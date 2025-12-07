@@ -8,6 +8,7 @@ import { LazyImage } from "@/components/LazyImage";
 interface PlayerCardProps {
   player: any; // Changed from Player to any since we're using database structure
   viewMode?: "grid" | "list";
+  disableProfileLink?: boolean;
 }
 
 // Convert player name to URL slug
@@ -19,7 +20,7 @@ const createPlayerSlug = (name: string): string => {
     .replace(/\s+/g, '-'); // Replace spaces with hyphens
 };
 
-export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
+export const PlayerCard = ({ player, viewMode = "grid", disableProfileLink = false }: PlayerCardProps) => {
   const cardRef = useRef<HTMLAnchorElement>(null);
   const [isInView, setIsInView] = useState(false);
   const [isTouched, setIsTouched] = useState(false);
@@ -75,12 +76,10 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
     // Format DOB with age
     const dobDisplay = dateOfBirth ? `${dateOfBirth} (${player.age})` : `Age ${player.age}`;
 
-    return (
-      <Link
-        ref={cardRef}
-        to={`/stars/${playerSlug}`}
-        className="group relative flex items-start gap-8 p-8 overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:bg-card border-b border-border last:border-b-0 hover:!border-primary hover:!border-4"
-      >
+    const listClassName = `group relative flex items-start gap-8 p-8 overflow-hidden transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:bg-card border-b border-border last:border-b-0 hover:!border-primary hover:!border-4 ${disableProfileLink ? '' : 'cursor-pointer'}`;
+
+    const listContent = (
+      <>
         {/* Player Image */}
         <div className="relative w-32 h-44 flex-shrink-0 overflow-hidden rounded-lg shadow-lg">
           <LazyImage
@@ -139,26 +138,38 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
             )}
           </div>
 
-          {/* View Profile Button */}
-          <div className="mt-2">
-            <div className="inline-flex bg-primary rounded-md py-2.5 px-5 items-center gap-2 transition-all group-hover:brightness-110 group-hover:scale-105">
-              <span className="font-bebas uppercase tracking-wider text-black text-base">{t('player_card.view_profile', 'View Profile')}</span>
-              <ArrowRight className="w-5 h-5 text-black group-hover:translate-x-1 transition-transform" />
+          {/* View Profile Button - hidden when link is disabled */}
+          {!disableProfileLink && (
+            <div className="mt-2">
+              <div className="inline-flex bg-primary rounded-md py-2.5 px-5 items-center gap-2 transition-all group-hover:brightness-110 group-hover:scale-105">
+                <span className="font-bebas uppercase tracking-wider text-black text-base">{t('player_card.view_profile', 'View Profile')}</span>
+                <ArrowRight className="w-5 h-5 text-black group-hover:translate-x-1 transition-transform" />
+              </div>
             </div>
-          </div>
+          )}
         </div>
+      </>
+    );
+
+    if (disableProfileLink) {
+      return (
+        <div ref={cardRef as any} className={listClassName}>
+          {listContent}
+        </div>
+      );
+    }
+
+    return (
+      <Link ref={cardRef} to={`/stars/${playerSlug}`} className={listClassName}>
+        {listContent}
       </Link>
     );
   }
 
-  return (
-    <Link
-      ref={cardRef}
-      to={`/stars/${playerSlug}`}
-      className="group relative block overflow-hidden transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-      onTouchStart={() => setIsTouched(true)}
-      onTouchEnd={() => setTimeout(() => setIsTouched(false), 300)}
-    >
+  const gridClassName = "group relative block overflow-hidden transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+
+  const gridContent = (
+    <>
       {/* Hover and focus glow effect - desktop and mobile */}
       <div className={`absolute inset-0 transition-opacity duration-500 pointer-events-none z-10 ${
         isTouched ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100 md:group-focus-visible:opacity-100'
@@ -259,11 +270,13 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
               </div>
             </div>
 
-            {/* Profile Button */}
-            <div className="bg-primary rounded-md py-3 px-4 flex items-center justify-center gap-2 transition-all hover:brightness-110">
-              <span className="font-bebas uppercase tracking-wider text-black">{t('player_card.player_profile', 'Player Profile')}</span>
-              <ArrowRight className="w-5 h-5 text-black" />
-            </div>
+            {/* Profile Button - hidden when link is disabled */}
+            {!disableProfileLink && (
+              <div className="bg-primary rounded-md py-3 px-4 flex items-center justify-center gap-2 transition-all hover:brightness-110">
+                <span className="font-bebas uppercase tracking-wider text-black">{t('player_card.player_profile', 'Player Profile')}</span>
+                <ArrowRight className="w-5 h-5 text-black" />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -293,6 +306,31 @@ export const PlayerCard = ({ player, viewMode = "grid" }: PlayerCardProps) => {
           </div>
         )}
       </div>
+    </>
+  );
+
+  if (disableProfileLink) {
+    return (
+      <div
+        ref={cardRef as any}
+        className={gridClassName}
+        onTouchStart={() => setIsTouched(true)}
+        onTouchEnd={() => setTimeout(() => setIsTouched(false), 300)}
+      >
+        {gridContent}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      ref={cardRef}
+      to={`/stars/${playerSlug}`}
+      className={gridClassName}
+      onTouchStart={() => setIsTouched(true)}
+      onTouchEnd={() => setTimeout(() => setIsTouched(false), 300)}
+    >
+      {gridContent}
     </Link>
   );
 };
