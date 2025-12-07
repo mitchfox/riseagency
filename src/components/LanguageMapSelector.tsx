@@ -10,6 +10,7 @@ interface LanguageRegion {
   code: LanguageCode;
   name: string;
   nativeName: string;
+  enterText: string; // "Enter" translated to this language
   flagCode: string;
   // Position on map (percentage)
   x: number;
@@ -20,16 +21,16 @@ const getFlagUrl = (flagCode: string) => `https://flagcdn.com/w40/${flagCode}.pn
 
 // Positions are percentages - will adjust based on feedback
 const languageRegions: LanguageRegion[] = [
-  { code: "en", name: "English", nativeName: "English", flagCode: "gb", x: 30, y: 60 },
-  { code: "es", name: "Spanish", nativeName: "Español", flagCode: "es", x: 29, y: 87 },
-  { code: "pt", name: "Portuguese", nativeName: "Português", flagCode: "pt", x: 25, y: 90 },
-  { code: "fr", name: "French", nativeName: "Français", flagCode: "fr", x: 34, y: 73 },
-  { code: "de", name: "German", nativeName: "Deutsch", flagCode: "de", x: 43, y: 63 },
-  { code: "it", name: "Italian", nativeName: "Italiano", flagCode: "it", x: 43, y: 80 },
-  { code: "pl", name: "Polish", nativeName: "Polski", flagCode: "pl", x: 50, y: 62 },
-  { code: "cs", name: "Czech", nativeName: "Čeština", flagCode: "cz", x: 47, y: 70 },
-  { code: "ru", name: "Russian", nativeName: "Русский", flagCode: "ru", x: 67, y: 50 },
-  { code: "tr", name: "Turkish", nativeName: "Türkçe", flagCode: "tr", x: 65, y: 90 },
+  { code: "en", name: "English", nativeName: "English", enterText: "Enter", flagCode: "gb", x: 30, y: 60 },
+  { code: "es", name: "Spanish", nativeName: "Español", enterText: "Entrar", flagCode: "es", x: 29, y: 87 },
+  { code: "pt", name: "Portuguese", nativeName: "Português", enterText: "Entrar", flagCode: "pt", x: 25, y: 90 },
+  { code: "fr", name: "French", nativeName: "Français", enterText: "Entrer", flagCode: "fr", x: 34, y: 73 },
+  { code: "de", name: "German", nativeName: "Deutsch", enterText: "Eintreten", flagCode: "de", x: 43, y: 63 },
+  { code: "it", name: "Italian", nativeName: "Italiano", enterText: "Entrare", flagCode: "it", x: 43, y: 80 },
+  { code: "pl", name: "Polish", nativeName: "Polski", enterText: "Wejdź", flagCode: "pl", x: 50, y: 62 },
+  { code: "cs", name: "Czech", nativeName: "Čeština", enterText: "Vstoupit", flagCode: "cz", x: 47, y: 70 },
+  { code: "ru", name: "Russian", nativeName: "Русский", enterText: "Войти", flagCode: "ru", x: 67, y: 50 },
+  { code: "tr", name: "Turkish", nativeName: "Türkçe", enterText: "Giriş", flagCode: "tr", x: 65, y: 90 },
 ];
 
 interface LanguageMapSelectorProps {
@@ -172,10 +173,10 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
                       onClick={handleConfirm}
                       className="px-6 py-2 bg-primary text-black font-bebas uppercase tracking-wider text-lg rounded hover:bg-primary/90 transition-colors"
                     >
-                      Enter in {pendingLangData.nativeName}
+                      {pendingLangData.enterText}
                     </button>
                     <span className="text-xs text-white/50 font-bebas tracking-wider">
-                      {pendingLangData.name}
+                      {pendingLangData.nativeName}
                     </span>
                   </div>
                 ) : (
