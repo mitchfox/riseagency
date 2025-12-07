@@ -541,16 +541,24 @@ const Staff = () => {
     },
     {
       id: 'coaching',
-      title: 'Coaching & Management',
+      title: 'Coaching',
       icon: Dumbbell,
       locked: isMarketeer,
       sections: [
         { id: 'schedule', title: 'Schedule', icon: Calendar },
-        { id: 'players', title: 'Player Management', icon: UserCog },
-        { id: 'athletecentre', title: 'Athlete Centre', icon: UserRound },
-        { id: 'transferhub', title: 'Transfer Hub', icon: Building2 },
         { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
         { id: 'analysis', title: 'Analysis Writer', icon: LineChart },
+        { id: 'athletecentre', title: 'Athlete Centre', icon: UserRound },
+      ]
+    },
+    {
+      id: 'management',
+      title: 'Management',
+      icon: UserCog,
+      locked: isMarketeer,
+      sections: [
+        { id: 'players', title: 'Player Management', icon: UserCog },
+        { id: 'transferhub', title: 'Transfer Hub', icon: Building2 },
         { id: 'highlightmaker', title: 'Highlight Maker', icon: Film },
         { id: 'updates', title: 'Player Updates', icon: BellRing },
       ]
