@@ -522,9 +522,9 @@ export const RadialMenu = () => {
           <div 
             className="absolute z-20" 
             style={{ 
-              bottom: isMobile ? `${centerSize * 0.06 - 7 + 2}px` : `${centerSize * 0.04375 - 2}px`,
+              bottom: isMobile ? `${centerSize * 0.06 - 7}px` : `${centerSize * 0.04375 - 4}px`,
               left: '50%',
-              transform: isMobile ? 'translateX(calc(-50% + 4px))' : 'translateX(calc(-50% + 3px))'
+              transform: isMobile ? 'translateX(calc(-50% + 6px))' : 'translateX(calc(-50% + 5px))'
             }}
           >
             <button
