@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { HoverText } from "@/components/HoverText";
@@ -6,8 +6,7 @@ import { LazyPlayer3D } from "@/components/LazyPlayer3D";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { HomeBackground } from "@/components/HomeBackground";
 import { LightConeBackground } from "@/components/LightConeBackground";
-import { XRayProvider } from "@/contexts/XRayContext";
-import { DragNavigator } from "@/components/DragNavigator";
+import { XRayProvider, useXRay } from "@/contexts/XRayContext";
 import { LandingCursor } from "@/components/LandingCursor";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
@@ -16,12 +15,15 @@ import { useRoleSubdomain, pathToRole, RoleSubdomain } from "@/hooks/useRoleSubd
 import { ElectricWave } from "@/components/ElectricWave";
 import riseLogoWhite from "@/assets/logo.png";
 
-export default function Landing() {
+// Inner component that uses the XRay context for full-page tracking
+function LandingContent() {
   const { t } = useLanguage();
   const { getRoleUrl } = useRoleSubdomain();
   const [languagePopupOpen, setLanguagePopupOpen] = useState(false);
   const [showRepresentation, setShowRepresentation] = useState(false);
   const [showDeclareInterest, setShowDeclareInterest] = useState(false);
+  const { setXrayState } = useXRay();
+  const lastInteractionRef = useRef(0);
   
   const navigateToRole = (path: string) => {
     const role = pathToRole[path];
@@ -59,8 +61,51 @@ export default function Landing() {
     { to: "/media", labelKey: "landing.nav_media", fallback: "MEDIA" },
   ];
 
+  // Full-page X-ray tracking effect
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      lastInteractionRef.current = Date.now();
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+      setXrayState({
+        isActive: true,
+        intensity: 1,
+        position: { x, y }
+      });
+    };
+
+    const handleMouseLeave = () => {
+      setXrayState({
+        isActive: false,
+        intensity: 0,
+        position: { x: 0.5, y: 0.5 }
+      });
+    };
+
+    // Check for inactivity to fade out x-ray
+    const checkInactivity = () => {
+      const timeSinceInteraction = Date.now() - lastInteractionRef.current;
+      if (timeSinceInteraction > 2000) {
+        setXrayState({
+          isActive: false,
+          intensity: 0,
+          position: { x: 0.5, y: 0.5 }
+        });
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseleave', handleMouseLeave);
+    const inactivityInterval = setInterval(checkInactivity, 500);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+      clearInterval(inactivityInterval);
+    };
+  }, [setXrayState]);
+
   return (
-    <XRayProvider>
     <div className="bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none" style={{ height: '100dvh', maxHeight: '100dvh' }}>
       {/* Electric Wave Effect */}
       <ElectricWave />
@@ -85,8 +130,8 @@ export default function Landing() {
         />
       </div>
       
-      {/* Language Selector - centered on page, moved down 23px */}
-      <div className="absolute left-1/2 z-50" style={{ top: 'calc(50% + 23px)', transform: 'translate(-50%, -50%)' }}>
+      {/* Language Selector - centered on page, moved down 31px */}
+      <div className="absolute left-1/2 z-50" style={{ top: 'calc(50% + 31px)', transform: 'translate(-50%, -50%)' }}>
         <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
       </div>
       
@@ -257,6 +302,13 @@ export default function Landing() {
       <RepresentationDialog open={showRepresentation} onOpenChange={setShowRepresentation} />
       <DeclareInterestPlayerDialog open={showDeclareInterest} onOpenChange={setShowDeclareInterest} starsOnly />
     </div>
+  );
+}
+
+export default function Landing() {
+  return (
+    <XRayProvider>
+      <LandingContent />
     </XRayProvider>
   );
 }
