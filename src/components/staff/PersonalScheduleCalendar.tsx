@@ -36,7 +36,7 @@ interface PersonalScheduleCalendarProps {
   showFullscreenButton?: boolean;
 }
 
-type ViewMode = 'week' | 'month';
+type ViewMode = 'day' | 'week' | 'month';
 
 export const PersonalScheduleCalendar = ({ 
   isFullscreen = false, 
@@ -46,11 +46,12 @@ export const PersonalScheduleCalendar = ({
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [dayOffset, setDayOffset] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
-  const [viewMode, setViewMode] = useState<ViewMode>('week');
+  const [viewMode, setViewMode] = useState<ViewMode>('day');
   const isMobile = useIsMobile();
 
   const [newEvent, setNewEvent] = useState({
@@ -189,7 +190,11 @@ export const PersonalScheduleCalendar = ({
   };
   
   const getNavigationLabel = () => {
-    if (viewMode === 'month') {
+    if (viewMode === 'day') {
+      const currentDay = addDays(new Date(), dayOffset);
+      if (dayOffset === 0) return 'Today';
+      return format(currentDay, 'EEE, MMM d');
+    } else if (viewMode === 'month') {
       const currentMonth = addMonths(startOfMonth(new Date()), weekOffset);
       return format(currentMonth, 'MMMM yyyy');
     } else {
@@ -199,6 +204,49 @@ export const PersonalScheduleCalendar = ({
         ? `${weekOffset * multiplier} weeks ahead` 
         : `${Math.abs(weekOffset * multiplier)} weeks ago`;
     }
+  };
+
+  const getCurrentDayDate = () => addDays(new Date(), dayOffset);
+
+  const isCurrentEvent = (event: CalendarEvent): boolean => {
+    if (!event.start_time) return false;
+    const now = new Date();
+    const currentTime = format(now, 'HH:mm');
+    
+    if (event.end_time) {
+      return currentTime >= event.start_time && currentTime <= event.end_time;
+    }
+    // If no end time, check if it's the most recent event that has started
+    return event.start_time <= currentTime;
+  };
+
+  const getMostRecentOrCurrentEvent = (dayEvents: CalendarEvent[]): string | null => {
+    const now = new Date();
+    const currentTime = format(now, 'HH:mm');
+    
+    // First, check for currently active events
+    const activeEvent = dayEvents.find(e => {
+      if (!e.start_time) return false;
+      if (e.end_time) {
+        return currentTime >= e.start_time && currentTime <= e.end_time;
+      }
+      return false;
+    });
+    if (activeEvent) return activeEvent.id;
+
+    // Find the most recent event that has started
+    const pastEvents = dayEvents
+      .filter(e => e.start_time && e.start_time <= currentTime)
+      .sort((a, b) => (b.start_time || '').localeCompare(a.start_time || ''));
+    
+    if (pastEvents.length > 0) return pastEvents[0].id;
+    
+    // If no past events, return the next upcoming event
+    const futureEvents = dayEvents
+      .filter(e => e.start_time && e.start_time > currentTime)
+      .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+    
+    return futureEvents.length > 0 ? futureEvents[0].id : null;
   };
 
   const getEventsForDay = (date: Date): CalendarEvent[] => {
@@ -248,7 +296,7 @@ export const PersonalScheduleCalendar = ({
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <Button 
-            onClick={() => setWeekOffset(weekOffset - 1)} 
+            onClick={() => viewMode === 'day' ? setDayOffset(dayOffset - 1) : setWeekOffset(weekOffset - 1)} 
             size="sm" 
             variant="outline"
             className={isMobile ? "h-7 w-7 p-0" : ""}
@@ -259,7 +307,7 @@ export const PersonalScheduleCalendar = ({
             {getNavigationLabel()}
           </p>
           <Button 
-            onClick={() => setWeekOffset(weekOffset + 1)} 
+            onClick={() => viewMode === 'day' ? setDayOffset(dayOffset + 1) : setWeekOffset(weekOffset + 1)} 
             size="sm" 
             variant="outline"
             className={isMobile ? "h-7 w-7 p-0" : ""}
@@ -271,6 +319,14 @@ export const PersonalScheduleCalendar = ({
         <div className="flex items-center gap-2">
           {/* View Mode Toggle */}
           <div className="flex rounded-md border border-border overflow-hidden">
+            <Button
+              variant={viewMode === 'day' ? 'default' : 'ghost'}
+              size="sm"
+              className={`h-7 px-2 text-xs rounded-none ${viewMode === 'day' ? '' : 'hover:bg-muted'}`}
+              onClick={() => { setViewMode('day'); setDayOffset(0); }}
+            >
+              Day
+            </Button>
             <Button
               variant={viewMode === 'week' ? 'default' : 'ghost'}
               size="sm"
@@ -317,166 +373,291 @@ export const PersonalScheduleCalendar = ({
         </div>
       </div>
 
-      {/* Calendar Grid */}
-      <div className={`${isFullscreen ? 'flex-1 overflow-auto' : ''}`}>
-        <div className={isMobile && !isFullscreen ? "w-full" : "min-w-[600px]"}>
-          {/* Header Row */}
-          <div className="grid grid-cols-8 gap-1 mb-1">
-            <div 
-              className="p-2 text-center font-bebas uppercase text-xs rounded"
-              style={{ 
-                backgroundColor: 'hsl(43, 49%, 61%)',
-                color: 'hsl(0, 0%, 0%)'
-              }}
-            >
-              Week
-            </div>
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+      {/* Day View */}
+      {viewMode === 'day' && (
+        <div className={`${isFullscreen ? 'flex-1 overflow-auto' : ''}`}>
+          {(() => {
+            const currentDayDate = getCurrentDayDate();
+            const dayEvents = getEventsForDay(currentDayDate)
+              .sort((a, b) => (a.start_time || '23:59').localeCompare(b.start_time || '23:59'));
+            const highlightedEventId = getMostRecentOrCurrentEvent(dayEvents);
+            const isToday = isSameDay(currentDayDate, new Date());
+
+            return (
+              <div className="space-y-3">
+                {/* Day Header */}
+                <div 
+                  className="p-3 rounded-lg border-2 flex items-center justify-between"
+                  style={{ 
+                    backgroundColor: isToday ? 'hsl(43, 49%, 25%)' : 'hsl(0, 0%, 10%)',
+                    borderColor: isToday ? 'hsl(43, 49%, 61%)' : 'rgba(255, 255, 255, 0.1)'
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="text-xl font-bold px-3 py-1 rounded"
+                      style={{ 
+                        backgroundColor: 'hsl(43, 49%, 61%)',
+                        color: 'hsl(0, 0%, 0%)'
+                      }}
+                    >
+                      {format(currentDayDate, 'EEE')}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-white text-lg">{format(currentDayDate, 'MMMM d, yyyy')}</div>
+                      {isToday && <span className="text-xs text-primary">Today</span>}
+                    </div>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''}
+                  </div>
+                </div>
+
+                {/* Events List */}
+                {dayEvents.length === 0 ? (
+                  <div 
+                    className="p-6 text-center rounded-lg border"
+                    style={{ backgroundColor: 'hsl(0, 0%, 10%)', borderColor: 'rgba(255, 255, 255, 0.1)' }}
+                  >
+                    <Calendar className="h-10 w-10 mx-auto mb-2 text-muted-foreground opacity-50" />
+                    <p className="text-muted-foreground">No events scheduled for this day</p>
+                    <Button 
+                      onClick={() => { setSelectedDate(currentDayDate); setShowAddEvent(true); }}
+                      size="sm" 
+                      className="mt-3"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Event
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {dayEvents.map((event) => {
+                      const isHighlighted = event.id === highlightedEventId && isToday;
+                      
+                      return (
+                        <div 
+                          key={event.id}
+                          className={`p-3 rounded-lg group relative transition-all ${isHighlighted ? 'ring-2 ring-offset-2 ring-offset-background ring-[hsl(43,49%,61%)]' : ''}`}
+                          style={{ 
+                            backgroundColor: getCategoryColor(event.category),
+                            color: 'hsl(0, 0%, 0%)'
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <div className="font-bold text-sm flex items-center gap-2">
+                                {event.is_ongoing && <span className="text-[10px]">🔄</span>}
+                                {event.title}
+                                {isHighlighted && (
+                                  <span 
+                                    className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                                    style={{ backgroundColor: 'hsl(43, 49%, 61%)', color: 'hsl(0, 0%, 0%)' }}
+                                  >
+                                    {isToday && event.start_time && event.end_time && format(new Date(), 'HH:mm') >= event.start_time && format(new Date(), 'HH:mm') <= event.end_time ? 'NOW' : 'CURRENT'}
+                                  </span>
+                                )}
+                              </div>
+                              {event.start_time && (
+                                <div className="text-xs opacity-75 flex items-center gap-1 mt-1">
+                                  <Clock className="h-3 w-3" />
+                                  {event.start_time}{event.end_time && ` - ${event.end_time}`}
+                                </div>
+                              )}
+                              {event.description && (
+                                <div className="text-xs opacity-60 mt-1">{event.description}</div>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => deleteEvent(event.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Quick Add Button */}
+                    <Button 
+                      onClick={() => { setSelectedDate(currentDayDate); setShowAddEvent(true); }}
+                      variant="outline" 
+                      className="w-full mt-2"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Event
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* Calendar Grid (Week/Month views) */}
+      {viewMode !== 'day' && (
+        <div className={`${isFullscreen ? 'flex-1 overflow-auto' : ''}`}>
+          <div className={isMobile && !isFullscreen ? "w-full" : "min-w-[600px]"}>
+            {/* Header Row */}
+            <div className="grid grid-cols-8 gap-1 mb-1">
               <div 
-                key={day}
                 className="p-2 text-center font-bebas uppercase text-xs rounded"
                 style={{ 
                   backgroundColor: 'hsl(43, 49%, 61%)',
                   color: 'hsl(0, 0%, 0%)'
                 }}
               >
-                {day}
+                Week
               </div>
-            ))}
-          </div>
-
-          {/* Week Rows */}
-          <div className="space-y-1">
-            {calendarWeeks.map((weekStart, weekIndex) => (
-              <div key={weekIndex} className="grid grid-cols-8 gap-1">
-                {/* Week Start Cell */}
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
                 <div 
-                  className="p-2 rounded flex flex-col items-center justify-center border"
+                  key={day}
+                  className="p-2 text-center font-bebas uppercase text-xs rounded"
                   style={{ 
                     backgroundColor: 'hsl(43, 49%, 61%)',
-                    color: 'hsl(0, 0%, 0%)',
-                    borderColor: 'rgba(0, 0, 0, 0.1)'
+                    color: 'hsl(0, 0%, 0%)'
                   }}
                 >
-                  <div className="text-lg font-bold">
-                    {format(weekStart, 'd')}
-                  </div>
-                  <div className="text-[10px] font-medium">
-                    {format(weekStart, 'MMM')}
-                  </div>
+                  {day}
                 </div>
+              ))}
+            </div>
 
-                {/* Day Cells */}
-                {[0, 1, 2, 3, 4, 5, 6].map((dayOffset) => {
-                  const currentDate = addDays(weekStart, dayOffset);
-                  const dayEvents = getEventsForDay(currentDate);
-                  const isToday = isSameDay(currentDate, new Date());
-                  const dayKey = `${weekIndex}-${dayOffset}`;
-                  const isExpanded = expandedDays.has(dayKey);
-                  
-                  const displayEvents = isExpanded ? dayEvents : dayEvents.slice(0, 2);
-                  const remainingCount = dayEvents.length - 2;
+            {/* Week Rows */}
+            <div className="space-y-1">
+              {calendarWeeks.map((weekStart, weekIndex) => (
+                <div key={weekIndex} className="grid grid-cols-8 gap-1">
+                  {/* Week Start Cell */}
+                  <div 
+                    className="p-2 rounded flex flex-col items-center justify-center border"
+                    style={{ 
+                      backgroundColor: 'hsl(43, 49%, 61%)',
+                      color: 'hsl(0, 0%, 0%)',
+                      borderColor: 'rgba(0, 0, 0, 0.1)'
+                    }}
+                  >
+                    <div className="text-lg font-bold">
+                      {format(weekStart, 'd')}
+                    </div>
+                    <div className="text-[10px] font-medium">
+                      {format(weekStart, 'MMM')}
+                    </div>
+                  </div>
 
-                  return (
-                    <div 
-                      key={dayOffset}
-                      onClick={() => handleDayClick(currentDate)}
-                      className={`p-1 rounded ${isFullscreen ? 'min-h-[80px]' : 'min-h-[50px]'} relative border transition-all cursor-pointer hover:border-primary/50`}
-                      style={{ 
-                        backgroundColor: 'hsl(0, 0%, 10%)',
-                        borderColor: isToday ? 'hsl(43, 49%, 61%)' : 'rgba(255, 255, 255, 0.1)',
-                        borderWidth: isToday ? '2px' : '1px'
-                      }}
-                    >
-                      {/* Day number */}
-                      <span 
-                        className="absolute top-0.5 right-0.5 text-[9px] opacity-40"
-                        style={{ color: 'hsl(0, 0%, 100%)' }}
+                  {/* Day Cells */}
+                  {[0, 1, 2, 3, 4, 5, 6].map((dayOffset) => {
+                    const currentDate = addDays(weekStart, dayOffset);
+                    const dayEvents = getEventsForDay(currentDate);
+                    const isToday = isSameDay(currentDate, new Date());
+                    const dayKey = `${weekIndex}-${dayOffset}`;
+                    const isExpanded = expandedDays.has(dayKey);
+                    
+                    const displayEvents = isExpanded ? dayEvents : dayEvents.slice(0, 2);
+                    const remainingCount = dayEvents.length - 2;
+
+                    return (
+                      <div 
+                        key={dayOffset}
+                        onClick={() => handleDayClick(currentDate)}
+                        className={`p-1 rounded ${isFullscreen ? 'min-h-[80px]' : 'min-h-[50px]'} relative border transition-all cursor-pointer hover:border-primary/50`}
+                        style={{ 
+                          backgroundColor: 'hsl(0, 0%, 10%)',
+                          borderColor: isToday ? 'hsl(43, 49%, 61%)' : 'rgba(255, 255, 255, 0.1)',
+                          borderWidth: isToday ? '2px' : '1px'
+                        }}
                       >
-                        {format(currentDate, 'd')}
-                      </span>
+                        {/* Day number */}
+                        <span 
+                          className="absolute top-0.5 right-0.5 text-[9px] opacity-40"
+                          style={{ color: 'hsl(0, 0%, 100%)' }}
+                        >
+                          {format(currentDate, 'd')}
+                        </span>
 
-                      {/* Events */}
-                      {dayEvents.length > 0 && (
-                        <div className="flex flex-col gap-0.5 mt-3">
-                          {displayEvents.map((event, idx) => (
-                            <div 
-                              key={event.id}
-                              className="text-[9px] p-1 rounded group relative"
-                              style={{ 
-                                backgroundColor: getCategoryColor(event.category),
-                                color: 'hsl(0, 0%, 0%)'
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <div className="font-bold truncate pr-3 flex items-center gap-0.5">
-                                {event.is_ongoing && <span className="text-[7px]">🔄</span>}
-                                {event.title}
-                              </div>
-                              {event.start_time && (
-                                <div className="text-[8px] opacity-75">
-                                  {event.start_time}
+                        {/* Events */}
+                        {dayEvents.length > 0 && (
+                          <div className="flex flex-col gap-0.5 mt-3">
+                            {displayEvents.map((event, idx) => (
+                              <div 
+                                key={event.id}
+                                className="text-[9px] p-1 rounded group relative"
+                                style={{ 
+                                  backgroundColor: getCategoryColor(event.category),
+                                  color: 'hsl(0, 0%, 0%)'
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div className="font-bold truncate pr-3 flex items-center gap-0.5">
+                                  {event.is_ongoing && <span className="text-[7px]">🔄</span>}
+                                  {event.title}
                                 </div>
-                              )}
+                                {event.start_time && (
+                                  <div className="text-[8px] opacity-75">
+                                    {event.start_time}
+                                  </div>
+                                )}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteEvent(event.id);
+                                  }}
+                                  className="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <X className="h-2.5 w-2.5 text-destructive" />
+                                </button>
+                              </div>
+                            ))}
+                            
+                            {/* Show more button */}
+                            {!isExpanded && remainingCount > 0 && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  deleteEvent(event.id);
+                                  setExpandedDays(prev => new Set([...prev, dayKey]));
                                 }}
-                                className="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="text-[8px] p-0.5 rounded font-bold transition-all hover:scale-105"
+                                style={{ 
+                                  backgroundColor: 'hsl(0, 0%, 20%)',
+                                  color: 'hsl(0, 0%, 80%)'
+                                }}
                               >
-                                <X className="h-2.5 w-2.5 text-destructive" />
+                                +{remainingCount} more
                               </button>
-                            </div>
-                          ))}
-                          
-                          {/* Show more button */}
-                          {!isExpanded && remainingCount > 0 && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setExpandedDays(prev => new Set([...prev, dayKey]));
-                              }}
-                              className="text-[8px] p-0.5 rounded font-bold transition-all hover:scale-105"
-                              style={{ 
-                                backgroundColor: 'hsl(0, 0%, 20%)',
-                                color: 'hsl(0, 0%, 80%)'
-                              }}
-                            >
-                              +{remainingCount} more
-                            </button>
-                          )}
-                          
-                          {/* Collapse button */}
-                          {isExpanded && dayEvents.length > 2 && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setExpandedDays(prev => {
-                                  const next = new Set(prev);
-                                  next.delete(dayKey);
-                                  return next;
-                                });
-                              }}
-                              className="text-[8px] p-0.5 rounded font-bold"
-                              style={{ 
-                                backgroundColor: 'hsl(0, 0%, 20%)',
-                                color: 'hsl(0, 0%, 80%)'
-                              }}
-                            >
-                              Show less
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+                            )}
+                            
+                            {/* Collapse button */}
+                            {isExpanded && dayEvents.length > 2 && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedDays(prev => {
+                                    const next = new Set(prev);
+                                    next.delete(dayKey);
+                                    return next;
+                                  });
+                                }}
+                                className="text-[8px] p-0.5 rounded font-bold"
+                                style={{ 
+                                  backgroundColor: 'hsl(0, 0%, 20%)',
+                                  color: 'hsl(0, 0%, 80%)'
+                                }}
+                              >
+                                Show less
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Add Event Dialog */}
       <Dialog open={showAddEvent} onOpenChange={setShowAddEvent}>
