@@ -58,6 +58,39 @@ export const LightConeBackground = () => {
           strokeWidth="0.25"
           opacity="0.4"
         />
+        
+        {/* Future Light Cone (top) - ALWAYS VISIBLE */}
+        <path 
+          d="M 50,45 L 100,0 Q 75,-2 50,-2 Q 25,-2 0,0 Z"
+          fill="url(#pastConeGradientAlways)"
+          opacity="0.6"
+        />
+        {/* Cone edge lines */}
+        <line 
+          x1="50" y1="45" 
+          x2="0" y2="0"
+          stroke="hsl(var(--primary))"
+          strokeWidth="0.3"
+          opacity="0.5"
+        />
+        <line 
+          x1="50" y1="45" 
+          x2="100" y2="0"
+          stroke="hsl(var(--primary))"
+          strokeWidth="0.3"
+          opacity="0.5"
+        />
+        {/* Top ellipse for 3D effect */}
+        <ellipse 
+          cx="50" 
+          cy="-1" 
+          rx="50" 
+          ry="3"
+          fill="none"
+          stroke="hsl(var(--primary))"
+          strokeWidth="0.25"
+          opacity="0.4"
+        />
       </svg>
 
       {/* Top cone and full axes with planes - REVEALED BY CURSOR BUBBLE MASK */}
