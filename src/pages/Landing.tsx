@@ -171,14 +171,14 @@ function LandingContent() {
       {/* Light Cone Background - revealed by X-Ray */}
       <LightConeBackground />
       
-      {/* Hidden text revealed by X-ray - REALISE POTENTIAL */}
-      <div className="absolute top-16 md:top-20 left-1/2 transform -translate-x-1/2 z-[5] pointer-events-none">
+      {/* Hidden text revealed by X-ray - REALISE POTENTIAL - behind overlay at z-[1] */}
+      <div className="absolute top-16 md:top-20 left-1/2 transform -translate-x-1/2 z-[1] pointer-events-none">
         <span className="font-bebas text-4xl md:text-6xl lg:text-7xl tracking-[0.3em] text-white/90 uppercase whitespace-nowrap">
           REALISE POTENTIAL
         </span>
       </div>
       
-      {/* RISE Logo - center X, 2/3 down Y, adjusted 3px right and 24px up (was 14px) */}
+      {/* RISE Logo - center X, 2/3 down Y, adjusted 3px right and 24px up */}
       <div className="absolute z-50" style={{
       top: 'calc(66.67% - 24px)',
       left: 'calc(50% + 3px)',
