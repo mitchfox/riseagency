@@ -969,10 +969,25 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         // === ORGANIC FLUID X-RAY REVEAL ===
         const timeSinceCursorMove = currentTime - lastCursorMoveTime
         const rect = container.getBoundingClientRect()
-        let mouseX = (mouseRef.current.x - rect.left) / rect.width
-        let mouseY = 1 - (mouseRef.current.y - rect.top) / rect.height
         
-        // Check if user is actively interacting
+        // Use GLOBAL window coordinates (normalized 0-1 across entire viewport)
+        // This ensures x-ray effect responds to cursor ANYWHERE on the page
+        const globalMouseX = mouseRef.current.x / window.innerWidth
+        const globalMouseY = 1 - (mouseRef.current.y / window.innerHeight)
+        
+        // Map global coordinates to where they would appear on the player
+        // The player container occupies a portion of the screen - we need to map
+        // global cursor position to the equivalent local position for the shader
+        const playerCenterX = (rect.left + rect.width / 2) / window.innerWidth
+        const playerCenterY = 1 - ((rect.top + rect.height / 2) / window.innerHeight)
+        const scaleX = window.innerWidth / rect.width
+        const scaleY = window.innerHeight / rect.height
+        
+        // Transform: where is the global cursor relative to player center, then scale
+        let mouseX = 0.5 + (globalMouseX - playerCenterX) * scaleX
+        let mouseY = 0.5 + (globalMouseY - playerCenterY) * scaleY
+        
+        // Check if user is actively interacting (anywhere on page)
         const userTimeSinceInteraction = currentTime - lastInteractionRef.current
         const isUserActive = userTimeSinceInteraction < 500
         
@@ -1036,7 +1051,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         }
         
         // Update cursor target and track velocity (for real user input)
-        if (isUserActive && mouseX >= 0 && mouseX <= 1 && mouseY >= 0 && mouseY <= 1) {
+        // Always track cursor globally - x-ray effect works across entire page
+        if (isUserActive) {
           // Calculate velocity before updating target
           if (cursorBlobTarget.x >= 0) {
             velocity.x = mouseX - cursorBlobTarget.x
