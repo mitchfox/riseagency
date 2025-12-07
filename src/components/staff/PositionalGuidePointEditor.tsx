@@ -39,6 +39,7 @@ interface PointEditorProps {
 }
 
 const IMAGE_LAYOUTS = [
+  { value: 'none', label: 'No images', rows: 0, cols: 0 },
   { value: '1-1', label: '1×1 (1 image)', rows: 1, cols: 1 },
   { value: '2-1', label: '2×1 (2 images in 1 row)', rows: 1, cols: 2 },
   { value: '1-2', label: '1×2 (1 per row, 2 rows)', rows: 2, cols: 1 },
@@ -59,7 +60,7 @@ export const PositionalGuidePointEditor = ({
 }: PointEditorProps) => {
   const [title, setTitle] = useState(point?.title || "");
   const [paragraphs, setParagraphs] = useState<string[]>(point?.paragraphs || [""]);
-  const [imageLayout, setImageLayout] = useState(point?.image_layout || "1-1");
+  const [imageLayout, setImageLayout] = useState(point?.image_layout || "none");
   const [images, setImages] = useState<MediaItem[]>(point?.images || []);
   const [videoUrl, setVideoUrl] = useState(point?.video_url || "");
   const [uploading, setUploading] = useState(false);
@@ -353,69 +354,71 @@ export const PositionalGuidePointEditor = ({
               </Select>
             </div>
 
-            {/* Image Grid Preview */}
-            <div className="space-y-2">
-              <Label>Images - Upload in order (left to right, top to bottom)</Label>
-              <div 
-                className="grid gap-3 p-4 bg-muted/30 rounded-lg border border-border"
-                style={{ 
-                  gridTemplateColumns: `repeat(${layoutConfig.cols}, 1fr)`,
-                  gridTemplateRows: `repeat(${layoutConfig.rows}, 1fr)`,
-                }}
-              >
-                {gridSlots.map((slotIndex) => {
-                  const image = images[slotIndex];
-                  const hasImage = image?.url;
-                  
-                  return (
-                    <div 
-                      key={slotIndex} 
-                      className="relative aspect-square bg-background rounded-lg overflow-hidden border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors"
-                    >
-                      {hasImage ? (
-                        <>
-                          <img
-                            src={image.url}
-                            alt=""
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveImage(slotIndex)}
-                            className="absolute top-1 right-1 bg-destructive/90 hover:bg-destructive p-1 rounded"
-                          >
-                            <X className="h-3 w-3 text-destructive-foreground" />
-                          </button>
-                        </>
-                      ) : (
-                        <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleImageUpload(file, slotIndex);
-                            }}
-                            disabled={uploading}
-                          />
-                          {uploading ? (
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                          ) : (
-                            <>
-                              <Upload className="h-6 w-6 text-muted-foreground mb-1" />
-                              <span className="text-xs text-muted-foreground font-medium">
-                                Slot {slotIndex + 1}
-                              </span>
-                            </>
-                          )}
-                        </label>
-                      )}
-                    </div>
-                  );
-                })}
+            {/* Image Grid Preview - only show if layout is not 'none' */}
+            {imageLayout !== 'none' && maxImages > 0 && (
+              <div className="space-y-2">
+                <Label>Images - Upload in order (left to right, top to bottom)</Label>
+                <div 
+                  className="grid gap-3 p-4 bg-muted/30 rounded-lg border border-border"
+                  style={{ 
+                    gridTemplateColumns: `repeat(${layoutConfig.cols}, 1fr)`,
+                    gridTemplateRows: `repeat(${layoutConfig.rows}, 1fr)`,
+                  }}
+                >
+                  {gridSlots.map((slotIndex) => {
+                    const image = images[slotIndex];
+                    const hasImage = image?.url;
+                    
+                    return (
+                      <div 
+                        key={slotIndex} 
+                        className="relative aspect-square bg-background rounded-lg overflow-hidden border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors"
+                      >
+                        {hasImage ? (
+                          <>
+                            <img
+                              src={image.url}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(slotIndex)}
+                              className="absolute top-1 right-1 bg-destructive/90 hover:bg-destructive p-1 rounded"
+                            >
+                              <X className="h-3 w-3 text-destructive-foreground" />
+                            </button>
+                          </>
+                        ) : (
+                          <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleImageUpload(file, slotIndex);
+                              }}
+                              disabled={uploading}
+                            />
+                            {uploading ? (
+                              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            ) : (
+                              <>
+                                <Upload className="h-6 w-6 text-muted-foreground mb-1" />
+                                <span className="text-xs text-muted-foreground font-medium">
+                                  Slot {slotIndex + 1}
+                                </span>
+                              </>
+                            )}
+                          </label>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
