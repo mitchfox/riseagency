@@ -174,9 +174,9 @@ function LandingContent() {
         </span>
       </div>
       
-      {/* RISE Logo - center X, 2/3 down Y, adjusted 3px right and 24px up */}
+      {/* RISE Logo - center X, 2/3 down Y, adjusted 3px right and 28px up */}
       <div className="absolute z-50" style={{
-      top: 'calc(66.67% - 24px)',
+      top: 'calc(66.67% - 28px)',
       left: 'calc(50% + 3px)',
       transform: 'translateX(-50%)'
     }}>
