@@ -12,7 +12,6 @@ import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
 import { Button } from "@/components/ui/button";
 import { useRoleSubdomain, pathToRole, RoleSubdomain } from "@/hooks/useRoleSubdomain";
-import { ElectricWave } from "@/components/ElectricWave";
 import riseLogoWhite from "@/assets/logo.png";
 
 // Inner component that uses the XRay context for full-page tracking
@@ -159,9 +158,6 @@ function LandingContent() {
     height: '100dvh',
     maxHeight: '100dvh'
   }}>
-      {/* Electric Wave Effect */}
-      <ElectricWave />
-      
       {/* Custom Landing Page Cursor */}
       <LandingCursor />
       

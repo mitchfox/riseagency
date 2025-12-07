@@ -512,12 +512,200 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       uniform float kitShinePos;
       uniform float bwLightPhase;
       uniform float bwLayerOpacity;
+      uniform float noiseTime;
+      
+      // Fluid blob uniforms - same as overlay shader
+      uniform vec2 cursorBlobPos;
+      uniform float cursorBlobOpacity;
+      uniform vec2 cursorVelocity;
+      uniform float cursorSpeed;
+      uniform vec2 cursorTrail1;
+      uniform vec2 cursorTrail2;
+      uniform vec2 cursorTrail3;
+      uniform vec2 cursorTrail4;
+      uniform float trailOpacity1;
+      uniform float trailOpacity2;
+      uniform float trailOpacity3;
+      uniform float trailOpacity4;
+      uniform vec2 ambientBlob1Pos;
+      uniform vec2 ambientBlob2Pos;
+      uniform vec2 ambientBlob3Pos;
       
       varying vec2 vUv;
       
       const vec3 goldColor = vec3(0.92, 0.78, 0.45);
       const vec3 brightGold = vec3(1.0, 0.9, 0.5);
       const vec3 warmLight = vec3(1.0, 0.95, 0.85);
+      
+      // ============= SIMPLEX NOISE FOR FLUID BLOB =============
+      vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+      vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+      vec3 permute(vec3 x) { return mod289(((x * 34.0) + 1.0) * x); }
+      
+      float snoise(vec2 v) {
+        const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+                           -0.577350269189626, 0.024390243902439);
+        vec2 i  = floor(v + dot(v, C.yy));
+        vec2 x0 = v -   i + dot(i, C.xx);
+        vec2 i1;
+        i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+        vec4 x12 = x0.xyxy + C.xxzz;
+        x12.xy -= i1;
+        i = mod289(i);
+        vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0))
+                                + i.x + vec3(0.0, i1.x, 1.0));
+        vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy),
+                                dot(x12.zw, x12.zw)), 0.0);
+        m = m * m;
+        m = m * m;
+        vec3 x = 2.0 * fract(p * C.www) - 1.0;
+        vec3 h = abs(x) - 0.5;
+        vec3 ox = floor(x + 0.5);
+        vec3 a0 = x - ox;
+        m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
+        vec3 g;
+        g.x = a0.x * x0.x + h.x * x0.y;
+        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+        return 130.0 * dot(m, g);
+      }
+      
+      float flowFBM(vec2 p, float t) {
+        float value = 0.0;
+        float amplitude = 0.5;
+        vec2 flow = vec2(t * 0.15, t * 0.1);
+        for (int i = 0; i < 5; i++) {
+          value += amplitude * snoise(p + flow);
+          p *= 2.0;
+          flow *= 1.25;
+          amplitude *= 0.55;
+        }
+        return value;
+      }
+      
+      float smin(float a, float b, float k) {
+        float h = max(k - abs(a - b), 0.0) / k;
+        return min(a, b) - h * h * k * 0.25;
+      }
+      
+      float circleSDF(vec2 p, vec2 center, float radius) {
+        return length(p - center) - radius;
+      }
+      
+      float waterBlob(vec2 uv, vec2 center, float baseRadius, float timeOffset) {
+        vec2 flowDistort = vec2(
+          flowFBM(uv * 8.0 + timeOffset, noiseTime * 0.8) * 0.035,
+          flowFBM(uv * 8.0 + timeOffset + 100.0, noiseTime * 0.7) * 0.035
+        );
+        vec2 distortedUV = uv + flowDistort;
+        float dist = circleSDF(distortedUV, center, baseRadius);
+        float edgeWave = flowFBM(uv * 12.0 + center * 5.0 + timeOffset, noiseTime * 0.5) * 0.02;
+        float edgeWave2 = flowFBM(uv * 20.0 + center * 8.0 + timeOffset * 1.5, noiseTime * 0.7) * 0.01;
+        dist += edgeWave + edgeWave2;
+        return 1.0 - smoothstep(-0.015, 0.03, dist);
+      }
+      
+      float waterLobes(vec2 uv, vec2 center, float baseRadius, vec2 velocity, float speed, float timeOffset) {
+        float combinedSDF = circleSDF(uv, center, baseRadius);
+        for (int i = 0; i < 4; i++) {
+          float fi = float(i);
+          vec2 lobeOffset = vec2(
+            snoise(vec2(fi * 3.5 + timeOffset, noiseTime * 0.35)) * 0.14,
+            snoise(vec2(fi * 3.5 + 50.0 + timeOffset, noiseTime * 0.28)) * 0.14
+          );
+          if (speed > 0.02) {
+            lobeOffset += velocity * (0.07 + fi * 0.025);
+          }
+          vec2 lobeCenter = center + lobeOffset;
+          float lobeRadius = baseRadius * (0.35 + snoise(vec2(fi, noiseTime * 0.45)) * 0.18);
+          float lobeSDF = circleSDF(uv, lobeCenter, lobeRadius);
+          combinedSDF = smin(combinedSDF, lobeSDF, 0.06);
+        }
+        float flowDistort = flowFBM(uv * 10.0 + timeOffset, noiseTime * 0.6) * 0.018;
+        float flowDistort2 = flowFBM(uv * 18.0 + timeOffset * 1.3, noiseTime * 0.8) * 0.008;
+        combinedSDF += flowDistort + flowDistort2;
+        return 1.0 - smoothstep(-0.012, 0.028, combinedSDF);
+      }
+      
+      float capsuleSDF(vec2 p, vec2 a, vec2 b, float r) {
+        vec2 pa = p - a;
+        vec2 ba = b - a;
+        float h = clamp(dot(pa, ba) / (dot(ba, ba) + 0.0001), 0.0, 1.0);
+        return length(pa - ba * h) - r;
+      }
+      
+      float fluidTrail(vec2 uv, vec2 headPos, vec2 velocity, float speed, float maxLength, float width) {
+        if (speed < 0.02) return 0.0;
+        float trailLen = maxLength * speed;
+        vec2 tailPos = headPos - velocity * trailLen;
+        float dist = capsuleSDF(uv, headPos, tailPos, width);
+        float waveDistort = snoise(vec2(dot(uv - headPos, velocity) * 20.0, noiseTime)) * 0.01;
+        dist += waveDistort;
+        return 1.0 - smoothstep(-0.01, 0.02, dist);
+      }
+      
+      float splashDroplets(vec2 uv, vec2 center, vec2 velocity, float speed, float baseRadius, float timeOffset) {
+        float splash = 0.0;
+        if (speed < 0.05) return 0.0;
+        float baseSDF = circleSDF(uv, center, baseRadius * 1.2);
+        for (int i = 0; i < 4; i++) {
+          float fi = float(i);
+          vec2 dropOffset = vec2(
+            snoise(vec2(fi * 5.0 + timeOffset, noiseTime * 0.5)) * 0.1,
+            snoise(vec2(fi * 5.0 + 30.0 + timeOffset, noiseTime * 0.4)) * 0.1
+          );
+          dropOffset += velocity * (0.1 + fi * 0.05) * speed;
+          vec2 dropCenter = center + dropOffset;
+          float dropRadius = 0.02 + snoise(vec2(fi * 2.0, noiseTime * 0.6)) * 0.01;
+          float dropSDF = circleSDF(uv, dropCenter, dropRadius);
+          float connectedSDF = smin(baseSDF, dropSDF, 0.05);
+          float dropMask = 1.0 - smoothstep(-0.01, 0.02, dropSDF);
+          splash = max(splash, dropMask * 0.7);
+        }
+        return splash * speed;
+      }
+      
+      // Calculate full fluid mask matching overlay shader
+      float calculateFluidMask(vec2 uv) {
+        float fluidMask = 0.0;
+        
+        // Main cursor water blob with connected lobes
+        float mainBlob = waterLobes(uv, cursorBlobPos, 0.14, cursorVelocity, cursorSpeed, 0.0);
+        fluidMask += mainBlob * cursorBlobOpacity;
+        
+        // Fluid trail stretching backward
+        float trail = fluidTrail(uv, cursorBlobPos, cursorVelocity, cursorSpeed, 0.25, 0.04);
+        fluidMask = max(fluidMask, trail * cursorBlobOpacity * 0.9);
+        
+        // Splash droplets when moving fast
+        float splash = splashDroplets(uv, cursorBlobPos, cursorVelocity, cursorSpeed, 0.12, 0.0);
+        fluidMask = max(fluidMask, splash * cursorBlobOpacity * 0.7);
+        
+        // Trailing water blobs
+        float trail1Blob = waterBlob(uv, cursorTrail1, 0.11, 1.0);
+        float trail1Lobes = waterLobes(uv, cursorTrail1, 0.08, cursorVelocity, cursorSpeed * 0.5, 1.0);
+        fluidMask = max(fluidMask, max(trail1Blob, trail1Lobes) * trailOpacity1 * 0.85);
+        
+        float trail2Blob = waterBlob(uv, cursorTrail2, 0.08, 2.0);
+        fluidMask = max(fluidMask, trail2Blob * trailOpacity2 * 0.7);
+        
+        float trail3Blob = waterBlob(uv, cursorTrail3, 0.06, 3.0);
+        fluidMask = max(fluidMask, trail3Blob * trailOpacity3 * 0.55);
+        
+        float trail4Blob = waterBlob(uv, cursorTrail4, 0.045, 4.0);
+        fluidMask = max(fluidMask, trail4Blob * trailOpacity4 * 0.4);
+        
+        // Autonomous ambient water blobs
+        float ambient1 = waterLobes(uv, ambientBlob1Pos, 0.16, vec2(sin(noiseTime * 0.2), cos(noiseTime * 0.25)), 0.1, 5.0);
+        fluidMask = max(fluidMask, ambient1 * 0.35);
+        
+        float ambient2 = waterBlob(uv, ambientBlob2Pos, 0.13, 6.0);
+        fluidMask = max(fluidMask, ambient2 * 0.3);
+        
+        float ambient3 = waterBlob(uv, ambientBlob3Pos, 0.10, 7.0);
+        fluidMask = max(fluidMask, ambient3 * 0.25);
+        
+        return clamp(fluidMask, 0.0, 1.0);
+      }
       
       void main() {
         // Sample all depth maps and combine
@@ -616,9 +804,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
           }
         }
         
-        // ============= MOUSE SPOTLIGHT X-RAY (on player only) =============
-        float distToMouse = length(vUv - mousePos);
-        float mouseXrayMask = (1.0 - smoothstep(0.0, xrayRadius + 0.02, distToMouse)) * userActive;
+        // ============= FLUID BLOB X-RAY (matches overlay shader) =============
+        float mouseXrayMask = calculateFluidMask(vUv);
         
         // Sample x-ray texture
         vec2 xrayUV = (parallaxUV - 0.5) * xrayScale + 0.5 + xrayOffset;
@@ -814,7 +1001,24 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         shootingStarActive: { value: 0.0 },
         kitShinePos: { value: -1.0 },
         bwLightPhase: { value: 0.0 },
-        bwLayerOpacity: { value: 0.0 }
+        bwLayerOpacity: { value: 0.0 },
+        // Fluid blob uniforms - synced with overlay shader
+        noiseTime: { value: 0.0 },
+        cursorBlobPos: { value: new THREE.Vector2(-1, -1) },
+        cursorBlobOpacity: { value: 0.0 },
+        cursorVelocity: { value: new THREE.Vector2(0, 0) },
+        cursorSpeed: { value: 0.0 },
+        cursorTrail1: { value: new THREE.Vector2(-1, -1) },
+        cursorTrail2: { value: new THREE.Vector2(-1, -1) },
+        cursorTrail3: { value: new THREE.Vector2(-1, -1) },
+        cursorTrail4: { value: new THREE.Vector2(-1, -1) },
+        trailOpacity1: { value: 0.0 },
+        trailOpacity2: { value: 0.0 },
+        trailOpacity3: { value: 0.0 },
+        trailOpacity4: { value: 0.0 },
+        ambientBlob1Pos: { value: new THREE.Vector2(0.3, 0.4) },
+        ambientBlob2Pos: { value: new THREE.Vector2(0.7, 0.6) },
+        ambientBlob3Pos: { value: new THREE.Vector2(0.5, 0.3) }
       }
 
       // ============= X-RAY OVERLAY UNIFORMS (full-viewport) =============
@@ -1051,6 +1255,24 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         xrayOverlayUniforms.ambientBlob1Pos.value.set(-2, -2)
         xrayOverlayUniforms.ambientBlob2Pos.value.set(-2, -2)
         xrayOverlayUniforms.ambientBlob3Pos.value.set(-2, -2)
+        
+        // Sync PLAYER MESH uniforms with overlay for matching fluid X-ray reveal
+        uniforms.noiseTime.value = xrayOverlayUniforms.noiseTime.value
+        uniforms.cursorBlobPos.value.set(cursorBlob.x, cursorBlob.y)
+        uniforms.cursorBlobOpacity.value = cursorOpacity
+        uniforms.cursorVelocity.value.set(velocity.x, velocity.y)
+        uniforms.cursorSpeed.value = speed
+        uniforms.cursorTrail1.value.set(trail1.x, trail1.y)
+        uniforms.cursorTrail2.value.set(trail2.x, trail2.y)
+        uniforms.cursorTrail3.value.set(trail3.x, trail3.y)
+        uniforms.cursorTrail4.value.set(trail4.x, trail4.y)
+        uniforms.trailOpacity1.value = trail1Opacity
+        uniforms.trailOpacity2.value = trail2Opacity
+        uniforms.trailOpacity3.value = trail3Opacity
+        uniforms.trailOpacity4.value = trail4Opacity
+        uniforms.ambientBlob1Pos.value.set(-2, -2)
+        uniforms.ambientBlob2Pos.value.set(-2, -2)
+        uniforms.ambientBlob3Pos.value.set(-2, -2)
         
         // === KIT SHINE ANIMATION ===
         if (shineCycleTime < SHINE_DURATION) {
