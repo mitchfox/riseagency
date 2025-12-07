@@ -24,6 +24,7 @@ const PlayersList = () => {
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
   const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
+  const [expandedFilter, setExpandedFilter] = useState<"position" | "age" | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const positionOptions = [
@@ -289,6 +290,8 @@ const PlayersList = () => {
                 selectedValues={selectedPositions}
                 onToggle={togglePosition}
                 onClear={() => setSelectedPositions([])}
+                isExpanded={expandedFilter === "position"}
+                onExpandedChange={(expanded) => setExpandedFilter(expanded ? "position" : null)}
               />
 
               <LateralFilter
@@ -298,6 +301,8 @@ const PlayersList = () => {
                 onToggle={toggleAgeRange}
                 onClear={() => setSelectedAgeRanges([])}
                 direction="left"
+                isExpanded={expandedFilter === "age"}
+                onExpandedChange={(expanded) => setExpandedFilter(expanded ? "age" : null)}
               />
 
               {/* Clear All Filters */}
