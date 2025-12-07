@@ -167,10 +167,10 @@ function LandingContent() {
       {/* Light Cone Background - revealed by X-Ray */}
       <LightConeBackground />
       
-      {/* Hidden text revealed by X-ray - REALISE POTENTIAL */}
-      <div className="absolute left-1/2 transform -translate-x-1/2 z-[60]" style={{ top: 'calc(4rem - 50px)' }}>
+      {/* Hidden text revealed by X-ray - REALISE POTENTIAL - hidden until hover */}
+      <div className="absolute left-1/2 transform -translate-x-1/2 z-[60] opacity-0 hover:opacity-100 transition-opacity duration-500" style={{ top: 'calc(4rem - 50px)' }}>
         <span className="font-bebas text-4xl md:text-6xl lg:text-7xl tracking-[0.3em] text-white/90 uppercase whitespace-nowrap">
-          <HoverText text="REALISE POTENTIAL" />
+          <HoverText text="REALISE POTENTIAL" className="hover-text-slow" />
         </span>
       </div>
       

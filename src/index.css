@@ -544,6 +544,15 @@ All colors MUST be HSL.
   transform: translateY(100%);
 }
 
+/* Slower hover text animation variant */
+.hover-text-slow .hover-text-letter {
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-text-slow .hover-text-letter-clone {
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Hover states - original slides up and out, clone slides up and in */
 .hover-text-wrapper:hover .hover-text-letter,
 button:hover .hover-text-letter,
