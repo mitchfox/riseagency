@@ -194,40 +194,42 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
     if (!widgetLayout) return;
 
     const rowWidgets = layouts.filter(l => l.row === widgetLayout.row && visibleWidgets.includes(l.id));
-    
-    // Calculate how much width change there is
-    const widthDelta = newWidthPercent - widgetLayout.widthPercent;
-    
-    // Distribute the change among other widgets in the same row
     const otherWidgets = rowWidgets.filter(w => w.id !== widgetId);
-    const totalOtherWidth = otherWidgets.reduce((sum, w) => sum + w.widthPercent, 0);
     
+    // If only one widget in row, just update it
+    if (otherWidgets.length === 0) {
+      const newLayouts = layouts.map(l => 
+        l.id === widgetId ? { ...l, widthPercent: 100, heightPx: newHeightPx } : l
+      );
+      saveSettings(visibleWidgets, newLayouts);
+      return;
+    }
+    
+    // Calculate remaining width for other widgets
+    const remainingWidth = 100 - newWidthPercent;
+    
+    // For 2 widgets: sibling gets all remaining
+    // For 3+ widgets: distribute remaining proportionally
     const newLayouts = layouts.map(l => {
       if (l.id === widgetId) {
         return { ...l, widthPercent: newWidthPercent, heightPx: newHeightPx };
       }
       if (l.row === widgetLayout.row && otherWidgets.some(ow => ow.id === l.id)) {
-        // Proportionally adjust other widgets
-        const proportion = l.widthPercent / totalOtherWidth;
-        const adjustment = widthDelta * proportion;
-        const newWidth = Math.max(15, l.widthPercent - adjustment);
-        return { ...l, widthPercent: newWidth };
+        if (otherWidgets.length === 1) {
+          // Single sibling gets all remaining width
+          return { ...l, widthPercent: remainingWidth };
+        } else {
+          // Multiple siblings: distribute proportionally
+          const totalOtherWidth = otherWidgets.reduce((sum, w) => sum + w.widthPercent, 0);
+          const proportion = l.widthPercent / totalOtherWidth;
+          const newWidth = Math.max(15, remainingWidth * proportion);
+          return { ...l, widthPercent: newWidth };
+        }
       }
       return l;
     });
 
-    // Normalize row widths to 100%
-    const rowLayouts = newLayouts.filter(l => l.row === widgetLayout.row && visibleWidgets.includes(l.id));
-    const totalWidth = rowLayouts.reduce((sum, l) => sum + l.widthPercent, 0);
-    
-    const normalizedLayouts = newLayouts.map(l => {
-      if (l.row === widgetLayout.row && visibleWidgets.includes(l.id)) {
-        return { ...l, widthPercent: (l.widthPercent / totalWidth) * 100 };
-      }
-      return l;
-    });
-
-    saveSettings(visibleWidgets, normalizedLayouts);
+    saveSettings(visibleWidgets, newLayouts);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
