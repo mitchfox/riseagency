@@ -296,7 +296,7 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
                                   {point.paragraphs.length > 0 && (
                                     <div className="space-y-2">
                                       {point.paragraphs.map((para, pIdx) => (
-                                        <p key={pIdx} className="text-sm text-muted-foreground">
+                                        <p key={pIdx} className="text-sm text-muted-foreground whitespace-pre-line">
                                           {para}
                                         </p>
                                       ))}
