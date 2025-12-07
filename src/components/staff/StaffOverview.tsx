@@ -16,12 +16,14 @@ import { SortableWidget, WidgetLayout } from "./SortableWidget";
 import { RowDropZone } from "./RowDropZone";
 import { PersonalScheduleCalendar } from "./PersonalScheduleCalendar";
 import { PersonalScheduleFullscreen } from "./PersonalScheduleFullscreen";
-import { useScoutingWidget, useProspectsWidget, useInvoicesWidget, useReportsWidget, useSiteVisitsWidget, useMarketingWidget, useOutreachWidget, useNewPlayersWidget, useFormSubmissionsWidget, useCoachingWidget } from "./widgets/useWidgetData";
+import { useScoutingWidget, useProspectsWidget, useInvoicesWidget, useReportsWidget, useSiteVisitsWidget, useMarketingWidget, useOutreachWidget, useNewPlayersWidget, useCoachingWidget } from "./widgets/useWidgetData";
 import { FocusTimerWidget } from "./widgets/FocusTimerWidget";
 import { DailyHabitsWidget } from "./widgets/DailyHabitsWidget";
 import { KanbanWidget } from "./widgets/KanbanWidget";
 import { PriorityMatrixWidget } from "./widgets/PriorityMatrixWidget";
 import { IdeasNotesWidget } from "./widgets/IdeasNotesWidget";
+import { FormSubmissionsWidget } from "./widgets/FormSubmissionsWidget";
+import { ProductivityInsightsWidget } from "./widgets/ProductivityInsightsWidget";
 
 interface Goal {
   id: string;
@@ -126,7 +128,6 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
   const marketingData = useMarketingWidget();
   const outreachData = useOutreachWidget();
   const newPlayersData = useNewPlayersWidget();
-  const formSubmissionsData = useFormSubmissionsWidget();
   const coachingData = useCoachingWidget();
 
   const sensors = useSensors(
@@ -891,30 +892,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
         );
 
       case "messages":
-        return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'form-submissions' })}>
-            {formSubmissionsData.loading ? (
-              <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
-            ) : formSubmissionsData.data ? (
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-medium">Form Submissions</span>
-                  <Badge variant="outline" className="text-[10px]">{formSubmissionsData.data.total}</Badge>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {Object.entries(formSubmissionsData.data.byType).map(([type, count]) => (
-                    <Badge key={type} variant="outline" className="text-[9px]">{type}: {count}</Badge>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-xs text-muted-foreground py-4">
-                <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                No submissions
-              </div>
-            )}
-          </div>
-        );
+        return <FormSubmissionsWidget />;
 
       case "sitevisits":
         return (
@@ -1125,14 +1103,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
         );
 
       case "insights":
-        return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
-            <div className="text-center text-xs text-muted-foreground py-4">
-              <Sparkles className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              Productivity insights and trends
-            </div>
-          </div>
-        );
+        return <ProductivityInsightsWidget />;
 
       default:
         return null;
