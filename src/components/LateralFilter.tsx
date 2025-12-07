@@ -14,6 +14,8 @@ interface LateralFilterProps {
   onToggle: (value: string) => void;
   onClear?: () => void;
   direction?: "right" | "left";
+  isExpanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
 }
 
 export const LateralFilter = ({
@@ -23,14 +25,27 @@ export const LateralFilter = ({
   onToggle,
   onClear,
   direction = "right",
+  isExpanded: controlledExpanded,
+  onExpandedChange,
 }: LateralFilterProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  
+  const isExpanded = controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
+  
+  const handleToggle = () => {
+    const newValue = !isExpanded;
+    if (onExpandedChange) {
+      onExpandedChange(newValue);
+    } else {
+      setInternalExpanded(newValue);
+    }
+  };
 
   return (
     <div className={cn("inline-flex items-center gap-1", direction === "left" && "flex-row-reverse")}>
       {/* Filter trigger button */}
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleToggle}
         className={cn(
           "flex items-center gap-1.5 px-3 py-1.5 font-bebas uppercase tracking-wider transition-all duration-300 border text-sm",
           isExpanded
