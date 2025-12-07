@@ -211,7 +211,7 @@ function LandingContent() {
       }}>
           
           {/* Content container - pushed down to align with triangle body */}
-          <div className="relative z-10 px-4 md:px-8 pt-12 md:pt-10 pb-1 md:py-3">
+          <div className="relative z-10 px-4 md:px-8 pt-20 md:pt-16 pb-1 md:py-3">
             {/* Desktop Layout */}
             <div className="hidden md:block">
               
