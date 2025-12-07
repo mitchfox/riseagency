@@ -25,8 +25,10 @@ function LandingContent() {
   const [languagePopupOpen, setLanguagePopupOpen] = useState(false);
   const [showRepresentation, setShowRepresentation] = useState(false);
   const [showDeclareInterest, setShowDeclareInterest] = useState(false);
+  const [topLogoHovered, setTopLogoHovered] = useState(false);
   const {
-    setXrayState
+    setXrayState,
+    xrayState
   } = useXRay();
   const lastInteractionRef = useRef(0);
   const navigateToRole = (path: string) => {
@@ -167,8 +169,28 @@ function LandingContent() {
       {/* Light Cone Background - revealed by X-Ray */}
       <LightConeBackground />
       
+      {/* Top Center Logo - disappears on xray or when hovering REALISE POTENTIAL area */}
+      <div 
+        className={`absolute top-4 md:top-6 left-1/2 transform -translate-x-1/2 z-[55] transition-opacity duration-500 ${
+          xrayState.isActive || topLogoHovered ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+      >
+        <img 
+          src={riseLogoWhite} 
+          alt="RISE Football Agency" 
+          className="h-[32px] md:h-[42px] w-auto" 
+          loading="eager" 
+          fetchPriority="high" 
+        />
+      </div>
+      
       {/* Hidden text revealed by X-ray - REALISE POTENTIAL - hidden until hover */}
-      <div className="absolute left-1/2 transform -translate-x-1/2 z-[60] opacity-0 hover:opacity-100 transition-opacity duration-500" style={{ top: 'calc(4rem - 50px)' }}>
+      <div 
+        className="absolute left-1/2 transform -translate-x-1/2 z-[60] opacity-0 hover:opacity-100 transition-opacity duration-500" 
+        style={{ top: 'calc(4rem - 50px)' }}
+        onMouseEnter={() => setTopLogoHovered(true)}
+        onMouseLeave={() => setTopLogoHovered(false)}
+      >
         <span className="font-bebas text-4xl md:text-6xl lg:text-7xl tracking-[0.3em] text-white/90 uppercase whitespace-nowrap">
           <HoverText text="REALISE POTENTIAL" className="hover-text-slow" />
         </span>
