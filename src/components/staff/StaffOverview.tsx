@@ -1093,9 +1093,6 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
 
       case "mindmap":
         return <IdeasNotesWidget />;
-            </div>
-          </div>
-        );
 
       case "backlog":
         return (
