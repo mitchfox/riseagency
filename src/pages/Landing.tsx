@@ -184,7 +184,7 @@ function LandingContent() {
       </div>
       
       {/* Language Selector - centered on page, moved down 72px, right 10px */}
-      <div className="absolute z-50" style={{
+      <div className="absolute z-[100] pointer-events-auto" style={{
       top: 'calc(50% + 72px)',
       left: 'calc(50% + 10px)',
       transform: 'translate(-50%, -50%)'
