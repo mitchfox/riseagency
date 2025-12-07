@@ -26,6 +26,7 @@ export const StaffAccountManagement = () => {
   const [createdAccount, setCreatedAccount] = useState<StaffAccount | null>(null);
   const [resettingPassword, setResettingPassword] = useState<string | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<string | null>(null);
+  const [updatingRole, setUpdatingRole] = useState<string | null>(null);
   const [newAccount, setNewAccount] = useState<StaffAccount>({
     email: "",
     password: "",
@@ -243,6 +244,47 @@ export const StaffAccountManagement = () => {
     }
   };
 
+  const handleChangeRole = async (userId: string, email: string, newRole: "admin" | "staff" | "marketeer") => {
+    setUpdatingRole(userId);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-staff-account`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            email: email,
+            role: newRole,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to update role");
+      }
+
+      toast.success(`Role updated to ${newRole}`);
+      fetchExistingAccounts();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      toast.error(errorMessage);
+    } finally {
+      setUpdatingRole(null);
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading...</div>;
   }
@@ -288,8 +330,23 @@ export const StaffAccountManagement = () => {
                       <p className="font-medium text-sm md:text-base">{account.profiles?.full_name || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs md:text-sm text-muted-foreground">Role</p>
-                      <p className="font-medium text-sm md:text-base capitalize">{account.role}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground mb-1">Role</p>
+                      <Select
+                        value={account.role}
+                        onValueChange={(value: "admin" | "staff" | "marketeer") =>
+                          handleChangeRole(account.user_id, account.profiles?.email || '', value)
+                        }
+                        disabled={updatingRole === account.user_id}
+                      >
+                        <SelectTrigger className="w-full sm:w-[140px] h-8 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="staff">Staff</SelectItem>
+                          <SelectItem value="marketeer">Marketeer</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className="mt-3 md:mt-4 flex justify-end gap-2">
