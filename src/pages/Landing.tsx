@@ -85,8 +85,8 @@ export default function Landing() {
         />
       </div>
       
-      {/* Language Selector - centered on page, moved down 5px */}
-      <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ top: 'calc(50% + 5px)', transform: 'translate(-50%, -50%)' }}>
+      {/* Language Selector - centered on page, moved down 15px */}
+      <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ top: 'calc(50% + 15px)', transform: 'translate(-50%, -50%)' }}>
         <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
       </div>
       
