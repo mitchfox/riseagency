@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { HoverText } from "@/components/HoverText";
@@ -12,6 +12,8 @@ import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
 import { Button } from "@/components/ui/button";
 import { useRoleSubdomain, pathToRole, RoleSubdomain } from "@/hooks/useRoleSubdomain";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
 import riseLogoWhite from "@/assets/logo.png";
 
 // Inner component that uses the XRay context for full-page tracking
@@ -227,55 +229,62 @@ function LandingContent() {
           
           {/* Content container - pushed down to align with triangle body */}
           <div className="relative z-10 px-4 md:px-8 pt-20 md:pt-16 pb-1 md:py-3">
-            {/* Desktop Layout */}
-            <div className="hidden md:block">
-              
-              {/* Buttons row - with divider line meeting triangle edges */}
-              <div className="border-t border-primary/40 pt-3 pb-3 mx-auto" style={{
-              maxWidth: '42%'
-            }}>
-                <div className="flex items-center justify-center gap-3">
-                  <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary px-3.5 h-8 text-sm" hoverEffect>
+            {/* Desktop Layout - Horizontal Slider */}
+            <div className="hidden lg:block">
+              <RoleSlider 
+                navLinks={desktopNavLinks} 
+                navigateToRole={navigateToRole} 
+                t={t}
+                setShowRepresentation={setShowRepresentation}
+                setShowDeclareInterest={setShowDeclareInterest}
+              />
+            </div>
+
+            {/* Tablet Layout - Same as mobile but hidden on lg+ */}
+            <div className="hidden md:flex lg:hidden flex-col items-center gap-0 mt-4">
+              {/* Buttons row - with divider line */}
+              <div className="border-t border-primary/40 pt-2 pb-2 flex justify-center" style={{ width: '50%' }}>
+                <div className="flex gap-2">
+                  <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-xs px-3 h-7" hoverEffect>
                     {t("landing.represent_me", "Represent Me")}
                   </Button>
-                  
-                  <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider px-3.5 h-8 text-sm" hoverEffect>
-                    {t("landing.declare_interest", "Declare Interest In Star")}
+                  <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider text-xs px-3 h-7" hoverEffect>
+                    {t("landing.declare_interest_short", "Declare Interest")}
                   </Button>
                 </div>
               </div>
               
-              {/* Top menu row: Players, Coaches, Clubs - with divider line */}
-              <div className="border-t border-primary/40 pt-2 pb-2 mx-auto" style={{
-              maxWidth: '62%'
-            }}>
-                <nav className="flex items-center justify-center gap-6">
-                  {desktopNavLinks.slice(0, 3).map((link, index) => <div key={link.to} className="flex items-center">
-                      <button onClick={() => navigateToRole(link.to)} className="px-3 py-1 text-[19px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap">
+              {/* Top row: Players, Coaches, Clubs */}
+              <div className="border-t border-primary/40 pt-1 pb-1" style={{ width: '70%' }}>
+                <nav className="flex items-center justify-center gap-2">
+                  {desktopNavLinks.slice(0, 3).map((link, index) => (
+                    <div key={link.to} className="flex items-center">
+                      <button onClick={() => navigateToRole(link.to)} className="px-2 py-1 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap">
                         <HoverText text={t(link.labelKey, link.fallback)} />
                       </button>
-                      {index < 2 && <div className="w-px h-4 bg-primary/40 ml-6" />}
-                    </div>)}
+                      {index < 2 && <div className="w-px h-3 bg-primary/40" />}
+                    </div>
+                  ))}
                 </nav>
               </div>
               
-              {/* Bottom menu row: Agents, Scouts, Business, Media - widest line */}
-              <div className="border-t border-primary/40 pt-2 mx-auto" style={{
-              maxWidth: '85%'
-            }}>
-                <nav className="flex items-center justify-center gap-4">
-                  {desktopNavLinks.slice(3).map((link, index) => <div key={link.to} className="flex items-center">
-                      <button onClick={() => navigateToRole(link.to)} className="px-3 py-1 text-[19px] font-bebas uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap">
+              {/* Bottom row: Agents, Scouts, Business, Media */}
+              <div className="border-t border-primary/40 pt-1" style={{ width: '90%' }}>
+                <nav className="flex items-center justify-center gap-1">
+                  {desktopNavLinks.slice(3).map((link, index) => (
+                    <div key={link.to} className="flex items-center">
+                      <button onClick={() => navigateToRole(link.to)} className="px-2 py-1 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap">
                         <HoverText text={t(link.labelKey, link.fallback)} />
                       </button>
-                      {index < 3 && <div className="w-px h-4 bg-primary/40 ml-4" />}
-                    </div>)}
+                      {index < 3 && <div className="w-px h-3 bg-primary/40" />}
+                    </div>
+                  ))}
                 </nav>
               </div>
               
               {/* Select role text */}
-              <div className="text-center pt-2">
-                <span className="text-xs font-bebas uppercase tracking-[0.2em] text-white/40">
+              <div className="text-center pt-1">
+                <span className="text-[10px] font-bebas uppercase tracking-[0.15em] text-white/40">
                   Select Your Role To Enter Site
                 </span>
               </div>
@@ -342,6 +351,137 @@ function LandingContent() {
       <DeclareInterestPlayerDialog open={showDeclareInterest} onOpenChange={setShowDeclareInterest} starsOnly />
     </div>;
 }
+// Role Slider Component for Desktop
+function RoleSlider({ 
+  navLinks, 
+  navigateToRole, 
+  t,
+  setShowRepresentation,
+  setShowDeclareInterest
+}: { 
+  navLinks: { to: string; labelKey: string; fallback: string }[];
+  navigateToRole: (path: string) => void;
+  t: (key: string, fallback: string) => string;
+  setShowRepresentation: (open: boolean) => void;
+  setShowDeclareInterest: (open: boolean) => void;
+}) {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    loop: true, 
+    align: 'center',
+    dragFree: true,
+    containScroll: false
+  });
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+    setCanScrollPrev(emblaApi.canScrollPrev());
+    setCanScrollNext(emblaApi.canScrollNext());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on('select', onSelect);
+    emblaApi.on('reInit', onSelect);
+    return () => {
+      emblaApi.off('select', onSelect);
+      emblaApi.off('reInit', onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  return (
+    <div className="space-y-4">
+      {/* Buttons row */}
+      <div className="border-t border-primary/40 pt-3 pb-3 mx-auto" style={{ maxWidth: '42%' }}>
+        <div className="flex items-center justify-center gap-3">
+          <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary px-3.5 h-8 text-sm" hoverEffect>
+            {t("landing.represent_me", "Represent Me")}
+          </Button>
+          <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider px-3.5 h-8 text-sm" hoverEffect>
+            {t("landing.declare_interest", "Declare Interest In Star")}
+          </Button>
+        </div>
+      </div>
+
+      {/* Horizontal Role Slider */}
+      <div className="border-t border-primary/40 pt-4 mx-auto relative" style={{ maxWidth: '85%' }}>
+        <div className="flex items-center gap-4">
+          {/* Left Arrow */}
+          <button 
+            onClick={scrollPrev}
+            className="p-2 text-primary/60 hover:text-primary transition-colors shrink-0"
+            aria-label="Previous role"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+
+          {/* Slider */}
+          <div className="overflow-hidden flex-1" ref={emblaRef}>
+            <div className="flex">
+              {navLinks.map((link, index) => (
+                <div 
+                  key={link.to} 
+                  className="flex-[0_0_auto] min-w-0 px-4"
+                >
+                  <button 
+                    onClick={() => navigateToRole(link.to)} 
+                    className={`px-6 py-2 text-2xl font-bebas uppercase tracking-[0.25em] transition-all duration-300 whitespace-nowrap ${
+                      selectedIndex === index 
+                        ? 'text-primary scale-110' 
+                        : 'text-white/60 hover:text-white/90'
+                    }`}
+                  >
+                    <HoverText text={t(link.labelKey, link.fallback)} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Arrow */}
+          <button 
+            onClick={scrollNext}
+            className="p-2 text-primary/60 hover:text-primary transition-colors shrink-0"
+            aria-label="Next role"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Dots indicator */}
+        <div className="flex justify-center gap-2 mt-3">
+          {navLinks.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => emblaApi?.scrollTo(index)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                selectedIndex === index 
+                  ? 'bg-primary w-4' 
+                  : 'bg-white/30 hover:bg-white/50'
+              }`}
+              aria-label={`Go to role ${index + 1}`}
+            />
+          ))}
+        </div>
+
+        {/* Select role text */}
+        <div className="text-center pt-3">
+          <span className="text-xs font-bebas uppercase tracking-[0.2em] text-white/40">
+            Select Your Role To Enter Site
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
   return <XRayProvider>
       <LandingContent />
