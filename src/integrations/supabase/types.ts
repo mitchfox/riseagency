@@ -2102,6 +2102,51 @@ export type Database = {
           },
         ]
       }
+      positional_guide_points: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          image_layout: string | null
+          images: Json | null
+          paragraphs: string[] | null
+          phase: string
+          position: string
+          subcategory: string
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_layout?: string | null
+          images?: Json | null
+          paragraphs?: string[] | null
+          phase: string
+          position: string
+          subcategory: string
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_layout?: string | null
+          images?: Json | null
+          paragraphs?: string[] | null
+          phase?: string
+          position?: string
+          subcategory?: string
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       positional_guides: {
         Row: {
           content: string | null
