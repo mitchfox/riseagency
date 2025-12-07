@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, User, Plus, Trash2, Clock, CalendarDays, CalendarRange } from "lucide-react";
+import { Calendar, User, Plus, Trash2, Clock, CalendarDays, CalendarRange, Pencil } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StaffSchedule } from "./StaffSchedule";
 import { format, startOfWeek, addDays, isSameDay, parseISO, addWeeks, startOfMonth, endOfMonth, getDay } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -22,6 +23,7 @@ interface CalendarEvent {
   id: string;
   staff_id: string;
   event_date: string;
+  end_date: string | null;
   title: string;
   description: string | null;
   start_time: string | null;
@@ -50,6 +52,7 @@ export const StaffSchedulesManagement = () => {
   const [viewMode, setViewMode] = useState<'weekly' | 'monthly'>('weekly');
   const [newEvent, setNewEvent] = useState({
     event_date: new Date().toISOString().split('T')[0],
+    end_date: "",
     title: "",
     description: "",
     start_time: "",
@@ -57,6 +60,8 @@ export const StaffSchedulesManagement = () => {
     is_ongoing: false,
     category: "work",
   });
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchStaffMembers();
@@ -134,6 +139,7 @@ export const StaffSchedulesManagement = () => {
         .insert({
           staff_id: selectedStaffId,
           event_date: newEvent.event_date,
+          end_date: newEvent.end_date || null,
           title: newEvent.title.trim(),
           description: newEvent.description || null,
           start_time: newEvent.start_time || null,
@@ -148,6 +154,7 @@ export const StaffSchedulesManagement = () => {
       fetchEventsForStaff(selectedStaffId);
       setNewEvent({
         event_date: new Date().toISOString().split('T')[0],
+        end_date: "",
         title: "",
         description: "",
         start_time: "",
@@ -177,6 +184,41 @@ export const StaffSchedulesManagement = () => {
     } catch (error) {
       console.error("Error deleting event:", error);
       toast.error("Failed to delete event");
+    }
+  };
+
+  const openEditDialog = (event: CalendarEvent) => {
+    setEditingEvent(event);
+    setEditDialogOpen(true);
+  };
+
+  const updateEvent = async () => {
+    if (!editingEvent || !selectedStaffId) return;
+
+    try {
+      const { error } = await supabase
+        .from('staff_calendar_events')
+        .update({
+          event_date: editingEvent.event_date,
+          end_date: editingEvent.end_date || null,
+          title: editingEvent.title,
+          description: editingEvent.description || null,
+          start_time: editingEvent.start_time || null,
+          end_time: editingEvent.end_time || null,
+          is_ongoing: editingEvent.is_ongoing,
+          category: editingEvent.category,
+        })
+        .eq('id', editingEvent.id);
+
+      if (error) throw error;
+      
+      toast.success("Event updated");
+      setEditDialogOpen(false);
+      setEditingEvent(null);
+      fetchEventsForStaff(selectedStaffId);
+    } catch (error) {
+      console.error("Error updating event:", error);
+      toast.error("Failed to update event");
     }
   };
 
@@ -222,7 +264,13 @@ export const StaffSchedulesManagement = () => {
       if (event.is_ongoing && event.day_of_week === null) {
         return true;
       }
-      return isSameDay(parseISO(event.event_date), date);
+      // Check if date falls within event range (start_date to end_date)
+      const eventStart = parseISO(event.event_date);
+      if (event.end_date) {
+        const eventEnd = parseISO(event.end_date);
+        return date >= eventStart && date <= eventEnd;
+      }
+      return isSameDay(eventStart, date);
     });
   };
 
@@ -252,13 +300,14 @@ export const StaffSchedulesManagement = () => {
 
   const EventCard = ({ event, showDelete = true }: { event: CalendarEvent; showDelete?: boolean }) => (
     <div 
-      className="text-xs p-2 rounded group relative"
+      className="text-xs p-2 rounded group relative cursor-pointer hover:opacity-90 transition-opacity"
       style={{ 
         backgroundColor: getCategoryColor(event.category),
         color: 'hsl(0, 0%, 0%)'
       }}
+      onClick={() => openEditDialog(event)}
     >
-      <div className="font-bold truncate pr-4 flex items-center gap-1">
+      <div className="font-bold truncate pr-10 flex items-center gap-1">
         {event.is_ongoing && <span className="text-[8px]">🔄</span>}
         {event.title}
       </div>
@@ -268,27 +317,43 @@ export const StaffSchedulesManagement = () => {
           {event.start_time}{event.end_time && ` - ${event.end_time}`}
         </div>
       )}
+      {event.end_date && (
+        <div className="text-[10px] opacity-75 flex items-center gap-1">
+          <CalendarRange className="h-2.5 w-2.5" />
+          Until {format(parseISO(event.end_date), 'MMM d')}
+        </div>
+      )}
       {event.description && (
         <div className="text-[10px] opacity-60 truncate mt-0.5">{event.description}</div>
       )}
       {showDelete && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            deleteEvent(event.id);
-          }}
-          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <Trash2 className="h-3 w-3 text-destructive" />
-        </button>
+        <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              openEditDialog(event);
+            }}
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteEvent(event.id);
+            }}
+          >
+            <Trash2 className="h-3 w-3 text-destructive" />
+          </button>
+        </div>
       )}
     </div>
   );
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
+    <>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Staff Schedules
@@ -355,7 +420,7 @@ export const StaffSchedulesManagement = () => {
                           </select>
                         </div>
                         <div className="space-y-2">
-                          <Label>Date</Label>
+                          <Label>Start Date</Label>
                           <Input
                             type="date"
                             value={newEvent.event_date}
@@ -363,6 +428,18 @@ export const StaffSchedulesManagement = () => {
                               setNewEvent({ ...newEvent, event_date: e.target.value })
                             }
                             disabled={newEvent.is_ongoing}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>End Date (optional)</Label>
+                          <Input
+                            type="date"
+                            value={newEvent.end_date}
+                            onChange={(e) =>
+                              setNewEvent({ ...newEvent, end_date: e.target.value })
+                            }
+                            disabled={newEvent.is_ongoing}
+                            min={newEvent.event_date}
                           />
                         </div>
                         <div className="space-y-2">
@@ -748,5 +825,126 @@ export const StaffSchedulesManagement = () => {
         </CardContent>
       </Card>
     </div>
+
+      {/* Edit Event Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-4 w-4" />
+              Edit Event
+            </DialogTitle>
+          </DialogHeader>
+          {editingEvent && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Title</Label>
+                <Input
+                  value={editingEvent.title}
+                  onChange={(e) =>
+                    setEditingEvent({ ...editingEvent, title: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={editingEvent.category || 'work'}
+                  onChange={(e) =>
+                    setEditingEvent({ ...editingEvent, category: e.target.value })
+                  }
+                >
+                  {EVENT_CATEGORIES.map((cat) => (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Start Date</Label>
+                  <Input
+                    type="date"
+                    value={editingEvent.event_date}
+                    onChange={(e) =>
+                      setEditingEvent({ ...editingEvent, event_date: e.target.value })
+                    }
+                    disabled={editingEvent.is_ongoing || false}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>End Date (optional)</Label>
+                  <Input
+                    type="date"
+                    value={editingEvent.end_date || ''}
+                    onChange={(e) =>
+                      setEditingEvent({ ...editingEvent, end_date: e.target.value || null })
+                    }
+                    disabled={editingEvent.is_ongoing || false}
+                    min={editingEvent.event_date}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Start Time</Label>
+                  <Input
+                    type="time"
+                    value={editingEvent.start_time || ''}
+                    onChange={(e) =>
+                      setEditingEvent({ ...editingEvent, start_time: e.target.value || null })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>End Time</Label>
+                  <Input
+                    type="time"
+                    value={editingEvent.end_time || ''}
+                    onChange={(e) =>
+                      setEditingEvent({ ...editingEvent, end_time: e.target.value || null })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Notes</Label>
+                <Input
+                  value={editingEvent.description || ''}
+                  onChange={(e) =>
+                    setEditingEvent({ ...editingEvent, description: e.target.value || null })
+                  }
+                  placeholder="Optional notes"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="edit_is_ongoing"
+                  checked={editingEvent.is_ongoing || false}
+                  onChange={(e) =>
+                    setEditingEvent({ ...editingEvent, is_ongoing: e.target.checked })
+                  }
+                  className="h-4 w-4 rounded border-input"
+                />
+                <Label htmlFor="edit_is_ongoing" className="cursor-pointer">
+                  Ongoing task (shows every day)
+                </Label>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button onClick={updateEvent} className="flex-1">
+                  Save Changes
+                </Button>
+                <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
