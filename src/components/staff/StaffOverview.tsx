@@ -96,15 +96,15 @@ const WIDGET_CONFIGS: WidgetConfig[] = [
 ];
 
 const DEFAULT_LAYOUTS: WidgetLayout[] = [
-  { id: "goals", row: 0, order: 0, widthPercent: 33, heightRows: 1 },
-  { id: "todo", row: 0, order: 1, widthPercent: 33, heightRows: 1 },
-  { id: "quicklinks", row: 0, order: 2, widthPercent: 34, heightRows: 1 },
-  { id: "financial", row: 1, order: 0, widthPercent: 100, heightRows: 1 },
-  { id: "schedule", row: 2, order: 0, widthPercent: 60, heightRows: 3 },
-  { id: "represented", row: 2, order: 1, widthPercent: 40, heightRows: 3 },
+  { id: "goals", row: 0, order: 0, widthPercent: 33, heightPx: 200 },
+  { id: "todo", row: 0, order: 1, widthPercent: 33, heightPx: 200 },
+  { id: "quicklinks", row: 0, order: 2, widthPercent: 34, heightPx: 200 },
+  { id: "financial", row: 1, order: 0, widthPercent: 100, heightPx: 200 },
+  { id: "schedule", row: 2, order: 0, widthPercent: 60, heightPx: 450 },
+  { id: "represented", row: 2, order: 1, widthPercent: 40, heightPx: 450 },
 ];
 
-const ROW_HEIGHT = 200;
+const DEFAULT_HEIGHT_PX = 200;
 
 export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: string }) => {
   const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
@@ -176,7 +176,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
       const existingLayout = layouts.find(l => l.id === widgetId);
       if (!existingLayout) {
         const maxRow = Math.max(...layouts.map(l => l.row), -1);
-        newLayouts = [...layouts, { id: widgetId, row: maxRow + 1, order: 0, widthPercent: 100, heightRows: 1 }];
+        newLayouts = [...layouts, { id: widgetId, row: maxRow + 1, order: 0, widthPercent: 100, heightPx: DEFAULT_HEIGHT_PX }];
       }
     }
     
@@ -188,7 +188,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
     saveSettings(defaults, DEFAULT_LAYOUTS);
   };
 
-  const handleResize = (widgetId: string, newWidthPercent: number, newHeightRows: number) => {
+  const handleResize = (widgetId: string, newWidthPercent: number, newHeightPx: number) => {
     const widgetLayout = layouts.find(l => l.id === widgetId);
     if (!widgetLayout) return;
 
@@ -203,13 +203,13 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
     
     const newLayouts = layouts.map(l => {
       if (l.id === widgetId) {
-        return { ...l, widthPercent: newWidthPercent, heightRows: newHeightRows };
+        return { ...l, widthPercent: newWidthPercent, heightPx: newHeightPx };
       }
       if (l.row === widgetLayout.row && otherWidgets.some(ow => ow.id === l.id)) {
         // Proportionally adjust other widgets
         const proportion = l.widthPercent / totalOtherWidth;
         const adjustment = widthDelta * proportion;
-        const newWidth = Math.max(20, l.widthPercent - adjustment);
+        const newWidth = Math.max(15, l.widthPercent - adjustment);
         return { ...l, widthPercent: newWidth };
       }
       return l;
@@ -623,7 +623,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
       case "represented": {
         // Calculate adaptive sizing based on widget dimensions
         const widthPercent = layout?.widthPercent || 40;
-        const heightRows = layout?.heightRows || 1;
+        const heightPx = layout?.heightPx || DEFAULT_HEIGHT_PX;
         
         // Determine grid columns based on width
         const gridCols = widthPercent >= 80 ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5' 
@@ -631,8 +631,8 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
                        : 'grid-cols-1 sm:grid-cols-2';
         
         // Scale factors based on available space
-        const isLarge = widthPercent >= 60 && heightRows >= 2;
-        const isMedium = widthPercent >= 40 || heightRows >= 2;
+        const isLarge = widthPercent >= 60 && heightPx >= 350;
+        const isMedium = widthPercent >= 40 || heightPx >= 300;
         
         // Adaptive text/element sizes
         const imageHeight = isLarge ? 'h-24' : isMedium ? 'h-16' : 'h-12';
@@ -1234,12 +1234,12 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
             <RowDropZone id="row-gap-0" />
             
             {widgetsByRow.map(([rowNum, rowWidgets], rowIndex) => {
-              const maxHeightInRow = Math.max(...rowWidgets.map(w => w.heightRows));
+              const maxHeightInRow = Math.max(...rowWidgets.map(w => w.heightPx));
               return (
                 <div key={rowNum}>
                   <div 
                     className="flex gap-2 w-full"
-                    style={{ minHeight: `${maxHeightInRow * ROW_HEIGHT}px` }}
+                    style={{ minHeight: `${maxHeightInRow}px` }}
                   >
                     <SortableContext
                       items={rowWidgets.map(w => w.id)}
@@ -1258,7 +1258,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
                             expanded={expandedWidget === widget.id}
                             onToggleExpand={() => toggleWidget(widget.id)}
                             onResize={handleResize}
-                            rowHeight={ROW_HEIGHT}
+                            rowHeight={DEFAULT_HEIGHT_PX}
                           >
                             {renderWidgetContent(widget.id, widget)}
                           </SortableWidget>

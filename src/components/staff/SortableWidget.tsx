@@ -12,7 +12,7 @@ export interface WidgetLayout {
   row: number;
   order: number;
   widthPercent: number;
-  heightRows: number;
+  heightPx: number; // Now using pixel-based height for free-form sizing
 }
 
 interface SortableWidgetProps {
@@ -22,14 +22,16 @@ interface SortableWidgetProps {
   icon: React.ElementType;
   expanded: boolean;
   onToggleExpand: () => void;
-  onResize: (id: string, widthPercent: number, heightRows: number) => void;
+  onResize: (id: string, widthPercent: number, heightPx: number) => void;
   children: React.ReactNode;
-  rowHeight: number;
+  rowHeight: number; // Used as minimum height reference
 }
 
-// More granular width snaps for flexible ratios (e.g., 60/40, 70/30, 20/40/40, etc.)
-const WIDTH_SNAPS = [20, 25, 30, 33, 35, 40, 45, 50, 55, 60, 65, 67, 70, 75, 80, 100];
-const HEIGHT_OPTIONS = [1, 2, 3];
+// Minimum constraints
+const MIN_WIDTH_PERCENT = 15;
+const MAX_WIDTH_PERCENT = 100;
+const MIN_HEIGHT_PX = 150;
+const MAX_HEIGHT_PX = 800;
 
 export const SortableWidget = ({
   id,
@@ -60,13 +62,7 @@ export const SortableWidget = ({
     transform: CSS.Transform.toString(transform),
     transition,
     width: `${resizePreview?.width ?? layout.widthPercent}%`,
-    height: `${(resizePreview?.height ?? layout.heightRows) * rowHeight}px`,
-  };
-
-  const snapToWidth = (percent: number) => {
-    return WIDTH_SNAPS.reduce((prev, curr) =>
-      Math.abs(curr - percent) < Math.abs(prev - percent) ? curr : prev
-    );
+    height: `${resizePreview?.height ?? layout.heightPx}px`,
   };
 
   const handleWidthResizeStart = (e: React.MouseEvent) => {
@@ -84,14 +80,15 @@ export const SortableWidget = ({
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX;
       const deltaPercent = (deltaX / containerWidth) * 100;
-      const newWidth = Math.max(20, Math.min(100, startWidthPercent + deltaPercent));
-      setResizePreview({ width: snapToWidth(newWidth) });
+      // Free-form width, no snapping
+      const newWidth = Math.max(MIN_WIDTH_PERCENT, Math.min(MAX_WIDTH_PERCENT, startWidthPercent + deltaPercent));
+      setResizePreview({ width: Math.round(newWidth) });
     };
 
     const handleMouseUp = () => {
       setIsResizingWidth(false);
       if (resizePreview?.width) {
-        onResize(id, resizePreview.width, layout.heightRows);
+        onResize(id, resizePreview.width, layout.heightPx);
       }
       setResizePreview(null);
       document.removeEventListener("mousemove", handleMouseMove);
@@ -108,13 +105,13 @@ export const SortableWidget = ({
     setIsResizingHeight(true);
 
     const startY = e.clientY;
-    const startHeightRows = layout.heightRows;
+    const startHeightPx = layout.heightPx;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaY = moveEvent.clientY - startY;
-      const deltaRows = Math.round(deltaY / rowHeight);
-      const newHeight = Math.max(1, Math.min(3, startHeightRows + deltaRows));
-      setResizePreview({ height: newHeight });
+      // Free-form height in pixels
+      const newHeight = Math.max(MIN_HEIGHT_PX, Math.min(MAX_HEIGHT_PX, startHeightPx + deltaY));
+      setResizePreview({ height: Math.round(newHeight) });
     };
 
     const handleMouseUp = () => {
@@ -283,7 +280,7 @@ export const SortableWidget = ({
         <div className="absolute top-2 right-10 bg-primary text-primary-foreground text-xs px-2 py-1 rounded z-50">
           {resizePreview.width && `${resizePreview.width}%`}
           {resizePreview.width && resizePreview.height && " × "}
-          {resizePreview.height && `${resizePreview.height} row${resizePreview.height > 1 ? "s" : ""}`}
+          {resizePreview.height && `${resizePreview.height}px`}
         </div>
       )}
     </div>
