@@ -481,7 +481,7 @@ function RoleSlider({
           style={{ 
             borderRadius: '20px',
             transform: 'translateX(-50%) rotate(26deg)',
-            left: 'calc(50% + 352px)',
+            left: 'calc(50% + 332px)',
             top: '180px'
           }}
           hoverEffect
@@ -495,7 +495,7 @@ function RoleSlider({
           style={{ 
             borderRadius: '20px',
             transform: 'translateX(-50%) rotate(-26deg)',
-            left: 'calc(50% - 352px)',
+            left: 'calc(50% - 332px)',
             top: '180px'
           }}
           hoverEffect
