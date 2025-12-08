@@ -162,8 +162,8 @@ function LandingContent() {
     height: '100dvh',
     maxHeight: '100dvh'
   }}>
-      {/* Dev Mode Coordinate Overlay */}
-      <CoordinateOverlay enabled={isDevMode} />
+      {/* Dev Mode Coordinate Overlay - REMOVE BEFORE PUBLISHING */}
+      <CoordinateOverlay enabled={true} />
       
       {/* Custom Landing Page Cursor */}
       <LandingCursor />
