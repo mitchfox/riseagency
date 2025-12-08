@@ -26,22 +26,22 @@ export const LightConeBackground = () => {
           </linearGradient>
         </defs>
         
-        {/* Past Light Cone (bottom) - apex at 500,475 absolute */}
+        {/* Past Light Cone (bottom) - apex 150 down from center */}
         <path 
-          d="M 50,47.5 L 100,100 Q 75,102 50,102 Q 25,102 0,100 Z"
+          d="M 50,65 L 100,100 Q 75,102 50,102 Q 25,102 0,100 Z"
           fill="url(#pastConeGradientAlways)"
           opacity="0.6"
         />
         {/* Cone edge lines */}
         <line 
-          x1="50" y1="47.5" 
+          x1="50" y1="65" 
           x2="0" y2="100"
           stroke="hsl(var(--primary))"
           strokeWidth="0.3"
           opacity="0.5"
         />
         <line 
-          x1="50" y1="47.5" 
+          x1="50" y1="65" 
           x2="100" y2="100"
           stroke="hsl(var(--primary))"
           strokeWidth="0.3"
