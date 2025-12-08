@@ -192,10 +192,10 @@ function LandingContent() {
       </div>
       
       
-      {/* Language Selector - centered on page, moved down 80px, right 10px, 1.5x bigger */}
+      {/* Language Selector - centered on page, moved down 190px */}
       <div className="absolute z-[50] pointer-events-auto" style={{
-      top: 'calc(50% + 80px)',
-      left: 'calc(50% + 10px)',
+      top: 'calc(50% + 190px)',
+      left: '50%',
       transform: 'translate(-50%, -50%) scale(1.5)'
     }}>
         <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
