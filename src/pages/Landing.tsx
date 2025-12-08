@@ -403,38 +403,30 @@ function RoleSlider({
     setSelectedIndex(index);
     navigateToRole(navLinks[index].to);
   };
-  return <div className="flex flex-col items-center gap-3">
-      {/* Buttons row */}
-      <div className="border-t border-primary/30 pt-3 pb-2 flex justify-center" style={{
-      width: '35%'
-    }}>
-        <div className="flex gap-3">
-          <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-4 h-8 transition-all duration-300" hoverEffect>
-            {t("landing.represent_me", "Represent Me")}
-          </Button>
-          <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider text-sm px-4 h-8" hoverEffect>
-            {t("landing.declare_interest", "Declare Interest In Star")}
-          </Button>
+  return <div className="flex flex-col items-center" style={{ paddingTop: '35px' }}>
+      {/* Unified Slider Container - all elements in one parent */}
+      <div style={{ width: '85%', paddingLeft: '100px', paddingRight: '100px' }}>
+        
+        {/* Buttons row */}
+        <div className="border-t border-primary/30 pt-3 pb-2 flex justify-center" style={{ width: '35%', margin: '0 auto' }}>
+          <div className="flex gap-3">
+            <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-4 h-8 transition-all duration-300" hoverEffect>
+              {t("landing.represent_me", "Represent Me")}
+            </Button>
+            <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider text-sm px-4 h-8" hoverEffect>
+              {t("landing.declare_interest", "Declare Interest In Star")}
+            </Button>
+          </div>
         </div>
-      </div>
-      
-      {/* Slider Container - using absolute positioning for precise placement */}
-      <div style={{
-        maxWidth: '85%',
-        position: 'absolute',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        top: '625px',
-        width: '85%'
-      }} className="mx-0 px-[100px]">
-        {/* Role Labels - clickable to navigate */}
-        <div className="flex justify-between" style={{ marginBottom: '10px' }}>
+        
+        {/* Role Labels - with padding to push down */}
+        <div className="flex justify-between" style={{ paddingTop: '25px', marginBottom: '8px' }}>
           {navLinks.map((link, index) => <button key={link.to} onClick={() => handleRoleClick(index)} className={`text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 hover:text-primary ${selectedIndex === index ? 'text-primary' : 'text-white/40'}`}>
               {t(link.labelKey, link.fallback)}
             </button>)}
         </div>
         
-        {/* Separator line at y:643 */}
+        {/* Separator line */}
         <div className="w-full h-[1px] bg-primary/30" style={{ marginBottom: '8px' }} />
 
         {/* Minimal Slider Track */}
