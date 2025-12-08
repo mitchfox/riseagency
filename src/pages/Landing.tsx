@@ -192,9 +192,9 @@ function LandingContent() {
       </div>
       
       
-      {/* Language Selector - centered on page, moved down 190px */}
+      {/* Language Selector - centered on page, moved down 170px */}
       <div className="absolute z-[50] pointer-events-auto" style={{
-      top: 'calc(50% + 190px)',
+      top: 'calc(50% + 170px)',
       left: '50%',
       transform: 'translate(-50%, -50%) scale(1.5)'
     }}>
@@ -377,8 +377,8 @@ function RoleSlider({
     const percentage = Math.max(0, Math.min(1, x / rect.width));
     const exactIndex = percentage * (navLinks.length - 1);
     const roundedIndex = Math.round(exactIndex);
-    // Consider "snapped" if within 0.3 of a stop point
-    const isSnapped = Math.abs(exactIndex - roundedIndex) < 0.3;
+    // Consider "snapped" if within 0.45 of a stop point (easier snapping)
+    const isSnapped = Math.abs(exactIndex - roundedIndex) < 0.45;
     return { index: roundedIndex, isSnapped };
   };
   
