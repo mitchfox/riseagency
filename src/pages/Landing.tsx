@@ -472,31 +472,33 @@ function RoleSlider({
       paddingRight: '100px'
     }}>
         
-        {/* Buttons - positioned relative to container edges */}
+        {/* Buttons - positioned along cone edges using viewport units */}
+        {/* Cone apex at 49.3vw, 65vh. Right edge goes to 99.3vw at 100vh. At ~82vh, X = 49.3 + 50 * (82-65)/(100-65) = 73.6vw */}
         <Button 
           onClick={() => setShowRepresentation(true)} 
           variant="outline" 
           size="sm" 
-          className="absolute font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-6 h-7 transition-all duration-300" 
+          className="fixed font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-6 h-7 transition-all duration-300 z-10" 
           style={{ 
             borderRadius: '20px',
-            transform: 'rotate(26deg)',
-            right: '-40px',
-            top: '40px'
+            transform: 'translateX(-50%) rotate(26deg)',
+            left: 'calc(49.3vw + (99.3vw - 49.3vw) * (82 - 65) / 35)',
+            top: '82vh'
           }}
           hoverEffect
         >
           {t("landing.represent_me", "Represent Me")}
         </Button>
+        {/* Left edge goes from apex to -0.7vw at 100vh. At ~82vh, X = 49.3 - 50 * (82-65)/(100-65) = 25vw */}
         <Button 
           onClick={() => setShowDeclareInterest(true)} 
           size="sm" 
-          className="absolute btn-shine font-bebas uppercase tracking-wider text-sm px-6 h-7" 
+          className="fixed btn-shine font-bebas uppercase tracking-wider text-sm px-6 h-7 z-10" 
           style={{ 
             borderRadius: '20px',
-            transform: 'rotate(-26deg)',
-            left: '-40px',
-            top: '40px'
+            transform: 'translateX(-50%) rotate(-26deg)',
+            left: 'calc(49.3vw - (49.3vw - (-0.7vw)) * (82 - 65) / 35)',
+            top: '82vh'
           }}
           hoverEffect
         >
