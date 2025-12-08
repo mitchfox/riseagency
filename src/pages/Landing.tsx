@@ -487,14 +487,31 @@ function RoleSlider({
           </div>
         </div>
         
-        {/* Role Labels - minimal gap from buttons */}
+        {/* Role Labels - angled V-shape: ends raised, center stays */}
         <div className="flex justify-between" style={{
         paddingTop: '8px',
         marginBottom: '8px'
       }}>
-          {navLinks.map((link, index) => <button key={link.to} onClick={() => handleRoleClick(index)} className={`text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 hover:text-primary ${selectedIndex === index ? 'text-primary' : 'text-white/40'}`}>
-              {t(link.labelKey, link.fallback)}
-            </button>)}
+          {navLinks.map((link, index) => {
+            // Calculate V-shape offset: ends at top, center at bottom
+            // Center index is 3 (Agents) for 7 items (0-6)
+            const centerIndex = (navLinks.length - 1) / 2; // 3
+            const distanceFromCenter = Math.abs(index - centerIndex);
+            const maxDistance = centerIndex; // 3
+            // Offset in px: 0 at center, increases toward ends
+            const yOffset = -(distanceFromCenter / maxDistance) * 28; // negative moves up
+            
+            return (
+              <button 
+                key={link.to} 
+                onClick={() => handleRoleClick(index)} 
+                className={`text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 hover:text-primary ${selectedIndex === index ? 'text-primary' : 'text-white/40'}`}
+                style={{ transform: `translateY(${yOffset}px)` }}
+              >
+                {t(link.labelKey, link.fallback)}
+              </button>
+            );
+          })}
         </div>
         
         {/* Separator line */}
