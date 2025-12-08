@@ -170,28 +170,17 @@ function LandingContent() {
       <LightConeBackground />
       
       {/* Top Center Logo - disappears on xray or when hovering REALISE POTENTIAL area */}
-      <div 
-        className={`absolute top-4 md:top-6 z-[55] transition-opacity duration-500 ${
-          xrayState.isActive || topLogoHovered ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}
-        style={{ left: 'calc(50% - 3px)', transform: 'translateX(-50%)' }}
-      >
-        <img 
-          src={riseLogoWhite} 
-          alt="RISE Football Agency" 
-          className="h-[42px] md:h-[55px] w-auto" 
-          loading="eager" 
-          fetchPriority="high" 
-        />
+      <div className={`absolute top-4 md:top-6 z-[55] transition-opacity duration-500 ${xrayState.isActive || topLogoHovered ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
+      left: 'calc(50% - 3px)',
+      transform: 'translateX(-50%)'
+    }}>
+        <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[42px] md:h-[55px] w-auto" loading="eager" fetchPriority="high" />
       </div>
       
       {/* Hidden text revealed by X-ray - REALISE POTENTIAL - hidden until hover */}
-      <div 
-        className="absolute left-1/2 transform -translate-x-1/2 z-[60] opacity-0 hover:opacity-100 transition-opacity duration-500" 
-        style={{ top: 'calc(4rem - 50px)' }}
-        onMouseEnter={() => setTopLogoHovered(true)}
-        onMouseLeave={() => setTopLogoHovered(false)}
-      >
+      <div className="absolute left-1/2 transform -translate-x-1/2 z-[60] opacity-0 hover:opacity-100 transition-opacity duration-500" style={{
+      top: 'calc(4rem - 50px)'
+    }} onMouseEnter={() => setTopLogoHovered(true)} onMouseLeave={() => setTopLogoHovered(false)}>
         <span className="font-bebas text-4xl md:text-6xl lg:text-7xl tracking-[0.3em] text-white/90 uppercase whitespace-nowrap">
           <HoverText text="REALISE POTENTIAL" className="hover-text-slow" />
         </span>
@@ -229,19 +218,15 @@ function LandingContent() {
           <div className="relative z-10 px-4 md:px-8 pt-20 md:pt-16 pb-1 md:py-3">
             {/* Desktop Layout - Horizontal Slider */}
             <div className="hidden lg:block">
-              <RoleSlider 
-                navLinks={desktopNavLinks} 
-                navigateToRole={navigateToRole} 
-                t={t}
-                setShowRepresentation={setShowRepresentation}
-                setShowDeclareInterest={setShowDeclareInterest}
-              />
+              <RoleSlider navLinks={desktopNavLinks} navigateToRole={navigateToRole} t={t} setShowRepresentation={setShowRepresentation} setShowDeclareInterest={setShowDeclareInterest} />
             </div>
 
             {/* Tablet Layout - Same as mobile but hidden on lg+ */}
             <div className="hidden md:flex lg:hidden flex-col items-center gap-0 mt-4">
               {/* Buttons row - with divider line */}
-              <div className="border-t border-primary/40 pt-2 pb-2 flex justify-center" style={{ width: '50%' }}>
+              <div className="border-t border-primary/40 pt-2 pb-2 flex justify-center" style={{
+              width: '50%'
+            }}>
                 <div className="flex gap-2">
                   <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-xs px-3 h-7" hoverEffect>
                     {t("landing.represent_me", "Represent Me")}
@@ -253,30 +238,30 @@ function LandingContent() {
               </div>
               
               {/* Top row: Players, Coaches, Clubs */}
-              <div className="border-t border-primary/40 pt-1 pb-1" style={{ width: '70%' }}>
+              <div className="border-t border-primary/40 pt-1 pb-1" style={{
+              width: '70%'
+            }}>
                 <nav className="flex items-center justify-center gap-2">
-                  {desktopNavLinks.slice(0, 3).map((link, index) => (
-                    <div key={link.to} className="flex items-center">
+                  {desktopNavLinks.slice(0, 3).map((link, index) => <div key={link.to} className="flex items-center">
                       <button onClick={() => navigateToRole(link.to)} className="px-2 py-1 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap">
                         <HoverText text={t(link.labelKey, link.fallback)} />
                       </button>
                       {index < 2 && <div className="w-px h-3 bg-primary/40" />}
-                    </div>
-                  ))}
+                    </div>)}
                 </nav>
               </div>
               
               {/* Bottom row: Agents, Scouts, Business, Media */}
-              <div className="border-t border-primary/40 pt-1" style={{ width: '90%' }}>
+              <div className="border-t border-primary/40 pt-1" style={{
+              width: '90%'
+            }}>
                 <nav className="flex items-center justify-center gap-1">
-                  {desktopNavLinks.slice(3).map((link, index) => (
-                    <div key={link.to} className="flex items-center">
+                  {desktopNavLinks.slice(3).map((link, index) => <div key={link.to} className="flex items-center">
                       <button onClick={() => navigateToRole(link.to)} className="px-2 py-1 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap">
                         <HoverText text={t(link.labelKey, link.fallback)} />
                       </button>
                       {index < 3 && <div className="w-px h-3 bg-primary/40" />}
-                    </div>
-                  ))}
+                    </div>)}
                 </nav>
               </div>
               
@@ -289,7 +274,9 @@ function LandingContent() {
             </div>
 
             {/* Mobile Layout - pushed down with proper divider lines */}
-            <div className="md:hidden flex flex-col items-center gap-0 mt-4" style={{ transform: 'translateY(5px)' }}>
+            <div className="md:hidden flex flex-col items-center gap-0 mt-4" style={{
+            transform: 'translateY(5px)'
+          }}>
               
               {/* Buttons row - with divider line */}
               <div className="border-t border-primary/40 pt-1 pb-1 flex justify-center" style={{
@@ -350,14 +337,18 @@ function LandingContent() {
     </div>;
 }
 // Role Slider Component for Desktop - Elegant minimal slider
-function RoleSlider({ 
-  navLinks, 
-  navigateToRole, 
+function RoleSlider({
+  navLinks,
+  navigateToRole,
   t,
   setShowRepresentation,
   setShowDeclareInterest
-}: { 
-  navLinks: { to: string; labelKey: string; fallback: string }[];
+}: {
+  navLinks: {
+    to: string;
+    labelKey: string;
+    fallback: string;
+  }[];
   navigateToRole: (path: string) => void;
   t: (key: string, fallback: string) => string;
   setShowRepresentation: (open: boolean) => void;
@@ -366,11 +357,9 @@ function RoleSlider({
   const [selectedIndex, setSelectedIndex] = useState(3);
   const [isDragging, setIsDragging] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
-
   const getPositionFromIndex = (index: number) => {
-    return (index / (navLinks.length - 1)) * 100;
+    return index / (navLinks.length - 1) * 100;
   };
-
   const getIndexFromPosition = (clientX: number) => {
     if (!sliderRef.current) return selectedIndex;
     const rect = sliderRef.current.getBoundingClientRect();
@@ -378,19 +367,16 @@ function RoleSlider({
     const percentage = Math.max(0, Math.min(1, x / rect.width));
     return Math.round(percentage * (navLinks.length - 1));
   };
-
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     const newIndex = getIndexFromPosition(e.clientX);
     setSelectedIndex(newIndex);
   };
-
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     const newIndex = getIndexFromPosition(e.clientX);
     setSelectedIndex(newIndex);
   }, [isDragging, navLinks.length]);
-
   const handleMouseUp = useCallback(() => {
     if (isDragging) {
       setIsDragging(false);
@@ -398,7 +384,6 @@ function RoleSlider({
       navigateToRole(navLinks[selectedIndex].to);
     }
   }, [isDragging, selectedIndex, navLinks, navigateToRole]);
-
   useEffect(() => {
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
@@ -409,16 +394,15 @@ function RoleSlider({
       };
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
-
   const handleRoleClick = (index: number) => {
     setSelectedIndex(index);
     navigateToRole(navLinks[index].to);
   };
-
-  return (
-    <div className="flex flex-col items-center gap-3">
+  return <div className="flex flex-col items-center gap-3">
       {/* Buttons row */}
-      <div className="border-t border-primary/30 pt-3 pb-2 flex justify-center" style={{ width: '35%' }}>
+      <div className="border-t border-primary/30 pt-3 pb-2 flex justify-center" style={{
+      width: '35%'
+    }}>
         <div className="flex gap-3">
           <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-4 h-8 transition-all duration-300" hoverEffect>
             {t("landing.represent_me", "Represent Me")}
@@ -430,62 +414,35 @@ function RoleSlider({
       </div>
       
       {/* Slider Container */}
-      <div className="border-t border-primary/30 pt-5 w-full" style={{ maxWidth: '85%' }}>
+      <div style={{
+      maxWidth: '85%'
+    }} className="border-t border-primary/30 pt-5 w-full py-0 mx-0 px-[100px] pb-0 my-0 mb-0">
         {/* Role Labels - clickable to navigate */}
         <div className="flex justify-between mb-3">
-          {navLinks.map((link, index) => (
-            <button
-              key={link.to}
-              onClick={() => handleRoleClick(index)}
-              className={`text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 hover:text-primary ${
-                selectedIndex === index 
-                  ? 'text-primary' 
-                  : 'text-white/40'
-              }`}
-            >
+          {navLinks.map((link, index) => <button key={link.to} onClick={() => handleRoleClick(index)} className={`text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 hover:text-primary ${selectedIndex === index ? 'text-primary' : 'text-white/40'}`}>
               {t(link.labelKey, link.fallback)}
-            </button>
-          ))}
+            </button>)}
         </div>
 
         {/* Minimal Slider Track */}
-        <div 
-          ref={sliderRef}
-          className="relative h-[1px] bg-white/20 cursor-pointer"
-          onMouseDown={handleMouseDown}
-        >
+        <div ref={sliderRef} className="relative h-[1px] bg-white/20 cursor-pointer" onMouseDown={handleMouseDown}>
           {/* Filled line */}
-          <div 
-            className="absolute h-full bg-primary/60 transition-all duration-100"
-            style={{ width: `${getPositionFromIndex(selectedIndex)}%` }}
-          />
+          <div className="absolute h-full bg-primary/60 transition-all duration-100" style={{
+          width: `${getPositionFromIndex(selectedIndex)}%`
+        }} />
           
           {/* Stop markers - subtle dots */}
-          {navLinks.map((_, index) => (
-            <div
-              key={index}
-              className={`absolute top-1/2 w-1.5 h-1.5 rounded-full transition-all duration-200 ${
-                index === selectedIndex 
-                  ? 'bg-primary scale-150' 
-                  : index < selectedIndex 
-                    ? 'bg-primary/60' 
-                    : 'bg-white/30'
-              }`}
-              style={{ left: `${getPositionFromIndex(index)}%`, transform: 'translate(-50%, -50%)' }}
-            />
-          ))}
+          {navLinks.map((_, index) => <div key={index} className={`absolute top-1/2 w-1.5 h-1.5 rounded-full transition-all duration-200 ${index === selectedIndex ? 'bg-primary scale-150' : index < selectedIndex ? 'bg-primary/60' : 'bg-white/30'}`} style={{
+          left: `${getPositionFromIndex(index)}%`,
+          transform: 'translate(-50%, -50%)'
+        }} />)}
           
           {/* Elegant Thumb */}
-          <div
-            className={`absolute top-1/2 w-3 h-3 bg-primary rounded-full transition-all duration-150 ${
-              isDragging ? 'scale-150' : 'hover:scale-125'
-            }`}
-            style={{ 
-              left: `${getPositionFromIndex(selectedIndex)}%`, 
-              transform: 'translate(-50%, -50%)',
-              boxShadow: '0 0 12px hsl(var(--primary) / 0.5)'
-            }}
-          />
+          <div className={`absolute top-1/2 w-3 h-3 bg-primary rounded-full transition-all duration-150 ${isDragging ? 'scale-150' : 'hover:scale-125'}`} style={{
+          left: `${getPositionFromIndex(selectedIndex)}%`,
+          transform: 'translate(-50%, -50%)',
+          boxShadow: '0 0 12px hsl(var(--primary) / 0.5)'
+        }} />
         </div>
 
         {/* Instruction text */}
@@ -495,10 +452,8 @@ function RoleSlider({
           </span>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }
-
 export default function Landing() {
   return <XRayProvider>
       <LandingContent />
