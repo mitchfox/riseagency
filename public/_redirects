@@ -1,5 +1,12 @@
 # Sitemap redirect to edge function
 /sitemap.xml https://qwethimbtaamlhbajmal.supabase.co/functions/v1/sitemap 200
 
+# Static OG pages for social media crawlers
+# These serve HTML with proper meta tags, then redirect real users via JS
+/stars/tyrese-omotoye /og-pages/tyrese-omotoye.html 200
+/stars/michael-vit-mulligan /og-pages/michael-vit-mulligan.html 200
+/stars/jaroslav-svoboda /og-pages/jaroslav-svoboda.html 200
+/stars/sandra-soares-martins /og-pages/sandra-soares-martins.html 200
+
 # SPA fallback
 /*    /index.html   200
