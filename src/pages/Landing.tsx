@@ -418,17 +418,24 @@ function RoleSlider({
         </div>
       </div>
       
-      {/* Slider Container */}
+      {/* Slider Container - using absolute positioning for precise placement */}
       <div style={{
-      maxWidth: '85%',
-      marginTop: '20px'
-    }} className="border-t border-primary/30 w-full mx-0 px-[100px]">
+        maxWidth: '85%',
+        position: 'absolute',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        top: '625px',
+        width: '85%'
+      }} className="mx-0 px-[100px]">
         {/* Role Labels - clickable to navigate */}
-        <div className="flex justify-between" style={{ marginTop: '15px', marginBottom: '8px' }}>
+        <div className="flex justify-between" style={{ marginBottom: '10px' }}>
           {navLinks.map((link, index) => <button key={link.to} onClick={() => handleRoleClick(index)} className={`text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 hover:text-primary ${selectedIndex === index ? 'text-primary' : 'text-white/40'}`}>
               {t(link.labelKey, link.fallback)}
             </button>)}
         </div>
+        
+        {/* Separator line at y:643 */}
+        <div className="w-full h-[1px] bg-primary/30" style={{ marginBottom: '8px' }} />
 
         {/* Minimal Slider Track */}
         <div ref={sliderRef} className="relative h-[1px] bg-white/20 cursor-pointer" onMouseDown={handleMouseDown}>
