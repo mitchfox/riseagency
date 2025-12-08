@@ -289,7 +289,7 @@ function LandingContent() {
             </div>
 
             {/* Mobile Layout - pushed down with proper divider lines */}
-            <div className="md:hidden flex flex-col items-center gap-0 mt-4">
+            <div className="md:hidden flex flex-col items-center gap-0 mt-[21px]">
               
               {/* Buttons row - with divider line */}
               <div className="border-t border-primary/40 pt-2 pb-2 flex justify-center" style={{
