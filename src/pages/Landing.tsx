@@ -487,18 +487,15 @@ function RoleSlider({
           </div>
         </div>
         
-        {/* Role Labels - angled: ends drop down, center stays */}
-        <div className="flex justify-between" style={{
-        paddingTop: '8px',
-        marginBottom: '8px'
-      }}>
+        {/* Role Labels - tight to curve, no spacing */}
+        <div className="flex justify-between" style={{ marginBottom: '0px' }}>
           {navLinks.map((link, index) => {
             // Calculate angle offset: ends drop down to align with instruction text
             const centerIndex = (navLinks.length - 1) / 2; // 3
             const distanceFromCenter = Math.abs(index - centerIndex);
             const maxDistance = centerIndex; // 3
-            // Offset in px: 0 at center, positive (down) toward ends
-            const yOffset = (distanceFromCenter / maxDistance) * 24;
+            // Offset in px: 0 at center, positive (down) toward ends - extended to 36px
+            const yOffset = (distanceFromCenter / maxDistance) * 36;
             
             return (
               <button 
@@ -513,16 +510,16 @@ function RoleSlider({
           })}
         </div>
         
-        {/* Separator line - now an SVG curve */}
+        {/* Separator line - curved SVG, tight to labels */}
         <svg 
           className="w-full" 
-          height="32" 
-          viewBox="0 0 100 32" 
+          height="40" 
+          viewBox="0 0 100 40" 
           preserveAspectRatio="none"
-          style={{ marginBottom: '8px' }}
+          style={{ marginTop: '-2px', marginBottom: '0px' }}
         >
           <path 
-            d="M0,24 Q50,0 100,24" 
+            d="M0,32 Q50,0 100,32" 
             fill="none" 
             stroke="hsl(var(--primary) / 0.3)" 
             strokeWidth="0.5"
@@ -530,17 +527,17 @@ function RoleSlider({
           />
         </svg>
 
-        {/* Slider Track - angled with SVG */}
-        <div ref={sliderRef} className="relative cursor-pointer" style={{ height: '48px' }} onClick={handleTrackClick}>
+        {/* Slider Track - deeper curve to reach instruction text */}
+        <div ref={sliderRef} className="relative cursor-pointer" style={{ height: '56px', marginTop: '-4px' }} onClick={handleTrackClick}>
           {/* SVG curved track */}
           <svg 
             className="absolute w-full h-full" 
-            viewBox="0 0 100 48" 
+            viewBox="0 0 100 56" 
             preserveAspectRatio="none"
           >
             {/* Background track line */}
             <path 
-              d="M0,40 Q50,8 100,40" 
+              d="M0,48 Q50,4 100,48" 
               fill="none" 
               stroke="rgba(255,255,255,0.2)" 
               strokeWidth="1"
@@ -553,7 +550,7 @@ function RoleSlider({
               </clipPath>
             </defs>
             <path 
-              d="M0,40 Q50,8 100,40" 
+              d="M0,48 Q50,4 100,48" 
               fill="none" 
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="1"
@@ -566,11 +563,11 @@ function RoleSlider({
           {/* Stop markers - positioned along curve */}
           {navLinks.map((_, index) => {
             const xPercent = getPositionFromIndex(index);
-            // Calculate Y position on the curve: y = 40 - 32 * (1 - ((x-50)/50)^2) simplified
-            // At x=0: y=40, at x=50: y=8, at x=100: y=40
+            // Calculate Y position on the curve: parabola matching SVG path
+            // At x=0: y=48, at x=50: y=4, at x=100: y=48
             const normalizedX = (xPercent - 50) / 50; // -1 to 1
-            const yPos = 40 - 32 * (1 - normalizedX * normalizedX); // parabola
-            const yPercent = (yPos / 48) * 100;
+            const yPos = 48 - 44 * (1 - normalizedX * normalizedX); // deeper parabola
+            const yPercent = (yPos / 56) * 100;
             
             return (
               <div 
@@ -588,8 +585,8 @@ function RoleSlider({
           {/* Draggable Thumb Handle - positioned along curve */}
           {(() => {
             const normalizedX = (thumbPosition - 50) / 50;
-            const yPos = 40 - 32 * (1 - normalizedX * normalizedX);
-            const yPercent = (yPos / 48) * 100;
+            const yPos = 48 - 44 * (1 - normalizedX * normalizedX);
+            const yPercent = (yPos / 56) * 100;
             
             return (
               <div 
@@ -624,7 +621,7 @@ function RoleSlider({
         </div>
 
         {/* Instruction text */}
-        <div className="text-center" style={{ marginTop: '-4px' }}>
+        <div className="text-center" style={{ marginTop: '-8px' }}>
           <span className="text-[10px] font-bebas uppercase tracking-[0.25em] text-white/30">
             {isDragging ? 'Release to enter' : 'Drag slider to select role'}
           </span>
