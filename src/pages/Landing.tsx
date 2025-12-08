@@ -220,7 +220,9 @@ function LandingContent() {
       }}>
           
           {/* Content container - pushed down to align with triangle body */}
-          <div className="relative z-10 px-4 md:px-8 pt-20 md:pt-24 pb-1 md:py-3" style={{ transform: 'translateY(32px)' }}>
+          <div className="relative z-10 px-4 md:px-8 pt-20 md:pt-24 pb-1 md:py-3" style={{
+          transform: 'translateY(32px)'
+        }}>
             {/* Desktop Layout - Horizontal Slider */}
             <div className="hidden lg:block">
               <RoleSlider navLinks={desktopNavLinks} navigateToRole={navigateToRole} t={t} setShowRepresentation={setShowRepresentation} setShowDeclareInterest={setShowDeclareInterest} />
@@ -365,13 +367,18 @@ function RoleSlider({
   const [isAnimatingBack, setIsAnimatingBack] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
   const startIndexRef = useRef(3); // Track starting position for snap-back
-  
+
   const getPositionFromIndex = (index: number) => {
     return index / (navLinks.length - 1) * 100;
   };
-  
-  const getIndexFromPosition = (clientX: number): { index: number; isSnapped: boolean } => {
-    if (!sliderRef.current) return { index: selectedIndex, isSnapped: false };
+  const getIndexFromPosition = (clientX: number): {
+    index: number;
+    isSnapped: boolean;
+  } => {
+    if (!sliderRef.current) return {
+      index: selectedIndex,
+      isSnapped: false
+    };
     const rect = sliderRef.current.getBoundingClientRect();
     const x = clientX - rect.left;
     const percentage = Math.max(0, Math.min(1, x / rect.width));
@@ -379,16 +386,17 @@ function RoleSlider({
     const roundedIndex = Math.round(exactIndex);
     // Consider "snapped" if within 0.45 of a stop point (easier snapping)
     const isSnapped = Math.abs(exactIndex - roundedIndex) < 0.45;
-    return { index: roundedIndex, isSnapped };
+    return {
+      index: roundedIndex,
+      isSnapped
+    };
   };
-  
   const getPercentageFromClientX = (clientX: number): number => {
     if (!sliderRef.current) return 0;
     const rect = sliderRef.current.getBoundingClientRect();
     const x = clientX - rect.left;
-    return Math.max(0, Math.min(100, (x / rect.width) * 100));
+    return Math.max(0, Math.min(100, x / rect.width * 100));
   };
-  
   const handleThumbMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -396,28 +404,29 @@ function RoleSlider({
     startIndexRef.current = selectedIndex;
     setDragPosition(getPositionFromIndex(selectedIndex));
   };
-  
   const handleTrackClick = (e: React.MouseEvent) => {
     if (isDragging) return;
-    const { index, isSnapped } = getIndexFromPosition(e.clientX);
+    const {
+      index,
+      isSnapped
+    } = getIndexFromPosition(e.clientX);
     if (isSnapped) {
       setSelectedIndex(index);
       navigateToRole(navLinks[index].to);
     }
   };
-  
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     const percentage = getPercentageFromClientX(e.clientX);
     setDragPosition(percentage);
   }, [isDragging]);
-  
   const handleMouseUp = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     setIsDragging(false);
-    
-    const { index, isSnapped } = getIndexFromPosition(e.clientX);
-    
+    const {
+      index,
+      isSnapped
+    } = getIndexFromPosition(e.clientX);
     if (isSnapped) {
       // Snapped to a valid stop - navigate
       setDragPosition(null);
@@ -428,7 +437,7 @@ function RoleSlider({
       setIsAnimatingBack(true);
       const startPosition = getPositionFromIndex(startIndexRef.current);
       setDragPosition(startPosition);
-      
+
       // Reset after animation
       setTimeout(() => {
         setDragPosition(null);
@@ -436,7 +445,6 @@ function RoleSlider({
       }, 300);
     }
   }, [isDragging, navLinks, navigateToRole]);
-  
   useEffect(() => {
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
@@ -447,21 +455,28 @@ function RoleSlider({
       };
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
-  
   const handleRoleClick = (index: number) => {
     setSelectedIndex(index);
     navigateToRole(navLinks[index].to);
   };
-  
+
   // Calculate current thumb position
   const thumbPosition = dragPosition !== null ? dragPosition : getPositionFromIndex(selectedIndex);
-  
-  return <div className="flex flex-col items-center" style={{ paddingTop: '35px' }}>
+  return <div className="flex flex-col items-center" style={{
+    paddingTop: '35px'
+  }}>
       {/* Unified Slider Container - all elements in one parent */}
-      <div style={{ width: '85%', paddingLeft: '100px', paddingRight: '100px' }}>
+      <div style={{
+      width: '85%',
+      paddingLeft: '100px',
+      paddingRight: '100px'
+    }}>
         
         {/* Buttons row */}
-        <div className="border-t border-primary/30 pt-3 flex justify-center" style={{ width: '35%', margin: '0 auto' }}>
+        <div style={{
+        width: '35%',
+        margin: '0 auto'
+      }} className="border-t border-primary/30 pt-3 flex justify-center py-[4px]">
           <div className="flex gap-3">
             <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-4 h-8 transition-all duration-300" hoverEffect>
               {t("landing.represent_me", "Represent Me")}
@@ -473,66 +488,52 @@ function RoleSlider({
         </div>
         
         {/* Role Labels - minimal gap from buttons */}
-        <div className="flex justify-between" style={{ paddingTop: '8px', marginBottom: '8px' }}>
+        <div className="flex justify-between" style={{
+        paddingTop: '8px',
+        marginBottom: '8px'
+      }}>
           {navLinks.map((link, index) => <button key={link.to} onClick={() => handleRoleClick(index)} className={`text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 hover:text-primary ${selectedIndex === index ? 'text-primary' : 'text-white/40'}`}>
               {t(link.labelKey, link.fallback)}
             </button>)}
         </div>
         
         {/* Separator line */}
-        <div className="w-full h-[1px] bg-primary/30" style={{ marginBottom: '8px' }} />
+        <div className="w-full h-[1px] bg-primary/30" style={{
+        marginBottom: '8px'
+      }} />
 
         {/* Slider Track */}
-        <div 
-          ref={sliderRef} 
-          className="relative h-[12px] cursor-pointer flex items-center" 
-          onClick={handleTrackClick}
-        >
+        <div ref={sliderRef} className="relative h-[12px] cursor-pointer flex items-center" onClick={handleTrackClick}>
           {/* Track line */}
           <div className="absolute w-full h-[2px] bg-white/20 top-1/2 -translate-y-1/2" />
           
           {/* Filled line */}
-          <div 
-            className={`absolute h-[2px] bg-primary/60 top-1/2 -translate-y-1/2 ${isAnimatingBack ? 'transition-all duration-300 ease-out' : isDragging ? '' : 'transition-all duration-150'}`}
-            style={{ width: `${thumbPosition}%` }} 
-          />
+          <div className={`absolute h-[2px] bg-primary/60 top-1/2 -translate-y-1/2 ${isAnimatingBack ? 'transition-all duration-300 ease-out' : isDragging ? '' : 'transition-all duration-150'}`} style={{
+          width: `${thumbPosition}%`
+        }} />
           
           {/* Stop markers - subtle dots */}
-          {navLinks.map((_, index) => (
-            <div 
-              key={index} 
-              className={`absolute top-1/2 w-2 h-2 rounded-full transition-all duration-200 ${
-                index === selectedIndex 
-                  ? 'bg-primary scale-125' 
-                  : index < selectedIndex 
-                    ? 'bg-primary/60' 
-                    : 'bg-white/30'
-              }`} 
-              style={{
-                left: `${getPositionFromIndex(index)}%`,
-                transform: 'translate(-50%, -50%)'
-              }} 
-            />
-          ))}
+          {navLinks.map((_, index) => <div key={index} className={`absolute top-1/2 w-2 h-2 rounded-full transition-all duration-200 ${index === selectedIndex ? 'bg-primary scale-125' : index < selectedIndex ? 'bg-primary/60' : 'bg-white/30'}`} style={{
+          left: `${getPositionFromIndex(index)}%`,
+          transform: 'translate(-50%, -50%)'
+        }} />)}
           
           {/* Draggable Thumb Handle */}
-          <div 
-            className={`absolute top-1/2 cursor-grab active:cursor-grabbing ${isAnimatingBack ? 'transition-all duration-300 ease-out' : isDragging ? '' : 'transition-all duration-150'}`}
-            style={{
-              left: `${thumbPosition}%`,
-              transform: 'translate(-50%, -50%)',
-            }}
-            onMouseDown={handleThumbMouseDown}
-          >
+          <div className={`absolute top-1/2 cursor-grab active:cursor-grabbing ${isAnimatingBack ? 'transition-all duration-300 ease-out' : isDragging ? '' : 'transition-all duration-150'}`} style={{
+          left: `${thumbPosition}%`,
+          transform: 'translate(-50%, -50%)'
+        }} onMouseDown={handleThumbMouseDown}>
             {/* Outer glow */}
-            <div className={`absolute inset-0 rounded-full bg-primary/30 blur-md ${isDragging ? 'scale-150' : 'scale-100'} transition-transform duration-150`} 
-              style={{ width: '24px', height: '24px', marginLeft: '-4px', marginTop: '-4px' }} 
-            />
+            <div className={`absolute inset-0 rounded-full bg-primary/30 blur-md ${isDragging ? 'scale-150' : 'scale-100'} transition-transform duration-150`} style={{
+            width: '24px',
+            height: '24px',
+            marginLeft: '-4px',
+            marginTop: '-4px'
+          }} />
             {/* Main thumb */}
-            <div 
-              className={`relative w-4 h-4 rounded-full bg-primary shadow-lg flex items-center justify-center ${isDragging ? 'scale-125' : 'hover:scale-110'} transition-transform duration-150`}
-              style={{ boxShadow: '0 0 16px hsl(var(--primary) / 0.6)' }}
-            >
+            <div className={`relative w-4 h-4 rounded-full bg-primary shadow-lg flex items-center justify-center ${isDragging ? 'scale-125' : 'hover:scale-110'} transition-transform duration-150`} style={{
+            boxShadow: '0 0 16px hsl(var(--primary) / 0.6)'
+          }}>
               {/* Grip lines */}
               <div className="flex gap-[2px]">
                 <div className="w-[1px] h-2 bg-black/40 rounded-full" />
