@@ -349,7 +349,7 @@ function LandingContent() {
       <DeclareInterestPlayerDialog open={showDeclareInterest} onOpenChange={setShowDeclareInterest} starsOnly />
     </div>;
 }
-// Role Slider Component for Desktop - Clean horizontal layout
+// Role Slider Component for Desktop - Draggable slider with role stops
 function RoleSlider({ 
   navLinks, 
   navigateToRole, 
@@ -363,8 +363,55 @@ function RoleSlider({
   setShowRepresentation: (open: boolean) => void;
   setShowDeclareInterest: (open: boolean) => void;
 }) {
+  const [selectedIndex, setSelectedIndex] = useState(3); // Start at middle (AGENT)
+  const [isDragging, setIsDragging] = useState(false);
+  const sliderRef = useRef<HTMLDivElement>(null);
+
+  const getPositionFromIndex = (index: number) => {
+    return (index / (navLinks.length - 1)) * 100;
+  };
+
+  const getIndexFromPosition = (clientX: number) => {
+    if (!sliderRef.current) return selectedIndex;
+    const rect = sliderRef.current.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, x / rect.width));
+    return Math.round(percentage * (navLinks.length - 1));
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    const newIndex = getIndexFromPosition(e.clientX);
+    setSelectedIndex(newIndex);
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    const newIndex = getIndexFromPosition(e.clientX);
+    setSelectedIndex(newIndex);
+  }, [isDragging, navLinks.length]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  const handleEnter = () => {
+    navigateToRole(navLinks[selectedIndex].to);
+  };
+
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-4">
       {/* Buttons row */}
       <div className="border-t border-primary/40 pt-3 pb-2 flex justify-center" style={{ width: '40%' }}>
         <div className="flex gap-3">
@@ -377,27 +424,78 @@ function RoleSlider({
         </div>
       </div>
       
-      {/* All roles in one horizontal row */}
-      <div className="border-t border-primary/40 pt-3" style={{ width: '95%' }}>
-        <nav className="flex items-center justify-center gap-1">
+      {/* Slider Track with Role Labels */}
+      <div className="border-t border-primary/40 pt-6 pb-2 w-full" style={{ maxWidth: '90%' }}>
+        {/* Role Labels */}
+        <div className="flex justify-between mb-4 px-2">
           {navLinks.map((link, index) => (
-            <div key={link.to} className="flex items-center">
-              <button 
-                onClick={() => navigateToRole(link.to)} 
-                className="px-4 py-2 text-xl font-bebas uppercase tracking-[0.2em] text-white/70 hover:text-primary transition-colors duration-300 whitespace-nowrap"
-              >
-                <HoverText text={t(link.labelKey, link.fallback)} />
-              </button>
-              {index < navLinks.length - 1 && <div className="w-px h-4 bg-primary/40" />}
-            </div>
+            <button
+              key={link.to}
+              onClick={() => setSelectedIndex(index)}
+              className={`text-lg font-bebas uppercase tracking-[0.15em] transition-all duration-300 ${
+                selectedIndex === index 
+                  ? 'text-primary scale-110' 
+                  : 'text-white/50 hover:text-white/80'
+              }`}
+            >
+              {t(link.labelKey, link.fallback)}
+            </button>
           ))}
-        </nav>
+        </div>
+
+        {/* Slider Track */}
+        <div 
+          ref={sliderRef}
+          className="relative h-2 bg-white/20 rounded-full cursor-pointer mx-2"
+          onMouseDown={handleMouseDown}
+        >
+          {/* Filled portion */}
+          <div 
+            className="absolute h-full bg-gradient-to-r from-primary/60 to-primary rounded-full transition-all duration-150"
+            style={{ width: `${getPositionFromIndex(selectedIndex)}%` }}
+          />
+          
+          {/* Stop markers */}
+          {navLinks.map((_, index) => (
+            <div
+              key={index}
+              className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 transition-all duration-200 ${
+                index <= selectedIndex 
+                  ? 'bg-primary border-primary' 
+                  : 'bg-black border-white/40'
+              }`}
+              style={{ left: `${getPositionFromIndex(index)}%`, transform: 'translate(-50%, -50%)' }}
+            />
+          ))}
+          
+          {/* Draggable Thumb */}
+          <div
+            className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-primary rounded-full border-2 border-white shadow-lg shadow-primary/50 transition-all cursor-grab ${
+              isDragging ? 'scale-125 cursor-grabbing' : 'hover:scale-110'
+            }`}
+            style={{ 
+              left: `${getPositionFromIndex(selectedIndex)}%`, 
+              transform: 'translate(-50%, -50%)'
+            }}
+          />
+        </div>
+
+        {/* Enter Button */}
+        <div className="flex justify-center mt-6">
+          <Button 
+            onClick={handleEnter}
+            className="btn-shine font-bebas uppercase tracking-[0.3em] text-lg px-8 h-10"
+            hoverEffect
+          >
+            Enter as {t(navLinks[selectedIndex].labelKey, navLinks[selectedIndex].fallback)}
+          </Button>
+        </div>
       </div>
       
       {/* Select role text */}
       <div className="text-center">
         <span className="text-xs font-bebas uppercase tracking-[0.2em] text-white/40">
-          Select Your Role To Enter Site
+          Drag Slider To Select Your Role
         </span>
       </div>
     </div>
