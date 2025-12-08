@@ -451,7 +451,7 @@ function RoleSlider({
         </div>
 
         {/* Instruction text */}
-        <div className="text-center mt-4">
+        <div className="text-center mt-1">
           <span className="text-[10px] font-bebas uppercase tracking-[0.25em] text-white/30">
             Select Role To Enter
           </span>
