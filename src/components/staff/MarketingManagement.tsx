@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Calendar as CalendarIcon, Image, Upload, Trash2, Play, List, Folder, Palette } from "lucide-react";
+import { Calendar as CalendarIcon, Image, Upload, Trash2, Play, List, Folder } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { VideoPreviewCard } from "./VideoPreviewCard";
@@ -18,7 +18,6 @@ import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './marketing-calendar.css';
 import { MarketingResources } from './marketing/MarketingResources';
-import { ContentCreator } from './marketing/ContentCreator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const localizer = momentLocalizer(moment);
@@ -368,21 +367,12 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   return (
     <div className="space-y-6">
       {/* Resources Section */}
-      <section>
+      <section className="mb-6">
         <div className="flex items-center gap-2 mb-4">
           <Folder className="w-5 h-5 text-primary" />
           <h2 className="text-xl font-semibold">Resources</h2>
         </div>
         <MarketingResources />
-      </section>
-
-      {/* Content Creator Section */}
-      <section>
-        <div className="flex items-center gap-2 mb-4">
-          <Palette className="w-5 h-5 text-purple-500" />
-          <h2 className="text-xl font-semibold">Content Creator</h2>
-        </div>
-        <ContentCreator />
       </section>
 
       {/* Gallery & Planner Section - Tabbed for workflow */}
