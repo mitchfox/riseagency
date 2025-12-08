@@ -472,39 +472,36 @@ function RoleSlider({
       paddingRight: '100px'
     }}>
         
-        {/* Buttons row - oval shaped, rotated toward center */}
-        <div style={{
-        width: '35%',
-        margin: '0 auto'
-      }} className="border-t border-primary/30 pt-3 flex justify-center py-[4px]">
-          <div className="flex gap-4">
-            <Button 
-              onClick={() => setShowRepresentation(true)} 
-              variant="outline" 
-              size="sm" 
-              className="font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-6 h-7 transition-all duration-300" 
-              style={{ 
-                borderRadius: '20px',
-                transform: 'rotate(-3deg)'
-              }}
-              hoverEffect
-            >
-              {t("landing.represent_me", "Represent Me")}
-            </Button>
-            <Button 
-              onClick={() => setShowDeclareInterest(true)} 
-              size="sm" 
-              className="btn-shine font-bebas uppercase tracking-wider text-sm px-6 h-7" 
-              style={{ 
-                borderRadius: '20px',
-                transform: 'rotate(3deg)'
-              }}
-              hoverEffect
-            >
-              {t("landing.declare_interest", "Declare Interest In Star")}
-            </Button>
-          </div>
-        </div>
+        {/* Buttons - absolutely positioned */}
+        <Button 
+          onClick={() => setShowRepresentation(true)} 
+          variant="outline" 
+          size="sm" 
+          className="absolute font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-6 h-7 transition-all duration-300" 
+          style={{ 
+            borderRadius: '20px',
+            transform: 'translateX(-50%) rotate(-3deg)',
+            left: 'calc(50% + 400px)',
+            top: '255px'
+          }}
+          hoverEffect
+        >
+          {t("landing.represent_me", "Represent Me")}
+        </Button>
+        <Button 
+          onClick={() => setShowDeclareInterest(true)} 
+          size="sm" 
+          className="absolute btn-shine font-bebas uppercase tracking-wider text-sm px-6 h-7" 
+          style={{ 
+            borderRadius: '20px',
+            transform: 'translateX(-50%) rotate(3deg)',
+            left: 'calc(50% - 400px)',
+            top: '255px'
+          }}
+          hoverEffect
+        >
+          {t("landing.declare_interest", "Declare Interest In Star")}
+        </Button>
         
         {/* Role Labels - positioned directly on the curve */}
         <div className="flex justify-between relative" style={{ height: '75px' }}>
