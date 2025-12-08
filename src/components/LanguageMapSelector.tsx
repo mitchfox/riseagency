@@ -88,15 +88,14 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
 
   return (
     <>
-      {/* Trigger Button */}
+      {/* Trigger Button - Globe above flag, no text */}
       <button 
         type="button"
         onClick={() => handleOpenChange(true)}
-        className="flex items-center gap-1.5 text-xs md:text-sm font-bebas uppercase tracking-wider text-foreground hover:text-primary transition-all duration-300 focus:outline-none cursor-pointer"
+        className="flex flex-col items-center gap-1 text-xs md:text-sm font-bebas uppercase tracking-wider text-foreground hover:text-primary transition-all duration-300 focus:outline-none cursor-pointer"
       >
+        <Globe className="w-4 h-4" />
         <img src={getFlagUrl(selectedLanguage.flagCode)} alt={selectedLanguage.name} className="w-5 h-auto rounded-sm" />
-        <span>{selectedLanguage.code.toUpperCase()}</span>
-        <Globe className="w-3 h-3 ml-0.5" />
       </button>
 
       {/* Modal Overlay - rendered via portal to escape overflow:hidden */}
