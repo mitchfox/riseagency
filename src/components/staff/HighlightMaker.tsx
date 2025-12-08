@@ -200,28 +200,26 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
   const selectedPlaylist = playlists.find(p => p.id === selectedPlaylistId);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Film className="h-6 w-6" />
-            Highlight Maker
-          </h2>
-          <p className="text-muted-foreground mt-1">
-            Create highlight reels from player playlists with transitions
-          </p>
-        </div>
+    <div className="space-y-4 md:space-y-6">
+      <div>
+        <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+          <Film className="h-5 w-5 md:h-6 md:w-6" />
+          Highlight Maker
+        </h2>
+        <p className="text-sm md:text-base text-muted-foreground mt-1">
+          Create highlight reels from player playlists with transitions
+        </p>
       </div>
 
       {/* Player and Playlist Selection */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Select Source</CardTitle>
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="text-base md:text-lg">Select Source</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="p-4 md:p-6 pt-0 md:pt-0 space-y-4">
+          <div className="grid grid-cols-1 gap-3 md:gap-4">
             <div className="space-y-2">
-              <Label>Player</Label>
+              <Label className="text-sm">Player</Label>
               <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a player" />

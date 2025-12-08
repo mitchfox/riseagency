@@ -1098,12 +1098,12 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
   return (
     <div className="relative">
       {/* Preferences Button */}
-      <div className="absolute -top-12 right-0 z-10">
+      <div className="absolute -top-10 md:-top-12 right-0 z-10">
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Settings className="h-4 w-4" />
-              Preferences
+            <Button variant="outline" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3">
+              <Settings className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Preferences</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg max-h-[80vh]">
@@ -1199,17 +1199,42 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
       {/* Widget Grid */}
       <div className="w-full pt-2 space-y-2">
         {visibleWidgets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Settings className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No widgets visible</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Click "Preferences" to add widgets to your overview
+          <div className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
+            <Settings className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground mb-3 md:mb-4" />
+            <h3 className="text-base md:text-lg font-semibold mb-2">No widgets visible</h3>
+            <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">
+              Tap "Preferences" to add widgets to your overview
             </p>
-            <Button onClick={() => setSettingsOpen(true)}>
+            <Button onClick={() => setSettingsOpen(true)} size="sm">
               Open Preferences
             </Button>
           </div>
+        ) : isMobile ? (
+          /* Mobile: Stack widgets vertically */
+          <div className="space-y-3">
+            {visibleWidgets.map(widgetId => {
+              const config = WIDGET_CONFIGS.find(c => c.id === widgetId);
+              const layout = layouts.find(l => l.id === widgetId);
+              if (!config || !layout) return null;
+              return (
+                <SortableWidget
+                  key={widgetId}
+                  id={widgetId}
+                  layout={{ ...layout, widthPercent: 100 }}
+                  title={config.title}
+                  icon={config.icon}
+                  expanded={expandedWidget === widgetId}
+                  onToggleExpand={() => toggleWidget(widgetId)}
+                  onResize={handleResize}
+                  rowHeight={DEFAULT_HEIGHT_PX}
+                >
+                  {renderWidgetContent(widgetId, layout)}
+                </SortableWidget>
+              );
+            })}
+          </div>
         ) : (
+          /* Desktop: Original DnD layout */
           <DndContext
             sensors={sensors}
             collisionDetection={rectIntersection}

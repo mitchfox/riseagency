@@ -113,18 +113,18 @@ export const TaxRecordsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col gap-3 md:gap-4">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <FileSpreadsheet className="h-6 w-6" />
+          <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <FileSpreadsheet className="h-5 w-5 md:h-6 md:w-6" />
             Tax Records
           </h2>
-          <p className="text-muted-foreground mt-1">Manage tax obligations and documents</p>
+          <p className="text-sm md:text-base text-muted-foreground mt-1">Manage tax obligations and documents</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-full sm:w-[140px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -133,7 +133,7 @@ export const TaxRecordsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={() => setDialogOpen(true)}>
+          <Button onClick={() => setDialogOpen(true)} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add Record
           </Button>

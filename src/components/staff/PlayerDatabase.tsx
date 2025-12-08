@@ -182,10 +182,10 @@ export const PlayerDatabase = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 md:space-y-4">
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 items-center">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by name, club, position..."
@@ -195,40 +195,43 @@ export const PlayerDatabase = () => {
           />
         </div>
         
-        <Select value={ageFilter} onValueChange={setAgeFilter}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Age" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Ages</SelectItem>
-            <SelectItem value="u18">Under 18</SelectItem>
-            <SelectItem value="18-21">18-21</SelectItem>
-            <SelectItem value="22-25">22-25</SelectItem>
-            <SelectItem value="26-30">26-30</SelectItem>
-            <SelectItem value="30+">30+</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={ageFilter} onValueChange={setAgeFilter}>
+            <SelectTrigger className="flex-1 sm:w-[120px]">
+              <SelectValue placeholder="Age" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Ages</SelectItem>
+              <SelectItem value="u18">Under 18</SelectItem>
+              <SelectItem value="18-21">18-21</SelectItem>
+              <SelectItem value="22-25">22-25</SelectItem>
+              <SelectItem value="26-30">26-30</SelectItem>
+              <SelectItem value="30+">30+</SelectItem>
+            </SelectContent>
+          </Select>
 
-        <Select value={nationFilter} onValueChange={setNationFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Nation" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Nations</SelectItem>
-            {uniqueNations.map(nation => (
-              <SelectItem key={nation} value={nation}>{nation}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select value={nationFilter} onValueChange={setNationFilter}>
+            <SelectTrigger className="flex-1 sm:w-[140px]">
+              <SelectValue placeholder="Nation" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Nations</SelectItem>
+              {uniqueNations.map(nation => (
+                <SelectItem key={nation} value={nation}>{nation}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Results count */}
-      <div className="text-sm text-muted-foreground">
+      <div className="text-xs md:text-sm text-muted-foreground">
         Showing {visiblePlayers.length} of {filteredPlayers.length} players
       </div>
 
       {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border rounded-lg overflow-x-auto -mx-4 md:mx-0">
+        <div className="min-w-[700px] md:min-w-0">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
@@ -283,8 +286,9 @@ export const PlayerDatabase = () => {
                 </TableCell>
               </TableRow>
             ))}
-          </TableBody>
-        </Table>
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Load More */}

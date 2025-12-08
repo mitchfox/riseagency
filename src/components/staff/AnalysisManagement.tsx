@@ -946,12 +946,14 @@ Title: ${formData.scheme_title || 'Not specified'}`;
   return (
     <div className="space-y-4">
       <Tabs defaultValue="pre-match" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="pre-match">Pre-Match</TabsTrigger>
-          <TabsTrigger value="post-match">Post-Match</TabsTrigger>
-          <TabsTrigger value="concepts">Concepts</TabsTrigger>
-          <TabsTrigger value="other">Other</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-4 gap-1 h-auto p-1">
+            <TabsTrigger value="pre-match" className="text-xs md:text-sm px-3 md:px-4 py-2 whitespace-nowrap">Pre-Match</TabsTrigger>
+            <TabsTrigger value="post-match" className="text-xs md:text-sm px-3 md:px-4 py-2 whitespace-nowrap">Post-Match</TabsTrigger>
+            <TabsTrigger value="concepts" className="text-xs md:text-sm px-3 md:px-4 py-2 whitespace-nowrap">Concepts</TabsTrigger>
+            <TabsTrigger value="other" className="text-xs md:text-sm px-3 md:px-4 py-2 whitespace-nowrap">Other</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="pre-match" className="space-y-4">
           <div className="flex gap-2 flex-wrap">
