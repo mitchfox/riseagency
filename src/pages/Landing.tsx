@@ -195,7 +195,7 @@ function LandingContent() {
       {/* Language Selector - centered on page, moved down 170px */}
       <div className="absolute z-[50] pointer-events-auto" style={{
       top: 'calc(50% + 166px)',
-      left: '50%',
+      left: 'calc(50% - 3px)',
       transform: 'translate(-50%, -50%) scale(1.5)'
     }}>
         <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
@@ -208,7 +208,7 @@ function LandingContent() {
       
       {/* 3D Player Effect - Behind the bottom menu area (lower z-index so cone appears on top) */}
       {!languagePopupOpen && <div className="absolute inset-0 pointer-events-none z-[5]" style={{
-      transform: 'translateX(-11px) translateY(-28px)'
+      transform: 'translateX(-39px) translateY(-28px)'
     }}>
           <LazyPlayer3D className="pointer-events-none" />
         </div>}
@@ -481,7 +481,7 @@ function RoleSlider({
           style={{ 
             borderRadius: '20px',
             transform: 'translateX(-50%) rotate(30deg)',
-            left: 'calc(50% + 372px)',
+            left: 'calc(50% + 352px)',
             top: '180px'
           }}
           hoverEffect
@@ -495,7 +495,7 @@ function RoleSlider({
           style={{ 
             borderRadius: '20px',
             transform: 'translateX(-50%) rotate(-30deg)',
-            left: 'calc(50% - 372px)',
+            left: 'calc(50% - 352px)',
             top: '180px'
           }}
           hoverEffect
