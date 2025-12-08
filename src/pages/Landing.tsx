@@ -487,19 +487,18 @@ function RoleSlider({
           </div>
         </div>
         
-        {/* Role Labels - angled V-shape: ends raised, center stays */}
+        {/* Role Labels - angled: ends drop down, center stays */}
         <div className="flex justify-between" style={{
         paddingTop: '8px',
         marginBottom: '8px'
       }}>
           {navLinks.map((link, index) => {
-            // Calculate V-shape offset: ends at top, center at bottom
-            // Center index is 3 (Agents) for 7 items (0-6)
+            // Calculate angle offset: ends drop down to align with instruction text
             const centerIndex = (navLinks.length - 1) / 2; // 3
             const distanceFromCenter = Math.abs(index - centerIndex);
             const maxDistance = centerIndex; // 3
-            // Offset in px: 0 at center, increases toward ends
-            const yOffset = -(distanceFromCenter / maxDistance) * 28; // negative moves up
+            // Offset in px: 0 at center, positive (down) toward ends
+            const yOffset = (distanceFromCenter / maxDistance) * 24;
             
             return (
               <button 
@@ -514,54 +513,118 @@ function RoleSlider({
           })}
         </div>
         
-        {/* Separator line */}
-        <div className="w-full h-[1px] bg-primary/30" style={{
-        marginBottom: '8px'
-      }} />
+        {/* Separator line - now an SVG curve */}
+        <svg 
+          className="w-full" 
+          height="32" 
+          viewBox="0 0 100 32" 
+          preserveAspectRatio="none"
+          style={{ marginBottom: '8px' }}
+        >
+          <path 
+            d="M0,24 Q50,0 100,24" 
+            fill="none" 
+            stroke="hsl(var(--primary) / 0.3)" 
+            strokeWidth="0.5"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
 
-        {/* Slider Track */}
-        <div ref={sliderRef} className="relative h-[12px] cursor-pointer flex items-center" onClick={handleTrackClick}>
-          {/* Track line */}
-          <div className="absolute w-full h-[2px] bg-white/20 top-1/2 -translate-y-1/2" />
+        {/* Slider Track - angled with SVG */}
+        <div ref={sliderRef} className="relative cursor-pointer" style={{ height: '48px' }} onClick={handleTrackClick}>
+          {/* SVG curved track */}
+          <svg 
+            className="absolute w-full h-full" 
+            viewBox="0 0 100 48" 
+            preserveAspectRatio="none"
+          >
+            {/* Background track line */}
+            <path 
+              d="M0,40 Q50,8 100,40" 
+              fill="none" 
+              stroke="rgba(255,255,255,0.2)" 
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
+            />
+            {/* Filled track line - uses clipPath based on thumb position */}
+            <defs>
+              <clipPath id="filledClip">
+                <rect x="0" y="0" width={`${thumbPosition}%`} height="100%" />
+              </clipPath>
+            </defs>
+            <path 
+              d="M0,40 Q50,8 100,40" 
+              fill="none" 
+              stroke="hsl(var(--primary) / 0.6)" 
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
+              clipPath="url(#filledClip)"
+              className={isAnimatingBack ? 'transition-all duration-300 ease-out' : isDragging ? '' : 'transition-all duration-150'}
+            />
+          </svg>
           
-          {/* Filled line */}
-          <div className={`absolute h-[2px] bg-primary/60 top-1/2 -translate-y-1/2 ${isAnimatingBack ? 'transition-all duration-300 ease-out' : isDragging ? '' : 'transition-all duration-150'}`} style={{
-          width: `${thumbPosition}%`
-        }} />
+          {/* Stop markers - positioned along curve */}
+          {navLinks.map((_, index) => {
+            const xPercent = getPositionFromIndex(index);
+            // Calculate Y position on the curve: y = 40 - 32 * (1 - ((x-50)/50)^2) simplified
+            // At x=0: y=40, at x=50: y=8, at x=100: y=40
+            const normalizedX = (xPercent - 50) / 50; // -1 to 1
+            const yPos = 40 - 32 * (1 - normalizedX * normalizedX); // parabola
+            const yPercent = (yPos / 48) * 100;
+            
+            return (
+              <div 
+                key={index} 
+                className={`absolute w-2 h-2 rounded-full transition-all duration-200 ${index === selectedIndex ? 'bg-primary scale-125' : index < selectedIndex ? 'bg-primary/60' : 'bg-white/30'}`} 
+                style={{
+                  left: `${xPercent}%`,
+                  top: `${yPercent}%`,
+                  transform: 'translate(-50%, -50%)'
+                }} 
+              />
+            );
+          })}
           
-          {/* Stop markers - subtle dots */}
-          {navLinks.map((_, index) => <div key={index} className={`absolute top-1/2 w-2 h-2 rounded-full transition-all duration-200 ${index === selectedIndex ? 'bg-primary scale-125' : index < selectedIndex ? 'bg-primary/60' : 'bg-white/30'}`} style={{
-          left: `${getPositionFromIndex(index)}%`,
-          transform: 'translate(-50%, -50%)'
-        }} />)}
-          
-          {/* Draggable Thumb Handle */}
-          <div className={`absolute top-1/2 cursor-grab active:cursor-grabbing ${isAnimatingBack ? 'transition-all duration-300 ease-out' : isDragging ? '' : 'transition-all duration-150'}`} style={{
-          left: `${thumbPosition}%`,
-          transform: 'translate(-50%, -50%)'
-        }} onMouseDown={handleThumbMouseDown}>
-            {/* Outer glow */}
-            <div className={`absolute inset-0 rounded-full bg-primary/30 blur-md ${isDragging ? 'scale-150' : 'scale-100'} transition-transform duration-150`} style={{
-            width: '24px',
-            height: '24px',
-            marginLeft: '-4px',
-            marginTop: '-4px'
-          }} />
-            {/* Main thumb */}
-            <div className={`relative w-4 h-4 rounded-full bg-primary shadow-lg flex items-center justify-center ${isDragging ? 'scale-125' : 'hover:scale-110'} transition-transform duration-150`} style={{
-            boxShadow: '0 0 16px hsl(var(--primary) / 0.6)'
-          }}>
-              {/* Grip lines */}
-              <div className="flex gap-[2px]">
-                <div className="w-[1px] h-2 bg-black/40 rounded-full" />
-                <div className="w-[1px] h-2 bg-black/40 rounded-full" />
+          {/* Draggable Thumb Handle - positioned along curve */}
+          {(() => {
+            const normalizedX = (thumbPosition - 50) / 50;
+            const yPos = 40 - 32 * (1 - normalizedX * normalizedX);
+            const yPercent = (yPos / 48) * 100;
+            
+            return (
+              <div 
+                className={`absolute cursor-grab active:cursor-grabbing ${isAnimatingBack ? 'transition-all duration-300 ease-out' : isDragging ? '' : 'transition-all duration-150'}`} 
+                style={{
+                  left: `${thumbPosition}%`,
+                  top: `${yPercent}%`,
+                  transform: 'translate(-50%, -50%)'
+                }} 
+                onMouseDown={handleThumbMouseDown}
+              >
+                {/* Outer glow */}
+                <div className={`absolute inset-0 rounded-full bg-primary/30 blur-md ${isDragging ? 'scale-150' : 'scale-100'} transition-transform duration-150`} style={{
+                  width: '24px',
+                  height: '24px',
+                  marginLeft: '-4px',
+                  marginTop: '-4px'
+                }} />
+                {/* Main thumb */}
+                <div className={`relative w-4 h-4 rounded-full bg-primary shadow-lg flex items-center justify-center ${isDragging ? 'scale-125' : 'hover:scale-110'} transition-transform duration-150`} style={{
+                  boxShadow: '0 0 16px hsl(var(--primary) / 0.6)'
+                }}>
+                  {/* Grip lines */}
+                  <div className="flex gap-[2px]">
+                    <div className="w-[1px] h-2 bg-black/40 rounded-full" />
+                    <div className="w-[1px] h-2 bg-black/40 rounded-full" />
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
         </div>
 
         {/* Instruction text */}
-        <div className="text-center mt-2">
+        <div className="text-center" style={{ marginTop: '-4px' }}>
           <span className="text-[10px] font-bebas uppercase tracking-[0.25em] text-white/30">
             {isDragging ? 'Release to enter' : 'Drag slider to select role'}
           </span>
