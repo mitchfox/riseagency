@@ -5,13 +5,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SITE_URL = 'https://riseagency.lovable.app';
-const defaultImage = 'https://riseagency.lovable.app/og-preview-home.png';
+const SITE_URL = 'https://risefootballagency.com';
+const defaultImage = 'https://risefootballagency.com/og-preview-home.png';
 
 // Static OG image mappings for players with custom images
 const playerOgImages: Record<string, string> = {
-  'tyrese-omotoye': 'https://riseagency.lovable.app/og-tyrese-omotoye.png',
-  'michael-vit-mulligan': 'https://riseagency.lovable.app/og-michael-vit-mulligan.png',
+  'tyrese-omotoye': 'https://risefootballagency.com/og-tyrese-omotoye.png',
+  'michael-vit-mulligan': 'https://risefootballagency.com/og-michael-vit-mulligan.png',
 };
 
 Deno.serve(async (req) => {
