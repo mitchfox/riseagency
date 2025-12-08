@@ -480,9 +480,9 @@ function RoleSlider({
           className="absolute font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-6 h-7 transition-all duration-300" 
           style={{ 
             borderRadius: '20px',
-            transform: 'translateX(-50%) rotate(-3deg)',
+            transform: 'translateX(-50%) rotate(3deg)',
             left: 'calc(50% + 400px)',
-            top: '255px'
+            top: '180px'
           }}
           hoverEffect
         >
@@ -494,9 +494,9 @@ function RoleSlider({
           className="absolute btn-shine font-bebas uppercase tracking-wider text-sm px-6 h-7" 
           style={{ 
             borderRadius: '20px',
-            transform: 'translateX(-50%) rotate(3deg)',
+            transform: 'translateX(-50%) rotate(-3deg)',
             left: 'calc(50% - 400px)',
-            top: '255px'
+            top: '180px'
           }}
           hoverEffect
         >
