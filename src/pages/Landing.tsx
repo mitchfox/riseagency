@@ -334,7 +334,7 @@ function LandingContent() {
               </div>
               
               {/* Select role text - mobile */}
-              <div className="text-center pt-1">
+              <div className="text-center pt-0.5">
                 <span className="text-[10px] font-bebas uppercase tracking-[0.15em] text-white/40">
                   Select Your Role To Enter Site
                 </span>
