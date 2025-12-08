@@ -349,7 +349,7 @@ function LandingContent() {
       <DeclareInterestPlayerDialog open={showDeclareInterest} onOpenChange={setShowDeclareInterest} starsOnly />
     </div>;
 }
-// Role Slider Component for Desktop - Draggable slider with role stops
+// Role Slider Component for Desktop - Elegant minimal slider
 function RoleSlider({ 
   navLinks, 
   navigateToRole, 
@@ -363,7 +363,7 @@ function RoleSlider({
   setShowRepresentation: (open: boolean) => void;
   setShowDeclareInterest: (open: boolean) => void;
 }) {
-  const [selectedIndex, setSelectedIndex] = useState(3); // Start at middle (AGENT)
+  const [selectedIndex, setSelectedIndex] = useState(3);
   const [isDragging, setIsDragging] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
 
@@ -392,8 +392,12 @@ function RoleSlider({
   }, [isDragging, navLinks.length]);
 
   const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
+    if (isDragging) {
+      setIsDragging(false);
+      // Navigate on release
+      navigateToRole(navLinks[selectedIndex].to);
+    }
+  }, [isDragging, selectedIndex, navLinks, navigateToRole]);
 
   useEffect(() => {
     if (isDragging) {
@@ -406,16 +410,17 @@ function RoleSlider({
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  const handleEnter = () => {
-    navigateToRole(navLinks[selectedIndex].to);
+  const handleRoleClick = (index: number) => {
+    setSelectedIndex(index);
+    navigateToRole(navLinks[index].to);
   };
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-3">
       {/* Buttons row */}
-      <div className="border-t border-primary/40 pt-3 pb-2 flex justify-center" style={{ width: '40%' }}>
+      <div className="border-t border-primary/30 pt-3 pb-2 flex justify-center" style={{ width: '35%' }}>
         <div className="flex gap-3">
-          <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-sm px-4 h-8" hoverEffect>
+          <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-4 h-8 transition-all duration-300" hoverEffect>
             {t("landing.represent_me", "Represent Me")}
           </Button>
           <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider text-sm px-4 h-8" hoverEffect>
@@ -424,18 +429,18 @@ function RoleSlider({
         </div>
       </div>
       
-      {/* Slider Track with Role Labels */}
-      <div className="border-t border-primary/40 pt-6 pb-2 w-full" style={{ maxWidth: '90%' }}>
-        {/* Role Labels */}
-        <div className="flex justify-between mb-4 px-2">
+      {/* Slider Container */}
+      <div className="border-t border-primary/30 pt-5 w-full" style={{ maxWidth: '85%' }}>
+        {/* Role Labels - clickable to navigate */}
+        <div className="flex justify-between mb-3">
           {navLinks.map((link, index) => (
             <button
               key={link.to}
-              onClick={() => setSelectedIndex(index)}
-              className={`text-lg font-bebas uppercase tracking-[0.15em] transition-all duration-300 ${
+              onClick={() => handleRoleClick(index)}
+              className={`text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 hover:text-primary ${
                 selectedIndex === index 
-                  ? 'text-primary scale-110' 
-                  : 'text-white/50 hover:text-white/80'
+                  ? 'text-primary' 
+                  : 'text-white/40'
               }`}
             >
               {t(link.labelKey, link.fallback)}
@@ -443,60 +448,52 @@ function RoleSlider({
           ))}
         </div>
 
-        {/* Slider Track */}
+        {/* Minimal Slider Track */}
         <div 
           ref={sliderRef}
-          className="relative h-2 bg-white/20 rounded-full cursor-pointer mx-2"
+          className="relative h-[1px] bg-white/20 cursor-pointer"
           onMouseDown={handleMouseDown}
         >
-          {/* Filled portion */}
+          {/* Filled line */}
           <div 
-            className="absolute h-full bg-gradient-to-r from-primary/60 to-primary rounded-full transition-all duration-150"
+            className="absolute h-full bg-primary/60 transition-all duration-100"
             style={{ width: `${getPositionFromIndex(selectedIndex)}%` }}
           />
           
-          {/* Stop markers */}
+          {/* Stop markers - subtle dots */}
           {navLinks.map((_, index) => (
             <div
               key={index}
-              className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 transition-all duration-200 ${
-                index <= selectedIndex 
-                  ? 'bg-primary border-primary' 
-                  : 'bg-black border-white/40'
+              className={`absolute top-1/2 w-1.5 h-1.5 rounded-full transition-all duration-200 ${
+                index === selectedIndex 
+                  ? 'bg-primary scale-150' 
+                  : index < selectedIndex 
+                    ? 'bg-primary/60' 
+                    : 'bg-white/30'
               }`}
               style={{ left: `${getPositionFromIndex(index)}%`, transform: 'translate(-50%, -50%)' }}
             />
           ))}
           
-          {/* Draggable Thumb */}
+          {/* Elegant Thumb */}
           <div
-            className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-primary rounded-full border-2 border-white shadow-lg shadow-primary/50 transition-all cursor-grab ${
-              isDragging ? 'scale-125 cursor-grabbing' : 'hover:scale-110'
+            className={`absolute top-1/2 w-3 h-3 bg-primary rounded-full transition-all duration-150 ${
+              isDragging ? 'scale-150' : 'hover:scale-125'
             }`}
             style={{ 
               left: `${getPositionFromIndex(selectedIndex)}%`, 
-              transform: 'translate(-50%, -50%)'
+              transform: 'translate(-50%, -50%)',
+              boxShadow: '0 0 12px hsl(var(--primary) / 0.5)'
             }}
           />
         </div>
 
-        {/* Enter Button */}
-        <div className="flex justify-center mt-6">
-          <Button 
-            onClick={handleEnter}
-            className="btn-shine font-bebas uppercase tracking-[0.3em] text-lg px-8 h-10"
-            hoverEffect
-          >
-            Enter as {t(navLinks[selectedIndex].labelKey, navLinks[selectedIndex].fallback)}
-          </Button>
+        {/* Instruction text */}
+        <div className="text-center mt-4">
+          <span className="text-[10px] font-bebas uppercase tracking-[0.25em] text-white/30">
+            Select Role To Enter
+          </span>
         </div>
-      </div>
-      
-      {/* Select role text */}
-      <div className="text-center">
-        <span className="text-xs font-bebas uppercase tracking-[0.2em] text-white/40">
-          Drag Slider To Select Your Role
-        </span>
       </div>
     </div>
   );
