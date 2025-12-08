@@ -292,7 +292,7 @@ function LandingContent() {
             <div className="md:hidden flex flex-col items-center gap-0 mt-4" style={{ transform: 'translateY(5px)' }}>
               
               {/* Buttons row - with divider line */}
-              <div className="border-t border-primary/40 pt-2 pb-2 flex justify-center" style={{
+              <div className="border-t border-primary/40 pt-1 pb-1 flex justify-center" style={{
               width: '45%'
             }}>
                 <div className="flex gap-2">
@@ -306,12 +306,12 @@ function LandingContent() {
               </div>
               
               {/* Top row: Players, Coaches, Clubs - with divider */}
-              <div className="border-t border-primary/40 pt-1 pb-1" style={{
+              <div className="border-t border-primary/40 pt-0.5 pb-0.5" style={{
               width: '65%'
             }}>
                 <nav className="flex items-center justify-center gap-1">
                   {mobileNavLinks.slice(0, 3).map((link, index) => <div key={link.to} className="flex items-center">
-                      <button onClick={() => navigateToRole(link.to)} className="px-2 py-1 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap">
+                      <button onClick={() => navigateToRole(link.to)} className="px-2 py-0.5 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap">
                         <HoverText text={t(link.labelKey, link.fallback)} />
                       </button>
                       {index < 2 && <div className="w-px h-3 bg-primary/40" />}
@@ -320,12 +320,12 @@ function LandingContent() {
               </div>
               
               {/* Bottom row: Agents, Scouts, Business, Media - widest */}
-              <div className="border-t border-primary/40 pt-1" style={{
+              <div className="border-t border-primary/40 pt-0.5" style={{
               width: '88%'
             }}>
                 <nav className="flex items-center justify-center gap-1">
                   {mobileNavLinks.slice(3).map((link, index) => <div key={link.to} className="flex items-center">
-                      <button onClick={() => navigateToRole(link.to)} className="px-2 py-1 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap">
+                      <button onClick={() => navigateToRole(link.to)} className="px-2 py-0.5 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap">
                         <HoverText text={t(link.labelKey, link.fallback)} />
                       </button>
                       {index < 3 && <div className="w-px h-3 bg-primary/40" />}
@@ -334,7 +334,7 @@ function LandingContent() {
               </div>
               
               {/* Select role text - mobile */}
-              <div className="text-center pt-0.5">
+              <div className="text-center pt-0">
                 <span className="text-[10px] font-bebas uppercase tracking-[0.15em] text-white/40">
                   Select Your Role To Enter Site
                 </span>
