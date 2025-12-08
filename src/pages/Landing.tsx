@@ -220,7 +220,7 @@ function LandingContent() {
         </div>}
 
       {/* Bottom Section - Menu area */}
-      <div className="pb-1 md:pb-8 z-50 relative w-full pointer-events-auto">
+      <div className="pb-0 md:pb-8 z-50 relative w-full pointer-events-auto">
         <div className="relative max-w-6xl mx-auto" style={{
         minHeight: '180px'
       }}>
