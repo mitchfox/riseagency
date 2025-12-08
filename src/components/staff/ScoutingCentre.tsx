@@ -564,34 +564,36 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
 
   return (
     <>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Scouting Centre</h2>
+      <div className="space-y-4 md:space-y-6">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold">Scouting Centre</h2>
         </div>
           
         <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as any)} className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-5 mb-4">
-              <TabsTrigger value="reports" className="gap-2">
-                <FileText className="h-4 w-4" />
-                Create & View Reports
+          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-5 gap-1 h-auto p-1 mb-4">
+              <TabsTrigger value="reports" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
+                <FileText className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">Create & View </span>Reports
               </TabsTrigger>
-              <TabsTrigger value="all-players" className="gap-2">
-                <Users className="h-4 w-4" />
-                All Scouted Players
+              <TabsTrigger value="all-players" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
+                <Users className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">All </span>Players
               </TabsTrigger>
-              <TabsTrigger value="scouts" className="gap-2">
-                <Target className="h-4 w-4" />
+              <TabsTrigger value="scouts" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
+                <Target className="h-3 w-3 md:h-4 md:w-4" />
                 Scouts
               </TabsTrigger>
-              <TabsTrigger value="network" className="gap-2">
-                <Globe className="h-4 w-4" />
-                Scouting Network
+              <TabsTrigger value="network" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
+                <Globe className="h-3 w-3 md:h-4 md:w-4" />
+                Network
               </TabsTrigger>
-              <TabsTrigger value="map-coords" className="gap-2">
-                <MapPin className="h-4 w-4" />
-                Map Coordinates
+              <TabsTrigger value="map-coords" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
+                <MapPin className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">Map </span>Coords
               </TabsTrigger>
             </TabsList>
+          </div>
 
             <TabsContent value="reports" className="flex-1 mt-0">
               <ScrollArea className="h-[calc(100vh-350px)]">
@@ -599,12 +601,12 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
         {viewMode === "positions" ? (
           <>
             {/* Position Tiles View */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-2xl font-bold">Scouting Centre</h2>
-                <p className="text-muted-foreground">Select a position to view requirements or create a report</p>
+                <h3 className="text-lg md:text-xl font-bold">Position Analysis</h3>
+                <p className="text-sm text-muted-foreground">Select a position to view requirements or create a report</p>
               </div>
-              <Button onClick={() => setViewMode("reports")} variant="outline">
+              <Button onClick={() => setViewMode("reports")} variant="outline" size="sm" className="w-full sm:w-auto">
                 <FileText className="h-4 w-4 mr-2" />
                 View All Reports
               </Button>
@@ -791,13 +793,13 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
         ) : (
           <>
             {/* Reports List View */}
-            <div className="flex items-center justify-between gap-4">
-              <Button onClick={() => setViewMode("positions")} variant="outline">
+            <div className="flex flex-col gap-3">
+              <Button onClick={() => setViewMode("positions")} variant="outline" size="sm" className="w-full sm:w-auto self-start">
                 <Target className="h-4 w-4 mr-2" />
                 Position Analysis
               </Button>
-              <div className="flex items-center gap-4 flex-1">
-                <div className="relative flex-1 max-w-sm">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search players..."
@@ -806,24 +808,26 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
                     className="pl-9"
                   />
                 </div>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-[180px]">
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="recommended">Recommended</SelectItem>
-                    <SelectItem value="monitoring">Monitoring</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="flex-1 sm:w-[140px]">
+                      <Filter className="h-4 w-4 mr-1" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="recommended">Recommended</SelectItem>
+                      <SelectItem value="monitoring">Monitoring</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={() => handleAddNew()} size="sm" className="whitespace-nowrap">
+                    <Plus className="h-4 w-4 mr-1" />
+                    <span className="hidden sm:inline">New </span>Report
+                  </Button>
+                </div>
               </div>
-              <Button onClick={() => handleAddNew()}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Report
-              </Button>
             </div>
 
         {loading ? (

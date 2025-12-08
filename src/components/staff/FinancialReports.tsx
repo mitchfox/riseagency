@@ -90,18 +90,18 @@ export const FinancialReports = ({ isAdmin }: { isAdmin: boolean }) => {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col gap-3 md:gap-4">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <TrendingUp className="h-6 w-6" />
+          <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 md:h-6 md:w-6" />
             Financial Reports
           </h2>
-          <p className="text-muted-foreground mt-1">Overview of financial performance</p>
+          <p className="text-sm md:text-base text-muted-foreground mt-1">Overview of financial performance</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-full sm:w-[160px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -112,7 +112,7 @@ export const FinancialReports = ({ isAdmin }: { isAdmin: boolean }) => {
               <SelectItem value="all-time">All Time</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">
+          <Button variant="outline" className="w-full sm:w-auto">
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>

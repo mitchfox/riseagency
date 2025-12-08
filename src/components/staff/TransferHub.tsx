@@ -73,29 +73,29 @@ export const TransferHub = ({ isAdmin }: { isAdmin: boolean }) => {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col gap-3 md:gap-4">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Building2 className="h-6 w-6" />
+          <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <Building2 className="h-5 w-5 md:h-6 md:w-6" />
             Transfer Hub
           </h2>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-sm md:text-base text-muted-foreground mt-1">
             Manage player transfers, club outreach, and market activity
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search players..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="pl-9 w-[200px]"
+              className="pl-9 w-full"
             />
           </div>
           <Select value={selectedPlayer} onValueChange={setSelectedPlayer}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Filter by player" />
             </SelectTrigger>
             <SelectContent>
@@ -109,28 +109,30 @@ export const TransferHub = ({ isAdmin }: { isAdmin: boolean }) => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 gap-2 h-auto p-2 bg-muted">
-          <TabsTrigger value="outreach" className="font-medium text-sm">
-            <Building2 className="h-4 w-4 mr-2" />
-            Club Outreach
-          </TabsTrigger>
-          <TabsTrigger value="roster" className="font-medium text-sm">
-            <Users className="h-4 w-4 mr-2" />
-            Player Roster
-          </TabsTrigger>
-          <TabsTrigger value="market" className="font-medium text-sm">
-            <TrendingUp className="h-4 w-4 mr-2" />
-            Transfer Status
-          </TabsTrigger>
-          <TabsTrigger value="notes" className="font-medium text-sm">
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Agent Notes
-          </TabsTrigger>
-          <TabsTrigger value="contracts" className="font-medium text-sm">
-            <FileText className="h-4 w-4 mr-2" />
-            Contract Info
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-5 gap-1 h-auto p-1 bg-muted min-w-full">
+            <TabsTrigger value="outreach" className="font-medium text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
+              <Building2 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Club </span>Outreach
+            </TabsTrigger>
+            <TabsTrigger value="roster" className="font-medium text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
+              <Users className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              Roster
+            </TabsTrigger>
+            <TabsTrigger value="market" className="font-medium text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
+              <TrendingUp className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Transfer </span>Status
+            </TabsTrigger>
+            <TabsTrigger value="notes" className="font-medium text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
+              <MessageSquare className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              Notes
+            </TabsTrigger>
+            <TabsTrigger value="contracts" className="font-medium text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
+              <FileText className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              Contracts
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="outreach" className="mt-6">
           <ClubOutreachManagement />
