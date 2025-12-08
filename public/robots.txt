@@ -1,14 +1,33 @@
 User-agent: Googlebot
 Disallow: /player-list
+Disallow: /staff
+Disallow: /staff/*
+Allow: /stars/
+Allow: /news/
 
 User-agent: Bingbot
 Disallow: /player-list
+Disallow: /staff
+Disallow: /staff/*
+Allow: /stars/
+Allow: /news/
 
 User-agent: Twitterbot
 Disallow: /player-list
+Allow: /stars/
+Allow: /news/
 
 User-agent: facebookexternalhit
 Disallow: /player-list
+Allow: /stars/
+Allow: /news/
 
 User-agent: *
 Disallow: /player-list
+Disallow: /staff
+Disallow: /staff/*
+Allow: /stars/
+Allow: /news/
+
+# Sitemap
+Sitemap: https://riseagency.lovable.app/sitemap.xml
