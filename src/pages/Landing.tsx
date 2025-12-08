@@ -12,8 +12,6 @@ import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
 import { Button } from "@/components/ui/button";
 import { useRoleSubdomain, pathToRole, RoleSubdomain } from "@/hooks/useRoleSubdomain";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import useEmblaCarousel from "embla-carousel-react";
 import riseLogoWhite from "@/assets/logo.png";
 
 // Inner component that uses the XRay context for full-page tracking
@@ -351,7 +349,7 @@ function LandingContent() {
       <DeclareInterestPlayerDialog open={showDeclareInterest} onOpenChange={setShowDeclareInterest} starsOnly />
     </div>;
 }
-// Role Slider Component for Desktop
+// Role Slider Component for Desktop - Clean horizontal layout
 function RoleSlider({ 
   navLinks, 
   navigateToRole, 
@@ -365,118 +363,42 @@ function RoleSlider({
   setShowRepresentation: (open: boolean) => void;
   setShowDeclareInterest: (open: boolean) => void;
 }) {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ 
-    loop: true, 
-    align: 'center',
-    dragFree: true,
-    containScroll: false
-  });
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [canScrollPrev, setCanScrollPrev] = useState(false);
-  const [canScrollNext, setCanScrollNext] = useState(false);
-
-  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
-
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setSelectedIndex(emblaApi.selectedScrollSnap());
-    setCanScrollPrev(emblaApi.canScrollPrev());
-    setCanScrollNext(emblaApi.canScrollNext());
-  }, [emblaApi]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    onSelect();
-    emblaApi.on('select', onSelect);
-    emblaApi.on('reInit', onSelect);
-    return () => {
-      emblaApi.off('select', onSelect);
-      emblaApi.off('reInit', onSelect);
-    };
-  }, [emblaApi, onSelect]);
-
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col items-center gap-3">
       {/* Buttons row */}
-      <div className="border-t border-primary/40 pt-3 pb-3 mx-auto" style={{ maxWidth: '42%' }}>
-        <div className="flex items-center justify-center gap-3">
-          <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary px-3.5 h-8 text-sm" hoverEffect>
+      <div className="border-t border-primary/40 pt-3 pb-2 flex justify-center" style={{ width: '40%' }}>
+        <div className="flex gap-3">
+          <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-sm px-4 h-8" hoverEffect>
             {t("landing.represent_me", "Represent Me")}
           </Button>
-          <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider px-3.5 h-8 text-sm" hoverEffect>
+          <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider text-sm px-4 h-8" hoverEffect>
             {t("landing.declare_interest", "Declare Interest In Star")}
           </Button>
         </div>
       </div>
-
-      {/* Horizontal Role Slider */}
-      <div className="border-t border-primary/40 pt-4 mx-auto relative" style={{ maxWidth: '85%' }}>
-        <div className="flex items-center gap-4">
-          {/* Left Arrow */}
-          <button 
-            onClick={scrollPrev}
-            className="p-2 text-primary/60 hover:text-primary transition-colors shrink-0"
-            aria-label="Previous role"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-
-          {/* Slider */}
-          <div className="overflow-hidden flex-1" ref={emblaRef}>
-            <div className="flex">
-              {navLinks.map((link, index) => (
-                <div 
-                  key={link.to} 
-                  className="flex-[0_0_auto] min-w-0 px-4"
-                >
-                  <button 
-                    onClick={() => navigateToRole(link.to)} 
-                    className={`px-6 py-2 text-2xl font-bebas uppercase tracking-[0.25em] transition-all duration-300 whitespace-nowrap ${
-                      selectedIndex === index 
-                        ? 'text-primary scale-110' 
-                        : 'text-white/60 hover:text-white/90'
-                    }`}
-                  >
-                    <HoverText text={t(link.labelKey, link.fallback)} />
-                  </button>
-                </div>
-              ))}
+      
+      {/* All roles in one horizontal row */}
+      <div className="border-t border-primary/40 pt-3" style={{ width: '95%' }}>
+        <nav className="flex items-center justify-center gap-1">
+          {navLinks.map((link, index) => (
+            <div key={link.to} className="flex items-center">
+              <button 
+                onClick={() => navigateToRole(link.to)} 
+                className="px-4 py-2 text-xl font-bebas uppercase tracking-[0.2em] text-white/70 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+              >
+                <HoverText text={t(link.labelKey, link.fallback)} />
+              </button>
+              {index < navLinks.length - 1 && <div className="w-px h-4 bg-primary/40" />}
             </div>
-          </div>
-
-          {/* Right Arrow */}
-          <button 
-            onClick={scrollNext}
-            className="p-2 text-primary/60 hover:text-primary transition-colors shrink-0"
-            aria-label="Next role"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* Dots indicator */}
-        <div className="flex justify-center gap-2 mt-3">
-          {navLinks.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => emblaApi?.scrollTo(index)}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                selectedIndex === index 
-                  ? 'bg-primary w-4' 
-                  : 'bg-white/30 hover:bg-white/50'
-              }`}
-              aria-label={`Go to role ${index + 1}`}
-            />
           ))}
-        </div>
-
-        {/* Select role text */}
-        <div className="text-center pt-3">
-          <span className="text-xs font-bebas uppercase tracking-[0.2em] text-white/40">
-            Select Your Role To Enter Site
-          </span>
-        </div>
+        </nav>
+      </div>
+      
+      {/* Select role text */}
+      <div className="text-center">
+        <span className="text-xs font-bebas uppercase tracking-[0.2em] text-white/40">
+          Select Your Role To Enter Site
+        </span>
       </div>
     </div>
   );
