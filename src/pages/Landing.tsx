@@ -487,15 +487,15 @@ function RoleSlider({
           </div>
         </div>
         
-        {/* Role Labels - tight to curve, no spacing */}
-        <div className="flex justify-between" style={{ marginBottom: '0px' }}>
+        {/* Role Labels - positioned directly on the curve */}
+        <div className="flex justify-between relative" style={{ height: '60px' }}>
           {navLinks.map((link, index) => {
-            // Calculate angle offset: ends drop down to align with instruction text
+            // Calculate position on curve: ends drop down to align with instruction text
             const centerIndex = (navLinks.length - 1) / 2; // 3
             const distanceFromCenter = Math.abs(index - centerIndex);
             const maxDistance = centerIndex; // 3
-            // Offset in px: 0 at center, positive (down) toward ends - extended to 36px
-            const yOffset = (distanceFromCenter / maxDistance) * 36;
+            // Offset in px: 0 at center, positive (down) toward ends - extended to 48px
+            const yOffset = (distanceFromCenter / maxDistance) * 48;
             
             return (
               <button 
@@ -510,16 +510,16 @@ function RoleSlider({
           })}
         </div>
         
-        {/* Separator line - curved SVG, tight to labels */}
+        {/* Separator line - curved SVG, directly under labels */}
         <svg 
           className="w-full" 
-          height="40" 
-          viewBox="0 0 100 40" 
+          height="52" 
+          viewBox="0 0 100 52" 
           preserveAspectRatio="none"
-          style={{ marginTop: '-2px', marginBottom: '0px' }}
+          style={{ marginTop: '-50px', marginBottom: '0px' }}
         >
           <path 
-            d="M0,32 Q50,0 100,32" 
+            d="M0,48 Q50,4 100,48" 
             fill="none" 
             stroke="hsl(var(--primary) / 0.3)" 
             strokeWidth="0.5"
@@ -528,16 +528,16 @@ function RoleSlider({
         </svg>
 
         {/* Slider Track - deeper curve to reach instruction text */}
-        <div ref={sliderRef} className="relative cursor-pointer" style={{ height: '56px', marginTop: '-4px' }} onClick={handleTrackClick}>
+        <div ref={sliderRef} className="relative cursor-pointer" style={{ height: '64px', marginTop: '-4px' }} onClick={handleTrackClick}>
           {/* SVG curved track */}
           <svg 
             className="absolute w-full h-full" 
-            viewBox="0 0 100 56" 
+            viewBox="0 0 100 64" 
             preserveAspectRatio="none"
           >
             {/* Background track line */}
             <path 
-              d="M0,48 Q50,4 100,48" 
+              d="M0,56 Q50,4 100,56" 
               fill="none" 
               stroke="rgba(255,255,255,0.2)" 
               strokeWidth="1"
@@ -550,7 +550,7 @@ function RoleSlider({
               </clipPath>
             </defs>
             <path 
-              d="M0,48 Q50,4 100,48" 
+              d="M0,56 Q50,4 100,56" 
               fill="none" 
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="1"
@@ -564,10 +564,10 @@ function RoleSlider({
           {navLinks.map((_, index) => {
             const xPercent = getPositionFromIndex(index);
             // Calculate Y position on the curve: parabola matching SVG path
-            // At x=0: y=48, at x=50: y=4, at x=100: y=48
+            // At x=0: y=56, at x=50: y=4, at x=100: y=56
             const normalizedX = (xPercent - 50) / 50; // -1 to 1
-            const yPos = 48 - 44 * (1 - normalizedX * normalizedX); // deeper parabola
-            const yPercent = (yPos / 56) * 100;
+            const yPos = 56 - 52 * (1 - normalizedX * normalizedX); // deeper parabola
+            const yPercent = (yPos / 64) * 100;
             
             return (
               <div 
@@ -585,8 +585,8 @@ function RoleSlider({
           {/* Draggable Thumb Handle - positioned along curve */}
           {(() => {
             const normalizedX = (thumbPosition - 50) / 50;
-            const yPos = 48 - 44 * (1 - normalizedX * normalizedX);
-            const yPercent = (yPos / 56) * 100;
+            const yPos = 56 - 52 * (1 - normalizedX * normalizedX);
+            const yPercent = (yPos / 64) * 100;
             
             return (
               <div 
