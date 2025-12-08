@@ -116,13 +116,13 @@ export const PositionalGuidePointEditor = ({
       const filePath = `positional-guides/${position}/${phase}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('marketing-gallery')
+        .from('coaching-database')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('marketing-gallery')
+        .from('coaching-database')
         .getPublicUrl(filePath);
 
       const newImages = [...images];
@@ -145,13 +145,13 @@ export const PositionalGuidePointEditor = ({
       const filePath = `positional-guides/videos/${position}/${phase}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('marketing-gallery')
+        .from('coaching-database')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('marketing-gallery')
+        .from('coaching-database')
         .getPublicUrl(filePath);
 
       setVideoUrl(publicUrl);
