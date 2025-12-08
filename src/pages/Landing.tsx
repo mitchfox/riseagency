@@ -220,7 +220,7 @@ function LandingContent() {
       }}>
           
           {/* Content container - pushed down to align with triangle body */}
-          <div className="relative z-10 px-4 md:px-8 pt-20 md:pt-16 pb-1 md:py-3">
+          <div className="relative z-10 px-4 md:px-8 pt-20 md:pt-24 pb-1 md:py-3" style={{ transform: 'translateY(32px)' }}>
             {/* Desktop Layout - Horizontal Slider */}
             <div className="hidden lg:block">
               <RoleSlider navLinks={desktopNavLinks} navigateToRole={navigateToRole} t={t} setShowRepresentation={setShowRepresentation} setShowDeclareInterest={setShowDeclareInterest} />
