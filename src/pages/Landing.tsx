@@ -421,9 +421,9 @@ function RoleSlider({
       {/* Slider Container */}
       <div style={{
       maxWidth: '85%'
-    }} className="border-t border-primary/30 pt-5 w-full py-0 mx-0 px-[100px] pb-0 my-0 mb-0">
+    }} className="border-t border-primary/30 pt-8 w-full py-0 mx-0 px-[100px] pb-0 my-0 mb-0">
         {/* Role Labels - clickable to navigate */}
-        <div className="flex justify-between mb-3">
+        <div className="flex justify-between mb-1">
           {navLinks.map((link, index) => <button key={link.to} onClick={() => handleRoleClick(index)} className={`text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 hover:text-primary ${selectedIndex === index ? 'text-primary' : 'text-white/40'}`}>
               {t(link.labelKey, link.fallback)}
             </button>)}
