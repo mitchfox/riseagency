@@ -47,11 +47,11 @@ function LandingContent() {
     }
   };
 
-  // Desktop navigation (PLAYERS goes to /players)
+  // Desktop navigation - reordered: Agents first, Players in middle, swap Business/Media
   const desktopNavLinks = [{
-    to: "/players",
-    labelKey: "landing.nav_players",
-    fallback: "PLAYER"
+    to: "/agents",
+    labelKey: "landing.nav_agents",
+    fallback: "AGENT"
   }, {
     to: "/coaches",
     labelKey: "landing.nav_coaches",
@@ -61,21 +61,21 @@ function LandingContent() {
     labelKey: "landing.nav_clubs",
     fallback: "CLUB"
   }, {
-    to: "/agents",
-    labelKey: "landing.nav_agents",
-    fallback: "AGENT"
+    to: "/players",
+    labelKey: "landing.nav_players",
+    fallback: "PLAYER"
   }, {
     to: "/scouts",
     labelKey: "landing.nav_scouts",
     fallback: "SCOUT"
   }, {
-    to: "/business",
-    labelKey: "landing.nav_business",
-    fallback: "BUSINESS"
-  }, {
     to: "/media",
     labelKey: "landing.nav_media",
     fallback: "MEDIA"
+  }, {
+    to: "/business",
+    labelKey: "landing.nav_business",
+    fallback: "BUSINESS"
   }];
 
   // Mobile navigation
@@ -472,16 +472,35 @@ function RoleSlider({
       paddingRight: '100px'
     }}>
         
-        {/* Buttons row */}
+        {/* Buttons row - oval shaped, rotated toward center */}
         <div style={{
         width: '35%',
         margin: '0 auto'
       }} className="border-t border-primary/30 pt-3 flex justify-center py-[4px]">
-          <div className="flex gap-3">
-            <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-4 h-8 transition-all duration-300" hoverEffect>
+          <div className="flex gap-4">
+            <Button 
+              onClick={() => setShowRepresentation(true)} 
+              variant="outline" 
+              size="sm" 
+              className="font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-6 h-7 transition-all duration-300" 
+              style={{ 
+                borderRadius: '20px',
+                transform: 'rotate(3deg)'
+              }}
+              hoverEffect
+            >
               {t("landing.represent_me", "Represent Me")}
             </Button>
-            <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider text-sm px-4 h-8" hoverEffect>
+            <Button 
+              onClick={() => setShowDeclareInterest(true)} 
+              size="sm" 
+              className="btn-shine font-bebas uppercase tracking-wider text-sm px-6 h-7" 
+              style={{ 
+                borderRadius: '20px',
+                transform: 'rotate(-3deg)'
+              }}
+              hoverEffect
+            >
               {t("landing.declare_interest", "Declare Interest In Star")}
             </Button>
           </div>
@@ -598,21 +617,22 @@ function RoleSlider({
                 }} 
                 onMouseDown={handleThumbMouseDown}
               >
-                {/* Outer glow */}
-                <div className={`absolute inset-0 rounded-full bg-primary/30 blur-md ${isDragging ? 'scale-150' : 'scale-100'} transition-transform duration-150`} style={{
-                  width: '24px',
-                  height: '24px',
+                {/* Outer glow - larger and more visible */}
+                <div className={`absolute inset-0 rounded-full bg-primary/40 blur-lg ${isDragging ? 'scale-[2]' : 'scale-150'} transition-transform duration-150`} style={{
+                  width: '32px',
+                  height: '32px',
                   marginLeft: '-4px',
                   marginTop: '-4px'
                 }} />
-                {/* Main thumb */}
-                <div className={`relative w-4 h-4 rounded-full bg-primary shadow-lg flex items-center justify-center ${isDragging ? 'scale-125' : 'hover:scale-110'} transition-transform duration-150`} style={{
-                  boxShadow: '0 0 16px hsl(var(--primary) / 0.6)'
+                {/* Main thumb - larger and more obvious */}
+                <div className={`relative w-6 h-6 rounded-full bg-primary shadow-lg flex items-center justify-center ${isDragging ? 'scale-125' : 'hover:scale-110'} transition-transform duration-150`} style={{
+                  boxShadow: '0 0 20px hsl(var(--primary) / 0.7), 0 0 40px hsl(var(--primary) / 0.3)'
                 }}>
-                  {/* Grip lines */}
-                  <div className="flex gap-[2px]">
-                    <div className="w-[1px] h-2 bg-black/40 rounded-full" />
-                    <div className="w-[1px] h-2 bg-black/40 rounded-full" />
+                  {/* Grip lines - more visible */}
+                  <div className="flex gap-[3px]">
+                    <div className="w-[2px] h-3 bg-black/50 rounded-full" />
+                    <div className="w-[2px] h-3 bg-black/50 rounded-full" />
+                    <div className="w-[2px] h-3 bg-black/50 rounded-full" />
                   </div>
                 </div>
               </div>
