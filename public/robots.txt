@@ -30,4 +30,4 @@ Allow: /stars/
 Allow: /news/
 
 # Sitemap
-Sitemap: https://riseagency.lovable.app/sitemap.xml
+Sitemap: https://risefootballagency.com/sitemap.xml

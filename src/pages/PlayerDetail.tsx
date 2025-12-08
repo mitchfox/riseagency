@@ -214,8 +214,8 @@ const PlayerDetail = () => {
   };
 
   const ogImage = getPlayerOgImage(player.name);
-  // Use Lovable domain for OG images
-  const mainDomain = 'https://riseagency.lovable.app';
+  // Use main domain for SEO
+  const mainDomain = 'https://risefootballagency.com';
   const fullOgImage = ogImage.startsWith('http') ? ogImage : `${mainDomain}${ogImage}`;
 
   // Generate rich meta description with player details
