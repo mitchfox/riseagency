@@ -35,7 +35,7 @@ import { GoalsTasksManagement } from "@/components/staff/GoalsTasksManagement";
 import { StaffAvailabilityManagement } from "@/components/staff/StaffAvailabilityManagement";
 import { StaffSchedulesManagement } from "@/components/staff/StaffSchedulesManagement";
 import { MarketingManagement } from "@/components/staff/MarketingManagement";
-import { ContentCreator } from "@/components/staff/marketing/ContentCreator";
+import { ContentCreator, MarketingIdeas } from "@/components/staff/marketing";
 import { RecruitmentManagement } from "@/components/staff/RecruitmentManagement";
 import { ScoutingCentreManagement } from "@/components/staff/ScoutingCentreManagement";
 import { ScoutsManagement } from "@/components/staff/ScoutsManagement";
@@ -108,7 +108,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'highlightmaker' | 'marketing' | 'contentcreator' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'languages' | 'sitemanagement' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'highlightmaker' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'languages' | 'sitemanagement' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Enable staff notifications
@@ -586,6 +586,7 @@ const Staff = () => {
       locked: false,
       sections: [
         { id: 'marketing', title: 'Marketing', icon: Megaphone },
+        { id: 'marketingideas', title: 'Ideas', icon: Target },
         { id: 'contentcreator', title: 'Content Creator', icon: Film },
         { id: 'blog', title: 'News Articles', icon: Newspaper },
         { id: 'betweenthelines', title: 'Between The Lines', icon: FileText },
@@ -946,6 +947,7 @@ const Staff = () => {
                   {expandedSection === 'highlightmaker' && <HighlightMaker isAdmin={isAdmin} />}
                   {expandedSection === 'marketing' && <MarketingManagement isAdmin={isAdmin} isMarketeer={isMarketeer} />}
                   {expandedSection === 'contentcreator' && <ContentCreator />}
+                  {expandedSection === 'marketingideas' && <MarketingIdeas />}
                   {expandedSection === 'blog' && <BlogManagement isAdmin={isAdmin} />}
                   {expandedSection === 'betweenthelines' && <BetweenTheLinesManagement isAdmin={isAdmin} />}
                   {expandedSection === 'submissions' && <FormSubmissionsManagement isAdmin={isAdmin} />}
