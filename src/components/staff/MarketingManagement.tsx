@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -8,63 +7,22 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Calendar as CalendarIcon, FileText, Image, Table, Folder, HardDrive, ExternalLink, Upload, Trash2, Play, ChevronDown, List, Palette, Lightbulb, Sparkles, Instagram, Twitter, Facebook, Linkedin, Hash, MessageSquare } from "lucide-react";
+import { Calendar as CalendarIcon, Image, Upload, Trash2, Play, List, Folder, Palette } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { VideoPreviewCard } from "./VideoPreviewCard";
 import { PlaylistManager } from "@/components/PlaylistManager";
 import { HomepageVideoManager } from "./HomepageVideoManager";
-import { Calendar, momentLocalizer, Event as CalendarEvent } from 'react-big-calendar';
+import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './marketing-calendar.css';
+import { MarketingResources } from './marketing/MarketingResources';
+import { ContentCreator } from './marketing/ContentCreator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const localizer = momentLocalizer(moment);
 
-const marketingLinks = [
-  {
-    title: "Post Templates",
-    description: "Content templates and planning",
-    icon: FileText,
-    url: "https://flaxen-voice-e64.notion.site/1c248d32b9a181c9aab5c06bace0237b?v=1c248d32b9a18158b8fc000c0a4166b0",
-    color: "text-blue-500"
-  },
-  {
-    title: "Canva Design",
-    description: "Design templates and assets",
-    icon: Image,
-    url: "https://www.canva.com/design/DAG0N9vOwtg/6ZmTuSDkJzR9_b0nl7czJA/edit?utm_content=DAG0N9vOwtg&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton",
-    color: "text-purple-500"
-  },
-  {
-    title: "Player Images",
-    description: "Player photo templates",
-    icon: Image,
-    url: "https://www.canva.com/design/DAG0Fs-P2oY/xnS87xfydD4uus5vACSKgA/edit",
-    color: "text-green-500"
-  },
-  {
-    title: "Topic Schedule",
-    description: "Content calendar and planning",
-    icon: Table,
-    url: "https://docs.google.com/spreadsheets/d/1UtMiSeVkxDCP0b6DJmuB72dKHTUHAfyInUB_Ts2iRcc/edit?usp=sharing",
-    color: "text-orange-500"
-  },
-  {
-    title: "Canva Folder",
-    description: "Templates and published posts",
-    icon: Folder,
-    url: "https://www.canva.com/folder/FAFRi-Qvnf4",
-    color: "text-pink-500"
-  },
-  {
-    title: "Google Drive",
-    description: "Shared marketing resources",
-    icon: HardDrive,
-    url: "https://drive.google.com/drive/folders/1fCfrG6bY8YuEjm7bVMaxIGEoXOyCBLMj?usp=sharing",
-    color: "text-indigo-500"
-  }
-];
 
 interface GalleryItem {
   id: string;
@@ -94,7 +52,7 @@ interface Campaign {
 
 export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean; isMarketeer?: boolean }) => {
   const canManage = isAdmin || isMarketeer;
-  const [activeTab, setActiveTab] = useState("resources");
+  const [activeTab, setActiveTab] = useState("gallery");
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'brand' | 'players' | 'other'>('all');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>('all');
@@ -135,14 +93,11 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   const [showHomepageVideos, setShowHomepageVideos] = useState(false);
 
   useEffect(() => {
-    if (activeTab === 'gallery') {
-      fetchGalleryItems();
-      fetchPlayers();
-    }
-    if (activeTab === 'planner') {
-      fetchCampaigns();
-    }
-  }, [activeTab]);
+    // Fetch data for Gallery & Planner tabs on mount
+    fetchGalleryItems();
+    fetchPlayers();
+    fetchCampaigns();
+  }, []);
 
   const fetchPlayers = async () => {
     const { data } = await supabase
@@ -411,318 +366,40 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-          <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-4 gap-1 h-auto p-1">
-            <TabsTrigger value="resources" className="text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
-              <Folder className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              Resources
-            </TabsTrigger>
-            <TabsTrigger value="gallery" className="text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
-              <Image className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              Gallery
-            </TabsTrigger>
-            <TabsTrigger value="creator" className="text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
-              <Palette className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Content </span>Creator
-            </TabsTrigger>
-            <TabsTrigger value="planner" className="text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
-              <CalendarIcon className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              Planner
-            </TabsTrigger>
-          </TabsList>
+    <div className="space-y-6">
+      {/* Resources Section */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Folder className="w-5 h-5 text-primary" />
+          <h2 className="text-xl font-semibold">Resources</h2>
         </div>
+        <MarketingResources />
+      </section>
 
-        <TabsContent value="resources" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Marketing Resources</CardTitle>
-              <CardDescription>Quick access to all marketing tools and templates</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                {marketingLinks.map((link) => {
-                  const Icon = link.icon;
-                  return (
-                    <a
-                      key={link.title}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group"
-                    >
-                      <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
-                        <CardContent className="p-6">
-                          <div className="flex items-start gap-4">
-                            <div className={`p-3 rounded-lg bg-muted ${link.color}`}>
-                              <Icon className="w-6 h-6" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
-                                  {link.title}
-                                </h3>
-                                <ExternalLink className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                {link.description}
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </a>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+      {/* Content Creator Section */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Palette className="w-5 h-5 text-purple-500" />
+          <h2 className="text-xl font-semibold">Content Creator</h2>
+        </div>
+        <ContentCreator />
+      </section>
 
-        <TabsContent value="creator" className="space-y-4">
-          {/* Quick Design Link */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="w-5 h-5 text-purple-500" />
-                Design Tools
-              </CardTitle>
-              <CardDescription>Create stunning visuals for social media</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <a
-                href="https://www.canva.com/design/DAG0N9vOwtg/6ZmTuSDkJzR9_b0nl7czJA/edit?utm_content=DAG0N9vOwtg&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block"
-              >
-                <Card className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:border-purple-500/50 transition-all hover:shadow-lg cursor-pointer">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-lg bg-purple-500/20">
-                          <Sparkles className="w-8 h-8 text-purple-500" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-lg">Open Canva Design Studio</h3>
-                          <p className="text-sm text-muted-foreground">Access all templates, brand assets, and create new designs</p>
-                        </div>
-                      </div>
-                      <ExternalLink className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </a>
-            </CardContent>
-          </Card>
-
-          {/* Post Ideas */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-yellow-500" />
-                Post Ideas
-              </CardTitle>
-              <CardDescription>Content inspiration for different platforms and occasions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="player-content">
-                  <AccordionTrigger className="text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      <Hash className="w-4 h-4 text-blue-500" />
-                      Player Content Ideas
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <ul className="space-y-2 text-sm text-muted-foreground pl-6">
-                      <li>• Match day countdown with player focus</li>
-                      <li>• Training session highlights & behind the scenes</li>
-                      <li>• Player stats infographic after key performances</li>
-                      <li>• "Day in the life" stories</li>
-                      <li>• Goal/assist compilation reels</li>
-                      <li>• Player birthday celebrations</li>
-                      <li>• Transfer announcement graphics</li>
-                      <li>• Contract extension celebrations</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="brand-content">
-                  <AccordionTrigger className="text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-purple-500" />
-                      Brand Building Ideas
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <ul className="space-y-2 text-sm text-muted-foreground pl-6">
-                      <li>• Success story testimonials</li>
-                      <li>• Industry news & insights commentary</li>
-                      <li>• Team culture & values posts</li>
-                      <li>• Partnership announcements</li>
-                      <li>• Milestone celebrations (followers, achievements)</li>
-                      <li>• "Meet the team" features</li>
-                      <li>• Client spotlight series</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="engagement">
-                  <AccordionTrigger className="text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-green-500" />
-                      Engagement Drivers
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <ul className="space-y-2 text-sm text-muted-foreground pl-6">
-                      <li>• Polls & quizzes about football</li>
-                      <li>• "Caption this" photo posts</li>
-                      <li>• Throwback Thursday / Flashback Friday</li>
-                      <li>• Fan Q&A sessions</li>
-                      <li>• Prediction competitions for match outcomes</li>
-                      <li>• User-generated content reposts</li>
-                      <li>• Weekly trivia questions</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="seasonal">
-                  <AccordionTrigger className="text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      <CalendarIcon className="w-4 h-4 text-orange-500" />
-                      Seasonal & Timely
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <ul className="space-y-2 text-sm text-muted-foreground pl-6">
-                      <li>• Transfer window updates & rumours</li>
-                      <li>• Season kickoff / end of season reviews</li>
-                      <li>• Major tournament content (World Cup, Euros, etc.)</li>
-                      <li>• Holiday greetings (Christmas, New Year, etc.)</li>
-                      <li>• International break content</li>
-                      <li>• Award season predictions & reactions</li>
-                      <li>• Summer tour / pre-season coverage</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </CardContent>
-          </Card>
-
-          {/* Platform-Specific Tips */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Hash className="w-5 h-5 text-blue-500" />
-                Platform Best Practices
-              </CardTitle>
-              <CardDescription>Optimize your content for each platform</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className="border-pink-500/20">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Instagram className="w-5 h-5 text-pink-500" />
-                      <h4 className="font-semibold">Instagram</h4>
-                    </div>
-                    <ul className="text-xs text-muted-foreground space-y-1">
-                      <li>• Best times: 11am-1pm, 7-9pm</li>
-                      <li>• Use 3-5 relevant hashtags</li>
-                      <li>• Stories for behind-the-scenes</li>
-                      <li>• Reels for maximum reach</li>
-                      <li>• Carousel for detailed content</li>
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-blue-400/20">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Twitter className="w-5 h-5 text-blue-400" />
-                      <h4 className="font-semibold">X (Twitter)</h4>
-                    </div>
-                    <ul className="text-xs text-muted-foreground space-y-1">
-                      <li>• Best times: 8-10am, 12-1pm</li>
-                      <li>• Keep tweets under 280 chars</li>
-                      <li>• Use 1-2 hashtags max</li>
-                      <li>• Engage with trending topics</li>
-                      <li>• Quick reactions to news</li>
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-blue-600/20">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Facebook className="w-5 h-5 text-blue-600" />
-                      <h4 className="font-semibold">Facebook</h4>
-                    </div>
-                    <ul className="text-xs text-muted-foreground space-y-1">
-                      <li>• Best times: 1-4pm weekdays</li>
-                      <li>• Longer form content works</li>
-                      <li>• Video gets priority in feed</li>
-                      <li>• Create events for matches</li>
-                      <li>• Use Facebook Live for Q&As</li>
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-blue-700/20">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Linkedin className="w-5 h-5 text-blue-700" />
-                      <h4 className="font-semibold">LinkedIn</h4>
-                    </div>
-                    <ul className="text-xs text-muted-foreground space-y-1">
-                      <li>• Best times: Tue-Thu mornings</li>
-                      <li>• Professional tone</li>
-                      <li>• Industry insights & analysis</li>
-                      <li>• Business achievements</li>
-                      <li>• Team & company culture</li>
-                    </ul>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Content Calendar Template */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CalendarIcon className="w-5 h-5 text-green-500" />
-                Weekly Content Template
-              </CardTitle>
-              <CardDescription>Suggested posting schedule for consistent engagement</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
-                {[
-                  { day: 'Mon', theme: 'Motivation Monday', icon: '💪', desc: 'Player quotes, training clips' },
-                  { day: 'Tue', theme: 'Tactical Tuesday', icon: '📊', desc: 'Stats, analysis, insights' },
-                  { day: 'Wed', theme: 'Wellness Wed', icon: '🏃', desc: 'Training, fitness, health' },
-                  { day: 'Thu', theme: 'Throwback', icon: '📸', desc: 'Historic moments, memories' },
-                  { day: 'Fri', theme: 'Match Preview', icon: '⚽', desc: 'Weekend fixture build-up' },
-                  { day: 'Sat', theme: 'Matchday', icon: '🔥', desc: 'Live updates, reactions' },
-                  { day: 'Sun', theme: 'Review', icon: '📝', desc: 'Results, highlights, recap' },
-                ].map((item) => (
-                  <Card key={item.day} className="bg-muted/50">
-                    <CardContent className="p-3 text-center">
-                      <div className="text-2xl mb-1">{item.icon}</div>
-                      <div className="font-semibold text-xs">{item.day}</div>
-                      <div className="text-[10px] text-primary font-medium">{item.theme}</div>
-                      <div className="text-[9px] text-muted-foreground mt-1">{item.desc}</div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+      {/* Gallery & Planner Section - Tabbed for workflow */}
+      <section>
+        <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="gallery">
+          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-2 gap-1 h-auto p-1 mb-4">
+              <TabsTrigger value="gallery" className="text-xs md:text-sm px-3 md:px-6 py-2 whitespace-nowrap">
+                <Image className="w-4 h-4 mr-2" />
+                Gallery
+              </TabsTrigger>
+              <TabsTrigger value="planner" className="text-xs md:text-sm px-3 md:px-6 py-2 whitespace-nowrap">
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                Planner
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
         <TabsContent value="gallery" className="space-y-4">
           <Card>
@@ -1025,7 +702,8 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </section>
 
       {/* Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
