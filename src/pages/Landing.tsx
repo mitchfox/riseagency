@@ -466,13 +466,13 @@ function RoleSlider({
     paddingTop: '35px'
   }}>
       {/* Unified Slider Container - all elements in one parent */}
-      <div style={{
+      <div className="relative" style={{
       width: '85%',
       paddingLeft: '100px',
       paddingRight: '100px'
     }}>
         
-        {/* Buttons - absolutely positioned */}
+        {/* Buttons - positioned relative to container edges */}
         <Button 
           onClick={() => setShowRepresentation(true)} 
           variant="outline" 
@@ -480,9 +480,9 @@ function RoleSlider({
           className="absolute font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-6 h-7 transition-all duration-300" 
           style={{ 
             borderRadius: '20px',
-            transform: 'translateX(-50%) rotate(26deg)',
-            left: 'calc(50% + 332px)',
-            top: '180px'
+            transform: 'rotate(26deg)',
+            right: '-40px',
+            top: '40px'
           }}
           hoverEffect
         >
@@ -494,9 +494,9 @@ function RoleSlider({
           className="absolute btn-shine font-bebas uppercase tracking-wider text-sm px-6 h-7" 
           style={{ 
             borderRadius: '20px',
-            transform: 'translateX(-50%) rotate(-26deg)',
-            left: 'calc(50% - 332px)',
-            top: '180px'
+            transform: 'rotate(-26deg)',
+            left: '-40px',
+            top: '40px'
           }}
           hoverEffect
         >
