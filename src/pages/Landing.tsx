@@ -488,14 +488,14 @@ function RoleSlider({
         </div>
         
         {/* Role Labels - positioned directly on the curve */}
-        <div className="flex justify-between relative" style={{ height: '60px' }}>
+        <div className="flex justify-between relative" style={{ height: '75px' }}>
           {navLinks.map((link, index) => {
             // Calculate position on curve: ends drop down to align with instruction text
             const centerIndex = (navLinks.length - 1) / 2; // 3
             const distanceFromCenter = Math.abs(index - centerIndex);
             const maxDistance = centerIndex; // 3
-            // Offset in px: 0 at center, positive (down) toward ends - extended to 48px
-            const yOffset = (distanceFromCenter / maxDistance) * 48;
+            // Offset in px: 0 at center, positive (down) toward ends - extended to 63px to align with instruction text
+            const yOffset = (distanceFromCenter / maxDistance) * 63;
             
             return (
               <button 
@@ -513,13 +513,13 @@ function RoleSlider({
         {/* Separator line - curved SVG, directly under labels */}
         <svg 
           className="w-full" 
-          height="52" 
-          viewBox="0 0 100 52" 
+          height="67" 
+          viewBox="0 0 100 67" 
           preserveAspectRatio="none"
-          style={{ marginTop: '-50px', marginBottom: '0px' }}
+          style={{ marginTop: '-65px', marginBottom: '0px' }}
         >
           <path 
-            d="M0,48 Q50,4 100,48" 
+            d="M0,63 Q50,4 100,63" 
             fill="none" 
             stroke="hsl(var(--primary) / 0.3)" 
             strokeWidth="0.5"
@@ -528,16 +528,16 @@ function RoleSlider({
         </svg>
 
         {/* Slider Track - deeper curve to reach instruction text */}
-        <div ref={sliderRef} className="relative cursor-pointer" style={{ height: '64px', marginTop: '-4px' }} onClick={handleTrackClick}>
+        <div ref={sliderRef} className="relative cursor-pointer" style={{ height: '72px', marginTop: '-4px' }} onClick={handleTrackClick}>
           {/* SVG curved track */}
           <svg 
             className="absolute w-full h-full" 
-            viewBox="0 0 100 64" 
+            viewBox="0 0 100 72" 
             preserveAspectRatio="none"
           >
             {/* Background track line */}
             <path 
-              d="M0,56 Q50,4 100,56" 
+              d="M0,68 Q50,4 100,68" 
               fill="none" 
               stroke="rgba(255,255,255,0.2)" 
               strokeWidth="1"
@@ -550,7 +550,7 @@ function RoleSlider({
               </clipPath>
             </defs>
             <path 
-              d="M0,56 Q50,4 100,56" 
+              d="M0,68 Q50,4 100,68" 
               fill="none" 
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="1"
@@ -564,10 +564,10 @@ function RoleSlider({
           {navLinks.map((_, index) => {
             const xPercent = getPositionFromIndex(index);
             // Calculate Y position on the curve: parabola matching SVG path
-            // At x=0: y=56, at x=50: y=4, at x=100: y=56
+            // At x=0: y=68, at x=50: y=4, at x=100: y=68
             const normalizedX = (xPercent - 50) / 50; // -1 to 1
-            const yPos = 56 - 52 * (1 - normalizedX * normalizedX); // deeper parabola
-            const yPercent = (yPos / 64) * 100;
+            const yPos = 68 - 64 * (1 - normalizedX * normalizedX); // deeper parabola
+            const yPercent = (yPos / 72) * 100;
             
             return (
               <div 
@@ -585,8 +585,8 @@ function RoleSlider({
           {/* Draggable Thumb Handle - positioned along curve */}
           {(() => {
             const normalizedX = (thumbPosition - 50) / 50;
-            const yPos = 56 - 52 * (1 - normalizedX * normalizedX);
-            const yPercent = (yPos / 64) * 100;
+            const yPos = 68 - 64 * (1 - normalizedX * normalizedX);
+            const yPercent = (yPos / 72) * 100;
             
             return (
               <div 
