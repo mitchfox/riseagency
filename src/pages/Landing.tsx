@@ -341,7 +341,7 @@ function LandingContent() {
       <DeclareInterestPlayerDialog open={showDeclareInterest} onOpenChange={setShowDeclareInterest} starsOnly />
     </div>;
 }
-// Role Slider Component for Desktop - Elegant minimal slider
+// Role Slider Component for Desktop - Elegant minimal slider with drag-and-drop
 function RoleSlider({
   navLinks,
   navigateToRole,
@@ -361,34 +361,82 @@ function RoleSlider({
 }) {
   const [selectedIndex, setSelectedIndex] = useState(3);
   const [isDragging, setIsDragging] = useState(false);
+  const [dragPosition, setDragPosition] = useState<number | null>(null); // percentage position while dragging
+  const [isAnimatingBack, setIsAnimatingBack] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
+  const startIndexRef = useRef(3); // Track starting position for snap-back
+  
   const getPositionFromIndex = (index: number) => {
     return index / (navLinks.length - 1) * 100;
   };
-  const getIndexFromPosition = (clientX: number) => {
-    if (!sliderRef.current) return selectedIndex;
+  
+  const getIndexFromPosition = (clientX: number): { index: number; isSnapped: boolean } => {
+    if (!sliderRef.current) return { index: selectedIndex, isSnapped: false };
     const rect = sliderRef.current.getBoundingClientRect();
     const x = clientX - rect.left;
     const percentage = Math.max(0, Math.min(1, x / rect.width));
-    return Math.round(percentage * (navLinks.length - 1));
+    const exactIndex = percentage * (navLinks.length - 1);
+    const roundedIndex = Math.round(exactIndex);
+    // Consider "snapped" if within 0.3 of a stop point
+    const isSnapped = Math.abs(exactIndex - roundedIndex) < 0.3;
+    return { index: roundedIndex, isSnapped };
   };
-  const handleMouseDown = (e: React.MouseEvent) => {
+  
+  const getPercentageFromClientX = (clientX: number): number => {
+    if (!sliderRef.current) return 0;
+    const rect = sliderRef.current.getBoundingClientRect();
+    const x = clientX - rect.left;
+    return Math.max(0, Math.min(100, (x / rect.width) * 100));
+  };
+  
+  const handleThumbMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
-    const newIndex = getIndexFromPosition(e.clientX);
-    setSelectedIndex(newIndex);
+    startIndexRef.current = selectedIndex;
+    setDragPosition(getPositionFromIndex(selectedIndex));
   };
+  
+  const handleTrackClick = (e: React.MouseEvent) => {
+    if (isDragging) return;
+    const { index, isSnapped } = getIndexFromPosition(e.clientX);
+    if (isSnapped) {
+      setSelectedIndex(index);
+      navigateToRole(navLinks[index].to);
+    }
+  };
+  
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
-    const newIndex = getIndexFromPosition(e.clientX);
-    setSelectedIndex(newIndex);
-  }, [isDragging, navLinks.length]);
-  const handleMouseUp = useCallback(() => {
-    if (isDragging) {
-      setIsDragging(false);
-      // Navigate on release
-      navigateToRole(navLinks[selectedIndex].to);
+    const percentage = getPercentageFromClientX(e.clientX);
+    setDragPosition(percentage);
+  }, [isDragging]);
+  
+  const handleMouseUp = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    
+    const { index, isSnapped } = getIndexFromPosition(e.clientX);
+    
+    if (isSnapped) {
+      // Snapped to a valid stop - navigate
+      setDragPosition(null);
+      setSelectedIndex(index);
+      navigateToRole(navLinks[index].to);
+    } else {
+      // Dropped between stops - animate back to start
+      setIsAnimatingBack(true);
+      const startPosition = getPositionFromIndex(startIndexRef.current);
+      setDragPosition(startPosition);
+      
+      // Reset after animation
+      setTimeout(() => {
+        setDragPosition(null);
+        setIsAnimatingBack(false);
+      }, 300);
     }
-  }, [isDragging, selectedIndex, navLinks, navigateToRole]);
+  }, [isDragging, navLinks, navigateToRole]);
+  
   useEffect(() => {
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
@@ -399,10 +447,15 @@ function RoleSlider({
       };
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
+  
   const handleRoleClick = (index: number) => {
     setSelectedIndex(index);
     navigateToRole(navLinks[index].to);
   };
+  
+  // Calculate current thumb position
+  const thumbPosition = dragPosition !== null ? dragPosition : getPositionFromIndex(selectedIndex);
+  
   return <div className="flex flex-col items-center" style={{ paddingTop: '35px' }}>
       {/* Unified Slider Container - all elements in one parent */}
       <div style={{ width: '85%', paddingLeft: '100px', paddingRight: '100px' }}>
@@ -429,31 +482,70 @@ function RoleSlider({
         {/* Separator line */}
         <div className="w-full h-[1px] bg-primary/30" style={{ marginBottom: '8px' }} />
 
-        {/* Minimal Slider Track */}
-        <div ref={sliderRef} className="relative h-[1px] bg-white/20 cursor-pointer" onMouseDown={handleMouseDown}>
+        {/* Slider Track */}
+        <div 
+          ref={sliderRef} 
+          className="relative h-[12px] cursor-pointer flex items-center" 
+          onClick={handleTrackClick}
+        >
+          {/* Track line */}
+          <div className="absolute w-full h-[2px] bg-white/20 top-1/2 -translate-y-1/2" />
+          
           {/* Filled line */}
-          <div className="absolute h-full bg-primary/60 transition-all duration-100" style={{
-          width: `${getPositionFromIndex(selectedIndex)}%`
-        }} />
+          <div 
+            className={`absolute h-[2px] bg-primary/60 top-1/2 -translate-y-1/2 ${isAnimatingBack ? 'transition-all duration-300 ease-out' : isDragging ? '' : 'transition-all duration-150'}`}
+            style={{ width: `${thumbPosition}%` }} 
+          />
           
           {/* Stop markers - subtle dots */}
-          {navLinks.map((_, index) => <div key={index} className={`absolute top-1/2 w-1.5 h-1.5 rounded-full transition-all duration-200 ${index === selectedIndex ? 'bg-primary scale-150' : index < selectedIndex ? 'bg-primary/60' : 'bg-white/30'}`} style={{
-          left: `${getPositionFromIndex(index)}%`,
-          transform: 'translate(-50%, -50%)'
-        }} />)}
+          {navLinks.map((_, index) => (
+            <div 
+              key={index} 
+              className={`absolute top-1/2 w-2 h-2 rounded-full transition-all duration-200 ${
+                index === selectedIndex 
+                  ? 'bg-primary scale-125' 
+                  : index < selectedIndex 
+                    ? 'bg-primary/60' 
+                    : 'bg-white/30'
+              }`} 
+              style={{
+                left: `${getPositionFromIndex(index)}%`,
+                transform: 'translate(-50%, -50%)'
+              }} 
+            />
+          ))}
           
-          {/* Elegant Thumb */}
-          <div className={`absolute top-1/2 w-3 h-3 bg-primary rounded-full transition-all duration-150 ${isDragging ? 'scale-150' : 'hover:scale-125'}`} style={{
-          left: `${getPositionFromIndex(selectedIndex)}%`,
-          transform: 'translate(-50%, -50%)',
-          boxShadow: '0 0 12px hsl(var(--primary) / 0.5)'
-        }} />
+          {/* Draggable Thumb Handle */}
+          <div 
+            className={`absolute top-1/2 cursor-grab active:cursor-grabbing ${isAnimatingBack ? 'transition-all duration-300 ease-out' : isDragging ? '' : 'transition-all duration-150'}`}
+            style={{
+              left: `${thumbPosition}%`,
+              transform: 'translate(-50%, -50%)',
+            }}
+            onMouseDown={handleThumbMouseDown}
+          >
+            {/* Outer glow */}
+            <div className={`absolute inset-0 rounded-full bg-primary/30 blur-md ${isDragging ? 'scale-150' : 'scale-100'} transition-transform duration-150`} 
+              style={{ width: '24px', height: '24px', marginLeft: '-4px', marginTop: '-4px' }} 
+            />
+            {/* Main thumb */}
+            <div 
+              className={`relative w-4 h-4 rounded-full bg-primary shadow-lg flex items-center justify-center ${isDragging ? 'scale-125' : 'hover:scale-110'} transition-transform duration-150`}
+              style={{ boxShadow: '0 0 16px hsl(var(--primary) / 0.6)' }}
+            >
+              {/* Grip lines */}
+              <div className="flex gap-[2px]">
+                <div className="w-[1px] h-2 bg-black/40 rounded-full" />
+                <div className="w-[1px] h-2 bg-black/40 rounded-full" />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Instruction text */}
-        <div className="text-center mt-1">
+        <div className="text-center mt-2">
           <span className="text-[10px] font-bebas uppercase tracking-[0.25em] text-white/30">
-            Select Role To Enter
+            {isDragging ? 'Release to enter' : 'Drag slider to select role'}
           </span>
         </div>
       </div>
