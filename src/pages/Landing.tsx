@@ -226,7 +226,7 @@ function LandingContent() {
       }}>
           
           {/* Content container - pushed down to align with triangle body */}
-          <div className="relative z-10 px-4 md:px-8 pt-[85px] md:pt-16 pb-1 md:py-3">
+          <div className="relative z-10 px-4 md:px-8 pt-20 md:pt-16 pb-1 md:py-3">
             {/* Desktop Layout - Horizontal Slider */}
             <div className="hidden lg:block">
               <RoleSlider 
@@ -289,7 +289,7 @@ function LandingContent() {
             </div>
 
             {/* Mobile Layout - pushed down with proper divider lines */}
-            <div className="md:hidden flex flex-col items-center gap-0 mt-[21px]">
+            <div className="md:hidden flex flex-col items-center gap-0 mt-4" style={{ transform: 'translateY(5px)' }}>
               
               {/* Buttons row - with divider line */}
               <div className="border-t border-primary/40 pt-2 pb-2 flex justify-center" style={{
