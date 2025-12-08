@@ -473,7 +473,7 @@ function RoleSlider({
     }}>
         
         {/* Buttons - positioned along cone edges using viewport units */}
-        {/* Cone apex at 49.3vw, 65vh. Right edge goes to 99.3vw at 100vh. At ~82vh, X = 49.3 + 50 * (82-65)/(100-65) = 73.6vw */}
+        {/* Cone: apex at 49.3%, 65%. At 82vh: right edge = 73.6vw, left edge = 25vw */}
         <Button 
           onClick={() => setShowRepresentation(true)} 
           variant="outline" 
@@ -482,14 +482,13 @@ function RoleSlider({
           style={{ 
             borderRadius: '20px',
             transform: 'translateX(-50%) rotate(26deg)',
-            left: 'calc(49.3vw + (99.3vw - 49.3vw) * (82 - 65) / 35)',
+            left: '73.6vw',
             top: '82vh'
           }}
           hoverEffect
         >
           {t("landing.represent_me", "Represent Me")}
         </Button>
-        {/* Left edge goes from apex to -0.7vw at 100vh. At ~82vh, X = 49.3 - 50 * (82-65)/(100-65) = 25vw */}
         <Button 
           onClick={() => setShowDeclareInterest(true)} 
           size="sm" 
@@ -497,7 +496,7 @@ function RoleSlider({
           style={{ 
             borderRadius: '20px',
             transform: 'translateX(-50%) rotate(-26deg)',
-            left: 'calc(49.3vw - (49.3vw - (-0.7vw)) * (82 - 65) / 35)',
+            left: '25vw',
             top: '82vh'
           }}
           hoverEffect
