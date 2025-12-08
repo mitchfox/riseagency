@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { Card } from "@/components/ui/card";
 import { MessageCircle, Mail, Users, Handshake, Globe, Shield, TrendingUp, Target, Award, Building, CheckCircle2, ArrowRight, Clock, FileText, Phone, MapPin, Briefcase, Star } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Accordion,
   AccordionContent,
@@ -13,7 +12,6 @@ import {
 } from "@/components/ui/accordion";
 
 const Agents = () => {
-  const { t } = useLanguage();
   const handleWhatsApp = () => {
     window.open("https://wa.me/447508342901", "_blank");
   };
@@ -71,7 +69,7 @@ const Agents = () => {
     },
     {
       question: "Can you help with players outside your usual markets?",
-      answer: "Absolutely. While we have strongest connections in certain markets, we're always open to exploring opportunities elsewhere. If we don't have direct contacts, we're transparent about it and can often facilitate introductions through our wider network.",
+      answer: "Absolutely. While we have strongest connections in certain markets, we are always open to exploring opportunities elsewhere. If we do not have direct contacts, we are transparent about it and can often facilitate introductions through our wider network.",
     },
     {
       question: "What makes RISE different from other agencies?",
@@ -101,20 +99,20 @@ const Agents = () => {
           <div className="relative z-10 text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-6">
               <Handshake className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold">{t('agents.badge')}</span>
+              <span className="text-sm font-semibold">Agent Partnerships</span>
             </div>
             
             <h1 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider mb-6 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-              {t('agents.title')}
+              Partner With Us
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-4 font-light">
-              {t('agents.subtitle')}
+              Collaborate on player opportunities, share networks, and grow together in the football industry.
             </p>
             
             <p className="text-base text-muted-foreground/80 max-w-xl mx-auto mb-8">
               We believe the best outcomes happen when agents work together. Whether you need club connections, 
-              player development support, or a trusted partner for complex deals – we're here to collaborate.
+              player development support, or a trusted partner for complex deals - we are here to collaborate.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -123,7 +121,7 @@ const Agents = () => {
                 className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg"
               >
                 <MessageCircle className="h-5 w-5" />
-                {t('agents.whatsapp')}
+                Message on WhatsApp
               </Button>
               <Button 
                 onClick={handleEmail}
@@ -131,7 +129,7 @@ const Agents = () => {
                 className="gap-2 border-primary/50 hover:bg-primary/10 px-8 py-6 text-lg"
               >
                 <Mail className="h-5 w-5" />
-                {t('agents.email')}
+                Send an Email
               </Button>
             </div>
 
@@ -154,10 +152,10 @@ const Agents = () => {
           <div className="container mx-auto relative z-10">
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                {t('agents.why_partner')}
+                Why Partner With RISE
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                {t('agents.why_partner_desc')}
+                Access our network, development infrastructure, and industry expertise to better serve your players.
               </p>
             </div>
 
@@ -167,10 +165,10 @@ const Agents = () => {
                   <Globe className="h-7 w-7 text-primary" />
                 </div>
                 <h3 className="font-bebas text-2xl uppercase tracking-wider mb-2">
-                  {t('agents.network_title')}
+                  Extensive Network
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                  {t('agents.network_desc')}
+                  Leverage our established relationships with clubs across the UK and Europe to find the right opportunities for your players.
                 </p>
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-start gap-2">
@@ -193,10 +191,10 @@ const Agents = () => {
                   <TrendingUp className="h-7 w-7 text-primary" />
                 </div>
                 <h3 className="font-bebas text-2xl uppercase tracking-wider mb-2">
-                  {t('agents.development_title')}
+                  Player Development
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                  {t('agents.development_desc')}
+                  Our in-house performance analysis and coaching connections help players improve, making them more attractive to clubs.
                 </p>
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-start gap-2">
@@ -219,10 +217,10 @@ const Agents = () => {
                   <Shield className="h-7 w-7 text-primary" />
                 </div>
                 <h3 className="font-bebas text-2xl uppercase tracking-wider mb-2">
-                  {t('agents.standards_title')}
+                  Professional Standards
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                  {t('agents.standards_desc')}
+                  We operate with full transparency and integrity. All agreements are documented, fees are fair, and player welfare comes first.
                 </p>
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-start gap-2">
@@ -288,11 +286,11 @@ const Agents = () => {
             <div className="text-center mb-12">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-4">
                 <Users className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">{t('agents.collab_badge')}</span>
+                <span className="text-sm font-semibold">Collaboration Options</span>
               </div>
               
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                {t('agents.how_we_work')}
+                How We Work Together
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Flexible arrangements designed around your needs and your players' best interests.
@@ -487,10 +485,10 @@ const Agents = () => {
           <div className="container mx-auto relative z-10">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-4">
-                {t('agents.cta_title')}
+                Ready to Collaborate?
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                {t('agents.cta_subtitle')}
+                Get in touch to discuss how we can work together. No obligations, just a conversation about opportunities.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
@@ -499,7 +497,7 @@ const Agents = () => {
                   className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg"
                 >
                   <MessageCircle className="h-5 w-5" />
-                  {t('agents.start_convo')}
+                  Start a Conversation
                 </Button>
                 <Button 
                   onClick={handleEmail}
@@ -507,7 +505,7 @@ const Agents = () => {
                   className="gap-2 border-primary/50 hover:bg-primary/10 px-8 py-6 text-lg"
                 >
                   <Mail className="h-5 w-5" />
-                  {t('agents.email_us')}
+                  Email Us
                 </Button>
               </div>
 
