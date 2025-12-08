@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAutoTranslate } from "@/hooks/useAutoTranslate";
 import { useLanguage } from "@/contexts/LanguageContext";
-
+import { linkPlayerNames, usePlayerNames } from "@/lib/playerLinking";
 interface NewsArticle {
   id: string;
   title: string;
@@ -31,6 +31,7 @@ const createSlug = (title: string): string => {
 // Separate component for article view to use hooks properly
 const ArticleView = ({ article }: { article: NewsArticle }) => {
   const { t, language } = useLanguage();
+  const playerNames = usePlayerNames();
   const { translatedContent, isTranslating } = useAutoTranslate({
     title: article.title,
     excerpt: article.excerpt,
@@ -38,12 +39,20 @@ const ArticleView = ({ article }: { article: NewsArticle }) => {
     enabled: language !== 'en'
   });
 
+  // Format paragraph with bold text and player links
   const formatParagraph = (paragraph: string) => {
-    return paragraph.split(/(\*\*.*?\*\*)/).map((part, i) => {
+    // First, handle bold text
+    const boldParts = paragraph.split(/(\*\*.*?\*\*)/);
+    
+    return boldParts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i}>{part.slice(2, -2)}</strong>;
+        const boldText = part.slice(2, -2);
+        // Link player names within bold text
+        const linkedContent = linkPlayerNames(boldText, playerNames);
+        return <strong key={i}>{linkedContent}</strong>;
       }
-      return part;
+      // Link player names in regular text
+      return <span key={i}>{linkPlayerNames(part, playerNames)}</span>;
     });
   };
 

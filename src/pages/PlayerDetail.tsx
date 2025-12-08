@@ -218,19 +218,73 @@ const PlayerDetail = () => {
   const mainDomain = 'https://riseagency.lovable.app';
   const fullOgImage = ogImage.startsWith('http') ? ogImage : `${mainDomain}${ogImage}`;
 
+  // Generate rich meta description with player details
+  const metaDescription = `${player.name} - ${player.position} from ${player.nationality}${player.currentClub ? ` currently at ${player.currentClub}` : ''}. Professional footballer represented by RISE Football Agency. Contact us for transfer enquiries.`;
+  
+  // Generate Schema.org structured data for the player
+  const playerSchema = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": player.name,
+    "jobTitle": `Professional Football Player - ${player.position}`,
+    "nationality": {
+      "@type": "Country",
+      "name": player.nationality
+    },
+    "image": player.image_url || fullOgImage,
+    "url": `${mainDomain}/stars/${playername}`,
+    "description": metaDescription,
+    ...(player.currentClub && {
+      "memberOf": {
+        "@type": "SportsTeam",
+        "name": player.currentClub
+      }
+    }),
+    ...(player.dateOfBirth && {
+      "birthDate": player.dateOfBirth
+    }),
+    ...(player.links && Array.isArray(player.links) && player.links.length > 0 && {
+      "sameAs": player.links
+        .filter((link: any) => link.url && link.url !== '#')
+        .map((link: any) => link.url)
+    }),
+    "knowsAbout": ["Football", "Soccer", player.position],
+    "worksFor": {
+      "@type": "Organization",
+      "name": "RISE Football Agency",
+      "url": mainDomain
+    }
+  };
+
   return (
     <>
       <Helmet>
-        <title>{player.name} | RISE Football Agency</title>
-        <meta property="og:title" content={`${player.name} | RISE Football Agency`} />
-        <meta property="og:description" content={`${player.name} - Professional football player represented by RISE Football Agency.`} />
+        <title>{player.name} | ${player.position} | RISE Football Agency</title>
+        <meta name="description" content={metaDescription} />
+        <link rel="canonical" href={`${mainDomain}/stars/${playername}`} />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content={`${player.name} | ${player.position} | RISE Football Agency`} />
+        <meta property="og:description" content={metaDescription} />
         <meta property="og:image" content={fullOgImage} />
         <meta property="og:url" content={`${mainDomain}/stars/${playername}`} />
         <meta property="og:type" content="profile" />
+        <meta property="og:site_name" content="RISE Football Agency" />
+        <meta property="profile:first_name" content={player.name.split(' ')[0]} />
+        <meta property="profile:last_name" content={player.name.split(' ').slice(1).join(' ')} />
+        
+        {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${player.name} | RISE Football Agency`} />
-        <meta name="twitter:description" content={`${player.name} - Professional football player represented by RISE Football Agency.`} />
+        <meta name="twitter:site" content="@risefootball" />
+        <meta name="twitter:title" content={`${player.name} | ${player.position} | RISE Football Agency`} />
+        <meta name="twitter:description" content={metaDescription} />
         <meta name="twitter:image" content={fullOgImage} />
+        
+        {/* Schema.org JSON-LD */}
+        <script type="application/ld+json">
+          {JSON.stringify(playerSchema)}
+        </script>
+        
         {player.representation_status !== 'represented' && (
           <meta name="robots" content="noindex, nofollow" />
         )}
