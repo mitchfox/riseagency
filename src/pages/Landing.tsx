@@ -485,7 +485,7 @@ function RoleSlider({
               className="font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-6 h-7 transition-all duration-300" 
               style={{ 
                 borderRadius: '20px',
-                transform: 'rotate(3deg)'
+                transform: 'rotate(-3deg)'
               }}
               hoverEffect
             >
@@ -497,7 +497,7 @@ function RoleSlider({
               className="btn-shine font-bebas uppercase tracking-wider text-sm px-6 h-7" 
               style={{ 
                 borderRadius: '20px',
-                transform: 'rotate(-3deg)'
+                transform: 'rotate(3deg)'
               }}
               hoverEffect
             >
