@@ -223,13 +223,13 @@ function LandingContent() {
           <div className="relative z-10 px-4 md:px-8 pt-20 md:pt-24 pb-1 md:py-3" style={{
           transform: 'translateY(32px)'
         }}>
-            {/* Desktop Layout - Horizontal Slider */}
-            <div className="hidden lg:block">
+            {/* Desktop & Tablet Layout - Horizontal Slider */}
+            <div className="hidden md:block">
               <RoleSlider navLinks={desktopNavLinks} navigateToRole={navigateToRole} t={t} setShowRepresentation={setShowRepresentation} setShowDeclareInterest={setShowDeclareInterest} />
             </div>
 
-            {/* Tablet Layout - Same as mobile but hidden on lg+ */}
-            <div className="hidden md:flex lg:hidden flex-col items-center gap-0 mt-4">
+            {/* OLD Tablet Layout - REMOVED, now uses desktop slider */}
+            <div className="hidden flex-col items-center gap-0 mt-4">
               {/* Buttons row - with divider line */}
               <div className="border-t border-primary/40 pt-2 pb-2 flex justify-center" style={{
               width: '50%'
@@ -472,18 +472,17 @@ function RoleSlider({
       paddingRight: '100px'
     }}>
         
-        {/* Buttons - positioned along cone edges using viewport units */}
-        {/* Cone: apex at 49.3%, 65%. At 82vh: right edge = 73.6vw, left edge = 25vw */}
+        {/* Buttons - positioned absolutely within container, aligned with cone edges */}
         <Button 
           onClick={() => setShowRepresentation(true)} 
           variant="outline" 
           size="sm" 
-          className="fixed font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-6 h-7 transition-all duration-300 z-10" 
+          className="absolute font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-6 h-7 transition-all duration-300 z-10" 
           style={{ 
             borderRadius: '20px',
-            transform: 'translateX(-50%) rotate(26deg)',
-            left: '73.6vw',
-            top: '82vh'
+            transform: 'rotate(26deg)',
+            right: '-80px',
+            top: '50px'
           }}
           hoverEffect
         >
@@ -492,12 +491,12 @@ function RoleSlider({
         <Button 
           onClick={() => setShowDeclareInterest(true)} 
           size="sm" 
-          className="fixed btn-shine font-bebas uppercase tracking-wider text-sm px-6 h-7 z-10" 
+          className="absolute btn-shine font-bebas uppercase tracking-wider text-sm px-6 h-7 z-10" 
           style={{ 
             borderRadius: '20px',
-            transform: 'translateX(-50%) rotate(-26deg)',
-            left: '25vw',
-            top: '82vh'
+            transform: 'rotate(-26deg)',
+            left: '-80px',
+            top: '50px'
           }}
           hoverEffect
         >
