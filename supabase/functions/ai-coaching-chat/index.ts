@@ -112,7 +112,8 @@ serve(async (req) => {
 
     let bannedPhrasesInstructions = '';
     if (settings?.bannedPhrases && Array.isArray(settings.bannedPhrases) && settings.bannedPhrases.length > 0) {
-      bannedPhrasesInstructions = `\n\nBANNED PHRASES - NEVER use these words or phrases in your responses: ${settings.bannedPhrases.map((p: string) => `"${p}"`).join(', ')}`;
+      const phraseList = settings.bannedPhrases.map((p: string) => `"${p}"`).join(', ');
+      bannedPhrasesInstructions = `\n\n⛔ ABSOLUTELY FORBIDDEN PHRASES - YOU MUST NEVER USE THESE UNDER ANY CIRCUMSTANCES ⛔\nThe following phrases are STRICTLY BANNED. Do not use them or any variation of them: ${phraseList}\nIf you catch yourself about to write any of these phrases, STOP and rephrase completely. This is a hard requirement.`;
     }
 
     const systemPrompt = `You are an elite football coaching consultant with decades of experience at the highest levels. You've worked with top academies and first teams. Your responses should be insightful, practical, and worth saving to a coaching database.
