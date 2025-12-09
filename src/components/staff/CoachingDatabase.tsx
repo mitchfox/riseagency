@@ -18,6 +18,7 @@ import { R90RatingsManagement } from "./R90RatingsManagement";
 import { TacticalSchemes } from "./TacticalSchemes";
 import { SchemeEditor } from "./SchemeEditor";
 import { PositionalGuides } from "./PositionalGuides";
+import { MarkdownText } from "@/utils/markdownRenderer";
 
 
 type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides';
@@ -1291,13 +1292,13 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                       <CardContent className="pt-0">
                         {activeTab === 'coaching_aphorisms' ? (
                           <p className="text-sm text-muted-foreground line-clamp-3">
-                            {item.body_text}
+                            <MarkdownText text={item.body_text || ''} />
                           </p>
                         ) : activeTab === 'performance_statistics' ? (
                           <>
                             {item.description && (
                               <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                                {item.description}
+                                <MarkdownText text={item.description} />
                               </p>
                             )}
                             {item.positions && item.positions.length > 0 && (
@@ -1314,7 +1315,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                           <>
                             {item.description && (
                               <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
-                                {item.description}
+                                <MarkdownText text={item.description} />
                               </p>
                             )}
                             <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">

@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { MarkdownText } from "@/utils/markdownRenderer";
 import { Progress } from "@/components/ui/progress";
 import { downloadVideo } from "@/lib/videoDownload";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
@@ -1975,7 +1976,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                   <div className="flex-1 min-w-0">
                                     <h4 className="font-medium mb-1 text-sm md:text-base">{item.analysis.title}</h4>
                                     {item.analysis.description && (
-                                      <p className="text-xs md:text-sm text-muted-foreground mb-2">{item.analysis.description}</p>
+                                      <p className="text-xs md:text-sm text-muted-foreground mb-2">
+                                        <MarkdownText text={item.analysis.description} />
+                                      </p>
                                     )}
                                     <div className="flex flex-wrap items-center gap-2">
                                       {item.analysis.category && (
@@ -3720,7 +3723,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       <label htmlFor={analysis.id} className="flex-1 cursor-pointer">
                         <div className="font-medium">{analysis.title}</div>
                         {analysis.description && (
-                          <div className="text-sm text-muted-foreground">{analysis.description}</div>
+                          <div className="text-sm text-muted-foreground">
+                            <MarkdownText text={analysis.description} />
+                          </div>
                         )}
                         {analysis.category && (
                           <div className="text-xs text-muted-foreground mt-1">{analysis.category}</div>
