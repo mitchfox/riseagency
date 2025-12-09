@@ -55,12 +55,20 @@ serve(async (req) => {
       customInstructions = `\n\nAdditional user instructions: ${settings.customInstructions}`;
     }
 
+    let bannedPhrasesInstructions = '';
+    if (settings?.bannedPhrases && Array.isArray(settings.bannedPhrases) && settings.bannedPhrases.length > 0) {
+      bannedPhrasesInstructions = `\n\nBANNED PHRASES - NEVER use these words or phrases in your responses: ${settings.bannedPhrases.map((p: string) => `"${p}"`).join(', ')}`;
+    }
+
     const systemPrompt = `You are an elite football/soccer coaching consultant with decades of experience at the highest levels. Your responses should be insightful, practical, and worth saving to a coaching database.
+
+ALWAYS write in British English (UK spelling: colour, favour, defence, centre, organise, etc.).
 
 ${writingStyleDesc}
 
 ${personalityDesc}
 ${customInstructions}
+${bannedPhrasesInstructions}
 
 RESPONSE GUIDELINES:
 - Provide substantive, well-articulated ideas that demonstrate deep coaching knowledge
@@ -72,7 +80,8 @@ RESPONSE GUIDELINES:
 - Use bullet points only when listing specific drill progressions, coaching points, or tactical variations
 - Write as if creating valuable content for a professional coaching manual
 
-Your expertise spans: tactical periodization, positional play, pressing triggers, build-up patterns, transition phases, individual player development pathways, session design principles, psychological preparation, and physical conditioning for elite performance.`;
+Your expertise spans: tactical periodisation, positional play, pressing triggers, build-up patterns, transition phases, individual player development pathways, session design principles, psychological preparation, and physical conditioning for elite performance.`;
+
 
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
