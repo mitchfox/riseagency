@@ -12,11 +12,47 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, settings } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY not configured');
+    }
+
+    // Build dynamic system prompt based on settings
+    let writingStyleDesc = '';
+    switch (settings?.writingStyle) {
+      case 'casual':
+        writingStyleDesc = 'Use a casual, friendly, and approachable tone. Be conversational and warm.';
+        break;
+      case 'technical':
+        writingStyleDesc = 'Be highly technical and detailed. Use precise terminology and provide in-depth explanations with specific metrics and data where relevant.';
+        break;
+      case 'concise':
+        writingStyleDesc = 'Be extremely concise and direct. Get straight to the point with minimal explanation. Use bullet points and short sentences.';
+        break;
+      default:
+        writingStyleDesc = 'Maintain a professional, balanced tone suitable for coaching documentation.';
+    }
+
+    let personalityDesc = '';
+    switch (settings?.personality) {
+      case 'analyst':
+        personalityDesc = 'Approach topics from a tactical analysis perspective. Focus on patterns, formations, and strategic insights.';
+        break;
+      case 'mentor':
+        personalityDesc = 'Be supportive and encouraging like a mentor. Focus on player development and building confidence.';
+        break;
+      case 'educator':
+        personalityDesc = 'Take an educational approach. Explain concepts clearly, provide context, and help build understanding progressively.';
+        break;
+      default:
+        personalityDesc = 'Respond as an experienced coach with practical, pitch-tested knowledge.';
+    }
+
+    let customInstructions = '';
+    if (settings?.customInstructions) {
+      customInstructions = `\n\nAdditional user instructions: ${settings.customInstructions}`;
     }
 
     const systemPrompt = `You are an expert football/soccer coaching consultant with deep knowledge of:
@@ -28,14 +64,25 @@ serve(async (req) => {
 - Sports psychology and motivation
 - Physical conditioning for footballers
 
+${writingStyleDesc}
+
+${personalityDesc}
+${customInstructions}
+
 When discussing coaching concepts:
-- Be detailed and practical in your explanations
+- Be practical in your explanations
 - Include specific examples, setups, and progressions when relevant
-- Structure your responses clearly with headings when appropriate
+- Structure your responses clearly with headings and bullet points when appropriate
 - Consider age groups and skill levels when giving advice
 - Reference established coaching principles and methodologies
 
-Your responses will potentially be saved to a coaching database, so be thorough and professional in your explanations. Format content that could be saved as drills with clear setup, equipment, and progression sections.`;
+Use markdown formatting:
+- Use **bold** for key terms and important points
+- Use bullet points for lists
+- Use numbered lists for steps or progressions
+- Use ### for section headers
+
+Your responses will potentially be saved to a coaching database as concepts that can be assigned to players, so be thorough and professional in your explanations.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
