@@ -1,10 +1,59 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+async function fetchWritingExamples(supabase: any): Promise<string> {
+  try {
+    // Fetch recent coaching analysis content as examples
+    const { data: analyses } = await supabase
+      .from('coaching_analysis')
+      .select('content, description')
+      .not('content', 'is', null)
+      .limit(3);
+
+    // Fetch analysis point examples
+    const { data: examples } = await supabase
+      .from('analysis_point_examples')
+      .select('content, paragraph_1, paragraph_2')
+      .limit(3);
+
+    // Fetch positional guide content
+    const { data: guides } = await supabase
+      .from('positional_guides')
+      .select('content')
+      .not('content', 'is', null)
+      .limit(2);
+
+    let examplesText = '';
+    
+    if (analyses?.length || examples?.length || guides?.length) {
+      examplesText = '\n\nWRITING STYLE EXAMPLES FROM DATABASE - Match this tone and style:\n';
+      
+      analyses?.forEach((a: any, i: number) => {
+        if (a.content) examplesText += `\nExample ${i + 1}:\n${a.content.substring(0, 500)}...\n`;
+      });
+      
+      examples?.forEach((e: any) => {
+        if (e.paragraph_1) examplesText += `\nExample:\n${e.paragraph_1}\n`;
+        if (e.paragraph_2) examplesText += `${e.paragraph_2}\n`;
+      });
+      
+      guides?.forEach((g: any) => {
+        if (g.content) examplesText += `\nExample:\n${g.content.substring(0, 400)}...\n`;
+      });
+    }
+    
+    return examplesText;
+  } catch (error) {
+    console.error('Error fetching writing examples:', error);
+    return '';
+  }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -14,10 +63,16 @@ serve(async (req) => {
   try {
     const { messages, settings } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY not configured');
     }
+
+    // Create Supabase client to fetch examples
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    const writingExamples = await fetchWritingExamples(supabase);
 
     // Build dynamic system prompt based on settings
     let writingStyleDesc = '';
@@ -69,6 +124,7 @@ ${writingStyleDesc}
 ${personalityDesc}
 ${customInstructions}
 ${bannedPhrasesInstructions}
+${writingExamples}
 
 CRITICAL - WRITE LIKE A REAL COACH, NOT AN AI:
 - Write with authority and conviction - state things directly, don't hedge everything
@@ -81,6 +137,7 @@ CRITICAL - WRITE LIKE A REAL COACH, NOT AN AI:
 - Never use phrases like: "at the end of the day", "in terms of", "with that being said"
 - Don't over-explain or pad responses - be direct and economical with words
 - Write like you're talking to another coach, not explaining to a child
+- STUDY THE WRITING EXAMPLES ABOVE AND MATCH THAT EXACT STYLE AND TONE
 
 RESPONSE FORMAT:
 - Provide substantive, well-articulated ideas that demonstrate deep coaching knowledge
