@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,7 +13,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
-
 interface ProgrammingManagementProps {
   isOpen: boolean;
   onClose: () => void;
@@ -196,6 +195,9 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
   const [allPlayers, setAllPlayers] = useState<any[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showRecoveryBanner, setShowRecoveryBanner] = useState(false);
+  
+  // Ref to track pending exercise name lookups for debouncing
+  const exerciseLookupTimeoutRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
   // Auto-save backup key
   const getBackupKey = () => `program_backup_${playerId}_${selectedProgram?.id || 'new'}`;
@@ -267,8 +269,19 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
     setHasUnsavedChanges(true);
   };
 
+  // Cleanup exercise lookup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(exerciseLookupTimeoutRef.current).forEach(clearTimeout);
+    };
+  }, []);
+
   useEffect(() => {
     if (isOpen && playerId) {
+      // Clear any pending lookups when switching players
+      Object.values(exerciseLookupTimeoutRef.current).forEach(clearTimeout);
+      exerciseLookupTimeoutRef.current = {};
+      
       // Clear any selected program and data when switching players
       setSelectedProgram(null);
       setProgrammingData(initialProgrammingData());
@@ -960,46 +973,68 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
     });
   };
 
-  const updateExercise = async (sessionKey: SessionKey, index: number, field: keyof Exercise, value: string) => {
-    const session = programmingData[sessionKey] as SessionData;
-    // Deep clone exercises to prevent reference sharing
-    const updatedExercises = deepClone(session.exercises);
-    updatedExercises[index] = { ...updatedExercises[index], [field]: value };
-    
-    // If updating the name field, auto-fill from database if exercise exists and other fields are empty
-    if (field === 'name' && value.trim()) {
-      try {
-        const { data, error } = await supabase
-          .from('coaching_exercises')
-          .select('*')
-          .ilike('title', value.trim())
-          .limit(1)
-          .single();
-
-        if (data && !error) {
-          const currentExercise = updatedExercises[index];
-          // Only auto-fill fields that are currently empty
-          updatedExercises[index] = {
-            ...currentExercise,
-            name: value, // Always keep the user's typed value
-            description: currentExercise.description || data.description || '',
-            repetitions: currentExercise.repetitions || data.reps || '',
-            sets: currentExercise.sets || data.sets?.toString() || '',
-            load: currentExercise.load || data.load || '',
-            recoveryTime: currentExercise.recoveryTime || data.rest_time?.toString() || '',
-            videoUrl: currentExercise.videoUrl || data.video_url || ''
-          };
-        }
-      } catch (error) {
-        // Silently fail - just use the typed value
-        console.log('Exercise not found in database, using manual input');
-      }
-    }
-    
-    updateField(sessionKey, {
-      ...session,
-      exercises: updatedExercises
+  const updateExercise = (sessionKey: SessionKey, index: number, field: keyof Exercise, value: string) => {
+    // Immediately update state synchronously - this ensures responsive typing
+    setProgrammingData(prev => {
+      const session = prev[sessionKey] as SessionData;
+      const updatedExercises = deepClone(session.exercises);
+      updatedExercises[index] = { ...updatedExercises[index], [field]: value };
+      return { ...prev, [sessionKey]: { ...session, exercises: updatedExercises } };
     });
+    setHasUnsavedChanges(true);
+    
+    // If updating the name field, debounce the database lookup for auto-fill
+    if (field === 'name' && value.trim()) {
+      const lookupKey = `${sessionKey}-${index}`;
+      
+      // Clear any pending lookup for this exercise
+      if (exerciseLookupTimeoutRef.current[lookupKey]) {
+        clearTimeout(exerciseLookupTimeoutRef.current[lookupKey]);
+      }
+      
+      // Debounce the database lookup by 500ms
+      exerciseLookupTimeoutRef.current[lookupKey] = setTimeout(async () => {
+        try {
+          const { data, error } = await supabase
+            .from('coaching_exercises')
+            .select('*')
+            .ilike('title', value.trim())
+            .limit(1)
+            .single();
+
+          if (data && !error) {
+            // Only auto-fill if the name still matches (user hasn't changed it)
+            setProgrammingData(prev => {
+              const session = prev[sessionKey] as SessionData;
+              const currentExercise = session.exercises[index];
+              
+              // Only proceed if the name still matches what triggered the lookup
+              if (currentExercise?.name !== value) return prev;
+              
+              const updatedExercises = deepClone(session.exercises);
+              // Only auto-fill fields that are currently empty
+              updatedExercises[index] = {
+                ...currentExercise,
+                name: value,
+                description: currentExercise.description || data.description || '',
+                repetitions: currentExercise.repetitions || data.reps || '',
+                sets: currentExercise.sets || data.sets?.toString() || '',
+                load: currentExercise.load || data.load || '',
+                recoveryTime: currentExercise.recoveryTime || data.rest_time?.toString() || '',
+                videoUrl: currentExercise.videoUrl || data.video_url || ''
+              };
+              return { ...prev, [sessionKey]: { ...session, exercises: updatedExercises } };
+            });
+          }
+        } catch (error) {
+          // Silently fail - just use the typed value
+          console.log('Exercise not found in database, using manual input');
+        }
+        
+        // Clean up the timeout ref
+        delete exerciseLookupTimeoutRef.current[lookupKey];
+      }, 500);
+    }
   };
 
   const generateDescription = async (sessionKey: SessionKey, index: number, exerciseName: string) => {
