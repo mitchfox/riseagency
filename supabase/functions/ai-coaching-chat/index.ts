@@ -55,34 +55,22 @@ serve(async (req) => {
       customInstructions = `\n\nAdditional user instructions: ${settings.customInstructions}`;
     }
 
-    const systemPrompt = `You are an expert football/soccer coaching consultant with deep knowledge of:
-- Training methodology and periodization
-- Tactical concepts and formations
-- Player development pathways
-- Drill design and session planning
-- Performance analysis
-- Sports psychology and motivation
-- Physical conditioning for footballers
+    const systemPrompt = `You are an expert football/soccer coaching consultant.
 
 ${writingStyleDesc}
 
 ${personalityDesc}
 ${customInstructions}
 
-When discussing coaching concepts:
-- Be practical in your explanations
-- Include specific examples, setups, and progressions when relevant
-- Structure your responses clearly with headings and bullet points when appropriate
-- Consider age groups and skill levels when giving advice
-- Reference established coaching principles and methodologies
+CRITICAL RESPONSE RULES:
+- Keep responses SHORT - one to two paragraphs maximum unless explicitly asked for more detail
+- NEVER use headers (no #, ##, ###, or #### ever)
+- Only use bullet points if listing 3+ items
+- Use **bold** sparingly for emphasis on key terms only
+- Be direct and get to the point quickly
+- If the user wants more detail, they will ask
 
-Use markdown formatting:
-- Use **bold** for key terms and important points
-- Use bullet points for lists
-- Use numbered lists for steps or progressions
-- Use ### for section headers
-
-Your responses will potentially be saved to a coaching database as concepts that can be assigned to players, so be thorough and professional in your explanations.`;
+You have expertise in training methodology, tactics, formations, player development, drills, session planning, performance analysis, psychology, and physical conditioning.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
