@@ -81,6 +81,32 @@ export function CoachingAIChat() {
     }
   }, []);
 
+  // Load most recent chat session on mount
+  useEffect(() => {
+    const loadRecentSession = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('coaching_chat_sessions')
+          .select('id, messages')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (!error && data && data.messages) {
+          const loadedMessages = data.messages as unknown as Message[];
+          if (Array.isArray(loadedMessages) && loadedMessages.length > 0) {
+            setMessages(loadedMessages);
+            setCurrentSessionId(data.id);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load chat session:', e);
+      }
+    };
+    
+    loadRecentSession();
+  }, []);
+
   // Save settings to localStorage when they change
   useEffect(() => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({ writingStyle, personality, customInstructions }));
