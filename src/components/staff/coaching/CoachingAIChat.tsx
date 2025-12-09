@@ -79,7 +79,7 @@ function renderMarkdown(text: string) {
   return parts.length > 0 ? parts : text;
 }
 
-// Render full message with line breaks and markdown
+// Render full message with line breaks and markdown (strip headers if AI still uses them)
 function MessageContent({ content }: { content: string }) {
   const lines = content.split('\n');
   
@@ -89,12 +89,10 @@ function MessageContent({ content }: { content: string }) {
         if (line.trim() === '') {
           return <div key={i} className="h-2" />;
         }
-        // Check for headers (## or ###)
-        if (line.startsWith('### ')) {
-          return <h4 key={i} className="font-semibold text-sm mt-2">{renderMarkdown(line.slice(4))}</h4>;
-        }
-        if (line.startsWith('## ')) {
-          return <h3 key={i} className="font-semibold mt-3">{renderMarkdown(line.slice(3))}</h3>;
+        // Strip any headers - just render as bold paragraph
+        if (line.match(/^#{1,4}\s/)) {
+          const text = line.replace(/^#{1,4}\s/, '');
+          return <p key={i} className="font-semibold">{renderMarkdown(text)}</p>;
         }
         // Check for bullet points
         if (line.startsWith('- ') || line.startsWith('* ')) {
@@ -111,6 +109,9 @@ function MessageContent({ content }: { content: string }) {
   );
 }
 
+const SETTINGS_KEY = 'coaching-ai-settings';
+const CHAT_SESSION_KEY = 'coaching-ai-current-session';
+
 export function CoachingAIChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -123,16 +124,71 @@ export function CoachingAIChat() {
   const [saveContent, setSaveContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [writingStyle, setWritingStyle] = useState('professional');
+  const [writingStyle, setWritingStyle] = useState('concise');
   const [personality, setPersonality] = useState('coach');
   const [customInstructions, setCustomInstructions] = useState('');
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Load saved settings from localStorage
+  useEffect(() => {
+    const savedSettings = localStorage.getItem(SETTINGS_KEY);
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        if (parsed.writingStyle) setWritingStyle(parsed.writingStyle);
+        if (parsed.personality) setPersonality(parsed.personality);
+        if (parsed.customInstructions) setCustomInstructions(parsed.customInstructions);
+      } catch (e) {
+        console.error('Failed to parse saved settings:', e);
+      }
+    }
+  }, []);
+
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ writingStyle, personality, customInstructions }));
+  }, [writingStyle, personality, customInstructions]);
+
+  // Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Save chat session to database when messages change
+  useEffect(() => {
+    if (messages.length === 0) return;
+    
+    const saveSession = async () => {
+      try {
+        const title = messages[0]?.content?.slice(0, 50) || 'New Chat';
+        
+        if (currentSessionId) {
+          await supabase
+            .from('coaching_chat_sessions')
+            .update({ messages: JSON.parse(JSON.stringify(messages)), title, updated_at: new Date().toISOString() })
+            .eq('id', currentSessionId);
+        } else {
+          const { data, error } = await supabase
+            .from('coaching_chat_sessions')
+            .insert([{ messages: JSON.parse(JSON.stringify(messages)), title }])
+            .select('id')
+            .single();
+          
+          if (!error && data) {
+            setCurrentSessionId(data.id);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to save chat session:', e);
+      }
+    };
+
+    const debounce = setTimeout(saveSession, 1000);
+    return () => clearTimeout(debounce);
+  }, [messages, currentSessionId]);
 
   const buildSystemContext = () => {
     const styleDesc = WRITING_STYLES.find(s => s.value === writingStyle)?.label || 'Professional';
@@ -321,6 +377,7 @@ export function CoachingAIChat() {
 
   const clearChat = () => {
     setMessages([]);
+    setCurrentSessionId(null);
   };
 
   return (
