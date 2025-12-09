@@ -545,6 +545,33 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_chat_sessions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          messages: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          messages?: Json
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          messages?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coaching_drills: {
         Row: {
           attachments: Json | null

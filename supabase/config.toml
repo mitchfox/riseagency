@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.sitemap]
 verify_jwt = false
+
+[functions.ai-coaching-chat]
+verify_jwt = true
