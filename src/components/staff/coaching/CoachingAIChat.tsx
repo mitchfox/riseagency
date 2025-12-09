@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Badge } from '@/components/ui/badge';
 import { Send, Bot, User, Save, Loader2, Plus, Trash2, Settings, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -63,6 +64,8 @@ export function CoachingAIChat() {
   const [writingStyle, setWritingStyle] = useState('concise');
   const [personality, setPersonality] = useState('coach');
   const [customInstructions, setCustomInstructions] = useState('');
+  const [bannedPhrases, setBannedPhrases] = useState<string[]>(["It's about"]);
+  const [newBannedPhrase, setNewBannedPhrase] = useState('');
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -75,6 +78,7 @@ export function CoachingAIChat() {
         if (parsed.writingStyle) setWritingStyle(parsed.writingStyle);
         if (parsed.personality) setPersonality(parsed.personality);
         if (parsed.customInstructions) setCustomInstructions(parsed.customInstructions);
+        if (parsed.bannedPhrases) setBannedPhrases(parsed.bannedPhrases);
       } catch (e) {
         console.error('Failed to parse saved settings:', e);
       }
@@ -184,7 +188,12 @@ export function CoachingAIChat() {
         },
         body: JSON.stringify({ 
           messages: newMessages,
-          settings: { writingStyle, personality, customInstructions: customInstructions.trim() }
+          settings: { 
+            writingStyle, 
+            personality, 
+            customInstructions: customInstructions.trim(),
+            bannedPhrases 
+          }
         }),
       });
 
@@ -400,11 +409,54 @@ export function CoachingAIChat() {
                   className="resize-none"
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Banned Words/Phrases</Label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {bannedPhrases.map((phrase, idx) => (
+                    <Badge key={idx} variant="secondary" className="flex items-center gap-1">
+                      {phrase}
+                      <button 
+                        onClick={() => setBannedPhrases(prev => prev.filter((_, i) => i !== idx))}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={newBannedPhrase}
+                    onChange={(e) => setNewBannedPhrase(e.target.value)}
+                    placeholder="Add phrase to ban..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newBannedPhrase.trim()) {
+                        e.preventDefault();
+                        setBannedPhrases(prev => [...prev, newBannedPhrase.trim()]);
+                        setNewBannedPhrase('');
+                      }
+                    }}
+                  />
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      if (newBannedPhrase.trim()) {
+                        setBannedPhrases(prev => [...prev, newBannedPhrase.trim()]);
+                        setNewBannedPhrase('');
+                      }
+                    }}
+                  >
+                    Add
+                  </Button>
+                </div>
+              </div>
               <Button 
                 variant="secondary" 
                 className="w-full"
                 onClick={() => {
-                  localStorage.setItem(SETTINGS_KEY, JSON.stringify({ writingStyle, personality, customInstructions }));
+                  localStorage.setItem(SETTINGS_KEY, JSON.stringify({ writingStyle, personality, customInstructions, bannedPhrases }));
                   toast.success('Settings saved');
                   setSettingsOpen(false);
                 }}
