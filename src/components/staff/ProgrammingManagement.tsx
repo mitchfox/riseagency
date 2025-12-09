@@ -992,7 +992,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
         clearTimeout(exerciseLookupTimeoutRef.current[lookupKey]);
       }
       
-      // Debounce the database lookup by 500ms
+      // Debounce the database lookup by 3 seconds
       exerciseLookupTimeoutRef.current[lookupKey] = setTimeout(async () => {
         try {
           const { data, error } = await supabase
@@ -1033,7 +1033,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
         
         // Clean up the timeout ref
         delete exerciseLookupTimeoutRef.current[lookupKey];
-      }, 500);
+      }, 3000);
     }
   };
 
