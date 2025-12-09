@@ -194,6 +194,78 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
   const [availableFixtures, setAvailableFixtures] = useState<any[]>([]);
   const [selectedFixtures, setSelectedFixtures] = useState<Set<number>>(new Set());
   const [allPlayers, setAllPlayers] = useState<any[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showRecoveryBanner, setShowRecoveryBanner] = useState(false);
+
+  // Auto-save backup key
+  const getBackupKey = () => `program_backup_${playerId}_${selectedProgram?.id || 'new'}`;
+
+  // Auto-save to localStorage whenever programming data changes
+  useEffect(() => {
+    if (selectedProgram && hasUnsavedChanges) {
+      const backupData = {
+        programId: selectedProgram.id,
+        programName: selectedProgram.program_name,
+        data: programmingData,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(getBackupKey(), JSON.stringify(backupData));
+    }
+  }, [programmingData, selectedProgram, hasUnsavedChanges]);
+
+  // Check for recovery data on mount
+  useEffect(() => {
+    if (isOpen && selectedProgram) {
+      const backupKey = getBackupKey();
+      const backup = localStorage.getItem(backupKey);
+      if (backup) {
+        try {
+          const backupData = JSON.parse(backup);
+          // If backup is less than 24 hours old and for this program
+          if (backupData.programId === selectedProgram.id && 
+              Date.now() - backupData.timestamp < 24 * 60 * 60 * 1000) {
+            setShowRecoveryBanner(true);
+          }
+        } catch (e) {
+          // Invalid backup, remove it
+          localStorage.removeItem(backupKey);
+        }
+      }
+    }
+  }, [isOpen, selectedProgram]);
+
+  // Recovery function
+  const recoverUnsavedChanges = () => {
+    const backup = localStorage.getItem(getBackupKey());
+    if (backup) {
+      try {
+        const backupData = JSON.parse(backup);
+        setProgrammingData(backupData.data);
+        setHasUnsavedChanges(true);
+        toast.success('Recovered unsaved changes!');
+        setShowRecoveryBanner(false);
+      } catch (e) {
+        toast.error('Failed to recover data');
+      }
+    }
+  };
+
+  const dismissRecovery = () => {
+    localStorage.removeItem(getBackupKey());
+    setShowRecoveryBanner(false);
+  };
+
+  // Clear backup after successful save
+  const clearBackup = () => {
+    localStorage.removeItem(getBackupKey());
+    setHasUnsavedChanges(false);
+  };
+
+  // Track changes
+  const updateProgrammingData = (updates: Partial<ProgrammingData>) => {
+    setProgrammingData(prev => ({ ...prev, ...updates }));
+    setHasUnsavedChanges(true);
+  };
 
   useEffect(() => {
     if (isOpen && playerId) {
@@ -201,6 +273,8 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
       setSelectedProgram(null);
       setProgrammingData(initialProgrammingData());
       setSelectedSession(null);
+      setHasUnsavedChanges(false);
+      setShowRecoveryBanner(false);
       
       loadPrograms();
       loadCoachingPrograms();
@@ -324,7 +398,9 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
       
       console.log('Programming data set successfully');
       
-      // Reset coaching database save checkboxes when loading a program
+      // Reset state when loading a program
+      setHasUnsavedChanges(false);
+      setShowRecoveryBanner(false);
       setSaveToCoachingDB({
         programme: false,
         sessions: false,
@@ -698,6 +774,9 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
 
       toast.success('Program saved successfully');
       
+      // Clear the backup after successful save
+      clearBackup();
+      
       // Update the selected program with the new name
       if (selectedProgram) {
         setSelectedProgram({
@@ -707,9 +786,31 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
       }
       
       loadPrograms();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving program:', error);
-      toast.error('Failed to save program');
+      // More detailed error message - DON'T close the dialog
+      const isNetworkError = error?.message?.includes('NetworkError') || 
+                             error?.message?.includes('fetch') ||
+                             error?.code === 'NETWORK_ERROR';
+      
+      if (isNetworkError) {
+        toast.error(
+          <div>
+            <p className="font-semibold">Network error - changes NOT saved</p>
+            <p className="text-xs mt-1">Your work is backed up locally. Check your connection and try again.</p>
+          </div>,
+          { duration: 10000 }
+        );
+      } else {
+        toast.error(
+          <div>
+            <p className="font-semibold">Failed to save program</p>
+            <p className="text-xs mt-1">{error?.message || 'Unknown error'}</p>
+            <p className="text-xs">Your work is backed up locally.</p>
+          </div>,
+          { duration: 8000 }
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -768,6 +869,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
 
   const updateField = (field: keyof ProgrammingData, value: any) => {
     setProgrammingData(prev => ({ ...prev, [field]: value }));
+    setHasUnsavedChanges(true);
   };
 
   type SessionKey = 'sessionA' | 'sessionB' | 'sessionC' | 'sessionD' | 'sessionE' | 'sessionF' | 'sessionG' | 'sessionH' | 'preSessionA' | 'preSessionB' | 'preSessionC' | 'preSessionD' | 'preSessionE' | 'preSessionF' | 'preSessionG' | 'preSessionH';
@@ -1329,11 +1431,44 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen} onOpenChange={(open) => {
+        if (!open && hasUnsavedChanges) {
+          if (!confirm('You have unsaved changes. Are you sure you want to close? Your work is backed up locally.')) {
+            return;
+          }
+        }
+        onClose();
+      }}>
       <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl lg:max-w-6xl max-h-[90vh] overflow-y-auto bg-background">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl">Programming Management - {playerName}</DialogTitle>
         </DialogHeader>
+
+        {/* Recovery Banner */}
+        {showRecoveryBanner && selectedProgram && (
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-yellow-600">⚠️</span>
+              <span className="text-sm">Unsaved changes from a previous session were found.</span>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={dismissRecovery}>
+                Dismiss
+              </Button>
+              <Button size="sm" onClick={recoverUnsavedChanges}>
+                Recover
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Unsaved changes indicator */}
+        {hasUnsavedChanges && selectedProgram && (
+          <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg px-3 py-2 flex items-center gap-2">
+            <span className="text-orange-600 text-sm">●</span>
+            <span className="text-sm text-orange-600">You have unsaved changes (auto-backed up locally)</span>
+          </div>
+        )}
 
         {!selectedProgram ? (
           
