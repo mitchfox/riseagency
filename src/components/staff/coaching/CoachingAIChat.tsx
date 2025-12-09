@@ -438,6 +438,17 @@ export function CoachingAIChat() {
                   className="resize-none"
                 />
               </div>
+              <Button 
+                variant="secondary" 
+                className="w-full"
+                onClick={() => {
+                  localStorage.setItem(SETTINGS_KEY, JSON.stringify({ writingStyle, personality, customInstructions }));
+                  toast.success('Settings saved');
+                  setSettingsOpen(false);
+                }}
+              >
+                Save Settings
+              </Button>
             </CardContent>
           </Card>
         </CollapsibleContent>
