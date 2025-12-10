@@ -220,13 +220,14 @@ function LandingContent() {
       </div>
       
       {/* REPRESENT ME - Fixed position on RIGHT side of cone (matching original position) */}
+      {/* Note: -3deg offset correction to align with cone edge */}
       <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
         left: '75%',
         top: '78%',
-        transform: `translate(-50%, -50%) rotate(${coneAngle}deg)`
+        transform: `translate(-50%, -50%) rotate(${coneAngle - 3}deg)`
       }}>
         {/* Temporary Arrow Indicator - REMOVE LATER */}
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ transform: `rotate(-${coneAngle}deg)` }}>
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ transform: `rotate(-${coneAngle - 3}deg)` }}>
           <span className="text-primary text-xs font-mono mb-1">REPRESENT ME</span>
           <svg className="w-6 h-10 text-primary animate-bounce" fill="none" viewBox="0 0 24 40">
             <path d="M12 0v32M12 32l-8-8M12 32l8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
