@@ -1,6 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
+
+type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr';
 
 interface TranslatedPlayerContent {
   bio: string;
@@ -593,7 +595,19 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
 
 export function usePlayerProfileLabel(key: keyof typeof playerProfileLabels): string {
   const { language } = useLanguage();
-  // Use useMemo pattern inline to ensure reactivity
-  const label = playerProfileLabels[key]?.[language] || playerProfileLabels[key]?.en || key;
+  
+  // Memoize to ensure reactivity when language changes
+  const label = useMemo(() => {
+    const translations = playerProfileLabels[key];
+    if (!translations) {
+      console.warn(`Missing translation key: ${key}`);
+      return key;
+    }
+    const langKey = language as LanguageCode;
+    const result = translations[langKey] || translations.en || key;
+    console.log(`Translation [${key}] for lang [${language}]:`, result);
+    return result;
+  }, [key, language]);
+  
   return label;
 }
