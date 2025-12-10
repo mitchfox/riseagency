@@ -283,8 +283,8 @@ function LandingContent() {
       {!languagePopupOpen && <div className="absolute inset-0 md:inset-0 pointer-events-none z-[5]" style={{
       transform: 'translateX(-39px) translateY(-28px)'
     }}>
-          {/* Mobile wrapper to shift player down - extend beyond bounds */}
-          <div className="md:hidden absolute -inset-x-8 -inset-y-8" style={{ transform: 'translateY(32px)' }}>
+          {/* Mobile wrapper to shift player down 32px and right 8px - extend beyond bounds */}
+          <div className="md:hidden absolute -inset-x-8 -inset-y-8" style={{ transform: 'translateY(60px) translateX(8px)' }}>
             <LazyPlayer3D className="pointer-events-none" />
           </div>
           {/* Desktop/tablet version - unchanged */}
