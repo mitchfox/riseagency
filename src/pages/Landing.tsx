@@ -268,8 +268,8 @@ function LandingContent() {
       </div>
       
       {/* Language Selector - Mobile only */}
-      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+126px)] flex flex-col items-center" style={{
-        left: 'calc(50% - 13px)'
+      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+130px)] flex flex-col items-center" style={{
+        left: 'calc(50% - 17px)'
       }}>
         <div className="transform -translate-x-1/2 -translate-y-1/2 scale-[1.2]">
           <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
@@ -369,7 +369,7 @@ function LandingContent() {
 
             {/* Mobile Layout - pushed down with proper divider lines */}
             <div className="md:hidden flex flex-col items-center gap-0 mt-0" style={{
-            transform: 'translateY(-25px) translateX(-2px)'
+            transform: 'translateY(-25px) translateX(-4px)'
           }}>
               
               {/* Buttons row - with divider line */}
