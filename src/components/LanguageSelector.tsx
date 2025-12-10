@@ -54,14 +54,24 @@ export const LanguageSelector = () => {
     const currentPath = window.location.pathname;
     
     // Check if we're on localhost or preview
-    if (currentHost === 'localhost' || currentHost.includes('preview')) {
+    if (currentHost === 'localhost' || currentHost.includes('preview') || currentHost.includes('lovable.app')) {
       localStorage.setItem('preferredLanguage', selectedLang.code);
       window.location.reload();
       return;
     }
     
-    // Production: navigate to subdomain
-    const baseDomain = currentHost.replace(/^[a-z]{2}\./, '');
+    // Extract base domain, removing any existing subdomain (language or role)
+    const parts = currentHost.split('.');
+    let baseDomain = '';
+    
+    if (parts.length >= 3) {
+      // subdomain.domain.com -> domain.com
+      baseDomain = parts.slice(-2).join('.');
+    } else {
+      baseDomain = currentHost;
+    }
+    
+    // Navigate to language subdomain
     const newUrl = `https://${subdomain}.${baseDomain}${currentPath}`;
     window.location.href = newUrl;
   };

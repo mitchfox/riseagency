@@ -140,16 +140,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Initialize language on mount
   useEffect(() => {
     async function initializeLanguage() {
-      console.log('LanguageContext: Starting language initialization...');
-      console.log('LanguageContext: Hostname:', window.location.hostname);
-      
       // First check subdomain
       const subdomainLang = detectLanguageFromSubdomain();
-      console.log('LanguageContext: Detected subdomain language:', subdomainLang);
       
       if (subdomainLang) {
         // Subdomain explicitly sets language
-        console.log('LanguageContext: Setting language from subdomain:', subdomainLang);
         setLanguage(subdomainLang);
         setIsInitialized(true);
         return;
@@ -210,7 +205,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         const translationMap = new Map<string, string>();
 
         data?.forEach((row: Translation) => {
-          const key = `${row.page_name}.${row.text_key}`;
+          // Handle case where text_key already includes page_name prefix
+          const textKey = row.text_key;
+          const pageName = row.page_name;
+          
+          // If text_key already starts with page_name., don't duplicate
+          const key = textKey.startsWith(`${pageName}.`) 
+            ? textKey 
+            : `${pageName}.${textKey}`;
+          
           const value = row[column] as string | null;
           // Fall back to English if translation is missing
           translationMap.set(key, value || row.english || '');
