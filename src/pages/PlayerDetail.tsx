@@ -64,6 +64,21 @@ const PlayerDetail = () => {
   const backToDirectoryLabel = usePlayerProfileLabel('backToDirectory');
   const highlightsLabel = usePlayerProfileLabel('highlights');
   const comingSoonLabel = usePlayerProfileLabel('comingSoon');
+  const strengthsPlayStyleLabel = usePlayerProfileLabel('strengthsPlayStyle');
+  const getInTouchLabel = usePlayerProfileLabel('getInTouch');
+  const clubsAgentsLabel = usePlayerProfileLabel('clubsAgents');
+  const interestedInSigningLabel = usePlayerProfileLabel('interestedInSigning');
+  const mediaLabel = usePlayerProfileLabel('media');
+  const pressInquiriesLabel = usePlayerProfileLabel('pressInquiries');
+  const contactLabel = usePlayerProfileLabel('contact');
+  const sponsorsLabel = usePlayerProfileLabel('sponsors');
+  const sponsorOpportunitiesLabel = usePlayerProfileLabel('sponsorOpportunities');
+  const reachOutLabel = usePlayerProfileLabel('reachOut');
+
+  // Debug: Log the current language
+  console.log('PlayerDetail - Current language:', language);
+  console.log('PlayerDetail - Back to Stars label:', backToStarsLabel);
+  console.log('PlayerDetail - Biography label:', biographyLabel);
   
   // Extract video URLs for preloading
   const videoUrls = useMemo(() => 
@@ -790,7 +805,7 @@ const PlayerDetail = () => {
                   <div>
                     <h2 className="text-2xl md:text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
                       <span className="w-8 h-1 bg-primary"></span>
-                      {strengthsLabel} & Play Style
+                      {strengthsPlayStyleLabel}
                     </h2>
                     <div className="group relative overflow-hidden rounded-xl border-2 border-[hsl(var(--gold))]/30 bg-gradient-to-br from-secondary/40 via-secondary/30 to-secondary/20 backdrop-blur-sm p-8 transition-all duration-300 hover:border-[hsl(var(--gold))]/60 hover:shadow-[0_0_30px_rgba(212,175,55,0.15)]">
                       <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--gold))]/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -873,7 +888,7 @@ const PlayerDetail = () => {
               <div className="order-3 lg:hidden">
                 <h2 className="text-2xl md:text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
                   <span className="w-8 h-1 bg-primary"></span>
-                  Strengths & Play Style
+                  {strengthsPlayStyleLabel}
                 </h2>
                 <div className="group relative overflow-hidden rounded-xl border-2 border-[hsl(var(--gold))]/30 bg-gradient-to-br from-secondary/40 via-secondary/30 to-secondary/20 backdrop-blur-sm p-8 transition-all duration-300 hover:border-[hsl(var(--gold))]/60 hover:shadow-[0_0_30px_rgba(212,175,55,0.15)]">
                   <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--gold))]/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -895,7 +910,7 @@ const PlayerDetail = () => {
               <div className="order-4 lg:hidden">
                 <h2 className="text-2xl md:text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
                   <span className="w-8 h-1 bg-primary"></span>
-                  Scheme History
+                  {schemeHistoryLabel}
                 </h2>
                 <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg">
                   {/* Club Info with Logo */}
@@ -1040,16 +1055,16 @@ const PlayerDetail = () => {
         <section className="py-16 px-4 bg-secondary/20 border-t border-primary/10 -mx-4">
           <div className="container mx-auto max-w-4xl">
             <h2 className="text-4xl font-bebas text-center uppercase tracking-wider text-foreground mb-12">
-              Get In <span className="text-primary">Touch</span>
+              {getInTouchLabel}
             </h2>
             <div className="grid md:grid-cols-3 gap-8">
               {/* Clubs/Agents */}
               <div className="text-center space-y-4">
                 <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                  Clubs & Agents
+                  {clubsAgentsLabel}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Interested in signing this player? Let's discuss opportunities.
+                  {interestedInSigningLabel}
                 </p>
                 <Button 
                   asChild
@@ -1057,7 +1072,7 @@ const PlayerDetail = () => {
                   className="w-full font-bebas uppercase tracking-wider btn-shine"
                 >
                   <a href="https://wa.me/447508342901" target="_blank" rel="noopener noreferrer">
-                    <HoverText text="Enquire About This Player" />
+                    <HoverText text={enquirePlayerLabel} />
                   </a>
                 </Button>
               </div>
@@ -1065,10 +1080,10 @@ const PlayerDetail = () => {
               {/* Media */}
               <div className="text-center space-y-4">
                 <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                  Media
+                  {mediaLabel}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Press inquiries and interview requests welcome.
+                  {pressInquiriesLabel}
                 </p>
                 <Button 
                   asChild
@@ -1077,7 +1092,7 @@ const PlayerDetail = () => {
                   className="w-full font-bebas uppercase tracking-wider btn-shine"
                 >
                   <a href="mailto:kuda.butawo@risefootballagency.com?subject=Media%20Inquiry">
-                    <HoverText text="Contact" />
+                    <HoverText text={contactLabel} />
                   </a>
                 </Button>
               </div>
@@ -1085,10 +1100,10 @@ const PlayerDetail = () => {
               {/* Sponsors */}
               <div className="text-center space-y-4">
                 <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                  Sponsors
+                  {sponsorsLabel}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Explore partnership and sponsorship opportunities.
+                  {sponsorOpportunitiesLabel}
                 </p>
                 <Button 
                   asChild
@@ -1097,7 +1112,7 @@ const PlayerDetail = () => {
                   className="w-full font-bebas uppercase tracking-wider btn-shine"
                 >
                   <a href="https://wa.me/447446365438" target="_blank" rel="noopener noreferrer">
-                    <HoverText text="Reach Out" />
+                    <HoverText text={reachOutLabel} />
                   </a>
                 </Button>
               </div>
