@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -128,27 +128,25 @@ const positionTranslations: Record<string, Record<string, string>> = {
 
 export function usePlayerTranslations({ bio, position, playerId }: UsePlayerTranslationsOptions) {
   const { language } = useLanguage();
-  const [translatedContent, setTranslatedContent] = useState<TranslatedPlayerContent>({
-    bio,
-    position,
-  });
+  const [translatedBio, setTranslatedBio] = useState<string>(bio);
   const [isTranslating, setIsTranslating] = useState(false);
 
-  // Translate position immediately (no API call needed)
-  const translatedPosition = language === 'en' 
-    ? position 
-    : positionTranslations[position]?.[language] || position;
+  // Translate position immediately using useMemo for proper reactivity
+  const translatedPosition = useMemo(() => {
+    if (language === 'en') return position;
+    return positionTranslations[position]?.[language] || position;
+  }, [language, position]);
 
   useEffect(() => {
     // Reset to original when language is English
     if (language === 'en') {
-      setTranslatedContent({ bio, position });
+      setTranslatedBio(bio);
       return;
     }
 
-    const translateBio = async () => {
+    const translateBioText = async () => {
       if (!bio || bio.trim() === '') {
-        setTranslatedContent({ bio: '', position: translatedPosition });
+        setTranslatedBio('');
         return;
       }
 
@@ -159,7 +157,7 @@ export function usePlayerTranslations({ bio, position, playerId }: UsePlayerTran
         try {
           const parsed = JSON.parse(cached);
           if (parsed.bio) {
-            setTranslatedContent({ bio: parsed.bio, position: translatedPosition });
+            setTranslatedBio(parsed.bio);
             return;
           }
         } catch {
@@ -188,31 +186,31 @@ export function usePlayerTranslations({ bio, position, playerId }: UsePlayerTran
         };
         
         const translationKey = langMap[language];
-        const translatedBio = data?.[translationKey] || bio;
+        const translated = data?.[translationKey] || bio;
 
         // Cache the translation
-        localStorage.setItem(cacheKey, JSON.stringify({ bio: translatedBio }));
+        localStorage.setItem(cacheKey, JSON.stringify({ bio: translated }));
 
-        setTranslatedContent({
-          bio: translatedBio,
-          position: translatedPosition,
-        });
+        setTranslatedBio(translated);
       } catch (err) {
         console.error('Player bio translation error:', err);
-        setTranslatedContent({ bio, position: translatedPosition });
+        setTranslatedBio(bio);
       } finally {
         setIsTranslating(false);
       }
     };
 
-    translateBio();
-  }, [bio, position, language, playerId, translatedPosition]);
+    translateBioText();
+  }, [bio, language, playerId]);
+
+  // Use useMemo to ensure the returned object updates when language changes
+  const translatedContent = useMemo(() => ({
+    bio: translatedBio,
+    position: translatedPosition,
+  }), [translatedBio, translatedPosition]);
 
   return { 
-    translatedContent: {
-      ...translatedContent,
-      position: translatedPosition,
-    }, 
+    translatedContent, 
     isTranslating 
   };
 }
@@ -427,5 +425,7 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
 
 export function usePlayerProfileLabel(key: keyof typeof playerProfileLabels): string {
   const { language } = useLanguage();
-  return playerProfileLabels[key]?.[language] || playerProfileLabels[key]?.en || key;
+  // Use useMemo pattern inline to ensure reactivity
+  const label = playerProfileLabels[key]?.[language] || playerProfileLabels[key]?.en || key;
+  return label;
 }
