@@ -239,7 +239,7 @@ function LandingContent() {
       </div>
       
       {/* Top Center Logo - disappears on xray or when hovering REALISE POTENTIAL area */}
-      <div className={`absolute top-4 md:top-6 z-[55] transition-opacity duration-500 ${xrayState.isActive || topLogoHovered ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
+      <div className={`absolute top-4 md:top-6 z-[4] transition-opacity duration-500 ${xrayState.isActive || topLogoHovered ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
       left: 'calc(50% - 16px)',
       transform: 'translateX(-50%)'
     }}>
@@ -258,7 +258,7 @@ function LandingContent() {
       
       {/* Language Selector - fixed position, centered horizontally, above the menu slider */}
       <div className="hidden md:flex fixed z-[50] pointer-events-auto items-center justify-center" style={{
-        left: 'calc(50% - 8px)',
+        left: 'calc(50% - 12px)',
         bottom: '164px',
         transform: 'translateX(-50%)'
       }}>
