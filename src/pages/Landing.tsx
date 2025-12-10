@@ -258,7 +258,7 @@ function LandingContent() {
       
       {/* Language Selector - fixed position, centered horizontally, above the menu slider */}
       <div className="hidden md:flex fixed z-[50] pointer-events-auto items-center justify-center" style={{
-        left: 'calc(50% - 8px)',
+        left: 'calc(50% - 6px)',
         bottom: '164px',
         transform: 'translateX(-50%)'
       }}>
