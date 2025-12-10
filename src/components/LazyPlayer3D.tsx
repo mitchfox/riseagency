@@ -9,8 +9,16 @@ export const LazyPlayer3D = ({ className }: { className?: string }) => {
   const [shouldLoad, setShouldLoad] = useState(false);
 
   useEffect(() => {
-    // Defer loading until the browser is idle to improve First Input Delay
-    // This ensures the page becomes interactive before loading the heavy 3D effect
+    // On mobile, load immediately for faster perceived loading
+    // On desktop, defer loading until idle to improve First Input Delay
+    const isMobile = window.innerWidth < 768;
+    
+    if (isMobile) {
+      // Load immediately on mobile - no delay
+      setShouldLoad(true);
+      return;
+    }
+    
     if ('requestIdleCallback' in window) {
       const id = requestIdleCallback(() => setShouldLoad(true), { timeout: 1000 });
       return () => cancelIdleCallback(id);
