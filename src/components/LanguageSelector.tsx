@@ -72,10 +72,10 @@ export const LanguageSelector = () => {
         setIsOpen(open);
         if (!open) setSelectedLang(null);
       }}>
-        <DropdownMenuTrigger className="flex items-center gap-1.5 text-xs md:text-sm font-bebas uppercase tracking-wider text-foreground hover:text-primary transition-all duration-300 focus:outline-none">
-          <img src={getFlagUrl(currentLanguage.flagCode)} alt={currentLanguage.name} className="w-5 h-auto rounded-sm" />
+        <DropdownMenuTrigger className="flex items-center gap-1 text-[10px] md:text-xs font-bebas uppercase tracking-wider text-foreground hover:text-primary transition-all duration-300 focus:outline-none">
+          <img src={getFlagUrl(currentLanguage.flagCode)} alt={currentLanguage.name} className="w-4 h-auto rounded-sm" />
           <span>{currentLanguage.name}</span>
-          <ChevronDown className="w-3 h-3" />
+          <ChevronDown className="w-2.5 h-2.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent 
           className="bg-background border border-border min-w-[100px] z-[200]"
