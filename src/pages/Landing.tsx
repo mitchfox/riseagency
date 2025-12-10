@@ -243,7 +243,7 @@ function LandingContent() {
       <div className="absolute left-1/2 transform -translate-x-1/2 z-[4] opacity-0 hover:opacity-100 transition-opacity duration-500" style={{
       top: 'calc(4rem - 50px)'
     }} onMouseEnter={() => setTopLogoHovered(true)} onMouseLeave={() => setTopLogoHovered(false)}>
-        <span className="font-bebas text-4xl md:text-6xl lg:text-7xl tracking-[0.3em] text-white/90 uppercase whitespace-nowrap">
+        <span className="font-bebas text-2xl md:text-6xl lg:text-7xl tracking-[0.2em] md:tracking-[0.3em] text-white/90 uppercase whitespace-nowrap">
           <HoverText text="REALISE POTENTIAL" className="hover-text-slow" />
         </span>
       </div>
@@ -261,12 +261,14 @@ function LandingContent() {
       </div>
       
       {/* Language Selector - Mobile only */}
-      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+122px)]" style={{
+      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+122px)] flex flex-col items-center" style={{
         left: 'calc(50% - 3px)'
       }}>
         <div className="transform -translate-x-1/2 -translate-y-1/2 scale-[1.2]">
           <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
         </div>
+        {/* Divider line below language selector */}
+        <div className="w-12 h-px bg-primary/40 -mt-2" style={{ transform: 'translateX(-50%)' }} />
       </div>
       
       {/* Portal & Staff links - subtle top right */}
@@ -284,7 +286,7 @@ function LandingContent() {
       transform: 'translateX(-39px) translateY(-28px)'
     }}>
           {/* Mobile wrapper to shift player down and right - extend beyond bounds */}
-          <div className="md:hidden absolute -inset-x-8 -inset-y-8" style={{ transform: 'translateY(60px) translateX(32px)' }}>
+          <div className="md:hidden absolute -inset-x-8 -inset-y-8" style={{ transform: 'translateY(60px) translateX(36px)' }}>
             <LazyPlayer3D className="pointer-events-none" />
           </div>
           {/* Desktop/tablet version - unchanged */}
