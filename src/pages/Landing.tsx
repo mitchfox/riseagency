@@ -218,7 +218,7 @@ function LandingContent() {
       
       {/* REPRESENT ME - Fixed position on RIGHT side of cone */}
       <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
-        left: '75%',
+        left: '73.6%',
         top: '78%',
         transform: `translate(-50%, -50%) rotate(${coneAngle - 0.2}deg)`
       }}>
