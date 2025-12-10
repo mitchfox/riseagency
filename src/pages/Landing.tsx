@@ -192,9 +192,8 @@ function LandingContent() {
       </div>
       
       
-      {/* Language Selector - centered on page, moved down 170px */}
-      <div className="absolute z-[50] pointer-events-auto" style={{
-      top: 'calc(50% + 166px)',
+      {/* Language Selector - centered on page, moved down 170px on desktop, higher on mobile */}
+      <div className="absolute z-[50] pointer-events-auto top-[calc(50%+80px)] md:top-[calc(50%+166px)]" style={{
       left: 'calc(50% - 3px)'
     }}>
         <div className="transform -translate-x-1/2 -translate-y-1/2 scale-[1.2] md:scale-[1.5]">
