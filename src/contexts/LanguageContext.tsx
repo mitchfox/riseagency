@@ -140,11 +140,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Initialize language on mount
   useEffect(() => {
     async function initializeLanguage() {
+      console.log('LanguageContext: Starting language initialization...');
+      console.log('LanguageContext: Hostname:', window.location.hostname);
+      
       // First check subdomain
       const subdomainLang = detectLanguageFromSubdomain();
+      console.log('LanguageContext: Detected subdomain language:', subdomainLang);
       
       if (subdomainLang) {
         // Subdomain explicitly sets language
+        console.log('LanguageContext: Setting language from subdomain:', subdomainLang);
         setLanguage(subdomainLang);
         setIsInitialized(true);
         return;
