@@ -360,7 +360,7 @@ function LandingContent() {
 
             {/* Mobile Layout - pushed down with proper divider lines */}
             <div className="md:hidden flex flex-col items-center gap-0 mt-0" style={{
-            transform: 'translateY(-25px) translateX(2px)'
+            transform: 'translateY(-25px)'
           }}>
               
               {/* Buttons row - with divider line */}
