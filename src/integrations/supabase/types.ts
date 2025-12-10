@@ -2024,6 +2024,7 @@ export type Database = {
           links: Json | null
           name: string
           nationality: string
+          next_program_notes: string | null
           position: string
           preferred_currency: string | null
           representation_status: string | null
@@ -2051,6 +2052,7 @@ export type Database = {
           links?: Json | null
           name: string
           nationality: string
+          next_program_notes?: string | null
           position: string
           preferred_currency?: string | null
           representation_status?: string | null
@@ -2078,6 +2080,7 @@ export type Database = {
           links?: Json | null
           name?: string
           nationality?: string
+          next_program_notes?: string | null
           position?: string
           preferred_currency?: string | null
           representation_status?: string | null
