@@ -19,10 +19,13 @@ import blackMarbleBg from "@/assets/black-marble-menu.png";
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 import { HoverText } from "@/components/HoverText";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
+import { usePlayerTranslations, usePlayerProfileLabel } from "@/hooks/usePlayerTranslations";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const PlayerDetail = () => {
   const { playername } = useParams<{ playername: string }>();
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [currentFormationIndex, setCurrentFormationIndex] = useState(0);
   const [currentVideoType, setCurrentVideoType] = useState<'season' | number>(0);
   const [dbHighlights, setDbHighlights] = useState<any[]>([]);
@@ -37,6 +40,30 @@ const PlayerDetail = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   
   const playerInfoSentinelRef = useRef<HTMLDivElement>(null);
+
+  // Translation hooks
+  const { translatedContent, isTranslating } = usePlayerTranslations({
+    bio: player?.bio || '',
+    position: player?.position || '',
+    playerId: player?.id,
+  });
+  
+  // Label translations
+  const biographyLabel = usePlayerProfileLabel('biography');
+  const readMoreLabel = usePlayerProfileLabel('readMore');
+  const externalLinksLabel = usePlayerProfileLabel('externalLinks');
+  const inNumbersLabel = usePlayerProfileLabel('inNumbers');
+  const seasonStatsLabel = usePlayerProfileLabel('seasonStats');
+  const strengthsLabel = usePlayerProfileLabel('strengths');
+  const schemeHistoryLabel = usePlayerProfileLabel('schemeHistory');
+  const recentMatchesLabel = usePlayerProfileLabel('recentMatches');
+  const backToStarsLabel = usePlayerProfileLabel('backToStars');
+  const enquirePlayerLabel = usePlayerProfileLabel('enquirePlayer');
+  const loadingPlayerLabel = usePlayerProfileLabel('loadingPlayer');
+  const playerNotFoundLabel = usePlayerProfileLabel('playerNotFound');
+  const backToDirectoryLabel = usePlayerProfileLabel('backToDirectory');
+  const highlightsLabel = usePlayerProfileLabel('highlights');
+  const comingSoonLabel = usePlayerProfileLabel('comingSoon');
   
   // Extract video URLs for preloading
   const videoUrls = useMemo(() => 
@@ -184,7 +211,7 @@ const PlayerDetail = () => {
       <div className="min-h-screen bg-background flex flex-col">
         {!isModal && <Header />}
         <div className="flex-shrink-0 text-center py-16">
-          <h1 className="text-2xl font-bold text-foreground">Loading player...</h1>
+          <h1 className="text-2xl font-bold text-foreground">{loadingPlayerLabel}</h1>
         </div>
       </div>
     );
@@ -194,10 +221,10 @@ const PlayerDetail = () => {
     return (
     <div className="min-h-screen bg-background flex flex-col">
       <div className="flex-shrink-0 text-center py-8">
-        <h1 className="text-4xl font-bold text-foreground mb-4">Player Not Found</h1>
+        <h1 className="text-4xl font-bold text-foreground mb-4">{playerNotFoundLabel}</h1>
         <Button onClick={() => navigate("/")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Directory
+          {backToDirectoryLabel}
         </Button>
       </div>
     </div>
@@ -315,7 +342,7 @@ const PlayerDetail = () => {
                 className="group font-bebas uppercase tracking-wider border-primary/30 bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground btn-shine"
               >
                 <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-                <HoverText text="Back to Stars" />
+                <HoverText text={backToStarsLabel} />
               </Button>
               <Button 
                 asChild
@@ -328,7 +355,7 @@ const PlayerDetail = () => {
                   rel="noopener noreferrer"
                 >
                   <MessageCircle className="mr-2 h-4 w-4" />
-                  <HoverText text="Enquire About This Player" />
+                  <HoverText text={enquirePlayerLabel} />
                 </a>
               </Button>
             </div>
@@ -357,7 +384,7 @@ const PlayerDetail = () => {
                 </div>
                 
                 <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none whitespace-nowrap">
-                  {player.position}
+                  {translatedContent.position}
                 </p>
                 
                 <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none flex items-center gap-2 whitespace-nowrap">
@@ -514,7 +541,7 @@ const PlayerDetail = () => {
               {dbHighlights.length > 0 && (
                 <div className="hidden lg:block absolute bottom-[23px] md:bottom-[39px] left-4 z-20 bg-[hsl(var(--gold))]/20 backdrop-blur-sm px-3 py-1.5 rounded-md border border-[hsl(var(--gold))]/40">
                   <p className="text-foreground font-bebas uppercase tracking-wider text-sm md:text-base whitespace-nowrap">
-                    RECENT MATCHES
+                    {recentMatchesLabel.toUpperCase()}
                   </p>
                 </div>
               )}
@@ -525,7 +552,7 @@ const PlayerDetail = () => {
           <div className="mb-12">
             <h2 className="text-3xl font-bebas text-primary uppercase tracking-widest mb-4 flex items-center gap-3">
               <span className="w-12 h-1 bg-primary"></span>
-              Biography
+              {biographyLabel}
               <span className="flex-1 h-1 bg-primary/20"></span>
             </h2>
             <div className="flex gap-6 items-stretch">
@@ -542,14 +569,14 @@ const PlayerDetail = () => {
               {/* Bio - With line breaks preserved and read more */}
               <div className="flex-1">
                 <p className="text-foreground/80 leading-relaxed text-base whitespace-pre-line line-clamp-[12]">
-                  {player.bio}
+                  {isTranslating ? player.bio : translatedContent.bio}
                 </p>
                 {player.bio && player.bio.length > 500 && (
                   <button
                     onClick={() => setBioDialogOpen(true)}
                     className="mt-4 text-primary hover:text-primary/80 font-bebas uppercase text-sm tracking-wider transition-colors"
                   >
-                    Read More
+                    {readMoreLabel}
                   </button>
                 )}
               </div>
@@ -561,12 +588,12 @@ const PlayerDetail = () => {
             <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                  {player.name} - Biography
+                  {player.name} - {biographyLabel}
                 </DialogTitle>
               </DialogHeader>
               <div className="mt-4">
                 <p className="text-foreground/80 leading-relaxed text-base whitespace-pre-line">
-                  {player.bio}
+                  {isTranslating ? player.bio : translatedContent.bio}
                 </p>
               </div>
             </DialogContent>
@@ -576,7 +603,7 @@ const PlayerDetail = () => {
           {player.links && player.links.length > 0 && (
             <div className="mb-12">
               <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-4 text-lg">
-                External Links
+                {externalLinksLabel}
               </h2>
               <div className="flex flex-wrap gap-3">
                 {player.links.map((link: any, index: number) => (
@@ -608,7 +635,7 @@ const PlayerDetail = () => {
             <div className="order-1 lg:hidden">
               <h2 className="text-2xl md:text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
                 <span className="w-8 h-1 bg-primary"></span>
-                In Numbers
+                {inNumbersLabel}
               </h2>
               <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg space-y-6">
                 {player.topStats && player.topStats.length > 0 ? (
@@ -669,7 +696,7 @@ const PlayerDetail = () => {
               <div className="order-2 lg:order-1">
                 <h2 className="text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
                   <span className="w-12 h-1 bg-primary"></span>
-                  Season Stats
+                  {seasonStatsLabel}
                   <span className="flex-1 h-1 bg-primary/20"></span>
                 </h2>
                 <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
@@ -702,7 +729,7 @@ const PlayerDetail = () => {
                 <div>
                   <h2 className="text-2xl md:text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
                     <span className="w-8 h-1 bg-primary"></span>
-                    In Numbers
+                    {inNumbersLabel}
                   </h2>
                   <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg space-y-6">
                     {player.topStats && player.topStats.length > 0 ? (
@@ -763,7 +790,7 @@ const PlayerDetail = () => {
                   <div>
                     <h2 className="text-2xl md:text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
                       <span className="w-8 h-1 bg-primary"></span>
-                      Strengths & Play Style
+                      {strengthsLabel} & Play Style
                     </h2>
                     <div className="group relative overflow-hidden rounded-xl border-2 border-[hsl(var(--gold))]/30 bg-gradient-to-br from-secondary/40 via-secondary/30 to-secondary/20 backdrop-blur-sm p-8 transition-all duration-300 hover:border-[hsl(var(--gold))]/60 hover:shadow-[0_0_30px_rgba(212,175,55,0.15)]">
                       <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--gold))]/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -786,7 +813,7 @@ const PlayerDetail = () => {
                 <div>
                   <h2 className="text-2xl md:text-3xl font-bebas text-primary uppercase tracking-widest mb-6 flex items-center gap-3">
                     <span className="w-8 h-1 bg-primary"></span>
-                    Scheme History
+                    {schemeHistoryLabel}
                   </h2>
                   <div className="bg-secondary/30 backdrop-blur-sm p-6 rounded-lg">
                     <div className="flex items-center justify-center gap-4 mb-4">
