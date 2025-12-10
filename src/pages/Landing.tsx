@@ -7,7 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { HomeBackground } from "@/components/HomeBackground";
 import { LightConeBackground } from "@/components/LightConeBackground";
 import { XRayProvider, useXRay } from "@/contexts/XRayContext";
-
+import { LandingCursor } from "@/components/LandingCursor";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
 import { Button } from "@/components/ui/button";
@@ -165,6 +165,8 @@ function LandingContent() {
       {/* Dev Mode Coordinate Overlay - REMOVE BEFORE PUBLISHING */}
       <CoordinateOverlay enabled={true} />
       
+      {/* Custom Landing Page Cursor */}
+      <LandingCursor />
       
       {/* Data-driven Background */}
       <HomeBackground />
