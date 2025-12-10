@@ -197,9 +197,9 @@ function LandingContent() {
       
       {/* DECLARE INTEREST - Fixed position on LEFT side of cone */}
       <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
-        left: '25%',
+        left: '26%',
         top: '78%',
-        transform: `translate(-50%, -50%) rotate(-${coneAngle - 0.2}deg)`
+        transform: `translate(-50%, -50%) rotate(-${coneAngle - 0.4}deg)`
       }}>
         <Button 
           onClick={() => setShowDeclareInterest(true)} 
@@ -211,16 +211,16 @@ function LandingContent() {
           {t("landing.declare_interest", "Declare Interest In Star")}
         </Button>
         {/* Temp angle indicator */}
-        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-primary text-xs font-mono whitespace-nowrap" style={{ transform: `translateX(-50%) rotate(${coneAngle - 0.2}deg)` }}>
-          -{(coneAngle - 0.2).toFixed(1)}°
+        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-primary text-xs font-mono whitespace-nowrap" style={{ transform: `translateX(-50%) rotate(${coneAngle - 0.4}deg)` }}>
+          -{(coneAngle - 0.4).toFixed(1)}°
         </span>
       </div>
       
       {/* REPRESENT ME - Fixed position on RIGHT side of cone */}
       <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
-        left: '73.6%',
+        left: '72.6%',
         top: '78%',
-        transform: `translate(-50%, -50%) rotate(${coneAngle - 0.2}deg)`
+        transform: `translate(-50%, -50%) rotate(${coneAngle - 0.4}deg)`
       }}>
         <Button 
           onClick={() => setShowRepresentation(true)} 
@@ -233,8 +233,8 @@ function LandingContent() {
           {t("landing.represent_me", "Represent Me")}
         </Button>
         {/* Temp angle indicator */}
-        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-primary text-xs font-mono whitespace-nowrap" style={{ transform: `translateX(-50%) rotate(-${coneAngle - 0.2}deg)` }}>
-          +{(coneAngle - 0.2).toFixed(1)}°
+        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-primary text-xs font-mono whitespace-nowrap" style={{ transform: `translateX(-50%) rotate(-${coneAngle - 0.4}deg)` }}>
+          +{(coneAngle - 0.4).toFixed(1)}°
         </span>
       </div>
       
