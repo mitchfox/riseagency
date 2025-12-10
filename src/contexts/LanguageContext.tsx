@@ -135,6 +135,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [translations, setTranslations] = useState<Map<string, string>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [translationsLoaded, setTranslationsLoaded] = useState(false);
 
   // Initialize language on mount
   useEffect(() => {
@@ -187,6 +188,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     
     async function fetchTranslations() {
       setIsLoading(true);
+      setTranslationsLoaded(false);
       try {
         const { data, error } = await supabase
           .from('translations')
@@ -194,6 +196,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
         if (error) {
           console.error('Error fetching translations:', error);
+          // Still mark as loaded to prevent infinite loading
+          setTranslationsLoaded(true);
           return;
         }
 
@@ -208,8 +212,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         });
 
         setTranslations(translationMap);
+        setTranslationsLoaded(true);
       } catch (err) {
         console.error('Failed to fetch translations:', err);
+        setTranslationsLoaded(true);
       } finally {
         setIsLoading(false);
       }
@@ -293,8 +299,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     window.location.href = newUrl;
   }, []);
 
-  // Don't render children until language is initialized to prevent flash of English content
-  if (!isInitialized) {
+  // Don't render children until language is initialized AND translations are loaded
+  if (!isInitialized || !translationsLoaded) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
