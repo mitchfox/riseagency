@@ -260,8 +260,8 @@ function LandingContent() {
       </div>
       
       {/* Language Selector - Mobile only */}
-      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+80px)]" style={{
-        left: 'calc(50% - 3px)'
+      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+120px)]" style={{
+        left: 'calc(50% - 1px)'
       }}>
         <div className="transform -translate-x-1/2 -translate-y-1/2 scale-[1.2]">
           <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
@@ -354,12 +354,12 @@ function LandingContent() {
 
             {/* Mobile Layout - pushed down with proper divider lines */}
             <div className="md:hidden flex flex-col items-center gap-0 mt-0" style={{
-            transform: 'translateY(-25px)'
+            transform: 'translateY(-25px) translateX(2px)'
           }}>
               
               {/* Buttons row - with divider line */}
               <div className="border-t border-primary/40 pt-1 pb-1 flex justify-center" style={{
-              width: '45%'
+              width: '42%'
             }}>
                 <div className="flex gap-1.5">
                   <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-[10px] px-2 h-5" hoverEffect>
@@ -373,7 +373,7 @@ function LandingContent() {
               
               {/* Top row: Players, Coaches, Clubs - with divider */}
               <div className="border-t border-primary/40 pt-0.5 pb-0.5" style={{
-              width: '65%'
+              width: '60%'
             }}>
                 <nav className="flex items-center justify-center gap-1">
                   {mobileNavLinks.slice(0, 3).map((link, index) => <div key={link.to} className="flex items-center">
@@ -387,7 +387,7 @@ function LandingContent() {
               
               {/* Bottom row: Agents, Scouts, Business, Media - widest */}
               <div className="border-t border-primary/40 pt-0.5" style={{
-              width: '88%'
+              width: '82%'
             }}>
                 <nav className="flex items-center justify-center gap-1">
                   {mobileNavLinks.slice(3).map((link, index) => <div key={link.to} className="flex items-center">
