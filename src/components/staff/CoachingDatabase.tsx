@@ -21,7 +21,7 @@ import { PositionalGuides } from "./PositionalGuides";
 import { MarkdownText } from "@/utils/markdownRenderer";
 
 
-type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides';
+type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides';
 
 interface Exercise {
   name: string;
@@ -102,6 +102,13 @@ const tableConfigs = {
     fields: ['title', 'description', 'content', 'analysis_type', 'category'],
     icon: Database,
     color: 'cyan',
+  },
+  coaching_concepts: {
+    label: 'Concepts',
+    singular: 'Concept',
+    fields: ['title', 'description', 'content', 'category'],
+    icon: BookOpen,
+    color: 'violet',
   },
   psychological_sessions: {
     label: 'Psychological Sessions',
@@ -258,8 +265,11 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
     }
     
     try {
+      // Map coaching_concepts to coaching_analysis table
+      const tableName = activeTab === 'coaching_concepts' ? 'coaching_analysis' : activeTab;
+      
       const { data, error } = await supabase
-        .from(activeTab)
+        .from(tableName as any)
         .select('category, tags');
 
       if (error) throw error;
@@ -269,7 +279,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
       const uniquePositions = new Set<string>();
       const uniqueSkills = new Set<string>();
       
-      data?.forEach(item => {
+      (data as any[])?.forEach(item => {
         if (item.category) uniqueCategories.add(item.category);
         if (item.tags && Array.isArray(item.tags)) {
           if (activeTab === 'coaching_exercises') {
@@ -303,8 +313,11 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
     
     setLoading(true);
     try {
+      // Map coaching_concepts to coaching_analysis table
+      const tableName = activeTab === 'coaching_concepts' ? 'coaching_analysis' : activeTab;
+      
       let query: any = supabase
-        .from(activeTab as any)
+        .from(tableName as any)
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
 
@@ -332,6 +345,12 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         if (selectedCategory !== 'all') {
           query = query.eq('category', selectedCategory);
         }
+      } else if (activeTab === 'coaching_analysis') {
+        // Analysis tab shows non-concept items
+        query = query.or('analysis_type.is.null,analysis_type.neq.concept');
+      } else if (activeTab === 'coaching_concepts') {
+        // Concepts tab shows only concept items
+        query = query.eq('analysis_type', 'concept');
       }
 
       // Apply pagination
@@ -591,6 +610,9 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
     setLoading(true);
 
     try {
+      // Map coaching_concepts to coaching_analysis table
+      const tableName = activeTab === 'coaching_concepts' ? 'coaching_analysis' : activeTab;
+      
       // Create a clean copy of formData with only the fields we need for each table type
       const dataToSubmit: any = {};
       
@@ -628,6 +650,13 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         if (formData.is_own_video !== undefined) dataToSubmit.is_own_video = formData.is_own_video;
         if (formData.tags) dataToSubmit.tags = formData.tags;
         if (formData.attachments) dataToSubmit.attachments = formData.attachments;
+      } else if (activeTab === 'coaching_concepts') {
+        // For concepts, set analysis_type to 'concept'
+        dataToSubmit.title = formData.title;
+        if (formData.description) dataToSubmit.description = formData.description;
+        if (formData.content) dataToSubmit.content = formData.content;
+        if (formData.category) dataToSubmit.category = formData.category;
+        dataToSubmit.analysis_type = 'concept';
       } else {
         // For other tables, include all fields
         Object.assign(dataToSubmit, formData);
@@ -635,7 +664,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
       
       if (editingItem) {
         const { error } = await supabase
-          .from(activeTab as any)
+          .from(tableName as any)
           .update(dataToSubmit)
           .eq('id', editingItem.id);
 
@@ -643,7 +672,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         toast.success('Item updated successfully');
       } else {
         const { error } = await supabase
-          .from(activeTab as any)
+          .from(tableName as any)
           .insert(dataToSubmit);
 
         if (error) throw error;
@@ -682,8 +711,11 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
 
     setLoading(true);
     try {
+      // Map coaching_concepts to coaching_analysis table
+      const tableName = activeTab === 'coaching_concepts' ? 'coaching_analysis' : activeTab;
+      
       const { error } = await supabase
-        .from(activeTab as any)
+        .from(tableName as any)
         .delete()
         .eq('id', id);
 
@@ -931,7 +963,24 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                         <Upload className="w-4 h-4 mr-2" />
                         {Object.keys(uploadProgress).length > 0 ? 'Uploading...' : 'Upload PDFs'}
                       </Button>
+                      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button onClick={resetForm} variant="outline" className="w-full sm:w-auto">
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Manually
+                          </Button>
+                        </DialogTrigger>
+                      </Dialog>
                     </>
+                  ) : key === 'coaching_concepts' ? (
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button onClick={resetForm} className="w-full sm:w-auto">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Concept
+                        </Button>
+                      </DialogTrigger>
+                    </Dialog>
                   ) : (
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                       <DialogTrigger asChild>
@@ -1030,6 +1079,48 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                                 </label>
                               ))}
                             </div>
+                          </div>
+                        </>
+                      ) : activeTab === 'coaching_concepts' ? (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="title">Title *</Label>
+                            <Input
+                              id="title"
+                              value={formData.title}
+                              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                              placeholder="Concept title"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                              id="description"
+                              value={formData.description}
+                              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                              placeholder="Brief description"
+                              rows={2}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="content">Content</Label>
+                            <Textarea
+                              id="content"
+                              value={formData.content}
+                              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                              placeholder="Full concept content..."
+                              rows={6}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="category">Category</Label>
+                            <Input
+                              id="category"
+                              value={formData.category}
+                              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                              placeholder="Category (optional)"
+                            />
                           </div>
                         </>
                       ) : (
