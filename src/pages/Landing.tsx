@@ -268,8 +268,8 @@ function LandingContent() {
       </div>
       
       {/* Language Selector - Mobile only */}
-      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+130px)] flex flex-col items-center" style={{
-        left: 'calc(50% - 17px)'
+      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+132px)] flex flex-col items-center" style={{
+        left: 'calc(50% - 19px)'
       }}>
         <div className="transform -translate-x-1/2 -translate-y-1/2 scale-[1.2]">
           <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
@@ -562,13 +562,14 @@ function RoleSlider({
   // Calculate current thumb position - use center when no selection
   const thumbPosition = dragPosition !== null ? dragPosition : getPositionFromIndex(selectedIndex !== null ? selectedIndex : centerIndex);
   return <div className="flex flex-col items-center" style={{
-    paddingTop: '35px'
+    paddingTop: '35px',
+    transform: 'translateX(-2px)'
   }}>
       {/* Unified Slider Container - all elements in one parent */}
       <div className="relative" style={{
-      width: '85%',
-      paddingLeft: '100px',
-      paddingRight: '100px'
+      width: '90%',
+      paddingLeft: '80px',
+      paddingRight: '80px'
     }}>
         
         {/* Buttons moved to fixed positions at top of component */}
