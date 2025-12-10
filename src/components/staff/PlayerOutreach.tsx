@@ -66,7 +66,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   });
 
   // Staff can also edit (not just admins)
-  const canEdit = isAdmin;
+  const canEdit = true;
 
   useEffect(() => {
     fetchData();
@@ -204,18 +204,60 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
-  const toggleYouthField = (id: string, field: keyof Pick<YouthOutreach, 'messaged' | 'response_received' | 'parent_approval'>) => {
-    setYouthData(prev => prev.map(item => 
-      item.id === id ? { ...item, [field]: !item[field] } : item
+  const toggleYouthField = async (id: string, field: keyof Pick<YouthOutreach, 'messaged' | 'response_received' | 'parent_approval'>) => {
+    const item = youthData.find(i => i.id === id);
+    if (!item) return;
+    
+    const newValue = !item[field];
+    
+    // Update local state immediately
+    setYouthData(prev => prev.map(i => 
+      i.id === id ? { ...i, [field]: newValue } : i
     ));
-    setHasUnsavedChanges(true);
+    
+    // Auto-save to database
+    try {
+      const { error } = await supabase
+        .from("player_outreach_youth")
+        .update({ [field]: newValue })
+        .eq("id", id);
+      if (error) throw error;
+    } catch (error: any) {
+      console.error("Error saving:", error);
+      toast.error("Failed to save");
+      // Revert on error
+      setYouthData(prev => prev.map(i => 
+        i.id === id ? { ...i, [field]: !newValue } : i
+      ));
+    }
   };
 
-  const toggleProField = (id: string, field: keyof Pick<ProOutreach, 'messaged' | 'response_received'>) => {
-    setProData(prev => prev.map(item => 
-      item.id === id ? { ...item, [field]: !item[field] } : item
+  const toggleProField = async (id: string, field: keyof Pick<ProOutreach, 'messaged' | 'response_received'>) => {
+    const item = proData.find(i => i.id === id);
+    if (!item) return;
+    
+    const newValue = !item[field];
+    
+    // Update local state immediately
+    setProData(prev => prev.map(i => 
+      i.id === id ? { ...i, [field]: newValue } : i
     ));
-    setHasUnsavedChanges(true);
+    
+    // Auto-save to database
+    try {
+      const { error } = await supabase
+        .from("player_outreach_pro")
+        .update({ [field]: newValue })
+        .eq("id", id);
+      if (error) throw error;
+    } catch (error: any) {
+      console.error("Error saving:", error);
+      toast.error("Failed to save");
+      // Revert on error
+      setProData(prev => prev.map(i => 
+        i.id === id ? { ...i, [field]: !newValue } : i
+      ));
+    }
   };
 
   const handleEdit = (item: YouthOutreach | ProOutreach, type: 'youth' | 'pro') => {
