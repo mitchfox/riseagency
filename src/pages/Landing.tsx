@@ -199,7 +199,7 @@ function LandingContent() {
       <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
         left: '25%',
         top: '78%',
-        transform: `translate(-50%, -50%) rotate(-${coneAngle}deg)`
+        transform: `translate(-50%, -50%) rotate(-${coneAngle - 0.2}deg)`
       }}>
         <Button 
           onClick={() => setShowDeclareInterest(true)} 
@@ -211,8 +211,8 @@ function LandingContent() {
           {t("landing.declare_interest", "Declare Interest In Star")}
         </Button>
         {/* Temp angle indicator */}
-        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-primary text-xs font-mono whitespace-nowrap" style={{ transform: `translateX(-50%) rotate(${coneAngle}deg)` }}>
-          -{coneAngle.toFixed(1)}°
+        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-primary text-xs font-mono whitespace-nowrap" style={{ transform: `translateX(-50%) rotate(${coneAngle - 0.2}deg)` }}>
+          -{(coneAngle - 0.2).toFixed(1)}°
         </span>
       </div>
       
@@ -220,7 +220,7 @@ function LandingContent() {
       <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
         left: '75%',
         top: '78%',
-        transform: `translate(-50%, -50%) rotate(${coneAngle - 3}deg)`
+        transform: `translate(-50%, -50%) rotate(${coneAngle - 0.2}deg)`
       }}>
         <Button 
           onClick={() => setShowRepresentation(true)} 
@@ -233,8 +233,8 @@ function LandingContent() {
           {t("landing.represent_me", "Represent Me")}
         </Button>
         {/* Temp angle indicator */}
-        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-primary text-xs font-mono whitespace-nowrap" style={{ transform: `translateX(-50%) rotate(-${coneAngle - 3}deg)` }}>
-          +{(coneAngle - 3).toFixed(1)}°
+        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-primary text-xs font-mono whitespace-nowrap" style={{ transform: `translateX(-50%) rotate(-${coneAngle - 0.2}deg)` }}>
+          +{(coneAngle - 0.2).toFixed(1)}°
         </span>
       </div>
       
