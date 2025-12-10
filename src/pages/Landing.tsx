@@ -561,15 +561,28 @@ function RoleSlider({
 
   // Calculate current thumb position - use center when no selection
   const thumbPosition = dragPosition !== null ? dragPosition : getPositionFromIndex(selectedIndex !== null ? selectedIndex : centerIndex);
+  // Detect tablet screen
+  const [isTablet, setIsTablet] = useState(false);
+  
+  useEffect(() => {
+    const checkTablet = () => {
+      const width = window.innerWidth;
+      setIsTablet(width >= 768 && width < 1024);
+    };
+    checkTablet();
+    window.addEventListener('resize', checkTablet);
+    return () => window.removeEventListener('resize', checkTablet);
+  }, []);
+
   return <div className="flex flex-col items-center" style={{
     paddingTop: '35px',
     transform: 'translateX(-2px)'
   }}>
       {/* Unified Slider Container - all elements in one parent */}
       <div className="relative" style={{
-      width: '85%',
-      paddingLeft: '100px',
-      paddingRight: '100px'
+      width: isTablet ? '95%' : '85%',
+      paddingLeft: isTablet ? '40px' : '100px',
+      paddingRight: isTablet ? '40px' : '100px'
     }}>
         
         {/* Buttons moved to fixed positions at top of component */}
