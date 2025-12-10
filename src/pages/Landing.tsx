@@ -446,6 +446,7 @@ function RoleSlider({
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState<number | null>(null); // percentage position while dragging
   const [isAnimatingBack, setIsAnimatingBack] = useState(false);
+  const [nearestSnapIndex, setNearestSnapIndex] = useState<number | null>(null); // track nearest snap point during drag
   const sliderRef = useRef<HTMLDivElement>(null);
   const centerIndex = 3; // Center position for snap-back
 
@@ -483,6 +484,7 @@ function RoleSlider({
     e.stopPropagation();
     setIsDragging(true);
     setDragPosition(getPositionFromIndex(centerIndex));
+    setNearestSnapIndex(null);
   };
   const handleTrackClick = (e: React.MouseEvent) => {
     if (isDragging) return;
@@ -497,12 +499,22 @@ function RoleSlider({
   };
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
-    const percentage = getPercentageFromClientX(e.clientX);
-    setDragPosition(percentage);
+    const { index, isSnapped } = getIndexFromPosition(e.clientX);
+    
+    // If near a snap point, snap visually to it
+    if (isSnapped) {
+      setDragPosition(getPositionFromIndex(index));
+      setNearestSnapIndex(index);
+    } else {
+      const percentage = getPercentageFromClientX(e.clientX);
+      setDragPosition(percentage);
+      setNearestSnapIndex(null);
+    }
   }, [isDragging]);
   const handleMouseUp = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     setIsDragging(false);
+    setNearestSnapIndex(null);
     const {
       index,
       isSnapped
@@ -564,13 +576,20 @@ function RoleSlider({
             // Offset in px: 0 at center, positive (down) toward ends - extended to 63px to align with instruction text
             const yOffset = (distanceFromCenter / maxDistance) * 63;
             
+            const isHovered = hoveredIndex === index || nearestSnapIndex === index;
+            const isSelected = selectedIndex === index;
+            
             return (
               <button 
                 key={link.to} 
                 onClick={() => handleRoleClick(index)}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
-                className={`text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 hover:text-primary ${selectedIndex === index ? 'text-primary' : 'text-white/40'}`}
+                className={`text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 ${
+                  isSelected ? 'text-primary font-bold' : 
+                  isHovered ? 'text-primary font-bold' : 
+                  'text-white/40'
+                }`}
                 style={{ transform: `translateY(${yOffset}px)` }}
               >
                 {t(link.labelKey, link.fallback)}
@@ -699,12 +718,16 @@ function RoleSlider({
         {/* Instruction text - shows hovered role name or default */}
         <div className="text-center" style={{ marginTop: '-8px' }}>
           {hoveredIndex !== null ? (
-            <span className="text-lg font-bebas uppercase tracking-[0.15em] text-primary transition-all duration-200">
+            <span className="text-lg font-bebas font-bold uppercase tracking-[0.15em] text-primary transition-all duration-200">
               {t(navLinks[hoveredIndex].labelKey, navLinks[hoveredIndex].fallback)}
+            </span>
+          ) : nearestSnapIndex !== null ? (
+            <span className="text-lg font-bebas font-bold uppercase tracking-[0.15em] text-primary transition-all duration-200">
+              {t(navLinks[nearestSnapIndex].labelKey, navLinks[nearestSnapIndex].fallback)}
             </span>
           ) : (
             <span className="text-[10px] font-bebas uppercase tracking-[0.25em] text-white/30">
-              {isDragging ? 'Release to enter' : 'Drag slider to select role'}
+              {isDragging ? 'Drag to a role to select' : 'Drag slider to select role'}
             </span>
           )}
         </div>
