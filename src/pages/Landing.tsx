@@ -199,7 +199,7 @@ function LandingContent() {
       <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
         left: '26%',
         top: '78%',
-        transform: `translate(-50%, -50%) rotate(-${coneAngle - 0.4}deg)`
+        transform: `translate(-50%, -50%) rotate(-${coneAngle - 0.3}deg)`
       }}>
         <Button 
           onClick={() => setShowDeclareInterest(true)} 
@@ -210,17 +210,13 @@ function LandingContent() {
         >
           {t("landing.declare_interest", "Declare Interest In Star")}
         </Button>
-        {/* Temp angle indicator */}
-        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-primary text-xs font-mono whitespace-nowrap" style={{ transform: `translateX(-50%) rotate(${coneAngle - 0.4}deg)` }}>
-          -{(coneAngle - 0.4).toFixed(1)}°
-        </span>
       </div>
       
       {/* REPRESENT ME - Fixed position on RIGHT side of cone */}
       <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
         left: '72.6%',
         top: '78%',
-        transform: `translate(-50%, -50%) rotate(${coneAngle - 0.4}deg)`
+        transform: `translate(-50%, -50%) rotate(${coneAngle - 0.3}deg)`
       }}>
         <Button 
           onClick={() => setShowRepresentation(true)} 
@@ -232,10 +228,6 @@ function LandingContent() {
         >
           {t("landing.represent_me", "Represent Me")}
         </Button>
-        {/* Temp angle indicator */}
-        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-primary text-xs font-mono whitespace-nowrap" style={{ transform: `translateX(-50%) rotate(-${coneAngle - 0.4}deg)` }}>
-          +{(coneAngle - 0.4).toFixed(1)}°
-        </span>
       </div>
       
       {/* Top Center Logo - disappears on xray or when hovering REALISE POTENTIAL area */}
@@ -247,7 +239,7 @@ function LandingContent() {
       </div>
       
       {/* Hidden text revealed by X-ray - REALISE POTENTIAL - hidden until hover */}
-      <div className="absolute left-1/2 transform -translate-x-1/2 z-[60] opacity-0 hover:opacity-100 transition-opacity duration-500" style={{
+      <div className="absolute left-1/2 transform -translate-x-1/2 z-[4] opacity-0 hover:opacity-100 transition-opacity duration-500" style={{
       top: 'calc(4rem - 50px)'
     }} onMouseEnter={() => setTopLogoHovered(true)} onMouseLeave={() => setTopLogoHovered(false)}>
         <span className="font-bebas text-4xl md:text-6xl lg:text-7xl tracking-[0.3em] text-white/90 uppercase whitespace-nowrap">
@@ -258,7 +250,7 @@ function LandingContent() {
       
       {/* Language Selector - fixed position, centered horizontally, above the menu slider */}
       <div className="hidden md:flex fixed z-[50] pointer-events-auto items-center justify-center" style={{
-        left: 'calc(50% - 12px)',
+        left: 'calc(50% - 10px)',
         bottom: '164px',
         transform: 'translateX(-50%)'
       }}>
