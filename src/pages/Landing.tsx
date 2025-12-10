@@ -210,6 +210,10 @@ function LandingContent() {
         >
           {t("landing.declare_interest", "Declare Interest In Star")}
         </Button>
+        {/* Temp angle indicator */}
+        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-primary text-xs font-mono whitespace-nowrap" style={{ transform: `translateX(-50%) rotate(${coneAngle}deg)` }}>
+          -{coneAngle.toFixed(1)}°
+        </span>
       </div>
       
       {/* REPRESENT ME - Fixed position on RIGHT side of cone */}
@@ -228,6 +232,10 @@ function LandingContent() {
         >
           {t("landing.represent_me", "Represent Me")}
         </Button>
+        {/* Temp angle indicator */}
+        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-primary text-xs font-mono whitespace-nowrap" style={{ transform: `translateX(-50%) rotate(-${coneAngle - 3}deg)` }}>
+          +{(coneAngle - 3).toFixed(1)}°
+        </span>
       </div>
       
       {/* Top Center Logo - disappears on xray or when hovering REALISE POTENTIAL area */}
@@ -250,8 +258,8 @@ function LandingContent() {
       
       {/* Language Selector - fixed position, centered horizontally, above the menu slider */}
       <div className="hidden md:flex fixed z-[50] pointer-events-auto items-center justify-center" style={{
-        left: 'calc(50% - 4px)',
-        bottom: '192px',
+        left: 'calc(50% - 8px)',
+        bottom: '164px',
         transform: 'translateX(-50%)'
       }}>
         <div className="scale-[1.5]">
