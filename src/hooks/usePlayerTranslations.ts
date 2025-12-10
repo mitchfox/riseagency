@@ -600,13 +600,10 @@ export function usePlayerProfileLabel(key: keyof typeof playerProfileLabels): st
   const label = useMemo(() => {
     const translations = playerProfileLabels[key];
     if (!translations) {
-      console.warn(`Missing translation key: ${key}`);
       return key;
     }
     const langKey = language as LanguageCode;
-    const result = translations[langKey] || translations.en || key;
-    console.log(`Translation [${key}] for lang [${language}]:`, result);
-    return result;
+    return translations[langKey] || translations.en || key;
   }, [key, language]);
   
   return label;

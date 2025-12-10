@@ -24,7 +24,7 @@ const subdomainComponents: Record<string, React.ComponentType> = {
 };
 
 // Language subdomains should not trigger role-based rendering
-const languageSubdomains = ['es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'cz', 'ru', 'tr'];
+const languageSubdomains = ['en', 'es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'cz', 'ru', 'tr'];
 
 const getSubdomain = (): string | null => {
   const hostname = window.location.hostname;
