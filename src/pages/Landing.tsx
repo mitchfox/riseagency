@@ -263,11 +263,22 @@ function LandingContent() {
       </div>
       
       
-      {/* Language Selector - centered on page, moved down 170px on desktop, higher on mobile */}
-      <div className="absolute z-[50] pointer-events-auto top-[calc(50%+80px)] md:top-[calc(50%+166px)]" style={{
-      left: 'calc(50% - 3px)'
-    }}>
-        <div className="transform -translate-x-1/2 -translate-y-1/2 scale-[1.2] md:scale-[1.5]">
+      {/* Language Selector - fixed position, centered horizontally, above the menu slider */}
+      <div className="hidden md:flex fixed z-[50] pointer-events-auto items-center justify-center" style={{
+        left: '50%',
+        bottom: '220px',
+        transform: 'translateX(-50%)'
+      }}>
+        <div className="scale-[1.5]">
+          <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
+        </div>
+      </div>
+      
+      {/* Language Selector - Mobile only */}
+      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+80px)]" style={{
+        left: 'calc(50% - 3px)'
+      }}>
+        <div className="transform -translate-x-1/2 -translate-y-1/2 scale-[1.2]">
           <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
         </div>
       </div>
