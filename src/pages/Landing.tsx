@@ -261,8 +261,8 @@ function LandingContent() {
       </div>
       
       {/* Language Selector - Mobile only */}
-      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+120px)]" style={{
-        left: 'calc(50% - 1px)'
+      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+122px)]" style={{
+        left: 'calc(50% - 3px)'
       }}>
         <div className="transform -translate-x-1/2 -translate-y-1/2 scale-[1.2]">
           <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
@@ -283,8 +283,8 @@ function LandingContent() {
       {!languagePopupOpen && <div className="absolute inset-0 md:inset-0 pointer-events-none z-[5]" style={{
       transform: 'translateX(-39px) translateY(-28px)'
     }}>
-          {/* Mobile wrapper to shift player down 32px and right 8px - extend beyond bounds */}
-          <div className="md:hidden absolute -inset-x-8 -inset-y-8" style={{ transform: 'translateY(60px) translateX(8px)' }}>
+          {/* Mobile wrapper to shift player down and right - extend beyond bounds */}
+          <div className="md:hidden absolute -inset-x-8 -inset-y-8" style={{ transform: 'translateY(60px) translateX(32px)' }}>
             <LazyPlayer3D className="pointer-events-none" />
           </div>
           {/* Desktop/tablet version - unchanged */}
@@ -360,7 +360,7 @@ function LandingContent() {
 
             {/* Mobile Layout - pushed down with proper divider lines */}
             <div className="md:hidden flex flex-col items-center gap-0 mt-0" style={{
-            transform: 'translateY(-25px)'
+            transform: 'translateY(-25px) translateX(-2px)'
           }}>
               
               {/* Buttons row - with divider line */}
