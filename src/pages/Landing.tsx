@@ -26,11 +26,33 @@ function LandingContent() {
   const [showRepresentation, setShowRepresentation] = useState(false);
   const [showDeclareInterest, setShowDeclareInterest] = useState(false);
   const [topLogoHovered, setTopLogoHovered] = useState(false);
+  const [coneAngle, setConeAngle] = useState(26); // Dynamic angle based on viewport
   const {
     setXrayState,
     xrayState
   } = useXRay();
   const lastInteractionRef = useRef(0);
+
+  // Calculate cone angle based on viewport aspect ratio
+  // Cone apex at (49.3%, 65%), edges go to (-0.7%, 100%) and (99.3%, 100%)
+  useEffect(() => {
+    const calculateConeAngle = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      // Horizontal distance from apex to edge: 50% of viewport width
+      const horizontalPx = 0.50 * vw;
+      // Vertical distance: 35% of viewport height (from 65% to 100%)
+      const verticalPx = 0.35 * vh;
+      // Calculate angle in degrees
+      const angleRad = Math.atan2(verticalPx, horizontalPx);
+      const angleDeg = (angleRad * 180) / Math.PI;
+      setConeAngle(angleDeg);
+    };
+
+    calculateConeAngle();
+    window.addEventListener('resize', calculateConeAngle);
+    return () => window.removeEventListener('resize', calculateConeAngle);
+  }, []);
   const navigateToRole = (path: string) => {
     const role = pathToRole[path];
     if (role) {
@@ -177,10 +199,10 @@ function LandingContent() {
       <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
         left: '25%',
         top: '78%',
-        transform: 'translate(-50%, -50%) rotate(-26deg)'
+        transform: `translate(-50%, -50%) rotate(-${coneAngle}deg)`
       }}>
         {/* Temporary Arrow Indicator - REMOVE LATER */}
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ transform: 'rotate(26deg)' }}>
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ transform: `rotate(${coneAngle}deg)` }}>
           <span className="text-primary text-xs font-mono mb-1">DECLARE INTEREST</span>
           <svg className="w-6 h-10 text-primary animate-bounce" fill="none" viewBox="0 0 24 40">
             <path d="M12 0v32M12 32l-8-8M12 32l8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -201,10 +223,10 @@ function LandingContent() {
       <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
         left: '75%',
         top: '78%',
-        transform: 'translate(-50%, -50%) rotate(26deg)'
+        transform: `translate(-50%, -50%) rotate(${coneAngle}deg)`
       }}>
         {/* Temporary Arrow Indicator - REMOVE LATER */}
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ transform: 'rotate(-26deg)' }}>
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ transform: `rotate(-${coneAngle}deg)` }}>
           <span className="text-primary text-xs font-mono mb-1">REPRESENT ME</span>
           <svg className="w-6 h-10 text-primary animate-bounce" fill="none" viewBox="0 0 24 40">
             <path d="M12 0v32M12 32l-8-8M12 32l8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
