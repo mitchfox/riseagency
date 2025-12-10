@@ -567,9 +567,9 @@ function RoleSlider({
   }}>
       {/* Unified Slider Container - all elements in one parent */}
       <div className="relative" style={{
-      width: '90%',
-      paddingLeft: '80px',
-      paddingRight: '80px'
+      width: '85%',
+      paddingLeft: '100px',
+      paddingRight: '100px'
     }}>
         
         {/* Buttons moved to fixed positions at top of component */}
