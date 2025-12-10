@@ -281,8 +281,8 @@ function LandingContent() {
             </div>
 
             {/* Mobile Layout - pushed down with proper divider lines */}
-            <div className="md:hidden flex flex-col items-center gap-0 mt-4" style={{
-            transform: 'translateY(5px)'
+            <div className="md:hidden flex flex-col items-center gap-0 mt-0" style={{
+            transform: 'translateY(-25px)'
           }}>
               
               {/* Buttons row - with divider line */}
