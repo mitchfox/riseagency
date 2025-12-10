@@ -12,8 +12,6 @@ import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
 import { Button } from "@/components/ui/button";
 import { useRoleSubdomain, pathToRole, RoleSubdomain } from "@/hooks/useRoleSubdomain";
-import { CoordinateOverlay } from "@/components/dev/CoordinateOverlay";
-import { useDevMode } from "@/hooks/useDevMode";
 import riseLogoWhite from "@/assets/logo.png";
 // Inner component that uses the XRay context for full-page tracking
 function LandingContent() {
@@ -23,7 +21,7 @@ function LandingContent() {
   const {
     getRoleUrl
   } = useRoleSubdomain();
-  const isDevMode = useDevMode();
+  
   const [languagePopupOpen, setLanguagePopupOpen] = useState(false);
   const [showRepresentation, setShowRepresentation] = useState(false);
   const [showDeclareInterest, setShowDeclareInterest] = useState(false);
@@ -162,8 +160,6 @@ function LandingContent() {
     height: '100dvh',
     maxHeight: '100dvh'
   }}>
-      {/* Dev Mode Coordinate Overlay - REMOVE BEFORE PUBLISHING */}
-      <CoordinateOverlay enabled={true} />
       
       {/* Custom Landing Page Cursor */}
       <LandingCursor />
