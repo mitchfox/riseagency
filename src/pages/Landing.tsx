@@ -233,10 +233,17 @@ function LandingContent() {
       
       {/* Top Center Logo - disappears on xray or when hovering REALISE POTENTIAL area */}
       <div className={`absolute top-4 md:top-6 z-[4] transition-opacity duration-500 ${xrayState.isActive || topLogoHovered ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
-      left: 'calc(50% - 16px)',
+      left: 'calc(50% - 4px)',
       transform: 'translateX(-50%)'
     }}>
-        <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[42px] md:h-[55px] w-auto" loading="eager" fetchPriority="high" />
+        {/* Desktop position adjustment */}
+        <div className="hidden md:block" style={{ transform: 'translateX(-12px)' }}>
+          <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[55px] w-auto" loading="eager" fetchPriority="high" />
+        </div>
+        {/* Mobile position */}
+        <div className="md:hidden">
+          <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[42px] w-auto" loading="eager" fetchPriority="high" />
+        </div>
       </div>
       
       {/* Hidden text revealed by X-ray - REALISE POTENTIAL - hidden until hover */}
@@ -262,7 +269,7 @@ function LandingContent() {
       
       {/* Language Selector - Mobile only */}
       <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+122px)] flex flex-col items-center" style={{
-        left: 'calc(50% - 3px)'
+        left: 'calc(50% - 7px)'
       }}>
         <div className="transform -translate-x-1/2 -translate-y-1/2 scale-[1.2]">
           <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
@@ -282,18 +289,18 @@ function LandingContent() {
       </div>
       
       {/* 3D Player Effect - Behind the bottom menu area (lower z-index so cone appears on top) */}
-      {!languagePopupOpen && <div className="absolute inset-0 md:inset-0 pointer-events-none z-[5]" style={{
+      <div className="absolute inset-0 md:inset-0 pointer-events-none z-[5]" style={{
       transform: 'translateX(-39px) translateY(-28px)'
     }}>
           {/* Mobile wrapper to shift player down and right - extend beyond bounds */}
-          <div className="md:hidden absolute -inset-x-8 -inset-y-8" style={{ transform: 'translateY(60px) translateX(36px)' }}>
+          <div className="md:hidden absolute -inset-x-8 -inset-y-8" style={{ transform: 'translateY(60px) translateX(40px)' }}>
             <LazyPlayer3D className="pointer-events-none" />
           </div>
           {/* Desktop/tablet version - unchanged */}
           <div className="hidden md:block absolute inset-0">
             <LazyPlayer3D className="pointer-events-none" />
           </div>
-        </div>}
+        </div>
 
       {/* Bottom Section - Menu area */}
       <div className="pb-0 md:pb-8 z-50 relative w-full pointer-events-auto">
