@@ -195,10 +195,11 @@ function LandingContent() {
       {/* Language Selector - centered on page, moved down 170px */}
       <div className="absolute z-[50] pointer-events-auto" style={{
       top: 'calc(50% + 166px)',
-      left: 'calc(50% - 3px)',
-      transform: 'translate(-50%, -50%) scale(1.5)'
+      left: 'calc(50% - 3px)'
     }}>
-        <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
+        <div className="transform -translate-x-1/2 -translate-y-1/2 scale-[1.2] md:scale-[1.5]">
+          <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
+        </div>
       </div>
       
       {/* Portal link - subtle top right */}
@@ -289,11 +290,11 @@ function LandingContent() {
               <div className="border-t border-primary/40 pt-1 pb-1 flex justify-center" style={{
               width: '45%'
             }}>
-                <div className="flex gap-2">
-                  <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-[11.5px] px-2.5 h-6" hoverEffect>
+                <div className="flex gap-1.5">
+                  <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-[10px] px-2 h-5" hoverEffect>
                     {t("landing.represent_me", "Represent Me")}
                   </Button>
-                  <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider text-[11.5px] px-2.5 h-6" hoverEffect>
+                  <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider text-[10px] px-2 h-5" hoverEffect>
                     {t("landing.declare_interest_short", "Declare Interest")}
                   </Button>
                 </div>
