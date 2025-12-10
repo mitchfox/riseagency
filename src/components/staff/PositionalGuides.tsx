@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Map, Video, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Edit, Trash2, Map, Video, ChevronUp, ChevronDown, MoveRight, MoreVertical } from "lucide-react";
 import { PositionalGuidePointEditor } from "./PositionalGuidePointEditor";
 
 interface MediaItem {
@@ -81,7 +83,6 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
 
       if (error) throw error;
       
-      // Transform the data to ensure proper types
       const transformedData: PositionalGuidePoint[] = (data || []).map(item => ({
         id: item.id,
         position: item.position,
@@ -151,7 +152,6 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
     const swapPoint = subcategoryPoints[swapIndex];
 
     try {
-      // Swap display orders
       await Promise.all([
         supabase
           .from('positional_guide_points')
@@ -170,6 +170,33 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
+  const handleMoveToCategory = async (point: PositionalGuidePoint, newPhase: string, newSubcategory: string) => {
+    if (point.phase === newPhase && point.subcategory === newSubcategory) return;
+
+    try {
+      // Get the next display order for the new subcategory
+      const existingPoints = points.filter(p => p.phase === newPhase && p.subcategory === newSubcategory);
+      const nextOrder = existingPoints.length === 0 ? 0 : Math.max(...existingPoints.map(p => p.display_order)) + 1;
+
+      const { error } = await supabase
+        .from('positional_guide_points')
+        .update({ 
+          phase: newPhase, 
+          subcategory: newSubcategory,
+          display_order: nextOrder,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', point.id);
+
+      if (error) throw error;
+      toast.success(`Moved to ${newPhase} → ${newSubcategory}`);
+      fetchPoints();
+    } catch (error) {
+      console.error('Error moving point:', error);
+      toast.error('Failed to move point');
+    }
+  };
+
   const getNextOrder = (phase: string, subcategory: string) => {
     const subcategoryPoints = getPointsForSubcategory(phase, subcategory);
     if (subcategoryPoints.length === 0) return 0;
@@ -182,9 +209,26 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Position Selector */}
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-4 md:space-y-6">
+      {/* Position Selector - Mobile dropdown, desktop buttons */}
+      <div className="md:hidden">
+        <Select value={selectedPosition} onValueChange={setSelectedPosition}>
+          <SelectTrigger className="w-full">
+            <SelectValue>
+              {POSITION_LABELS[selectedPosition]} ({selectedPosition})
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {POSITIONS.map(pos => (
+              <SelectItem key={pos} value={pos}>
+                {POSITION_LABELS[pos]} ({pos})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="hidden md:flex flex-wrap gap-2">
         {POSITIONS.map(pos => (
           <Button
             key={pos}
@@ -198,97 +242,202 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Map className="w-5 h-5" />
-            {POSITION_LABELS[selectedPosition]} ({selectedPosition})
+        <CardHeader className="pb-2 md:pb-4">
+          <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+            <Map className="w-4 h-4 md:w-5 md:h-5" />
+            <span className="hidden sm:inline">{POSITION_LABELS[selectedPosition]}</span>
+            <span className="sm:hidden">{selectedPosition}</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 md:px-6">
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : (
             <Accordion type="multiple" className="w-full">
               {PHASES.map(phase => (
                 <AccordionItem key={phase} value={phase}>
-                  <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-                    <div className="flex items-center gap-2">
-                      {phase}
-                      <Badge variant="secondary" className="text-xs">
-                        {points.filter(p => p.phase === phase).length} points
+                  <AccordionTrigger className="text-sm md:text-lg font-semibold hover:no-underline py-3 md:py-4">
+                    <div className="flex items-center gap-2 text-left">
+                      <span className="line-clamp-1">{phase}</span>
+                      <Badge variant="secondary" className="text-[10px] md:text-xs shrink-0">
+                        {points.filter(p => p.phase === phase).length}
                       </Badge>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="space-y-4 pt-2">
+                  <AccordionContent className="space-y-3 md:space-y-4 pt-2">
                     {DEFAULT_SUBCATEGORIES[phase].map(subcategory => {
                       const subcategoryPoints = getPointsForSubcategory(phase, subcategory);
 
                       return (
                         <Card key={subcategory} className="border-l-4 border-l-primary">
-                          <CardHeader className="pb-2">
-                            <div className="flex items-center justify-between">
-                              <CardTitle className="text-base">{subcategory}</CardTitle>
+                          <CardHeader className="pb-2 px-3 md:px-6 py-2 md:py-4">
+                            <div className="flex items-center justify-between gap-2">
+                              <CardTitle className="text-sm md:text-base line-clamp-1">{subcategory}</CardTitle>
                               {isAdmin && (
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleAddPoint(phase, subcategory)}
+                                  className="shrink-0 h-7 md:h-8 text-xs md:text-sm px-2 md:px-3"
                                 >
-                                  <Plus className="w-4 h-4 mr-1" />
-                                  Add Point
+                                  <Plus className="w-3 h-3 md:w-4 md:h-4 md:mr-1" />
+                                  <span className="hidden md:inline">Add Point</span>
                                 </Button>
                               )}
                             </div>
                           </CardHeader>
-                          <CardContent className="space-y-4">
+                          <CardContent className="space-y-3 md:space-y-4 px-3 md:px-6">
                             {subcategoryPoints.length === 0 ? (
-                              <p className="text-sm text-muted-foreground italic">No points added yet.</p>
+                              <p className="text-xs md:text-sm text-muted-foreground italic">No points added yet.</p>
                             ) : (
                               subcategoryPoints.map((point, idx) => (
                                 <div
                                   key={point.id}
-                                  className="border rounded-lg p-4 bg-muted/30 space-y-3"
+                                  className="border rounded-lg p-3 md:p-4 bg-muted/30 space-y-2 md:space-y-3"
                                 >
                                   {/* Point Header */}
                                   <div className="flex items-start justify-between gap-2">
-                                    <h4 className="font-semibold text-primary">{point.title}</h4>
+                                    <h4 className="font-semibold text-primary text-sm md:text-base">{point.title}</h4>
                                     {isAdmin && (
-                                      <div className="flex items-center gap-1">
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7"
-                                          onClick={() => handleMovePoint(point, 'up')}
-                                          disabled={idx === 0}
-                                        >
-                                          <ChevronUp className="w-4 h-4" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7"
-                                          onClick={() => handleMovePoint(point, 'down')}
-                                          disabled={idx === subcategoryPoints.length - 1}
-                                        >
-                                          <ChevronDown className="w-4 h-4" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7"
-                                          onClick={() => handleEditPoint(point)}
-                                        >
-                                          <Edit className="w-4 h-4" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7 text-destructive"
-                                          onClick={() => handleDeletePoint(point.id)}
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                      </div>
+                                      <>
+                                        {/* Desktop actions */}
+                                        <div className="hidden md:flex items-center gap-1">
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            onClick={() => handleMovePoint(point, 'up')}
+                                            disabled={idx === 0}
+                                          >
+                                            <ChevronUp className="w-4 h-4" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            onClick={() => handleMovePoint(point, 'down')}
+                                            disabled={idx === subcategoryPoints.length - 1}
+                                          >
+                                            <ChevronDown className="w-4 h-4" />
+                                          </Button>
+                                          
+                                          {/* Move to category dropdown */}
+                                          <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                              <Button variant="ghost" size="icon" className="h-7 w-7">
+                                                <MoveRight className="w-4 h-4" />
+                                              </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="max-h-80 overflow-y-auto">
+                                              {PHASES.map(targetPhase => (
+                                                <DropdownMenuSub key={targetPhase}>
+                                                  <DropdownMenuSubTrigger className="text-xs">
+                                                    {targetPhase}
+                                                  </DropdownMenuSubTrigger>
+                                                  <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
+                                                    {DEFAULT_SUBCATEGORIES[targetPhase].map(targetSubcategory => (
+                                                      <DropdownMenuItem
+                                                        key={targetSubcategory}
+                                                        onClick={() => handleMoveToCategory(point, targetPhase, targetSubcategory)}
+                                                        disabled={point.phase === targetPhase && point.subcategory === targetSubcategory}
+                                                        className="text-xs"
+                                                      >
+                                                        {targetSubcategory}
+                                                        {point.phase === targetPhase && point.subcategory === targetSubcategory && (
+                                                          <span className="ml-2 text-muted-foreground">(current)</span>
+                                                        )}
+                                                      </DropdownMenuItem>
+                                                    ))}
+                                                  </DropdownMenuSubContent>
+                                                </DropdownMenuSub>
+                                              ))}
+                                            </DropdownMenuContent>
+                                          </DropdownMenu>
+                                          
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            onClick={() => handleEditPoint(point)}
+                                          >
+                                            <Edit className="w-4 h-4" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-destructive"
+                                            onClick={() => handleDeletePoint(point.id)}
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </Button>
+                                        </div>
+                                        
+                                        {/* Mobile actions - compact dropdown */}
+                                        <DropdownMenu>
+                                          <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 md:hidden">
+                                              <MoreVertical className="w-4 h-4" />
+                                            </Button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end" className="w-48">
+                                            <DropdownMenuItem 
+                                              onClick={() => handleMovePoint(point, 'up')}
+                                              disabled={idx === 0}
+                                            >
+                                              <ChevronUp className="w-4 h-4 mr-2" />
+                                              Move Up
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem 
+                                              onClick={() => handleMovePoint(point, 'down')}
+                                              disabled={idx === subcategoryPoints.length - 1}
+                                            >
+                                              <ChevronDown className="w-4 h-4 mr-2" />
+                                              Move Down
+                                            </DropdownMenuItem>
+                                            
+                                            {/* Move to category - nested */}
+                                            <DropdownMenuSub>
+                                              <DropdownMenuSubTrigger>
+                                                <MoveRight className="w-4 h-4 mr-2" />
+                                                Move to...
+                                              </DropdownMenuSubTrigger>
+                                              <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
+                                                {PHASES.map(targetPhase => (
+                                                  <DropdownMenuSub key={targetPhase}>
+                                                    <DropdownMenuSubTrigger className="text-xs">
+                                                      {targetPhase}
+                                                    </DropdownMenuSubTrigger>
+                                                    <DropdownMenuSubContent className="max-h-48 overflow-y-auto">
+                                                      {DEFAULT_SUBCATEGORIES[targetPhase].map(targetSubcategory => (
+                                                        <DropdownMenuItem
+                                                          key={targetSubcategory}
+                                                          onClick={() => handleMoveToCategory(point, targetPhase, targetSubcategory)}
+                                                          disabled={point.phase === targetPhase && point.subcategory === targetSubcategory}
+                                                          className="text-xs"
+                                                        >
+                                                          {targetSubcategory}
+                                                        </DropdownMenuItem>
+                                                      ))}
+                                                    </DropdownMenuSubContent>
+                                                  </DropdownMenuSub>
+                                                ))}
+                                              </DropdownMenuSubContent>
+                                            </DropdownMenuSub>
+                                            
+                                            <DropdownMenuItem onClick={() => handleEditPoint(point)}>
+                                              <Edit className="w-4 h-4 mr-2" />
+                                              Edit
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem 
+                                              onClick={() => handleDeletePoint(point.id)}
+                                              className="text-destructive"
+                                            >
+                                              <Trash2 className="w-4 h-4 mr-2" />
+                                              Delete
+                                            </DropdownMenuItem>
+                                          </DropdownMenuContent>
+                                        </DropdownMenu>
+                                      </>
                                     )}
                                   </div>
 
@@ -296,7 +445,7 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
                                   {point.paragraphs.length > 0 && (
                                     <div className="space-y-2">
                                       {point.paragraphs.map((para, pIdx) => (
-                                        <p key={pIdx} className="text-sm text-muted-foreground whitespace-pre-line">
+                                        <p key={pIdx} className="text-xs md:text-sm text-muted-foreground whitespace-pre-line">
                                           {para}
                                         </p>
                                       ))}
@@ -327,9 +476,9 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
                                       variant="outline"
                                       size="sm"
                                       onClick={() => window.open(point.video_url!, '_blank')}
-                                      className="mt-2"
+                                      className="mt-2 h-7 md:h-8 text-xs md:text-sm"
                                     >
-                                      <Video className="w-4 h-4 mr-2" />
+                                      <Video className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                                       Watch Video
                                     </Button>
                                   )}

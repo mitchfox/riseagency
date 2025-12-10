@@ -227,38 +227,40 @@ export const PositionalGuidePointEditor = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] w-full max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] md:max-w-4xl w-full max-h-[90vh] overflow-y-auto p-4 md:p-6">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-base md:text-lg">
             {point ? 'Edit Point' : 'Add New Point'}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 py-2 md:py-4">
           {/* Left Column - Text Content */}
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {/* Title */}
             <div className="space-y-2">
-              <Label>Title *</Label>
+              <Label className="text-xs md:text-sm">Title *</Label>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Enter point title..."
+                className="h-9 md:h-10 text-sm"
               />
             </div>
 
             {/* Paragraphs */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Paragraphs</Label>
+                <Label className="text-xs md:text-sm">Paragraphs</Label>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={handleAddParagraph}
+                  className="h-7 text-xs"
                 >
                   <Plus className="w-3 h-3 mr-1" />
-                  Add Paragraph
+                  Add
                 </Button>
               </div>
               <div className="space-y-2">
@@ -269,15 +271,15 @@ export const PositionalGuidePointEditor = ({
                       onChange={(e) => handleParagraphChange(idx, e.target.value)}
                       onPaste={(e) => handleParagraphPaste(e, idx)}
                       placeholder={`Paragraph ${idx + 1}...`}
-                      rows={3}
-                      className="flex-1"
+                      rows={2}
+                      className="flex-1 text-sm min-h-[60px]"
                     />
                     {paragraphs.length > 1 && (
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 text-destructive"
+                        className="h-8 w-8 text-destructive shrink-0"
                         onClick={() => handleRemoveParagraph(idx)}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -290,7 +292,7 @@ export const PositionalGuidePointEditor = ({
 
             {/* Video Upload */}
             <div className="space-y-2">
-              <Label>Video (optional)</Label>
+              <Label className="text-xs md:text-sm">Video (optional)</Label>
               {videoUrl ? (
                 <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
                   <video
@@ -341,10 +343,10 @@ export const PositionalGuidePointEditor = ({
           </div>
 
           {/* Right Column - Image Layout */}
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {/* Image Layout Selector */}
             <div className="space-y-2">
-              <Label>Image Layout</Label>
+              <Label className="text-xs md:text-sm">Image Layout</Label>
               <Select value={imageLayout} onValueChange={(val) => {
                 setImageLayout(val);
                 // Reset images when layout changes
@@ -366,7 +368,7 @@ export const PositionalGuidePointEditor = ({
             {/* Image Grid Preview - only show if layout is not 'none' */}
             {imageLayout !== 'none' && maxImages > 0 && (
               <div className="space-y-2">
-                <Label>Images - Upload in order (left to right, top to bottom)</Label>
+                <Label className="text-xs md:text-sm">Images - Upload in order</Label>
                 <div 
                   className="grid gap-3 p-4 bg-muted/30 rounded-lg border border-border"
                   style={{ 
