@@ -178,9 +178,10 @@ function LandingContent() {
       clearInterval(inactivityInterval);
     };
   }, [setXrayState]);
-  return <div className="bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none" style={{
+  return <div className="landing-no-scroll bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none" style={{
     height: '100dvh',
-    maxHeight: '100dvh'
+    maxHeight: '100dvh',
+    overflow: 'hidden'
   }}>
       
       {/* Custom Landing Page Cursor */}
@@ -287,12 +288,10 @@ function LandingContent() {
 
       {/* Bottom Section - Menu area */}
       <div className="pb-0 md:pb-8 z-50 relative w-full pointer-events-auto">
-        <div className="relative max-w-6xl mx-auto" style={{
-        minHeight: '180px'
-      }}>
+        <div className="relative max-w-6xl mx-auto md:min-h-[180px]">
           
           {/* Content container - pushed down to align with triangle body */}
-          <div className="relative z-10 px-4 md:px-8 pt-20 md:pt-24 pb-1 md:py-3" style={{
+          <div className="relative z-10 px-4 md:px-8 pt-8 md:pt-24 pb-1 md:py-3" style={{
           transform: 'translateY(32px)'
         }}>
             {/* Desktop & Tablet Layout - Horizontal Slider */}
