@@ -173,14 +173,38 @@ function LandingContent() {
       {/* Fixed Position Buttons - Desktop Only - Coordinated with golden triangle cone */}
       {/* Cone apex is at ~49.3% from left, 65% from top. Buttons positioned along cone edges */}
       
-      {/* REPRESENT ME - Fixed position on left side of cone */}
+      {/* DECLARE INTEREST - Fixed position on LEFT side of cone (matching original position) */}
       <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
         left: '25%',
         top: '78%',
-        transform: 'translate(-50%, -50%)'
+        transform: 'translate(-50%, -50%) rotate(-26deg)'
       }}>
         {/* Temporary Arrow Indicator - REMOVE LATER */}
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center">
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ transform: 'rotate(26deg)' }}>
+          <span className="text-primary text-xs font-mono mb-1">DECLARE INTEREST</span>
+          <svg className="w-6 h-10 text-primary animate-bounce" fill="none" viewBox="0 0 24 40">
+            <path d="M12 0v32M12 32l-8-8M12 32l8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <Button 
+          onClick={() => setShowDeclareInterest(true)} 
+          size="sm" 
+          className="btn-shine font-bebas uppercase tracking-wider text-sm px-6 h-7"
+          style={{ borderRadius: '20px' }}
+          hoverEffect
+        >
+          {t("landing.declare_interest", "Declare Interest In Star")}
+        </Button>
+      </div>
+      
+      {/* REPRESENT ME - Fixed position on RIGHT side of cone (matching original position) */}
+      <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
+        left: '75%',
+        top: '78%',
+        transform: 'translate(-50%, -50%) rotate(26deg)'
+      }}>
+        {/* Temporary Arrow Indicator - REMOVE LATER */}
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ transform: 'rotate(-26deg)' }}>
           <span className="text-primary text-xs font-mono mb-1">REPRESENT ME</span>
           <svg className="w-6 h-10 text-primary animate-bounce" fill="none" viewBox="0 0 24 40">
             <path d="M12 0v32M12 32l-8-8M12 32l8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -190,33 +214,11 @@ function LandingContent() {
           onClick={() => setShowRepresentation(true)} 
           variant="outline" 
           size="sm" 
-          className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-xs px-4 h-8"
+          className="font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-6 h-7 transition-all duration-300"
+          style={{ borderRadius: '20px' }}
           hoverEffect
         >
           {t("landing.represent_me", "Represent Me")}
-        </Button>
-      </div>
-      
-      {/* DECLARE INTEREST - Fixed position on right side of cone */}
-      <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
-        left: '75%',
-        top: '78%',
-        transform: 'translate(-50%, -50%)'
-      }}>
-        {/* Temporary Arrow Indicator - REMOVE LATER */}
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center">
-          <span className="text-primary text-xs font-mono mb-1">DECLARE INTEREST</span>
-          <svg className="w-6 h-10 text-primary animate-bounce" fill="none" viewBox="0 0 24 40">
-            <path d="M12 0v32M12 32l-8-8M12 32l8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
-        <Button 
-          onClick={() => setShowDeclareInterest(true)} 
-          size="sm" 
-          className="btn-shine font-bebas uppercase tracking-wider text-xs px-4 h-8"
-          hoverEffect
-        >
-          {t("landing.declare_interest_short", "Declare Interest")}
         </Button>
       </div>
       
@@ -518,36 +520,7 @@ function RoleSlider({
       paddingRight: '100px'
     }}>
         
-        {/* Buttons - positioned absolutely within container, aligned with cone edges */}
-        <Button 
-          onClick={() => setShowRepresentation(true)} 
-          variant="outline" 
-          size="sm" 
-          className="absolute font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-6 h-7 transition-all duration-300 z-10" 
-          style={{ 
-            borderRadius: '20px',
-            transform: 'rotate(26deg)',
-            right: '-80px',
-            top: '50px'
-          }}
-          hoverEffect
-        >
-          {t("landing.represent_me", "Represent Me")}
-        </Button>
-        <Button 
-          onClick={() => setShowDeclareInterest(true)} 
-          size="sm" 
-          className="absolute btn-shine font-bebas uppercase tracking-wider text-sm px-6 h-7 z-10" 
-          style={{ 
-            borderRadius: '20px',
-            transform: 'rotate(-26deg)',
-            left: '-80px',
-            top: '50px'
-          }}
-          hoverEffect
-        >
-          {t("landing.declare_interest", "Declare Interest In Star")}
-        </Button>
+        {/* Buttons moved to fixed positions at top of component */}
         
         {/* Role Labels - positioned directly on the curve */}
         <div className="flex justify-between relative" style={{ height: '75px' }}>
