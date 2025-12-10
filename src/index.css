@@ -69,6 +69,12 @@ All colors MUST be HSL.
     min-height: 100%;
   }
 
+  /* Prevent scrolling on landing page */
+  body:has(.landing-no-scroll) {
+    overflow: hidden;
+    height: 100dvh;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Agrandir Tight', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
