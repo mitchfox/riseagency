@@ -268,14 +268,14 @@ function LandingContent() {
       </div>
       
       {/* Language Selector - Mobile only */}
-      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+124px)] flex flex-col items-center" style={{
-        left: 'calc(50% - 11px)'
+      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+126px)] flex flex-col items-center" style={{
+        left: 'calc(50% - 13px)'
       }}>
         <div className="transform -translate-x-1/2 -translate-y-1/2 scale-[1.2]">
           <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
         </div>
         {/* Divider line below language selector */}
-        <div className="w-12 h-px bg-primary/40 mt-0" style={{ transform: 'translateX(-50%)' }} />
+        <div className="h-px bg-primary/40 mt-0" style={{ width: '56px', transform: 'translateX(calc(-50% + 4px))' }} />
       </div>
       
       {/* Portal & Staff links - subtle top right */}
