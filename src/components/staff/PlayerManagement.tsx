@@ -52,6 +52,8 @@ interface Player {
   league: string | null;
   links?: any;
   highlighted_match?: any;
+  agent_notes?: string | null;
+  next_program_notes?: string | null;
 }
 
 interface PlayerStats {
@@ -2163,6 +2165,75 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     )}
                   </CardContent>
                 </Card>
+
+                {/* Player Notes and Next Program Notes - Side by Side */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  {/* Player Notes Card */}
+                  <Card>
+                    <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                      <CardTitle className="text-base">Player Notes</CardTitle>
+                      <p className="text-xs text-muted-foreground">Health, needs, and general notes</p>
+                    </CardHeader>
+                    <CardContent className="px-3 md:px-6 py-4">
+                      <Textarea
+                        placeholder="Add notes about the player's health, specific needs, training considerations..."
+                        value={selectedPlayer?.agent_notes || ''}
+                        onChange={async (e) => {
+                          const newValue = e.target.value;
+                          // Optimistic update
+                          setPlayers(prev => prev.map(p => 
+                            p.id === selectedPlayerId ? { ...p, agent_notes: newValue } : p
+                          ));
+                        }}
+                        onBlur={async (e) => {
+                          try {
+                            const { error } = await supabase
+                              .from('players')
+                              .update({ agent_notes: e.target.value })
+                              .eq('id', selectedPlayerId);
+                            if (error) throw error;
+                          } catch (error: any) {
+                            toast.error('Failed to save notes: ' + error.message);
+                          }
+                        }}
+                        className="min-h-[200px] resize-none"
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* Next Program Notes Card */}
+                  <Card>
+                    <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                      <CardTitle className="text-base">Next Program Notes</CardTitle>
+                      <p className="text-xs text-muted-foreground">Ideas and brainstorming for upcoming programs</p>
+                    </CardHeader>
+                    <CardContent className="px-3 md:px-6 py-4">
+                      <Textarea
+                        placeholder="Brainstorm ideas for the player's next training program, goals, focus areas..."
+                        value={selectedPlayer?.next_program_notes || ''}
+                        onChange={async (e) => {
+                          const newValue = e.target.value;
+                          // Optimistic update
+                          setPlayers(prev => prev.map(p => 
+                            p.id === selectedPlayerId ? { ...p, next_program_notes: newValue } : p
+                          ));
+                        }}
+                        onBlur={async (e) => {
+                          try {
+                            const { error } = await supabase
+                              .from('players')
+                              .update({ next_program_notes: e.target.value })
+                              .eq('id', selectedPlayerId);
+                            if (error) throw error;
+                          } catch (error: any) {
+                            toast.error('Failed to save notes: ' + error.message);
+                          }
+                        }}
+                        className="min-h-[200px] resize-none"
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
 
               <TabsContent value="highlights" className="mt-4 md:mt-0">
