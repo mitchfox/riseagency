@@ -195,19 +195,12 @@ function LandingContent() {
       {/* Fixed Position Buttons - Desktop Only - Coordinated with golden triangle cone */}
       {/* Cone apex is at ~49.3% from left, 65% from top. Buttons positioned along cone edges */}
       
-      {/* DECLARE INTEREST - Fixed position on LEFT side of cone (matching original position) */}
+      {/* DECLARE INTEREST - Fixed position on LEFT side of cone */}
       <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
         left: '25%',
         top: '78%',
         transform: `translate(-50%, -50%) rotate(-${coneAngle}deg)`
       }}>
-        {/* Temporary Arrow Indicator - REMOVE LATER */}
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ transform: `rotate(${coneAngle}deg)` }}>
-          <span className="text-primary text-xs font-mono mb-1">DECLARE INTEREST</span>
-          <svg className="w-6 h-10 text-primary animate-bounce" fill="none" viewBox="0 0 24 40">
-            <path d="M12 0v32M12 32l-8-8M12 32l8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
         <Button 
           onClick={() => setShowDeclareInterest(true)} 
           size="sm" 
@@ -219,20 +212,12 @@ function LandingContent() {
         </Button>
       </div>
       
-      {/* REPRESENT ME - Fixed position on RIGHT side of cone (matching original position) */}
-      {/* Note: -3deg offset correction to align with cone edge */}
+      {/* REPRESENT ME - Fixed position on RIGHT side of cone */}
       <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
         left: '75%',
         top: '78%',
         transform: `translate(-50%, -50%) rotate(${coneAngle - 3}deg)`
       }}>
-        {/* Temporary Arrow Indicator - REMOVE LATER */}
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ transform: `rotate(-${coneAngle - 3}deg)` }}>
-          <span className="text-primary text-xs font-mono mb-1">REPRESENT ME</span>
-          <svg className="w-6 h-10 text-primary animate-bounce" fill="none" viewBox="0 0 24 40">
-            <path d="M12 0v32M12 32l-8-8M12 32l8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
         <Button 
           onClick={() => setShowRepresentation(true)} 
           variant="outline" 
@@ -265,8 +250,8 @@ function LandingContent() {
       
       {/* Language Selector - fixed position, centered horizontally, above the menu slider */}
       <div className="hidden md:flex fixed z-[50] pointer-events-auto items-center justify-center" style={{
-        left: '50%',
-        bottom: '220px',
+        left: 'calc(50% - 4px)',
+        bottom: '192px',
         transform: 'translateX(-50%)'
       }}>
         <div className="scale-[1.5]">
@@ -283,10 +268,15 @@ function LandingContent() {
         </div>
       </div>
       
-      {/* Portal link - subtle top right */}
-      <Link to="/portal" className="absolute top-6 md:top-8 right-4 md:right-8 z-50 text-white/20 hover:text-white/50 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
-        {t("header.portal", "Portal")}
-      </Link>
+      {/* Portal & Staff links - subtle top right */}
+      <div className="absolute top-6 md:top-8 right-4 md:right-8 z-50 flex items-center gap-3">
+        <Link to="/staff" className="text-white/20 hover:text-white/50 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
+          {t("header.staff", "Staff")}
+        </Link>
+        <Link to="/portal" className="text-white/20 hover:text-white/50 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
+          {t("header.portal", "Portal")}
+        </Link>
+      </div>
       
       {/* 3D Player Effect - Behind the bottom menu area (lower z-index so cone appears on top) */}
       {!languagePopupOpen && <div className="absolute inset-0 pointer-events-none z-[5]" style={{
