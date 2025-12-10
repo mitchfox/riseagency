@@ -280,10 +280,17 @@ function LandingContent() {
       </div>
       
       {/* 3D Player Effect - Behind the bottom menu area (lower z-index so cone appears on top) */}
-      {!languagePopupOpen && <div className="absolute inset-0 pointer-events-none z-[5]" style={{
+      {!languagePopupOpen && <div className="absolute inset-0 md:inset-0 pointer-events-none z-[5]" style={{
       transform: 'translateX(-39px) translateY(-28px)'
     }}>
-          <LazyPlayer3D className="pointer-events-none" />
+          {/* Mobile wrapper to shift player down - extend beyond bounds */}
+          <div className="md:hidden absolute -inset-x-8 -inset-y-8" style={{ transform: 'translateY(32px)' }}>
+            <LazyPlayer3D className="pointer-events-none" />
+          </div>
+          {/* Desktop/tablet version - unchanged */}
+          <div className="hidden md:block absolute inset-0">
+            <LazyPlayer3D className="pointer-events-none" />
+          </div>
         </div>}
 
       {/* Bottom Section - Menu area */}
