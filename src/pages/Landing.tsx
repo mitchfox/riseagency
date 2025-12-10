@@ -432,12 +432,13 @@ function RoleSlider({
   setShowRepresentation: (open: boolean) => void;
   setShowDeclareInterest: (open: boolean) => void;
 }) {
-  const [selectedIndex, setSelectedIndex] = useState(3);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null); // null = no selection yet
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState<number | null>(null); // percentage position while dragging
   const [isAnimatingBack, setIsAnimatingBack] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
-  const startIndexRef = useRef(3); // Track starting position for snap-back
+  const centerIndex = 3; // Center position for snap-back
 
   const getPositionFromIndex = (index: number) => {
     return index / (navLinks.length - 1) * 100;
@@ -472,8 +473,7 @@ function RoleSlider({
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
-    startIndexRef.current = selectedIndex;
-    setDragPosition(getPositionFromIndex(selectedIndex));
+    setDragPosition(getPositionFromIndex(centerIndex));
   };
   const handleTrackClick = (e: React.MouseEvent) => {
     if (isDragging) return;
@@ -504,10 +504,10 @@ function RoleSlider({
       setSelectedIndex(index);
       navigateToRole(navLinks[index].to);
     } else {
-      // Dropped between stops - animate back to start
+      // Dropped between stops - animate back to center
       setIsAnimatingBack(true);
-      const startPosition = getPositionFromIndex(startIndexRef.current);
-      setDragPosition(startPosition);
+      const centerPosition = getPositionFromIndex(centerIndex);
+      setDragPosition(centerPosition);
 
       // Reset after animation
       setTimeout(() => {
@@ -531,8 +531,8 @@ function RoleSlider({
     navigateToRole(navLinks[index].to);
   };
 
-  // Calculate current thumb position
-  const thumbPosition = dragPosition !== null ? dragPosition : getPositionFromIndex(selectedIndex);
+  // Calculate current thumb position - use center when no selection
+  const thumbPosition = dragPosition !== null ? dragPosition : getPositionFromIndex(selectedIndex !== null ? selectedIndex : centerIndex);
   return <div className="flex flex-col items-center" style={{
     paddingTop: '35px'
   }}>
@@ -549,16 +549,18 @@ function RoleSlider({
         <div className="flex justify-between relative" style={{ height: '75px' }}>
           {navLinks.map((link, index) => {
             // Calculate position on curve: ends drop down to align with instruction text
-            const centerIndex = (navLinks.length - 1) / 2; // 3
-            const distanceFromCenter = Math.abs(index - centerIndex);
-            const maxDistance = centerIndex; // 3
+            const centerIdx = (navLinks.length - 1) / 2; // 3
+            const distanceFromCenter = Math.abs(index - centerIdx);
+            const maxDistance = centerIdx; // 3
             // Offset in px: 0 at center, positive (down) toward ends - extended to 63px to align with instruction text
             const yOffset = (distanceFromCenter / maxDistance) * 63;
             
             return (
               <button 
                 key={link.to} 
-                onClick={() => handleRoleClick(index)} 
+                onClick={() => handleRoleClick(index)}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
                 className={`text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 hover:text-primary ${selectedIndex === index ? 'text-primary' : 'text-white/40'}`}
                 style={{ transform: `translateY(${yOffset}px)` }}
               >
@@ -630,7 +632,13 @@ function RoleSlider({
             return (
               <div 
                 key={index} 
-                className={`absolute w-2 h-2 rounded-full transition-all duration-200 ${index === selectedIndex ? 'bg-primary scale-125' : index < selectedIndex ? 'bg-primary/60' : 'bg-white/30'}`} 
+                className={`absolute w-2 h-2 rounded-full transition-all duration-200 ${
+                  selectedIndex !== null && index === selectedIndex 
+                    ? 'bg-primary scale-125' 
+                    : selectedIndex !== null && index < selectedIndex 
+                      ? 'bg-primary/60' 
+                      : 'bg-white/30'
+                }`} 
                 style={{
                   left: `${xPercent}%`,
                   top: `${yPercent}%`,
@@ -679,11 +687,17 @@ function RoleSlider({
           })()}
         </div>
 
-        {/* Instruction text */}
+        {/* Instruction text - shows hovered role name or default */}
         <div className="text-center" style={{ marginTop: '-8px' }}>
-          <span className="text-[10px] font-bebas uppercase tracking-[0.25em] text-white/30">
-            {isDragging ? 'Release to enter' : 'Drag slider to select role'}
-          </span>
+          {hoveredIndex !== null ? (
+            <span className="text-lg font-bebas uppercase tracking-[0.15em] text-primary transition-all duration-200">
+              {t(navLinks[hoveredIndex].labelKey, navLinks[hoveredIndex].fallback)}
+            </span>
+          ) : (
+            <span className="text-[10px] font-bebas uppercase tracking-[0.25em] text-white/30">
+              {isDragging ? 'Release to enter' : 'Drag slider to select role'}
+            </span>
+          )}
         </div>
       </div>
     </div>;
