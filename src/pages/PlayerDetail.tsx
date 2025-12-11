@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { useVideoPreloader } from "@/hooks/useVideoPreloader";
 import { players } from "@/data/players";
@@ -22,6 +22,13 @@ import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { usePlayerTranslations, usePlayerProfileLabel, useTranslatedCountry, seasonStatTranslations, schemeHistoryLabels, inNumbersStatTranslations } from "@/hooks/usePlayerTranslations";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+// Language column map for translation API responses
+const languageColumnMap: Record<string, string> = {
+  'en': 'english', 'es': 'spanish', 'pt': 'portuguese', 'fr': 'french',
+  'de': 'german', 'it': 'italian', 'pl': 'polish', 'cs': 'czech',
+  'ru': 'russian', 'tr': 'turkish',
+};
+
 const PlayerDetail = () => {
   const { playername } = useParams<{ playername: string }>();
   const navigate = useNavigate();
@@ -37,6 +44,8 @@ const PlayerDetail = () => {
   const [performanceReports, setPerformanceReports] = useState<any[]>([]);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [translatedStatDescriptions, setTranslatedStatDescriptions] = useState<Record<number, string>>({});
+  const [isTranslatingDescriptions, setIsTranslatingDescriptions] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   
   const playerInfoSentinelRef = useRef<HTMLDivElement>(null);
@@ -51,6 +60,65 @@ const PlayerDetail = () => {
   
   // Translated country name
   const translatedCountry = useTranslatedCountry(player?.nationality || '');
+  
+  // Translate "In Numbers" stat descriptions
+  useEffect(() => {
+    const translateDescriptions = async () => {
+      if (language === 'en' || !player?.topStats || player.topStats.length === 0) {
+        setTranslatedStatDescriptions({});
+        return;
+      }
+      
+      setIsTranslatingDescriptions(true);
+      const translations: Record<number, string> = {};
+      const targetLang = languageColumnMap[language];
+      
+      for (let i = 0; i < player.topStats.length; i++) {
+        const stat = player.topStats[i];
+        if (!stat.description) continue;
+        
+        // Check localStorage cache first
+        const cacheKey = `stat_desc_${player.id}_${i}`;
+        try {
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed[targetLang]) {
+              translations[i] = parsed[targetLang];
+              continue;
+            }
+          }
+        } catch (e) {}
+        
+        // Fetch translation from AI
+        try {
+          const { data, error } = await supabase.functions.invoke('ai-translate', {
+            body: { text: stat.description }
+          });
+          
+          if (!error && data?.[targetLang]) {
+            translations[i] = data[targetLang];
+            try {
+              localStorage.setItem(cacheKey, JSON.stringify(data));
+            } catch (e) {}
+          }
+        } catch (e) {
+          console.error('Failed to translate stat description:', e);
+        }
+      }
+      
+      setTranslatedStatDescriptions(translations);
+      setIsTranslatingDescriptions(false);
+    };
+    
+    translateDescriptions();
+  }, [language, player?.id, player?.topStats]);
+  
+  // Helper to get translated stat description
+  const getTranslatedStatDescription = useCallback((index: number, originalDescription: string): string => {
+    if (language === 'en') return originalDescription;
+    return translatedStatDescriptions[index] || originalDescription;
+  }, [language, translatedStatDescriptions]);
   
   // Helper function to translate season stat headers
   const getTranslatedStatHeader = (header: string): string => {
@@ -758,7 +826,7 @@ const PlayerDetail = () => {
                             {stat.value === '#1' && <span className="text-lg font-bebas text-primary/80 uppercase">{getInLeagueText()}</span>}
                           </div>
                           <span className="text-sm text-muted-foreground uppercase tracking-wider block mb-2">{getTranslatedInNumbersStat(stat.label)}</span>
-                          {stat.description && <p className="text-sm text-foreground/70 leading-relaxed">{stat.description}</p>}
+                          {stat.description && <p className="text-sm text-foreground/70 leading-relaxed">{getTranslatedStatDescription(index, stat.description)}</p>}
                         </div>
                       </div>
                       {index < player.topStats.length - 1 && <div className="h-px bg-border/50 mt-4" />}
@@ -852,7 +920,7 @@ const PlayerDetail = () => {
                                 {stat.value === '#1' && <span className="text-lg font-bebas text-primary/80 uppercase">{getInLeagueText()}</span>}
                               </div>
                               <span className="text-sm text-muted-foreground uppercase tracking-wider block mb-2">{getTranslatedInNumbersStat(stat.label)}</span>
-                              {stat.description && <p className="text-sm text-foreground/70 leading-relaxed">{stat.description}</p>}
+                              {stat.description && <p className="text-sm text-foreground/70 leading-relaxed">{getTranslatedStatDescription(index, stat.description)}</p>}
                             </div>
                           </div>
                           {index < player.topStats.length - 1 && <div className="h-px bg-border/50 mt-4" />}
