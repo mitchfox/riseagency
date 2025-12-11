@@ -61,7 +61,7 @@ const PlayerDetail = () => {
   // Translated country name
   const translatedCountry = useTranslatedCountry(player?.nationality || '');
   
-  // Translate "In Numbers" stat descriptions
+  // Translate "In Numbers" stat descriptions using BATCH translation
   useEffect(() => {
     const translateDescriptions = async () => {
       if (language === 'en' || !player?.topStats || player.topStats.length === 0) {
@@ -72,39 +72,53 @@ const PlayerDetail = () => {
       setIsTranslatingDescriptions(true);
       const translations: Record<number, string> = {};
       const targetLang = languageColumnMap[language];
+      const textsToTranslate: { index: number; text: string }[] = [];
       
+      // Check cache for each stat and collect uncached ones
       for (let i = 0; i < player.topStats.length; i++) {
         const stat = player.topStats[i];
         if (!stat.description) continue;
         
-        // Check localStorage cache first
-        const cacheKey = `stat_desc_${player.id}_${i}`;
+        const cacheKey = `stat_desc_v2_${player.id}_${i}_${language}`;
         try {
           const cached = localStorage.getItem(cacheKey);
           if (cached) {
-            const parsed = JSON.parse(cached);
-            if (parsed[targetLang]) {
-              translations[i] = parsed[targetLang];
-              continue;
-            }
+            translations[i] = cached;
+            continue;
           }
         } catch (e) {}
         
-        // Fetch translation from AI
-        try {
-          const { data, error } = await supabase.functions.invoke('ai-translate', {
-            body: { text: stat.description }
+        textsToTranslate.push({ index: i, text: stat.description });
+      }
+      
+      // If all were cached, we're done
+      if (textsToTranslate.length === 0) {
+        setTranslatedStatDescriptions(translations);
+        setIsTranslatingDescriptions(false);
+        return;
+      }
+      
+      // Batch translate all uncached descriptions in ONE API call
+      try {
+        const { data, error } = await supabase.functions.invoke('ai-translate-batch', {
+          body: { texts: textsToTranslate.map(t => t.text) }
+        });
+        
+        if (!error && data?.translations) {
+          data.translations.forEach((translation: Record<string, string>, i: number) => {
+            const originalIndex = textsToTranslate[i].index;
+            const translatedText = translation[targetLang];
+            if (translatedText) {
+              translations[originalIndex] = translatedText;
+              // Cache each translation
+              try {
+                localStorage.setItem(`stat_desc_v2_${player.id}_${originalIndex}_${language}`, translatedText);
+              } catch (e) {}
+            }
           });
-          
-          if (!error && data?.[targetLang]) {
-            translations[i] = data[targetLang];
-            try {
-              localStorage.setItem(cacheKey, JSON.stringify(data));
-            } catch (e) {}
-          }
-        } catch (e) {
-          console.error('Failed to translate stat description:', e);
         }
+      } catch (e) {
+        console.error('Failed to batch translate stat descriptions:', e);
       }
       
       setTranslatedStatDescriptions(translations);

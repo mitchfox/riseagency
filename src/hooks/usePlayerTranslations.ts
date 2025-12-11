@@ -563,38 +563,60 @@ export function usePlayerTranslations({ bio, position, playerId, strengths = [] 
       const translationKey = langMap[language];
 
       try {
-        // Translate bio if not cached
+        // Collect texts to translate in batch
+        const textsToTranslate: string[] = [];
+        const textMap: { type: 'bio' | 'strengths'; index?: number }[] = [];
+        
         if (!cachedBio && bio) {
-          const { data, error } = await supabase.functions.invoke('ai-translate', {
-            body: { text: bio }
-          });
-
-          if (!error && data?.[translationKey]) {
-            localStorage.setItem(bioCacheKey, JSON.stringify({ bio: data[translationKey] }));
-            setTranslatedBio(data[translationKey]);
-          } else {
-            // Fallback to original if translation fails
-            setTranslatedBio(bio);
-          }
+          textsToTranslate.push(bio);
+          textMap.push({ type: 'bio' });
         }
-
-        // Translate strengths if not cached and strengths exist
+        
         if (!cachedStrengths && strengths.length > 0) {
-          const strengthsText = strengths.join('\n---\n');
-          const { data, error } = await supabase.functions.invoke('ai-translate', {
-            body: { text: strengthsText }
+          // Add each strength as a separate text for better translation accuracy
+          strengths.forEach((s, i) => {
+            textsToTranslate.push(s);
+            textMap.push({ type: 'strengths', index: i });
           });
-
-          if (!error && data?.[translationKey]) {
-            const translatedArray = data[translationKey].split('\n---\n').map((s: string) => s.trim()).filter(Boolean);
-            localStorage.setItem(strengthsCacheKey, JSON.stringify({ strengths: translatedArray }));
-            setTranslatedStrengths(translatedArray);
-          } else {
-            // Fallback to original if translation fails
-            setTranslatedStrengths(strengths);
+        }
+        
+        // If nothing to translate, finish
+        if (textsToTranslate.length === 0) {
+          if (strengths.length === 0) setTranslatedStrengths([]);
+          setIsTranslating(false);
+          return;
+        }
+        
+        // Batch translate bio + strengths in ONE API call
+        const { data, error } = await supabase.functions.invoke('ai-translate-batch', {
+          body: { texts: textsToTranslate }
+        });
+        
+        if (!error && data?.translations) {
+          const translatedStrengthsArr: string[] = [];
+          
+          data.translations.forEach((translation: Record<string, string>, i: number) => {
+            const mapping = textMap[i];
+            const translatedText = translation[translationKey];
+            
+            if (mapping.type === 'bio' && translatedText) {
+              localStorage.setItem(bioCacheKey, JSON.stringify({ bio: translatedText }));
+              setTranslatedBio(translatedText);
+            } else if (mapping.type === 'strengths' && translatedText) {
+              translatedStrengthsArr[mapping.index!] = translatedText;
+            }
+          });
+          
+          if (translatedStrengthsArr.length > 0) {
+            localStorage.setItem(strengthsCacheKey, JSON.stringify({ strengths: translatedStrengthsArr }));
+            setTranslatedStrengths(translatedStrengthsArr);
+          } else if (!cachedStrengths && strengths.length === 0) {
+            setTranslatedStrengths([]);
           }
-        } else if (strengths.length === 0) {
-          setTranslatedStrengths([]);
+        } else {
+          // Fallback to original if translation fails
+          if (!cachedBio) setTranslatedBio(bio);
+          if (!cachedStrengths) setTranslatedStrengths(strengths.length > 0 ? strengths : []);
         }
       } catch (err) {
         console.error('Player content translation error:', err);

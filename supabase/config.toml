@@ -71,3 +71,9 @@ verify_jwt = false
 
 [functions.ai-coaching-chat]
 verify_jwt = true
+
+[functions.ai-translate]
+verify_jwt = false
+
+[functions.ai-translate-batch]
+verify_jwt = false
