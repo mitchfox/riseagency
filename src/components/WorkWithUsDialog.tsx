@@ -17,6 +17,7 @@ import { useRoleSubdomain, RoleSubdomain } from "@/hooks/useRoleSubdomain";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Role = "player" | "coach" | "club" | "agent" | "parent" | "media" | "other" | null;
 
@@ -31,6 +32,56 @@ const subdomainToRole: Record<Exclude<RoleSubdomain, null>, Role> = {
   media: "media",
 };
 
+// Role label translations
+const roleTranslations: Record<string, Record<string, string>> = {
+  player: { en: "Player", es: "Jugador", pt: "Jogador", fr: "Joueur", de: "Spieler", it: "Giocatore", pl: "Zawodnik", cs: "Hráč", ru: "Игрок", tr: "Oyuncu" },
+  coach: { en: "Coach", es: "Entrenador", pt: "Treinador", fr: "Entraîneur", de: "Trainer", it: "Allenatore", pl: "Trener", cs: "Trenér", ru: "Тренер", tr: "Antrenör" },
+  club: { en: "Club", es: "Club", pt: "Clube", fr: "Club", de: "Verein", it: "Club", pl: "Klub", cs: "Klub", ru: "Клуб", tr: "Kulüp" },
+  agent: { en: "Agent", es: "Agente", pt: "Agente", fr: "Agent", de: "Agent", it: "Agente", pl: "Agent", cs: "Agent", ru: "Агент", tr: "Menajer" },
+  parent: { en: "Parent", es: "Padre/Madre", pt: "Pai/Mãe", fr: "Parent", de: "Elternteil", it: "Genitore", pl: "Rodzic", cs: "Rodič", ru: "Родитель", tr: "Veli" },
+  media: { en: "Media", es: "Medios", pt: "Mídia", fr: "Média", de: "Medien", it: "Media", pl: "Media", cs: "Média", ru: "СМИ", tr: "Medya" },
+  other: { en: "Other", es: "Otro", pt: "Outro", fr: "Autre", de: "Andere", it: "Altro", pl: "Inne", cs: "Jiné", ru: "Другое", tr: "Diğer" },
+};
+
+const dialogTranslations: Record<string, Record<string, string>> = {
+  selectRole: { 
+    en: "Please select your role to continue", 
+    es: "Por favor selecciona tu rol para continuar", 
+    pt: "Por favor selecione sua função para continuar", 
+    fr: "Veuillez sélectionner votre rôle pour continuer", 
+    de: "Bitte wählen Sie Ihre Rolle aus, um fortzufahren", 
+    it: "Seleziona il tuo ruolo per continuare", 
+    pl: "Wybierz swoją rolę, aby kontynuować", 
+    cs: "Vyberte svou roli pro pokračování", 
+    ru: "Выберите вашу роль, чтобы продолжить", 
+    tr: "Devam etmek için lütfen rolünüzü seçin" 
+  },
+  otherOptions: { 
+    en: "Other Options", 
+    es: "Otras opciones", 
+    pt: "Outras opções", 
+    fr: "Autres options", 
+    de: "Andere Optionen", 
+    it: "Altre opzioni", 
+    pl: "Inne opcje", 
+    cs: "Další možnosti", 
+    ru: "Другие варианты", 
+    tr: "Diğer seçenekler" 
+  },
+  backToRoleSelection: { 
+    en: "← Back to role selection", 
+    es: "← Volver a selección de rol", 
+    pt: "← Voltar para seleção de função", 
+    fr: "← Retour à la sélection du rôle", 
+    de: "← Zurück zur Rollenauswahl", 
+    it: "← Torna alla selezione del ruolo", 
+    pl: "← Powrót do wyboru roli", 
+    cs: "← Zpět na výběr role", 
+    ru: "← Назад к выбору роли", 
+    tr: "← Rol seçimine geri dön" 
+  },
+};
+
 interface WorkWithUsDialogProps {
   children?: React.ReactNode;
   open?: boolean;
@@ -40,8 +91,18 @@ interface WorkWithUsDialogProps {
 export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDialogProps) => {
   const { toast } = useToast();
   const { currentRole: subdomainRole } = useRoleSubdomain();
+  const { language } = useLanguage();
   const [selectedRole, setSelectedRole] = useState<Role>(null);
   const [otherRolesOpen, setOtherRolesOpen] = useState(false);
+
+  // Helper to get translated text
+  const getTranslation = (key: keyof typeof dialogTranslations) => {
+    return dialogTranslations[key][language] || dialogTranslations[key].en;
+  };
+
+  const getRoleLabel = (role: string) => {
+    return roleTranslations[role]?.[language] || roleTranslations[role]?.en || role;
+  };
 
   // Get the default role based on subdomain
   const defaultRole = subdomainRole ? subdomainToRole[subdomainRole] : null;
@@ -90,13 +151,13 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
   };
 
   const roles = [
-    { value: "player" as const, label: "Player" },
-    { value: "coach" as const, label: "Coach" },
-    { value: "club" as const, label: "Club" },
-    { value: "agent" as const, label: "Agent" },
-    { value: "parent" as const, label: "Parent" },
-    { value: "media" as const, label: "Media" },
-    { value: "other" as const, label: "Other" },
+    { value: "player" as const, label: getRoleLabel("player") },
+    { value: "coach" as const, label: getRoleLabel("coach") },
+    { value: "club" as const, label: getRoleLabel("club") },
+    { value: "agent" as const, label: getRoleLabel("agent") },
+    { value: "parent" as const, label: getRoleLabel("parent") },
+    { value: "media" as const, label: getRoleLabel("media") },
+    { value: "other" as const, label: getRoleLabel("other") },
   ];
 
   const renderRoleForm = () => {
@@ -112,7 +173,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
       return (
         <div className="space-y-4">
           <p className="text-center text-muted-foreground mb-6">
-            Please select your role to continue
+            {getTranslation("selectRole")}
           </p>
           
           {/* Show primary role (from subdomain) prominently */}
@@ -134,7 +195,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
                   variant="outline" 
                   className="w-full font-bebas uppercase tracking-wider justify-between"
                 >
-                  <span>Other Options</span>
+                  <span>{getTranslation("otherOptions")}</span>
                   <ChevronDown className={`h-4 w-4 transition-transform ${otherRolesOpen ? 'rotate-180' : ''}`} />
                 </Button>
               </CollapsibleTrigger>
@@ -203,7 +264,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
               onClick={resetSelection}
               className="mb-2"
             >
-              ← Back to role selection
+              {getTranslation("backToRoleSelection")}
             </Button>
             {commonFields}
             <div className="space-y-2">
@@ -243,7 +304,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
               onClick={resetSelection}
               className="mb-2"
             >
-              ← Back to role selection
+              {getTranslation("backToRoleSelection")}
             </Button>
             {commonFields}
             <div className="space-y-2">
@@ -283,7 +344,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
               onClick={resetSelection}
               className="mb-2"
             >
-              ← Back to role selection
+              {getTranslation("backToRoleSelection")}
             </Button>
             <div className="space-y-2">
               <Label htmlFor="clubName">Club Name *</Label>
@@ -330,7 +391,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
               onClick={resetSelection}
               className="mb-2"
             >
-              ← Back to role selection
+              {getTranslation("backToRoleSelection")}
             </Button>
             {commonFields}
             <div className="space-y-2">
@@ -366,7 +427,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
               onClick={resetSelection}
               className="mb-2"
             >
-              ← Back to role selection
+              {getTranslation("backToRoleSelection")}
             </Button>
             {commonFields}
             <div className="space-y-2">
@@ -410,7 +471,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
               onClick={resetSelection}
               className="mb-2"
             >
-              ← Back to role selection
+              {getTranslation("backToRoleSelection")}
             </Button>
             {commonFields}
             <div className="space-y-2">
@@ -446,7 +507,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
               onClick={resetSelection}
               className="mb-2"
             >
-              ← Back to role selection
+              {getTranslation("backToRoleSelection")}
             </Button>
             {commonFields}
             <div className="space-y-2">
