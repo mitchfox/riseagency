@@ -583,37 +583,37 @@ function RoleSlider({
     }}>
         
         {/* Slider Track with labels and bullets */}
-        <div ref={sliderRef} className="relative cursor-pointer overflow-visible" style={{ height: '100px', marginTop: '40px' }} onClick={handleTrackClick}>
-          {/* SVG curved tracks */}
+        <div ref={sliderRef} className="relative cursor-pointer overflow-visible" style={{ height: '72px', marginTop: '40px' }} onClick={handleTrackClick}>
+          {/* SVG curved track */}
           <svg 
             className="absolute w-full h-full" 
-            viewBox="0 0 100 100" 
+            viewBox="0 0 100 72" 
             preserveAspectRatio="none"
           >
-            {/* Upper curve - for role labels */}
+            {/* Background track line - upper curve for labels */}
             <path 
-              d="M0,50 Q50,4 100,50" 
-              fill="none" 
-              stroke="rgba(255,255,255,0.15)" 
-              strokeWidth="1"
-              vectorEffect="non-scaling-stroke"
-            />
-            {/* Lower curve - for slider thumb */}
-            <path 
-              d="M0,95 Q50,55 100,95" 
+              d="M0,68 Q50,4 100,68" 
               fill="none" 
               stroke="rgba(255,255,255,0.2)" 
               strokeWidth="1"
               vectorEffect="non-scaling-stroke"
             />
-            {/* Filled lower track line - uses clipPath based on thumb position */}
+            {/* Lower track line - for thumb slider */}
+            <path 
+              d="M0,72 Q50,40 100,72" 
+              fill="none" 
+              stroke="rgba(255,255,255,0.15)" 
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
+            />
+            {/* Filled lower track line */}
             <defs>
               <clipPath id="filledClip">
                 <rect x="0" y="0" width={`${thumbPosition}%`} height="100%" />
               </clipPath>
             </defs>
             <path 
-              d="M0,95 Q50,55 100,95" 
+              d="M0,72 Q50,40 100,72" 
               fill="none" 
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="1"
@@ -623,13 +623,13 @@ function RoleSlider({
             />
           </svg>
           
-          {/* Stop markers and labels - positioned along UPPER curve */}
+          {/* Stop markers and labels - positioned along upper curve */}
           {navLinks.map((link, index) => {
             const xPercent = getPositionFromIndex(index);
-            // Calculate Y position on the UPPER curve: y = 50 - 46*(1-x^2) where x is normalized -1 to 1
+            // Calculate Y position on the upper curve
             const normalizedX = (xPercent - 50) / 50;
-            const yPos = 50 - 46 * (1 - normalizedX * normalizedX);
-            const yPercent = (yPos / 100) * 100;
+            const yPos = 68 - 64 * (1 - normalizedX * normalizedX);
+            const yPercent = (yPos / 72) * 100;
             
             const isHovered = hoveredIndex === index || nearestSnapIndex === index;
             const isSelected = selectedIndex === index;
@@ -654,7 +654,7 @@ function RoleSlider({
                 >
                   {t(link.labelKey, link.fallback)}
                 </button>
-                {/* Bullet marker on upper curve */}
+                {/* Bullet marker */}
                 <div 
                   className={`absolute w-2 h-2 rounded-full transition-all duration-200 ${
                     selectedIndex !== null && index === selectedIndex 
@@ -676,9 +676,9 @@ function RoleSlider({
           {/* Draggable Thumb Handle - positioned along LOWER curve */}
           {(() => {
             const normalizedX = (thumbPosition - 50) / 50;
-            // Lower curve: y = 95 - 40*(1-x^2)
-            const yPos = 95 - 40 * (1 - normalizedX * normalizedX);
-            const yPercent = (yPos / 100) * 100;
+            // Lower curve: y = 72 - 32*(1-x^2) - shallower curve below the labels
+            const yPos = 72 - 32 * (1 - normalizedX * normalizedX);
+            const yPercent = (yPos / 72) * 100;
             
             return (
               <div 
@@ -690,18 +690,18 @@ function RoleSlider({
                 }} 
                 onMouseDown={handleThumbMouseDown}
               >
-                {/* Outer glow - larger and more visible */}
+                {/* Outer glow */}
                 <div className={`absolute inset-0 rounded-full bg-primary/40 blur-lg ${isDragging ? 'scale-[2]' : 'scale-150'} transition-transform duration-150`} style={{
                   width: '32px',
                   height: '32px',
                   marginLeft: '-4px',
                   marginTop: '-4px'
                 }} />
-                {/* Main thumb - larger and more obvious */}
+                {/* Main thumb */}
                 <div className={`relative w-6 h-6 rounded-full bg-primary shadow-lg flex items-center justify-center ${isDragging ? 'scale-125' : 'hover:scale-110'} transition-transform duration-150`} style={{
                   boxShadow: '0 0 20px hsl(var(--primary) / 0.7), 0 0 40px hsl(var(--primary) / 0.3)'
                 }}>
-                  {/* Grip lines - more visible */}
+                  {/* Grip lines */}
                   <div className="flex gap-[3px]">
                     <div className="w-[2px] h-3 bg-black/50 rounded-full" />
                     <div className="w-[2px] h-3 bg-black/50 rounded-full" />
