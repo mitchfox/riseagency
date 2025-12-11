@@ -5,6 +5,7 @@ import { LocalizedLink } from "@/components/LocalizedLink";
 import { useRoleSubdomain, pathToRole } from "@/hooks/useRoleSubdomain";
 import { useLocalizedNavigate } from "@/hooks/useLocalizedNavigate";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getSubdomainInfo } from "@/lib/subdomainUtils";
 import riseLogoBlack from "@/assets/RISEBlack.png";
 import whiteMarbleBg from "@/assets/white-marble.png";
 import smudgedMarbleBg from "@/assets/black-marble-smudged.png";
@@ -233,25 +234,10 @@ export const RadialMenu = () => {
   const { radius, circleSize, centerSize } = getResponsiveSize();
   const segmentAngle = 360 / menuItems.length;
 
-  // Language subdomains that take priority over role subdomains
-  const languageSubdomains = ['es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'cz', 'ru', 'tr'];
-  
+  // Use shared utility for subdomain detection
   const isOnLanguageSubdomain = (): boolean => {
-    const hostname = window.location.hostname;
-    const parts = hostname.split('.');
-    
-    if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
-      return false;
-    }
-    
-    let subdomain = '';
-    if (parts[0].toLowerCase() === 'www' && parts.length >= 4) {
-      subdomain = parts[1].toLowerCase();
-    } else if (parts[0].toLowerCase() !== 'www' && parts.length >= 3) {
-      subdomain = parts[0].toLowerCase();
-    }
-    
-    return languageSubdomains.includes(subdomain);
+    const info = getSubdomainInfo();
+    return info.type === 'language';
   };
 
   return (
