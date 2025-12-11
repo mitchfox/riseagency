@@ -362,7 +362,7 @@ function LandingContent() {
               {/* Select role text */}
               <div className="text-center pt-1">
                 <span className="text-[10px] font-bebas uppercase tracking-[0.15em] text-white/40">
-                  Select Your Role To Enter Site
+                  {t("landing.select_role_enter", "Select Your Role To Enter Site")}
                 </span>
               </div>
             </div>
@@ -417,7 +417,7 @@ function LandingContent() {
               {/* Select role text - mobile */}
               <div className="text-center pt-0">
                 <span className="text-[10px] font-bebas uppercase tracking-[0.15em] text-white/40">
-                  Select Your Role To Enter Site
+                  {t("landing.select_role_enter", "Select Your Role To Enter Site")}
                 </span>
               </div>
             </div>
@@ -748,7 +748,7 @@ function RoleSlider({
             </span>
           ) : (
             <span className="text-[10px] font-bebas uppercase tracking-[0.25em] text-white/30">
-              {isDragging ? 'Drag to a role to select' : 'Drag slider to select role'}
+              {isDragging ? t("landing.drag_to_role", "Drag to a role to select") : t("landing.drag_slider_select", "Drag slider to select role")}
             </span>
           )}
         </div>
