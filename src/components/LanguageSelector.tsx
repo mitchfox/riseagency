@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getSubdomainInfo, isPreviewOrLocalEnvironment } from "@/lib/subdomainUtils";
 
 const languages = [
   { code: "en" as const, name: "ENG", flagCode: "gb" },
@@ -50,29 +51,20 @@ export const LanguageSelector = () => {
     if (!selectedLang) return;
     
     const subdomain = languageUrlSubdomains[selectedLang.code];
-    const currentHost = window.location.hostname;
     const currentPath = window.location.pathname;
     
     // Check if we're on localhost or preview
-    if (currentHost === 'localhost' || currentHost.includes('preview') || currentHost.includes('lovable.app')) {
+    if (isPreviewOrLocalEnvironment()) {
       localStorage.setItem('preferred_language', selectedLang.code);
       window.location.reload();
       return;
     }
     
-    // Extract base domain, removing any existing subdomain (language or role)
-    const parts = currentHost.split('.');
-    let baseDomain = '';
-    
-    if (parts.length >= 3) {
-      // subdomain.domain.com -> domain.com
-      baseDomain = parts.slice(-2).join('.');
-    } else {
-      baseDomain = currentHost;
-    }
+    // Use shared utility to extract base domain
+    const info = getSubdomainInfo();
     
     // Navigate to language subdomain
-    const newUrl = `https://${subdomain}.${baseDomain}${currentPath}`;
+    const newUrl = `https://${subdomain}.${info.baseDomain}${currentPath}`;
     window.location.href = newUrl;
   };
 

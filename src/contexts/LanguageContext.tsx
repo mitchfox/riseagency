@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getEnglishPath, getLocalizedPath } from '@/lib/localizedRoutes';
+import { getSubdomainInfo, getLanguageFromSubdomain, isPreviewOrLocalEnvironment, ROLE_SUBDOMAINS } from '@/lib/subdomainUtils';
 
 type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr';
 
@@ -28,22 +29,6 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
-
-const languageSubdomains: Record<string, LanguageCode> = {
-  'es': 'es',
-  'pt': 'pt',
-  'fr': 'fr',
-  'de': 'de',
-  'it': 'it',
-  'pl': 'pl',
-  'cs': 'cs',
-  'cz': 'cs', // DNS uses 'cz' for Czech
-  'ru': 'ru',
-  'tr': 'tr',
-};
-
-// Role subdomains that should NOT be treated as language subdomains
-const roleSubdomains = ['players', 'clubs', 'scouts', 'agents', 'coaches', 'media', 'business'];
 
 // URL subdomains to use (matching DNS records)
 const languageUrlSubdomains: Record<LanguageCode, string> = {
@@ -74,34 +59,24 @@ const languageColumns: Record<LanguageCode, keyof Translation> = {
 
 const validLanguages: LanguageCode[] = ['en', 'es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'ru', 'tr'];
 
-function isPreviewOrLocalEnvironment(): boolean {
-  const hostname = window.location.hostname;
-  return hostname === 'localhost' || 
-         /^\d+\.\d+\.\d+\.\d+$/.test(hostname) ||
-         hostname.includes('lovable.app') ||
-         hostname.includes('lovableproject.com');
-}
-
 function detectLanguageFromSubdomain(): LanguageCode | null {
-  const hostname = window.location.hostname;
-  
-  // For localhost, IP addresses, or preview environments, return null to trigger auto-detection
+  // For preview/local environments, return null to trigger auto-detection
   if (isPreviewOrLocalEnvironment()) {
     return null;
   }
   
-  const parts = hostname.split('.');
+  const info = getSubdomainInfo();
   
-  // Check format: es.risefootballagency.com (language subdomain first)
-  // Skip role subdomains like players.risefootballagency.com
-  if (parts.length >= 2) {
-    const potentialLang = parts[0].toLowerCase();
-    // Skip if it's a role subdomain
-    if (roleSubdomains.includes(potentialLang)) {
-      return null;
-    }
-    if (languageSubdomains[potentialLang]) {
-      return languageSubdomains[potentialLang];
+  // Skip role subdomains
+  if (info.type === 'role') {
+    return null;
+  }
+  
+  // Check if it's a language subdomain
+  if (info.type === 'language' && info.subdomain) {
+    const langCode = getLanguageFromSubdomain(info.subdomain);
+    if (langCode && validLanguages.includes(langCode as LanguageCode)) {
+      return langCode as LanguageCode;
     }
   }
   
@@ -282,21 +257,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const parts = hostname.split('.');
+    const info = getSubdomainInfo(hostname);
+    const baseDomain = info.baseDomain;
     
-    // Extract base domain using the same reliable approach as role subdomains
-    // Always take the last 2 parts: risefootballagency.com
-    const baseDomain = parts.slice(-2).join('.');
-    
-    // Check if we're on a role subdomain by looking at parts before the base domain
+    // Check if we're on a role subdomain
     let currentRoleSubdomain: string | null = null;
-    for (const part of parts.slice(0, -2)) {
-      const lowerPart = part.toLowerCase();
-      if (lowerPart === 'www') continue;
-      if (roleSubdomains.includes(lowerPart)) {
-        currentRoleSubdomain = lowerPart;
-        break;
-      }
+    if (info.type === 'role' && info.subdomain) {
+      currentRoleSubdomain = info.subdomain;
     }
 
     // Build new hostname
@@ -313,7 +280,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     // If we were on a role subdomain, convert it to a path and translate it
     // e.g., players.risefootballagency.com → es.risefootballagency.com/jugadoras
     let finalPath = localizedPath;
-    if (currentRoleSubdomain) {
+    if (currentRoleSubdomain && ROLE_SUBDOMAINS.includes(currentRoleSubdomain as any)) {
       // Translate the role subdomain to a localized path
       const roleAsEnglishPath = `/${currentRoleSubdomain}`;
       const localizedRolePath = getLocalizedPath(roleAsEnglishPath, lang);
