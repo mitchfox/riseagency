@@ -580,9 +580,9 @@ function RoleSlider({
   }}>
       {/* Unified Slider Container - all elements in one parent */}
       <div className="relative" style={{
-      width: isTablet ? '95%' : '85%',
-      paddingLeft: isTablet ? '40px' : '100px',
-      paddingRight: isTablet ? '40px' : '100px'
+      width: isTablet ? '80%' : '85%',
+      paddingLeft: isTablet ? '30px' : '100px',
+      paddingRight: isTablet ? '30px' : '100px'
     }}>
         
         {/* Slider Track with labels and bullets */}
