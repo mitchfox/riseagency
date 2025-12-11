@@ -288,19 +288,15 @@ function LandingContent() {
         </Link>
       </div>
       
-      {/* 3D Player Effect - Behind the bottom menu area (lower z-index so cone appears on top) */}
-      <div className="absolute inset-0 md:inset-0 pointer-events-none z-[5]" style={{
-      transform: 'translateX(-39px) translateY(-28px)'
-    }}>
-          {/* Mobile wrapper to shift player down and right - extend beyond bounds */}
-          <div className="md:hidden absolute -inset-x-8 -inset-y-8" style={{ transform: 'translateY(60px) translateX(40px)' }}>
-            <LazyPlayer3D className="pointer-events-none" />
-          </div>
-          {/* Desktop/tablet version - unchanged */}
-          <div className="hidden md:block absolute inset-0">
-            <LazyPlayer3D className="pointer-events-none" />
-          </div>
+      {/* 3D Player Effect - Single instance with responsive CSS positioning */}
+      <div className="absolute inset-0 pointer-events-none z-[5]">
+        {/* Mobile: translateX(1px) translateY(32px), Desktop: translateX(-39px) translateY(-28px) */}
+        <div 
+          className="absolute inset-0 translate-x-[1px] translate-y-[32px] md:translate-x-[-39px] md:translate-y-[-28px]"
+        >
+          <LazyPlayer3D className="pointer-events-none w-full h-full" />
         </div>
+      </div>
 
       {/* Bottom Section - Menu area */}
       <div className="pb-0 md:pb-8 z-50 relative w-full pointer-events-auto">
