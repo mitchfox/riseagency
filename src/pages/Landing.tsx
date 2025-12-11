@@ -587,15 +587,15 @@ function RoleSlider({
         
         {/* Buttons moved to fixed positions at top of component */}
         
-        {/* Role Labels - positioned directly on the curve */}
-        <div className="flex justify-between relative" style={{ height: '75px' }}>
+        {/* Role Labels - fixed positions directly above bullet points */}
+        <div className="relative" style={{ height: '75px' }}>
           {navLinks.map((link, index) => {
-            // Calculate position on curve: ends drop down to align with instruction text
-            const centerIdx = (navLinks.length - 1) / 2; // 3
-            const distanceFromCenter = Math.abs(index - centerIdx);
-            const maxDistance = centerIdx; // 3
-            // Offset in px: 0 at center, positive (down) toward ends - extended to 63px to align with instruction text
-            const yOffset = (distanceFromCenter / maxDistance) * 63;
+            const xPercent = getPositionFromIndex(index);
+            // Calculate Y position matching the curve - same formula as bullet points
+            const normalizedX = (xPercent - 50) / 50; // -1 to 1
+            const yPos = 68 - 64 * (1 - normalizedX * normalizedX);
+            // Position label above the bullet point
+            const labelYOffset = yPos - 20; // 20px above the curve point
             
             const isHovered = hoveredIndex === index || nearestSnapIndex === index;
             const isSelected = selectedIndex === index;
@@ -606,12 +606,16 @@ function RoleSlider({
                 onClick={() => handleRoleClick(index)}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
-                className={`text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 ${
+                className={`absolute text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 whitespace-nowrap ${
                   isSelected ? 'text-primary font-bold' : 
                   isHovered ? 'text-primary font-bold' : 
                   'text-white/40'
                 }`}
-                style={{ transform: `translateY(${yOffset}px)` }}
+                style={{ 
+                  left: `${xPercent}%`,
+                  top: `${labelYOffset}px`,
+                  transform: 'translateX(-50%)'
+                }}
               >
                 {t(link.labelKey, link.fallback)}
               </button>
