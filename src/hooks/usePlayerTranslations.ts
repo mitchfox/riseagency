@@ -371,6 +371,17 @@ export const seasonStatTranslations: Record<string, Record<string, string>> = {
   'Yellow Cards': { es: 'Tarjetas amarillas', pt: 'Cartões amarelos', fr: 'Cartons jaunes', de: 'Gelbe Karten', it: 'Cartellini gialli', pl: 'Żółte kartki', cs: 'Žluté karty', ru: 'Жёлтые карточки', tr: 'Sarı kartlar' },
   'Red Cards': { es: 'Tarjetas rojas', pt: 'Cartões vermelhos', fr: 'Cartons rouges', de: 'Rote Karten', it: 'Cartellini rossi', pl: 'Czerwone kartki', cs: 'Červené karty', ru: 'Красные карточки', tr: 'Kırmızı kartlar' },
   'Starts': { es: 'Titularidades', pt: 'Titularidades', fr: 'Titularisations', de: 'Startelf', it: 'Titolare', pl: 'Występy w pierwszym składzie', cs: 'Základní sestava', ru: 'В стартовом составе', tr: 'İlk 11' },
+  'Successful Dribbles': { es: 'Regates exitosos', pt: 'Dribles bem-sucedidos', fr: 'Dribbles réussis', de: 'Erfolgreiche Dribblings', it: 'Dribbling riusciti', pl: 'Udane dryblingi', cs: 'Úspěšné driblinky', ru: 'Успешные обводки', tr: 'Başarılı dribblingler' },
+  'Key Passes': { es: 'Pases clave', pt: 'Passes decisivos', fr: 'Passes clés', de: 'Schlüsselpässe', it: 'Passaggi chiave', pl: 'Kluczowe podania', cs: 'Klíčové přihrávky', ru: 'Ключевые передачи', tr: 'Kilit paslar' },
+  'Shots': { es: 'Tiros', pt: 'Finalizações', fr: 'Tirs', de: 'Schüsse', it: 'Tiri', pl: 'Strzały', cs: 'Střely', ru: 'Удары', tr: 'Şutlar' },
+  'Tackles': { es: 'Entradas', pt: 'Desarmes', fr: 'Tacles', de: 'Tacklings', it: 'Contrasti', pl: 'Odbiory', cs: 'Zákroky', ru: 'Отборы', tr: 'Müdahaleler' },
+  'Interceptions': { es: 'Intercepciones', pt: 'Interceptações', fr: 'Interceptions', de: 'Abfangaktionen', it: 'Intercetti', pl: 'Przechwyty', cs: 'Zachycení', ru: 'Перехваты', tr: 'Topları kesme' },
+  'Clearances': { es: 'Despejes', pt: 'Cortes', fr: 'Dégagements', de: 'Klärungsaktionen', it: 'Spazzate', pl: 'Wybicia', cs: 'Odkopy', ru: 'Выносы', tr: 'Uzaklaştırmalar' },
+  'Aerial Duels': { es: 'Duelos aéreos', pt: 'Duelos aéreos', fr: 'Duels aériens', de: 'Kopfballduelle', it: 'Duelli aerei', pl: 'Pojedynki powietrzne', cs: 'Hlavičkové souboje', ru: 'Воздушные дуэли', tr: 'Hava topları' },
+  'Pass Accuracy': { es: 'Precisión de pase', pt: 'Precisão de passe', fr: 'Précision de passe', de: 'Passgenauigkeit', it: 'Precisione passaggio', pl: 'Celność podań', cs: 'Přesnost přihrávek', ru: 'Точность передач', tr: 'Pas isabeti' },
+  'Chances Created': { es: 'Ocasiones creadas', pt: 'Chances criadas', fr: 'Occasions créées', de: 'Erstellte Chancen', it: 'Occasioni create', pl: 'Stworzone okazje', cs: 'Vytvořené šance', ru: 'Созданные моменты', tr: 'Yaratılan şanslar' },
+  'xG': { es: 'xG', pt: 'xG', fr: 'xG', de: 'xG', it: 'xG', pl: 'xG', cs: 'xG', ru: 'xG', tr: 'xG' },
+  'xA': { es: 'xA', pt: 'xA', fr: 'xA', de: 'xA', it: 'xA', pl: 'xA', cs: 'xA', ru: 'xA', tr: 'xA' },
 };
 
 // Scheme history label translations
@@ -414,6 +425,15 @@ export const inNumbersStatTranslations: Record<string, Record<string, string>> =
   'Matches': { es: 'Partidos', pt: 'Partidas', fr: 'Matchs', de: 'Spiele', it: 'Partite', pl: 'Mecze', cs: 'Zápasy', ru: 'Матчи', tr: 'Maçlar' },
   'xG': { es: 'xG', pt: 'xG', fr: 'xG', de: 'xG', it: 'xG', pl: 'xG', cs: 'xG', ru: 'xG', tr: 'xG' },
   'xA': { es: 'xA', pt: 'xA', fr: 'xA', de: 'xA', it: 'xA', pl: 'xA', cs: 'xA', ru: 'xA', tr: 'xA' },
+  // Dynamic stats with PER 90 suffix
+  'OFFENSIVE DUELS PER 90': { es: 'DUELOS OFENSIVOS POR 90', pt: 'DUELOS OFENSIVOS POR 90', fr: 'DUELS OFFENSIFS PAR 90', de: 'OFFENSIVE DUELLE PRO 90', it: 'DUELLI OFFENSIVI PER 90', pl: 'POJEDYNKI OFENSYWNE NA 90', cs: 'ÚTOČNÉ SOUBOJE NA 90', ru: 'АТАКУЮЩИЕ ДУЭЛИ ЗА 90', tr: 'HÜCUM İKİLİ MÜCADELELERİ 90' },
+  'SUCCESSFUL DRIBBLES PER 90': { es: 'REGATES EXITOSOS POR 90', pt: 'DRIBLES BEM-SUCEDIDOS POR 90', fr: 'DRIBBLES RÉUSSIS PAR 90', de: 'ERFOLGREICHE DRIBBLINGS PRO 90', it: 'DRIBBLING RIUSCITI PER 90', pl: 'UDANE DRYBLINGI NA 90', cs: 'ÚSPĚŠNÉ DRIBLINKY NA 90', ru: 'УСПЕШНЫЕ ОБВОДКИ ЗА 90', tr: 'BAŞARILI DRİBLİNGLER 90' },
+  'PROGRESSIVE CARRIES PER 90': { es: 'CONDUCCIONES PROGRESIVAS POR 90', pt: 'CONDUÇÕES PROGRESSIVAS POR 90', fr: 'PORTAGES PROGRESSIFS PAR 90', de: 'PROGRESSIVE BALLFÜHRUNGEN PRO 90', it: 'CONDUZIONI PROGRESSIVE PER 90', pl: 'PROGRESYWNE PROWADZENIA NA 90', cs: 'PROGRESIVNÍ VEDENÍ NA 90', ru: 'ПРОГРЕССИВНЫЕ ПРОХОДЫ ЗА 90', tr: 'İLERİYE TOP TAŞIMA 90' },
+  'TOUCHES IN BOX PER 90': { es: 'TOQUES EN ÁREA POR 90', pt: 'TOQUES NA ÁREA POR 90', fr: 'TOUCHES DANS LA SURFACE PAR 90', de: 'BALLKONTAKTE IM STRAFRAUM PRO 90', it: 'TOCCHI IN AREA PER 90', pl: 'KONTAKTY W POLU KARNYM NA 90', cs: 'DOTYKY V POKUTOVÉM ÚZEMÍ NA 90', ru: 'КАСАНИЯ В ШТРАФНОЙ ЗА 90', tr: 'CEZA SAHASINDA DOKUNUŞ 90' },
+  'AERIAL DUELS WON PER 90': { es: 'DUELOS AÉREOS GANADOS POR 90', pt: 'DUELOS AÉREOS VENCIDOS POR 90', fr: 'DUELS AÉRIENS GAGNÉS PAR 90', de: 'GEWONNENE KOPFBALLDUELLE PRO 90', it: 'DUELLI AEREI VINTI PER 90', pl: 'WYGRANE POJEDYNKI POWIETRZNE NA 90', cs: 'VYHRANÉ HLAVIČKOVÉ SOUBOJE NA 90', ru: 'ВЫИГРАННЫЕ ВОЗДУШНЫЕ ДУЭЛИ ЗА 90', tr: 'KAZANILAN HAVA TOPU 90' },
+  'HOLD-UP PLAY': { es: 'JUEGO DE ESPALDAS', pt: 'JOGO DE COSTAS', fr: 'JEU DOS AU BUT', de: 'BALLHALTEN', it: 'GIOCO SPALLE ALLA PORTA', pl: 'GRA PLECAMI', cs: 'HRA ZÁDY K BRÁNĚ', ru: 'ИГРА СПИНОЙ К ВОРОТАМ', tr: 'TOP KORUMA' },
+  'DRIBBLING': { es: 'REGATE', pt: 'DRIBLE', fr: 'DRIBBLE', de: 'DRIBBLING', it: 'DRIBBLING', pl: 'DRYBLING', cs: 'DRIBLOVÁNÍ', ru: 'ДРИБЛИНГ', tr: 'DRİBLİNG' },
+  'PASSING ACCURACY': { es: 'PRECISIÓN DE PASE', pt: 'PRECISÃO DE PASSE', fr: 'PRÉCISION DE PASSE', de: 'PASSGENAUIGKEIT', it: 'PRECISIONE DI PASSAGGIO', pl: 'CELNOŚĆ PODAŃ', cs: 'PŘESNOST PŘIHRÁVEK', ru: 'ТОЧНОСТЬ ПЕРЕДАЧ', tr: 'PAS İSABETİ' },
 };
 
 // Performance stat translations for HighlightedMatchDisplay

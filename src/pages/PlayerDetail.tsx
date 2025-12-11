@@ -54,20 +54,24 @@ const PlayerDetail = () => {
   
   // Helper function to translate season stat headers
   const getTranslatedStatHeader = (header: string): string => {
-    if (language === 'en' || !header) return header;
-    return seasonStatTranslations[header]?.[language] || header;
+    const trimmedHeader = header?.trim();
+    if (language === 'en' || !trimmedHeader) return trimmedHeader || header;
+    return seasonStatTranslations[trimmedHeader]?.[language] || trimmedHeader;
   };
   
   // Helper function to translate scheme history labels
-  const getSchemeLabel = (isCurrentClub: boolean, matchCount?: number): string => {
-    if (isCurrentClub) {
-      return language === 'en' ? 'CURRENT CLUB' : (schemeHistoryLabels['CURRENT CLUB']?.[language] || 'CURRENT CLUB');
+  const getSchemeLabel = (labelOrCount: string | number): string => {
+    if (typeof labelOrCount === 'string') {
+      const upper = labelOrCount.toUpperCase().trim();
+      if (upper === 'CURRENT CLUB') {
+        return language === 'en' ? 'CURRENT CLUB' : (schemeHistoryLabels['CURRENT CLUB']?.[language] || 'CURRENT CLUB');
+      }
+      // Return the string as-is if not a known label
+      return upper;
     }
-    if (matchCount !== undefined) {
-      const matchesWord = language === 'en' ? 'MATCHES' : (schemeHistoryLabels['MATCHES']?.[language] || 'MATCHES');
-      return `${matchCount} ${matchesWord}`;
-    }
-    return '';
+    // It's a number - format as "X MATCHES"
+    const matchesWord = language === 'en' ? 'MATCHES' : (schemeHistoryLabels['MATCHES']?.[language] || 'MATCHES');
+    return `${labelOrCount} ${matchesWord}`;
   };
   
   // Helper function to translate "In Numbers" stat labels
@@ -879,13 +883,11 @@ const PlayerDetail = () => {
                           {(() => {
                             const formation = player.tacticalFormations[currentFormationIndex];
                             const matchValue = formation.appearances || formation.matches;
-                            const isCurrentClub = formation.club === (player.club || player.currentClub);
                             const isNumeric = typeof matchValue === 'number' || (typeof matchValue === 'string' && !isNaN(Number(matchValue)) && matchValue !== '');
                             
                             let labelText = '';
-                            if (isCurrentClub) labelText = getSchemeLabel(true);
-                            else if (isNumeric) labelText = getSchemeLabel(false, Number(matchValue));
-                            else if (matchValue) labelText = String(matchValue).toUpperCase();
+                            if (isNumeric) labelText = getSchemeLabel(Number(matchValue));
+                            else if (matchValue) labelText = getSchemeLabel(String(matchValue));
                             
                             return labelText ? `${labelText} • ${formation.formation}` : formation.formation;
                           })()}
@@ -965,13 +967,11 @@ const PlayerDetail = () => {
                         {(() => {
                           const formation = player.tacticalFormations[currentFormationIndex];
                           const matchValue = formation.appearances || formation.matches;
-                          const isCurrentClub = formation.club === (player.club || player.currentClub);
                           const isNumeric = typeof matchValue === 'number' || (typeof matchValue === 'string' && !isNaN(Number(matchValue)) && matchValue !== '');
                           
                           let labelText = '';
-                          if (isCurrentClub) labelText = getSchemeLabel(true);
-                          else if (isNumeric) labelText = getSchemeLabel(false, Number(matchValue));
-                          else if (matchValue) labelText = String(matchValue).toUpperCase();
+                          if (isNumeric) labelText = getSchemeLabel(Number(matchValue));
+                          else if (matchValue) labelText = getSchemeLabel(String(matchValue));
                           
                           return labelText ? `${labelText} • ${formation.formation}` : formation.formation;
                         })()}
