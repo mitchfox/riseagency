@@ -140,7 +140,26 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Initialize language on mount
   useEffect(() => {
     async function initializeLanguage() {
-      // First check subdomain
+      // First check URL parameter (highest priority for testing)
+      const urlParams = new URLSearchParams(window.location.search);
+      const langParam = urlParams.get('lang');
+      if (langParam && validLanguages.includes(langParam as LanguageCode)) {
+        // Store in sessionStorage so it persists during navigation
+        sessionStorage.setItem('url_language_override', langParam);
+        setLanguage(langParam as LanguageCode);
+        setIsInitialized(true);
+        return;
+      }
+      
+      // Check if we have a session override from URL param
+      const sessionOverride = sessionStorage.getItem('url_language_override');
+      if (sessionOverride && validLanguages.includes(sessionOverride as LanguageCode)) {
+        setLanguage(sessionOverride as LanguageCode);
+        setIsInitialized(true);
+        return;
+      }
+      
+      // Then check subdomain
       const subdomainLang = detectLanguageFromSubdomain();
       
       if (subdomainLang) {
