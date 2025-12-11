@@ -470,11 +470,15 @@ export const performanceStatTranslations: Record<string, Record<string, string>>
   'On Target': { es: 'A puerta', pt: 'No alvo', fr: 'Cadrés', de: 'Auf Tor', it: 'In porta', pl: 'Celne', cs: 'Na branku', ru: 'В створ', tr: 'İsabetli' },
 };
 
+// Cache version - increment to invalidate all cached translations
+const CACHE_VERSION = 'v2';
+
 export function usePlayerTranslations({ bio, position, playerId, strengths = [] }: UsePlayerTranslationsOptions) {
   const { language } = useLanguage();
-  const [translatedBio, setTranslatedBio] = useState<string>(bio);
-  const [translatedStrengths, setTranslatedStrengths] = useState<string[]>(strengths);
-  const [isTranslating, setIsTranslating] = useState(false);
+  // Initialize with null to indicate "not yet loaded" - this prevents English flash
+  const [translatedBio, setTranslatedBio] = useState<string | null>(null);
+  const [translatedStrengths, setTranslatedStrengths] = useState<string[] | null>(null);
+  const [isTranslating, setIsTranslating] = useState(true);
 
   // Translate position immediately using useMemo for proper reactivity
   const translatedPosition = useMemo(() => {
@@ -483,21 +487,30 @@ export function usePlayerTranslations({ bio, position, playerId, strengths = [] 
   }, [language, position]);
 
   useEffect(() => {
-    // Reset to original when language is English
+    // Reset state immediately when language changes to prevent stale content
+    setTranslatedBio(null);
+    setTranslatedStrengths(null);
+    setIsTranslating(true);
+
+    // For English, use original content immediately
     if (language === 'en') {
       setTranslatedBio(bio);
       setTranslatedStrengths(strengths);
+      setIsTranslating(false);
       return;
     }
 
     const translateContent = async () => {
       if (!bio || bio.trim() === '') {
         setTranslatedBio('');
+        setTranslatedStrengths(strengths.length > 0 ? strengths : []);
+        setIsTranslating(false);
+        return;
       }
 
-      // Check cache for bio
-      const bioCacheKey = `player_bio_${playerId}_${language}`;
-      const strengthsCacheKey = `player_strengths_${playerId}_${language}`;
+      // Check cache for bio with versioning
+      const bioCacheKey = `player_bio_${CACHE_VERSION}_${playerId}_${language}`;
+      const strengthsCacheKey = `player_strengths_${CACHE_VERSION}_${playerId}_${language}`;
       
       let cachedBio = null;
       let cachedStrengths = null;
@@ -506,23 +519,36 @@ export function usePlayerTranslations({ bio, position, playerId, strengths = [] 
         const cached = localStorage.getItem(bioCacheKey);
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (parsed.bio) cachedBio = parsed.bio;
+          // Validate cache has expected structure
+          if (parsed.bio && typeof parsed.bio === 'string' && parsed.bio.trim() !== '') {
+            cachedBio = parsed.bio;
+          }
         }
         const cachedStr = localStorage.getItem(strengthsCacheKey);
         if (cachedStr) {
           const parsed = JSON.parse(cachedStr);
-          if (parsed.strengths) cachedStrengths = parsed.strengths;
+          if (parsed.strengths && Array.isArray(parsed.strengths)) {
+            cachedStrengths = parsed.strengths;
+          }
         }
-      } catch { /* ignore */ }
+      } catch {
+        // Invalid cache - clear it
+        try {
+          localStorage.removeItem(bioCacheKey);
+          localStorage.removeItem(strengthsCacheKey);
+        } catch { /* ignore */ }
+      }
 
+      // Apply cached values immediately if available
       if (cachedBio) setTranslatedBio(cachedBio);
       if (cachedStrengths) setTranslatedStrengths(cachedStrengths);
       
-      // If both are cached, return
-      if (cachedBio && (strengths.length === 0 || cachedStrengths)) return;
+      // If both are cached, we're done
+      if (cachedBio && (strengths.length === 0 || cachedStrengths)) {
+        setIsTranslating(false);
+        return;
+      }
 
-      setIsTranslating(true);
-      
       const langMap: Record<string, string> = {
         'es': 'spanish',
         'pt': 'portuguese',
@@ -546,6 +572,9 @@ export function usePlayerTranslations({ bio, position, playerId, strengths = [] 
           if (!error && data?.[translationKey]) {
             localStorage.setItem(bioCacheKey, JSON.stringify({ bio: data[translationKey] }));
             setTranslatedBio(data[translationKey]);
+          } else {
+            // Fallback to original if translation fails
+            setTranslatedBio(bio);
           }
         }
 
@@ -560,10 +589,18 @@ export function usePlayerTranslations({ bio, position, playerId, strengths = [] 
             const translatedArray = data[translationKey].split('\n---\n').map((s: string) => s.trim()).filter(Boolean);
             localStorage.setItem(strengthsCacheKey, JSON.stringify({ strengths: translatedArray }));
             setTranslatedStrengths(translatedArray);
+          } else {
+            // Fallback to original if translation fails
+            setTranslatedStrengths(strengths);
           }
+        } else if (strengths.length === 0) {
+          setTranslatedStrengths([]);
         }
       } catch (err) {
         console.error('Player content translation error:', err);
+        // Fallback to original content on error
+        if (!cachedBio) setTranslatedBio(bio);
+        if (!cachedStrengths) setTranslatedStrengths(strengths);
       } finally {
         setIsTranslating(false);
       }
@@ -574,15 +611,78 @@ export function usePlayerTranslations({ bio, position, playerId, strengths = [] 
 
   // Use useMemo to ensure the returned object updates when language changes
   const translatedContent = useMemo(() => ({
-    bio: translatedBio,
+    bio: translatedBio ?? bio, // Fallback to original while loading
     position: translatedPosition,
-    strengths: translatedStrengths,
-  }), [translatedBio, translatedPosition, translatedStrengths]);
+    strengths: translatedStrengths ?? strengths, // Fallback to original while loading
+  }), [translatedBio, translatedPosition, translatedStrengths, bio, strengths]);
 
   return { 
     translatedContent, 
-    isTranslating 
+    isTranslating,
+    // Additional helper to check if content is ready
+    isContentReady: translatedBio !== null
   };
+}
+
+// Lightweight hook for translating just bio text (for PlayerCard list view)
+export function useTranslatedBio(bio: string, playerId: string): { translatedBio: string; isLoading: boolean } {
+  const { language } = useLanguage();
+  const [translatedBio, setTranslatedBio] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setTranslatedBio(null);
+    setIsLoading(true);
+
+    if (language === 'en' || !bio || bio.trim() === '') {
+      setTranslatedBio(bio || '');
+      setIsLoading(false);
+      return;
+    }
+
+    const translateBio = async () => {
+      const bioCacheKey = `player_bio_${CACHE_VERSION}_${playerId}_${language}`;
+      
+      // Check cache first
+      try {
+        const cached = localStorage.getItem(bioCacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.bio && typeof parsed.bio === 'string') {
+            setTranslatedBio(parsed.bio);
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch { /* ignore */ }
+
+      const langMap: Record<string, string> = {
+        'es': 'spanish', 'pt': 'portuguese', 'fr': 'french', 'de': 'german',
+        'it': 'italian', 'pl': 'polish', 'cs': 'czech', 'ru': 'russian', 'tr': 'turkish'
+      };
+
+      try {
+        const { data, error } = await supabase.functions.invoke('ai-translate', {
+          body: { text: bio }
+        });
+
+        if (!error && data?.[langMap[language]]) {
+          localStorage.setItem(bioCacheKey, JSON.stringify({ bio: data[langMap[language]] }));
+          setTranslatedBio(data[langMap[language]]);
+        } else {
+          setTranslatedBio(bio);
+        }
+      } catch {
+        setTranslatedBio(bio);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    translateBio();
+  }, [bio, language, playerId]);
+
+  return { translatedBio: translatedBio ?? bio, isLoading };
 }
 
 // Helper function to translate country names

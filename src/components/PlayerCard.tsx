@@ -4,6 +4,8 @@ import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { ArrowRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LazyImage } from "@/components/LazyImage";
+import { useTranslatedBio } from "@/hooks/usePlayerTranslations";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PlayerCardProps {
   player: any; // Changed from Player to any since we're using database structure
@@ -36,6 +38,24 @@ export const PlayerCard = ({ player, viewMode = "grid", disableProfileLink = fal
   const positionKey = player.position?.toUpperCase() || '';
   const translatedPosition = t(`positions.${positionKey}`, positionKey);
 
+  // Parse bio for display and extract DOB (needed for both views now for translation)
+  let bioText = "";
+  let dateOfBirth = "";
+  if (player.bio) {
+    try {
+      const parsed = JSON.parse(player.bio);
+      if (typeof parsed === 'object' && parsed !== null) {
+        bioText = parsed.bio || parsed.overview || parsed.description || "";
+        dateOfBirth = parsed.dateOfBirth || parsed.dob || "";
+      }
+    } catch {
+      bioText = typeof player.bio === 'string' ? player.bio : "";
+    }
+  }
+
+  // Translate bio for list view
+  const { translatedBio, isLoading: isBioLoading } = useTranslatedBio(bioText, player.id);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -56,22 +76,8 @@ export const PlayerCard = ({ player, viewMode = "grid", disableProfileLink = fal
   }, []);
 
   if (viewMode === "list") {
-    // Parse bio for display and extract DOB
-    let bioText = "";
-    let dateOfBirth = "";
-    if (player.bio) {
-      try {
-        const parsed = JSON.parse(player.bio);
-        if (typeof parsed === 'object' && parsed !== null) {
-          bioText = parsed.bio || parsed.overview || parsed.description || "";
-          dateOfBirth = parsed.dateOfBirth || parsed.dob || "";
-        }
-      } catch {
-        bioText = typeof player.bio === 'string' ? player.bio : "";
-      }
-    }
-    // Truncate bio
-    const truncatedBio = bioText.length > 200 ? bioText.substring(0, 200) + "..." : bioText;
+    // Truncate translated bio
+    const truncatedBio = translatedBio.length > 200 ? translatedBio.substring(0, 200) + "..." : translatedBio;
 
     // Format DOB with age
     const dobDisplay = dateOfBirth ? `${dateOfBirth} (${player.age})` : `Age ${player.age}`;
@@ -131,11 +137,17 @@ export const PlayerCard = ({ player, viewMode = "grid", disableProfileLink = fal
             </div>
 
             {/* Bio Text */}
-            {truncatedBio && (
+            {isBioLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            ) : truncatedBio ? (
               <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
                 {truncatedBio}
               </p>
-            )}
+            ) : null}
           </div>
 
           {/* View Profile Button - hidden when link is disabled */}
