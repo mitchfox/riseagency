@@ -667,9 +667,9 @@ function RoleSlider({
           {/* Draggable Thumb - ON the main curve */}
           {(() => {
             const normalizedX = (thumbPosition - 50) / 50;
-            // Follow a shallower curve near the bottom
-            const yPos = 72 - 12 * (1 - normalizedX * normalizedX);
-            const yPercent = (yPos / 72) * 100;
+            // Same curve as the main line but offset down onto the lower grey line
+            const yPos = 68 - 64 * (1 - normalizedX * normalizedX);
+            const yPercent = (yPos / 72) * 100 + 42;
             
             return (
               <div 
