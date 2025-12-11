@@ -206,6 +206,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     if (!isInitialized) return;
     
     async function fetchTranslations() {
+      console.log('[Translation] Fetching translations for language:', language);
       setIsLoading(true);
       setTranslationsLoaded(false);
       try {
@@ -221,6 +222,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         }
 
         const column = languageColumns[language];
+        console.log('[Translation] Using column:', column, 'for language:', language);
         const translationMap = new Map<string, string>();
 
         data?.forEach((row: Translation) => {
@@ -238,6 +240,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
           translationMap.set(key, value || row.english || '');
         });
 
+        console.log('[Translation] Loaded', translationMap.size, 'translations. Sample keys:', Array.from(translationMap.keys()).slice(0, 5));
+        console.log('[Translation] Sample: landing.nav_players =', translationMap.get('landing.nav_players'));
+        
         setTranslations(translationMap);
         setTranslationsLoaded(true);
       } catch (err) {
