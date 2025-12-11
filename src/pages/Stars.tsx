@@ -165,8 +165,7 @@ const Stars = () => {
                 {t('stars.title', 'Our Stars')}
               </h1>
               <p className="text-muted-foreground mt-4 max-w-3xl mx-auto">
-                Because of our background, we have the mandate to many top players across Europe's major divisions not under exclusive representation. 
-                Clubs can request our full portfolio through the button below.
+                {t('stars.description', 'Because of our background, we have the mandate to many top players across Europe\'s major divisions not under exclusive representation. Clubs can request our full portfolio through the button below.')}
               </p>
             </div>
 
@@ -184,10 +183,10 @@ const Stars = () => {
                       </div>
                        <div>
                          <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">
-                           <HoverText text="Declare Interest in Player(s)" />
+                           <HoverText text={t('stars.declare_interest', 'Declare Interest in Player(s)')} />
                          </h3>
                          <p className="text-sm text-muted-foreground">
-                           Select players and submit your interest
+                           {t('stars.declare_interest_desc', 'Select players and submit your interest')}
                          </p>
                        </div>
                     </div>
@@ -208,10 +207,10 @@ const Stars = () => {
                       </div>
                        <div>
                          <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">
-                           <HoverText text="Contact" />
+                           <HoverText text={t('stars.contact_btn', 'Contact')} />
                          </h3>
                          <p className="text-sm text-muted-foreground">
-                           Get in touch with us directly
+                           {t('stars.contact_desc', 'Get in touch with us directly')}
                          </p>
                        </div>
                     </div>
@@ -232,10 +231,10 @@ const Stars = () => {
                       </div>
                        <div>
                          <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">
-                           <HoverText text="Request Full Portfolio" />
+                           <HoverText text={t('stars.request_portfolio', 'Request Full Portfolio')} />
                          </h3>
                          <p className="text-sm text-muted-foreground">
-                           Access our complete player portfolio
+                           {t('stars.request_portfolio_desc', 'Access our complete player portfolio')}
                          </p>
                        </div>
                     </div>
@@ -339,11 +338,11 @@ const Stars = () => {
                   className="font-bebas uppercase"
                 >
                   <ChevronLeft className="w-4 h-4 mr-1" />
-                  Previous
+                  {t('stars.previous', 'Previous')}
                 </Button>
                 
                 <span className="text-sm text-muted-foreground font-bebas">
-                  Page {currentPage} of {totalPages}
+                  {t('stars.page', 'Page')} {currentPage} {t('stars.of', 'of')} {totalPages}
                 </span>
                 
                 <Button
@@ -353,7 +352,7 @@ const Stars = () => {
                   disabled={currentPage === totalPages}
                   className="font-bebas uppercase"
                 >
-                  Next
+                  {t('stars.next', 'Next')}
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </div>
