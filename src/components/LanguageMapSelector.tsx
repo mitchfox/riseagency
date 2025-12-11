@@ -111,7 +111,7 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
           
           {/* Content */}
           <div 
-            className="relative bg-black/95 border border-primary/30 max-w-4xl w-full mx-4 overflow-hidden rounded-lg z-[9999]"
+            className="relative bg-black/95 border border-primary/30 max-w-4xl w-full mx-4 overflow-hidden rounded-lg z-[9999] max-h-[85vh] md:max-h-none flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
@@ -123,7 +123,8 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
               <X className="h-5 w-5" />
             </button>
 
-            <div className="relative w-full aspect-[16/10]">
+            {/* Map Section - smaller on mobile */}
+            <div className="relative w-full aspect-[16/10] md:aspect-[16/10] flex-shrink-0">
               {/* Europe Map Image */}
               <img 
                 src={europeMap} 
@@ -162,7 +163,7 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
                     <span 
                       className={`
                         relative flex items-center justify-center
-                        w-10 h-10 md:w-12 md:h-12 rounded-full
+                        w-8 h-8 md:w-12 md:h-12 rounded-full
                         transition-all duration-300 cursor-pointer
                         ${isPending 
                           ? 'bg-primary text-black scale-110 shadow-lg shadow-primary/50' 
@@ -172,7 +173,7 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
                         }
                       `}
                     >
-                      <img src={getFlagUrl(region.flagCode)} alt={region.name} className="w-6 h-auto md:w-7 rounded-sm" />
+                      <img src={getFlagUrl(region.flagCode)} alt={region.name} className="w-5 h-auto md:w-7 rounded-sm" />
                     </span>
                   </button>
                 );
@@ -180,16 +181,16 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
               
               {/* Title */}
               <div className="absolute top-4 left-0 right-0 text-center">
-                <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-[0.3em] text-primary">
+                <h3 className="text-lg md:text-2xl font-bebas uppercase tracking-[0.3em] text-primary">
                   Select Language
                 </h3>
-                <p className="text-xs text-white/50 font-bebas tracking-wider mt-1">
+                <p className="text-xs text-white/50 font-bebas tracking-wider mt-1 hidden md:block">
                   Click a country to switch
                 </p>
               </div>
               
-              {/* Confirmation button */}
-              <div className="absolute bottom-4 left-0 right-0 text-center">
+              {/* Confirmation button - only on desktop inside map */}
+              <div className="absolute bottom-4 left-0 right-0 text-center hidden md:block">
                 {pendingLangData ? (
                   <div className="flex flex-col items-center gap-1">
                     <button
@@ -207,6 +208,55 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
                   <span className="text-sm font-bebas uppercase tracking-wider text-white/40">
                     Select a language
                   </span>
+                )}
+              </div>
+            </div>
+
+            {/* Mobile-only language list */}
+            <div className="md:hidden flex-1 overflow-y-auto border-t border-primary/20">
+              <div className="grid grid-cols-2 gap-1 p-3">
+                {languageRegions.map((region) => {
+                  const isPending = pendingLanguage === region.code;
+                  return (
+                    <button
+                      key={region.code}
+                      type="button"
+                      onClick={() => setPendingLanguage(region.code)}
+                      className={`
+                        flex items-center gap-2 px-3 py-2 rounded transition-all
+                        ${isPending 
+                          ? 'bg-primary text-black' 
+                          : 'bg-white/5 text-white/80 hover:bg-white/10'
+                        }
+                      `}
+                    >
+                      <img 
+                        src={getFlagUrl(region.flagCode)} 
+                        alt={region.name} 
+                        className="w-5 h-auto rounded-sm" 
+                      />
+                      <span className="font-bebas text-sm tracking-wider">
+                        {region.nativeName}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              
+              {/* Mobile confirmation button */}
+              <div className="p-3 pt-0">
+                {pendingLangData ? (
+                  <button
+                    type="button"
+                    onClick={handleConfirm}
+                    className="w-full px-6 py-3 bg-primary text-black font-bebas uppercase tracking-wider text-lg rounded hover:bg-primary/90 transition-colors"
+                  >
+                    {pendingLangData.enterText} - {pendingLangData.nativeName}
+                  </button>
+                ) : (
+                  <div className="w-full px-6 py-3 bg-white/10 text-white/40 font-bebas uppercase tracking-wider text-lg rounded text-center">
+                    Select a language
+                  </div>
                 )}
               </div>
             </div>
