@@ -7,12 +7,14 @@ type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru'
 interface TranslatedPlayerContent {
   bio: string;
   position: string;
+  strengths: string[];
 }
 
 interface UsePlayerTranslationsOptions {
   bio: string;
   position: string;
   playerId?: string;
+  strengths?: string[];
 }
 
 const positionTranslations: Record<string, Record<string, string>> = {
@@ -128,9 +130,106 @@ const positionTranslations: Record<string, Record<string, string>> = {
   },
 };
 
-export function usePlayerTranslations({ bio, position, playerId }: UsePlayerTranslationsOptions) {
+// Country name translations
+export const countryTranslations: Record<string, Record<string, string>> = {
+  'England': { es: 'Inglaterra', pt: 'Inglaterra', fr: 'Angleterre', de: 'England', it: 'Inghilterra', pl: 'Anglia', cs: 'Anglie', ru: 'Англия', tr: 'İngiltere' },
+  'Ireland': { es: 'Irlanda', pt: 'Irlanda', fr: 'Irlande', de: 'Irland', it: 'Irlanda', pl: 'Irlandia', cs: 'Irsko', ru: 'Ирландия', tr: 'İrlanda' },
+  'Spain': { es: 'España', pt: 'Espanha', fr: 'Espagne', de: 'Spanien', it: 'Spagna', pl: 'Hiszpania', cs: 'Španělsko', ru: 'Испания', tr: 'İspanya' },
+  'France': { es: 'Francia', pt: 'França', fr: 'France', de: 'Frankreich', it: 'Francia', pl: 'Francja', cs: 'Francie', ru: 'Франция', tr: 'Fransa' },
+  'Germany': { es: 'Alemania', pt: 'Alemanha', fr: 'Allemagne', de: 'Deutschland', it: 'Germania', pl: 'Niemcy', cs: 'Německo', ru: 'Германия', tr: 'Almanya' },
+  'Italy': { es: 'Italia', pt: 'Itália', fr: 'Italie', de: 'Italien', it: 'Italia', pl: 'Włochy', cs: 'Itálie', ru: 'Италия', tr: 'İtalya' },
+  'Portugal': { es: 'Portugal', pt: 'Portugal', fr: 'Portugal', de: 'Portugal', it: 'Portogallo', pl: 'Portugalia', cs: 'Portugalsko', ru: 'Португалия', tr: 'Portekiz' },
+  'Netherlands': { es: 'Países Bajos', pt: 'Países Baixos', fr: 'Pays-Bas', de: 'Niederlande', it: 'Paesi Bassi', pl: 'Holandia', cs: 'Nizozemsko', ru: 'Нидерланды', tr: 'Hollanda' },
+  'Belgium': { es: 'Bélgica', pt: 'Bélgica', fr: 'Belgique', de: 'Belgien', it: 'Belgio', pl: 'Belgia', cs: 'Belgie', ru: 'Бельгия', tr: 'Belçika' },
+  'Brazil': { es: 'Brasil', pt: 'Brasil', fr: 'Brésil', de: 'Brasilien', it: 'Brasile', pl: 'Brazylia', cs: 'Brazílie', ru: 'Бразилия', tr: 'Brezilya' },
+  'Argentina': { es: 'Argentina', pt: 'Argentina', fr: 'Argentine', de: 'Argentinien', it: 'Argentina', pl: 'Argentyna', cs: 'Argentina', ru: 'Аргентина', tr: 'Arjantin' },
+  'Scotland': { es: 'Escocia', pt: 'Escócia', fr: 'Écosse', de: 'Schottland', it: 'Scozia', pl: 'Szkocja', cs: 'Skotsko', ru: 'Шотландия', tr: 'İskoçya' },
+  'Wales': { es: 'Gales', pt: 'País de Gales', fr: 'Pays de Galles', de: 'Wales', it: 'Galles', pl: 'Walia', cs: 'Wales', ru: 'Уэльс', tr: 'Galler' },
+  'Poland': { es: 'Polonia', pt: 'Polônia', fr: 'Pologne', de: 'Polen', it: 'Polonia', pl: 'Polska', cs: 'Polsko', ru: 'Польша', tr: 'Polonya' },
+  'Czech Republic': { es: 'República Checa', pt: 'República Tcheca', fr: 'République tchèque', de: 'Tschechien', it: 'Repubblica Ceca', pl: 'Czechy', cs: 'Česká republika', ru: 'Чехия', tr: 'Çek Cumhuriyeti' },
+  'Russia': { es: 'Rusia', pt: 'Rússia', fr: 'Russie', de: 'Russland', it: 'Russia', pl: 'Rosja', cs: 'Rusko', ru: 'Россия', tr: 'Rusya' },
+  'Turkey': { es: 'Turquía', pt: 'Turquia', fr: 'Turquie', de: 'Türkei', it: 'Turchia', pl: 'Turcja', cs: 'Turecko', ru: 'Турция', tr: 'Türkiye' },
+  'Nigeria': { es: 'Nigeria', pt: 'Nigéria', fr: 'Nigéria', de: 'Nigeria', it: 'Nigeria', pl: 'Nigeria', cs: 'Nigérie', ru: 'Нигерия', tr: 'Nijerya' },
+  'Ghana': { es: 'Ghana', pt: 'Gana', fr: 'Ghana', de: 'Ghana', it: 'Ghana', pl: 'Ghana', cs: 'Ghana', ru: 'Гана', tr: 'Gana' },
+  'USA': { es: 'Estados Unidos', pt: 'Estados Unidos', fr: 'États-Unis', de: 'USA', it: 'Stati Uniti', pl: 'USA', cs: 'USA', ru: 'США', tr: 'ABD' },
+  'United States': { es: 'Estados Unidos', pt: 'Estados Unidos', fr: 'États-Unis', de: 'Vereinigte Staaten', it: 'Stati Uniti', pl: 'Stany Zjednoczone', cs: 'Spojené státy', ru: 'Соединённые Штаты', tr: 'Amerika Birleşik Devletleri' },
+  'Canada': { es: 'Canadá', pt: 'Canadá', fr: 'Canada', de: 'Kanada', it: 'Canada', pl: 'Kanada', cs: 'Kanada', ru: 'Канада', tr: 'Kanada' },
+  'Mexico': { es: 'México', pt: 'México', fr: 'Mexique', de: 'Mexiko', it: 'Messico', pl: 'Meksyk', cs: 'Mexiko', ru: 'Мексика', tr: 'Meksika' },
+  'Japan': { es: 'Japón', pt: 'Japão', fr: 'Japon', de: 'Japan', it: 'Giappone', pl: 'Japonia', cs: 'Japonsko', ru: 'Япония', tr: 'Japonya' },
+  'South Korea': { es: 'Corea del Sur', pt: 'Coreia do Sul', fr: 'Corée du Sud', de: 'Südkorea', it: 'Corea del Sud', pl: 'Korea Południowa', cs: 'Jižní Korea', ru: 'Южная Корея', tr: 'Güney Kore' },
+  'Australia': { es: 'Australia', pt: 'Austrália', fr: 'Australie', de: 'Australien', it: 'Australia', pl: 'Australia', cs: 'Austrálie', ru: 'Австралия', tr: 'Avustralya' },
+  'Sweden': { es: 'Suecia', pt: 'Suécia', fr: 'Suède', de: 'Schweden', it: 'Svezia', pl: 'Szwecja', cs: 'Švédsko', ru: 'Швеция', tr: 'İsveç' },
+  'Norway': { es: 'Noruega', pt: 'Noruega', fr: 'Norvège', de: 'Norwegen', it: 'Norvegia', pl: 'Norwegia', cs: 'Norsko', ru: 'Норвегия', tr: 'Norveç' },
+  'Denmark': { es: 'Dinamarca', pt: 'Dinamarca', fr: 'Danemark', de: 'Dänemark', it: 'Danimarca', pl: 'Dania', cs: 'Dánsko', ru: 'Дания', tr: 'Danimarka' },
+  'Austria': { es: 'Austria', pt: 'Áustria', fr: 'Autriche', de: 'Österreich', it: 'Austria', pl: 'Austria', cs: 'Rakousko', ru: 'Австрия', tr: 'Avusturya' },
+  'Switzerland': { es: 'Suiza', pt: 'Suíça', fr: 'Suisse', de: 'Schweiz', it: 'Svizzera', pl: 'Szwajcaria', cs: 'Švýcarsko', ru: 'Швейцария', tr: 'İsviçre' },
+  'Croatia': { es: 'Croacia', pt: 'Croácia', fr: 'Croatie', de: 'Kroatien', it: 'Croazia', pl: 'Chorwacja', cs: 'Chorvatsko', ru: 'Хорватия', tr: 'Hırvatistan' },
+  'Serbia': { es: 'Serbia', pt: 'Sérvia', fr: 'Serbie', de: 'Serbien', it: 'Serbia', pl: 'Serbia', cs: 'Srbsko', ru: 'Сербия', tr: 'Sırbistan' },
+  'Ukraine': { es: 'Ucrania', pt: 'Ucrânia', fr: 'Ukraine', de: 'Ukraine', it: 'Ucraina', pl: 'Ukraina', cs: 'Ukrajina', ru: 'Украина', tr: 'Ukrayna' },
+  'Greece': { es: 'Grecia', pt: 'Grécia', fr: 'Grèce', de: 'Griechenland', it: 'Grecia', pl: 'Grecja', cs: 'Řecko', ru: 'Греция', tr: 'Yunanistan' },
+  'Morocco': { es: 'Marruecos', pt: 'Marrocos', fr: 'Maroc', de: 'Marokko', it: 'Marocco', pl: 'Maroko', cs: 'Maroko', ru: 'Марокко', tr: 'Fas' },
+  'Egypt': { es: 'Egipto', pt: 'Egito', fr: 'Égypte', de: 'Ägypten', it: 'Egitto', pl: 'Egipt', cs: 'Egypt', ru: 'Египет', tr: 'Mısır' },
+  'Senegal': { es: 'Senegal', pt: 'Senegal', fr: 'Sénégal', de: 'Senegal', it: 'Senegal', pl: 'Senegal', cs: 'Senegal', ru: 'Сенегал', tr: 'Senegal' },
+  'Cameroon': { es: 'Camerún', pt: 'Camarões', fr: 'Cameroun', de: 'Kamerun', it: 'Camerun', pl: 'Kamerun', cs: 'Kamerun', ru: 'Камерун', tr: 'Kamerun' },
+  'Ivory Coast': { es: 'Costa de Marfil', pt: 'Costa do Marfim', fr: 'Côte d\'Ivoire', de: 'Elfenbeinküste', it: 'Costa d\'Avorio', pl: 'Wybrzeże Kości Słoniowej', cs: 'Pobřeží slonoviny', ru: 'Кот-д\'Ивуар', tr: 'Fildişi Sahili' },
+  'Colombia': { es: 'Colombia', pt: 'Colômbia', fr: 'Colombie', de: 'Kolumbien', it: 'Colombia', pl: 'Kolumbia', cs: 'Kolumbie', ru: 'Колумбия', tr: 'Kolombiya' },
+  'Chile': { es: 'Chile', pt: 'Chile', fr: 'Chili', de: 'Chile', it: 'Cile', pl: 'Chile', cs: 'Chile', ru: 'Чили', tr: 'Şili' },
+  'Uruguay': { es: 'Uruguay', pt: 'Uruguai', fr: 'Uruguay', de: 'Uruguay', it: 'Uruguay', pl: 'Urugwaj', cs: 'Uruguay', ru: 'Уругвай', tr: 'Uruguay' },
+  'Ecuador': { es: 'Ecuador', pt: 'Equador', fr: 'Équateur', de: 'Ecuador', it: 'Ecuador', pl: 'Ekwador', cs: 'Ekvádor', ru: 'Эквадор', tr: 'Ekvador' },
+  'Paraguay': { es: 'Paraguay', pt: 'Paraguai', fr: 'Paraguay', de: 'Paraguay', it: 'Paraguay', pl: 'Paragwaj', cs: 'Paraguay', ru: 'Парагвай', tr: 'Paraguay' },
+  'Peru': { es: 'Perú', pt: 'Peru', fr: 'Pérou', de: 'Peru', it: 'Perù', pl: 'Peru', cs: 'Peru', ru: 'Перу', tr: 'Peru' },
+  'Venezuela': { es: 'Venezuela', pt: 'Venezuela', fr: 'Venezuela', de: 'Venezuela', it: 'Venezuela', pl: 'Wenezuela', cs: 'Venezuela', ru: 'Венесуэла', tr: 'Venezuela' },
+  'Jamaica': { es: 'Jamaica', pt: 'Jamaica', fr: 'Jamaïque', de: 'Jamaika', it: 'Giamaica', pl: 'Jamajka', cs: 'Jamajka', ru: 'Ямайка', tr: 'Jamaika' },
+  'Northern Ireland': { es: 'Irlanda del Norte', pt: 'Irlanda do Norte', fr: 'Irlande du Nord', de: 'Nordirland', it: 'Irlanda del Nord', pl: 'Irlandia Północna', cs: 'Severní Irsko', ru: 'Северная Ирландия', tr: 'Kuzey İrlanda' },
+};
+
+// Season stat header translations
+export const seasonStatTranslations: Record<string, Record<string, string>> = {
+  'Minutes': { es: 'Minutos', pt: 'Minutos', fr: 'Minutes', de: 'Minuten', it: 'Minuti', pl: 'Minuty', cs: 'Minuty', ru: 'Минуты', tr: 'Dakika' },
+  'Goals': { es: 'Goles', pt: 'Gols', fr: 'Buts', de: 'Tore', it: 'Gol', pl: 'Gole', cs: 'Góly', ru: 'Голы', tr: 'Goller' },
+  'Assists': { es: 'Asistencias', pt: 'Assistências', fr: 'Passes décisives', de: 'Assists', it: 'Assist', pl: 'Asysty', cs: 'Asistence', ru: 'Ассисты', tr: 'Asistler' },
+  'Matches': { es: 'Partidos', pt: 'Partidas', fr: 'Matchs', de: 'Spiele', it: 'Partite', pl: 'Mecze', cs: 'Zápasy', ru: 'Матчи', tr: 'Maçlar' },
+  'Clean Sheets': { es: 'Porterías imbatidas', pt: 'Jogos sem sofrer gol', fr: 'Clean sheets', de: 'Zu-Null-Spiele', it: 'Porta inviolata', pl: 'Czyste konta', cs: 'Čisté konto', ru: 'Сухие матчи', tr: 'Gol yemeden' },
+  'Saves': { es: 'Paradas', pt: 'Defesas', fr: 'Arrêts', de: 'Paraden', it: 'Parate', pl: 'Obrony', cs: 'Zákroky', ru: 'Сейвы', tr: 'Kurtarışlar' },
+  'Appearances': { es: 'Apariciones', pt: 'Aparições', fr: 'Apparitions', de: 'Einsätze', it: 'Presenze', pl: 'Występy', cs: 'Vystoupení', ru: 'Выступления', tr: 'Maçlar' },
+  'Yellow Cards': { es: 'Tarjetas amarillas', pt: 'Cartões amarelos', fr: 'Cartons jaunes', de: 'Gelbe Karten', it: 'Cartellini gialli', pl: 'Żółte kartki', cs: 'Žluté karty', ru: 'Жёлтые карточки', tr: 'Sarı kartlar' },
+  'Red Cards': { es: 'Tarjetas rojas', pt: 'Cartões vermelhos', fr: 'Cartons rouges', de: 'Rote Karten', it: 'Cartellini rossi', pl: 'Czerwone kartki', cs: 'Červené karty', ru: 'Красные карточки', tr: 'Kırmızı kartlar' },
+  'Starts': { es: 'Titularidades', pt: 'Titularidades', fr: 'Titularisations', de: 'Startelf', it: 'Titolare', pl: 'Występy w pierwszym składzie', cs: 'Základní sestava', ru: 'В стартовом составе', tr: 'İlk 11' },
+};
+
+// Scheme history label translations
+export const schemeHistoryLabels: Record<string, Record<string, string>> = {
+  'CURRENT CLUB': { es: 'CLUB ACTUAL', pt: 'CLUBE ATUAL', fr: 'CLUB ACTUEL', de: 'AKTUELLER VEREIN', it: 'CLUB ATTUALE', pl: 'OBECNY KLUB', cs: 'AKTUÁLNÍ KLUB', ru: 'ТЕКУЩИЙ КЛУБ', tr: 'MEVCUT KULÜP' },
+  'MATCHES': { es: 'PARTIDOS', pt: 'PARTIDAS', fr: 'MATCHS', de: 'SPIELE', it: 'PARTITE', pl: 'MECZE', cs: 'ZÁPASY', ru: 'МАТЧИ', tr: 'MAÇLAR' },
+};
+
+// Performance stat translations for HighlightedMatchDisplay
+export const performanceStatTranslations: Record<string, Record<string, string>> = {
+  'Goals': { es: 'Goles', pt: 'Gols', fr: 'Buts', de: 'Tore', it: 'Gol', pl: 'Gole', cs: 'Góly', ru: 'Голы', tr: 'Goller' },
+  'Assists': { es: 'Asistencias', pt: 'Assistências', fr: 'Passes décisives', de: 'Assists', it: 'Assist', pl: 'Asysty', cs: 'Asistence', ru: 'Ассисты', tr: 'Asistler' },
+  'xG': { es: 'xG', pt: 'xG', fr: 'xG', de: 'xG', it: 'xG', pl: 'xG', cs: 'xG', ru: 'xG', tr: 'xG' },
+  'xA': { es: 'xA', pt: 'xA', fr: 'xA', de: 'xA', it: 'xA', pl: 'xA', cs: 'xA', ru: 'xA', tr: 'xA' },
+  'Prog Passes': { es: 'Pases Prog', pt: 'Passes Prog', fr: 'Passes Prog', de: 'Prog Pässe', it: 'Passaggi Prog', pl: 'Podania Prog', cs: 'Prog přihrávky', ru: 'Прог пасы', tr: 'İleriye Paslar' },
+  'Regains': { es: 'Recuperaciones', pt: 'Recuperações', fr: 'Récupérations', de: 'Rückgewinne', it: 'Recuperi', pl: 'Odzyskania', cs: 'Získání', ru: 'Возвраты', tr: 'Top Kazanma' },
+  'Turnovers': { es: 'Pérdidas', pt: 'Perdas', fr: 'Pertes', de: 'Ballverluste', it: 'Palle perse', pl: 'Straty', cs: 'Ztráty', ru: 'Потери', tr: 'Top Kayıpları' },
+  'Duels Won': { es: 'Duelos ganados', pt: 'Duelos ganhos', fr: 'Duels gagnés', de: 'Gewonnene Duelle', it: 'Duelli vinti', pl: 'Wygrane pojedynki', cs: 'Vyhrané souboje', ru: 'Выигранные дуэли', tr: 'Kazanılan İkili Mücadeleler' },
+  'Aerial Duels': { es: 'Duelos aéreos', pt: 'Duelos aéreos', fr: 'Duels aériens', de: 'Kopfballduelle', it: 'Duelli aerei', pl: 'Pojedynki powietrzne', cs: 'Hlavičkové souboje', ru: 'Воздушные дуэли', tr: 'Hava Topları' },
+  'xG Chain': { es: 'Cadena xG', pt: 'Cadeia xG', fr: 'Chaîne xG', de: 'xG-Kette', it: 'Catena xG', pl: 'Łańcuch xG', cs: 'xG řetěz', ru: 'Цепочка xG', tr: 'xG Zinciri' },
+  'Interceptions': { es: 'Intercepciones', pt: 'Interceptações', fr: 'Interceptions', de: 'Abfangaktionen', it: 'Intercetti', pl: 'Przechwyty', cs: 'Zachycení', ru: 'Перехваты', tr: 'Topları Kesme' },
+  'Crossing xC': { es: 'Centros xC', pt: 'Cruzamentos xC', fr: 'Centres xC', de: 'Flanken xC', it: 'Cross xC', pl: 'Dośrodkowania xC', cs: 'Centry xC', ru: 'Кроссы xC', tr: 'Orta xC' },
+  'In Behind xC': { es: 'A espaldas xC', pt: 'Por trás xC', fr: 'Dans le dos xC', de: 'Hinter die Abwehr xC', it: 'Alle spalle xC', pl: 'Za plecy xC', cs: 'Za obranu xC', ru: 'За спину xC', tr: 'Arkaya xC' },
+  'To Feet xC': { es: 'Al pie xC', pt: 'Nos pés xC', fr: 'Dans les pieds xC', de: 'In den Fuß xC', it: 'Sui piedi xC', pl: 'Do nóg xC', cs: 'Do nohou xC', ru: 'В ноги xC', tr: 'Ayağa xC' },
+  'Triple Threat xC': { es: 'Triple amenaza xC', pt: 'Tripla ameaça xC', fr: 'Triple menace xC', de: 'Dreifache Bedrohung xC', it: 'Tripla minaccia xC', pl: 'Potrójne zagrożenie xC', cs: 'Trojitá hrozba xC', ru: 'Тройная угроза xC', tr: 'Üçlü Tehdit xC' },
+  'Tackles': { es: 'Entradas', pt: 'Desarmes', fr: 'Tacles', de: 'Tacklings', it: 'Contrasti', pl: 'Odbiory', cs: 'Zákroky', ru: 'Отборы', tr: 'Müdahaleler' },
+  'Passes': { es: 'Pases', pt: 'Passes', fr: 'Passes', de: 'Pässe', it: 'Passaggi', pl: 'Podania', cs: 'Přihrávky', ru: 'Передачи', tr: 'Paslar' },
+  'Shots': { es: 'Tiros', pt: 'Finalizações', fr: 'Tirs', de: 'Schüsse', it: 'Tiri', pl: 'Strzały', cs: 'Střely', ru: 'Удары', tr: 'Şutlar' },
+  'On Target': { es: 'A puerta', pt: 'No alvo', fr: 'Cadrés', de: 'Auf Tor', it: 'In porta', pl: 'Celne', cs: 'Na branku', ru: 'В створ', tr: 'İsabetli' },
+};
+
+export function usePlayerTranslations({ bio, position, playerId, strengths = [] }: UsePlayerTranslationsOptions) {
   const { language } = useLanguage();
   const [translatedBio, setTranslatedBio] = useState<string>(bio);
+  const [translatedStrengths, setTranslatedStrengths] = useState<string[]>(strengths);
   const [isTranslating, setIsTranslating] = useState(false);
 
   // Translate position immediately using useMemo for proper reactivity
@@ -143,78 +242,137 @@ export function usePlayerTranslations({ bio, position, playerId }: UsePlayerTran
     // Reset to original when language is English
     if (language === 'en') {
       setTranslatedBio(bio);
+      setTranslatedStrengths(strengths);
       return;
     }
 
-    const translateBioText = async () => {
+    const translateContent = async () => {
       if (!bio || bio.trim() === '') {
         setTranslatedBio('');
-        return;
       }
 
-      // Check cache first
-      const cacheKey = `player_bio_${playerId}_${language}`;
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        try {
+      // Check cache for bio
+      const bioCacheKey = `player_bio_${playerId}_${language}`;
+      const strengthsCacheKey = `player_strengths_${playerId}_${language}`;
+      
+      let cachedBio = null;
+      let cachedStrengths = null;
+      
+      try {
+        const cached = localStorage.getItem(bioCacheKey);
+        if (cached) {
           const parsed = JSON.parse(cached);
-          if (parsed.bio) {
-            setTranslatedBio(parsed.bio);
-            return;
-          }
-        } catch {
-          // Invalid cache, continue to translate
+          if (parsed.bio) cachedBio = parsed.bio;
         }
-      }
+        const cachedStr = localStorage.getItem(strengthsCacheKey);
+        if (cachedStr) {
+          const parsed = JSON.parse(cachedStr);
+          if (parsed.strengths) cachedStrengths = parsed.strengths;
+        }
+      } catch { /* ignore */ }
+
+      if (cachedBio) setTranslatedBio(cachedBio);
+      if (cachedStrengths) setTranslatedStrengths(cachedStrengths);
+      
+      // If both are cached, return
+      if (cachedBio && (strengths.length === 0 || cachedStrengths)) return;
 
       setIsTranslating(true);
+      
+      const langMap: Record<string, string> = {
+        'es': 'spanish',
+        'pt': 'portuguese',
+        'fr': 'french',
+        'de': 'german',
+        'it': 'italian',
+        'pl': 'polish',
+        'cs': 'czech',
+        'ru': 'russian',
+        'tr': 'turkish'
+      };
+      const translationKey = langMap[language];
+
       try {
-        const { data, error } = await supabase.functions.invoke('ai-translate', {
-          body: { text: bio }
-        });
+        // Translate bio if not cached
+        if (!cachedBio && bio) {
+          const { data, error } = await supabase.functions.invoke('ai-translate', {
+            body: { text: bio }
+          });
 
-        if (error) throw error;
+          if (!error && data?.[translationKey]) {
+            localStorage.setItem(bioCacheKey, JSON.stringify({ bio: data[translationKey] }));
+            setTranslatedBio(data[translationKey]);
+          }
+        }
 
-        const langMap: Record<string, string> = {
-          'es': 'spanish',
-          'pt': 'portuguese',
-          'fr': 'french',
-          'de': 'german',
-          'it': 'italian',
-          'pl': 'polish',
-          'cs': 'czech',
-          'ru': 'russian',
-          'tr': 'turkish'
-        };
-        
-        const translationKey = langMap[language];
-        const translated = data?.[translationKey] || bio;
+        // Translate strengths if not cached and strengths exist
+        if (!cachedStrengths && strengths.length > 0) {
+          const strengthsText = strengths.join('\n---\n');
+          const { data, error } = await supabase.functions.invoke('ai-translate', {
+            body: { text: strengthsText }
+          });
 
-        // Cache the translation
-        localStorage.setItem(cacheKey, JSON.stringify({ bio: translated }));
-
-        setTranslatedBio(translated);
+          if (!error && data?.[translationKey]) {
+            const translatedArray = data[translationKey].split('\n---\n').map((s: string) => s.trim()).filter(Boolean);
+            localStorage.setItem(strengthsCacheKey, JSON.stringify({ strengths: translatedArray }));
+            setTranslatedStrengths(translatedArray);
+          }
+        }
       } catch (err) {
-        console.error('Player bio translation error:', err);
-        setTranslatedBio(bio);
+        console.error('Player content translation error:', err);
       } finally {
         setIsTranslating(false);
       }
     };
 
-    translateBioText();
-  }, [bio, language, playerId]);
+    translateContent();
+  }, [bio, language, playerId, strengths]);
 
   // Use useMemo to ensure the returned object updates when language changes
   const translatedContent = useMemo(() => ({
     bio: translatedBio,
     position: translatedPosition,
-  }), [translatedBio, translatedPosition]);
+    strengths: translatedStrengths,
+  }), [translatedBio, translatedPosition, translatedStrengths]);
 
   return { 
     translatedContent, 
     isTranslating 
   };
+}
+
+// Helper function to translate country names
+export function useTranslatedCountry(country: string): string {
+  const { language } = useLanguage();
+  return useMemo(() => {
+    if (language === 'en' || !country) return country;
+    return countryTranslations[country]?.[language] || country;
+  }, [country, language]);
+}
+
+// Helper function to translate season stat headers
+export function useTranslatedStatHeader(header: string): string {
+  const { language } = useLanguage();
+  return useMemo(() => {
+    if (language === 'en' || !header) return header;
+    return seasonStatTranslations[header]?.[language] || header;
+  }, [header, language]);
+}
+
+// Helper function to translate scheme history labels
+export function useTranslatedSchemeLabel(label: string, matchCount?: number): string {
+  const { language } = useLanguage();
+  return useMemo(() => {
+    if (language === 'en' || !label) return label;
+    if (label === 'CURRENT CLUB') {
+      return schemeHistoryLabels['CURRENT CLUB']?.[language] || label;
+    }
+    if (matchCount !== undefined) {
+      const matchesWord = schemeHistoryLabels['MATCHES']?.[language] || 'MATCHES';
+      return `${matchCount} ${matchesWord}`;
+    }
+    return label;
+  }, [label, language, matchCount]);
 }
 
 // Static label translations for player profile page
