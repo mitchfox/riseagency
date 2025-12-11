@@ -668,7 +668,7 @@ function RoleSlider({
           {(() => {
             const normalizedX = (thumbPosition - 50) / 50;
             const yPos = 68 - 64 * (1 - normalizedX * normalizedX);
-            const yPercent = (yPos / 72) * 100;
+            const yPercent = (yPos / 72) * 100 + 28; // Offset down onto the lower grey line
             
             return (
               <div 
