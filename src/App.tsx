@@ -10,6 +10,7 @@ import { TransitionProvider } from "@/contexts/TransitionContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSubdomainRouter } from "@/hooks/useSubdomainRouter";
+import { useLocalizedRedirect } from "@/hooks/useLocalizedRedirect";
 import { getAllPathVariants } from "@/lib/localizedRoutes";
 import Landing from "./pages/Landing";
 import Home from "./pages/Home";
@@ -52,6 +53,7 @@ const queryClient = new QueryClient();
 
 const SubdomainRouter = () => {
   useSubdomainRouter();
+  useLocalizedRedirect();
   return null;
 };
 
@@ -116,7 +118,7 @@ const App = () => {
                     {createLocalizedRoutes('/portal', <Dashboard />)}
                     
                     {/* Non-localized routes */}
-                    <Route path="/playersmore" element={<Players />} />
+                    {createLocalizedRoutes('/playersmore', <Players />)}
                     <Route path="/players-list" element={<PlayersList />} />
                     <Route path="/players-draft" element={<PlayersDraft />} />
                     <Route path="/club-network" element={<ClubNetwork />} />
