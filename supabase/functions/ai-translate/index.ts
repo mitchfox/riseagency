@@ -90,11 +90,33 @@ Return ONLY a valid JSON object with exactly this structure (no markdown, no cod
     let translations;
     try {
       // Clean the response in case it has markdown code blocks
-      const cleanedContent = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      let cleanedContent = content
+        .replace(/```json\n?/g, "")
+        .replace(/```\n?/g, "")
+        .trim();
+      
+      // Fix common escape sequence issues (e.g., \\n that should be \n)
+      cleanedContent = cleanedContent.replace(/\\\\n/g, "\\n");
+      // Fix malformed escapes like \D which should just be D
+      cleanedContent = cleanedContent.replace(/\\([^"\\\/bfnrtu])/g, "$1");
+      
       translations = JSON.parse(cleanedContent);
     } catch (parseError) {
       console.error("Failed to parse AI response:", content);
-      throw new Error("Failed to parse translation response");
+      // Try to extract JSON from the response as a fallback
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          let extracted = jsonMatch[0]
+            .replace(/\\\\n/g, "\\n")
+            .replace(/\\([^"\\\/bfnrtu])/g, "$1");
+          translations = JSON.parse(extracted);
+        } catch {
+          throw new Error("Failed to parse translation response");
+        }
+      } else {
+        throw new Error("Failed to parse translation response");
+      }
     }
 
     return new Response(
