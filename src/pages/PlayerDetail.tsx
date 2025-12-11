@@ -19,7 +19,7 @@ import blackMarbleBg from "@/assets/black-marble-menu.png";
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 import { HoverText } from "@/components/HoverText";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
-import { usePlayerTranslations, usePlayerProfileLabel } from "@/hooks/usePlayerTranslations";
+import { usePlayerTranslations, usePlayerProfileLabel, useTranslatedCountry, seasonStatTranslations, schemeHistoryLabels } from "@/hooks/usePlayerTranslations";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const PlayerDetail = () => {
@@ -46,7 +46,29 @@ const PlayerDetail = () => {
     bio: player?.bio || '',
     position: player?.position || '',
     playerId: player?.id,
+    strengths: player?.strengthsAndPlayStyle || [],
   });
+  
+  // Translated country name
+  const translatedCountry = useTranslatedCountry(player?.nationality || '');
+  
+  // Helper function to translate season stat headers
+  const getTranslatedStatHeader = (header: string): string => {
+    if (language === 'en' || !header) return header;
+    return seasonStatTranslations[header]?.[language] || header;
+  };
+  
+  // Helper function to translate scheme history labels
+  const getSchemeLabel = (isCurrentClub: boolean, matchCount?: number): string => {
+    if (isCurrentClub) {
+      return language === 'en' ? 'CURRENT CLUB' : (schemeHistoryLabels['CURRENT CLUB']?.[language] || 'CURRENT CLUB');
+    }
+    if (matchCount !== undefined) {
+      const matchesWord = language === 'en' ? 'MATCHES' : (schemeHistoryLabels['MATCHES']?.[language] || 'MATCHES');
+      return `${matchCount} ${matchesWord}`;
+    }
+    return '';
+  };
   
   // Label translations
   const biographyLabel = usePlayerProfileLabel('biography');
@@ -412,7 +434,7 @@ const PlayerDetail = () => {
                     alt={player.nationality}
                     className="w-6 h-4 object-cover rounded"
                   />
-                  {player.nationality}
+                  {translatedCountry}
                 </p>
                 
                 <p className="text-lg md:text-xl text-muted-foreground uppercase tracking-wide font-bebas leading-none flex items-center gap-2 whitespace-nowrap">
@@ -727,7 +749,7 @@ const PlayerDetail = () => {
                           {stat.value || "0"}
                         </div>
                         <div className="text-sm md:text-base text-foreground/90 uppercase tracking-[0.2em] font-bold font-bebas">
-                          {stat.header}
+                          {getTranslatedStatHeader(stat.header)}
                         </div>
                       </div>
                     </div>
@@ -811,7 +833,7 @@ const PlayerDetail = () => {
                       <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--gold))]/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-[hsl(var(--gold))]/10 to-transparent" />
                       <ul className="relative space-y-4">
-                        {player.strengthsAndPlayStyle.map((strength, index) => (
+                        {(translatedContent.strengths.length > 0 ? translatedContent.strengths : player.strengthsAndPlayStyle).map((strength, index) => (
                           <li key={index} className="flex items-start gap-4 group/item">
                             <span className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-br from-[hsl(var(--gold))] to-primary mt-2 group-hover/item:scale-125 transition-transform duration-300 shadow-[0_0_8px_rgba(212,175,55,0.5)]"></span>
                             <span className="leading-relaxed text-foreground/90 group-hover/item:text-foreground transition-colors duration-300">{strength}</span>
@@ -847,11 +869,14 @@ const PlayerDetail = () => {
                             const matchValue = formation.appearances || formation.matches;
                             const isCurrentClub = formation.club === player.currentClub;
                             const isNumeric = typeof matchValue === 'number' || (typeof matchValue === 'string' && !isNaN(Number(matchValue)) && matchValue !== '');
-                            if (isCurrentClub) return 'CURRENT CLUB';
-                            else if (isNumeric) return `${matchValue} MATCHES`;
-                            else if (matchValue) return String(matchValue).toUpperCase();
-                            else return '';
-                          })()} • {player.tacticalFormations[currentFormationIndex].formation}
+                            
+                            let labelText = '';
+                            if (isCurrentClub) labelText = getSchemeLabel(true);
+                            else if (isNumeric) labelText = getSchemeLabel(false, Number(matchValue));
+                            else if (matchValue) labelText = String(matchValue).toUpperCase();
+                            
+                            return labelText ? `${labelText} • ${formation.formation}` : formation.formation;
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -894,7 +919,7 @@ const PlayerDetail = () => {
                   <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--gold))]/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-[hsl(var(--gold))]/10 to-transparent" />
                   <ul className="relative space-y-4">
-                    {player.strengthsAndPlayStyle.map((strength, index) => (
+                    {(translatedContent.strengths.length > 0 ? translatedContent.strengths : player.strengthsAndPlayStyle).map((strength, index) => (
                       <li key={index} className="flex items-start gap-4 group/item">
                         <span className="flex-shrink-0 w-2 h-2 rounded-full bg-gradient-to-br from-[hsl(var(--gold))] to-primary mt-2 group-hover/item:scale-125 transition-transform duration-300 shadow-[0_0_8px_rgba(212,175,55,0.5)]"></span>
                         <span className="leading-relaxed text-foreground/90 group-hover/item:text-foreground transition-colors duration-300">{strength}</span>
@@ -931,16 +956,13 @@ const PlayerDetail = () => {
                           const isCurrentClub = formation.club === player.currentClub;
                           const isNumeric = typeof matchValue === 'number' || (typeof matchValue === 'string' && !isNaN(Number(matchValue)) && matchValue !== '');
                           
-                          if (isCurrentClub) {
-                            return 'CURRENT CLUB';
-                          } else if (isNumeric) {
-                            return `${matchValue} MATCHES`;
-                          } else if (matchValue) {
-                            return String(matchValue).toUpperCase();
-                          } else {
-                            return '';
-                          }
-                        })()} • {player.tacticalFormations[currentFormationIndex].formation}
+                          let labelText = '';
+                          if (isCurrentClub) labelText = getSchemeLabel(true);
+                          else if (isNumeric) labelText = getSchemeLabel(false, Number(matchValue));
+                          else if (matchValue) labelText = String(matchValue).toUpperCase();
+                          
+                          return labelText ? `${labelText} • ${formation.formation}` : formation.formation;
+                        })()}
                       </div>
                     </div>
                   </div>

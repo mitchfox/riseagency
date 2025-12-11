@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { HoverText } from "@/components/HoverText";
+import { usePlayerProfileLabel, performanceStatTranslations } from "@/hooks/usePlayerTranslations";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface HighlightedMatchProps {
   highlightedMatch: {
@@ -51,6 +53,22 @@ const STAT_LABELS: Record<string, string> = {
 export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, onViewReport }: HighlightedMatchProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { language } = useLanguage();
+  
+  // Get translated labels
+  const highlightedPerformanceLabel = usePlayerProfileLabel('highlightedPerformance');
+  const performanceMetricsLabel = usePlayerProfileLabel('performanceMetrics');
+  const readActionReportLabel = usePlayerProfileLabel('readActionReport');
+  const watchFullMatchLabel = usePlayerProfileLabel('watchFullMatch');
+
+  // Translate stat labels based on language
+  const getTranslatedStatLabel = useMemo(() => {
+    return (statKey: string): string => {
+      const englishLabel = STAT_LABELS[statKey] || statKey;
+      if (language === 'en') return englishLabel;
+      return performanceStatTranslations[englishLabel]?.[language] || englishLabel;
+    };
+  }, [language]);
 
   const formatStatValue = (value: any): string => {
     if (typeof value === 'number') {
@@ -121,7 +139,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
     <div ref={containerRef} className="mb-10">
       <h2 className="text-3xl font-bebas text-primary uppercase tracking-widest mb-4 flex items-center gap-3">
         <span className="w-12 h-1 bg-primary"></span>
-        Highlighted Performance
+        {highlightedPerformanceLabel}
         <span className="flex-1 h-1 bg-primary/20"></span>
       </h2>
       
@@ -179,7 +197,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
         {/* Key Stats */}
         {highlightedMatch.selected_stats && highlightedMatch.selected_stats.length > 0 && (
           <div className="bg-gradient-to-br from-background/50 via-background to-background/50 p-5 border-y border-primary/10">
-            <h3 className="text-lg font-bebas text-primary uppercase tracking-widest mb-4 text-center">Performance Metrics</h3>
+            <h3 className="text-lg font-bebas text-primary uppercase tracking-widest mb-4 text-center">{performanceMetricsLabel}</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {highlightedMatch.selected_stats.map((statKey) => (
                 <div key={statKey} className="relative group">
@@ -188,7 +206,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
                       {formatStatValue(highlightedMatch.stats[statKey])}
                     </div>
                     <div className="text-xs text-muted-foreground uppercase tracking-wider text-center font-semibold">
-                      {STAT_LABELS[statKey] || statKey}
+                      {getTranslatedStatLabel(statKey)}
                     </div>
                   </div>
                   {/* Subtle glow effect on hover */}
@@ -210,7 +228,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
                   className="btn-shine font-bebas uppercase tracking-wider text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
                 >
                   <ExternalLink className="h-5 w-5 mr-2" />
-                  <HoverText text="Read Action Report" />
+                  <HoverText text={readActionReportLabel} />
                 </Button>
               )}
               {highlightedMatch.full_match_url && (
@@ -227,7 +245,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
                     className="flex items-center gap-2"
                   >
                     <ExternalLink className="h-5 w-5" />
-                    <HoverText text="Watch Full Match" />
+                    <HoverText text={watchFullMatchLabel} />
                   </a>
                 </Button>
               )}
