@@ -594,8 +594,8 @@ function RoleSlider({
             // Calculate Y position matching the curve - same formula as bullet points
             const normalizedX = (xPercent - 50) / 50; // -1 to 1
             const yPos = 68 - 64 * (1 - normalizedX * normalizedX);
-            // Position label above the bullet point
-            const labelYOffset = yPos - 20; // 20px above the curve point
+            // Position label just above the bullet point
+            const labelYOffset = yPos - 2; // minimal gap above the curve point
             
             const isHovered = hoveredIndex === index || nearestSnapIndex === index;
             const isSelected = selectedIndex === index;
