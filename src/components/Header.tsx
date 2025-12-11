@@ -527,12 +527,12 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
                     {t("header.request_representation", "Request Representation")}
                   </span>
                 </button>
-                <Link to="/login" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title={t("header.portal", "Portal")}>
+                <LocalizedLink to="/login" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title={t("header.portal", "Portal")}>
                   <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
                   <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
                     {t("header.portal", "Portal")}
                   </span>
-                </Link>
+                </LocalizedLink>
               </div>
             </>}
 
