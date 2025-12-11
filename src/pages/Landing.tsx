@@ -583,29 +583,37 @@ function RoleSlider({
     }}>
         
         {/* Slider Track with labels and bullets */}
-        <div ref={sliderRef} className="relative cursor-pointer overflow-visible" style={{ height: '72px', marginTop: '40px' }} onClick={handleTrackClick}>
-          {/* SVG curved track */}
+        <div ref={sliderRef} className="relative cursor-pointer overflow-visible" style={{ height: '100px', marginTop: '40px' }} onClick={handleTrackClick}>
+          {/* SVG curved tracks */}
           <svg 
             className="absolute w-full h-full" 
-            viewBox="0 0 100 72" 
+            viewBox="0 0 100 100" 
             preserveAspectRatio="none"
           >
-            {/* Background track line */}
+            {/* Upper curve - for role labels */}
             <path 
-              d="M0,68 Q50,4 100,68" 
+              d="M0,50 Q50,4 100,50" 
+              fill="none" 
+              stroke="rgba(255,255,255,0.15)" 
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
+            />
+            {/* Lower curve - for slider thumb */}
+            <path 
+              d="M0,95 Q50,55 100,95" 
               fill="none" 
               stroke="rgba(255,255,255,0.2)" 
               strokeWidth="1"
               vectorEffect="non-scaling-stroke"
             />
-            {/* Filled track line - uses clipPath based on thumb position */}
+            {/* Filled lower track line - uses clipPath based on thumb position */}
             <defs>
               <clipPath id="filledClip">
                 <rect x="0" y="0" width={`${thumbPosition}%`} height="100%" />
               </clipPath>
             </defs>
             <path 
-              d="M0,68 Q50,4 100,68" 
+              d="M0,95 Q50,55 100,95" 
               fill="none" 
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="1"
@@ -615,14 +623,13 @@ function RoleSlider({
             />
           </svg>
           
-          {/* Stop markers and labels - positioned along curve */}
+          {/* Stop markers and labels - positioned along UPPER curve */}
           {navLinks.map((link, index) => {
             const xPercent = getPositionFromIndex(index);
-            // Calculate Y position on the curve: parabola matching SVG path
-            // At x=0: y=68, at x=50: y=4, at x=100: y=68
-            const normalizedX = (xPercent - 50) / 50; // -1 to 1
-            const yPos = 68 - 64 * (1 - normalizedX * normalizedX); // deeper parabola
-            const yPercent = (yPos / 72) * 100;
+            // Calculate Y position on the UPPER curve: y = 50 - 46*(1-x^2) where x is normalized -1 to 1
+            const normalizedX = (xPercent - 50) / 50;
+            const yPos = 50 - 46 * (1 - normalizedX * normalizedX);
+            const yPercent = (yPos / 100) * 100;
             
             const isHovered = hoveredIndex === index || nearestSnapIndex === index;
             const isSelected = selectedIndex === index;
@@ -647,7 +654,7 @@ function RoleSlider({
                 >
                   {t(link.labelKey, link.fallback)}
                 </button>
-                {/* Bullet marker */}
+                {/* Bullet marker on upper curve */}
                 <div 
                   className={`absolute w-2 h-2 rounded-full transition-all duration-200 ${
                     selectedIndex !== null && index === selectedIndex 
@@ -666,11 +673,12 @@ function RoleSlider({
             );
           })}
           
-          {/* Draggable Thumb Handle - positioned along curve */}
+          {/* Draggable Thumb Handle - positioned along LOWER curve */}
           {(() => {
             const normalizedX = (thumbPosition - 50) / 50;
-            const yPos = 68 - 64 * (1 - normalizedX * normalizedX);
-            const yPercent = (yPos / 72) * 100;
+            // Lower curve: y = 95 - 40*(1-x^2)
+            const yPos = 95 - 40 * (1 - normalizedX * normalizedX);
+            const yPercent = (yPos / 100) * 100;
             
             return (
               <div 
