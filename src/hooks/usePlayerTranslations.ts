@@ -434,6 +434,17 @@ export const inNumbersStatTranslations: Record<string, Record<string, string>> =
   'HOLD-UP PLAY': { es: 'JUEGO DE ESPALDAS', pt: 'JOGO DE COSTAS', fr: 'JEU DOS AU BUT', de: 'BALLHALTEN', it: 'GIOCO SPALLE ALLA PORTA', pl: 'GRA PLECAMI', cs: 'HRA ZÁDY K BRÁNĚ', ru: 'ИГРА СПИНОЙ К ВОРОТАМ', tr: 'TOP KORUMA' },
   'DRIBBLING': { es: 'REGATE', pt: 'DRIBLE', fr: 'DRIBBLE', de: 'DRIBBLING', it: 'DRIBBLING', pl: 'DRYBLING', cs: 'DRIBLOVÁNÍ', ru: 'ДРИБЛИНГ', tr: 'DRİBLİNG' },
   'PASSING ACCURACY': { es: 'PRECISIÓN DE PASE', pt: 'PRECISÃO DE PASSE', fr: 'PRÉCISION DE PASSE', de: 'PASSGENAUIGKEIT', it: 'PRECISIONE DI PASSAGGIO', pl: 'CELNOŚĆ PODAŃ', cs: 'PŘESNOST PŘIHRÁVEK', ru: 'ТОЧНОСТЬ ПЕРЕДАЧ', tr: 'PAS İSABETİ' },
+  // Additional PER 90 variations
+  'DRIBBLES PER 90': { es: 'REGATES POR 90', pt: 'DRIBLES POR 90', fr: 'DRIBBLES PAR 90', de: 'DRIBBLINGS PRO 90', it: 'DRIBBLING PER 90', pl: 'DRYBLINGI NA 90', cs: 'DRIBLINKY NA 90', ru: 'ОБВОДКИ ЗА 90', tr: 'DRİBLİNGLER 90' },
+  'PASSES PER 90': { es: 'PASES POR 90', pt: 'PASSES POR 90', fr: 'PASSES PAR 90', de: 'PÄSSE PRO 90', it: 'PASSAGGI PER 90', pl: 'PODANIA NA 90', cs: 'PŘIHRÁVKY NA 90', ru: 'ПЕРЕДАЧИ ЗА 90', tr: 'PASLAR 90' },
+  'SHOTS PER 90': { es: 'TIROS POR 90', pt: 'FINALIZAÇÕES POR 90', fr: 'TIRS PAR 90', de: 'SCHÜSSE PRO 90', it: 'TIRI PER 90', pl: 'STRZAŁY NA 90', cs: 'STŘELY NA 90', ru: 'УДАРЫ ЗА 90', tr: 'ŞUTLAR 90' },
+  'KEY PASSES PER 90': { es: 'PASES CLAVE POR 90', pt: 'PASSES DECISIVOS POR 90', fr: 'PASSES CLÉS PAR 90', de: 'SCHLÜSSELPÄSSE PRO 90', it: 'PASSAGGI CHIAVE PER 90', pl: 'KLUCZOWE PODANIA NA 90', cs: 'KLÍČOVÉ PŘIHRÁVKY NA 90', ru: 'КЛЮЧЕВЫЕ ПЕРЕДАЧИ ЗА 90', tr: 'KİLİT PASLAR 90' },
+  'TACKLES PER 90': { es: 'ENTRADAS POR 90', pt: 'DESARMES POR 90', fr: 'TACLES PAR 90', de: 'TACKLINGS PRO 90', it: 'CONTRASTI PER 90', pl: 'ODBIORY NA 90', cs: 'ZÁKROKY NA 90', ru: 'ОТБОРЫ ЗА 90', tr: 'MÜDAHALELER 90' },
+  'INTERCEPTIONS PER 90': { es: 'INTERCEPCIONES POR 90', pt: 'INTERCEPTAÇÕES POR 90', fr: 'INTERCEPTIONS PAR 90', de: 'ABFANGAKTIONEN PRO 90', it: 'INTERCETTI PER 90', pl: 'PRZECHWYTY NA 90', cs: 'ZACHYCENÍ NA 90', ru: 'ПЕРЕХВАТЫ ЗА 90', tr: 'TOP KESME 90' },
+  'CLEARANCES PER 90': { es: 'DESPEJES POR 90', pt: 'CORTES POR 90', fr: 'DÉGAGEMENTS PAR 90', de: 'KLÄRUNGSAKTIONEN PRO 90', it: 'SPAZZATE PER 90', pl: 'WYBICIA NA 90', cs: 'ODKOPY NA 90', ru: 'ВЫНОСЫ ЗА 90', tr: 'UZAKLAŞTIRMALAR 90' },
+  'GOALS PER 90': { es: 'GOLES POR 90', pt: 'GOLS POR 90', fr: 'BUTS PAR 90', de: 'TORE PRO 90', it: 'GOL PER 90', pl: 'GOLE NA 90', cs: 'GÓLY NA 90', ru: 'ГОЛЫ ЗА 90', tr: 'GOLLER 90' },
+  'ASSISTS PER 90': { es: 'ASISTENCIAS POR 90', pt: 'ASSISTÊNCIAS POR 90', fr: 'PASSES DÉCISIVES PAR 90', de: 'ASSISTS PRO 90', it: 'ASSIST PER 90', pl: 'ASYSTY NA 90', cs: 'ASISTENCE NA 90', ru: 'АССИСТЫ ЗА 90', tr: 'ASİSTLER 90' },
+  'XG PER 90': { es: 'XG POR 90', pt: 'XG POR 90', fr: 'XG PAR 90', de: 'XG PRO 90', it: 'XG PER 90', pl: 'XG NA 90', cs: 'XG NA 90', ru: 'XG ЗА 90', tr: 'XG 90' },
 };
 
 // Performance stat translations for HighlightedMatchDisplay

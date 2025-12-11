@@ -74,10 +74,36 @@ const PlayerDetail = () => {
     return `${labelOrCount} ${matchesWord}`;
   };
   
-  // Helper function to translate "In Numbers" stat labels
+  // Helper function to translate "In Numbers" stat labels (case-insensitive)
   const getTranslatedInNumbersStat = (label: string): string => {
     if (language === 'en' || !label) return label;
-    return inNumbersStatTranslations[label]?.[language] || label;
+    
+    // Try exact match first
+    if (inNumbersStatTranslations[label]?.[language]) {
+      return inNumbersStatTranslations[label][language];
+    }
+    
+    // Try uppercase match
+    const upperLabel = label.toUpperCase();
+    if (inNumbersStatTranslations[upperLabel]?.[language]) {
+      return inNumbersStatTranslations[upperLabel][language];
+    }
+    
+    // Try title case match
+    const titleCase = label.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    if (inNumbersStatTranslations[titleCase]?.[language]) {
+      return inNumbersStatTranslations[titleCase][language];
+    }
+    
+    // Try case-insensitive search through all keys
+    const lowerLabel = label.toLowerCase().trim();
+    for (const key of Object.keys(inNumbersStatTranslations)) {
+      if (key.toLowerCase() === lowerLabel) {
+        return inNumbersStatTranslations[key][language] || label;
+      }
+    }
+    
+    return label;
   };
   
   // Helper function to get translated "IN LEAGUE" text
@@ -882,6 +908,14 @@ const PlayerDetail = () => {
                         <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
                           {(() => {
                             const formation = player.tacticalFormations[currentFormationIndex];
+                            const isCurrentClub = formation.club === player.club || formation.club === player.currentClub;
+                            
+                            // If current club, show "CURRENT CLUB" translated
+                            if (isCurrentClub) {
+                              return `${getSchemeLabel('CURRENT CLUB')} • ${formation.formation}`;
+                            }
+                            
+                            // Otherwise show match count if available
                             const matchValue = formation.appearances || formation.matches;
                             const isNumeric = typeof matchValue === 'number' || (typeof matchValue === 'string' && !isNaN(Number(matchValue)) && matchValue !== '');
                             
@@ -966,6 +1000,14 @@ const PlayerDetail = () => {
                       <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold transition-all duration-500">
                         {(() => {
                           const formation = player.tacticalFormations[currentFormationIndex];
+                          const isCurrentClub = formation.club === player.club || formation.club === player.currentClub;
+                          
+                          // If current club, show "CURRENT CLUB" translated
+                          if (isCurrentClub) {
+                            return `${getSchemeLabel('CURRENT CLUB')} • ${formation.formation}`;
+                          }
+                          
+                          // Otherwise show match count if available
                           const matchValue = formation.appearances || formation.matches;
                           const isNumeric = typeof matchValue === 'number' || (typeof matchValue === 'string' && !isNaN(Number(matchValue)) && matchValue !== '');
                           
