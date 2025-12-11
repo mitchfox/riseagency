@@ -1,3 +1,17 @@
+// Redirect www.{subdomain}.domain.com → {subdomain}.domain.com
+// Must run before React renders to avoid flash of content
+(function() {
+  const hostname = window.location.hostname;
+  const parts = hostname.split('.');
+  
+  // Check for www.{subdomain}.domain.com format (4+ parts with www prefix)
+  if (parts.length >= 4 && parts[0].toLowerCase() === 'www') {
+    const newHostname = parts.slice(1).join('.');
+    const newUrl = `${window.location.protocol}//${newHostname}${window.location.pathname}${window.location.search}${window.location.hash}`;
+    window.location.replace(newUrl);
+  }
+})();
+
 import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
