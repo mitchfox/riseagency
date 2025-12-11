@@ -197,7 +197,7 @@ function LandingContent() {
       {/* Cone apex is at ~49.3% from left, 65% from top. Buttons positioned along cone edges */}
       
       {/* DECLARE INTEREST - Fixed position on LEFT side of cone */}
-      <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
+      <div className={`hidden md:block fixed z-[100] pointer-events-auto transition-opacity duration-300 ${languagePopupOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
         left: '26%',
         top: '78%',
         transform: `translate(-50%, -50%) rotate(-${coneAngle - 0.3}deg)`
@@ -214,7 +214,7 @@ function LandingContent() {
       </div>
       
       {/* REPRESENT ME - Fixed position on RIGHT side of cone */}
-      <div className="hidden md:block fixed z-[100] pointer-events-auto" style={{
+      <div className={`hidden md:block fixed z-[100] pointer-events-auto transition-opacity duration-300 ${languagePopupOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
         left: '72.6%',
         top: '78%',
         transform: `translate(-50%, -50%) rotate(${coneAngle - 0.3}deg)`
