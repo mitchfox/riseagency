@@ -20,6 +20,8 @@ const languages = [
   { code: "cs" as const, name: "ČES", flagCode: "cz" },
   { code: "ru" as const, name: "РУС", flagCode: "ru" },
   { code: "tr" as const, name: "TÜR", flagCode: "tr" },
+  { code: "hr" as const, name: "HRV", flagCode: "hr" },
+  { code: "no" as const, name: "NOR", flagCode: "no" },
 ];
 
 const getFlagUrl = (flagCode: string) => `https://flagcdn.com/w40/${flagCode}.png`;
@@ -35,6 +37,8 @@ const languageUrlSubdomains: Record<string, string> = {
   cs: "cs",
   ru: "ru",
   tr: "tr",
+  hr: "hr",
+  no: "no",
 };
 
 export const LanguageSelector = () => {

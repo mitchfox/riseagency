@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr';
+type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr' | 'hr' | 'no';
 
 const languageColumnMap: Record<LanguageCode, string> = {
   'en': 'english',
@@ -15,6 +15,8 @@ const languageColumnMap: Record<LanguageCode, string> = {
   'cs': 'czech',
   'ru': 'russian',
   'tr': 'turkish',
+  'hr': 'croatian',
+  'no': 'norwegian',
 };
 
 // Cache translations in memory to avoid re-fetching

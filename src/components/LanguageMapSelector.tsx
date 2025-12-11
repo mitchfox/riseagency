@@ -4,7 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Globe, X } from "lucide-react";
 import europeMap from "@/assets/europe-outline.gif";
 
-type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr';
+type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr' | 'hr' | 'no';
 
 interface LanguageRegion {
   code: LanguageCode;
@@ -31,6 +31,8 @@ const languageRegions: LanguageRegion[] = [
   { code: "cs", name: "Czech", nativeName: "Čeština", enterText: "Vstoupit", flagCode: "cz", x: 47, y: 70 },
   { code: "ru", name: "Russian", nativeName: "Русский", enterText: "Войти", flagCode: "ru", x: 67, y: 50 },
   { code: "tr", name: "Turkish", nativeName: "Türkçe", enterText: "Giriş", flagCode: "tr", x: 65, y: 90 },
+  { code: "hr", name: "Croatian", nativeName: "Hrvatski", enterText: "Uđi", flagCode: "hr", x: 46, y: 76 },
+  { code: "no", name: "Norwegian", nativeName: "Norsk", enterText: "Gå inn", flagCode: "no", x: 43, y: 32 },
 ];
 
 interface LanguageMapSelectorProps {

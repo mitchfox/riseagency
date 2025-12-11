@@ -21,7 +21,7 @@ interface MenuItem {
   angle: number; // angle in degrees for positioning
 }
 
-type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr';
+type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr' | 'hr' | 'no';
 
 interface LanguageRegion {
   code: LanguageCode;
@@ -45,6 +45,8 @@ const languageRegions: LanguageRegion[] = [
   { code: "cs", name: "Czech", nativeName: "Čeština", flagCode: "cz", x: 47, y: 70 },
   { code: "ru", name: "Russian", nativeName: "Русский", flagCode: "ru", x: 67, y: 50 },
   { code: "tr", name: "Turkish", nativeName: "Türkçe", flagCode: "tr", x: 65, y: 90 },
+  { code: "hr", name: "Croatian", nativeName: "Hrvatski", flagCode: "hr", x: 46, y: 76 },
+  { code: "no", name: "Norwegian", nativeName: "Norsk", flagCode: "no", x: 43, y: 32 },
 ];
 
 export const RadialMenu = () => {

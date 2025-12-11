@@ -1,7 +1,7 @@
 // Shared subdomain detection utility
 // Handles both subdomain.domain.com and www.subdomain.domain.com formats
 
-export const LANGUAGE_SUBDOMAINS = ['en', 'es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'cz', 'ru', 'tr'] as const;
+export const LANGUAGE_SUBDOMAINS = ['en', 'es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'cz', 'ru', 'tr', 'hr', 'no'] as const;
 export const ROLE_SUBDOMAINS = ['players', 'clubs', 'scouts', 'agents', 'coaches', 'media', 'business', 'portal', 'potential'] as const;
 
 export type LanguageSubdomain = typeof LANGUAGE_SUBDOMAINS[number];
@@ -129,6 +129,8 @@ export function getLanguageFromSubdomain(subdomain: string | null): string | nul
     'cz': 'cs', // Czech uses 'cz' in DNS but 'cs' as language code
     'ru': 'ru',
     'tr': 'tr',
+    'hr': 'hr',
+    'no': 'no',
   };
   
   return languageMap[subdomain] || null;
