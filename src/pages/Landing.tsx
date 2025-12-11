@@ -252,7 +252,7 @@ function LandingContent() {
       top: 'calc(4rem - 50px)'
     }} onMouseEnter={() => setTopLogoHovered(true)} onMouseLeave={() => setTopLogoHovered(false)}>
         <span className="font-bebas text-2xl md:text-6xl lg:text-7xl tracking-[0.2em] md:tracking-[0.3em] text-white/90 uppercase whitespace-nowrap">
-          <HoverText text="REALISE POTENTIAL" className="hover-text-slow" />
+          <HoverText text={t("landing.realise_potential", "REALISE POTENTIAL")} className="hover-text-slow" />
         </span>
       </div>
       
