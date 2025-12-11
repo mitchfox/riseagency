@@ -22,17 +22,17 @@ const getFlagUrl = (flagCode: string) => `https://flagcdn.com/w40/${flagCode}.pn
 // Positions are percentages - will adjust based on feedback
 const languageRegions: LanguageRegion[] = [
   { code: "en", name: "English", nativeName: "English", enterText: "Enter", flagCode: "gb", x: 30, y: 60 },
-  { code: "es", name: "Spanish", nativeName: "Español", enterText: "Entrar", flagCode: "es", x: 29, y: 87 },
+  { code: "es", name: "Spanish", nativeName: "Español", enterText: "Entrar", flagCode: "es", x: 30, y: 85 },
   { code: "pt", name: "Portuguese", nativeName: "Português", enterText: "Entrar", flagCode: "pt", x: 25, y: 90 },
   { code: "fr", name: "French", nativeName: "Français", enterText: "Entrer", flagCode: "fr", x: 34, y: 73 },
-  { code: "de", name: "German", nativeName: "Deutsch", enterText: "Eintreten", flagCode: "de", x: 43, y: 63 },
-  { code: "it", name: "Italian", nativeName: "Italiano", enterText: "Entrare", flagCode: "it", x: 43, y: 80 },
-  { code: "pl", name: "Polish", nativeName: "Polski", enterText: "Wejdź", flagCode: "pl", x: 50, y: 62 },
-  { code: "cs", name: "Czech", nativeName: "Čeština", enterText: "Vstoupit", flagCode: "cz", x: 47, y: 70 },
+  { code: "de", name: "German", nativeName: "Deutsch", enterText: "Eintreten", flagCode: "de", x: 41, y: 61 },
+  { code: "it", name: "Italian", nativeName: "Italiano", enterText: "Entrare", flagCode: "it", x: 45, y: 84 },
+  { code: "pl", name: "Polish", nativeName: "Polski", enterText: "Wejdź", flagCode: "pl", x: 53, y: 62 },
+  { code: "cs", name: "Czech", nativeName: "Čeština", enterText: "Vstoupit", flagCode: "cz", x: 45, y: 67 },
   { code: "ru", name: "Russian", nativeName: "Русский", enterText: "Войти", flagCode: "ru", x: 67, y: 50 },
   { code: "tr", name: "Turkish", nativeName: "Türkçe", enterText: "Giriş", flagCode: "tr", x: 65, y: 90 },
   { code: "hr", name: "Croatian", nativeName: "Hrvatski", enterText: "Uđi", flagCode: "hr", x: 46, y: 76 },
-  { code: "no", name: "Norwegian", nativeName: "Norsk", enterText: "Gå inn", flagCode: "no", x: 43, y: 32 },
+  { code: "no", name: "Norwegian", nativeName: "Norsk", enterText: "Gå inn", flagCode: "no", x: 40, y: 40 },
 ];
 
 interface LanguageMapSelectorProps {
