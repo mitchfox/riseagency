@@ -839,6 +839,14 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
 
     // Initialize Three.js
     const initScene = async () => {
+      // Validate container dimensions before proceeding
+      if (!container.clientWidth || !container.clientHeight) {
+        console.warn('Player3DEffect: Container has no dimensions, retrying...');
+        // Retry after a short delay
+        setTimeout(initScene, 100);
+        return;
+      }
+
       const images = await loadImages()
       if (!images || !images.baseImage || !images.overlayImage || !images.xrayImage) {
         setIsLoading(false)
@@ -849,7 +857,9 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
 
       const scene = new THREE.Scene()
       
-      const aspect = container.clientWidth / container.clientHeight
+      const containerWidth = container.clientWidth || 1;
+      const containerHeight = container.clientHeight || 1;
+      const aspect = containerWidth / containerHeight
       const frustumSize = 2
       const camera = new THREE.OrthographicCamera(
         -frustumSize * aspect / 2,
@@ -867,7 +877,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         premultipliedAlpha: false
       })
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-      renderer.setSize(container.clientWidth, container.clientHeight)
+      renderer.setSize(containerWidth, containerHeight)
       renderer.setClearColor(0x000000, 0)
       container.appendChild(renderer.domElement)
 
@@ -1404,8 +1414,13 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
     const handleResize = () => {
       if (!sceneRef.current || !container) return
       
+      // Validate dimensions
+      const containerWidth = container.clientWidth || 1;
+      const containerHeight = container.clientHeight || 1;
+      if (containerWidth < 10 || containerHeight < 10) return;
+      
       const { camera, renderer, uniforms, xrayOverlayUniforms, playerMesh, xrayOverlayMesh } = sceneRef.current
-      const aspect = container.clientWidth / container.clientHeight
+      const aspect = containerWidth / containerHeight
       const frustumSize = 2
       
       camera.left = -frustumSize * aspect / 2
@@ -1414,11 +1429,11 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       camera.bottom = -frustumSize / 2
       camera.updateProjectionMatrix()
       
-      renderer.setSize(container.clientWidth, container.clientHeight)
-      uniforms.resolution.value.set(container.clientWidth, container.clientHeight)
-      xrayOverlayUniforms.resolution.value.set(container.clientWidth, container.clientHeight)
+      renderer.setSize(containerWidth, containerHeight)
+      uniforms.resolution.value.set(containerWidth, containerHeight)
+      xrayOverlayUniforms.resolution.value.set(containerWidth, containerHeight)
       
-      const isMobile = container.clientWidth < 768
+      const isMobile = containerWidth < 768
       if (playerMesh) {
         playerMesh.position.y = isMobile ? 0.15 : 0.05
       }

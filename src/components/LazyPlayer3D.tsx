@@ -1,42 +1,76 @@
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect, useRef } from "react";
 
 // Lazy load the heavy 3D component
 const Player3DEffect = lazy(() => 
   import("./Player3DEffect").then(module => ({ default: module.Player3DEffect }))
 );
 
+// Static placeholder while 3D loads
+const StaticPlaceholder = ({ className }: { className?: string }) => (
+  <div className={`${className} flex items-center justify-center`}>
+    <img 
+      src="/assets/player-static-fallback.png" 
+      alt=""
+      className="w-full h-full object-contain opacity-0"
+      loading="eager"
+    />
+  </div>
+);
+
 export const LazyPlayer3D = ({ className }: { className?: string }) => {
   const [shouldLoad, setShouldLoad] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // On mobile, load immediately for faster perceived loading
-    // On desktop, defer loading until idle to improve First Input Delay
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Use IntersectionObserver to only load when visible
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '100px', threshold: 0 }
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    // On mobile, load after a short delay to let page settle
+    // On desktop, defer loading until idle
     const isMobile = window.innerWidth < 768;
     
     if (isMobile) {
-      // Load immediately on mobile - no delay
-      setShouldLoad(true);
-      return;
+      const timeout = setTimeout(() => setShouldLoad(true), 200);
+      return () => clearTimeout(timeout);
     }
     
     if ('requestIdleCallback' in window) {
-      const id = requestIdleCallback(() => setShouldLoad(true), { timeout: 1000 });
+      const id = requestIdleCallback(() => setShouldLoad(true), { timeout: 800 });
       return () => cancelIdleCallback(id);
     } else {
-      // Fallback for browsers without requestIdleCallback
       const timeout = setTimeout(() => setShouldLoad(true), 100);
       return () => clearTimeout(timeout);
     }
-  }, []);
-
-  if (!shouldLoad) {
-    // Return empty placeholder while waiting for idle time
-    return <div className={className} />;
-  }
+  }, [isVisible]);
 
   return (
-    <Suspense fallback={<div className={className} />}>
-      <Player3DEffect className={className} />
-    </Suspense>
+    <div ref={containerRef} className={className}>
+      {shouldLoad ? (
+        <Suspense fallback={<StaticPlaceholder className={className} />}>
+          <Player3DEffect className={className} />
+        </Suspense>
+      ) : (
+        <StaticPlaceholder className={className} />
+      )}
+    </div>
   );
 };
