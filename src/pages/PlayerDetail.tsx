@@ -729,8 +729,8 @@ const PlayerDetail = () => {
 
               {/* Bio - With line breaks preserved and read more */}
               <div className="flex-1">
-                <p className="text-foreground/80 leading-relaxed text-base whitespace-pre-line line-clamp-[12]">
-                  {isTranslating ? player.bio : translatedContent.bio}
+                <p className={`text-foreground/80 leading-relaxed text-base whitespace-pre-line line-clamp-[12] transition-opacity duration-300 ${isTranslating ? 'opacity-80' : 'opacity-100'}`}>
+                  {translatedContent.bio}
                 </p>
                 {player.bio && player.bio.length > 500 && (
                   <button
@@ -753,8 +753,8 @@ const PlayerDetail = () => {
                 </DialogTitle>
               </DialogHeader>
               <div className="mt-4">
-                <p className="text-foreground/80 leading-relaxed text-base whitespace-pre-line">
-                  {isTranslating ? player.bio : translatedContent.bio}
+                <p className={`text-foreground/80 leading-relaxed text-base whitespace-pre-line transition-opacity duration-300 ${isTranslating ? 'opacity-80' : 'opacity-100'}`}>
+                  {translatedContent.bio}
                 </p>
               </div>
             </DialogContent>
