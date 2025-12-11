@@ -3,6 +3,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getLocalizedPath } from "@/lib/localizedRoutes";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HoverText } from "@/components/HoverText";
@@ -56,7 +57,7 @@ const createSlug = (title: string): string => {
 };
 
 export default function BetweenTheLines() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [articles, setArticles] = useState<Article[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
@@ -209,7 +210,7 @@ export default function BetweenTheLines() {
                 {filteredArticles.map((article) => (
                   <CarouselItem key={article.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
                     <a
-                      href={`/between-the-lines/${createSlug(article.title)}`}
+                      href={getLocalizedPath(`/between-the-lines/${createSlug(article.title)}`, language)}
                       className="group cursor-pointer overflow-hidden rounded-lg border border-border hover:border-primary/50 transition-all hover:shadow-lg block h-full"
                     >
                       <div className="relative aspect-[4/3] overflow-hidden bg-black">

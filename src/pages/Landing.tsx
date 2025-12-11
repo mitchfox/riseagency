@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { LocalizedLink } from "@/components/LocalizedLink";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { HoverText } from "@/components/HoverText";
 import { LazyPlayer3D } from "@/components/LazyPlayer3D";
@@ -283,9 +284,9 @@ function LandingContent() {
         <Link to="/staff" className="text-white/20 hover:text-white/50 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
           {t("header.staff", "Staff")}
         </Link>
-        <Link to="/portal" className="text-white/20 hover:text-white/50 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
+        <LocalizedLink to="/portal" className="text-white/20 hover:text-white/50 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
           {t("header.portal", "Portal")}
-        </Link>
+        </LocalizedLink>
       </div>
       
       {/* 3D Player Effect - Single instance with responsive CSS positioning */}
