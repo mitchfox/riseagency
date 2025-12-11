@@ -136,15 +136,9 @@ export const PlayerCard = ({ player, viewMode = "grid", disableProfileLink = fal
               <span>{player.nationality}</span>
             </div>
 
-            {/* Bio Text */}
-            {isBioLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-              </div>
-            ) : truncatedBio ? (
-              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
+            {/* Bio Text - show immediately, translate in background */}
+            {truncatedBio ? (
+              <p className={`text-sm text-muted-foreground leading-relaxed line-clamp-4 transition-opacity duration-300 ${isBioLoading ? 'opacity-70' : 'opacity-100'}`}>
                 {truncatedBio}
               </p>
             ) : null}

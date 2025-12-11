@@ -475,10 +475,11 @@ const CACHE_VERSION = 'v2';
 
 export function usePlayerTranslations({ bio, position, playerId, strengths = [] }: UsePlayerTranslationsOptions) {
   const { language } = useLanguage();
-  // Initialize with null to indicate "not yet loaded" - this prevents English flash
-  const [translatedBio, setTranslatedBio] = useState<string | null>(null);
-  const [translatedStrengths, setTranslatedStrengths] = useState<string[] | null>(null);
-  const [isTranslating, setIsTranslating] = useState(true);
+  // Initialize with ORIGINAL content immediately for instant display
+  // This ensures first-time visitors see content right away (in English)
+  const [translatedBio, setTranslatedBio] = useState<string>(bio);
+  const [translatedStrengths, setTranslatedStrengths] = useState<string[]>(strengths);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   // Translate position immediately using useMemo for proper reactivity
   const translatedPosition = useMemo(() => {
@@ -486,19 +487,25 @@ export function usePlayerTranslations({ bio, position, playerId, strengths = [] 
     return positionTranslations[position]?.[language] || position;
   }, [language, position]);
 
+  // Update state when props change (for initial load)
   useEffect(() => {
-    // Reset state immediately when language changes to prevent stale content
-    setTranslatedBio(null);
-    setTranslatedStrengths(null);
-    setIsTranslating(true);
+    if (language === 'en') {
+      setTranslatedBio(bio);
+      setTranslatedStrengths(strengths);
+    }
+  }, [bio, strengths, language]);
 
-    // For English, use original content immediately
+  useEffect(() => {
+    // For English, use original content immediately - no translation needed
     if (language === 'en') {
       setTranslatedBio(bio);
       setTranslatedStrengths(strengths);
       setIsTranslating(false);
       return;
     }
+    
+    // For other languages, start translating in background
+    setIsTranslating(true);
 
     const translateContent = async () => {
       if (!bio || bio.trim() === '') {
@@ -633,34 +640,41 @@ export function usePlayerTranslations({ bio, position, playerId, strengths = [] 
 
   // Use useMemo to ensure the returned object updates when language changes
   const translatedContent = useMemo(() => ({
-    bio: translatedBio ?? bio, // Fallback to original while loading
+    bio: translatedBio,
     position: translatedPosition,
-    strengths: translatedStrengths ?? strengths, // Fallback to original while loading
-  }), [translatedBio, translatedPosition, translatedStrengths, bio, strengths]);
+    strengths: translatedStrengths,
+  }), [translatedBio, translatedPosition, translatedStrengths]);
 
   return { 
     translatedContent, 
     isTranslating,
-    // Additional helper to check if content is ready
-    isContentReady: translatedBio !== null
+    // Content is always ready since we show English immediately
+    isContentReady: true
   };
 }
 
 // Lightweight hook for translating just bio text (for PlayerCard list view)
 export function useTranslatedBio(bio: string, playerId: string): { translatedBio: string; isLoading: boolean } {
   const { language } = useLanguage();
-  const [translatedBio, setTranslatedBio] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Initialize with original bio for instant display
+  const [translatedBio, setTranslatedBio] = useState<string>(bio || '');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Update when bio prop changes
+  useEffect(() => {
+    if (language === 'en' || !bio) {
+      setTranslatedBio(bio || '');
+    }
+  }, [bio, language]);
 
   useEffect(() => {
-    setTranslatedBio(null);
-    setIsLoading(true);
-
     if (language === 'en' || !bio || bio.trim() === '') {
       setTranslatedBio(bio || '');
       setIsLoading(false);
       return;
     }
+    
+    setIsLoading(true);
 
     const translateBio = async () => {
       const bioCacheKey = `player_bio_${CACHE_VERSION}_${playerId}_${language}`;
@@ -704,7 +718,7 @@ export function useTranslatedBio(bio: string, playerId: string): { translatedBio
     translateBio();
   }, [bio, language, playerId]);
 
-  return { translatedBio: translatedBio ?? bio, isLoading };
+  return { translatedBio, isLoading };
 }
 
 // Helper function to translate country names
