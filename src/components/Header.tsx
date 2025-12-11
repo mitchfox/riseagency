@@ -410,7 +410,7 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
             </div>
             
             {/* Language Selector - Centered on tablet+ only */}
-            <div className="hidden md:block absolute left-1/2 -translate-x-1/2 translate-y-[2px] ml-[2px]">
+            <div className="hidden md:block absolute left-1/2 -translate-x-1/2 -translate-y-[6px] ml-[2px] z-[150]">
               <LanguageSelector />
             </div>
             
