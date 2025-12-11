@@ -25,7 +25,7 @@ export const LandingCursor = () => {
 
   return (
     <div
-      className="fixed pointer-events-none z-[9999]"
+      className="fixed pointer-events-none z-[3]"
       style={{
         left: position.x,
         top: position.y,
