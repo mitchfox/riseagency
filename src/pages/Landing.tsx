@@ -585,63 +585,8 @@ function RoleSlider({
       paddingRight: isTablet ? '40px' : '100px'
     }}>
         
-        {/* Buttons moved to fixed positions at top of component */}
-        
-        {/* Role Labels - fixed positions directly above bullet points */}
-        <div className="relative" style={{ height: '75px' }}>
-          {navLinks.map((link, index) => {
-            const xPercent = getPositionFromIndex(index);
-            // Calculate Y position matching the curve - same formula as bullet points
-            const normalizedX = (xPercent - 50) / 50; // -1 to 1
-            const yPos = 68 - 64 * (1 - normalizedX * normalizedX);
-            // Position label just above the bullet point
-            const labelYOffset = yPos - 2; // minimal gap above the curve point
-            
-            const isHovered = hoveredIndex === index || nearestSnapIndex === index;
-            const isSelected = selectedIndex === index;
-            
-            return (
-              <button 
-                key={link.to} 
-                onClick={() => handleRoleClick(index)}
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
-                className={`absolute text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 whitespace-nowrap ${
-                  isSelected ? 'text-primary font-bold' : 
-                  isHovered ? 'text-primary font-bold' : 
-                  'text-white/40'
-                }`}
-                style={{ 
-                  left: `${xPercent}%`,
-                  top: `${labelYOffset}px`,
-                  transform: 'translateX(-50%)'
-                }}
-              >
-                {t(link.labelKey, link.fallback)}
-              </button>
-            );
-          })}
-        </div>
-        
-        {/* Separator line - curved SVG, directly under labels */}
-        <svg 
-          className="w-full" 
-          height="67" 
-          viewBox="0 0 100 67" 
-          preserveAspectRatio="none"
-          style={{ marginTop: '-65px', marginBottom: '0px' }}
-        >
-          <path 
-            d="M0,63 Q50,4 100,63" 
-            fill="none" 
-            stroke="hsl(var(--primary) / 0.3)" 
-            strokeWidth="0.5"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
-
-        {/* Slider Track - deeper curve to reach instruction text */}
-        <div ref={sliderRef} className="relative cursor-pointer" style={{ height: '72px', marginTop: '-4px' }} onClick={handleTrackClick}>
+        {/* Slider Track with labels and bullets */}
+        <div ref={sliderRef} className="relative cursor-pointer overflow-visible" style={{ height: '72px', marginTop: '40px' }} onClick={handleTrackClick}>
           {/* SVG curved track */}
           <svg 
             className="absolute w-full h-full" 
@@ -673,8 +618,8 @@ function RoleSlider({
             />
           </svg>
           
-          {/* Stop markers - positioned along curve */}
-          {navLinks.map((_, index) => {
+          {/* Stop markers and labels - positioned along curve */}
+          {navLinks.map((link, index) => {
             const xPercent = getPositionFromIndex(index);
             // Calculate Y position on the curve: parabola matching SVG path
             // At x=0: y=68, at x=50: y=4, at x=100: y=68
@@ -682,22 +627,45 @@ function RoleSlider({
             const yPos = 68 - 64 * (1 - normalizedX * normalizedX); // deeper parabola
             const yPercent = (yPos / 72) * 100;
             
+            const isHovered = hoveredIndex === index || nearestSnapIndex === index;
+            const isSelected = selectedIndex === index;
+            
             return (
-              <div 
-                key={index} 
-                className={`absolute w-2 h-2 rounded-full transition-all duration-200 ${
-                  selectedIndex !== null && index === selectedIndex 
-                    ? 'bg-primary scale-125' 
-                    : selectedIndex !== null && index < selectedIndex 
-                      ? 'bg-primary/60' 
-                      : 'bg-white/30'
-                }`} 
-                style={{
-                  left: `${xPercent}%`,
-                  top: `${yPercent}%`,
-                  transform: 'translate(-50%, -50%)'
-                }} 
-              />
+              <div key={index}>
+                {/* Label directly above bullet */}
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleRoleClick(index); }}
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  className={`absolute text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 whitespace-nowrap ${
+                    isSelected ? 'text-primary font-bold' : 
+                    isHovered ? 'text-primary font-bold' : 
+                    'text-white/40'
+                  }`}
+                  style={{
+                    left: `${xPercent}%`,
+                    top: `${yPercent}%`,
+                    transform: 'translate(-50%, -100%) translateY(-6px)'
+                  }}
+                >
+                  {t(link.labelKey, link.fallback)}
+                </button>
+                {/* Bullet marker */}
+                <div 
+                  className={`absolute w-2 h-2 rounded-full transition-all duration-200 ${
+                    selectedIndex !== null && index === selectedIndex 
+                      ? 'bg-primary scale-125' 
+                      : selectedIndex !== null && index < selectedIndex 
+                        ? 'bg-primary/60' 
+                        : 'bg-white/30'
+                  }`} 
+                  style={{
+                    left: `${xPercent}%`,
+                    top: `${yPercent}%`,
+                    transform: 'translate(-50%, -50%)'
+                  }} 
+                />
+              </div>
             );
           })}
           
