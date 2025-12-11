@@ -55,7 +55,7 @@ export const LanguageSelector = () => {
     
     // Check if we're on localhost or preview
     if (currentHost === 'localhost' || currentHost.includes('preview') || currentHost.includes('lovable.app')) {
-      localStorage.setItem('preferredLanguage', selectedLang.code);
+      localStorage.setItem('preferred_language', selectedLang.code);
       window.location.reload();
       return;
     }
