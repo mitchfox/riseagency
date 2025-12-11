@@ -19,7 +19,7 @@ import blackMarbleBg from "@/assets/black-marble-menu.png";
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 import { HoverText } from "@/components/HoverText";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
-import { usePlayerTranslations, usePlayerProfileLabel, useTranslatedCountry, seasonStatTranslations, schemeHistoryLabels } from "@/hooks/usePlayerTranslations";
+import { usePlayerTranslations, usePlayerProfileLabel, useTranslatedCountry, seasonStatTranslations, schemeHistoryLabels, inNumbersStatTranslations } from "@/hooks/usePlayerTranslations";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const PlayerDetail = () => {
@@ -68,6 +68,18 @@ const PlayerDetail = () => {
       return `${matchCount} ${matchesWord}`;
     }
     return '';
+  };
+  
+  // Helper function to translate "In Numbers" stat labels
+  const getTranslatedInNumbersStat = (label: string): string => {
+    if (language === 'en' || !label) return label;
+    return inNumbersStatTranslations[label]?.[language] || label;
+  };
+  
+  // Helper function to get translated "IN LEAGUE" text
+  const getInLeagueText = (): string => {
+    if (language === 'en') return 'IN LEAGUE';
+    return inNumbersStatTranslations['IN LEAGUE']?.[language] || 'IN LEAGUE';
   };
   
   // Label translations
@@ -713,9 +725,9 @@ const PlayerDetail = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline gap-3 mb-2">
                             <span className="text-5xl font-bebas text-primary leading-none">{stat.value}</span>
-                            {stat.value === '#1' && <span className="text-lg font-bebas text-primary/80 uppercase">IN LEAGUE</span>}
+                            {stat.value === '#1' && <span className="text-lg font-bebas text-primary/80 uppercase">{getInLeagueText()}</span>}
                           </div>
-                          <span className="text-sm text-muted-foreground uppercase tracking-wider block mb-2">{stat.label}</span>
+                          <span className="text-sm text-muted-foreground uppercase tracking-wider block mb-2">{getTranslatedInNumbersStat(stat.label)}</span>
                           {stat.description && <p className="text-sm text-foreground/70 leading-relaxed">{stat.description}</p>}
                         </div>
                       </div>
@@ -807,9 +819,9 @@ const PlayerDetail = () => {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-baseline gap-3 mb-2">
                                 <span className="text-5xl font-bebas text-primary leading-none">{stat.value}</span>
-                                {stat.value === '#1' && <span className="text-lg font-bebas text-primary/80 uppercase">IN LEAGUE</span>}
+                                {stat.value === '#1' && <span className="text-lg font-bebas text-primary/80 uppercase">{getInLeagueText()}</span>}
                               </div>
-                              <span className="text-sm text-muted-foreground uppercase tracking-wider block mb-2">{stat.label}</span>
+                              <span className="text-sm text-muted-foreground uppercase tracking-wider block mb-2">{getTranslatedInNumbersStat(stat.label)}</span>
                               {stat.description && <p className="text-sm text-foreground/70 leading-relaxed">{stat.description}</p>}
                             </div>
                           </div>
