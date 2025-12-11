@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getEnglishPath, getLocalizedPath } from '@/lib/localizedRoutes';
 import { getSubdomainInfo, getLanguageFromSubdomain, isPreviewOrLocalEnvironment, ROLE_SUBDOMAINS } from '@/lib/subdomainUtils';
 
-type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr';
+type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr' | 'hr' | 'no';
 
 interface Translation {
   page_name: string;
@@ -18,6 +18,8 @@ interface Translation {
   czech: string | null;
   russian: string | null;
   turkish: string | null;
+  croatian: string | null;
+  norwegian: string | null;
 }
 
 interface LanguageContextType {
@@ -42,6 +44,8 @@ const languageUrlSubdomains: Record<LanguageCode, string> = {
   'cs': 'cz', // DNS uses 'cz' for Czech
   'ru': 'ru',
   'tr': 'tr',
+  'hr': 'hr',
+  'no': 'no',
 };
 
 const languageColumns: Record<LanguageCode, keyof Translation> = {
@@ -55,9 +59,11 @@ const languageColumns: Record<LanguageCode, keyof Translation> = {
   'cs': 'czech',
   'ru': 'russian',
   'tr': 'turkish',
+  'hr': 'croatian',
+  'no': 'norwegian',
 };
 
-const validLanguages: LanguageCode[] = ['en', 'es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'ru', 'tr'];
+const validLanguages: LanguageCode[] = ['en', 'es', 'pt', 'fr', 'de', 'it', 'pl', 'cs', 'ru', 'tr', 'hr', 'no'];
 
 function detectLanguageFromSubdomain(): LanguageCode | null {
   // For preview/local environments, return null to trigger auto-detection

@@ -3072,12 +3072,14 @@ export type Database = {
       translations: {
         Row: {
           created_at: string
+          croatian: string | null
           czech: string | null
           english: string
           french: string | null
           german: string | null
           id: string
           italian: string | null
+          norwegian: string | null
           page_name: string
           polish: string | null
           portuguese: string | null
@@ -3089,12 +3091,14 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          croatian?: string | null
           czech?: string | null
           english: string
           french?: string | null
           german?: string | null
           id?: string
           italian?: string | null
+          norwegian?: string | null
           page_name: string
           polish?: string | null
           portuguese?: string | null
@@ -3106,12 +3110,14 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          croatian?: string | null
           czech?: string | null
           english?: string
           french?: string | null
           german?: string | null
           id?: string
           italian?: string | null
+          norwegian?: string | null
           page_name?: string
           polish?: string | null
           portuguese?: string | null
