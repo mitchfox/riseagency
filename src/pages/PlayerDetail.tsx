@@ -879,7 +879,7 @@ const PlayerDetail = () => {
                           {(() => {
                             const formation = player.tacticalFormations[currentFormationIndex];
                             const matchValue = formation.appearances || formation.matches;
-                            const isCurrentClub = formation.club === player.currentClub;
+                            const isCurrentClub = formation.club === (player.club || player.currentClub);
                             const isNumeric = typeof matchValue === 'number' || (typeof matchValue === 'string' && !isNaN(Number(matchValue)) && matchValue !== '');
                             
                             let labelText = '';
@@ -965,7 +965,7 @@ const PlayerDetail = () => {
                         {(() => {
                           const formation = player.tacticalFormations[currentFormationIndex];
                           const matchValue = formation.appearances || formation.matches;
-                          const isCurrentClub = formation.club === player.currentClub;
+                          const isCurrentClub = formation.club === (player.club || player.currentClub);
                           const isNumeric = typeof matchValue === 'number' || (typeof matchValue === 'string' && !isNaN(Number(matchValue)) && matchValue !== '');
                           
                           let labelText = '';

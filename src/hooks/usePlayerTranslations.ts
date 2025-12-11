@@ -395,6 +395,25 @@ export const inNumbersStatTranslations: Record<string, Record<string, string>> =
   'Matches played': { es: 'Partidos jugados', pt: 'Partidas jogadas', fr: 'Matchs joués', de: 'Gespielte Spiele', it: 'Partite giocate', pl: 'Rozegrane mecze', cs: 'Odehrané zápasy', ru: 'Сыгранные матчи', tr: 'Oynanan maçlar' },
   'Goal contributions': { es: 'Contribuciones de gol', pt: 'Participações em gols', fr: 'Participations aux buts', de: 'Torbeteiligungen', it: 'Partecipazioni ai gol', pl: 'Udział w golach', cs: 'Podíl na gólech', ru: 'Участие в голах', tr: 'Gol katkıları' },
   'Save percentage': { es: 'Porcentaje de paradas', pt: 'Percentual de defesas', fr: 'Pourcentage d\'arrêts', de: 'Haltequote', it: 'Percentuale di parate', pl: 'Procent obron', cs: 'Procento zákroků', ru: 'Процент сейвов', tr: 'Kurtarış yüzdesi' },
+  // Common database stat labels
+  'Goals Per Game': { es: 'Goles por partido', pt: 'Gols por jogo', fr: 'Buts par match', de: 'Tore pro Spiel', it: 'Gol per partita', pl: 'Gole na mecz', cs: 'Góly na zápas', ru: 'Голы за игру', tr: 'Maç başına gol' },
+  'Shot Accuracy': { es: 'Precisión de tiro', pt: 'Precisão de chute', fr: 'Précision de tir', de: 'Schussgenauigkeit', it: 'Precisione di tiro', pl: 'Celność strzałów', cs: 'Přesnost střelby', ru: 'Точность ударов', tr: 'Şut isabeti' },
+  'Interceptions': { es: 'Intercepciones', pt: 'Interceptações', fr: 'Interceptions', de: 'Abfangaktionen', it: 'Intercetti', pl: 'Przechwyty', cs: 'Zachycení', ru: 'Перехваты', tr: 'Topları kesme' },
+  'Passing Accuracy': { es: 'Precisión de pase', pt: 'Precisão de passe', fr: 'Précision de passe', de: 'Passgenauigkeit', it: 'Precisione di passaggio', pl: 'Celność podań', cs: 'Přesnost přihrávek', ru: 'Точность передач', tr: 'Pas isabeti' },
+  'Key Passes': { es: 'Pases clave', pt: 'Passes decisivos', fr: 'Passes clés', de: 'Schlüsselpässe', it: 'Passaggi chiave', pl: 'Kluczowe podania', cs: 'Klíčové přihrávky', ru: 'Ключевые передачи', tr: 'Kilit paslar' },
+  'Dribble Success': { es: 'Éxito en regates', pt: 'Sucesso em dribles', fr: 'Réussite des dribbles', de: 'Dribbling-Erfolg', it: 'Successo nei dribbling', pl: 'Skuteczność dryblingów', cs: 'Úspěšnost driblů', ru: 'Успех обводок', tr: 'Dribling başarısı' },
+  'Aerial Duels Won': { es: 'Duelos aéreos ganados', pt: 'Duelos aéreos vencidos', fr: 'Duels aériens gagnés', de: 'Gewonnene Kopfballduelle', it: 'Duelli aerei vinti', pl: 'Wygrane pojedynki powietrzne', cs: 'Vyhrané hlavičkové souboje', ru: 'Выигранные верховые единоборства', tr: 'Kazanılan hava topları' },
+  'Tackles Won': { es: 'Entradas ganadas', pt: 'Desarmes vencidos', fr: 'Tacles gagnés', de: 'Gewonnene Tackles', it: 'Contrasti vinti', pl: 'Wygrane odbiory', cs: 'Vyhrané zákroky', ru: 'Выигранные отборы', tr: 'Kazanılan müdahaleler' },
+  'Clearances': { es: 'Despejes', pt: 'Cortes', fr: 'Dégagements', de: 'Klärungsaktionen', it: 'Spazzate', pl: 'Wybicia', cs: 'Odkopy', ru: 'Выносы', tr: 'Uzaklaştırmalar' },
+  'Blocks': { es: 'Bloqueos', pt: 'Bloqueios', fr: 'Contres', de: 'Blocks', it: 'Blocchi', pl: 'Bloki', cs: 'Bloky', ru: 'Блоки', tr: 'Bloklar' },
+  'Clean Sheets': { es: 'Porterías imbatidas', pt: 'Jogos sem sofrer gol', fr: 'Clean sheets', de: 'Zu-Null-Spiele', it: 'Porta inviolata', pl: 'Czyste konta', cs: 'Čistá konta', ru: 'Сухие матчи', tr: 'Gol yemeden' },
+  'Saves': { es: 'Paradas', pt: 'Defesas', fr: 'Arrêts', de: 'Paraden', it: 'Parate', pl: 'Obrony', cs: 'Zákroky', ru: 'Сейвы', tr: 'Kurtarışlar' },
+  'Goals': { es: 'Goles', pt: 'Gols', fr: 'Buts', de: 'Tore', it: 'Gol', pl: 'Gole', cs: 'Góly', ru: 'Голы', tr: 'Goller' },
+  'Assists': { es: 'Asistencias', pt: 'Assistências', fr: 'Passes décisives', de: 'Assists', it: 'Assist', pl: 'Asysty', cs: 'Asistence', ru: 'Ассисты', tr: 'Asistler' },
+  'Minutes': { es: 'Minutos', pt: 'Minutos', fr: 'Minutes', de: 'Minuten', it: 'Minuti', pl: 'Minuty', cs: 'Minuty', ru: 'Минуты', tr: 'Dakikalar' },
+  'Matches': { es: 'Partidos', pt: 'Partidas', fr: 'Matchs', de: 'Spiele', it: 'Partite', pl: 'Mecze', cs: 'Zápasy', ru: 'Матчи', tr: 'Maçlar' },
+  'xG': { es: 'xG', pt: 'xG', fr: 'xG', de: 'xG', it: 'xG', pl: 'xG', cs: 'xG', ru: 'xG', tr: 'xG' },
+  'xA': { es: 'xA', pt: 'xA', fr: 'xA', de: 'xA', it: 'xA', pl: 'xA', cs: 'xA', ru: 'xA', tr: 'xA' },
 };
 
 // Performance stat translations for HighlightedMatchDisplay
