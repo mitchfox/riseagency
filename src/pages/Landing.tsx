@@ -290,7 +290,7 @@ function LandingContent() {
       </div>
       
       {/* 3D Player Effect - Single instance with responsive CSS positioning */}
-      <div className="absolute inset-0 pointer-events-none z-[5]">
+      <div className="absolute inset-0 pointer-events-none z-[2]">
         {/* Mobile: translateX(1px) translateY(32px), Desktop: translateX(-39px) translateY(-28px) */}
         <div 
           className="absolute inset-0 translate-x-[1px] translate-y-[32px] md:translate-x-[-39px] md:translate-y-[-28px]"
