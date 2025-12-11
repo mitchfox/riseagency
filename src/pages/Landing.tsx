@@ -590,7 +590,7 @@ function RoleSlider({
             viewBox="0 0 100 72" 
             preserveAspectRatio="none"
           >
-            {/* Background track line - upper curve for labels */}
+            {/* Main curved track line - thumb slides along this */}
             <path 
               d="M0,68 Q50,4 100,68" 
               fill="none" 
@@ -598,22 +598,14 @@ function RoleSlider({
               strokeWidth="1"
               vectorEffect="non-scaling-stroke"
             />
-            {/* Lower track line - for thumb slider */}
-            <path 
-              d="M0,72 Q50,40 100,72" 
-              fill="none" 
-              stroke="rgba(255,255,255,0.15)" 
-              strokeWidth="1"
-              vectorEffect="non-scaling-stroke"
-            />
-            {/* Filled lower track line */}
+            {/* Filled track line */}
             <defs>
               <clipPath id="filledClip">
                 <rect x="0" y="0" width={`${thumbPosition}%`} height="100%" />
               </clipPath>
             </defs>
             <path 
-              d="M0,72 Q50,40 100,72" 
+              d="M0,68 Q50,4 100,68" 
               fill="none" 
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="1"
@@ -623,10 +615,9 @@ function RoleSlider({
             />
           </svg>
           
-          {/* Stop markers and labels - positioned along upper curve */}
+          {/* Stop markers and labels - positioned above the curve */}
           {navLinks.map((link, index) => {
             const xPercent = getPositionFromIndex(index);
-            // Calculate Y position on the upper curve
             const normalizedX = (xPercent - 50) / 50;
             const yPos = 68 - 64 * (1 - normalizedX * normalizedX);
             const yPercent = (yPos / 72) * 100;
@@ -636,7 +627,7 @@ function RoleSlider({
             
             return (
               <div key={index}>
-                {/* Label directly above bullet */}
+                {/* Label above the curve */}
                 <button 
                   onClick={(e) => { e.stopPropagation(); handleRoleClick(index); }}
                   onMouseEnter={() => setHoveredIndex(index)}
@@ -649,12 +640,12 @@ function RoleSlider({
                   style={{
                     left: `${xPercent}%`,
                     top: `${yPercent}%`,
-                    transform: `translate(-50%, -100%) translateY(${index === 3 ? '-10px' : '-6px'})`
+                    transform: `translate(-50%, -100%) translateY(${index === 3 ? '-18px' : '-14px'})`
                   }}
                 >
                   {t(link.labelKey, link.fallback)}
                 </button>
-                {/* Bullet marker */}
+                {/* Bullet marker on curve */}
                 <div 
                   className={`absolute w-2 h-2 rounded-full transition-all duration-200 ${
                     selectedIndex !== null && index === selectedIndex 
@@ -673,11 +664,10 @@ function RoleSlider({
             );
           })}
           
-          {/* Draggable Thumb Handle - positioned along LOWER curve */}
+          {/* Draggable Thumb - ON the main curve */}
           {(() => {
             const normalizedX = (thumbPosition - 50) / 50;
-            // Lower curve: y = 72 - 32*(1-x^2) - shallower curve below the labels
-            const yPos = 72 - 32 * (1 - normalizedX * normalizedX);
+            const yPos = 68 - 64 * (1 - normalizedX * normalizedX);
             const yPercent = (yPos / 72) * 100;
             
             return (
@@ -701,7 +691,6 @@ function RoleSlider({
                 <div className={`relative w-6 h-6 rounded-full bg-primary shadow-lg flex items-center justify-center ${isDragging ? 'scale-125' : 'hover:scale-110'} transition-transform duration-150`} style={{
                   boxShadow: '0 0 20px hsl(var(--primary) / 0.7), 0 0 40px hsl(var(--primary) / 0.3)'
                 }}>
-                  {/* Grip lines */}
                   <div className="flex gap-[3px]">
                     <div className="w-[2px] h-3 bg-black/50 rounded-full" />
                     <div className="w-[2px] h-3 bg-black/50 rounded-full" />
