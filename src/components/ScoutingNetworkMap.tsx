@@ -61,12 +61,10 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
   const [draggingClub, setDraggingClub] = useState<string | null>(null);
   const [clubPositions, setClubPositions] = useState<Record<string, {x: number, y: number}>>({});
   const [wasDragging, setWasDragging] = useState(false);
-  // Country -> League -> Team -> Category -> Players
-  const [countryData, setCountryData] = useState<Record<string, Record<string, Record<string, Record<string, {id: string, name: string, age: number}[]>>>>>({});
+  // Country -> Clubs (from footballClubs) with optional scouting data overlay
+  const [scoutingData, setScoutingData] = useState<Record<string, {id: string, name: string, age: number | null, position: string | null}[]>>({});
   const [expandedCountries, setExpandedCountries] = useState<Set<string>>(new Set());
-  const [expandedLeagues, setExpandedLeagues] = useState<Set<string>>(new Set());
-  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedClubs, setExpandedClubs] = useState<Set<string>>(new Set());
   // Europe outline is rendered from raster map image (europe-outline.gif)
   
   // Load club positions from database on mount
@@ -93,106 +91,36 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
     loadClubPositions();
   }, []);
 
-  // Load player data grouped by country, league, team, and category
+  // Load scouting data from scouting_reports table
   useEffect(() => {
-    const loadCountryData = async () => {
+    const loadScoutingData = async () => {
       const { data, error } = await supabase
-        .from('players')
-        .select('id, name, club, league, category, age, nationality')
-        .not('club', 'is', null)
-        .not('league', 'is', null)
-        .order('nationality')
-        .order('league')
-        .order('club')
-        .order('category')
-        .order('name');
+        .from('scouting_reports')
+        .select('id, player_name, current_club, age, position')
+        .not('current_club', 'is', null)
+        .order('current_club')
+        .order('player_name');
       
       if (!error && data) {
-        // Group by country -> league -> team -> category -> players
-        const grouped: Record<string, Record<string, Record<string, Record<string, {id: string, name: string, age: number}[]>>>> = {};
+        // Group by club name
+        const grouped: Record<string, {id: string, name: string, age: number | null, position: string | null}[]> = {};
         
-        data.forEach(player => {
-          // Derive country from league or use a mapping
-          const country = getCountryFromLeague(player.league || '');
-          const league = player.league || 'Unknown League';
-          const club = player.club || 'Unknown Club';
-          const category = player.category || 'Other';
-          
-          if (!grouped[country]) grouped[country] = {};
-          if (!grouped[country][league]) grouped[country][league] = {};
-          if (!grouped[country][league][club]) grouped[country][league][club] = {};
-          if (!grouped[country][league][club][category]) grouped[country][league][club][category] = [];
-          
-          grouped[country][league][club][category].push({
-            id: player.id,
-            name: player.name,
-            age: player.age
+        data.forEach(report => {
+          const club = report.current_club || '';
+          if (!grouped[club]) grouped[club] = [];
+          grouped[club].push({
+            id: report.id,
+            name: report.player_name,
+            age: report.age,
+            position: report.position
           });
         });
         
-        setCountryData(grouped);
+        setScoutingData(grouped);
       }
     };
     
-    // Helper to derive country from league name
-    const getCountryFromLeague = (league: string): string => {
-      const leagueToCountry: Record<string, string> = {
-        'Premier League': 'England',
-        'EFL Championship': 'England',
-        'EFL League One': 'England',
-        'EFL League Two': 'England',
-        'National League': 'England',
-        'La Liga': 'Spain',
-        'Segunda División': 'Spain',
-        'Bundesliga': 'Germany',
-        '2. Bundesliga': 'Germany',
-        'Serie A': 'Italy',
-        'Serie B': 'Italy',
-        'Ligue 1': 'France',
-        'Ligue 2': 'France',
-        'Eredivisie': 'Netherlands',
-        'Primeira Liga': 'Portugal',
-        'Czech First League': 'Czech Republic',
-        'Czech National Football League': 'Czech Republic',
-        'Scottish Premiership': 'Scotland',
-        'Scottish Championship': 'Scotland',
-        'League of Ireland': 'Ireland',
-        'Eliteserien': 'Norway',
-        'Allsvenskan': 'Sweden',
-        'Superliga': 'Denmark',
-        'Super League': 'Switzerland',
-        'Austrian Bundesliga': 'Austria',
-        'Belgian Pro League': 'Belgium',
-        'Süper Lig': 'Turkey',
-        'Super League Greece': 'Greece',
-        'Ekstraklasa': 'Poland',
-        'Ukrainian Premier League': 'Ukraine',
-        'Russian Premier League': 'Russia',
-        'Romanian Liga I': 'Romania',
-        'Croatian First Football League': 'Croatia',
-        'Serbian SuperLiga': 'Serbia',
-      };
-      
-      for (const [leagueName, country] of Object.entries(leagueToCountry)) {
-        if (league.toLowerCase().includes(leagueName.toLowerCase())) {
-          return country;
-        }
-      }
-      
-      // Try to detect country from league name patterns
-      if (league.toLowerCase().includes('england') || league.toLowerCase().includes('english')) return 'England';
-      if (league.toLowerCase().includes('spain') || league.toLowerCase().includes('spanish')) return 'Spain';
-      if (league.toLowerCase().includes('german')) return 'Germany';
-      if (league.toLowerCase().includes('france') || league.toLowerCase().includes('french')) return 'France';
-      if (league.toLowerCase().includes('italy') || league.toLowerCase().includes('italian')) return 'Italy';
-      if (league.toLowerCase().includes('czech')) return 'Czech Republic';
-      if (league.toLowerCase().includes('scotland') || league.toLowerCase().includes('scottish')) return 'Scotland';
-      if (league.toLowerCase().includes('ireland') || league.toLowerCase().includes('irish')) return 'Ireland';
-      
-      return 'Other';
-    };
-    
-    loadCountryData();
+    loadScoutingData();
   }, []);
 
   // Handle initialCountry prop changes - zoom to country
@@ -1416,25 +1344,24 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
             </div>
           </div>
 
-          {/* Coverage Regions - Country Hierarchy */}
+          {/* Coverage Regions - Country -> Clubs from footballClubs */}
           <div className="bg-card rounded-lg p-4 border max-h-96 overflow-y-auto">
             <h4 className="font-bebas text-xl mb-3">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
             <div className="space-y-1">
-              {Object.keys(countryData).length === 0 ? (
-                <p className="text-sm text-muted-foreground">Loading coverage data...</p>
-              ) : (
-                Object.entries(countryData)
+              {(() => {
+                // Group footballClubs by country
+                const clubsByCountry: Record<string, typeof footballClubs> = {};
+                footballClubs.forEach(club => {
+                  if (!clubsByCountry[club.country]) clubsByCountry[club.country] = [];
+                  clubsByCountry[club.country].push(club);
+                });
+                
+                return Object.entries(clubsByCountry)
                   .sort(([a], [b]) => a.localeCompare(b))
-                  .map(([country, leagues]) => {
+                  .map(([country, clubs]) => {
                     const countryKey = `country-${country}`;
                     const isCountryExpanded = expandedCountries.has(countryKey);
-                    const totalPlayersInCountry = Object.values(leagues).reduce(
-                      (sum, teams) => sum + Object.values(teams).reduce(
-                        (teamSum, categories) => teamSum + Object.values(categories).reduce(
-                          (catSum, players) => catSum + players.length, 0
-                        ), 0
-                      ), 0
-                    );
+                    const flagImage = flagImages[country];
                     
                     return (
                       <div key={countryKey} className="border-b border-border/30 last:border-b-0">
@@ -1455,133 +1382,75 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
                           ) : (
                             <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                           )}
+                          {flagImage && (
+                            <img src={flagImage} alt={country} className="w-5 h-4 object-cover rounded-sm flex-shrink-0" />
+                          )}
                           <span className="font-medium text-sm flex-1">{country}</span>
-                          <span className="text-xs text-muted-foreground">{totalPlayersInCountry} players</span>
                         </button>
                         
                         {isCountryExpanded && (
-                          <div className="ml-4 space-y-1 pb-2">
-                            {Object.entries(leagues)
-                              .sort(([a], [b]) => a.localeCompare(b))
-                              .map(([league, teams]) => {
-                                const leagueKey = `league-${country}-${league}`;
-                                const isLeagueExpanded = expandedLeagues.has(leagueKey);
-                                const totalPlayersInLeague = Object.values(teams).reduce(
-                                  (sum, categories) => sum + Object.values(categories).reduce(
-                                    (catSum, players) => catSum + players.length, 0
-                                  ), 0
-                                );
+                          <div className="ml-6 space-y-1 pb-2">
+                            {clubs
+                              .sort((a, b) => a.name.localeCompare(b.name))
+                              .map((club) => {
+                                const clubKey = `club-${country}-${club.name}`;
+                                const isClubExpanded = expandedClubs.has(clubKey);
+                                const clubPlayers = scoutingData[club.name] || [];
+                                const hasPlayers = clubPlayers.length > 0;
                                 
                                 return (
-                                  <div key={leagueKey}>
+                                  <div key={clubKey}>
                                     <button
                                       onClick={() => {
-                                        const newSet = new Set(expandedLeagues);
-                                        if (isLeagueExpanded) {
-                                          newSet.delete(leagueKey);
-                                        } else {
-                                          newSet.add(leagueKey);
+                                        if (hasPlayers) {
+                                          const newSet = new Set(expandedClubs);
+                                          if (isClubExpanded) {
+                                            newSet.delete(clubKey);
+                                          } else {
+                                            newSet.add(clubKey);
+                                          }
+                                          setExpandedClubs(newSet);
                                         }
-                                        setExpandedLeagues(newSet);
                                       }}
-                                      className="w-full flex items-center gap-2 p-1.5 hover:bg-accent/30 rounded transition-colors text-left"
+                                      className={`w-full flex items-center gap-2 p-1.5 hover:bg-accent/30 rounded transition-colors text-left ${!hasPlayers ? 'cursor-default' : ''}`}
                                     >
-                                      {isLeagueExpanded ? (
-                                        <ChevronDown className="w-3 h-3 text-primary flex-shrink-0" />
+                                      {hasPlayers ? (
+                                        isClubExpanded ? (
+                                          <ChevronDown className="w-3 h-3 text-primary flex-shrink-0" />
+                                        ) : (
+                                          <ChevronRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                        )
                                       ) : (
-                                        <ChevronRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                        <span className="w-3 h-3 flex-shrink-0" />
                                       )}
-                                      <span className="text-sm flex-1">{league}</span>
-                                      <span className="text-xs text-muted-foreground">{totalPlayersInLeague}</span>
+                                      {club.logo && (
+                                        <img 
+                                          src={club.logo} 
+                                          alt={club.name} 
+                                          className="w-4 h-4 object-contain flex-shrink-0"
+                                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                        />
+                                      )}
+                                      <span className="text-sm flex-1">{club.name}</span>
                                     </button>
                                     
-                                    {isLeagueExpanded && (
-                                      <div className="ml-4 space-y-1">
-                                        {Object.entries(teams)
-                                          .sort(([a], [b]) => a.localeCompare(b))
-                                          .map(([team, categories]) => {
-                                            const teamKey = `team-${country}-${league}-${team}`;
-                                            const isTeamExpanded = expandedTeams.has(teamKey);
-                                            const totalPlayersInTeam = Object.values(categories).reduce(
-                                              (sum, players) => sum + players.length, 0
-                                            );
-                                            
-                                            return (
-                                              <div key={teamKey}>
-                                                <button
-                                                  onClick={() => {
-                                                    const newSet = new Set(expandedTeams);
-                                                    if (isTeamExpanded) {
-                                                      newSet.delete(teamKey);
-                                                    } else {
-                                                      newSet.add(teamKey);
-                                                    }
-                                                    setExpandedTeams(newSet);
-                                                  }}
-                                                  className="w-full flex items-center gap-2 p-1 hover:bg-accent/20 rounded transition-colors text-left"
-                                                >
-                                                  {isTeamExpanded ? (
-                                                    <ChevronDown className="w-3 h-3 text-primary flex-shrink-0" />
-                                                  ) : (
-                                                    <ChevronRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                                                  )}
-                                                  <span className="text-xs flex-1">{team}</span>
-                                                  <span className="text-xs text-muted-foreground">{totalPlayersInTeam}</span>
-                                                </button>
-                                                
-                                                {isTeamExpanded && (
-                                                  <div className="ml-4 space-y-1">
-                                                    {Object.entries(categories)
-                                                      .sort(([a], [b]) => a.localeCompare(b))
-                                                      .map(([category, players]) => {
-                                                        const categoryKey = `cat-${country}-${league}-${team}-${category}`;
-                                                        const isCategoryExpanded = expandedCategories.has(categoryKey);
-                                                        
-                                                        return (
-                                                          <div key={categoryKey}>
-                                                            <button
-                                                              onClick={() => {
-                                                                const newSet = new Set(expandedCategories);
-                                                                if (isCategoryExpanded) {
-                                                                  newSet.delete(categoryKey);
-                                                                } else {
-                                                                  newSet.add(categoryKey);
-                                                                }
-                                                                setExpandedCategories(newSet);
-                                                              }}
-                                                              className="w-full flex items-center gap-2 p-1 hover:bg-accent/10 rounded transition-colors text-left"
-                                                            >
-                                                              {isCategoryExpanded ? (
-                                                                <ChevronDown className="w-2 h-2 text-primary flex-shrink-0" />
-                                                              ) : (
-                                                                <ChevronRight className="w-2 h-2 text-muted-foreground flex-shrink-0" />
-                                                              )}
-                                                              <span className="text-xs text-muted-foreground flex-1">{category}</span>
-                                                              <span className="text-xs text-muted-foreground">{players.length}</span>
-                                                            </button>
-                                                            
-                                                            {isCategoryExpanded && players.length > 0 && (
-                                                              <div className="ml-5 py-1 space-y-0.5">
-                                                                {players.map((player) => (
-                                                                  <div
-                                                                    key={player.id}
-                                                                    className="flex items-center gap-2 text-xs text-muted-foreground py-0.5 px-1 hover:bg-accent/10 rounded"
-                                                                  >
-                                                                    <Users className="w-3 h-3 flex-shrink-0" />
-                                                                    <span>{player.name}</span>
-                                                                    <span className="text-xs opacity-60">({player.age})</span>
-                                                                  </div>
-                                                                ))}
-                                                              </div>
-                                                            )}
-                                                          </div>
-                                                        );
-                                                      })}
-                                                  </div>
-                                                )}
-                                              </div>
-                                            );
-                                          })}
+                                    {isClubExpanded && hasPlayers && (
+                                      <div className="ml-6 py-1 space-y-0.5">
+                                        {clubPlayers.map((player) => (
+                                          <div
+                                            key={player.id}
+                                            className="flex items-center gap-2 text-xs text-muted-foreground py-0.5 px-1 hover:bg-accent/10 rounded"
+                                          >
+                                            <Users className="w-3 h-3 flex-shrink-0" />
+                                            <span>{player.name}</span>
+                                            {player.position && (
+                                              <span className="text-xs opacity-60">• {player.position}</span>
+                                            )}
+                                            {player.age && (
+                                              <span className="text-xs opacity-60">({player.age})</span>
+                                            )}
+                                          </div>
+                                        ))}
                                       </div>
                                     )}
                                   </div>
@@ -1591,8 +1460,8 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
                         )}
                       </div>
                     );
-                  })
-              )}
+                  });
+              })()}
             </div>
           </div>
         </div>
