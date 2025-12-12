@@ -1,56 +1,29 @@
-import { lazy, Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { Player3DEffect } from "./Player3DEffect";
 
-// Lazy load the heavy 3D component
-const Player3DEffect = lazy(() => 
-  import("./Player3DEffect").then(module => ({ default: module.Player3DEffect }))
-);
-
-// Static placeholder while 3D loads
+// Static placeholder while 3D loads - now shows the actual base image
 const StaticPlaceholder = ({ className }: { className?: string }) => (
   <div className={`${className} flex items-center justify-center`}>
     <img 
-      src="/assets/player-static-fallback.png" 
+      src="/assets/player-base.png" 
       alt=""
-      className="w-full h-full object-contain opacity-0"
+      className="w-full h-full object-contain"
       loading="eager"
     />
   </div>
 );
 
 export const LazyPlayer3D = ({ className }: { className?: string }) => {
-  const [shouldLoad, setShouldLoad] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    // Use IntersectionObserver to only load when visible
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '100px', threshold: 0 }
-    );
-
-    observer.observe(container);
-    return () => observer.disconnect();
+    // Start loading immediately - no delays
+    setIsReady(true);
   }, []);
 
-  useEffect(() => {
-    if (!isVisible) return;
-
-    // Load immediately since images are now preloaded and no ZIP parsing needed
-    setShouldLoad(true);
-  }, [isVisible]);
-
   return (
-    <div ref={containerRef} className={className}>
-      {shouldLoad ? (
+    <div className={className}>
+      {isReady ? (
         <Suspense fallback={<StaticPlaceholder className={className} />}>
           <Player3DEffect className={className} />
         </Suspense>
