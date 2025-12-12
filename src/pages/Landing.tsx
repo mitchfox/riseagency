@@ -583,7 +583,7 @@ function RoleSlider({
     }}>
         
         {/* Slider Track with labels and bullets */}
-        <div ref={sliderRef} className="relative cursor-pointer overflow-visible" style={{ height: '100px', marginTop: '0px' }} onClick={handleTrackClick}>
+        <div ref={sliderRef} className="relative cursor-pointer overflow-visible" style={{ height: '140px', marginTop: '0px' }} onClick={handleTrackClick}>
           {/* SVG curved tracks */}
           <svg 
             className="absolute w-full h-full" 
