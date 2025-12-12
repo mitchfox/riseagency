@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Building, User, Briefcase, Clock, MessageSquare, Loader2, UserCircle } from "lucide-react";
+import { Plus, Building, User, Briefcase, Clock, MessageSquare, Loader2, UserCircle, Search } from "lucide-react";
 import { format } from "date-fns";
 
 interface ClubOutreach {
@@ -38,6 +38,17 @@ interface OutreachUpdate {
 interface Player {
   id: string;
   name: string;
+}
+
+interface ClubNetworkContact {
+  id: string;
+  name: string;
+  club_name: string | null;
+  position: string | null;
+  email: string | null;
+  phone: string | null;
+  city: string | null;
+  country: string | null;
 }
 
 interface PlayerSubmission {
@@ -87,6 +98,10 @@ export const ClubOutreachManagement = () => {
   const [newInitialUpdate, setNewInitialUpdate] = useState("");
   const [saving, setSaving] = useState(false);
   
+  // Club network contacts
+  const [networkContacts, setNetworkContacts] = useState<ClubNetworkContact[]>([]);
+  const [selectedContactId, setSelectedContactId] = useState<string>("");
+  
   // Detail dialog state
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedClubGroup, setSelectedClubGroup] = useState<ClubGroup | null>(null);
@@ -108,6 +123,13 @@ export const ClubOutreachManagement = () => {
         .select("id, name")
         .order("name");
       setPlayers(playersData || []);
+
+      // Fetch club network contacts
+      const { data: contactsData } = await supabase
+        .from("club_network_contacts")
+        .select("id, name, club_name, position, email, phone, city, country")
+        .order("name");
+      setNetworkContacts(contactsData || []);
 
       // Fetch outreach records (staff-created)
       const { data: outreachData, error } = await supabase
@@ -227,6 +249,20 @@ export const ClubOutreachManagement = () => {
     setSelectedPlayerIds([]);
     setNewStatus("contacted");
     setNewInitialUpdate("");
+    setSelectedContactId("");
+  };
+
+  const handleContactSelect = (contactId: string) => {
+    setSelectedContactId(contactId);
+    if (contactId) {
+      const contact = networkContacts.find(c => c.id === contactId);
+      if (contact) {
+        // Use contact name as club name if no club_name, or club_name if available
+        setNewClubName(contact.club_name || contact.name);
+        setNewContactName(contact.name);
+        setNewContactRole(contact.position || "");
+      }
+    }
   };
 
   const handleOpenClubDetail = async (clubGroup: ClubGroup) => {
@@ -494,6 +530,34 @@ export const ClubOutreachManagement = () => {
             <DialogTitle>Add Club Outreach</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Select from Club Network */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Search className="h-4 w-4" />
+                Select from Club Network (Optional)
+              </Label>
+              <Select value={selectedContactId} onValueChange={handleContactSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a contact from your network..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  <SelectItem value="">-- Manual Entry --</SelectItem>
+                  {networkContacts.map(contact => (
+                    <SelectItem key={contact.id} value={contact.id}>
+                      <span className="flex flex-col">
+                        <span className="font-medium">{contact.name}</span>
+                        {(contact.club_name || contact.city) && (
+                          <span className="text-xs text-muted-foreground">
+                            {[contact.club_name, contact.city, contact.country].filter(Boolean).join(", ")}
+                          </span>
+                        )}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="space-y-2">
               <Label>Club Name *</Label>
               <Input
