@@ -61,7 +61,9 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
   const [draggingClub, setDraggingClub] = useState<string | null>(null);
   const [clubPositions, setClubPositions] = useState<Record<string, {x: number, y: number}>>({});
   const [wasDragging, setWasDragging] = useState(false);
-  const [leagueData, setLeagueData] = useState<Record<string, Record<string, Record<string, {id: string, name: string, age: number}[]>>>>({});
+  // Country -> League -> Team -> Category -> Players
+  const [countryData, setCountryData] = useState<Record<string, Record<string, Record<string, Record<string, {id: string, name: string, age: number}[]>>>>>({});
+  const [expandedCountries, setExpandedCountries] = useState<Set<string>>(new Set());
   const [expandedLeagues, setExpandedLeagues] = useState<Set<string>>(new Set());
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
@@ -91,44 +93,106 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
     loadClubPositions();
   }, []);
 
-  // Load player data grouped by league, team, and category
+  // Load player data grouped by country, league, team, and category
   useEffect(() => {
-    const loadLeagueData = async () => {
+    const loadCountryData = async () => {
       const { data, error } = await supabase
         .from('players')
-        .select('id, name, club, league, category, age')
+        .select('id, name, club, league, category, age, nationality')
         .not('club', 'is', null)
         .not('league', 'is', null)
+        .order('nationality')
         .order('league')
         .order('club')
         .order('category')
         .order('name');
       
       if (!error && data) {
-        // Group by league -> team -> category -> players
-        const grouped: Record<string, Record<string, Record<string, {id: string, name: string, age: number}[]>>> = {};
+        // Group by country -> league -> team -> category -> players
+        const grouped: Record<string, Record<string, Record<string, Record<string, {id: string, name: string, age: number}[]>>>> = {};
         
         data.forEach(player => {
+          // Derive country from league or use a mapping
+          const country = getCountryFromLeague(player.league || '');
           const league = player.league || 'Unknown League';
           const club = player.club || 'Unknown Club';
           const category = player.category || 'Other';
           
-          if (!grouped[league]) grouped[league] = {};
-          if (!grouped[league][club]) grouped[league][club] = {};
-          if (!grouped[league][club][category]) grouped[league][club][category] = [];
+          if (!grouped[country]) grouped[country] = {};
+          if (!grouped[country][league]) grouped[country][league] = {};
+          if (!grouped[country][league][club]) grouped[country][league][club] = {};
+          if (!grouped[country][league][club][category]) grouped[country][league][club][category] = [];
           
-          grouped[league][club][category].push({
+          grouped[country][league][club][category].push({
             id: player.id,
             name: player.name,
             age: player.age
           });
         });
         
-        setLeagueData(grouped);
+        setCountryData(grouped);
       }
     };
     
-    loadLeagueData();
+    // Helper to derive country from league name
+    const getCountryFromLeague = (league: string): string => {
+      const leagueToCountry: Record<string, string> = {
+        'Premier League': 'England',
+        'EFL Championship': 'England',
+        'EFL League One': 'England',
+        'EFL League Two': 'England',
+        'National League': 'England',
+        'La Liga': 'Spain',
+        'Segunda División': 'Spain',
+        'Bundesliga': 'Germany',
+        '2. Bundesliga': 'Germany',
+        'Serie A': 'Italy',
+        'Serie B': 'Italy',
+        'Ligue 1': 'France',
+        'Ligue 2': 'France',
+        'Eredivisie': 'Netherlands',
+        'Primeira Liga': 'Portugal',
+        'Czech First League': 'Czech Republic',
+        'Czech National Football League': 'Czech Republic',
+        'Scottish Premiership': 'Scotland',
+        'Scottish Championship': 'Scotland',
+        'League of Ireland': 'Ireland',
+        'Eliteserien': 'Norway',
+        'Allsvenskan': 'Sweden',
+        'Superliga': 'Denmark',
+        'Super League': 'Switzerland',
+        'Austrian Bundesliga': 'Austria',
+        'Belgian Pro League': 'Belgium',
+        'Süper Lig': 'Turkey',
+        'Super League Greece': 'Greece',
+        'Ekstraklasa': 'Poland',
+        'Ukrainian Premier League': 'Ukraine',
+        'Russian Premier League': 'Russia',
+        'Romanian Liga I': 'Romania',
+        'Croatian First Football League': 'Croatia',
+        'Serbian SuperLiga': 'Serbia',
+      };
+      
+      for (const [leagueName, country] of Object.entries(leagueToCountry)) {
+        if (league.toLowerCase().includes(leagueName.toLowerCase())) {
+          return country;
+        }
+      }
+      
+      // Try to detect country from league name patterns
+      if (league.toLowerCase().includes('england') || league.toLowerCase().includes('english')) return 'England';
+      if (league.toLowerCase().includes('spain') || league.toLowerCase().includes('spanish')) return 'Spain';
+      if (league.toLowerCase().includes('german')) return 'Germany';
+      if (league.toLowerCase().includes('france') || league.toLowerCase().includes('french')) return 'France';
+      if (league.toLowerCase().includes('italy') || league.toLowerCase().includes('italian')) return 'Italy';
+      if (league.toLowerCase().includes('czech')) return 'Czech Republic';
+      if (league.toLowerCase().includes('scotland') || league.toLowerCase().includes('scottish')) return 'Scotland';
+      if (league.toLowerCase().includes('ireland') || league.toLowerCase().includes('irish')) return 'Ireland';
+      
+      return 'Other';
+    };
+    
+    loadCountryData();
   }, []);
 
   // Handle initialCountry prop changes - zoom to country
@@ -1352,124 +1416,167 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
             </div>
           </div>
 
-          {/* Coverage Regions - League Hierarchy */}
+          {/* Coverage Regions - Country Hierarchy */}
           <div className="bg-card rounded-lg p-4 border max-h-96 overflow-y-auto">
             <h4 className="font-bebas text-xl mb-3">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
             <div className="space-y-1">
-              {Object.keys(leagueData).length === 0 ? (
+              {Object.keys(countryData).length === 0 ? (
                 <p className="text-sm text-muted-foreground">Loading coverage data...</p>
               ) : (
-                Object.entries(leagueData)
+                Object.entries(countryData)
                   .sort(([a], [b]) => a.localeCompare(b))
-                  .map(([league, teams]) => {
-                    const leagueKey = `league-${league}`;
-                    const isLeagueExpanded = expandedLeagues.has(leagueKey);
-                    const totalPlayersInLeague = Object.values(teams).reduce(
-                      (sum, categories) => sum + Object.values(categories).reduce(
-                        (catSum, players) => catSum + players.length, 0
+                  .map(([country, leagues]) => {
+                    const countryKey = `country-${country}`;
+                    const isCountryExpanded = expandedCountries.has(countryKey);
+                    const totalPlayersInCountry = Object.values(leagues).reduce(
+                      (sum, teams) => sum + Object.values(teams).reduce(
+                        (teamSum, categories) => teamSum + Object.values(categories).reduce(
+                          (catSum, players) => catSum + players.length, 0
+                        ), 0
                       ), 0
                     );
                     
                     return (
-                      <div key={leagueKey} className="border-b border-border/30 last:border-b-0">
+                      <div key={countryKey} className="border-b border-border/30 last:border-b-0">
                         <button
                           onClick={() => {
-                            const newSet = new Set(expandedLeagues);
-                            if (isLeagueExpanded) {
-                              newSet.delete(leagueKey);
+                            const newSet = new Set(expandedCountries);
+                            if (isCountryExpanded) {
+                              newSet.delete(countryKey);
                             } else {
-                              newSet.add(leagueKey);
+                              newSet.add(countryKey);
                             }
-                            setExpandedLeagues(newSet);
+                            setExpandedCountries(newSet);
                           }}
                           className="w-full flex items-center gap-2 p-2 hover:bg-accent/50 rounded transition-colors text-left"
                         >
-                          {isLeagueExpanded ? (
+                          {isCountryExpanded ? (
                             <ChevronDown className="w-4 h-4 text-primary flex-shrink-0" />
                           ) : (
                             <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                           )}
-                          <span className="font-medium text-sm flex-1">{league}</span>
-                          <span className="text-xs text-muted-foreground">{totalPlayersInLeague} players</span>
+                          <span className="font-medium text-sm flex-1">{country}</span>
+                          <span className="text-xs text-muted-foreground">{totalPlayersInCountry} players</span>
                         </button>
                         
-                        {isLeagueExpanded && (
+                        {isCountryExpanded && (
                           <div className="ml-4 space-y-1 pb-2">
-                            {Object.entries(teams)
+                            {Object.entries(leagues)
                               .sort(([a], [b]) => a.localeCompare(b))
-                              .map(([team, categories]) => {
-                                const teamKey = `team-${league}-${team}`;
-                                const isTeamExpanded = expandedTeams.has(teamKey);
-                                const totalPlayersInTeam = Object.values(categories).reduce(
-                                  (sum, players) => sum + players.length, 0
+                              .map(([league, teams]) => {
+                                const leagueKey = `league-${country}-${league}`;
+                                const isLeagueExpanded = expandedLeagues.has(leagueKey);
+                                const totalPlayersInLeague = Object.values(teams).reduce(
+                                  (sum, categories) => sum + Object.values(categories).reduce(
+                                    (catSum, players) => catSum + players.length, 0
+                                  ), 0
                                 );
                                 
                                 return (
-                                  <div key={teamKey}>
+                                  <div key={leagueKey}>
                                     <button
                                       onClick={() => {
-                                        const newSet = new Set(expandedTeams);
-                                        if (isTeamExpanded) {
-                                          newSet.delete(teamKey);
+                                        const newSet = new Set(expandedLeagues);
+                                        if (isLeagueExpanded) {
+                                          newSet.delete(leagueKey);
                                         } else {
-                                          newSet.add(teamKey);
+                                          newSet.add(leagueKey);
                                         }
-                                        setExpandedTeams(newSet);
+                                        setExpandedLeagues(newSet);
                                       }}
                                       className="w-full flex items-center gap-2 p-1.5 hover:bg-accent/30 rounded transition-colors text-left"
                                     >
-                                      {isTeamExpanded ? (
+                                      {isLeagueExpanded ? (
                                         <ChevronDown className="w-3 h-3 text-primary flex-shrink-0" />
                                       ) : (
                                         <ChevronRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                                       )}
-                                      <span className="text-sm flex-1">{team}</span>
-                                      <span className="text-xs text-muted-foreground">{totalPlayersInTeam}</span>
+                                      <span className="text-sm flex-1">{league}</span>
+                                      <span className="text-xs text-muted-foreground">{totalPlayersInLeague}</span>
                                     </button>
                                     
-                                    {isTeamExpanded && (
+                                    {isLeagueExpanded && (
                                       <div className="ml-4 space-y-1">
-                                        {Object.entries(categories)
+                                        {Object.entries(teams)
                                           .sort(([a], [b]) => a.localeCompare(b))
-                                          .map(([category, players]) => {
-                                            const categoryKey = `cat-${league}-${team}-${category}`;
-                                            const isCategoryExpanded = expandedCategories.has(categoryKey);
+                                          .map(([team, categories]) => {
+                                            const teamKey = `team-${country}-${league}-${team}`;
+                                            const isTeamExpanded = expandedTeams.has(teamKey);
+                                            const totalPlayersInTeam = Object.values(categories).reduce(
+                                              (sum, players) => sum + players.length, 0
+                                            );
                                             
                                             return (
-                                              <div key={categoryKey}>
+                                              <div key={teamKey}>
                                                 <button
                                                   onClick={() => {
-                                                    const newSet = new Set(expandedCategories);
-                                                    if (isCategoryExpanded) {
-                                                      newSet.delete(categoryKey);
+                                                    const newSet = new Set(expandedTeams);
+                                                    if (isTeamExpanded) {
+                                                      newSet.delete(teamKey);
                                                     } else {
-                                                      newSet.add(categoryKey);
+                                                      newSet.add(teamKey);
                                                     }
-                                                    setExpandedCategories(newSet);
+                                                    setExpandedTeams(newSet);
                                                   }}
                                                   className="w-full flex items-center gap-2 p-1 hover:bg-accent/20 rounded transition-colors text-left"
                                                 >
-                                                  {isCategoryExpanded ? (
+                                                  {isTeamExpanded ? (
                                                     <ChevronDown className="w-3 h-3 text-primary flex-shrink-0" />
                                                   ) : (
                                                     <ChevronRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                                                   )}
-                                                  <span className="text-xs text-muted-foreground flex-1">{category}</span>
-                                                  <span className="text-xs text-muted-foreground">{players.length}</span>
+                                                  <span className="text-xs flex-1">{team}</span>
+                                                  <span className="text-xs text-muted-foreground">{totalPlayersInTeam}</span>
                                                 </button>
                                                 
-                                                {isCategoryExpanded && players.length > 0 && (
-                                                  <div className="ml-5 py-1 space-y-0.5">
-                                                    {players.map((player) => (
-                                                      <div
-                                                        key={player.id}
-                                                        className="flex items-center gap-2 text-xs text-muted-foreground py-0.5 px-1 hover:bg-accent/10 rounded"
-                                                      >
-                                                        <Users className="w-3 h-3 flex-shrink-0" />
-                                                        <span>{player.name}</span>
-                                                        <span className="text-xs opacity-60">({player.age})</span>
-                                                      </div>
-                                                    ))}
+                                                {isTeamExpanded && (
+                                                  <div className="ml-4 space-y-1">
+                                                    {Object.entries(categories)
+                                                      .sort(([a], [b]) => a.localeCompare(b))
+                                                      .map(([category, players]) => {
+                                                        const categoryKey = `cat-${country}-${league}-${team}-${category}`;
+                                                        const isCategoryExpanded = expandedCategories.has(categoryKey);
+                                                        
+                                                        return (
+                                                          <div key={categoryKey}>
+                                                            <button
+                                                              onClick={() => {
+                                                                const newSet = new Set(expandedCategories);
+                                                                if (isCategoryExpanded) {
+                                                                  newSet.delete(categoryKey);
+                                                                } else {
+                                                                  newSet.add(categoryKey);
+                                                                }
+                                                                setExpandedCategories(newSet);
+                                                              }}
+                                                              className="w-full flex items-center gap-2 p-1 hover:bg-accent/10 rounded transition-colors text-left"
+                                                            >
+                                                              {isCategoryExpanded ? (
+                                                                <ChevronDown className="w-2 h-2 text-primary flex-shrink-0" />
+                                                              ) : (
+                                                                <ChevronRight className="w-2 h-2 text-muted-foreground flex-shrink-0" />
+                                                              )}
+                                                              <span className="text-xs text-muted-foreground flex-1">{category}</span>
+                                                              <span className="text-xs text-muted-foreground">{players.length}</span>
+                                                            </button>
+                                                            
+                                                            {isCategoryExpanded && players.length > 0 && (
+                                                              <div className="ml-5 py-1 space-y-0.5">
+                                                                {players.map((player) => (
+                                                                  <div
+                                                                    key={player.id}
+                                                                    className="flex items-center gap-2 text-xs text-muted-foreground py-0.5 px-1 hover:bg-accent/10 rounded"
+                                                                  >
+                                                                    <Users className="w-3 h-3 flex-shrink-0" />
+                                                                    <span>{player.name}</span>
+                                                                    <span className="text-xs opacity-60">({player.age})</span>
+                                                                  </div>
+                                                                ))}
+                                                              </div>
+                                                            )}
+                                                          </div>
+                                                        );
+                                                      })}
                                                   </div>
                                                 )}
                                               </div>
