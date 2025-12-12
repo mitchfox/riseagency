@@ -219,7 +219,7 @@ function LandingContent() {
       <div className={`hidden md:block fixed z-[100] pointer-events-auto transition-opacity duration-300 ${languagePopupOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
         left: '74%',
         top: '78%',
-        transform: `translate(-50%, -50%) rotate(${coneAngle - 0.1}deg)`
+        transform: `translate(-50%, -50%) rotate(${coneAngle}deg)`
       }}>
         <Button 
           onClick={() => setShowRepresentation(true)} 
@@ -234,7 +234,7 @@ function LandingContent() {
       </div>
       
       {/* Top Center Logo - disappears on xray or when hovering REALISE POTENTIAL area */}
-      <div className={`absolute top-4 md:top-6 z-[4] transition-opacity duration-500 ${xrayState.isActive || topLogoHovered ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
+      <div className={`absolute top-4 md:top-6 z-[1] transition-opacity duration-500 ${xrayState.isActive || topLogoHovered ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
         left: '50%',
         transform: 'translateX(-50%)'
       }}>
