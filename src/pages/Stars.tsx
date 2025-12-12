@@ -175,22 +175,22 @@ const Stars = () => {
                 className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group btn-shine"
                 onClick={() => setDeclareInterestOpen(true)}
               >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                        <Users className="w-6 h-6 text-primary" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                      <div className="p-2 sm:p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors shrink-0">
+                        <Users className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                       </div>
-                       <div>
-                         <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">
+                       <div className="min-w-0">
+                         <h3 className="font-bebas uppercase tracking-wider text-lg sm:text-xl mb-1 break-words">
                            <HoverText text={t('stars.declare_interest', 'Declare Interest in Player(s)')} />
                          </h3>
-                         <p className="text-sm text-muted-foreground">
+                         <p className="text-xs sm:text-sm text-muted-foreground break-words">
                            {t('stars.declare_interest_desc', 'Select players and submit your interest')}
                          </p>
                        </div>
                     </div>
-                    <ArrowRight className="w-6 h-6 text-primary group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:translate-x-1 transition-transform shrink-0" />
                   </div>
                 </CardContent>
               </Card>
@@ -199,22 +199,22 @@ const Stars = () => {
                 className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group btn-shine"
                 onClick={() => setContactOpen(true)}
               >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                        <MessageCircle className="w-6 h-6 text-primary" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                      <div className="p-2 sm:p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors shrink-0">
+                        <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                       </div>
-                       <div>
-                         <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">
+                       <div className="min-w-0">
+                         <h3 className="font-bebas uppercase tracking-wider text-lg sm:text-xl mb-1 break-words">
                            <HoverText text={t('stars.contact_btn', 'Contact')} />
                          </h3>
-                         <p className="text-sm text-muted-foreground">
+                         <p className="text-xs sm:text-sm text-muted-foreground break-words">
                            {t('stars.contact_desc', 'Get in touch with us directly')}
                          </p>
                        </div>
                     </div>
-                    <ArrowRight className="w-6 h-6 text-primary group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:translate-x-1 transition-transform shrink-0" />
                   </div>
                 </CardContent>
               </Card>
@@ -223,22 +223,22 @@ const Stars = () => {
                 className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group btn-shine"
                 onClick={() => setPortfolioOpen(true)}
               >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                        <FileText className="w-6 h-6 text-primary" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                      <div className="p-2 sm:p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors shrink-0">
+                        <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                       </div>
-                       <div>
-                         <h3 className="font-bebas uppercase tracking-wider text-xl mb-1">
+                       <div className="min-w-0">
+                         <h3 className="font-bebas uppercase tracking-wider text-lg sm:text-xl mb-1 break-words">
                            <HoverText text={t('stars.request_portfolio', 'Request Full Portfolio')} />
                          </h3>
-                         <p className="text-sm text-muted-foreground">
+                         <p className="text-xs sm:text-sm text-muted-foreground break-words">
                            {t('stars.request_portfolio_desc', 'Access our complete player portfolio')}
                          </p>
                        </div>
                     </div>
-                    <ArrowRight className="w-6 h-6 text-primary group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:translate-x-1 transition-transform shrink-0" />
                   </div>
                 </CardContent>
               </Card>
