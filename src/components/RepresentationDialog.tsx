@@ -162,7 +162,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
               placeholder="Tell us about your experience and goals..."
-              className="min-h-[80px]"
+              className="min-h-[40px] sm:min-h-[80px]"
             />
           </div>
 
