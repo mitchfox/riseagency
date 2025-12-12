@@ -216,7 +216,7 @@ function LandingContent() {
       
       {/* REPRESENT ME - Fixed position on RIGHT side of cone */}
       <div className={`hidden md:block fixed z-[100] pointer-events-auto transition-opacity duration-300 ${languagePopupOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
-        left: '72.6%',
+        left: '74%',
         top: '78%',
         transform: `translate(-50%, -50%) rotate(${coneAngle - 0.3}deg)`
       }}>
