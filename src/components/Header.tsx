@@ -20,6 +20,7 @@ import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { ArrangeMeetingDialog } from "@/components/ArrangeMeetingDialog";
 import { IntroModal } from "@/components/IntroModal";
+import { WhatWeLookForDialog } from "@/components/WhatWeLookForDialog";
 import { HoverText } from "@/components/HoverText";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { LocalizedLink } from "@/components/LocalizedLink";
@@ -36,7 +37,7 @@ import { SubdomainLink } from "@/components/SubdomainLink";
 type SubHeaderItem = {
   type: 'link' | 'button';
   to?: string;
-  action?: 'declareInterest' | 'representation' | 'workWithUs' | 'arrangeMeeting';
+  action?: 'declareInterest' | 'representation' | 'workWithUs' | 'arrangeMeeting' | 'whatWeLookFor';
   labelKey: string;
   fallback: string;
   mobileFallback: string;
@@ -66,7 +67,7 @@ const subdomainSubHeaders: Record<string, SubHeaderConfig> = {
       { type: 'link', to: '/between-the-lines', labelKey: 'header.between_the_lines', fallback: 'Between The Lines', mobileFallback: 'BTL', icon: BookOpen },
     ],
     right: [
-      { type: 'link', to: '/scouts', labelKey: 'header.what_we_look_for', fallback: 'What We Look For', mobileFallback: 'Look For', icon: Search },
+      { type: 'button', action: 'whatWeLookFor', labelKey: 'header.what_we_look_for', fallback: 'What We Look For', mobileFallback: 'Look For', icon: Search },
       { type: 'button', action: 'representation', labelKey: 'header.represent_me', fallback: 'Represent Me', mobileFallback: 'Represent', icon: Handshake },
     ],
   },
@@ -156,6 +157,7 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
   const [workWithUsOpen, setWorkWithUsOpen] = useState(false);
   const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
   const [arrangeMeetingOpen, setArrangeMeetingOpen] = useState(false);
+  const [whatWeLookForOpen, setWhatWeLookForOpen] = useState(false);
   
   // Detect role from route if no subdomain role
   const routeRole = routeToRole[location.pathname];
@@ -178,8 +180,10 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
         setWorkWithUsOpen(true);
         break;
       case 'arrangeMeeting':
-        // For now, use contact page or a new dialog
         setArrangeMeetingOpen(true);
+        break;
+      case 'whatWeLookFor':
+        setWhatWeLookForOpen(true);
         break;
     }
   };
@@ -553,5 +557,6 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
       <DeclareInterestDialog open={declareInterestOpen} onOpenChange={setDeclareInterestOpen} />
       <ArrangeMeetingDialog open={arrangeMeetingOpen} onOpenChange={setArrangeMeetingOpen} />
       <IntroModal open={introModalOpen} onOpenChange={setIntroModalOpen} />
+      <WhatWeLookForDialog open={whatWeLookForOpen} onOpenChange={setWhatWeLookForOpen} />
     </>;
 };
