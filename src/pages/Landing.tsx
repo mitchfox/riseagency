@@ -618,9 +618,10 @@ function RoleSlider({
           {/* Stop markers and labels - positioned along the slider curve */}
           {navLinks.map((link, index) => {
             const xPercent = getPositionFromIndex(index);
-            // Position bullets ON the slider curve: y = 87 - 72*(1-x^2) for Q50,15
-            const normalizedX = (xPercent - 50) / 50;
-            const yPos = 87 - 72 * (1 - normalizedX * normalizedX);
+            // Use actual quadratic Bezier formula for M0,87 Q50,15 100,87
+            const bezierT = xPercent / 100;
+            const controlY = 15;
+            const yPos = Math.pow(1-bezierT, 2) * 87 + 2 * (1-bezierT) * bezierT * controlY + Math.pow(bezierT, 2) * 87;
             const yPercent = (yPos / 100) * 100;
             
             const isHovered = hoveredIndex === index || nearestSnapIndex === index;
@@ -667,9 +668,10 @@ function RoleSlider({
           
           {/* Draggable Thumb Handle - positioned along LOWER curve */}
           {(() => {
-            const normalizedX = (thumbPosition - 50) / 50;
-            // Slider curve: y = 87 - 72*(1-x^2) for Q50,15
-            const yPos = 87 - 72 * (1 - normalizedX * normalizedX);
+            // Use actual quadratic Bezier formula for M0,87 Q50,15 100,87
+            const bezierT = thumbPosition / 100;
+            const controlY = 15;
+            const yPos = Math.pow(1-bezierT, 2) * 87 + 2 * (1-bezierT) * bezierT * controlY + Math.pow(bezierT, 2) * 87;
             const yPercent = (yPos / 100) * 100;
             
             return (
