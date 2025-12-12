@@ -66,7 +66,7 @@ const subdomainSubHeaders: Record<string, SubHeaderConfig> = {
       { type: 'link', to: '/between-the-lines', labelKey: 'header.between_the_lines', fallback: 'Between The Lines', mobileFallback: 'BTL', icon: BookOpen },
     ],
     right: [
-      { type: 'link', to: '/playersmore', labelKey: 'header.what_we_look_for', fallback: 'What We Look For', mobileFallback: 'Look For', icon: Search },
+      { type: 'link', to: '/scouts', labelKey: 'header.what_we_look_for', fallback: 'What We Look For', mobileFallback: 'Look For', icon: Search },
       { type: 'button', action: 'representation', labelKey: 'header.represent_me', fallback: 'Represent Me', mobileFallback: 'Represent', icon: Handshake },
     ],
   },
