@@ -7,6 +7,7 @@ import { IntroModal } from "@/components/IntroModal";
 import { SEO } from "@/components/SEO";
 import { VideoPortfolio } from "@/components/VideoPortfolio";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
+import { Search, BarChart3, GraduationCap, Trophy } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { HoverText } from "@/components/HoverText";
@@ -94,6 +95,26 @@ const Index = () => {
               <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic">
                 {t("home.hero_subtitle", "Elite Football Representation & Performance Optimisation")}
               </p>
+              
+              {/* Capability Tiles */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 max-w-4xl mx-auto">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
+                  <Search className="w-5 h-5 text-primary shrink-0" />
+                  <span className="text-sm text-foreground/80">Extensive Scouting Network</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
+                  <BarChart3 className="w-5 h-5 text-primary shrink-0" />
+                  <span className="text-sm text-foreground/80">Deep Analysis Models</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
+                  <GraduationCap className="w-5 h-5 text-primary shrink-0" />
+                  <span className="text-sm text-foreground/80">Expert Coaching</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
+                  <Trophy className="w-5 h-5 text-primary shrink-0" />
+                  <span className="text-sm text-foreground/80">Premier League Background</span>
+                </div>
+              </div>
             </div>
 
           </div>
