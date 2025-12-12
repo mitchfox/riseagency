@@ -266,7 +266,7 @@ function LandingContent() {
       </div>
       
       {/* Language Selector - Mobile only */}
-      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+128px)] flex flex-col items-center" style={{
+      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+124px)] flex flex-col items-center" style={{
         left: '50%',
         transform: 'translateX(-50%)'
       }}>
@@ -706,7 +706,7 @@ function RoleSlider({
         </div>
 
         {/* Instruction text - shows hovered role name or default - fixed height to prevent layout shift */}
-        <div className="text-center h-6 flex items-center justify-center" style={{ marginTop: isTablet ? '-18px' : '-8px' }}>
+        <div className="text-center h-6 flex items-center justify-center" style={{ marginTop: isTablet ? '-22px' : '-8px' }}>
           {hoveredIndex !== null ? (
             <span className="text-lg font-bebas font-bold uppercase tracking-[0.15em] text-primary transition-all duration-200">
               {t(navLinks[hoveredIndex].labelKey, navLinks[hoveredIndex].fallback)}
