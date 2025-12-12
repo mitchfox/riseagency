@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,42 +13,53 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSubdomainRouter } from "@/hooks/useSubdomainRouter";
 import { useLocalizedRedirect } from "@/hooks/useLocalizedRedirect";
 import { getAllPathVariants } from "@/lib/localizedRoutes";
-import Landing from "./pages/Landing";
+
+// Critical pages - loaded immediately
 import Home from "./pages/Home";
-import Index from "./pages/Index";
 import Stars from "./pages/Stars";
-import Players from "./pages/Performance"; // Old Performance content now becomes Players
 import PlayerDetail from "./pages/PlayerDetail";
 import News from "./pages/News";
 import Contact from "./pages/Contact";
-import Staff from "./pages/Staff";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import About from "./pages/About";
-import Clubs from "./pages/Clubs";
-import Coaches from "./pages/Coaches";
-import Scouts from "./pages/Scouts";
-import Agents from "./pages/Agents";
-import Business from "./pages/Business";
-import Media from "./pages/Media";
-import Performance from "./pages/NewPerformance";
-import BetweenTheLines from "./pages/BetweenTheLines";
-import PerformanceReport from "./pages/PerformanceReport";
 import NotFound from "./pages/NotFound";
-import ImportProgramCSV from "./pages/ImportProgramCSV";
-import ReplaceProgram from "./pages/ReplaceProgram";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import AnalysisViewer from "./pages/AnalysisViewer";
-import Intro from "./pages/Intro";
-import PlayersList from "./pages/PlayersList";
-import PlayersDraft from "./pages/PlayersDraft";
-import ClubNetwork from "./pages/ClubNetwork";
-import PDFViewer from "./pages/PDFViewer";
-import ScoutPortal from "./pages/ScoutPortal";
-import Potential from "./pages/Potential";
-import RealisePotential from "./pages/RealisePotential";
-import FluidCursor from "./components/FluidCursor";
+
+// Lazy-loaded pages for better initial load performance
+const Landing = lazy(() => import("./pages/Landing"));
+const Index = lazy(() => import("./pages/Index"));
+const Players = lazy(() => import("./pages/Performance"));
+const Staff = lazy(() => import("./pages/Staff"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const About = lazy(() => import("./pages/About"));
+const Clubs = lazy(() => import("./pages/Clubs"));
+const Coaches = lazy(() => import("./pages/Coaches"));
+const Scouts = lazy(() => import("./pages/Scouts"));
+const Agents = lazy(() => import("./pages/Agents"));
+const Business = lazy(() => import("./pages/Business"));
+const Media = lazy(() => import("./pages/Media"));
+const Performance = lazy(() => import("./pages/NewPerformance"));
+const BetweenTheLines = lazy(() => import("./pages/BetweenTheLines"));
+const PerformanceReport = lazy(() => import("./pages/PerformanceReport"));
+const ImportProgramCSV = lazy(() => import("./pages/ImportProgramCSV"));
+const ReplaceProgram = lazy(() => import("./pages/ReplaceProgram"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const AnalysisViewer = lazy(() => import("./pages/AnalysisViewer"));
+const Intro = lazy(() => import("./pages/Intro"));
+const PlayersList = lazy(() => import("./pages/PlayersList"));
+const PlayersDraft = lazy(() => import("./pages/PlayersDraft"));
+const ClubNetwork = lazy(() => import("./pages/ClubNetwork"));
+const PDFViewer = lazy(() => import("./pages/PDFViewer"));
+const ScoutPortal = lazy(() => import("./pages/ScoutPortal"));
+const Potential = lazy(() => import("./pages/Potential"));
+const RealisePotential = lazy(() => import("./pages/RealisePotential"));
+const FluidCursor = lazy(() => import("./components/FluidCursor"));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="animate-pulse text-primary font-bebas text-2xl tracking-wider">Loading...</div>
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -87,12 +99,15 @@ const App = () => {
           <BrowserRouter>
             <SubdomainRouter />
             <TransitionProvider>
-            <FluidCursor />
+            <Suspense fallback={null}>
+              <FluidCursor />
+            </Suspense>
             <PageTracker />
             <ScrollToTop />
             <PageTransition>
               {(displayLocation) => (
                 <main>
+                  <Suspense fallback={<PageLoader />}>
                   <Routes location={displayLocation}>
                     <Route path="/" element={<Home />} />
                     {createLocalizedRoutes('/players', <Index />)}
@@ -136,6 +151,7 @@ const App = () => {
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
+                  </Suspense>
                 </main>
               )}
             </PageTransition>

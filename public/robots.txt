@@ -1,33 +1,61 @@
+# RISE Football Agency - robots.txt
+
 User-agent: Googlebot
+Allow: /
 Disallow: /player-list
+Disallow: /players-list
+Disallow: /players-draft
 Disallow: /staff
 Disallow: /staff/*
-Allow: /stars/
-Allow: /news/
+Disallow: /portal
+Disallow: /portal/*
+Disallow: /login
+Disallow: /import-program
+Disallow: /replace-program
+Disallow: /scout-portal
 
 User-agent: Bingbot
+Allow: /
 Disallow: /player-list
+Disallow: /players-list
+Disallow: /players-draft
 Disallow: /staff
 Disallow: /staff/*
-Allow: /stars/
-Allow: /news/
+Disallow: /portal
+Disallow: /login
 
 User-agent: Twitterbot
-Disallow: /player-list
+Allow: /
 Allow: /stars/
 Allow: /news/
-
-User-agent: facebookexternalhit
-Disallow: /player-list
-Allow: /stars/
-Allow: /news/
-
-User-agent: *
 Disallow: /player-list
 Disallow: /staff
-Disallow: /staff/*
+
+User-agent: facebookexternalhit
+Allow: /
 Allow: /stars/
 Allow: /news/
+Disallow: /player-list
+Disallow: /staff
 
-# Sitemap
+User-agent: *
+Allow: /
+Disallow: /player-list
+Disallow: /players-list
+Disallow: /players-draft
+Disallow: /staff
+Disallow: /staff/*
+Disallow: /portal
+Disallow: /portal/*
+Disallow: /login
+Disallow: /import-program
+Disallow: /replace-program
+Disallow: /scout-portal
+Disallow: /pdf-viewer
+Disallow: /analysis/
+
+# Sitemaps
 Sitemap: https://risefootballagency.com/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
