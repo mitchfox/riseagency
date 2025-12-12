@@ -249,7 +249,7 @@ function LandingContent() {
       </div>
       
       {/* Hidden text revealed by X-ray - REALISE POTENTIAL - hidden until hover */}
-      <div className="absolute left-1/2 transform -translate-x-1/2 z-[4] opacity-0 hover:opacity-100 transition-opacity duration-500" style={{
+      <div className="absolute left-1/2 transform -translate-x-1/2 z-[1] opacity-0 hover:opacity-100 transition-opacity duration-500" style={{
       top: 'calc(4rem - 50px)'
     }} onMouseEnter={() => setTopLogoHovered(true)} onMouseLeave={() => setTopLogoHovered(false)}>
         <span className="font-bebas text-2xl md:text-6xl lg:text-7xl tracking-[0.2em] md:tracking-[0.3em] text-white/90 uppercase whitespace-nowrap">
