@@ -198,7 +198,7 @@ function LandingContent() {
       {/* Cone apex is at ~49.3% from left, 65% from top. Buttons positioned along cone edges */}
       
       {/* DECLARE INTEREST - Fixed position on LEFT side of cone */}
-      <div className={`hidden md:block fixed z-[100] pointer-events-auto transition-opacity duration-300 ${languagePopupOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
+      <div className={`hidden md:block fixed z-[1] pointer-events-auto transition-opacity duration-300 ${languagePopupOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
         left: '26%',
         top: '78%',
         transform: `translate(-50%, -50%) rotate(-${coneAngle - 0.3}deg)`
@@ -216,7 +216,7 @@ function LandingContent() {
       </div>
       
       {/* REPRESENT ME - Fixed position on RIGHT side of cone */}
-      <div className={`hidden md:block fixed z-[100] pointer-events-auto transition-opacity duration-300 ${languagePopupOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
+      <div className={`hidden md:block fixed z-[1] pointer-events-auto transition-opacity duration-300 ${languagePopupOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
         left: '74%',
         top: '78%',
         transform: `translate(-50%, -50%) rotate(${coneAngle}deg)`
@@ -570,7 +570,7 @@ function RoleSlider({
   }, []);
 
   return <div className="flex flex-col items-center hover-text-no-shift" style={{
-    paddingTop: '35px',
+    paddingTop: isTablet ? '25px' : '35px',
     transform: 'translateX(-2px)'
   }}>
       {/* Unified Slider Container - all elements in one parent */}
@@ -706,7 +706,7 @@ function RoleSlider({
         </div>
 
         {/* Instruction text - shows hovered role name or default - fixed height to prevent layout shift */}
-        <div className="text-center h-6 flex items-center justify-center" style={{ marginTop: '-8px' }}>
+        <div className="text-center h-6 flex items-center justify-center" style={{ marginTop: isTablet ? '-14px' : '-8px' }}>
           {hoveredIndex !== null ? (
             <span className="text-lg font-bebas font-bold uppercase tracking-[0.15em] text-primary transition-all duration-200">
               {t(navLinks[hoveredIndex].labelKey, navLinks[hoveredIndex].fallback)}
