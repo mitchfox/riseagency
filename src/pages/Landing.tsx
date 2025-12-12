@@ -592,7 +592,7 @@ function RoleSlider({
           >
             {/* Lower curve - for slider thumb - moved up 8px by adjusting y values */}
             <path 
-              d="M0,87 Q50,35 100,87" 
+              d="M0,87 Q50,15 100,87" 
               fill="none" 
               stroke="rgba(255,255,255,0.2)" 
               strokeWidth="1"
@@ -605,7 +605,7 @@ function RoleSlider({
               </clipPath>
             </defs>
             <path 
-              d="M0,87 Q50,35 100,87"
+              d="M0,87 Q50,15 100,87"
               fill="none" 
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="1"
