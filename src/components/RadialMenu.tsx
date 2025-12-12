@@ -63,19 +63,22 @@ export const RadialMenu = () => {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const languages = [
-    { code: "en" as const, name: "ENG", flagCode: "gb" },
-    { code: "es" as const, name: "ESP", flagCode: "es" },
-    { code: "pt" as const, name: "POR", flagCode: "pt" },
-    { code: "fr" as const, name: "FRA", flagCode: "fr" },
-    { code: "de" as const, name: "DEU", flagCode: "de" },
-    { code: "it" as const, name: "ITA", flagCode: "it" },
-    { code: "pl" as const, name: "POL", flagCode: "pl" },
-    { code: "cs" as const, name: "ČES", flagCode: "cz" },
-    { code: "ru" as const, name: "РУС", flagCode: "ru" },
-    { code: "tr" as const, name: "TÜR", flagCode: "tr" },
+    { code: "en" as LanguageCode, name: "ENG", flagCode: "gb" },
+    { code: "es" as LanguageCode, name: "ESP", flagCode: "es" },
+    { code: "pt" as LanguageCode, name: "POR", flagCode: "pt" },
+    { code: "fr" as LanguageCode, name: "FRA", flagCode: "fr" },
+    { code: "de" as LanguageCode, name: "DEU", flagCode: "de" },
+    { code: "it" as LanguageCode, name: "ITA", flagCode: "it" },
+    { code: "pl" as LanguageCode, name: "POL", flagCode: "pl" },
+    { code: "cs" as LanguageCode, name: "ČES", flagCode: "cz" },
+    { code: "ru" as LanguageCode, name: "РУС", flagCode: "ru" },
+    { code: "tr" as LanguageCode, name: "TÜR", flagCode: "tr" },
+    { code: "hr" as LanguageCode, name: "HRV", flagCode: "hr" },
+    { code: "no" as LanguageCode, name: "NOR", flagCode: "no" },
   ];
 
-  const selectedLanguage = languages.find(l => l.code === language) || languages[0];
+  // Find the current language - must match context language exactly
+  const selectedLanguage = languages.find(l => l.code === language) ?? languages[0];
 
   const pathRole = useMemo(() => {
     if (location.pathname.startsWith('/players')) return 'players';
