@@ -32,14 +32,24 @@ Deno.serve(async (req) => {
 
     console.log(`Generating sitemap for ${players?.length || 0} players`)
 
-    // Static pages with their priorities
+    // Static pages with their priorities and changefreq
     const staticPages = [
       { loc: '/', priority: '1.0', changefreq: 'weekly' },
       { loc: '/stars', priority: '0.9', changefreq: 'weekly' },
       { loc: '/news', priority: '0.8', changefreq: 'daily' },
       { loc: '/about', priority: '0.7', changefreq: 'monthly' },
       { loc: '/contact', priority: '0.7', changefreq: 'monthly' },
-      { loc: '/between-the-lines', priority: '0.7', changefreq: 'weekly' },
+      { loc: '/between-the-lines', priority: '0.8', changefreq: 'weekly' },
+      { loc: '/clubs', priority: '0.8', changefreq: 'monthly' },
+      { loc: '/coaches', priority: '0.8', changefreq: 'monthly' },
+      { loc: '/scouts', priority: '0.8', changefreq: 'monthly' },
+      { loc: '/agents', priority: '0.8', changefreq: 'monthly' },
+      { loc: '/business', priority: '0.7', changefreq: 'monthly' },
+      { loc: '/media', priority: '0.7', changefreq: 'monthly' },
+      { loc: '/players', priority: '0.8', changefreq: 'monthly' },
+      { loc: '/potential', priority: '0.7', changefreq: 'monthly' },
+      { loc: '/privacy-policy', priority: '0.3', changefreq: 'yearly' },
+      { loc: '/terms-of-service', priority: '0.3', changefreq: 'yearly' },
     ]
 
     // Generate player URLs
