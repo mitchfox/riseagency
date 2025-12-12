@@ -273,8 +273,6 @@ function LandingContent() {
         <div className="scale-[1.2]">
           <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
         </div>
-        {/* Divider line below language selector */}
-        <div className="h-px bg-primary/40 mt-0" style={{ width: '56px' }} />
       </div>
       
       {/* Portal & Staff links - subtle top right */}
@@ -706,7 +704,7 @@ function RoleSlider({
         </div>
 
         {/* Instruction text - shows hovered role name or default - fixed height to prevent layout shift */}
-        <div className="text-center h-6 flex items-center justify-center" style={{ marginTop: isTablet ? '-22px' : '-8px' }}>
+        <div className="text-center h-6 flex items-center justify-center" style={{ marginTop: isTablet ? '-28px' : '-8px' }}>
           {hoveredIndex !== null ? (
             <span className="text-lg font-bebas font-bold uppercase tracking-[0.15em] text-primary transition-all duration-200">
               {t(navLinks[hoveredIndex].labelKey, navLinks[hoveredIndex].fallback)}
