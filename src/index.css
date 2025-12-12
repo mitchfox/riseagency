@@ -574,6 +574,19 @@ a:hover .hover-text-letter-clone,
   transform: translateY(0) !important;
 }
 
+/* Disable hover shift for role slider items */
+.hover-text-no-shift .hover-text-letter,
+.hover-text-no-shift:hover .hover-text-letter,
+.hover-text-no-shift button:hover .hover-text-letter {
+  transform: translateY(0) !important;
+}
+
+.hover-text-no-shift .hover-text-letter-clone,
+.hover-text-no-shift:hover .hover-text-letter-clone,
+.hover-text-no-shift button:hover .hover-text-letter-clone {
+  transform: translateY(100%) !important;
+}
+
 /* Flashcard 3D flip animation */
 .perspective-1000 {
   perspective: 1000px;

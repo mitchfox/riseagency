@@ -365,7 +365,7 @@ function LandingContent() {
             </div>
 
             {/* Mobile Layout - pushed down with proper divider lines */}
-            <div className="md:hidden flex flex-col items-center gap-0 mt-0" style={{
+            <div className="md:hidden flex flex-col items-center gap-0 mt-0 hover-text-no-shift" style={{
             transform: 'translateY(-25px) translateX(-4px)'
           }}>
               
@@ -571,7 +571,7 @@ function RoleSlider({
     return () => window.removeEventListener('resize', checkTablet);
   }, []);
 
-  return <div className="flex flex-col items-center" style={{
+  return <div className="flex flex-col items-center hover-text-no-shift" style={{
     paddingTop: '35px',
     transform: 'translateX(-2px)'
   }}>
