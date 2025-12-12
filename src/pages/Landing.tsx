@@ -219,7 +219,7 @@ function LandingContent() {
       <div className={`hidden md:block fixed z-[100] pointer-events-auto transition-opacity duration-300 ${languagePopupOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
         left: '74%',
         top: '78%',
-        transform: `translate(-50%, -50%) rotate(${coneAngle - 0.3}deg)`
+        transform: `translate(-50%, -50%) rotate(${coneAngle - 0.1}deg)`
       }}>
         <Button 
           onClick={() => setShowRepresentation(true)} 
