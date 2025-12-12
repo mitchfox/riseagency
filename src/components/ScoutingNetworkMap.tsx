@@ -915,7 +915,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
 
   return (
     <div className="w-full h-full">
-      <div className={hideStats ? "h-full" : "grid grid-cols-1 lg:grid-cols-4 gap-4"}>
+      <div className={hideStats ? "h-full" : "grid grid-cols-1 lg:grid-cols-4 gap-4"} style={!hideStats ? { maxHeight: '650px' } : undefined}>
         {/* Map Section */}
         <div className={`${hideStats ? "h-full" : "lg:col-span-3"} bg-card rounded-lg p-3 border relative`}>
           {/* Country Flag Overlay when zoomed */}
@@ -1318,7 +1318,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
 
         {/* Stats & Details Section - only show when hideStats is false */}
         {!hideStats && (
-        <div className="flex flex-col h-full min-h-0">
+        <div className="flex flex-col h-full min-h-0 overflow-hidden">
           <div className="bg-card rounded-lg p-3 border flex-shrink-0">
             <h4 className="font-bebas text-lg mb-2">{t("map.network_coverage", "NETWORK COVERAGE")}</h4>
             <div className="space-y-2 text-sm">
@@ -1338,7 +1338,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
           </div>
 
           {/* Coverage Regions - Country -> Clubs from footballClubs */}
-          <div className="bg-card rounded-lg p-3 border mt-3 flex-1 min-h-0 overflow-hidden flex flex-col">
+          <div id="coverage-regions-container" className="bg-card rounded-lg p-3 border mt-3 flex-1 min-h-0 overflow-hidden flex flex-col">
             <h4 className="font-bebas text-lg mb-2 flex-shrink-0">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
             <div className="space-y-1 overflow-y-auto flex-1 min-h-0">
               {(() => {
@@ -1360,11 +1360,18 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
                       <div key={countryKey} className="border-b border-border/30 last:border-b-0">
                         <button
                           onClick={() => {
+                            // Toggle expand state
                             const newSet = new Set(expandedCountries);
                             if (isCountryExpanded) {
                               newSet.delete(countryKey);
+                              // Reset zoom when collapsing
+                              setSelectedCountry(null);
+                              setZoomLevel(0);
                             } else {
                               newSet.add(countryKey);
+                              // Zoom to country on map
+                              setSelectedCountry(country);
+                              setZoomLevel(1);
                             }
                             setExpandedCountries(newSet);
                           }}
