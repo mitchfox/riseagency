@@ -586,7 +586,7 @@ function RoleSlider({
         <div ref={sliderRef} className="relative cursor-pointer overflow-visible" style={{ height: '140px', marginTop: '0px' }} onClick={handleTrackClick}>
           {/* SVG curved tracks */}
           <svg 
-            className="absolute w-full h-full" 
+            className="absolute w-full h-full z-0" 
             viewBox="0 0 100 100" 
             preserveAspectRatio="none"
           >
@@ -618,9 +618,9 @@ function RoleSlider({
           {/* Stop markers and labels - positioned along the slider curve */}
           {navLinks.map((link, index) => {
             const xPercent = getPositionFromIndex(index);
-            // Position bullets ON the slider curve: y = 87 - 52*(1-x^2)
+            // Position bullets ON the slider curve: y = 87 - 72*(1-x^2) for Q50,15
             const normalizedX = (xPercent - 50) / 50;
-            const yPos = 87 - 52 * (1 - normalizedX * normalizedX);
+            const yPos = 87 - 72 * (1 - normalizedX * normalizedX);
             const yPercent = (yPos / 100) * 100;
             
             const isHovered = hoveredIndex === index || nearestSnapIndex === index;
@@ -633,7 +633,7 @@ function RoleSlider({
                   onClick={(e) => { e.stopPropagation(); handleRoleClick(index); }}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
-                  className={`absolute text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 whitespace-nowrap ${
+                  className={`absolute z-10 text-[15px] font-bebas uppercase tracking-[0.12em] transition-all duration-300 whitespace-nowrap ${
                     isSelected ? 'text-primary font-bold' : 
                     isHovered ? 'text-primary font-bold' : 
                     'text-white/40'
@@ -648,13 +648,13 @@ function RoleSlider({
                 </button>
                 {/* Bullet marker on curve */}
                 <div 
-                  className={`absolute w-2 h-2 rounded-full transition-all duration-200 ${
+                  className={`absolute z-10 w-2 h-2 rounded-full transition-all duration-200 ${
                     selectedIndex !== null && index === selectedIndex 
                       ? 'bg-primary scale-125' 
                       : selectedIndex !== null && index < selectedIndex 
                         ? 'bg-primary/60' 
                         : 'bg-white/30'
-                  }`} 
+                  }`}
                   style={{
                     left: `${xPercent}%`,
                     top: `${yPercent}%`,
@@ -668,13 +668,13 @@ function RoleSlider({
           {/* Draggable Thumb Handle - positioned along LOWER curve */}
           {(() => {
             const normalizedX = (thumbPosition - 50) / 50;
-            // Slider curve: y = 87 - 52*(1-x^2)
-            const yPos = 87 - 52 * (1 - normalizedX * normalizedX);
+            // Slider curve: y = 87 - 72*(1-x^2) for Q50,15
+            const yPos = 87 - 72 * (1 - normalizedX * normalizedX);
             const yPercent = (yPos / 100) * 100;
             
             return (
               <div 
-                className={`absolute cursor-grab active:cursor-grabbing ${isAnimatingBack ? 'transition-all duration-300 ease-out' : isDragging ? '' : 'transition-all duration-150'}`} 
+                className={`absolute z-20 cursor-grab active:cursor-grabbing ${isAnimatingBack ? 'transition-all duration-300 ease-out' : isDragging ? '' : 'transition-all duration-150'}`} 
                 style={{
                   left: `${thumbPosition}%`,
                   top: `${yPercent}%`,
