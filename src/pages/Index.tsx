@@ -200,6 +200,208 @@ const Index = () => {
           </div>
         </section>
 
+        {/* Player Development Section */}
+        <section className="py-12 md:py-16 px-4 bg-background/85 backdrop-blur-sm">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-10 space-y-3">
+              <div className="inline-block">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                  {t("home.proven_track_record", "Proven Track Record")}
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                {t("home.player", "PLAYER")} <span className="text-primary">{t("home.development", "DEVELOPMENT")}</span>
+              </h2>
+              <p className="text-muted-foreground max-w-3xl mx-auto">
+                {t("home.development_intro", "Our team has a proven history of identifying and developing talent that reaches the highest levels of the game.")}
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+              <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg">
+                <div className="text-5xl font-bebas text-primary mb-2">15+</div>
+                <p className="text-sm text-muted-foreground uppercase tracking-wider">{t("home.premier_league_players", "Premier League Players Developed")}</p>
+              </div>
+              <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg">
+                <div className="text-5xl font-bebas text-primary mb-2">5</div>
+                <p className="text-sm text-muted-foreground uppercase tracking-wider">{t("home.big_five_leagues", "Big 5 European Leagues")}</p>
+              </div>
+              <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg">
+                <div className="text-5xl font-bebas text-primary mb-2">20+</div>
+                <p className="text-sm text-muted-foreground uppercase tracking-wider">{t("home.international_stars", "International Players")}</p>
+              </div>
+              <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg">
+                <div className="text-5xl font-bebas text-primary mb-2">100%</div>
+                <p className="text-sm text-muted-foreground uppercase tracking-wider">{t("home.player_focused", "Player-Focused Approach")}</p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="p-6 border border-border/50 bg-card/30 rounded-lg">
+                <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-4">
+                  {t("home.what_we_look_for", "What We Look For")}
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  {t("home.position_specific", "Each position demands specific qualities. We evaluate players across all positions using detailed positional criteria—from goalkeepers to strikers—ensuring we identify the right attributes for success at the highest level.")}
+                </p>
+                <Link to="/realise-potential" className="text-primary font-bebas uppercase tracking-wider hover:underline">
+                  {t("home.view_positional_guides", "View Our Positional Guides →")}
+                </Link>
+              </div>
+              <div className="p-6 border border-border/50 bg-card/30 rounded-lg">
+                <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-4">
+                  {t("home.development_pathway", "Development Pathway")}
+                </h3>
+                <p className="text-muted-foreground">
+                  {t("home.development_pathway_desc", "From academy prospects to established professionals, we create personalised development plans that address technical, tactical, physical, and psychological dimensions of the game.")}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Portal & Analysis Access Section */}
+        <section className="py-12 md:py-16 px-4 bg-background/90 backdrop-blur-sm">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-10 space-y-3">
+              <div className="inline-block">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                  {t("home.exclusive_access", "Exclusive Access")}
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                {t("home.player_portal", "PLAYER")} <span className="text-primary">{t("home.portal", "PORTAL")}</span>
+              </h2>
+              <p className="text-muted-foreground max-w-3xl mx-auto">
+                {t("home.portal_intro", "Every RISE player receives access to our exclusive portal—a complete performance management system with analysis, programmes, and development tracking.")}
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="p-6 border border-border/50 bg-card/30 rounded-lg space-y-4">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-2xl font-bebas text-primary">01</span>
+                </div>
+                <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
+                  {t("home.pre_match_analysis", "Pre-Match Analysis")}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {t("home.pre_match_desc", "Detailed breakdown of upcoming opponents, individual matchups, and tactical preparation specific to your position and role.")}
+                </p>
+              </div>
+
+              <div className="p-6 border border-border/50 bg-card/30 rounded-lg space-y-4">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-2xl font-bebas text-primary">02</span>
+                </div>
+                <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
+                  {t("home.performance_reports", "Performance Reports")}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {t("home.performance_reports_desc", "Post-match analysis with detailed R90 scoring, action-by-action breakdowns, and areas for improvement based on our proprietary rating system.")}
+                </p>
+              </div>
+
+              <div className="p-6 border border-border/50 bg-card/30 rounded-lg space-y-4">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-2xl font-bebas text-primary">03</span>
+                </div>
+                <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
+                  {t("home.training_programmes", "Training Programmes")}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {t("home.training_programmes_desc", "Personalised physical and technical development programmes, updated regularly and accessible anytime through your portal.")}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 5 Dimensionality Section */}
+        <section className="py-12 md:py-16 px-4 bg-background/85 backdrop-blur-sm">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-10 space-y-3">
+              <div className="inline-block">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                  {t("home.our_philosophy", "Our Philosophy")}
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                <span className="text-primary">5</span> {t("home.dimensional_play", "DIMENSIONAL PLAY")}
+              </h2>
+              <p className="text-muted-foreground max-w-3xl mx-auto">
+                {t("home.five_dimensions_intro", "We believe in developing the complete player. Our approach evaluates and develops across five key dimensions that define elite performance.")}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="text-center p-4 border border-primary/30 bg-primary/5 rounded-lg">
+                <div className="text-3xl font-bebas text-primary mb-2">{t("home.technical", "TECHNICAL")}</div>
+                <p className="text-xs text-muted-foreground">{t("home.technical_desc", "Ball mastery & skill execution")}</p>
+              </div>
+              <div className="text-center p-4 border border-primary/30 bg-primary/5 rounded-lg">
+                <div className="text-3xl font-bebas text-primary mb-2">{t("home.tactical", "TACTICAL")}</div>
+                <p className="text-xs text-muted-foreground">{t("home.tactical_desc", "Game intelligence & positioning")}</p>
+              </div>
+              <div className="text-center p-4 border border-primary/30 bg-primary/5 rounded-lg">
+                <div className="text-3xl font-bebas text-primary mb-2">{t("home.physical", "PHYSICAL")}</div>
+                <p className="text-xs text-muted-foreground">{t("home.physical_desc", "Athletic capacity & conditioning")}</p>
+              </div>
+              <div className="text-center p-4 border border-primary/30 bg-primary/5 rounded-lg">
+                <div className="text-3xl font-bebas text-primary mb-2">{t("home.psychological", "PSYCHOLOGICAL")}</div>
+                <p className="text-xs text-muted-foreground">{t("home.psychological_desc", "Mental strength & focus")}</p>
+              </div>
+              <div className="text-center p-4 border border-primary/30 bg-primary/5 rounded-lg col-span-2 md:col-span-1">
+                <div className="text-3xl font-bebas text-primary mb-2">{t("home.social", "SOCIAL")}</div>
+                <p className="text-xs text-muted-foreground">{t("home.social_desc", "Team dynamics & communication")}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Skills That Level Up Section */}
+        <section className="py-12 md:py-16 px-4 bg-background/90 backdrop-blur-sm">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-10 space-y-3">
+              <div className="inline-block">
+                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                  {t("home.future_proofing", "Future-Proofing Careers")}
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                {t("home.skills_that", "SKILLS THAT")} <span className="text-primary">{t("home.level_up", "LEVEL UP")}</span>
+              </h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div className="space-y-6">
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  {t("home.level_up_intro", "We don't just develop skills for where you are now. We identify and nurture qualities that will scale with your career—from academy to top-flight football.")}
+                </p>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <span className="text-primary font-bebas text-xl">→</span>
+                    <p className="text-foreground">{t("home.level_up_point_1", "Focus on transferable qualities that remain effective at higher levels of competition")}</p>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <span className="text-primary font-bebas text-xl">→</span>
+                    <p className="text-foreground">{t("home.level_up_point_2", "Build habits and techniques that adapt as the game speeds up")}</p>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <span className="text-primary font-bebas text-xl">→</span>
+                    <p className="text-foreground">{t("home.level_up_point_3", "Prepare players for the demands of their target destination, not just their current environment")}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-8 border border-primary/30 bg-primary/5 rounded-lg text-center">
+                <blockquote className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-foreground italic">
+                  "{t("home.level_up_quote", "We scout and develop for where you're going, not just where you are.")}"
+                </blockquote>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* CTA Section - moved above News */}
         <section className="py-12 md:py-16 px-4 bg-background/85 backdrop-blur-sm relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-primary/10"></div>
