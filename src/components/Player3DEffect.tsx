@@ -1430,6 +1430,16 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
     <div 
       ref={containerRef} 
       className={`relative w-full h-full cursor-none ${className}`}
-    />
+    >
+      {/* Show static base image immediately while Three.js loads */}
+      {isLoading && (
+        <img 
+          src="/assets/player-base.png" 
+          alt=""
+          className="absolute inset-0 w-full h-full object-contain"
+          style={{ pointerEvents: 'none' }}
+        />
+      )}
+    </div>
   )
 }
