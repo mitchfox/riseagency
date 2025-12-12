@@ -915,9 +915,9 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
 
   return (
     <div className="w-full h-full">
-      <div className={hideStats ? "h-full" : "grid grid-cols-1 lg:grid-cols-3 gap-6"}>
+      <div className={hideStats ? "h-full" : "grid grid-cols-1 lg:grid-cols-4 gap-4"}>
         {/* Map Section */}
-        <div className={`${hideStats ? "h-full" : "lg:col-span-2"} bg-card rounded-lg p-4 border relative`}>
+        <div className={`${hideStats ? "h-full" : "lg:col-span-3"} bg-card rounded-lg p-3 border relative`}>
           {/* Country Flag Overlay when zoomed */}
           {selectedCountry && (
             <div className="absolute top-6 left-6 z-10 bg-card/95 backdrop-blur-sm border border-primary/20 rounded-lg p-4 shadow-xl">
@@ -1306,47 +1306,40 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
           </svg>
 
           {/* Legend */}
-          <div className="flex items-center justify-center gap-6 mt-4 text-sm flex-wrap">
+          <div className="flex items-center justify-center gap-6 mt-2 text-sm">
             <button
               onClick={() => setShowGrid(!showGrid)}
               className="flex items-center gap-2 px-3 py-1 rounded border border-border hover:bg-accent transition-colors"
             >
               <span>{showGrid ? t("map.hide_grid", "Hide") : t("map.show_grid", "Show")} {t("map.grid", "Grid")}</span>
             </button>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <span>
-                {zoomLevel === 0 
-                  ? t("map.zoom_instructions", "Click country flag, list, or gold club cluster to zoom in • Drag club logos in expanded cities to reposition")
-                  : t("map.zoom_out_instructions", "Click map to zoom out • Drag club logos to reposition")}
-              </span>
-            </div>
           </div>
         </div>
 
         {/* Stats & Details Section - only show when hideStats is false */}
         {!hideStats && (
-        <div className="space-y-4">
-          <div className="bg-card rounded-lg p-4 border">
-            <h4 className="font-bebas text-xl mb-3">{t("map.network_coverage", "NETWORK COVERAGE")}</h4>
-            <div className="space-y-3">
+        <div className="space-y-3 flex flex-col">
+          <div className="bg-card rounded-lg p-3 border">
+            <h4 className="font-bebas text-lg mb-2">{t("map.network_coverage", "NETWORK COVERAGE")}</h4>
+            <div className="space-y-2 text-sm">
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">{t("map.professional_players", "Professional Players")}</span>
-                <span className="font-bold text-xl">10,000+</span>
+                <span className="font-bold">10,000+</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">{t("map.youth_prospects", "Youth Prospects")}</span>
-                <span className="font-bold text-xl">4,000+</span>
+                <span className="font-bold">4,000+</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">{t("map.teams", "Teams")}</span>
-                <span className="font-bold text-xl">500+</span>
+                <span className="font-bold">500+</span>
               </div>
             </div>
           </div>
 
           {/* Coverage Regions - Country -> Clubs from footballClubs */}
-          <div className="bg-card rounded-lg p-4 border max-h-96 overflow-y-auto">
-            <h4 className="font-bebas text-xl mb-3">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
+          <div className="bg-card rounded-lg p-3 border flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 400px)' }}>
+            <h4 className="font-bebas text-lg mb-2">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
             <div className="space-y-1">
               {(() => {
                 // Group footballClubs by country
