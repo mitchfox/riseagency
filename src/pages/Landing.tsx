@@ -259,7 +259,7 @@ function LandingContent() {
       
       
       {/* Language Selector - fixed position, centered horizontally, between slider menu and instruction text */}
-      <div className="hidden md:flex fixed z-[60] pointer-events-auto items-center justify-center left-1/2 -translate-x-1/2 bottom-[42px] lg:bottom-[54px]">
+      <div className="hidden md:flex fixed z-[60] pointer-events-auto items-center justify-center left-1/2 -translate-x-1/2 bottom-[50px] lg:bottom-[54px]">
         <div className="scale-[1.5]">
           <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
         </div>
@@ -568,7 +568,8 @@ function RoleSlider({
   }, []);
 
   return <div className="flex flex-col items-center hover-text-no-shift" style={{
-    paddingTop: isTablet ? '25px' : '35px',
+    paddingTop: isTablet ? '35px' : '35px',
+    paddingBottom: isTablet ? '8px' : '0px',
     transform: 'translateX(-2px)'
   }}>
       {/* Unified Slider Container - all elements in one parent */}
@@ -704,7 +705,7 @@ function RoleSlider({
         </div>
 
         {/* Instruction text - shows hovered role name or default - fixed height to prevent layout shift */}
-        <div className="text-center h-6 flex items-center justify-center" style={{ marginTop: isTablet ? '-28px' : '-8px' }}>
+        <div className="text-center h-6 flex items-center justify-center" style={{ marginTop: isTablet ? '-20px' : '-8px' }}>
           {hoveredIndex !== null ? (
             <span className="text-lg font-bebas font-bold uppercase tracking-[0.15em] text-primary transition-all duration-200">
               {t(navLinks[hoveredIndex].labelKey, navLinks[hoveredIndex].fallback)}
