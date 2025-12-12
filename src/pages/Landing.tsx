@@ -707,8 +707,8 @@ function RoleSlider({
           })()}
         </div>
 
-        {/* Instruction text - shows hovered role name or default */}
-        <div className="text-center" style={{ marginTop: '-8px' }}>
+        {/* Instruction text - shows hovered role name or default - fixed height to prevent layout shift */}
+        <div className="text-center h-6 flex items-center justify-center" style={{ marginTop: '-8px' }}>
           {hoveredIndex !== null ? (
             <span className="text-lg font-bebas font-bold uppercase tracking-[0.15em] text-primary transition-all duration-200">
               {t(navLinks[hoveredIndex].labelKey, navLinks[hoveredIndex].fallback)}
