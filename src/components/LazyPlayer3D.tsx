@@ -44,22 +44,8 @@ export const LazyPlayer3D = ({ className }: { className?: string }) => {
   useEffect(() => {
     if (!isVisible) return;
 
-    // On mobile, load after a short delay to let page settle
-    // On desktop, defer loading until idle
-    const isMobile = window.innerWidth < 768;
-    
-    if (isMobile) {
-      const timeout = setTimeout(() => setShouldLoad(true), 200);
-      return () => clearTimeout(timeout);
-    }
-    
-    if ('requestIdleCallback' in window) {
-      const id = requestIdleCallback(() => setShouldLoad(true), { timeout: 800 });
-      return () => cancelIdleCallback(id);
-    } else {
-      const timeout = setTimeout(() => setShouldLoad(true), 100);
-      return () => clearTimeout(timeout);
-    }
+    // Load immediately since images are now preloaded and no ZIP parsing needed
+    setShouldLoad(true);
   }, [isVisible]);
 
   return (

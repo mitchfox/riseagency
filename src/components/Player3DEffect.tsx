@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import * as THREE from "three"
-import JSZip from "jszip"
 import { useXRay } from "@/contexts/XRayContext"
 
 interface Player3DEffectProps {
@@ -31,10 +30,9 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
   // Utility to yield to main thread, preventing long tasks
   const yieldToMain = () => new Promise<void>(resolve => setTimeout(resolve, 0));
 
-  // Load images from zip + custom depth maps
+  // Load images directly (no ZIP processing)
   const loadImages = useCallback(async () => {
     try {
-      // Load all depth maps in parallel
       const loadImage = (src: string) => new Promise<HTMLImageElement | null>((resolve) => {
         const img = new Image()
         img.onload = () => resolve(img)
@@ -42,87 +40,47 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         img.src = src
       })
 
-      const depthMapPromise = loadImage("/assets/player-depth-map.png")
-      const depthLightenedPromise = loadImage("/assets/player-depth-lightened.png")
-      const depthDarkenedPromise = loadImage("/assets/player-depth-darkened.png")
-      const kitOverlayPromise = loadImage("/assets/player-kit-overlay.png")
-      const kitDepthPromise = loadImage("/assets/player-kit-depth.png")
-      const shadowPromise = loadImage("/assets/player-shadow.png")
-      const bwLayerPromise = loadImage("/assets/player-bw-layer.png")
-      
       // Import white marble from assets
       const whiteMarbleModule = await import("@/assets/white-marble.png")
-      const whiteMarblePromise = loadImage(whiteMarbleModule.default)
 
-      // Yield before heavy zip processing
-      await yieldToMain();
-
-      const response = await fetch("/assets/Website_Hero_RISE.zip")
-      const zipData = await response.arrayBuffer()
-      
-      // Yield after fetch, before JSZip processing
-      await yieldToMain();
-      
-      const zip = await JSZip.loadAsync(zipData)
-      
-      // Yield after zip parsing
-      await yieldToMain();
-      
-      const imageMap: { [key: string]: HTMLImageElement } = {}
-      const imagePromises: Promise<void>[] = []
-
-      const files = Object.entries(zip.files);
-      for (let i = 0; i < files.length; i++) {
-        const [relativePath, file] = files[i];
-        if (relativePath.endsWith(".png") && !relativePath.startsWith("__MACOSX")) {
-          const match = relativePath.match(/(\d+)\.png$/i)
-          if (match) {
-            const imageNum = match[1]
-            const promise = file.async("blob").then((blob) => {
-              return new Promise<void>((resolve) => {
-                const img = new Image()
-                img.onload = () => {
-                  imageMap[imageNum] = img
-                  resolve()
-                }
-                img.onerror = () => resolve()
-                img.src = URL.createObjectURL(blob)
-              })
-            })
-            imagePromises.push(promise)
-          }
-        }
-        // Yield every few files to prevent blocking
-        if (i % 3 === 0) await yieldToMain();
-      }
-
-      const [depthMapImg, depthLightenedImg, depthDarkenedImg, kitOverlayImg, kitDepthImg, shadowImg, bwLayerImg, whiteMarbleImg] = await Promise.all([
-        depthMapPromise, 
-        depthLightenedPromise, 
-        depthDarkenedPromise,
-        kitOverlayPromise,
-        kitDepthPromise,
-        shadowPromise,
-        bwLayerPromise,
-        whiteMarblePromise,
-        ...imagePromises
+      // Load ALL images in parallel - no ZIP needed!
+      const [
+        baseImage,
+        overlayImage,
+        xrayImage,
+        depthMapImg,
+        depthLightenedImg,
+        depthDarkenedImg,
+        kitOverlayImg,
+        kitDepthImg,
+        shadowImg,
+        bwLayerImg,
+        whiteMarbleImg
+      ] = await Promise.all([
+        loadImage("/assets/player-base.png"),
+        loadImage("/assets/player-gold-overlay.png"),
+        loadImage("/assets/player-xray.png"),
+        loadImage("/assets/player-depth-map.png"),
+        loadImage("/assets/player-depth-lightened.png"),
+        loadImage("/assets/player-depth-darkened.png"),
+        loadImage("/assets/player-kit-overlay.png"),
+        loadImage("/assets/player-kit-depth.png"),
+        loadImage("/assets/player-shadow.png"),
+        loadImage("/assets/player-bw-layer.png"),
+        loadImage(whiteMarbleModule.default)
       ])
       
-      const img5 = imageMap["5"]  // Base image
-      const img2 = imageMap["2"]  // Gold overlay/gloss
-      const img1 = imageMap["1"]  // X-ray image
-      
-      if (!img5 || !img2 || !img1) {
+      if (!baseImage || !overlayImage || !xrayImage) {
         console.error("Missing required images")
         return null
       }
       
-      console.log("Images loaded:", { base: !!img5, overlay: !!img2, xray: !!img1, kitOverlay: !!kitOverlayImg, kitDepth: !!kitDepthImg, shadow: !!shadowImg, bwLayer: !!bwLayerImg, whiteMarble: !!whiteMarbleImg })
+      console.log("Images loaded:", { base: !!baseImage, overlay: !!overlayImage, xray: !!xrayImage, kitOverlay: !!kitOverlayImg, kitDepth: !!kitDepthImg, shadow: !!shadowImg, bwLayer: !!bwLayerImg, whiteMarble: !!whiteMarbleImg })
       
       return { 
-        baseImage: img5, 
-        overlayImage: img2, 
-        xrayImage: img1,
+        baseImage,
+        overlayImage,
+        xrayImage,
         depthMap: depthMapImg,
         depthLightened: depthLightenedImg,
         depthDarkened: depthDarkenedImg,
