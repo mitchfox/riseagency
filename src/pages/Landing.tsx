@@ -615,12 +615,12 @@ function RoleSlider({
             />
           </svg>
           
-          {/* Stop markers and labels - positioned along UPPER curve */}
+          {/* Stop markers and labels - positioned along the slider curve */}
           {navLinks.map((link, index) => {
             const xPercent = getPositionFromIndex(index);
-            // Calculate Y position on the UPPER curve: y = 50 - 46*(1-x^2) where x is normalized -1 to 1
+            // Position bullets ON the slider curve: y = 87 - 40*(1-x^2)
             const normalizedX = (xPercent - 50) / 50;
-            const yPos = 50 - 46 * (1 - normalizedX * normalizedX);
+            const yPos = 87 - 40 * (1 - normalizedX * normalizedX);
             const yPercent = (yPos / 100) * 100;
             
             const isHovered = hoveredIndex === index || nearestSnapIndex === index;
@@ -641,12 +641,12 @@ function RoleSlider({
                   style={{
                     left: `${xPercent}%`,
                     top: `${yPercent}%`,
-                    transform: `translate(-50%, -100%) translateY(${index === 3 ? '-10px' : '-6px'})`
+                    transform: `translate(-50%, -100%) translateY(-10px)`
                   }}
                 >
                   {t(link.labelKey, link.fallback)}
                 </button>
-                {/* Bullet marker on upper curve */}
+                {/* Bullet marker on curve */}
                 <div 
                   className={`absolute w-2 h-2 rounded-full transition-all duration-200 ${
                     selectedIndex !== null && index === selectedIndex 
