@@ -6,7 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LateralFilter } from "@/components/LateralFilter";
-import { LayoutGrid, List, Users, MessageCircle, ArrowRight, ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { LayoutGrid, List, Users, MessageCircle, ArrowRight, ChevronLeft, ChevronRight, FileText, Search, BarChart3, GraduationCap, Trophy } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { parsePlayerBio } from "@/lib/playerDataParser";
@@ -165,6 +165,30 @@ const Stars = () => {
                 {t('stars.title', 'Our Stars')}
               </h1>
               <p className="text-muted-foreground mt-4 max-w-3xl mx-auto">
+                {t('stars.subtitle', 'Elite Football Representation & Performance Optimisation')}
+              </p>
+              
+              {/* Capability Tiles */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 max-w-4xl mx-auto">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
+                  <Search className="w-5 h-5 text-primary shrink-0" />
+                  <span className="text-sm text-foreground/80">Extensive Scouting Network</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
+                  <BarChart3 className="w-5 h-5 text-primary shrink-0" />
+                  <span className="text-sm text-foreground/80">Deep Analysis Models</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
+                  <GraduationCap className="w-5 h-5 text-primary shrink-0" />
+                  <span className="text-sm text-foreground/80">Expert Coaching</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
+                  <Trophy className="w-5 h-5 text-primary shrink-0" />
+                  <span className="text-sm text-foreground/80">Premier League Background</span>
+                </div>
+              </div>
+              
+              <p className="text-muted-foreground mt-6 max-w-3xl mx-auto text-sm">
                 {t('stars.description', 'Because of our background, we have the mandate to many top players across Europe\'s major divisions not under exclusive representation. Clubs can request our full portfolio through the button below.')}
               </p>
             </div>
