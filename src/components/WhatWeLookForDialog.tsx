@@ -69,7 +69,7 @@ export const WhatWeLookForDialog = ({ open, onOpenChange }: WhatWeLookForDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-[95vw] w-full max-h-[90vh] overflow-y-auto p-0">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-center bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
             {t('scouts.what_we_look', 'What We Look For')}
