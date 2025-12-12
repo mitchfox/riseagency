@@ -259,11 +259,7 @@ function LandingContent() {
       
       
       {/* Language Selector - fixed position, centered horizontally, between slider menu and instruction text */}
-      <div className="hidden md:flex fixed z-[60] pointer-events-auto items-center justify-center" style={{
-        left: '50%',
-        bottom: '54px',
-        transform: 'translateX(-50%)'
-      }}>
+      <div className="hidden md:flex fixed z-[60] pointer-events-auto items-center justify-center left-1/2 -translate-x-1/2 bottom-[46px] lg:bottom-[54px]">
         <div className="scale-[1.5]">
           <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
         </div>
