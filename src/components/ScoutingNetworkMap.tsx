@@ -1318,8 +1318,8 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
 
         {/* Stats & Details Section - only show when hideStats is false */}
         {!hideStats && (
-        <div className="space-y-3 flex flex-col">
-          <div className="bg-card rounded-lg p-3 border">
+        <div className="flex flex-col h-full min-h-0">
+          <div className="bg-card rounded-lg p-3 border flex-shrink-0">
             <h4 className="font-bebas text-lg mb-2">{t("map.network_coverage", "NETWORK COVERAGE")}</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between items-center">
@@ -1338,9 +1338,9 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
           </div>
 
           {/* Coverage Regions - Country -> Clubs from footballClubs */}
-          <div className="bg-card rounded-lg p-3 border flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 400px)' }}>
-            <h4 className="font-bebas text-lg mb-2">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
-            <div className="space-y-1">
+          <div className="bg-card rounded-lg p-3 border mt-3 flex-1 min-h-0 overflow-hidden flex flex-col">
+            <h4 className="font-bebas text-lg mb-2 flex-shrink-0">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
+            <div className="space-y-1 overflow-y-auto flex-1 min-h-0">
               {(() => {
                 // Group footballClubs by country
                 const clubsByCountry: Record<string, typeof footballClubs> = {};
