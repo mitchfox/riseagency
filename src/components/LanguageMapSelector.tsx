@@ -90,11 +90,11 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
 
   return (
     <>
-      {/* Trigger Button - Globe above flag, no text */}
+      {/* Trigger Button - Globe to the left of flag on same line */}
       <button 
         type="button"
         onClick={() => handleOpenChange(true)}
-        className="flex flex-col items-center gap-1 text-xs md:text-sm font-bebas uppercase tracking-wider text-foreground hover:text-primary transition-all duration-300 focus:outline-none cursor-pointer"
+        className="flex flex-row items-center gap-2 text-xs md:text-sm font-bebas uppercase tracking-wider text-foreground hover:text-primary transition-all duration-300 focus:outline-none cursor-pointer"
       >
         <Globe className="w-3 h-3" />
         <img src={getFlagUrl(selectedLanguage.flagCode)} alt={selectedLanguage.name} className="w-[22px] h-auto rounded-sm" />
