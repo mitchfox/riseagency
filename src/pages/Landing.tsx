@@ -259,7 +259,7 @@ function LandingContent() {
       
       
       {/* Language Selector - fixed position, centered horizontally, between slider menu and instruction text */}
-      <div className="hidden md:flex fixed z-[60] pointer-events-auto items-center justify-center left-1/2 -translate-x-1/2 bottom-[46px] lg:bottom-[54px]">
+      <div className="hidden md:flex fixed z-[60] pointer-events-auto items-center justify-center left-1/2 -translate-x-1/2 bottom-[42px] lg:bottom-[54px]">
         <div className="scale-[1.5]">
           <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
         </div>
@@ -306,7 +306,7 @@ function LandingContent() {
           transform: 'translateY(32px)'
         }}>
             {/* Desktop & Tablet Layout - Horizontal Slider */}
-            <div className="hidden md:block">
+            <div className="hidden md:block md:translate-y-2 lg:translate-y-0">
               <RoleSlider navLinks={desktopNavLinks} navigateToRole={navigateToRole} t={t} setShowRepresentation={setShowRepresentation} setShowDeclareInterest={setShowDeclareInterest} />
             </div>
 
