@@ -12,11 +12,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { HoverText } from "@/components/HoverText";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTranslatedNews } from "@/hooks/useTranslateContent";
+import { Activity, Brain, Zap, Crosshair } from "lucide-react";
+import { SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
 import riseStarIcon from "@/assets/rise-star-icon.png";
 import playersNetwork from "@/assets/players-network.jpg";
 import clubsNetwork from "@/assets/clubs-network.jpg";
 import scoutsNetwork from "@/assets/scouts-network.jpg";
 import coachesNetwork from "@/assets/coaches-network.jpg";
+
+const domainConfig = {
+  Physical: { icon: Activity, color: "text-red-500", bgColor: "bg-red-500/10", borderColor: "border-red-500/20", solidBg: "bg-red-500" },
+  Psychological: { icon: Brain, color: "text-purple-500", bgColor: "bg-purple-500/10", borderColor: "border-purple-500/20", solidBg: "bg-purple-500" },
+  Technical: { icon: Zap, color: "text-blue-500", bgColor: "bg-blue-500/10", borderColor: "border-blue-500/20", solidBg: "bg-blue-500" },
+  Tactical: { icon: Crosshair, color: "text-green-500", bgColor: "bg-green-500/10", borderColor: "border-green-500/20", solidBg: "bg-green-500" }
+};
+
+const positionInitials: Record<ScoutingPosition, string> = {
+  "Goalkeeper": "GK", "Full-Back": "FB", "Centre-Back": "CB", "Central Defensive Midfielder": "CDM",
+  "Central Midfielder": "CM", "Central Attacking Midfielder": "CAM", "Winger / Wide Forward": "W/WF", "Centre Forward / Striker": "CF/ST"
+};
 
 interface NewsArticle {
   id: string;
@@ -31,6 +45,8 @@ const Index = () => {
   const [showIntroModal, setShowIntroModal] = useState(false);
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [insideAccessArticles, setInsideAccessArticles] = useState<NewsArticle[]>([]);
+  const [selectedPosition, setSelectedPosition] = useState<ScoutingPosition>(SCOUTING_POSITIONS[0]);
+  const [expandedDomain, setExpandedDomain] = useState<keyof typeof domainConfig | null>(null);
   
   // Auto-translate news articles based on current language
   const { translatedArticles: translatedNews } = useTranslatedNews(newsArticles);
@@ -119,10 +135,8 @@ const Index = () => {
                 </div>
               </div>
             </div>
-
           </div>
         </section>
-
 
         {/* INSIDE:ACCESS Section */}
         {translatedInsideAccess.length > 0 && (
@@ -258,15 +272,107 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Positional Excellence CTA */}
-            <div className="flex justify-center">
-              <Link 
-                to="/realise-potential" 
-                className="group inline-flex items-center gap-4 px-8 py-4 border border-primary/40 rounded-lg hover:border-primary hover:bg-primary/5 transition-all duration-300"
-              >
-                <span className="text-lg font-bebas uppercase tracking-wider text-foreground">What We Look For In Each Position</span>
-                <span className="text-2xl text-primary group-hover:translate-x-2 transition-transform">→</span>
-              </Link>
+            {/* What We Look For - Position/Domain Table */}
+            <div className="mt-16">
+              <div className="text-center mb-8">
+                <h3 className="text-3xl md:text-5xl font-bebas uppercase tracking-wider text-foreground">
+                  WHAT WE <span className="text-primary">LOOK FOR</span>
+                </h3>
+                <p className="text-muted-foreground mt-2">Four-corner model evaluation by position</p>
+              </div>
+
+              <div className="border-2 border-border rounded-2xl overflow-hidden bg-card/50 max-w-5xl mx-auto">
+                {/* Position Selection */}
+                <div className="grid grid-cols-4 md:grid-cols-8 gap-0 border-b-2 border-border">
+                  {SCOUTING_POSITIONS.map((position) => (
+                    <button
+                      key={position}
+                      onClick={() => setSelectedPosition(position)}
+                      className={`py-3 px-2 font-bebas uppercase tracking-wider text-xs md:text-sm transition-all border-r border-border last:border-r-0 ${
+                        selectedPosition === position
+                          ? "bg-primary/10 text-primary"
+                          : "hover:bg-muted/50"
+                      }`}
+                    >
+                      {positionInitials[position]}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Content Area with Corner Domain Selectors */}
+                <div className="relative p-0">
+                  {(() => {
+                    const positionSkills = POSITION_SKILLS[selectedPosition];
+                    const skillsByDomain = positionSkills.reduce((acc, skill) => {
+                      if (!acc[skill.domain]) acc[skill.domain] = [];
+                      acc[skill.domain].push(skill);
+                      return acc;
+                    }, {} as Record<string, typeof positionSkills>);
+
+                    const currentDomain = expandedDomain || "Physical";
+                    const config = domainConfig[currentDomain];
+                    const skills = skillsByDomain[currentDomain];
+
+                    const domainKeys = Object.keys(domainConfig) as Array<keyof typeof domainConfig>;
+                    const cornerPositions = [
+                      { domain: domainKeys[0], position: 'top-0 left-0', rounded: 'rounded-br-xl' },
+                      { domain: domainKeys[1], position: 'top-0 right-0', rounded: 'rounded-bl-xl' },
+                      { domain: domainKeys[2], position: 'bottom-0 left-0', rounded: 'rounded-bl-2xl rounded-tr-xl' },
+                      { domain: domainKeys[3], position: 'bottom-0 right-0', rounded: 'rounded-br-2xl rounded-tl-xl' }
+                    ];
+
+                    return (
+                      <>
+                        {/* Corner Domain Buttons */}
+                        {cornerPositions.map(({ domain, position, rounded }) => {
+                          const domainConf = domainConfig[domain];
+                          const DomainIcon = domainConf.icon;
+                          const isActive = currentDomain === domain;
+                          
+                          return (
+                            <button
+                              key={domain}
+                              onClick={() => setExpandedDomain(domain)}
+                              className={`absolute ${position} ${rounded} flex items-center gap-2 transition-all hover:scale-105 border-2 z-10 ${
+                                isActive 
+                                  ? 'border-primary bg-primary/20 shadow-lg shadow-primary/20 h-12 md:h-14 px-3 w-auto' 
+                                  : `${domainConf.borderColor} ${domainConf.bgColor} hover:shadow-lg h-12 md:h-14 w-12 md:w-14 justify-center`
+                              }`}
+                              title={domain}
+                            >
+                              <DomainIcon className={`h-5 w-5 ${domainConf.color} flex-shrink-0`} />
+                              {isActive && (
+                                <span className={`font-bebas uppercase tracking-wider text-sm md:text-lg ${domainConf.color} pr-1 whitespace-nowrap hidden sm:inline`}>
+                                  {domain}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+
+                        {/* Content - Attributes Grid */}
+                        <div className="px-4 py-16 md:px-6 md:py-20">
+                          <div className="grid md:grid-cols-2 gap-3">
+                            {skills.map((skill, idx) => (
+                              <div 
+                                key={idx} 
+                                className="group bg-gradient-to-br from-muted/50 to-muted/30 rounded-lg hover:from-muted/70 hover:to-muted/50 transition-all duration-300 overflow-hidden"
+                              >
+                                <div className={`${config.solidBg} px-4 py-2`}>
+                                  <h4 className="font-bold text-black text-sm">{skill.skill_name}</h4>
+                                </div>
+                                <div className="px-4 py-3">
+                                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">{skill.description}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
             </div>
           </div>
         </section>
