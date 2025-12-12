@@ -205,8 +205,9 @@ function LandingContent() {
       }}>
         <Button 
           onClick={() => setShowDeclareInterest(true)} 
+          variant="outline" 
           size="sm" 
-          className="btn-shine font-bebas uppercase tracking-wider text-sm px-6 h-7"
+          className="font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary hover:text-primary-foreground hover:border-primary text-sm h-7 w-[180px] transition-all duration-300"
           style={{ borderRadius: '20px' }}
           hoverEffect
         >
@@ -224,7 +225,7 @@ function LandingContent() {
           onClick={() => setShowRepresentation(true)} 
           variant="outline" 
           size="sm" 
-          className="font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary/10 hover:text-primary hover:border-primary/60 text-sm px-6 h-7 transition-all duration-300"
+          className="font-bebas uppercase tracking-wider border-primary/40 text-primary/80 hover:bg-primary hover:text-primary-foreground hover:border-primary text-sm h-7 w-[180px] transition-all duration-300"
           style={{ borderRadius: '20px' }}
           hoverEffect
         >
