@@ -182,7 +182,7 @@ const Stars = () => {
                         <Users className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                       </div>
                        <div className="min-w-0">
-                         <h3 className="font-bebas uppercase tracking-wider text-lg sm:text-xl mb-1 break-words">
+                         <h3 className="font-bebas uppercase tracking-wider text-base sm:text-lg mb-1 break-words">
                            <HoverText text={t('stars.declare_interest', 'Declare Interest in Player(s)')} />
                          </h3>
                          <p className="text-xs sm:text-sm text-muted-foreground break-words">
@@ -206,7 +206,7 @@ const Stars = () => {
                         <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                       </div>
                        <div className="min-w-0">
-                         <h3 className="font-bebas uppercase tracking-wider text-lg sm:text-xl mb-1 break-words">
+                         <h3 className="font-bebas uppercase tracking-wider text-base sm:text-lg mb-1 break-words">
                            <HoverText text={t('stars.contact_btn', 'Contact')} />
                          </h3>
                          <p className="text-xs sm:text-sm text-muted-foreground break-words">
@@ -230,7 +230,7 @@ const Stars = () => {
                         <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                       </div>
                        <div className="min-w-0">
-                         <h3 className="font-bebas uppercase tracking-wider text-lg sm:text-xl mb-1 break-words">
+                         <h3 className="font-bebas uppercase tracking-wider text-base sm:text-lg mb-1 break-words">
                            <HoverText text={t('stars.request_portfolio', 'Request Full Portfolio')} />
                          </h3>
                          <p className="text-xs sm:text-sm text-muted-foreground break-words">
