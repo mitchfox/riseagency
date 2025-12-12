@@ -536,12 +536,12 @@ export const ClubOutreachManagement = () => {
                 <Search className="h-4 w-4" />
                 Select from Club Network (Optional)
               </Label>
-              <Select value={selectedContactId} onValueChange={handleContactSelect}>
+              <Select value={selectedContactId || "manual"} onValueChange={(val) => handleContactSelect(val === "manual" ? "" : val)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a contact from your network..." />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
-                  <SelectItem value="">-- Manual Entry --</SelectItem>
+                  <SelectItem value="manual">-- Manual Entry --</SelectItem>
                   {networkContacts.map(contact => (
                     <SelectItem key={contact.id} value={contact.id}>
                       <span className="flex flex-col">
