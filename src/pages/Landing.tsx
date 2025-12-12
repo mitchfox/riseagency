@@ -583,24 +583,16 @@ function RoleSlider({
     }}>
         
         {/* Slider Track with labels and bullets */}
-        <div ref={sliderRef} className="relative cursor-pointer overflow-visible" style={{ height: '100px', marginTop: '40px' }} onClick={handleTrackClick}>
+        <div ref={sliderRef} className="relative cursor-pointer overflow-visible" style={{ height: '100px', marginTop: '0px' }} onClick={handleTrackClick}>
           {/* SVG curved tracks */}
           <svg 
             className="absolute w-full h-full" 
             viewBox="0 0 100 100" 
             preserveAspectRatio="none"
           >
-            {/* Upper curve - invisible, only used for label positioning */}
+            {/* Lower curve - for slider thumb - moved up 8px by adjusting y values */}
             <path 
-              d="M0,50 Q50,4 100,50" 
-              fill="none" 
-              stroke="transparent" 
-              strokeWidth="0"
-              vectorEffect="non-scaling-stroke"
-            />
-            {/* Lower curve - for slider thumb */}
-            <path 
-              d="M0,95 Q50,55 100,95" 
+              d="M0,87 Q50,47 100,87" 
               fill="none" 
               stroke="rgba(255,255,255,0.2)" 
               strokeWidth="1"
@@ -613,7 +605,7 @@ function RoleSlider({
               </clipPath>
             </defs>
             <path 
-              d="M0,95 Q50,55 100,95" 
+              d="M0,87 Q50,47 100,87" 
               fill="none" 
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="1"
@@ -676,8 +668,8 @@ function RoleSlider({
           {/* Draggable Thumb Handle - positioned along LOWER curve */}
           {(() => {
             const normalizedX = (thumbPosition - 50) / 50;
-            // Lower curve: y = 95 - 40*(1-x^2)
-            const yPos = 95 - 40 * (1 - normalizedX * normalizedX);
+            // Lower curve: y = 87 - 40*(1-x^2) - moved up 8px
+            const yPos = 87 - 40 * (1 - normalizedX * normalizedX);
             const yPercent = (yPos / 100) * 100;
             
             return (
