@@ -592,7 +592,7 @@ function RoleSlider({
           >
             {/* Lower curve - for slider thumb - moved up 8px by adjusting y values */}
             <path 
-              d="M0,87 Q50,47 100,87" 
+              d="M0,87 Q50,35 100,87" 
               fill="none" 
               stroke="rgba(255,255,255,0.2)" 
               strokeWidth="1"
@@ -605,7 +605,7 @@ function RoleSlider({
               </clipPath>
             </defs>
             <path 
-              d="M0,87 Q50,47 100,87" 
+              d="M0,87 Q50,35 100,87"
               fill="none" 
               stroke="hsl(var(--primary) / 0.6)" 
               strokeWidth="1"
@@ -618,9 +618,9 @@ function RoleSlider({
           {/* Stop markers and labels - positioned along the slider curve */}
           {navLinks.map((link, index) => {
             const xPercent = getPositionFromIndex(index);
-            // Position bullets ON the slider curve: y = 87 - 40*(1-x^2)
+            // Position bullets ON the slider curve: y = 87 - 52*(1-x^2)
             const normalizedX = (xPercent - 50) / 50;
-            const yPos = 87 - 40 * (1 - normalizedX * normalizedX);
+            const yPos = 87 - 52 * (1 - normalizedX * normalizedX);
             const yPercent = (yPos / 100) * 100;
             
             const isHovered = hoveredIndex === index || nearestSnapIndex === index;
@@ -668,8 +668,8 @@ function RoleSlider({
           {/* Draggable Thumb Handle - positioned along LOWER curve */}
           {(() => {
             const normalizedX = (thumbPosition - 50) / 50;
-            // Lower curve: y = 87 - 40*(1-x^2) - moved up 8px
-            const yPos = 87 - 40 * (1 - normalizedX * normalizedX);
+            // Slider curve: y = 87 - 52*(1-x^2)
+            const yPos = 87 - 52 * (1 - normalizedX * normalizedX);
             const yPercent = (yPos / 100) * 100;
             
             return (
