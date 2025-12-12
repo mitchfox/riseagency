@@ -23,8 +23,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
     xrayOverlayUniforms: any
     animationId: number
   } | null>(null)
-  const mouseRef = useRef({ x: -1000, y: -1000 })
-  const lastInteractionRef = useRef(0)
+  const mouseRef = useRef({ x: typeof window !== 'undefined' ? window.innerWidth / 2 : 500, y: typeof window !== 'undefined' ? window.innerHeight / 2 : 400 })
+  const lastInteractionRef = useRef(Date.now() - 3000)
   const autoRevealPosRef = useRef({ x: 0.5, y: 0.5 })
 
   // Utility to yield to main thread, preventing long tasks
@@ -1081,9 +1081,9 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       const STAR_DURATION = 1.5
       
       // Cursor blob tracking for organic fluid reveal
-      const cursorBlob = { x: -1, y: -1 }
-      const cursorBlobTarget = { x: -1, y: -1 }
-      const prevCursorPos = { x: -1, y: -1 }
+      const cursorBlob = { x: 0.5, y: 0.5 }
+      const cursorBlobTarget = { x: 0.5, y: 0.5 }
+      const prevCursorPos = { x: 0.5, y: 0.5 }
       let cursorOpacity = 0
       
       // Velocity tracking
@@ -1091,10 +1091,10 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       let speed = 0
       
       // Trailing blobs
-      const trail1 = { x: -1, y: -1 }
-      const trail2 = { x: -1, y: -1 }
-      const trail3 = { x: -1, y: -1 }
-      const trail4 = { x: -1, y: -1 }
+      const trail1 = { x: 0.5, y: 0.5 }
+      const trail2 = { x: 0.5, y: 0.5 }
+      const trail3 = { x: 0.5, y: 0.5 }
+      const trail4 = { x: 0.5, y: 0.5 }
       let trail1Opacity = 0
       let trail2Opacity = 0
       let trail3Opacity = 0
