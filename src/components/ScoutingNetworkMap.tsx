@@ -1,7 +1,8 @@
-import { MapPin, ZoomOut } from "lucide-react";
+import { MapPin, ZoomOut, ChevronRight, ChevronDown, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useLanguage } from "@/contexts/LanguageContext";
 import europeOutline from "@/assets/europe-outline.gif";
 import norwichLogo from "@/assets/clubs/norwich-city-official.png";
@@ -60,6 +61,10 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
   const [draggingClub, setDraggingClub] = useState<string | null>(null);
   const [clubPositions, setClubPositions] = useState<Record<string, {x: number, y: number}>>({});
   const [wasDragging, setWasDragging] = useState(false);
+  const [leagueData, setLeagueData] = useState<Record<string, Record<string, Record<string, {id: string, name: string, age: number}[]>>>>({});
+  const [expandedLeagues, setExpandedLeagues] = useState<Set<string>>(new Set());
+  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   // Europe outline is rendered from raster map image (europe-outline.gif)
   
   // Load club positions from database on mount
@@ -84,6 +89,46 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
     };
     
     loadClubPositions();
+  }, []);
+
+  // Load player data grouped by league, team, and category
+  useEffect(() => {
+    const loadLeagueData = async () => {
+      const { data, error } = await supabase
+        .from('players')
+        .select('id, name, club, league, category, age')
+        .not('club', 'is', null)
+        .not('league', 'is', null)
+        .order('league')
+        .order('club')
+        .order('category')
+        .order('name');
+      
+      if (!error && data) {
+        // Group by league -> team -> category -> players
+        const grouped: Record<string, Record<string, Record<string, {id: string, name: string, age: number}[]>>> = {};
+        
+        data.forEach(player => {
+          const league = player.league || 'Unknown League';
+          const club = player.club || 'Unknown Club';
+          const category = player.category || 'Other';
+          
+          if (!grouped[league]) grouped[league] = {};
+          if (!grouped[league][club]) grouped[league][club] = {};
+          if (!grouped[league][club][category]) grouped[league][club][category] = [];
+          
+          grouped[league][club][category].push({
+            id: player.id,
+            name: player.name,
+            age: player.age
+          });
+        });
+        
+        setLeagueData(grouped);
+      }
+    };
+    
+    loadLeagueData();
   }, []);
 
   // Handle initialCountry prop changes - zoom to country
@@ -1307,63 +1352,140 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
             </div>
           </div>
 
-          {/* Country List */}
+          {/* Coverage Regions - League Hierarchy */}
           <div className="bg-card rounded-lg p-4 border max-h-96 overflow-y-auto">
             <h4 className="font-bebas text-xl mb-3">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
-            <div className="space-y-0">
-              {countryMarkers
-                .filter(country => !selectedCountry || country.country === selectedCountry)
-                .map((country, idx, arr) => (
-                <div key={idx}>
-                  <div
-                    className="flex flex-col gap-2 p-2 rounded hover:bg-accent transition-colors cursor-pointer"
-                    onClick={() => handleCountryListClick(country.country, country.x, country.y)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-6 h-6 flex-shrink-0">
-                        <svg width="24" height="24" viewBox="0 0 24 24">
-                          <defs>
-                            <clipPath id={`list-flag-clip-${idx}`}>
-                              <circle cx="12" cy="12" r="10" />
-                            </clipPath>
-                          </defs>
-                          <image
-                            href={flagImages[country.country]}
-                            x="2"
-                            y="2"
-                            width="20"
-                            height="20"
-                            clipPath={`url(#list-flag-clip-${idx})`}
-                          />
-                          <circle
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            fill="none"
-                            stroke="hsl(var(--primary))"
-                            strokeWidth="1.5"
-                          />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium">{t(`countries.${country.country.toLowerCase().replace(/ /g, '_')}`, country.country)}</div>
-                      </div>
-                    </div>
-                    {selectedCountry === country.country && (
-                      <div className="ml-7 space-y-1">
-                        {country.leagues.map((league, leagueIdx) => (
-                          <div key={leagueIdx} className="text-sm text-muted-foreground">
-                            • {league}
+            <div className="space-y-1">
+              {Object.keys(leagueData).length === 0 ? (
+                <p className="text-sm text-muted-foreground">Loading coverage data...</p>
+              ) : (
+                Object.entries(leagueData)
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .map(([league, teams]) => {
+                    const leagueKey = `league-${league}`;
+                    const isLeagueExpanded = expandedLeagues.has(leagueKey);
+                    const totalPlayersInLeague = Object.values(teams).reduce(
+                      (sum, categories) => sum + Object.values(categories).reduce(
+                        (catSum, players) => catSum + players.length, 0
+                      ), 0
+                    );
+                    
+                    return (
+                      <div key={leagueKey} className="border-b border-border/30 last:border-b-0">
+                        <button
+                          onClick={() => {
+                            const newSet = new Set(expandedLeagues);
+                            if (isLeagueExpanded) {
+                              newSet.delete(leagueKey);
+                            } else {
+                              newSet.add(leagueKey);
+                            }
+                            setExpandedLeagues(newSet);
+                          }}
+                          className="w-full flex items-center gap-2 p-2 hover:bg-accent/50 rounded transition-colors text-left"
+                        >
+                          {isLeagueExpanded ? (
+                            <ChevronDown className="w-4 h-4 text-primary flex-shrink-0" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                          )}
+                          <span className="font-medium text-sm flex-1">{league}</span>
+                          <span className="text-xs text-muted-foreground">{totalPlayersInLeague} players</span>
+                        </button>
+                        
+                        {isLeagueExpanded && (
+                          <div className="ml-4 space-y-1 pb-2">
+                            {Object.entries(teams)
+                              .sort(([a], [b]) => a.localeCompare(b))
+                              .map(([team, categories]) => {
+                                const teamKey = `team-${league}-${team}`;
+                                const isTeamExpanded = expandedTeams.has(teamKey);
+                                const totalPlayersInTeam = Object.values(categories).reduce(
+                                  (sum, players) => sum + players.length, 0
+                                );
+                                
+                                return (
+                                  <div key={teamKey}>
+                                    <button
+                                      onClick={() => {
+                                        const newSet = new Set(expandedTeams);
+                                        if (isTeamExpanded) {
+                                          newSet.delete(teamKey);
+                                        } else {
+                                          newSet.add(teamKey);
+                                        }
+                                        setExpandedTeams(newSet);
+                                      }}
+                                      className="w-full flex items-center gap-2 p-1.5 hover:bg-accent/30 rounded transition-colors text-left"
+                                    >
+                                      {isTeamExpanded ? (
+                                        <ChevronDown className="w-3 h-3 text-primary flex-shrink-0" />
+                                      ) : (
+                                        <ChevronRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                      )}
+                                      <span className="text-sm flex-1">{team}</span>
+                                      <span className="text-xs text-muted-foreground">{totalPlayersInTeam}</span>
+                                    </button>
+                                    
+                                    {isTeamExpanded && (
+                                      <div className="ml-4 space-y-1">
+                                        {Object.entries(categories)
+                                          .sort(([a], [b]) => a.localeCompare(b))
+                                          .map(([category, players]) => {
+                                            const categoryKey = `cat-${league}-${team}-${category}`;
+                                            const isCategoryExpanded = expandedCategories.has(categoryKey);
+                                            
+                                            return (
+                                              <div key={categoryKey}>
+                                                <button
+                                                  onClick={() => {
+                                                    const newSet = new Set(expandedCategories);
+                                                    if (isCategoryExpanded) {
+                                                      newSet.delete(categoryKey);
+                                                    } else {
+                                                      newSet.add(categoryKey);
+                                                    }
+                                                    setExpandedCategories(newSet);
+                                                  }}
+                                                  className="w-full flex items-center gap-2 p-1 hover:bg-accent/20 rounded transition-colors text-left"
+                                                >
+                                                  {isCategoryExpanded ? (
+                                                    <ChevronDown className="w-3 h-3 text-primary flex-shrink-0" />
+                                                  ) : (
+                                                    <ChevronRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                                  )}
+                                                  <span className="text-xs text-muted-foreground flex-1">{category}</span>
+                                                  <span className="text-xs text-muted-foreground">{players.length}</span>
+                                                </button>
+                                                
+                                                {isCategoryExpanded && players.length > 0 && (
+                                                  <div className="ml-5 py-1 space-y-0.5">
+                                                    {players.map((player) => (
+                                                      <div
+                                                        key={player.id}
+                                                        className="flex items-center gap-2 text-xs text-muted-foreground py-0.5 px-1 hover:bg-accent/10 rounded"
+                                                      >
+                                                        <Users className="w-3 h-3 flex-shrink-0" />
+                                                        <span>{player.name}</span>
+                                                        <span className="text-xs opacity-60">({player.age})</span>
+                                                      </div>
+                                                    ))}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
                           </div>
-                        ))}
+                        )}
                       </div>
-                    )}
-                  </div>
-                  {idx < arr.length - 1 && (
-                    <div className="h-px bg-gold/20 my-1" />
-                  )}
-                </div>
-              ))}
+                    );
+                  })
+              )}
             </div>
           </div>
         </div>
