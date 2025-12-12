@@ -7,7 +7,6 @@ import { IntroModal } from "@/components/IntroModal";
 import { SEO } from "@/components/SEO";
 import { VideoPortfolio } from "@/components/VideoPortfolio";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
-import { Search, BarChart3, GraduationCap, Trophy } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { HoverText } from "@/components/HoverText";
@@ -96,23 +95,27 @@ const Index = () => {
                 {t("home.hero_subtitle", "Elite Football Representation & Performance Optimisation")}
               </p>
               
-              {/* Capability Tiles */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 max-w-4xl mx-auto">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
-                  <Search className="w-5 h-5 text-primary shrink-0" />
-                  <span className="text-sm text-foreground/80">Extensive Scouting Network</span>
+              {/* Capability Tiles - Visually Striking */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 max-w-5xl mx-auto">
+                <div className="group relative p-6 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-[1.02]">
+                  <div className="text-4xl font-bebas text-primary mb-2">950+</div>
+                  <div className="text-sm font-bebas uppercase tracking-wider text-foreground">Scouts Worldwide</div>
+                  <div className="text-xs text-muted-foreground mt-1">Eyes across every league</div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
-                  <BarChart3 className="w-5 h-5 text-primary shrink-0" />
-                  <span className="text-sm text-foreground/80">Deep Analysis Models</span>
+                <div className="group relative p-6 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-[1.02]">
+                  <div className="text-4xl font-bebas text-primary mb-2">R90</div>
+                  <div className="text-sm font-bebas uppercase tracking-wider text-foreground">Analysis System</div>
+                  <div className="text-xs text-muted-foreground mt-1">Proprietary performance metrics</div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
-                  <GraduationCap className="w-5 h-5 text-primary shrink-0" />
-                  <span className="text-sm text-foreground/80">Expert Coaching</span>
+                <div className="group relative p-6 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-[1.02]">
+                  <div className="text-4xl font-bebas text-primary mb-2">5D</div>
+                  <div className="text-sm font-bebas uppercase tracking-wider text-foreground">Coaching Model</div>
+                  <div className="text-xs text-muted-foreground mt-1">Complete player development</div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
-                  <Trophy className="w-5 h-5 text-primary shrink-0" />
-                  <span className="text-sm text-foreground/80">Premier League Background</span>
+                <div className="group relative p-6 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-[1.02]">
+                  <div className="text-4xl font-bebas text-primary mb-2">PL</div>
+                  <div className="text-sm font-bebas uppercase tracking-wider text-foreground">Development History</div>
+                  <div className="text-xs text-muted-foreground mt-1">Premier League stars developed</div>
                 </div>
               </div>
             </div>
@@ -221,203 +224,218 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Player Development Section */}
-        <section className="py-12 md:py-16 px-4 bg-background/85 backdrop-blur-sm">
-          <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-10 space-y-3">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  {t("home.proven_track_record", "Proven Track Record")}
-                </span>
-              </div>
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+        {/* Player Development Section - Visual Stats */}
+        <section className="py-16 md:py-24 px-4 bg-background/85 backdrop-blur-sm relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+          <div className="container mx-auto max-w-7xl relative z-10">
+            <div className="text-center mb-12">
+              <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground">
                 {t("home.player", "PLAYER")} <span className="text-primary">{t("home.development", "DEVELOPMENT")}</span>
               </h2>
-              <p className="text-muted-foreground max-w-3xl mx-auto">
-                {t("home.development_intro", "Our team has a proven history of identifying and developing talent that reaches the highest levels of the game.")}
-              </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-              <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg">
-                <div className="text-5xl font-bebas text-primary mb-2">15+</div>
-                <p className="text-sm text-muted-foreground uppercase tracking-wider">{t("home.premier_league_players", "Premier League Players Developed")}</p>
+            {/* Big Impact Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+              <div className="text-center group">
+                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">15+</div>
+                <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Premier League Players</p>
               </div>
-              <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg">
-                <div className="text-5xl font-bebas text-primary mb-2">5</div>
-                <p className="text-sm text-muted-foreground uppercase tracking-wider">{t("home.big_five_leagues", "Big 5 European Leagues")}</p>
+              <div className="text-center group">
+                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">5</div>
+                <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Big 5 Leagues</p>
               </div>
-              <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg">
-                <div className="text-5xl font-bebas text-primary mb-2">20+</div>
-                <p className="text-sm text-muted-foreground uppercase tracking-wider">{t("home.international_stars", "International Players")}</p>
+              <div className="text-center group">
+                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">20+</div>
+                <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">International Stars</p>
               </div>
-              <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg">
-                <div className="text-5xl font-bebas text-primary mb-2">100%</div>
-                <p className="text-sm text-muted-foreground uppercase tracking-wider">{t("home.player_focused", "Player-Focused Approach")}</p>
+              <div className="text-center group">
+                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">£M</div>
+                <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Transfer Value Created</p>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="p-6 border border-border/50 bg-card/30 rounded-lg">
-                <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-4">
-                  {t("home.what_we_look_for", "What We Look For")}
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  {t("home.position_specific", "Each position demands specific qualities. We evaluate players across all positions using detailed positional criteria—from goalkeepers to strikers—ensuring we identify the right attributes for success at the highest level.")}
-                </p>
-                <Link to="/realise-potential" className="text-primary font-bebas uppercase tracking-wider hover:underline">
-                  {t("home.view_positional_guides", "View Our Positional Guides →")}
-                </Link>
-              </div>
-              <div className="p-6 border border-border/50 bg-card/30 rounded-lg">
-                <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-4">
-                  {t("home.development_pathway", "Development Pathway")}
-                </h3>
-                <p className="text-muted-foreground">
-                  {t("home.development_pathway_desc", "From academy prospects to established professionals, we create personalised development plans that address technical, tactical, physical, and psychological dimensions of the game.")}
-                </p>
-              </div>
+            {/* Positional Excellence CTA */}
+            <div className="flex justify-center">
+              <Link 
+                to="/realise-potential" 
+                className="group inline-flex items-center gap-4 px-8 py-4 border border-primary/40 rounded-lg hover:border-primary hover:bg-primary/5 transition-all duration-300"
+              >
+                <span className="text-lg font-bebas uppercase tracking-wider text-foreground">What We Look For In Each Position</span>
+                <span className="text-2xl text-primary group-hover:translate-x-2 transition-transform">→</span>
+              </Link>
             </div>
           </div>
         </section>
 
-        {/* Portal & Analysis Access Section */}
-        <section className="py-12 md:py-16 px-4 bg-background/90 backdrop-blur-sm">
+        {/* Player Portal Section - Visual */}
+        <section className="py-16 md:py-24 px-4 bg-background/90 backdrop-blur-sm">
           <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-10 space-y-3">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  {t("home.exclusive_access", "Exclusive Access")}
-                </span>
-              </div>
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+            <div className="text-center mb-12">
+              <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground">
                 {t("home.player_portal", "PLAYER")} <span className="text-primary">{t("home.portal", "PORTAL")}</span>
               </h2>
-              <p className="text-muted-foreground max-w-3xl mx-auto">
-                {t("home.portal_intro", "Every RISE player receives access to our exclusive portal—a complete performance management system with analysis, programmes, and development tracking.")}
-              </p>
+              <p className="text-muted-foreground mt-4 max-w-xl mx-auto">Every RISE player gets exclusive portal access</p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="p-6 border border-border/50 bg-card/30 rounded-lg space-y-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-2xl font-bebas text-primary">01</span>
+            {/* Portal Features - Visual Cards */}
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative p-8 border border-border/50 rounded-2xl bg-card/20 hover:border-primary/50 transition-all duration-300">
+                  <div className="text-6xl font-bebas text-primary/30 mb-4">PRE</div>
+                  <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-2">Pre-Match Analysis</h3>
+                  <p className="text-sm text-muted-foreground">Opponent breakdowns & tactical prep</p>
                 </div>
-                <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
-                  {t("home.pre_match_analysis", "Pre-Match Analysis")}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {t("home.pre_match_desc", "Detailed breakdown of upcoming opponents, individual matchups, and tactical preparation specific to your position and role.")}
-                </p>
               </div>
 
-              <div className="p-6 border border-border/50 bg-card/30 rounded-lg space-y-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-2xl font-bebas text-primary">02</span>
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative p-8 border border-border/50 rounded-2xl bg-card/20 hover:border-primary/50 transition-all duration-300">
+                  <div className="text-6xl font-bebas text-primary/30 mb-4">R90</div>
+                  <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-2">Performance Reports</h3>
+                  <p className="text-sm text-muted-foreground">Action-by-action scoring & analysis</p>
                 </div>
-                <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
-                  {t("home.performance_reports", "Performance Reports")}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {t("home.performance_reports_desc", "Post-match analysis with detailed R90 scoring, action-by-action breakdowns, and areas for improvement based on our proprietary rating system.")}
-                </p>
               </div>
 
-              <div className="p-6 border border-border/50 bg-card/30 rounded-lg space-y-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-2xl font-bebas text-primary">03</span>
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative p-8 border border-border/50 rounded-2xl bg-card/20 hover:border-primary/50 transition-all duration-300">
+                  <div className="text-6xl font-bebas text-primary/30 mb-4">DEV</div>
+                  <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-2">Training Programmes</h3>
+                  <p className="text-sm text-muted-foreground">Personalised development plans</p>
                 </div>
-                <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
-                  {t("home.training_programmes", "Training Programmes")}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {t("home.training_programmes_desc", "Personalised physical and technical development programmes, updated regularly and accessible anytime through your portal.")}
-                </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* 5 Dimensionality Section */}
-        <section className="py-12 md:py-16 px-4 bg-background/85 backdrop-blur-sm">
-          <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-10 space-y-3">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  {t("home.our_philosophy", "Our Philosophy")}
-                </span>
-              </div>
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                <span className="text-primary">5</span> {t("home.dimensional_play", "DIMENSIONAL PLAY")}
+        {/* 5 Dimensional Play Section - The Real Thing */}
+        <section className="py-16 md:py-24 px-4 bg-background/85 backdrop-blur-sm relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+          <div className="container mx-auto max-w-7xl relative z-10">
+            <div className="text-center mb-16">
+              <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground mb-4">
+                <span className="text-primary">5</span>D PLAY
               </h2>
-              <p className="text-muted-foreground max-w-3xl mx-auto">
-                {t("home.five_dimensions_intro", "We believe in developing the complete player. Our approach evaluates and develops across five key dimensions that define elite performance.")}
-              </p>
+              <p className="text-muted-foreground max-w-2xl mx-auto">Not just what you do—but how unpredictable and intelligent you are doing it</p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div className="text-center p-4 border border-primary/30 bg-primary/5 rounded-lg">
-                <div className="text-3xl font-bebas text-primary mb-2">{t("home.technical", "TECHNICAL")}</div>
-                <p className="text-xs text-muted-foreground">{t("home.technical_desc", "Ball mastery & skill execution")}</p>
+            {/* 5D Levels - Visual Progression */}
+            <div className="space-y-4">
+              {/* 2D */}
+              <div className="group relative">
+                <div className="flex items-stretch gap-6 p-6 rounded-xl border border-border/30 bg-card/10 hover:border-primary/30 hover:bg-card/20 transition-all duration-300">
+                  <div className="flex-shrink-0 w-20 md:w-28 flex items-center justify-center">
+                    <span className="text-4xl md:text-6xl font-bebas text-foreground/30 group-hover:text-foreground/50 transition-colors">2D</span>
+                  </div>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-foreground mb-1">Predictable</h3>
+                    <p className="text-sm text-muted-foreground">Obvious to the opponent what you will do. One option, one outcome.</p>
+                  </div>
+                  <div className="hidden md:flex items-center">
+                    <div className="w-24 h-2 bg-foreground/10 rounded-full overflow-hidden">
+                      <div className="h-full w-1/4 bg-foreground/30 rounded-full" />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="text-center p-4 border border-primary/30 bg-primary/5 rounded-lg">
-                <div className="text-3xl font-bebas text-primary mb-2">{t("home.tactical", "TACTICAL")}</div>
-                <p className="text-xs text-muted-foreground">{t("home.tactical_desc", "Game intelligence & positioning")}</p>
+
+              {/* 3D */}
+              <div className="group relative">
+                <div className="flex items-stretch gap-6 p-6 rounded-xl border border-border/30 bg-card/10 hover:border-primary/40 hover:bg-card/20 transition-all duration-300">
+                  <div className="flex-shrink-0 w-20 md:w-28 flex items-center justify-center">
+                    <span className="text-4xl md:text-6xl font-bebas text-foreground/40 group-hover:text-foreground/60 transition-colors">3D</span>
+                  </div>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-foreground mb-1">Optionality</h3>
+                    <p className="text-sm text-muted-foreground">Two or more viable options create indecision for the opponent.</p>
+                  </div>
+                  <div className="hidden md:flex items-center">
+                    <div className="w-24 h-2 bg-foreground/10 rounded-full overflow-hidden">
+                      <div className="h-full w-2/4 bg-foreground/40 rounded-full" />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="text-center p-4 border border-primary/30 bg-primary/5 rounded-lg">
-                <div className="text-3xl font-bebas text-primary mb-2">{t("home.physical", "PHYSICAL")}</div>
-                <p className="text-xs text-muted-foreground">{t("home.physical_desc", "Athletic capacity & conditioning")}</p>
+
+              {/* 4D */}
+              <div className="group relative">
+                <div className="flex items-stretch gap-6 p-6 rounded-xl border border-border/30 bg-card/10 hover:border-primary/50 hover:bg-card/20 transition-all duration-300">
+                  <div className="flex-shrink-0 w-20 md:w-28 flex items-center justify-center">
+                    <span className="text-4xl md:text-6xl font-bebas text-primary/50 group-hover:text-primary/70 transition-colors">4D</span>
+                  </div>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-foreground mb-1">Tempo Manipulation</h3>
+                    <p className="text-sm text-muted-foreground">Controlling time and rhythm to wrong-foot the opponent.</p>
+                  </div>
+                  <div className="hidden md:flex items-center">
+                    <div className="w-24 h-2 bg-foreground/10 rounded-full overflow-hidden">
+                      <div className="h-full w-3/4 bg-primary/50 rounded-full" />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="text-center p-4 border border-primary/30 bg-primary/5 rounded-lg">
-                <div className="text-3xl font-bebas text-primary mb-2">{t("home.psychological", "PSYCHOLOGICAL")}</div>
-                <p className="text-xs text-muted-foreground">{t("home.psychological_desc", "Mental strength & focus")}</p>
-              </div>
-              <div className="text-center p-4 border border-primary/30 bg-primary/5 rounded-lg col-span-2 md:col-span-1">
-                <div className="text-3xl font-bebas text-primary mb-2">{t("home.social", "SOCIAL")}</div>
-                <p className="text-xs text-muted-foreground">{t("home.social_desc", "Team dynamics & communication")}</p>
+
+              {/* 5D */}
+              <div className="group relative">
+                <div className="flex items-stretch gap-6 p-6 rounded-xl border border-primary/40 bg-primary/5 hover:border-primary hover:bg-primary/10 transition-all duration-300">
+                  <div className="flex-shrink-0 w-20 md:w-28 flex items-center justify-center">
+                    <span className="text-4xl md:text-6xl font-bebas text-primary group-hover:scale-110 transition-transform">5D</span>
+                  </div>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-foreground mb-1">Complete Integration</h3>
+                    <p className="text-sm text-muted-foreground">Understanding the opponent. Purposely acting to counter their decision with a clear pathway for every outcome.</p>
+                  </div>
+                  <div className="hidden md:flex items-center">
+                    <div className="w-24 h-2 bg-primary/20 rounded-full overflow-hidden">
+                      <div className="h-full w-full bg-primary rounded-full" />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Skills That Level Up Section */}
-        <section className="py-12 md:py-16 px-4 bg-background/90 backdrop-blur-sm">
+        {/* Skills That Level Up - Visual */}
+        <section className="py-16 md:py-24 px-4 bg-background/90 backdrop-blur-sm">
           <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-10 space-y-3">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  {t("home.future_proofing", "Future-Proofing Careers")}
-                </span>
-              </div>
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                {t("home.skills_that", "SKILLS THAT")} <span className="text-primary">{t("home.level_up", "LEVEL UP")}</span>
-              </h2>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div className="space-y-6">
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  {t("home.level_up_intro", "We don't just develop skills for where you are now. We identify and nurture qualities that will scale with your career—from academy to top-flight football.")}
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground mb-6">
+                  SKILLS THAT <span className="text-primary">LEVEL UP</span>
+                </h2>
+                <p className="text-lg text-muted-foreground mb-8">
+                  We develop for where you're going—not just where you are.
                 </p>
                 <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <span className="text-primary font-bebas text-xl">→</span>
-                    <p className="text-foreground">{t("home.level_up_point_1", "Focus on transferable qualities that remain effective at higher levels of competition")}</p>
+                  <div className="flex items-center gap-4 p-4 border-l-4 border-primary/30 bg-card/20">
+                    <span className="text-3xl font-bebas text-primary">01</span>
+                    <span className="text-foreground">Qualities that scale with competition level</span>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <span className="text-primary font-bebas text-xl">→</span>
-                    <p className="text-foreground">{t("home.level_up_point_2", "Build habits and techniques that adapt as the game speeds up")}</p>
+                  <div className="flex items-center gap-4 p-4 border-l-4 border-primary/50 bg-card/20">
+                    <span className="text-3xl font-bebas text-primary">02</span>
+                    <span className="text-foreground">Techniques that adapt as pace increases</span>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <span className="text-primary font-bebas text-xl">→</span>
-                    <p className="text-foreground">{t("home.level_up_point_3", "Prepare players for the demands of their target destination, not just their current environment")}</p>
+                  <div className="flex items-center gap-4 p-4 border-l-4 border-primary bg-card/20">
+                    <span className="text-3xl font-bebas text-primary">03</span>
+                    <span className="text-foreground">Prepared for target destination demands</span>
                   </div>
                 </div>
               </div>
-              <div className="p-8 border border-primary/30 bg-primary/5 rounded-lg text-center">
-                <blockquote className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-foreground italic">
-                  "{t("home.level_up_quote", "We scout and develop for where you're going, not just where you are.")}"
-                </blockquote>
+              
+              {/* Visual Element */}
+              <div className="relative">
+                <div className="aspect-square rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-8xl md:text-9xl font-bebas text-primary/20">↑</div>
+                    <p className="text-xl font-bebas uppercase tracking-widest text-foreground/60 mt-4">TRAJECTORY</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
