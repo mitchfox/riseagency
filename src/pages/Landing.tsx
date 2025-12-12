@@ -234,14 +234,14 @@ function LandingContent() {
       
       {/* Top Center Logo - disappears on xray or when hovering REALISE POTENTIAL area */}
       <div className={`absolute top-4 md:top-6 z-[4] transition-opacity duration-500 ${xrayState.isActive || topLogoHovered ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{
-      left: 'calc(50% - 4px)',
-      transform: 'translateX(-50%)'
-    }}>
-        {/* Desktop position adjustment */}
-        <div className="hidden md:block" style={{ transform: 'translateX(-12px)' }}>
+        left: '50%',
+        transform: 'translateX(-50%)'
+      }}>
+        {/* Desktop */}
+        <div className="hidden md:block">
           <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[55px] w-auto" loading="eager" fetchPriority="high" />
         </div>
-        {/* Mobile position */}
+        {/* Mobile */}
         <div className="md:hidden">
           <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[42px] w-auto" loading="eager" fetchPriority="high" />
         </div>
@@ -259,7 +259,7 @@ function LandingContent() {
       
       {/* Language Selector - fixed position, centered horizontally, above the menu slider */}
       <div className="hidden md:flex fixed z-[60] pointer-events-auto items-center justify-center" style={{
-        left: 'calc(50% - 6px)',
+        left: '50%',
         bottom: '172px',
         transform: 'translateX(-50%)'
       }}>
@@ -270,13 +270,14 @@ function LandingContent() {
       
       {/* Language Selector - Mobile only */}
       <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+132px)] flex flex-col items-center" style={{
-        left: 'calc(50% - 19px)'
+        left: '50%',
+        transform: 'translateX(-50%)'
       }}>
-        <div className="transform -translate-x-1/2 -translate-y-1/2 scale-[1.2]">
+        <div className="scale-[1.2]">
           <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
         </div>
         {/* Divider line below language selector */}
-        <div className="h-px bg-primary/40 mt-0" style={{ width: '56px', transform: 'translateX(calc(-50% + 4px))' }} />
+        <div className="h-px bg-primary/40 mt-0" style={{ width: '56px' }} />
       </div>
       
       {/* Portal & Staff links - subtle top right */}
