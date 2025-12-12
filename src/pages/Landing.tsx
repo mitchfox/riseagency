@@ -590,12 +590,12 @@ function RoleSlider({
             viewBox="0 0 100 100" 
             preserveAspectRatio="none"
           >
-            {/* Upper curve - for role labels */}
+            {/* Upper curve - invisible, only used for label positioning */}
             <path 
               d="M0,50 Q50,4 100,50" 
               fill="none" 
-              stroke="rgba(255,255,255,0.15)" 
-              strokeWidth="1"
+              stroke="transparent" 
+              strokeWidth="0"
               vectorEffect="non-scaling-stroke"
             />
             {/* Lower curve - for slider thumb */}
