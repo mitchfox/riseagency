@@ -1021,6 +1021,14 @@ export const RadialMenu = () => {
 
         // Mask out the center circle area
         const menuRadiusPercent = (menuRadius / overlaySize) * 100;
+
+        // Position card along the middle of the wedge so it always sits inside the clipPath
+        const midAngle = (startAngle + endAngle) / 2;
+        const midRad = (midAngle * Math.PI) / 180;
+        const cardRadius = menuRadius + menuPadding + maxHeight * 0.6;
+        const radiusPct = (cardRadius / overlaySize) * 100;
+        const cardCenterXPct = 50 + radiusPct * Math.cos(midRad);
+        const cardCenterYPct = 50 + radiusPct * Math.sin(midRad);
         
         return (
           <div 
@@ -1044,16 +1052,12 @@ export const RadialMenu = () => {
             <div 
               className="absolute"
               style={{
-                maxWidth,
-                maxHeight,
-                width: '100%',
+                width: maxWidth,
+                height: maxHeight,
                 overflow: 'hidden',
-                ...(card.position === 'top-right' || card.position === 'bottom-right'
-                  ? { right: edgePadding + overlayOffsetX }
-                  : { left: edgePadding + overlayOffsetX }),
-                ...(card.position === 'top-right' || card.position === 'top-left'
-                  ? { top: edgePadding + overlayOffsetY }
-                  : { bottom: edgePadding + overlayOffsetY }),
+                left: `${cardCenterXPct}%`,
+                top: `${cardCenterYPct}%`,
+                transform: 'translate(-50%, -50%)',
               }}
             >
               <CardComponent maxWidth={maxWidth} maxHeight={maxHeight} />
