@@ -626,21 +626,45 @@ export const RadialMenu = () => {
         
         const clipPath = generateWedgeClipPath(startAngle, endAngle);
         
-        // Calculate the radial menu circle radius as percentage of the overlay size
-        // The overlay is max(100vw, 100vh) and circleSize is 600px on desktop
-        // We need to position content OUTSIDE this circle
-        const overlaySize = Math.max(window.innerWidth, window.innerHeight);
-        const menuRadiusPercent = ((circleSize / 2) / overlaySize) * 100;
-        
-        // Position content outside the circle - start at circle edge + some padding
+        // Calculate positioning in viewport pixels for precise control
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const menuRadius = circleSize / 2;
         const contentRad = (centerAngle * Math.PI) / 180;
-        // Content distance should be beyond the menu circle (menuRadiusPercent + offset)
-        const contentDistFromCenter = menuRadiusPercent + 12; // 12% padding beyond circle edge
-        const contentX = 50 + Math.cos(contentRad) * contentDistFromCenter;
-        const contentY = 50 + Math.sin(contentRad) * contentDistFromCenter;
         
-        // Also mask out the center circle area from the gradient
-        const innerMaskPercent = menuRadiusPercent;
+        // Calculate the ideal position along the center angle, just outside the menu
+        const minDistFromCenter = menuRadius + 40; // 40px padding from menu edge
+        
+        // Calculate content box size estimate
+        const contentWidth = 260;
+        const contentHeight = 180;
+        
+        // Calculate position in pixels from viewport center
+        const idealX = Math.cos(contentRad) * minDistFromCenter;
+        const idealY = Math.sin(contentRad) * minDistFromCenter;
+        
+        // Convert to viewport coordinates (center is at vw/2, vh/2)
+        let finalX = vw / 2 + idealX;
+        let finalY = vh / 2 + idealY;
+        
+        // Clamp to keep content fully within viewport with padding
+        const edgePadding = 20;
+        const halfW = contentWidth / 2;
+        const halfH = contentHeight / 2;
+        
+        finalX = Math.max(edgePadding + halfW, Math.min(vw - edgePadding - halfW, finalX));
+        finalY = Math.max(edgePadding + halfH, Math.min(vh - edgePadding - halfH, finalY));
+        
+        // Convert back to overlay percentages (overlay is max(vw, vh) centered)
+        const overlaySize = Math.max(vw, vh);
+        const overlayOffsetX = (overlaySize - vw) / 2;
+        const overlayOffsetY = (overlaySize - vh) / 2;
+        
+        const contentXPercent = ((finalX + overlayOffsetX) / overlaySize) * 100;
+        const contentYPercent = ((finalY + overlayOffsetY) / overlaySize) * 100;
+        
+        // Mask out the center circle area
+        const menuRadiusPercent = (menuRadius / overlaySize) * 100;
         
         return (
           <div 
@@ -650,24 +674,25 @@ export const RadialMenu = () => {
               left: '50%',
               top: '50%',
               transform: 'translate(-50%, -50%)',
-              width: 'max(100vw, 100vh)',
-              height: 'max(100vw, 100vh)',
+              width: `${overlaySize}px`,
+              height: `${overlaySize}px`,
               clipPath,
             }}
           >
             <div 
               className="absolute inset-0"
               style={{
-                background: `radial-gradient(circle at 50% 50%, transparent ${innerMaskPercent}%, rgba(0,0,0,0.4) ${innerMaskPercent + 5}%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.9) 100%)`
+                background: `radial-gradient(circle at 50% 50%, transparent ${menuRadiusPercent}%, rgba(0,0,0,0.4) ${menuRadiusPercent + 3}%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.9) 100%)`
               }}
             />
             <div 
               className="absolute"
               style={{
-                left: `${contentX}%`,
-                top: `${contentY}%`,
+                left: `${contentXPercent}%`,
+                top: `${contentYPercent}%`,
                 transform: 'translate(-50%, -50%)',
-                maxWidth: '280px'
+                width: `${contentWidth}px`,
+                maxWidth: `${contentWidth}px`
               }}
             >
               <CardComponent />
