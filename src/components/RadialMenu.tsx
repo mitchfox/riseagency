@@ -601,23 +601,46 @@ export const RadialMenu = () => {
       {!isMobile && hoveredItem !== null && menuItems[hoveredItem]?.quadrantCard && (() => {
         const card = menuItems[hoveredItem].quadrantCard!;
         const CardComponent = card.component;
-        const segmentAngle = 360 / menuItems.length;
         
-        // Use the exact same angle math as the visible segments: 0° = right, increasing clockwise
-        const startAngle = hoveredItem * segmentAngle;
-        const endAngle = startAngle + segmentAngle;
-        const centerAngle = startAngle + segmentAngle / 2;
+        // CRITICAL: Use the EXACT same angle calculation as the dividers (line 365)
+        // Dividers use: angle = index * segmentAngle where segmentAngle = 360 / menuItems.length
+        // So segment boundaries are at: 0°, 72°, 144°, 216°, 288° for 5 items
+        const numItems = menuItems.length;
+        const segAngle = 360 / numItems;
         
-        // Wedge clip-path that is the same angular slice as the segment, just extended past the screen edges
+        // The divider at index N is at angle (N * segAngle)
+        // Segment N spans from divider N to divider N+1
+        // So segment N goes from (N * segAngle) to ((N+1) * segAngle)
+        const startAngle = hoveredItem * segAngle;
+        const endAngle = (hoveredItem + 1) * segAngle;
+        const centerAngle = (startAngle + endAngle) / 2;
+        
+        // Generate wedge clip-path with straight edges matching divider lines exactly
+        // Using only start point, end point, and center - no arc needed for straight edges
         const generateWedgeClipPath = (start: number, end: number): string => {
-          const points: string[] = ['50% 50%'];
-          const numArcPoints = 24;
+          // Convert to radians
+          const startRad = (start * Math.PI) / 180;
+          const endRad = (end * Math.PI) / 180;
           
+          // Calculate points far from center (200% ensures it reaches screen edge)
+          const dist = 200;
+          const startX = 50 + Math.cos(startRad) * dist;
+          const startY = 50 + Math.sin(startRad) * dist;
+          const endX = 50 + Math.cos(endRad) * dist;
+          const endY = 50 + Math.sin(endRad) * dist;
+          
+          // For a clean wedge, we need: center -> start edge -> arc along edge -> end edge -> center
+          // But for straight lines to match dividers, just use: center, start point, end point
+          // However this creates a triangle, not a wedge. We need intermediate arc points.
+          const points: string[] = ['50% 50%'];
+          
+          // Add arc points from start to end
+          const numArcPoints = 20;
           for (let i = 0; i <= numArcPoints; i++) {
             const angle = start + (end - start) * (i / numArcPoints);
-            const radians = (angle * Math.PI) / 180;
-            const x = 50 + Math.cos(radians) * 200; // 200% so it definitely reaches screen edge
-            const y = 50 + Math.sin(radians) * 200;
+            const rad = (angle * Math.PI) / 180;
+            const x = 50 + Math.cos(rad) * dist;
+            const y = 50 + Math.sin(rad) * dist;
             points.push(`${x}% ${y}%`);
           }
           
@@ -626,18 +649,17 @@ export const RadialMenu = () => {
         
         const clipPath = generateWedgeClipPath(startAngle, endAngle);
         
-        // Place content in the outer half of that SAME wedge
-        const contentRadians = (centerAngle * Math.PI) / 180;
-        const contentDistance = 42; // radial distance from center (in % of viewport)
-        const contentX = 50 + Math.cos(contentRadians) * contentDistance;
-        const contentY = 50 + Math.sin(contentRadians) * contentDistance;
+        // Position content in the outer portion of the wedge
+        const contentRad = (centerAngle * Math.PI) / 180;
+        const contentDist = 42;
+        const contentX = 50 + Math.cos(contentRad) * contentDist;
+        const contentY = 50 + Math.sin(contentRad) * contentDist;
         
         return (
           <div 
             className="fixed inset-0 pointer-events-none z-[5]"
             style={{ clipPath }}
           >
-            {/* Subtle extension from the segment outwards */}
             <div 
               className="absolute inset-0"
               style={{
