@@ -636,15 +636,21 @@ export const RadialMenu = () => {
         const cosA = Math.cos(contentRad);
         const sinA = Math.sin(contentRad);
         
-        // Minimum distance from center: just outside the radial menu
-        const rMin = menuRadius + 40; // 40px padding from menu edge
-        
         // Estimate content box size
         const contentWidth = 260;
         const contentHeight = 180;
         const halfW = contentWidth / 2;
         const halfH = contentHeight / 2;
         const edgePadding = 20;
+
+        // Gap between menu edge and content edge
+        const padding = 30;
+
+        // The content box extends back toward the center along the angle direction
+        const boxExtentTowardCenter = halfW * Math.abs(cosA) + halfH * Math.abs(sinA);
+
+        // Minimum distance from center: ensure nearest edge of content stays outside radial menu
+        const rMin = menuRadius + padding + boxExtentTowardCenter;
         
         // Compute allowed radius range from a single axis constraint
         const computeRange = (
