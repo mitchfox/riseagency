@@ -583,7 +583,6 @@ export const RadialMenu = () => {
               style={{ fontSize: `${isMobile ? centerSize * 0.165 * 0.7 : centerSize * 0.09375}px` }}
             >
               <img src={getFlagUrl(selectedLanguage.flagCode)} alt={selectedLanguage.name} className="rounded-sm" style={{ height: `${isMobile ? centerSize * 0.126 : centerSize * 0.105}px`, width: 'auto' }} />
-              <span>{selectedLanguage.name}</span>
               <ChevronDown 
                 className="transition-transform duration-300"
                 style={{
