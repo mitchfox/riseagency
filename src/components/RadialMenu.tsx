@@ -1029,7 +1029,7 @@ export const RadialMenu = () => {
         
         return (
           <div 
-            className="pointer-events-none z-[25]"
+            className="pointer-events-none z-[210]"
             style={{
               position: 'fixed',
               left: '50%',
