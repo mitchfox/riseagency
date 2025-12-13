@@ -12,6 +12,7 @@ import smudgedMarbleBg from "@/assets/black-marble-smudged.png";
 import europeMap from "@/assets/europe-outline.gif";
 import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Trophy, Users, Handshake, Briefcase, Search, Calendar, Heart, Package, X, ChevronDown } from "lucide-react";
 import { useState, useMemo, useRef } from "react";
+import { MenuHoverCard, HoverCardData, Quadrant } from "@/components/radial-menu/MenuHoverCard";
 
 interface MenuItem {
   to: string;
@@ -19,6 +20,10 @@ interface MenuItem {
   fallback: string;
   Icon: React.ComponentType<{ className?: string }>;
   angle: number; // angle in degrees for positioning
+  hoverCard?: {
+    quadrant: Quadrant;
+    data: HoverCardData;
+  };
 }
 
 type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr' | 'hr' | 'no';
@@ -168,13 +173,91 @@ export const RadialMenu = () => {
     ],
   };
 
-  // Default menu for main site
+  // Default menu for main site with hover cards
   const defaultMenu: MenuItem[] = [
-    { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: 0 },
-    { to: "/performance", labelKey: "header.realise_potential", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 72 },
-    { to: "/between-the-lines", labelKey: "header.between_the_lines", fallback: "INSIGHTS", Icon: BookOpen, angle: 144 },
-    { to: "/news", labelKey: "header.news", fallback: "NEWS", Icon: Newspaper, angle: 216 },
-    { to: "/contact", labelKey: "header.contact", fallback: "CONTACT", Icon: MessageCircle, angle: 288 },
+    { 
+      to: "/stars", 
+      labelKey: "header.stars", 
+      fallback: "STARS", 
+      Icon: Star, 
+      angle: 0,
+      hoverCard: {
+        quadrant: 'top-right',
+        data: {
+          title: "Our Rising Stars",
+          description: "Discover the exceptional talents we represent. Elite players ready to make their mark.",
+          icon: <Star className="w-8 h-8" />,
+          stats: [
+            { label: "Players", value: "50+" },
+            { label: "Countries", value: "15" }
+          ]
+        }
+      }
+    },
+    { 
+      to: "/performance", 
+      labelKey: "header.realise_potential", 
+      fallback: "PERFORMANCE", 
+      Icon: TrendingUp, 
+      angle: 72,
+      hoverCard: {
+        quadrant: 'top-right',
+        data: {
+          title: "Performance Analysis",
+          description: "Data-driven insights and comprehensive player development programs.",
+          icon: <TrendingUp className="w-8 h-8" />,
+          stats: [
+            { label: "Metrics", value: "100+" },
+            { label: "Reports", value: "Weekly" }
+          ]
+        }
+      }
+    },
+    { 
+      to: "/between-the-lines", 
+      labelKey: "header.between_the_lines", 
+      fallback: "INSIGHTS", 
+      Icon: BookOpen, 
+      angle: 144,
+      hoverCard: {
+        quadrant: 'bottom-left',
+        data: {
+          title: "Between The Lines",
+          description: "Expert analysis, tactical breakdowns, and exclusive football insights.",
+          icon: <BookOpen className="w-8 h-8" />
+        }
+      }
+    },
+    { 
+      to: "/news", 
+      labelKey: "header.news", 
+      fallback: "NEWS", 
+      Icon: Newspaper, 
+      angle: 216,
+      hoverCard: {
+        quadrant: 'bottom-left',
+        data: {
+          title: "Latest News",
+          description: "Stay updated with transfers, signings, and all the latest from RISE.",
+          icon: <Newspaper className="w-8 h-8" />
+        }
+      }
+    },
+    { 
+      to: "/contact", 
+      labelKey: "header.contact", 
+      fallback: "CONTACT", 
+      Icon: MessageCircle, 
+      angle: 288,
+      hoverCard: {
+        quadrant: 'bottom-right',
+        data: {
+          title: "Get In Touch",
+          description: "Ready to elevate your career? Connect with our team today.",
+          icon: <MessageCircle className="w-8 h-8" />
+        }
+      }
+    },
   ];
 
   // Role selection menu items
@@ -539,8 +622,49 @@ export const RadialMenu = () => {
 
       </div>
 
+      {/* Quadrant hover cards - Desktop only */}
+      {!isMobile && hoveredItem !== null && menuItems[hoveredItem]?.hoverCard && (
+        <>
+          {/* Top-Left Quadrant */}
+          <div className="fixed top-0 left-0 w-1/2 h-1/2 flex items-end justify-end p-16 pointer-events-none z-[180]">
+            <MenuHoverCard
+              data={menuItems[hoveredItem].hoverCard!.data}
+              quadrant="top-left"
+              isVisible={menuItems[hoveredItem].hoverCard!.quadrant === 'top-left'}
+            />
+          </div>
 
-      {/* Map overlay - positioned relative to the fixed container */}
+          {/* Top-Right Quadrant */}
+          <div className="fixed top-0 right-0 w-1/2 h-1/2 flex items-end justify-start p-16 pointer-events-none z-[180]">
+            <MenuHoverCard
+              data={menuItems[hoveredItem].hoverCard!.data}
+              quadrant="top-right"
+              isVisible={menuItems[hoveredItem].hoverCard!.quadrant === 'top-right'}
+            />
+          </div>
+
+          {/* Bottom-Left Quadrant */}
+          <div className="fixed bottom-0 left-0 w-1/2 h-1/2 flex items-start justify-end p-16 pointer-events-none z-[180]">
+            <MenuHoverCard
+              data={menuItems[hoveredItem].hoverCard!.data}
+              quadrant="bottom-left"
+              isVisible={menuItems[hoveredItem].hoverCard!.quadrant === 'bottom-left'}
+            />
+          </div>
+
+          {/* Bottom-Right Quadrant */}
+          <div className="fixed bottom-0 right-0 w-1/2 h-1/2 flex items-start justify-start p-16 pointer-events-none z-[180]">
+            <MenuHoverCard
+              data={menuItems[hoveredItem].hoverCard!.data}
+              quadrant="bottom-right"
+              isVisible={menuItems[hoveredItem].hoverCard!.quadrant === 'bottom-right'}
+            />
+          </div>
+        </>
+      )}
+
+
+
       {showMap && (
         <div 
           className="absolute inset-0 z-50 flex items-center justify-center"
