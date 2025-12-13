@@ -657,8 +657,16 @@ export const RadialMenu = () => {
         
         return (
           <div 
-            className="fixed inset-0 pointer-events-none z-[5]"
-            style={{ clipPath }}
+            className="pointer-events-none z-[5]"
+            style={{
+              position: 'fixed',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 'max(100vw, 100vh)',
+              height: 'max(100vw, 100vh)',
+              clipPath,
+            }}
           >
             <div 
               className="absolute inset-0"
