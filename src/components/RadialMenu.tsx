@@ -598,11 +598,24 @@ export const RadialMenu = () => {
 
       </div>
 
-      {/* Quadrant cards - Desktop only, positioned in corners as background */}
+      {/* Quadrant cards - Desktop only, positioned in closest corner as background */}
       {!isMobile && hoveredItem !== null && menuItems[hoveredItem]?.quadrantCard && (() => {
         const card = menuItems[hoveredItem].quadrantCard!;
         const CardComponent = card.component;
-        const position = card.position;
+        const itemAngle = menuItems[hoveredItem].angle;
+        
+        // Determine closest quadrant based on menu item angle
+        // Angles: 0=right, 90=bottom, 180=left, 270=top (clockwise from right)
+        // Quadrants: top-right (315-45), bottom-right (45-135), bottom-left (135-225), top-left (225-315)
+        const getClosestQuadrant = (angle: number): QuadrantPosition => {
+          const normalizedAngle = ((angle % 360) + 360) % 360;
+          if (normalizedAngle >= 315 || normalizedAngle < 45) return 'bottom-right';
+          if (normalizedAngle >= 45 && normalizedAngle < 135) return 'bottom-left';
+          if (normalizedAngle >= 135 && normalizedAngle < 225) return 'top-left';
+          return 'top-right';
+        };
+        
+        const position = getClosestQuadrant(itemAngle);
         
         // Position classes for each quadrant - fill the full corner
         const positionClasses: Record<QuadrantPosition, string> = {
@@ -614,7 +627,7 @@ export const RadialMenu = () => {
         
         return (
           <div 
-            className={`fixed ${positionClasses[position]} w-1/2 h-1/2 pointer-events-none z-[100] overflow-hidden`}
+            className={`fixed ${positionClasses[position]} w-1/2 h-1/2 pointer-events-none z-[5] overflow-hidden`}
           >
             {/* Background fill for the quadrant */}
             <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/20" />
