@@ -224,6 +224,14 @@ const Login = () => {
         </div>
       </section>
 
+      {/* Not a Player CTA */}
+      <div className="py-8 px-4 bg-secondary/30 border-y border-border/30">
+        <p className="text-center text-muted-foreground">
+          Not a player represented by our agency?{" "}
+          <span className="text-primary font-medium">Learn more about the RISE Portal below ↓</span>
+        </p>
+      </div>
+
       {/* Features Showcase Section */}
       <section className="py-16 md:py-24 px-4 bg-background">
         <div className="max-w-6xl mx-auto">
