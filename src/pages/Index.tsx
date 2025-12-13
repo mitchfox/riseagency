@@ -7,6 +7,7 @@ import { IntroModal } from "@/components/IntroModal";
 import { SEO } from "@/components/SEO";
 import { VideoPortfolio } from "@/components/VideoPortfolio";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
+import { CapabilityAccordion } from "@/components/CapabilityAccordion";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { HoverText } from "@/components/HoverText";
@@ -111,28 +112,9 @@ const Index = () => {
                 {t("home.hero_subtitle", "Elite Football Representation & Performance Optimisation")}
               </p>
               
-              {/* Capability Tiles - Visually Striking */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 max-w-5xl mx-auto">
-                <div className="group relative p-6 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-[1.02]">
-                  <div className="text-4xl font-bebas text-primary mb-2">950+</div>
-                  <div className="text-sm font-bebas uppercase tracking-wider text-foreground">Scouts Worldwide</div>
-                  <div className="text-xs text-muted-foreground mt-1">Eyes across every league</div>
-                </div>
-                <div className="group relative p-6 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-[1.02]">
-                  <div className="text-4xl font-bebas text-primary mb-2">R90</div>
-                  <div className="text-sm font-bebas uppercase tracking-wider text-foreground">Analysis System</div>
-                  <div className="text-xs text-muted-foreground mt-1">Proprietary performance metrics</div>
-                </div>
-                <div className="group relative p-6 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-[1.02]">
-                  <div className="text-4xl font-bebas text-primary mb-2">5D</div>
-                  <div className="text-sm font-bebas uppercase tracking-wider text-foreground">Coaching Model</div>
-                  <div className="text-xs text-muted-foreground mt-1">Complete player development</div>
-                </div>
-                <div className="group relative p-6 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:scale-[1.02]">
-                  <div className="text-4xl font-bebas text-primary mb-2">PL</div>
-                  <div className="text-sm font-bebas uppercase tracking-wider text-foreground">Development History</div>
-                  <div className="text-xs text-muted-foreground mt-1">Premier League stars developed</div>
-                </div>
+              {/* Capability Accordion */}
+              <div className="mt-12">
+                <CapabilityAccordion />
               </div>
             </div>
           </div>
