@@ -604,9 +604,9 @@ export const RadialMenu = () => {
         const segmentAngle = 360 / menuItems.length;
         
         // Calculate start and end angles for this segment
-        // Menu starts at top (-90 degrees offset) and goes clockwise
-        const startAngle = hoveredItem * segmentAngle - 90;
-        const endAngle = (hoveredItem + 1) * segmentAngle - 90;
+        // Use same coordinate system as segment paths: 0° = right, increasing clockwise
+        const startAngle = hoveredItem * segmentAngle;
+        const endAngle = startAngle + segmentAngle;
         
         // Generate clip-path polygon points for wedge shape
         // Points: center, then arc from startAngle to endAngle
@@ -629,9 +629,9 @@ export const RadialMenu = () => {
         const clipPath = generateWedgeClipPath(startAngle, endAngle);
         
         // Calculate center angle of the segment for content positioning
-        const centerAngle = (startAngle + endAngle) / 2;
+        const centerAngle = startAngle + segmentAngle / 2;
         
-        // Calculate position for content (70% from center toward outer edge)
+        // Calculate position for content (from center toward outer edge)
         const contentRadians = (centerAngle * Math.PI) / 180;
         const contentDistance = 35; // Percentage from center
         const contentX = 50 + Math.cos(contentRadians) * contentDistance;
