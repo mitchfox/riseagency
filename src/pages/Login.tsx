@@ -6,59 +6,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import smudgedMarbleBg from "@/assets/smudged-marble-login.png";
-import { 
-  Video, 
-  BarChart3, 
-  Dumbbell, 
-  FileText, 
-  Users, 
-  Trophy,
-  Play,
-  TrendingUp,
-  Calendar,
-  Target
-} from "lucide-react";
+
+// Portal feature screenshots
+import analysisScreenshot from "@/assets/realise-potential-analysis.png";
+import reportScreenshot from "@/assets/realise-potential-report.png";
+import sessionsScreenshot from "@/assets/realise-potential-sessions.png";
+import paosScreenshot from "@/assets/realise-potential-paos.png";
 
 const portalFeatures = [
   {
-    icon: Video,
+    image: analysisScreenshot,
     title: "Match Analysis",
-    description: "Detailed breakdown of your performances with expert insights and tactical analysis from every match."
+    description: "Every performance broken down with expert tactical insights, key moments, and actionable feedback."
   },
   {
-    icon: BarChart3,
-    title: "Performance Stats",
-    description: "Track your progress with comprehensive statistics, ratings, and performance metrics over time."
+    image: reportScreenshot,
+    title: "Performance Reports",
+    description: "Comprehensive match reports with ratings, stats, and detailed analysis of your contributions."
   },
   {
-    icon: Dumbbell,
+    image: sessionsScreenshot,
     title: "Training Programmes",
-    description: "Personalized training sessions and workout programmes designed specifically for your development."
+    description: "Personalized sessions and workout programmes designed to develop your game week by week."
   },
   {
-    icon: Play,
-    title: "Video Highlights",
-    description: "Access your curated highlight reels and individual clip collections from your matches."
-  },
-  {
-    icon: TrendingUp,
+    image: paosScreenshot,
     title: "Development Tracking",
-    description: "Monitor your growth with test results, benchmarks, and development milestones."
-  },
-  {
-    icon: Users,
-    title: "Club Outreach",
-    description: "Stay informed about club interest, trial opportunities, and representation progress."
-  },
-  {
-    icon: Calendar,
-    title: "Weekly Schedule",
-    description: "View your personalized weekly training schedule and upcoming sessions at a glance."
-  },
-  {
-    icon: Target,
-    title: "Positional Guides",
-    description: "Access tactical guides and educational content tailored to your playing position."
+    description: "Monitor your progress with benchmarks, test results, and development milestones over time."
   }
 ];
 
@@ -250,31 +224,77 @@ const Login = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Showcase Section */}
       <section className="py-16 md:py-24 px-4 bg-background">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-foreground mb-4">
-              EVERYTHING YOU NEED
+            <p className="text-primary uppercase tracking-widest text-sm mb-3">Exclusive Access</p>
+            <h2 className="text-3xl md:text-5xl font-bebas uppercase tracking-wider text-foreground mb-4">
+              HERE'S WHAT OUR PLAYERS GET
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Access comprehensive tools and resources designed to accelerate your football development.
+              Every player on our agency receives a dedicated portal with tools and resources to accelerate their development.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Feature Cards with Screenshots */}
+          <div className="space-y-16 md:space-y-24">
             {portalFeatures.map((feature, index) => (
               <div 
                 key={index}
-                className="group p-6 bg-secondary/30 border border-border/50 hover:border-primary/50 transition-all duration-300"
+                className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-8 lg:gap-12 items-center`}
               >
-                <feature.icon className="w-10 h-10 text-primary mb-4 group-hover:scale-110 transition-transform duration-300" />
-                <h3 className="text-lg font-bebas uppercase tracking-wider text-foreground mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {feature.description}
-                </p>
+                {/* Screenshot */}
+                <div className="flex-1 w-full">
+                  <div className="relative group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-primary/5 rounded-lg blur-sm group-hover:blur-md transition-all duration-300" />
+                    <div className="relative overflow-hidden rounded-lg border border-border/50">
+                      <img 
+                        src={feature.image} 
+                        alt={feature.title}
+                        className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Text Content */}
+                <div className="flex-1 text-center lg:text-left">
+                  <span className="inline-block text-primary text-sm uppercase tracking-widest mb-2">
+                    0{index + 1}
+                  </span>
+                  <h3 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-foreground mb-4">
+                    {feature.title}
+                  </h3>
+                  <p className="text-muted-foreground text-lg leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Additional Features List */}
+      <section className="py-16 px-4 bg-secondary/20 border-t border-border/50">
+        <div className="max-w-4xl mx-auto">
+          <h3 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-foreground text-center mb-10">
+            PLUS SO MUCH MORE
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {[
+              "Video Highlights",
+              "Weekly Schedules", 
+              "Positional Guides",
+              "Club Outreach Updates",
+              "Physical Testing",
+              "Nutrition Plans",
+              "Psychology Sessions",
+              "Career Planning"
+            ].map((item, idx) => (
+              <div key={idx} className="p-4">
+                <p className="text-foreground font-medium">{item}</p>
               </div>
             ))}
           </div>
@@ -282,14 +302,13 @@ const Login = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 px-4 bg-secondary/20 border-t border-border/50">
+      <section className="py-16 px-4 bg-background border-t border-border/50">
         <div className="max-w-3xl mx-auto text-center">
-          <Trophy className="w-12 h-12 text-primary mx-auto mb-6" />
           <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-foreground mb-4">
-            READY TO ELEVATE YOUR GAME?
+            WANT ACCESS?
           </h2>
           <p className="text-muted-foreground mb-8">
-            Not a member yet? Get in touch to learn more about our player development programme.
+            Get in touch to learn more about joining our player development programme.
           </p>
           <Button 
             variant="outline" 
