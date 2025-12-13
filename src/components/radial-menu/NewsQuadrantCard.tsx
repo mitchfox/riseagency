@@ -7,7 +7,12 @@ interface NewsItem {
   image_url: string;
 }
 
-export const NewsQuadrantCard = () => {
+interface QuadrantCardProps {
+  maxWidth?: number;
+  maxHeight?: number;
+}
+
+export const NewsQuadrantCard = ({ maxWidth, maxHeight }: QuadrantCardProps) => {
   const [newsIndex, setNewsIndex] = useState(0);
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
 
@@ -42,9 +47,17 @@ export const NewsQuadrantCard = () => {
   if (newsItems.length === 0) return null;
 
   return (
-    <div className="animate-[fade-in_0.3s_ease-out_forwards] text-center">
+    <div
+      className="animate-[fade-in_0.3s_ease-out_forwards] text-center"
+      style={{
+        maxWidth: maxWidth ?? undefined,
+        maxHeight: maxHeight ?? undefined,
+        marginLeft: "auto",
+        marginRight: "auto",
+      }}
+    >
       {/* News image thumbnail */}
-      <div className="relative w-48 h-32 mx-auto mb-4 rounded-lg overflow-hidden">
+      <div className="relative w-full aspect-[3/2] mx-auto mb-4 rounded-lg overflow-hidden">
         {newsItems.map((item, index) => (
           <div
             key={item.id}

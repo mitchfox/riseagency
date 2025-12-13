@@ -14,7 +14,12 @@ interface Player {
   image_url: string;
 }
 
-export const StarsQuadrantCard = () => {
+interface QuadrantCardProps {
+  maxWidth?: number;
+  maxHeight?: number;
+}
+
+export const StarsQuadrantCard = ({ maxWidth, maxHeight }: QuadrantCardProps) => {
   const { t } = useLanguage();
   const [starIndex, setStarIndex] = useState(0);
   const [starPlayers, setStarPlayers] = useState<Player[]>([]);
@@ -48,9 +53,17 @@ export const StarsQuadrantCard = () => {
   if (starPlayers.length === 0) return null;
 
   return (
-    <div className="animate-[fade-in_0.3s_ease-out_forwards] text-center">
+    <div
+      className="animate-[fade-in_0.3s_ease-out_forwards] text-center"
+      style={{
+        maxWidth: maxWidth ?? undefined,
+        maxHeight: maxHeight ?? undefined,
+        marginLeft: "auto",
+        marginRight: "auto",
+      }}
+    >
       {/* Player images cycling */}
-      <div className="relative w-48 h-48 mx-auto mb-4">
+      <div className="relative w-full aspect-square mx-auto mb-4">
         {starPlayers.map((player, index) => (
           <div
             key={player.id}
