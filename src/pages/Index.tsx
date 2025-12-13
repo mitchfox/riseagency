@@ -104,11 +104,11 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background/80"></div>
           <div className="container mx-auto max-w-7xl relative z-10">
             <div className="text-center space-y-6">
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider">
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider mb-0">
                 <span className="text-foreground">{t("home.hero_title_1", "REALISE")} </span>
                 <span className="text-primary">{t("home.hero_title_2", "POTENTIAL")}</span>
               </h1>
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic">
+              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic !mt-0">
                 {t("home.hero_subtitle", "Elite Football Representation & Performance Optimisation")}
               </p>
               
