@@ -276,14 +276,6 @@ export const CapabilityAccordion = () => {
           );
         })}
         
-        {/* Auto-rotate indicator */}
-        <div className="flex items-center justify-center gap-2 mt-2 text-xs text-muted-foreground">
-          <div className={cn(
-            "w-2 h-2 rounded-full transition-colors duration-300",
-            isPaused ? "bg-muted-foreground/50" : "bg-primary animate-pulse"
-          )} />
-          <span>{isPaused ? "Paused" : "Auto-rotating"}</span>
-        </div>
       </div>
     </div>
   );
