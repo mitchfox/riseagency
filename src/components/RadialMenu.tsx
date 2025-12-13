@@ -629,33 +629,61 @@ export const RadialMenu = () => {
         // Calculate positioning in viewport pixels for precise control
         const vw = window.innerWidth;
         const vh = window.innerHeight;
+        const cx = vw / 2;
+        const cy = vh / 2;
         const menuRadius = circleSize / 2;
         const contentRad = (centerAngle * Math.PI) / 180;
+        const cosA = Math.cos(contentRad);
+        const sinA = Math.sin(contentRad);
         
-        // Calculate the ideal position along the center angle, just outside the menu
-        const minDistFromCenter = menuRadius + 40; // 40px padding from menu edge
+        // Minimum distance from center: just outside the radial menu
+        const rMin = menuRadius + 40; // 40px padding from menu edge
         
-        // Calculate content box size estimate
+        // Estimate content box size
         const contentWidth = 260;
         const contentHeight = 180;
-        
-        // Calculate position in pixels from viewport center
-        const idealX = Math.cos(contentRad) * minDistFromCenter;
-        const idealY = Math.sin(contentRad) * minDistFromCenter;
-        
-        // Convert to viewport coordinates (center is at vw/2, vh/2)
-        let finalX = vw / 2 + idealX;
-        let finalY = vh / 2 + idealY;
-        
-        // Clamp to keep content fully within viewport with padding
-        const edgePadding = 20;
         const halfW = contentWidth / 2;
         const halfH = contentHeight / 2;
+        const edgePadding = 20;
         
-        finalX = Math.max(edgePadding + halfW, Math.min(vw - edgePadding - halfW, finalX));
-        finalY = Math.max(edgePadding + halfH, Math.min(vh - edgePadding - halfH, finalY));
+        // Compute allowed radius range from a single axis constraint
+        const computeRange = (
+          center: number,
+          halfSize: number,
+          component: number,
+          maxSize: number,
+        ) => {
+          if (Math.abs(component) < 1e-4) {
+            // Direction is nearly perpendicular to this axis; no meaningful constraint
+            return { min: 0, max: Infinity };
+          }
+          const minCenter = edgePadding + halfSize;
+          const maxCenter = maxSize - edgePadding - halfSize;
+          const r1 = (minCenter - center) / component;
+          const r2 = (maxCenter - center) / component;
+          return {
+            min: Math.min(r1, r2),
+            max: Math.max(r1, r2),
+          };
+        };
         
-        // Convert back to overlay percentages (overlay is max(vw, vh) centered)
+        const rangeX = computeRange(cx, halfW, cosA, vw);
+        const rangeY = computeRange(cy, halfH, sinA, vh);
+        
+        // Final allowed radius interval: intersection of X, Y, and rMin
+        let rLow = Math.max(0, rMin, rangeX.min, rangeY.min);
+        const rHigh = Math.min(rangeX.max, rangeY.max);
+        
+        // If intersection is empty, fall back to rMin (may slightly clip on tiny screens)
+        if (rHigh < rLow) {
+          rLow = rMin;
+        }
+        const r = rLow;
+        
+        const finalX = cx + r * cosA;
+        const finalY = cy + r * sinA;
+        
+        // Convert back to overlay percentages (overlay is square max(vw, vh) centered)
         const overlaySize = Math.max(vw, vh);
         const overlayOffsetX = (overlaySize - vw) / 2;
         const overlayOffsetY = (overlaySize - vh) / 2;
