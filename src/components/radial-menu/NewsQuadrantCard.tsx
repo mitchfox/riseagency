@@ -60,8 +60,8 @@ export const NewsQuadrantCard = () => {
         </div>
       ))}
       
-      {/* Content overlay - positioned in the corner */}
-      <div className="absolute bottom-8 left-8 text-left space-y-3 max-w-md">
+      {/* Content overlay - positioned in the outer corner away from center */}
+      <div className="absolute bottom-4 left-4 text-left space-y-3 max-w-[40%]">
         {/* Label */}
         <div className="inline-block bg-primary px-4 py-1">
           <span className="text-sm font-bebas uppercase tracking-wider text-black">Latest News</span>

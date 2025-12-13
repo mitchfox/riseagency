@@ -11,21 +11,22 @@ interface SimpleQuadrantCardProps {
 
 export const SimpleQuadrantCard = ({ icon, title, description, stat, position }: SimpleQuadrantCardProps) => {
   // Determine corner positioning and gradient direction based on quadrant
+  // Position content at outer edges, away from center of screen
   const positionStyles: Record<string, { container: string; gradient: string }> = {
     'top-left': { 
-      container: 'top-8 left-8 text-left', 
+      container: 'top-4 left-4 text-left max-w-[40%]', 
       gradient: 'bg-gradient-to-br from-black/80 via-black/40 to-transparent' 
     },
     'top-right': { 
-      container: 'top-8 right-8 text-right', 
+      container: 'top-4 right-4 text-right max-w-[40%]', 
       gradient: 'bg-gradient-to-bl from-black/80 via-black/40 to-transparent' 
     },
     'bottom-left': { 
-      container: 'bottom-8 left-8 text-left', 
+      container: 'bottom-4 left-4 text-left max-w-[40%]', 
       gradient: 'bg-gradient-to-tr from-black/80 via-black/40 to-transparent' 
     },
     'bottom-right': { 
-      container: 'bottom-8 right-8 text-right', 
+      container: 'bottom-4 right-4 text-right max-w-[40%]', 
       gradient: 'bg-gradient-to-tl from-black/80 via-black/40 to-transparent' 
     },
   };
@@ -37,8 +38,8 @@ export const SimpleQuadrantCard = ({ icon, title, description, stat, position }:
       {/* Gradient background */}
       <div className={`absolute inset-0 ${styles.gradient}`} />
       
-      {/* Content positioned in corner */}
-      <div className={`absolute ${styles.container} space-y-3 max-w-sm`}>
+      {/* Content positioned in outer corner */}
+      <div className={`absolute ${styles.container} space-y-3`}>
         {/* Label with icon */}
         <div className="inline-flex items-center gap-2 bg-primary px-4 py-1">
           <div className="text-black">{icon}</div>
