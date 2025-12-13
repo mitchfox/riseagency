@@ -122,66 +122,416 @@ export const RadialMenu = () => {
     { key: "business", labelKey: "roles.business", fallback: "Business" },
   ];
 
+  const getQuadrantPositionForAngle = (angle: number): QuadrantPosition => {
+    const normalized = ((angle % 360) + 360) % 360;
+    const isRight = normalized < 90 || normalized >= 270;
+    const isTop = normalized >= 36 && normalized < 180;
+
+    if (isRight && isTop) return 'top-right';
+    if (!isRight && isTop) return 'top-left';
+    if (!isRight && !isTop) return 'bottom-left';
+    return 'bottom-right';
+  };
+
   // Role-specific menu configurations
   const roleMenus: Record<string, MenuItem[]> = {
     players: [
       { to: "/login", labelKey: "header.portal", fallback: "PORTAL", Icon: Users, angle: 0 },
-      { to: "/between-the-lines", labelKey: "header.between_the_lines", fallback: "INSIGHTS", Icon: BookOpen, angle: 60 },
+      { 
+        to: "/between-the-lines", 
+        labelKey: "header.between_the_lines", 
+        fallback: "INSIGHTS", 
+        Icon: BookOpen, 
+        angle: 60,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(60),
+          component: InsightsQuadrantCard,
+        },
+      },
       { to: "/playersmore", labelKey: "header.what_we_look_for", fallback: "WHAT WE SEEK", Icon: Search, angle: 120 },
-      { to: "/performance", labelKey: "header.performance", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 180 },
-      { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: 240 },
-      { to: "/contact", labelKey: "header.contact", fallback: "REPRESENT ME", Icon: Handshake, angle: 300 },
+      { 
+        to: "/performance", 
+        labelKey: "header.performance", 
+        fallback: "PERFORMANCE", 
+        Icon: TrendingUp, 
+        angle: 180,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(180),
+          component: PerformanceQuadrantCard,
+        },
+      },
+      { 
+        to: "/stars", 
+        labelKey: "header.stars", 
+        fallback: "STARS", 
+        Icon: Star, 
+        angle: 240,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(240),
+          component: StarsQuadrantCard,
+        },
+      },
+      { 
+        to: "/contact", 
+        labelKey: "header.contact", 
+        fallback: "REPRESENT ME", 
+        Icon: Handshake, 
+        angle: 300,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(300),
+          component: ContactQuadrantCard,
+        },
+      },
     ],
     clubs: [
       { to: "/clubs", labelKey: "header.club_direction", fallback: "CLUB SUPPORT", Icon: Target, angle: 0 },
-      { to: "/stars", labelKey: "header.stars", fallback: "OUR STARS", Icon: Star, angle: 60 },
-      { to: "/performance", labelKey: "header.performance", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 120 },
-      { to: "/contact", labelKey: "header.declare_interest", fallback: "DECLARE INTEREST", Icon: Users, angle: 180 },
-      { to: "/between-the-lines", labelKey: "header.insights", fallback: "INSIGHTS", Icon: BookOpen, angle: 240 },
-      { to: "/contact", labelKey: "header.arrange_meeting", fallback: "ARRANGE MEETING", Icon: Calendar, angle: 300 },
+      { 
+        to: "/stars", 
+        labelKey: "header.stars", 
+        fallback: "OUR STARS", 
+        Icon: Star, 
+        angle: 60,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(60),
+          component: StarsQuadrantCard,
+        },
+      },
+      { 
+        to: "/performance", 
+        labelKey: "header.performance", 
+        fallback: "PERFORMANCE", 
+        Icon: TrendingUp, 
+        angle: 120,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(120),
+          component: PerformanceQuadrantCard,
+        },
+      },
+      { 
+        to: "/contact", 
+        labelKey: "header.declare_interest", 
+        fallback: "DECLARE INTEREST", 
+        Icon: Users, 
+        angle: 180,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(180),
+          component: ContactQuadrantCard,
+        },
+      },
+      { 
+        to: "/between-the-lines", 
+        labelKey: "header.insights", 
+        fallback: "INSIGHTS", 
+        Icon: BookOpen, 
+        angle: 240,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(240),
+          component: InsightsQuadrantCard,
+        },
+      },
+      { 
+        to: "/contact", 
+        labelKey: "header.arrange_meeting", 
+        fallback: "ARRANGE MEETING", 
+        Icon: Calendar, 
+        angle: 300,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(300),
+          component: ContactQuadrantCard,
+        },
+      },
     ],
     agents: [
-      { to: "/stars", labelKey: "header.stars", fallback: "OUR STARS", Icon: Star, angle: 0 },
-      { to: "/contact", labelKey: "header.collaboration", fallback: "COLLABORATION", Icon: Handshake, angle: 60 },
-      { to: "/contact", labelKey: "header.declare_interest", fallback: "DECLARE INTEREST", Icon: Users, angle: 120 },
-      { to: "/between-the-lines", labelKey: "header.insights", fallback: "INSIGHTS", Icon: BookOpen, angle: 180 },
-      { to: "/performance", labelKey: "header.performance", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 240 },
-      { to: "/contact", labelKey: "header.arrange_meeting", fallback: "ARRANGE MEETING", Icon: Calendar, angle: 300 },
+      { 
+        to: "/stars", 
+        labelKey: "header.stars", 
+        fallback: "OUR STARS", 
+        Icon: Star, 
+        angle: 0,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(0),
+          component: StarsQuadrantCard,
+        },
+      },
+      { 
+        to: "/contact", 
+        labelKey: "header.collaboration", 
+        fallback: "COLLABORATION", 
+        Icon: Handshake, 
+        angle: 60,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(60),
+          component: ContactQuadrantCard,
+        },
+      },
+      { 
+        to: "/contact", 
+        labelKey: "header.declare_interest", 
+        fallback: "DECLARE INTEREST", 
+        Icon: Users, 
+        angle: 120,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(120),
+          component: ContactQuadrantCard,
+        },
+      },
+      { 
+        to: "/between-the-lines", 
+        labelKey: "header.insights", 
+        fallback: "INSIGHTS", 
+        Icon: BookOpen, 
+        angle: 180,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(180),
+          component: InsightsQuadrantCard,
+        },
+      },
+      { 
+        to: "/performance", 
+        labelKey: "header.performance", 
+        fallback: "PERFORMANCE", 
+        Icon: TrendingUp, 
+        angle: 240,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(240),
+          component: PerformanceQuadrantCard,
+        },
+      },
+      { 
+        to: "/contact", 
+        labelKey: "header.arrange_meeting", 
+        fallback: "ARRANGE MEETING", 
+        Icon: Calendar, 
+        angle: 300,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(300),
+          component: ContactQuadrantCard,
+        },
+      },
     ],
     scouts: [
       { to: "/playersmore", labelKey: "header.what_we_look_for", fallback: "WHAT WE SEEK", Icon: Search, angle: 0 },
       { to: "/login", labelKey: "header.portal", fallback: "PORTAL", Icon: Users, angle: 60 },
       { to: "/scouts", labelKey: "header.jobs", fallback: "OPPORTUNITIES", Icon: Briefcase, angle: 120 },
-      { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: 180 },
-      { to: "/between-the-lines", labelKey: "header.insights", fallback: "INSIGHTS", Icon: BookOpen, angle: 240 },
-      { to: "/contact", labelKey: "header.work_with_us", fallback: "SCOUT FOR RISE", Icon: Handshake, angle: 300 },
+      { 
+        to: "/stars", 
+        labelKey: "header.stars", 
+        fallback: "STARS", 
+        Icon: Star, 
+        angle: 180,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(180),
+          component: StarsQuadrantCard,
+        },
+      },
+      { 
+        to: "/between-the-lines", 
+        labelKey: "header.insights", 
+        fallback: "INSIGHTS", 
+        Icon: BookOpen, 
+        angle: 240,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(240),
+          component: InsightsQuadrantCard,
+        },
+      },
+      { 
+        to: "/contact", 
+        labelKey: "header.work_with_us", 
+        fallback: "SCOUT FOR RISE", 
+        Icon: Handshake, 
+        angle: 300,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(300),
+          component: ContactQuadrantCard,
+        },
+      },
     ],
     coaches: [
       { to: "/login", labelKey: "header.portal", fallback: "PORTAL", Icon: Users, angle: 0 },
-      { to: "/potential", labelKey: "header.performance", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 60 },
-      { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: 120 },
-      { to: "/between-the-lines", labelKey: "header.insights", fallback: "INSIGHTS", Icon: BookOpen, angle: 180 },
-      { to: "/contact", labelKey: "header.represent_me", fallback: "REPRESENT ME", Icon: Handshake, angle: 240 },
-      { to: "/contact", labelKey: "header.arrange_meeting", fallback: "ARRANGE MEETING", Icon: Calendar, angle: 300 },
+      { 
+        to: "/potential", 
+        labelKey: "header.performance", 
+        fallback: "PERFORMANCE", 
+        Icon: TrendingUp, 
+        angle: 60,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(60),
+          component: PerformanceQuadrantCard,
+        },
+      },
+      { 
+        to: "/stars", 
+        labelKey: "header.stars", 
+        fallback: "STARS", 
+        Icon: Star, 
+        angle: 120,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(120),
+          component: StarsQuadrantCard,
+        },
+      },
+      { 
+        to: "/between-the-lines", 
+        labelKey: "header.insights", 
+        fallback: "INSIGHTS", 
+        Icon: BookOpen, 
+        angle: 180,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(180),
+          component: InsightsQuadrantCard,
+        },
+      },
+      { 
+        to: "/contact", 
+        labelKey: "header.represent_me", 
+        fallback: "REPRESENT ME", 
+        Icon: Handshake, 
+        angle: 240,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(240),
+          component: ContactQuadrantCard,
+        },
+      },
+      { 
+        to: "/contact", 
+        labelKey: "header.arrange_meeting", 
+        fallback: "ARRANGE MEETING", 
+        Icon: Calendar, 
+        angle: 300,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(300),
+          component: ContactQuadrantCard,
+        },
+      },
     ],
     media: [
-      { to: "/between-the-lines", labelKey: "header.press_release", fallback: "PRESS", Icon: Newspaper, angle: 0 },
-      { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: 60 },
-      { to: "/contact", labelKey: "header.collaboration", fallback: "COLLABORATION", Icon: Heart, angle: 120 },
-      { to: "/performance", labelKey: "header.performance", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 180 },
-      { to: "/contact", labelKey: "header.declare_interest", fallback: "DECLARE INTEREST", Icon: Users, angle: 240 },
-      { to: "/contact", labelKey: "header.arrange_meeting", fallback: "ARRANGE MEETING", Icon: Calendar, angle: 300 },
+      { 
+        to: "/between-the-lines", 
+        labelKey: "header.press_release", 
+        fallback: "PRESS", 
+        Icon: Newspaper, 
+        angle: 0,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(0),
+          component: InsightsQuadrantCard,
+        },
+      },
+      { 
+        to: "/stars", 
+        labelKey: "header.stars", 
+        fallback: "STARS", 
+        Icon: Star, 
+        angle: 60,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(60),
+          component: StarsQuadrantCard,
+        },
+      },
+      { 
+        to: "/contact", 
+        labelKey: "header.collaboration", 
+        fallback: "COLLABORATION", 
+        Icon: Heart, 
+        angle: 120,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(120),
+          component: ContactQuadrantCard,
+        },
+      },
+      { 
+        to: "/performance", 
+        labelKey: "header.performance", 
+        fallback: "PERFORMANCE", 
+        Icon: TrendingUp, 
+        angle: 180,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(180),
+          component: PerformanceQuadrantCard,
+        },
+      },
+      { 
+        to: "/contact", 
+        labelKey: "header.declare_interest", 
+        fallback: "DECLARE INTEREST", 
+        Icon: Users, 
+        angle: 240,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(240),
+          component: ContactQuadrantCard,
+        },
+      },
+      { 
+        to: "/contact", 
+        labelKey: "header.arrange_meeting", 
+        fallback: "ARRANGE MEETING", 
+        Icon: Calendar, 
+        angle: 300,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(300),
+          component: ContactQuadrantCard,
+        },
+      },
     ],
     business: [
       { to: "/business", labelKey: "header.packages", fallback: "PACKAGES", Icon: Package, angle: 0 },
-      { to: "/stars", labelKey: "header.stars", fallback: "STARS", Icon: Star, angle: 60 },
-      { to: "/performance", labelKey: "header.performance", fallback: "PERFORMANCE", Icon: TrendingUp, angle: 120 },
-      { to: "/contact", labelKey: "header.declare_interest", fallback: "DECLARE INTEREST", Icon: Users, angle: 180 },
-      { to: "/between-the-lines", labelKey: "header.insights", fallback: "INSIGHTS", Icon: BookOpen, angle: 240 },
-      { to: "/contact", labelKey: "header.connect", fallback: "CONNECT", Icon: MessageCircle, angle: 300 },
+      { 
+        to: "/stars", 
+        labelKey: "header.stars", 
+        fallback: "STARS", 
+        Icon: Star, 
+        angle: 60,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(60),
+          component: StarsQuadrantCard,
+        },
+      },
+      { 
+        to: "/performance", 
+        labelKey: "header.performance", 
+        fallback: "PERFORMANCE", 
+        Icon: TrendingUp, 
+        angle: 120,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(120),
+          component: PerformanceQuadrantCard,
+        },
+      },
+      { 
+        to: "/contact", 
+        labelKey: "header.declare_interest", 
+        fallback: "DECLARE INTEREST", 
+        Icon: Users, 
+        angle: 180,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(180),
+          component: ContactQuadrantCard,
+        },
+      },
+      { 
+        to: "/between-the-lines", 
+        labelKey: "header.insights", 
+        fallback: "INSIGHTS", 
+        Icon: BookOpen, 
+        angle: 240,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(240),
+          component: InsightsQuadrantCard,
+        },
+      },
+      { 
+        to: "/contact", 
+        labelKey: "header.connect", 
+        fallback: "CONNECT", 
+        Icon: MessageCircle, 
+        angle: 300,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(300),
+          component: ContactQuadrantCard,
+        },
+      },
     ],
   };
-
   // Default menu for main site with quadrant cards
   const defaultMenu: MenuItem[] = [
     { 
