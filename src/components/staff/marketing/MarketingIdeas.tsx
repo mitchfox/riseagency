@@ -52,6 +52,8 @@ export function MarketingIdeas() {
     canva_link: "",
   });
 
+  const isEditing = !!editingIdea;
+
   const { data: ideas = [], isLoading } = useQuery({
     queryKey: ["marketing-ideas"],
     queryFn: async () => {
@@ -136,14 +138,16 @@ export function MarketingIdeas() {
   };
 
   const handleSubmit = () => {
+    // For new ideas, title is required (used as idea explained)
     if (!formData.title.trim()) {
-      toast.error("Title is required");
+      toast.error("Please explain your idea");
       return;
     }
     if (editingIdea) {
       updateMutation.mutate({ id: editingIdea.id, data: formData });
     } else {
-      createMutation.mutate(formData);
+      // New ideas always start as pending
+      createMutation.mutate({ ...formData, status: "pending", category: "", canva_link: "" });
     }
   };
 
@@ -171,52 +175,87 @@ export function MarketingIdeas() {
               Add Idea
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="w-full max-w-2xl">
             <DialogHeader>
-              <DialogTitle>{editingIdea ? "Edit Idea" : "Add New Idea"}</DialogTitle>
+              <DialogTitle>{isEditing ? "Edit Idea" : "Submit New Idea"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-4">
-              <Input
-                placeholder="Title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              />
-              <Textarea
-                placeholder="Description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-              <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((status) => (
-                    <SelectItem key={status.value} value={status.value}>
-                      {status.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORY_OPTIONS.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="Canva Link (optional)"
-                value={formData.canva_link}
-                onChange={(e) => setFormData({ ...formData, canva_link: e.target.value })}
-              />
+              {isEditing ? (
+                <>
+                  {/* Full form for editing */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Idea</label>
+                    <Textarea
+                      placeholder="Explain your idea..."
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      className="min-h-[120px]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Additional Notes</label>
+                    <Textarea
+                      placeholder="Any additional details..."
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="min-h-[80px]"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Status</label>
+                      <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map((status) => (
+                            <SelectItem key={status.value} value={status.value}>
+                              {status.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Category</label>
+                      <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CATEGORY_OPTIONS.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Canva Link</label>
+                    <Input
+                      placeholder="https://www.canva.com/..."
+                      value={formData.canva_link}
+                      onChange={(e) => setFormData({ ...formData, canva_link: e.target.value })}
+                    />
+                  </div>
+                </>
+              ) : (
+                /* Simplified form for new ideas - just one field */
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Idea Explained</label>
+                  <Textarea
+                    placeholder="Describe your marketing idea in detail..."
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="min-h-[160px]"
+                  />
+                </div>
+              )}
               <Button onClick={handleSubmit} className="w-full" disabled={createMutation.isPending || updateMutation.isPending}>
-                {editingIdea ? "Update" : "Add"} Idea
+                {isEditing ? "Update Idea" : "Submit Idea"}
               </Button>
             </div>
           </DialogContent>
