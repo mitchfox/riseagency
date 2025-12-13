@@ -34,26 +34,20 @@ export const SimpleQuadrantCard = ({ icon, title, description, stat, position }:
   const styles = positionStyles[position];
 
   return (
-    <div className="absolute inset-0 animate-[fade-in_0.3s_ease-out_forwards]">
-      {/* Gradient background */}
-      <div className={`absolute inset-0 ${styles.gradient}`} />
-      
-      {/* Content positioned in outer corner */}
-      <div className={`absolute ${styles.container} space-y-3`}>
-        {/* Label with icon */}
-        <div className="inline-flex items-center gap-2 bg-primary px-4 py-1">
-          <div className="text-black">{icon}</div>
-          <span className="text-sm font-bebas uppercase tracking-wider text-black">{title}</span>
-        </div>
-        
-        {/* Stat if provided */}
-        {stat && (
-          <div className="text-6xl font-bebas text-primary leading-none">{stat}</div>
-        )}
-        
-        {/* Description */}
-        <p className="text-white/80 text-base leading-relaxed">{description}</p>
+    <div className="animate-[fade-in_0.3s_ease-out_forwards] text-center">
+      {/* Label with icon */}
+      <div className="inline-flex items-center gap-2 bg-primary px-4 py-1 mb-3">
+        <div className="text-black">{icon}</div>
+        <span className="text-sm font-bebas uppercase tracking-wider text-black">{title}</span>
       </div>
+      
+      {/* Stat if provided */}
+      {stat && (
+        <div className="text-5xl font-bebas text-primary leading-none mb-2">{stat}</div>
+      )}
+      
+      {/* Description */}
+      <p className="text-white/80 text-sm leading-relaxed">{description}</p>
     </div>
   );
 };
