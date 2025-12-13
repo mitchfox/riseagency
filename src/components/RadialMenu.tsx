@@ -597,27 +597,25 @@ export const RadialMenu = () => {
 
       </div>
 
-      {/* Quadrant cards - Desktop only, constrained to segment boundaries */}
+      {/* Quadrant cards - Desktop only, extending from segment to screen edge */}
       {!isMobile && hoveredItem !== null && menuItems[hoveredItem]?.quadrantCard && (() => {
         const card = menuItems[hoveredItem].quadrantCard!;
         const CardComponent = card.component;
         const segmentAngle = 360 / menuItems.length;
         
-        // Calculate start and end angles for this segment
-        // Menu starts at top (-90°) and goes clockwise, so offset by -90
+        // Menu starts at top (-90°) and goes clockwise
         const startAngle = hoveredItem * segmentAngle - 90;
         const endAngle = startAngle + segmentAngle;
+        const centerAngle = startAngle + segmentAngle / 2;
         
-        // Generate clip-path polygon points for wedge shape
-        // Points: center, then arc from startAngle to endAngle extending to screen edges
+        // Generate clip-path polygon for wedge from center to edges
         const generateWedgeClipPath = (start: number, end: number): string => {
-          const points: string[] = ['50% 50%']; // Center point
-          const numArcPoints = 24; // Smooth arc
+          const points: string[] = ['50% 50%'];
+          const numArcPoints = 24;
           
           for (let i = 0; i <= numArcPoints; i++) {
             const angle = start + (end - start) * (i / numArcPoints);
             const radians = (angle * Math.PI) / 180;
-            // Use 200% to ensure wedge extends well beyond screen corners
             const x = 50 + Math.cos(radians) * 200;
             const y = 50 + Math.sin(radians) * 200;
             points.push(`${x}% ${y}%`);
@@ -628,30 +626,32 @@ export const RadialMenu = () => {
         
         const clipPath = generateWedgeClipPath(startAngle, endAngle);
         
-        // Calculate center angle of the segment for content positioning
-        const centerAngle = startAngle + segmentAngle / 2;
-        
-        // Calculate position for content (toward outer edge of wedge)
+        // Position content in outer portion of wedge (from ~60% outward)
         const contentRadians = (centerAngle * Math.PI) / 180;
-        const contentDistance = 38; // Percentage from center
+        const contentDistance = 42;
         const contentX = 50 + Math.cos(contentRadians) * contentDistance;
         const contentY = 50 + Math.sin(contentRadians) * contentDistance;
         
         return (
           <div 
-            className="fixed inset-0 pointer-events-none z-[5] overflow-hidden"
+            className="fixed inset-0 pointer-events-none z-[5]"
             style={{ clipPath }}
           >
-            {/* Background fill for the segment */}
-            <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/20" />
-            {/* Content positioned toward outer edge of wedge */}
+            {/* Gradient fill extending outward */}
+            <div 
+              className="absolute inset-0"
+              style={{
+                background: `radial-gradient(circle at 50% 50%, transparent 20%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.9) 100%)`
+              }}
+            />
+            {/* Content positioned in outer wedge area */}
             <div 
               className="absolute"
               style={{
                 left: `${contentX}%`,
                 top: `${contentY}%`,
                 transform: 'translate(-50%, -50%)',
-                maxWidth: '35%'
+                maxWidth: '320px'
               }}
             >
               <CardComponent />
