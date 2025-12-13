@@ -105,7 +105,7 @@ const CapabilityAccordionContent = () => {
         onMouseMove={handleMouseMove}
       >
         <div className="relative w-full h-full min-h-[400px] md:min-h-[500px]">
-          <LazyPlayer3D className="w-full h-full" />
+          <LazyPlayer3D className="w-full h-full" imagePrefix="player2" />
         </div>
         
       </div>
