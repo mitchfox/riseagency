@@ -999,29 +999,9 @@ export const RadialMenu = () => {
         const edgePadding = 24;
         const menuPadding = 32;
 
-        // Base content size before clamping to available space
-        const baseWidth = 320;
-        const baseHeight = 220;
-
-        // Compute how much room we have between the menu edge and the screen edge
-        let maxWidth = baseWidth;
-        let maxHeight = baseHeight;
-
-        if (card.position === 'top-right' || card.position === 'bottom-right') {
-          const availableRight = vw - edgePadding - (cx + menuRadius + menuPadding);
-          maxWidth = Math.max(0, Math.min(baseWidth, availableRight));
-        } else {
-          const availableLeft = (cx - menuRadius - menuPadding) - edgePadding;
-          maxWidth = Math.max(0, Math.min(baseWidth, availableLeft));
-        }
-
-        if (card.position === 'top-right' || card.position === 'top-left') {
-          const availableTop = (cy - menuRadius - menuPadding) - edgePadding;
-          maxHeight = Math.max(0, Math.min(baseHeight, availableTop));
-        } else {
-          const availableBottom = vh - edgePadding - (cy + menuRadius + menuPadding);
-          maxHeight = Math.max(0, Math.min(baseHeight, availableBottom));
-        }
+        // Base content size (fixed)
+        const maxWidth = 320;
+        const maxHeight = 220;
 
         console.log('Quadrant overlay', {
           isMobile,
@@ -1033,12 +1013,6 @@ export const RadialMenu = () => {
           vh,
           circleSize,
         });
-
-        // If there really isn't room, skip rendering the card rather than overlapping the menu or going off-screen
-        if (maxWidth <= 0 || maxHeight <= 0) {
-          console.log('Skipping quadrant overlay due to insufficient space');
-          return null;
-        }
 
         // Convert viewport edge positions to overlay coordinates
         const overlaySize = Math.max(vw, vh);
