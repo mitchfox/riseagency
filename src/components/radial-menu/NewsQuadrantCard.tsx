@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 
 interface NewsItem {
   id: string;
@@ -9,7 +8,6 @@ interface NewsItem {
 }
 
 export const NewsQuadrantCard = () => {
-  const navigate = useNavigate();
   const [newsIndex, setNewsIndex] = useState(0);
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
 
@@ -44,38 +42,45 @@ export const NewsQuadrantCard = () => {
   if (newsItems.length === 0) return null;
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-8">
-      <div 
-        className="relative w-56 bg-black/70 backdrop-blur-sm border-2 border-primary/50 rounded-lg overflow-hidden cursor-pointer hover:border-primary transition-colors shadow-2xl shadow-primary/20 animate-[slideFromBottomLeft_0.5s_ease-out_forwards]"
-        onClick={() => navigate('/news')}
-      >
-        <div className="relative w-full aspect-video">
-          {newsItems.map((item, index) => (
-            <img 
-              key={item.id}
-              src={item.image_url} 
-              alt="Latest News" 
-              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
-              style={{ opacity: index === newsIndex ? 1 : 0 }}
-            />
-          ))}
+    <div className="absolute inset-0 flex items-center justify-center animate-[fade-in_0.3s_ease-out_forwards]">
+      {/* Full quadrant background with news image */}
+      {newsItems.map((item, index) => (
+        <div
+          key={item.id}
+          className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+          style={{ opacity: index === newsIndex ? 1 : 0 }}
+        >
+          <img 
+            src={item.image_url} 
+            alt="Latest News" 
+            className="w-full h-full object-cover"
+          />
+          {/* Gradient overlay - from bottom-left corner */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-black/90 via-black/50 to-transparent" />
         </div>
-        <div className="relative p-3">
-          {newsItems.map((item, index) => (
-            <div 
-              key={`news-text-${item.id}`}
-              className="transition-opacity duration-1000 ease-in-out"
-              style={{ 
-                opacity: index === newsIndex ? 1 : 0,
-                position: index === newsIndex ? 'relative' : 'absolute',
-                visibility: index === newsIndex ? 'visible' : 'hidden'
-              }}
-            >
-              <h3 className="text-primary font-bebas text-sm uppercase tracking-wider mb-1">Latest News</h3>
-              <p className="text-white/80 text-xs line-clamp-2">{item.title}</p>
-            </div>
-          ))}
+      ))}
+      
+      {/* Content overlay - positioned in the corner */}
+      <div className="absolute bottom-8 left-8 text-left space-y-3 max-w-md">
+        {/* Label */}
+        <div className="inline-block bg-primary px-4 py-1">
+          <span className="text-sm font-bebas uppercase tracking-wider text-black">Latest News</span>
         </div>
+        
+        {/* News title */}
+        {newsItems.map((item, index) => (
+          <div
+            key={`news-text-${item.id}`}
+            className="transition-opacity duration-1000 ease-in-out"
+            style={{ 
+              opacity: index === newsIndex ? 1 : 0,
+              position: index === newsIndex ? 'relative' : 'absolute',
+              visibility: index === newsIndex ? 'visible' : 'hidden'
+            }}
+          >
+            <h3 className="text-2xl font-bebas uppercase text-white tracking-wider leading-tight">{item.title}</h3>
+          </div>
+        ))}
       </div>
     </div>
   );
