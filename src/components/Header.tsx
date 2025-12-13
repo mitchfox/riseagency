@@ -338,7 +338,7 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
       {/* Top Utility Bar - only on homepage and only when not scrolled */}
       {showTopBar && !isScrolled && <div className="fixed top-14 md:top-16 left-0 right-0 z-[99] bg-background/95 backdrop-blur-md transition-all duration-500 border-b-2 border-primary">
           <div className="container mx-auto px-2 md:px-4">
-          <div className="flex items-center justify-between h-8 md:h-10 relative">
+          <div className="flex items-center h-8 md:h-10 relative">
             {/* Left items - hidden on mobile, shown on tablet+ */}
             <div className="hidden md:flex items-center gap-4 transition-all duration-500">
               {subHeaderConfig.left.map((item, index) => (
@@ -390,8 +390,18 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
               ))}
             </div>
             
+            {/* Language Selector - Absolutely centered */}
+            <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center z-[150]">
+              <LanguageMapSelector className="flex items-center" />
+            </div>
+            
+            {/* Mobile Language Selector - Centered */}
+            <div className="absolute left-1/2 -translate-x-1/2 flex md:hidden items-center z-[150]">
+              <LanguageMapSelector className="flex items-center" />
+            </div>
+            
             {/* Mobile: Right side items */}
-            <div className="flex md:hidden items-center gap-2">
+            <div className="flex md:hidden items-center gap-2 ml-auto">
               {subHeaderConfig.right.map((item, index) => (
                 <div key={`mobile-right-${index}`} className="flex items-center gap-2">
                   {index > 0 && <div className="w-px h-3 bg-white/20" />}
@@ -414,13 +424,8 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
               ))}
             </div>
             
-            {/* Language Selector - Centered on tablet+ only, same line as buttons */}
-            <div className="hidden md:flex items-center z-[150]">
-              <LanguageMapSelector className="flex items-center" />
-            </div>
-            
             {/* Right items - hidden on mobile, shown on tablet+ */}
-            <div className="hidden md:flex items-center gap-4 transition-all duration-500">
+            <div className="hidden md:flex items-center gap-4 transition-all duration-500 ml-auto">
               {subHeaderConfig.right.map((item, index) => (
                 <div key={`right-${index}`} className="flex items-center gap-4">
                   {index > 0 && <div className="w-px h-4 bg-white/20" />}
