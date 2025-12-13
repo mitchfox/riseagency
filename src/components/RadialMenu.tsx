@@ -602,39 +602,17 @@ export const RadialMenu = () => {
         const card = menuItems[hoveredItem].quadrantCard!;
         const CardComponent = card.component;
         
-        // CRITICAL: Use the EXACT same angle calculation as the dividers (line 365)
-        // Dividers use: angle = index * segmentAngle where segmentAngle = 360 / menuItems.length
-        // So segment boundaries are at: 0°, 72°, 144°, 216°, 288° for 5 items
+        // Use the EXACT same angle calculation as the dividers
         const numItems = menuItems.length;
         const segAngle = 360 / numItems;
-        
-        // The divider at index N is at angle (N * segAngle)
-        // Segment N spans from divider N to divider N+1
-        // So segment N goes from (N * segAngle) to ((N+1) * segAngle)
         const startAngle = hoveredItem * segAngle;
         const endAngle = (hoveredItem + 1) * segAngle;
         const centerAngle = (startAngle + endAngle) / 2;
         
-        // Generate wedge clip-path with straight edges matching divider lines exactly
-        // Using only start point, end point, and center - no arc needed for straight edges
+        // Generate wedge clip-path
         const generateWedgeClipPath = (start: number, end: number): string => {
-          // Convert to radians
-          const startRad = (start * Math.PI) / 180;
-          const endRad = (end * Math.PI) / 180;
-          
-          // Calculate points far from center (200% ensures it reaches screen edge)
           const dist = 200;
-          const startX = 50 + Math.cos(startRad) * dist;
-          const startY = 50 + Math.sin(startRad) * dist;
-          const endX = 50 + Math.cos(endRad) * dist;
-          const endY = 50 + Math.sin(endRad) * dist;
-          
-          // For a clean wedge, we need: center -> start edge -> arc along edge -> end edge -> center
-          // But for straight lines to match dividers, just use: center, start point, end point
-          // However this creates a triangle, not a wedge. We need intermediate arc points.
           const points: string[] = ['50% 50%'];
-          
-          // Add arc points from start to end
           const numArcPoints = 20;
           for (let i = 0; i <= numArcPoints; i++) {
             const angle = start + (end - start) * (i / numArcPoints);
@@ -643,17 +621,26 @@ export const RadialMenu = () => {
             const y = 50 + Math.sin(rad) * dist;
             points.push(`${x}% ${y}%`);
           }
-          
           return `polygon(${points.join(', ')})`;
         };
         
         const clipPath = generateWedgeClipPath(startAngle, endAngle);
         
-        // Position content in the outer portion of the wedge
+        // Calculate the radial menu circle radius as percentage of the overlay size
+        // The overlay is max(100vw, 100vh) and circleSize is 600px on desktop
+        // We need to position content OUTSIDE this circle
+        const overlaySize = Math.max(window.innerWidth, window.innerHeight);
+        const menuRadiusPercent = ((circleSize / 2) / overlaySize) * 100;
+        
+        // Position content outside the circle - start at circle edge + some padding
         const contentRad = (centerAngle * Math.PI) / 180;
-        const contentDist = 42;
-        const contentX = 50 + Math.cos(contentRad) * contentDist;
-        const contentY = 50 + Math.sin(contentRad) * contentDist;
+        // Content distance should be beyond the menu circle (menuRadiusPercent + offset)
+        const contentDistFromCenter = menuRadiusPercent + 12; // 12% padding beyond circle edge
+        const contentX = 50 + Math.cos(contentRad) * contentDistFromCenter;
+        const contentY = 50 + Math.sin(contentRad) * contentDistFromCenter;
+        
+        // Also mask out the center circle area from the gradient
+        const innerMaskPercent = menuRadiusPercent;
         
         return (
           <div 
@@ -671,7 +658,7 @@ export const RadialMenu = () => {
             <div 
               className="absolute inset-0"
               style={{
-                background: 'radial-gradient(circle at 50% 50%, transparent 35%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.9) 100%)'
+                background: `radial-gradient(circle at 50% 50%, transparent ${innerMaskPercent}%, rgba(0,0,0,0.4) ${innerMaskPercent + 5}%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.9) 100%)`
               }}
             />
             <div 
@@ -680,7 +667,7 @@ export const RadialMenu = () => {
                 left: `${contentX}%`,
                 top: `${contentY}%`,
                 transform: 'translate(-50%, -50%)',
-                maxWidth: '320px'
+                maxWidth: '280px'
               }}
             >
               <CardComponent />
