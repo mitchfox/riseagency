@@ -597,18 +597,18 @@ export const RadialMenu = () => {
 
       </div>
 
-      {/* Quadrant cards - Desktop only, extending from segment to screen edge */}
+      {/* Quadrant cards - Desktop only, extending from the SAME segment toward screen edge */}
       {!isMobile && hoveredItem !== null && menuItems[hoveredItem]?.quadrantCard && (() => {
         const card = menuItems[hoveredItem].quadrantCard!;
         const CardComponent = card.component;
         const segmentAngle = 360 / menuItems.length;
         
-        // Menu starts at top (-90°) and goes clockwise
-        const startAngle = hoveredItem * segmentAngle - 90;
+        // Use the exact same angle math as the visible segments: 0° = right, increasing clockwise
+        const startAngle = hoveredItem * segmentAngle;
         const endAngle = startAngle + segmentAngle;
         const centerAngle = startAngle + segmentAngle / 2;
         
-        // Generate clip-path polygon for wedge from center to edges
+        // Wedge clip-path that is the same angular slice as the segment, just extended past the screen edges
         const generateWedgeClipPath = (start: number, end: number): string => {
           const points: string[] = ['50% 50%'];
           const numArcPoints = 24;
@@ -616,7 +616,7 @@ export const RadialMenu = () => {
           for (let i = 0; i <= numArcPoints; i++) {
             const angle = start + (end - start) * (i / numArcPoints);
             const radians = (angle * Math.PI) / 180;
-            const x = 50 + Math.cos(radians) * 200;
+            const x = 50 + Math.cos(radians) * 200; // 200% so it definitely reaches screen edge
             const y = 50 + Math.sin(radians) * 200;
             points.push(`${x}% ${y}%`);
           }
@@ -626,9 +626,9 @@ export const RadialMenu = () => {
         
         const clipPath = generateWedgeClipPath(startAngle, endAngle);
         
-        // Position content in outer portion of wedge (from ~60% outward)
+        // Place content in the outer half of that SAME wedge
         const contentRadians = (centerAngle * Math.PI) / 180;
-        const contentDistance = 42;
+        const contentDistance = 42; // radial distance from center (in % of viewport)
         const contentX = 50 + Math.cos(contentRadians) * contentDistance;
         const contentY = 50 + Math.sin(contentRadians) * contentDistance;
         
@@ -637,14 +637,13 @@ export const RadialMenu = () => {
             className="fixed inset-0 pointer-events-none z-[5]"
             style={{ clipPath }}
           >
-            {/* Gradient fill extending outward */}
+            {/* Subtle extension from the segment outwards */}
             <div 
               className="absolute inset-0"
               style={{
-                background: `radial-gradient(circle at 50% 50%, transparent 20%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.9) 100%)`
+                background: 'radial-gradient(circle at 50% 50%, transparent 35%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.9) 100%)'
               }}
             />
-            {/* Content positioned in outer wedge area */}
             <div 
               className="absolute"
               style={{
