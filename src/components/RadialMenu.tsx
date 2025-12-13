@@ -598,13 +598,13 @@ export const RadialMenu = () => {
 
       </div>
 
-      {/* Quadrant cards - Desktop only, positioned in corners */}
+      {/* Quadrant cards - Desktop only, positioned in corners as background */}
       {!isMobile && hoveredItem !== null && menuItems[hoveredItem]?.quadrantCard && (() => {
         const card = menuItems[hoveredItem].quadrantCard!;
         const CardComponent = card.component;
         const position = card.position;
         
-        // Position classes for each quadrant
+        // Position classes for each quadrant - fill the full corner
         const positionClasses: Record<QuadrantPosition, string> = {
           'top-left': 'top-0 left-0',
           'top-right': 'top-0 right-0',
@@ -614,8 +614,10 @@ export const RadialMenu = () => {
         
         return (
           <div 
-            className={`fixed ${positionClasses[position]} w-1/2 h-1/2 pointer-events-none z-[180]`}
+            className={`fixed ${positionClasses[position]} w-1/2 h-1/2 pointer-events-none z-[100] overflow-hidden`}
           >
+            {/* Background fill for the quadrant */}
+            <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/20" />
             <CardComponent />
           </div>
         );

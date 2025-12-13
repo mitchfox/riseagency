@@ -6,29 +6,52 @@ interface SimpleQuadrantCardProps {
   title: string;
   description: string;
   stat?: string;
-  animationClass: string;
+  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 }
 
-export const SimpleQuadrantCard = ({ icon, title, description, stat, animationClass }: SimpleQuadrantCardProps) => {
+export const SimpleQuadrantCard = ({ icon, title, description, stat, position }: SimpleQuadrantCardProps) => {
+  // Determine corner positioning and gradient direction based on quadrant
+  const positionStyles: Record<string, { container: string; gradient: string }> = {
+    'top-left': { 
+      container: 'top-8 left-8 text-left', 
+      gradient: 'bg-gradient-to-br from-black/80 via-black/40 to-transparent' 
+    },
+    'top-right': { 
+      container: 'top-8 right-8 text-right', 
+      gradient: 'bg-gradient-to-bl from-black/80 via-black/40 to-transparent' 
+    },
+    'bottom-left': { 
+      container: 'bottom-8 left-8 text-left', 
+      gradient: 'bg-gradient-to-tr from-black/80 via-black/40 to-transparent' 
+    },
+    'bottom-right': { 
+      container: 'bottom-8 right-8 text-right', 
+      gradient: 'bg-gradient-to-tl from-black/80 via-black/40 to-transparent' 
+    },
+  };
+
+  const styles = positionStyles[position];
+
   return (
-    <div className="w-full h-full flex items-center justify-center p-8">
-      <div className={`relative w-56 bg-black/80 backdrop-blur-sm border-2 border-primary/50 rounded-lg overflow-hidden shadow-2xl shadow-primary/20 ${animationClass}`}>
-        {/* Gold header bar */}
-        <div className="bg-primary/90 py-2 px-4 flex items-center gap-2">
+    <div className="absolute inset-0 animate-[fade-in_0.3s_ease-out_forwards]">
+      {/* Gradient background */}
+      <div className={`absolute inset-0 ${styles.gradient}`} />
+      
+      {/* Content positioned in corner */}
+      <div className={`absolute ${styles.container} space-y-3 max-w-sm`}>
+        {/* Label with icon */}
+        <div className="inline-flex items-center gap-2 bg-primary px-4 py-1">
           <div className="text-black">{icon}</div>
           <span className="text-sm font-bebas uppercase tracking-wider text-black">{title}</span>
         </div>
         
-        <div className="p-4 space-y-3">
-          {stat && (
-            <div className="text-4xl font-bebas text-primary">{stat}</div>
-          )}
-          <p className="text-white/70 text-sm leading-relaxed">{description}</p>
-        </div>
-
-        {/* Corner accents */}
-        <div className="absolute bottom-0 left-0 w-6 h-6 border-l-2 border-b-2 border-primary/30" />
-        <div className="absolute bottom-0 right-0 w-6 h-6 border-r-2 border-b-2 border-primary/30" />
+        {/* Stat if provided */}
+        {stat && (
+          <div className="text-6xl font-bebas text-primary leading-none">{stat}</div>
+        )}
+        
+        {/* Description */}
+        <p className="text-white/80 text-base leading-relaxed">{description}</p>
       </div>
     </div>
   );
@@ -41,7 +64,7 @@ export const PerformanceQuadrantCard = () => (
     title="Performance"
     stat="R90"
     description="Our proprietary analysis system tracks every action to maximise player potential."
-    animationClass="animate-[slideFromTopRight_0.5s_ease-out_forwards]"
+    position="top-right"
   />
 );
 
@@ -50,7 +73,7 @@ export const InsightsQuadrantCard = () => (
     icon={<BookOpen className="w-4 h-4" />}
     title="Insights"
     description="Expert tactical analysis and exclusive content from inside the game."
-    animationClass="animate-[slideFromBottomLeft_0.5s_ease-out_forwards]"
+    position="top-left"
   />
 );
 
@@ -59,6 +82,6 @@ export const ContactQuadrantCard = () => (
     icon={<MessageCircle className="w-4 h-4" />}
     title="Get In Touch"
     description="Ready to elevate your career? Connect with our team today."
-    animationClass="animate-[slideFromBottomRight_0.5s_ease-out_forwards]"
+    position="bottom-right"
   />
 );
