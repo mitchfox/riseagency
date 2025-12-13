@@ -7,9 +7,19 @@ interface SimpleQuadrantCardProps {
   description: string;
   stat?: string;
   position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  maxWidth?: number;
+  maxHeight?: number;
 }
 
-export const SimpleQuadrantCard = ({ icon, title, description, stat, position }: SimpleQuadrantCardProps) => {
+export const SimpleQuadrantCard = ({
+  icon,
+  title,
+  description,
+  stat,
+  position,
+  maxWidth,
+  maxHeight,
+}: SimpleQuadrantCardProps) => {
   // Determine corner positioning and gradient direction based on quadrant
   // Position content at outer edges, away from center of screen
   const positionStyles: Record<string, { container: string; gradient: string }> = {
@@ -34,7 +44,13 @@ export const SimpleQuadrantCard = ({ icon, title, description, stat, position }:
   const styles = positionStyles[position];
 
   return (
-    <div className="animate-[fade-in_0.3s_ease-out_forwards] text-center">
+    <div
+      className="animate-[fade-in_0.3s_ease-out_forwards] text-center"
+      style={{
+        maxWidth: maxWidth ?? undefined,
+        maxHeight: maxHeight ?? undefined,
+      }}
+    >
       {/* Label with icon */}
       <div className="inline-flex items-center gap-2 bg-primary px-4 py-1 mb-3">
         <div className="text-black">{icon}</div>
@@ -53,30 +69,35 @@ export const SimpleQuadrantCard = ({ icon, title, description, stat, position }:
 };
 
 // Pre-configured cards for different menu items
-export const PerformanceQuadrantCard = () => (
+type QuadrantCardProps = Pick<SimpleQuadrantCardProps, "maxWidth" | "maxHeight">;
+
+export const PerformanceQuadrantCard = (props: QuadrantCardProps) => (
   <SimpleQuadrantCard
     icon={<TrendingUp className="w-4 h-4" />}
     title="Performance"
     stat="R90"
     description="Our proprietary analysis system tracks every action to maximise player potential."
     position="top-right"
+    {...props}
   />
 );
 
-export const InsightsQuadrantCard = () => (
+export const InsightsQuadrantCard = (props: QuadrantCardProps) => (
   <SimpleQuadrantCard
     icon={<BookOpen className="w-4 h-4" />}
     title="Insights"
     description="Expert tactical analysis and exclusive content from inside the game."
     position="top-left"
+    {...props}
   />
 );
 
-export const ContactQuadrantCard = () => (
+export const ContactQuadrantCard = (props: QuadrantCardProps) => (
   <SimpleQuadrantCard
     icon={<MessageCircle className="w-4 h-4" />}
     title="Get In Touch"
     description="Ready to elevate your career? Connect with our team today."
     position="bottom-right"
+    {...props}
   />
 );

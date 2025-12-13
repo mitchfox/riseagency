@@ -18,6 +18,11 @@ import { PerformanceQuadrantCard, InsightsQuadrantCard, ContactQuadrantCard } fr
 
 export type QuadrantPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
+interface QuadrantCardProps {
+  maxWidth?: number;
+  maxHeight?: number;
+}
+
 interface MenuItem {
   to: string;
   labelKey: string;
@@ -26,7 +31,7 @@ interface MenuItem {
   angle: number;
   quadrantCard?: {
     position: QuadrantPosition;
-    component: React.ComponentType;
+    component: React.ComponentType<QuadrantCardProps>;
   };
 }
 
@@ -626,77 +631,50 @@ export const RadialMenu = () => {
         
         const clipPath = generateWedgeClipPath(startAngle, endAngle);
         
-        // Calculate positioning in viewport pixels for precise control
+        // Calculate viewport and menu geometry
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         const cx = vw / 2;
         const cy = vh / 2;
         const menuRadius = circleSize / 2;
-        const contentRad = (centerAngle * Math.PI) / 180;
-        const cosA = Math.cos(contentRad);
-        const sinA = Math.sin(contentRad);
-        
-        // Estimate content box size
-        const contentWidth = 260;
-        const contentHeight = 180;
-        const halfW = contentWidth / 2;
-        const halfH = contentHeight / 2;
-        const edgePadding = 20;
 
-        // Gap between menu edge and content edge
-        const padding = 30;
+        const edgePadding = 24;
+        const menuPadding = 32;
 
-        // The content box extends back toward the center along the angle direction
-        const boxExtentTowardCenter = halfW * Math.abs(cosA) + halfH * Math.abs(sinA);
+        // Base content size before clamping to available space
+        const baseWidth = 320;
+        const baseHeight = 220;
 
-        // Minimum distance from center: ensure nearest edge of content stays outside radial menu
-        const rMin = menuRadius + padding + boxExtentTowardCenter;
-        
-        // Compute allowed radius range from a single axis constraint
-        const computeRange = (
-          center: number,
-          halfSize: number,
-          component: number,
-          maxSize: number,
-        ) => {
-          if (Math.abs(component) < 1e-4) {
-            // Direction is nearly perpendicular to this axis; no meaningful constraint
-            return { min: 0, max: Infinity };
-          }
-          const minCenter = edgePadding + halfSize;
-          const maxCenter = maxSize - edgePadding - halfSize;
-          const r1 = (minCenter - center) / component;
-          const r2 = (maxCenter - center) / component;
-          return {
-            min: Math.min(r1, r2),
-            max: Math.max(r1, r2),
-          };
-        };
-        
-        const rangeX = computeRange(cx, halfW, cosA, vw);
-        const rangeY = computeRange(cy, halfH, sinA, vh);
-        
-        // Final allowed radius interval: intersection of X, Y, and rMin
-        let rLow = Math.max(0, rMin, rangeX.min, rangeY.min);
-        const rHigh = Math.min(rangeX.max, rangeY.max);
-        
-        // If intersection is empty, fall back to rMin (may slightly clip on tiny screens)
-        if (rHigh < rLow) {
-          rLow = rMin;
+        // Compute how much room we have between the menu edge and the screen edge
+        let maxWidth = baseWidth;
+        let maxHeight = baseHeight;
+
+        if (card.position === 'top-right' || card.position === 'bottom-right') {
+          const availableRight = vw - edgePadding - (cx + menuRadius + menuPadding);
+          maxWidth = Math.max(0, Math.min(baseWidth, availableRight));
+        } else {
+          const availableLeft = (cx - menuRadius - menuPadding) - edgePadding;
+          maxWidth = Math.max(0, Math.min(baseWidth, availableLeft));
         }
-        const r = rLow;
-        
-        const finalX = cx + r * cosA;
-        const finalY = cy + r * sinA;
-        
-        // Convert back to overlay percentages (overlay is square max(vw, vh) centered)
+
+        if (card.position === 'top-right' || card.position === 'top-left') {
+          const availableTop = (cy - menuRadius - menuPadding) - edgePadding;
+          maxHeight = Math.max(0, Math.min(baseHeight, availableTop));
+        } else {
+          const availableBottom = vh - edgePadding - (cy + menuRadius + menuPadding);
+          maxHeight = Math.max(0, Math.min(baseHeight, availableBottom));
+        }
+
+        // If there really isn't room, skip rendering the card rather than overlapping the menu or going off-screen
+        if (maxWidth <= 0 || maxHeight <= 0) {
+          return null;
+        }
+
+        // Convert viewport edge positions to overlay coordinates
         const overlaySize = Math.max(vw, vh);
         const overlayOffsetX = (overlaySize - vw) / 2;
         const overlayOffsetY = (overlaySize - vh) / 2;
-        
-        const contentXPercent = ((finalX + overlayOffsetX) / overlaySize) * 100;
-        const contentYPercent = ((finalY + overlayOffsetY) / overlaySize) * 100;
-        
+
         // Mask out the center circle area
         const menuRadiusPercent = (menuRadius / overlaySize) * 100;
         
@@ -722,14 +700,19 @@ export const RadialMenu = () => {
             <div 
               className="absolute"
               style={{
-                left: `${contentXPercent}%`,
-                top: `${contentYPercent}%`,
-                transform: 'translate(-50%, -50%)',
-                width: `${contentWidth}px`,
-                maxWidth: `${contentWidth}px`
+                maxWidth,
+                maxHeight,
+                width: '100%',
+                overflow: 'hidden',
+                ...(card.position === 'top-right' || card.position === 'bottom-right'
+                  ? { right: edgePadding + overlayOffsetX }
+                  : { left: edgePadding + overlayOffsetX }),
+                ...(card.position === 'top-right' || card.position === 'top-left'
+                  ? { top: edgePadding + overlayOffsetY }
+                  : { bottom: edgePadding + overlayOffsetY }),
               }}
             >
-              <CardComponent />
+              <CardComponent maxWidth={maxWidth} maxHeight={maxHeight} />
             </div>
           </div>
         );
