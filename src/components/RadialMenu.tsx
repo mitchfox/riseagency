@@ -12,17 +12,21 @@ import smudgedMarbleBg from "@/assets/black-marble-smudged.png";
 import europeMap from "@/assets/europe-outline.gif";
 import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Trophy, Users, Handshake, Briefcase, Search, Calendar, Heart, Package, X, ChevronDown } from "lucide-react";
 import { useState, useMemo, useRef } from "react";
-import { MenuHoverCard, HoverCardData, Quadrant } from "@/components/radial-menu/MenuHoverCard";
+import { StarsQuadrantCard } from "@/components/radial-menu/StarsQuadrantCard";
+import { NewsQuadrantCard } from "@/components/radial-menu/NewsQuadrantCard";
+import { PerformanceQuadrantCard, InsightsQuadrantCard, ContactQuadrantCard } from "@/components/radial-menu/SimpleQuadrantCard";
+
+export type QuadrantPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
 interface MenuItem {
   to: string;
   labelKey: string;
   fallback: string;
   Icon: React.ComponentType<{ className?: string }>;
-  angle: number; // angle in degrees for positioning
-  hoverCard?: {
-    quadrant: Quadrant;
-    data: HoverCardData;
+  angle: number;
+  quadrantCard?: {
+    position: QuadrantPosition;
+    component: React.ComponentType;
   };
 }
 
@@ -173,7 +177,7 @@ export const RadialMenu = () => {
     ],
   };
 
-  // Default menu for main site with hover cards
+  // Default menu for main site with quadrant cards
   const defaultMenu: MenuItem[] = [
     { 
       to: "/stars", 
@@ -181,17 +185,9 @@ export const RadialMenu = () => {
       fallback: "STARS", 
       Icon: Star, 
       angle: 0,
-      hoverCard: {
-        quadrant: 'top-right',
-        data: {
-          title: "Our Rising Stars",
-          description: "Discover the exceptional talents we represent. Elite players ready to make their mark.",
-          icon: <Star className="w-8 h-8" />,
-          stats: [
-            { label: "Players", value: "50+" },
-            { label: "Countries", value: "15" }
-          ]
-        }
+      quadrantCard: {
+        position: 'bottom-right',
+        component: StarsQuadrantCard
       }
     },
     { 
@@ -200,17 +196,9 @@ export const RadialMenu = () => {
       fallback: "PERFORMANCE", 
       Icon: TrendingUp, 
       angle: 72,
-      hoverCard: {
-        quadrant: 'top-right',
-        data: {
-          title: "Performance Analysis",
-          description: "Data-driven insights and comprehensive player development programs.",
-          icon: <TrendingUp className="w-8 h-8" />,
-          stats: [
-            { label: "Metrics", value: "100+" },
-            { label: "Reports", value: "Weekly" }
-          ]
-        }
+      quadrantCard: {
+        position: 'top-right',
+        component: PerformanceQuadrantCard
       }
     },
     { 
@@ -219,13 +207,9 @@ export const RadialMenu = () => {
       fallback: "INSIGHTS", 
       Icon: BookOpen, 
       angle: 144,
-      hoverCard: {
-        quadrant: 'bottom-left',
-        data: {
-          title: "Between The Lines",
-          description: "Expert analysis, tactical breakdowns, and exclusive football insights.",
-          icon: <BookOpen className="w-8 h-8" />
-        }
+      quadrantCard: {
+        position: 'top-left',
+        component: InsightsQuadrantCard
       }
     },
     { 
@@ -234,13 +218,9 @@ export const RadialMenu = () => {
       fallback: "NEWS", 
       Icon: Newspaper, 
       angle: 216,
-      hoverCard: {
-        quadrant: 'bottom-left',
-        data: {
-          title: "Latest News",
-          description: "Stay updated with transfers, signings, and all the latest from RISE.",
-          icon: <Newspaper className="w-8 h-8" />
-        }
+      quadrantCard: {
+        position: 'bottom-left',
+        component: NewsQuadrantCard
       }
     },
     { 
@@ -249,13 +229,9 @@ export const RadialMenu = () => {
       fallback: "CONTACT", 
       Icon: MessageCircle, 
       angle: 288,
-      hoverCard: {
-        quadrant: 'bottom-right',
-        data: {
-          title: "Get In Touch",
-          description: "Ready to elevate your career? Connect with our team today.",
-          icon: <MessageCircle className="w-8 h-8" />
-        }
+      quadrantCard: {
+        position: 'bottom-right',
+        component: ContactQuadrantCard
       }
     },
   ];
@@ -622,46 +598,28 @@ export const RadialMenu = () => {
 
       </div>
 
-      {/* Quadrant hover cards - Desktop only */}
-      {!isMobile && hoveredItem !== null && menuItems[hoveredItem]?.hoverCard && (
-        <>
-          {/* Top-Left Quadrant */}
-          <div className="fixed top-0 left-0 w-1/2 h-1/2 flex items-end justify-end p-16 pointer-events-none z-[180]">
-            <MenuHoverCard
-              data={menuItems[hoveredItem].hoverCard!.data}
-              quadrant="top-left"
-              isVisible={menuItems[hoveredItem].hoverCard!.quadrant === 'top-left'}
-            />
+      {/* Quadrant cards - Desktop only, positioned in corners */}
+      {!isMobile && hoveredItem !== null && menuItems[hoveredItem]?.quadrantCard && (() => {
+        const card = menuItems[hoveredItem].quadrantCard!;
+        const CardComponent = card.component;
+        const position = card.position;
+        
+        // Position classes for each quadrant
+        const positionClasses: Record<QuadrantPosition, string> = {
+          'top-left': 'top-0 left-0',
+          'top-right': 'top-0 right-0',
+          'bottom-left': 'bottom-0 left-0',
+          'bottom-right': 'bottom-0 right-0'
+        };
+        
+        return (
+          <div 
+            className={`fixed ${positionClasses[position]} w-1/2 h-1/2 pointer-events-none z-[180]`}
+          >
+            <CardComponent />
           </div>
-
-          {/* Top-Right Quadrant */}
-          <div className="fixed top-0 right-0 w-1/2 h-1/2 flex items-end justify-start p-16 pointer-events-none z-[180]">
-            <MenuHoverCard
-              data={menuItems[hoveredItem].hoverCard!.data}
-              quadrant="top-right"
-              isVisible={menuItems[hoveredItem].hoverCard!.quadrant === 'top-right'}
-            />
-          </div>
-
-          {/* Bottom-Left Quadrant */}
-          <div className="fixed bottom-0 left-0 w-1/2 h-1/2 flex items-start justify-end p-16 pointer-events-none z-[180]">
-            <MenuHoverCard
-              data={menuItems[hoveredItem].hoverCard!.data}
-              quadrant="bottom-left"
-              isVisible={menuItems[hoveredItem].hoverCard!.quadrant === 'bottom-left'}
-            />
-          </div>
-
-          {/* Bottom-Right Quadrant */}
-          <div className="fixed bottom-0 right-0 w-1/2 h-1/2 flex items-start justify-start p-16 pointer-events-none z-[180]">
-            <MenuHoverCard
-              data={menuItems[hoveredItem].hoverCard!.data}
-              quadrant="bottom-right"
-              isVisible={menuItems[hoveredItem].hoverCard!.quadrant === 'bottom-right'}
-            />
-          </div>
-        </>
-      )}
+        );
+      })()}
 
 
 
