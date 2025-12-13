@@ -42,46 +42,43 @@ export const NewsQuadrantCard = () => {
   if (newsItems.length === 0) return null;
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center animate-[fade-in_0.3s_ease-out_forwards]">
-      {/* Full quadrant background with news image */}
-      {newsItems.map((item, index) => (
-        <div
-          key={item.id}
-          className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
-          style={{ opacity: index === newsIndex ? 1 : 0 }}
-        >
-          <img 
-            src={item.image_url} 
-            alt="Latest News" 
-            className="w-full h-full object-cover"
-          />
-          {/* Gradient overlay - from bottom-left corner */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-black/90 via-black/50 to-transparent" />
-        </div>
-      ))}
-      
-      {/* Content overlay - positioned in the outer corner away from center */}
-      <div className="absolute bottom-4 left-4 text-left space-y-3 max-w-[40%]">
-        {/* Label */}
-        <div className="inline-block bg-primary px-4 py-1">
-          <span className="text-sm font-bebas uppercase tracking-wider text-black">Latest News</span>
-        </div>
-        
-        {/* News title */}
+    <div className="animate-[fade-in_0.3s_ease-out_forwards] text-center">
+      {/* News image thumbnail */}
+      <div className="relative w-48 h-32 mx-auto mb-4 rounded-lg overflow-hidden">
         {newsItems.map((item, index) => (
           <div
-            key={`news-text-${item.id}`}
-            className="transition-opacity duration-1000 ease-in-out"
-            style={{ 
-              opacity: index === newsIndex ? 1 : 0,
-              position: index === newsIndex ? 'relative' : 'absolute',
-              visibility: index === newsIndex ? 'visible' : 'hidden'
-            }}
+            key={item.id}
+            className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+            style={{ opacity: index === newsIndex ? 1 : 0 }}
           >
-            <h3 className="text-2xl font-bebas uppercase text-white tracking-wider leading-tight">{item.title}</h3>
+            <img 
+              src={item.image_url} 
+              alt="Latest News" 
+              className="w-full h-full object-cover"
+            />
           </div>
         ))}
       </div>
+      
+      {/* Label */}
+      <div className="inline-block bg-primary px-4 py-1 mb-3">
+        <span className="text-sm font-bebas uppercase tracking-wider text-black">Latest News</span>
+      </div>
+      
+      {/* News title */}
+      {newsItems.map((item, index) => (
+        <div
+          key={`news-text-${item.id}`}
+          className="transition-opacity duration-1000 ease-in-out"
+          style={{ 
+            opacity: index === newsIndex ? 1 : 0,
+            position: index === newsIndex ? 'relative' : 'absolute',
+            visibility: index === newsIndex ? 'visible' : 'hidden'
+          }}
+        >
+          <h3 className="text-xl font-bebas uppercase text-white tracking-wider leading-tight">{item.title}</h3>
+        </div>
+      ))}
     </div>
   );
 };

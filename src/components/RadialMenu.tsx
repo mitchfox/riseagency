@@ -597,40 +597,65 @@ export const RadialMenu = () => {
 
       </div>
 
-      {/* Quadrant cards - Desktop only, positioned in closest corner as background */}
+      {/* Quadrant cards - Desktop only, constrained to segment boundaries */}
       {!isMobile && hoveredItem !== null && menuItems[hoveredItem]?.quadrantCard && (() => {
         const card = menuItems[hoveredItem].quadrantCard!;
         const CardComponent = card.component;
-        const itemAngle = menuItems[hoveredItem].angle;
+        const segmentAngle = 360 / menuItems.length;
         
-        // Determine closest quadrant based on menu item angle
-        // Angles: 0=right, 90=bottom, 180=left, 270=top (clockwise from right)
-        // Quadrants: top-right (315-45), bottom-right (45-135), bottom-left (135-225), top-left (225-315)
-        const getClosestQuadrant = (angle: number): QuadrantPosition => {
-          const normalizedAngle = ((angle % 360) + 360) % 360;
-          if (normalizedAngle >= 315 || normalizedAngle < 45) return 'bottom-right';
-          if (normalizedAngle >= 45 && normalizedAngle < 135) return 'bottom-left';
-          if (normalizedAngle >= 135 && normalizedAngle < 225) return 'top-left';
-          return 'top-right';
+        // Calculate start and end angles for this segment
+        // Menu starts at top (-90 degrees offset) and goes clockwise
+        const startAngle = hoveredItem * segmentAngle - 90;
+        const endAngle = (hoveredItem + 1) * segmentAngle - 90;
+        
+        // Generate clip-path polygon points for wedge shape
+        // Points: center, then arc from startAngle to endAngle
+        const generateWedgeClipPath = (start: number, end: number): string => {
+          const points: string[] = ['50% 50%']; // Center point
+          const numArcPoints = 20; // Smooth arc
+          
+          for (let i = 0; i <= numArcPoints; i++) {
+            const angle = start + (end - start) * (i / numArcPoints);
+            const radians = (angle * Math.PI) / 180;
+            // Extend to 150% to ensure it covers beyond screen edges
+            const x = 50 + Math.cos(radians) * 150;
+            const y = 50 + Math.sin(radians) * 150;
+            points.push(`${x}% ${y}%`);
+          }
+          
+          return `polygon(${points.join(', ')})`;
         };
         
-        const position = getClosestQuadrant(itemAngle);
+        const clipPath = generateWedgeClipPath(startAngle, endAngle);
         
-        // Position classes for each quadrant - fill the full corner
-        const positionClasses: Record<QuadrantPosition, string> = {
-          'top-left': 'top-0 left-0',
-          'top-right': 'top-0 right-0',
-          'bottom-left': 'bottom-0 left-0',
-          'bottom-right': 'bottom-0 right-0'
-        };
+        // Calculate center angle of the segment for content positioning
+        const centerAngle = (startAngle + endAngle) / 2;
+        
+        // Calculate position for content (70% from center toward outer edge)
+        const contentRadians = (centerAngle * Math.PI) / 180;
+        const contentDistance = 35; // Percentage from center
+        const contentX = 50 + Math.cos(contentRadians) * contentDistance;
+        const contentY = 50 + Math.sin(contentRadians) * contentDistance;
         
         return (
           <div 
-            className={`fixed ${positionClasses[position]} w-1/2 h-1/2 pointer-events-none z-[5] overflow-hidden`}
+            className="fixed inset-0 pointer-events-none z-[5] overflow-hidden"
+            style={{ clipPath }}
           >
-            {/* Background fill for the quadrant */}
+            {/* Background fill for the segment */}
             <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/20" />
-            <CardComponent />
+            {/* Content positioned toward outer edge of wedge */}
+            <div 
+              className="absolute"
+              style={{
+                left: `${contentX}%`,
+                top: `${contentY}%`,
+                transform: 'translate(-50%, -50%)',
+                maxWidth: '35%'
+              }}
+            >
+              <CardComponent />
+            </div>
           </div>
         );
       })()}
