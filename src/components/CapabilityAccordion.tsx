@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, BarChart3, Layers, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import capabilityImage1 from "@/assets/capability-1.png";
@@ -49,21 +49,22 @@ const capabilities: CapabilityItem[] = [
   }
 ];
 
-// Stacked images for the slideshow visual effect
-const stackedImages = [
-  { src: capabilityImage1, label: "Full Color", zIndex: 3, rotate: 0, translateX: 0 },
-  { src: capabilityImage2, label: "Sepia", zIndex: 2, rotate: -6, translateX: -20 },
-  { src: capabilityImage5, label: "B&W", zIndex: 1, rotate: 6, translateX: 20 }
-];
+// Image layers - base (color), xray reveal (sepia), and bw layer
+const imageLayers = {
+  base: capabilityImage1,      // Full color - default visible
+  xray: capabilityImage2,      // Sepia - revealed on hover
+  bw: capabilityImage5         // B&W - deepest layer
+};
 
 export const CapabilityAccordion = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
+  const [isHovering, setIsHovering] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const nextSlide = useCallback(() => {
     setActiveIndex((prev) => (prev + 1) % capabilities.length);
-    setActiveImageIndex((prev) => (prev + 1) % stackedImages.length);
   }, []);
 
   // Auto-rotate every 7 seconds
@@ -76,8 +77,26 @@ export const CapabilityAccordion = () => {
 
   const handleItemClick = (index: number) => {
     setActiveIndex(index);
-    setActiveImageIndex(index % stackedImages.length);
   };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    setMousePos({ x, y });
+  };
+
+  // Generate the radial gradient mask for X-ray reveal effect
+  const xrayMaskStyle = isHovering ? {
+    maskImage: `radial-gradient(circle 120px at ${mousePos.x * 100}% ${mousePos.y * 100}%, black 0%, black 40%, transparent 100%)`,
+    WebkitMaskImage: `radial-gradient(circle 120px at ${mousePos.x * 100}% ${mousePos.y * 100}%, black 0%, black 40%, transparent 100%)`
+  } : {};
+
+  // Gold edge glow around the reveal area
+  const goldGlowStyle = isHovering ? {
+    background: `radial-gradient(circle 130px at ${mousePos.x * 100}% ${mousePos.y * 100}%, transparent 0%, transparent 35%, rgba(184, 165, 116, 0.4) 50%, rgba(184, 165, 116, 0.2) 70%, transparent 100%)`
+  } : {};
 
   return (
     <div 
@@ -85,42 +104,72 @@ export const CapabilityAccordion = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Left side - Stacked images visual effect */}
-      <div className="relative aspect-[4/3] md:aspect-auto md:min-h-[400px] flex items-center justify-center order-2 md:order-1">
-        <div className="relative w-[280px] h-[340px] md:w-[320px] md:h-[400px]">
-          {stackedImages.map((image, index) => {
-            const isActive = index === activeImageIndex;
-            const offset = (index - activeImageIndex + stackedImages.length) % stackedImages.length;
-            
-            // Calculate dynamic positioning based on active state
-            const rotation = isActive ? 0 : (offset === 1 ? -8 : 8);
-            const translateX = isActive ? 0 : (offset === 1 ? -30 : 30);
-            const scale = isActive ? 1 : 0.9;
-            const zIndex = isActive ? 10 : (offset === 1 ? 5 : 1);
-            const opacity = isActive ? 1 : 0.7;
-            
-            return (
-              <div
-                key={index}
-                className="absolute inset-0 transition-all duration-700 ease-out cursor-pointer"
-                style={{
-                  transform: `translateX(${translateX}px) rotate(${rotation}deg) scale(${scale})`,
-                  zIndex,
-                  opacity
-                }}
-                onClick={() => {
-                  setActiveImageIndex(index);
-                  setActiveIndex(index % capabilities.length);
-                }}
-              >
-                <img
-                  src={image.src}
-                  alt={image.label}
-                  className="w-full h-full object-contain drop-shadow-2xl"
-                />
-              </div>
-            );
-          })}
+      {/* Left side - X-Ray reveal effect on stacked images */}
+      <div 
+        ref={containerRef}
+        className="relative aspect-[4/3] md:aspect-auto md:min-h-[400px] flex items-center justify-center order-2 md:order-1 cursor-crosshair"
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+      >
+        <div className="relative w-[320px] h-[400px] md:w-[360px] md:h-[450px]">
+          {/* Layer 1: B&W (deepest layer - always visible as base) */}
+          <div className="absolute inset-0 transition-opacity duration-300">
+            <img
+              src={imageLayers.bw}
+              alt="Player B&W"
+              className="w-full h-full object-contain drop-shadow-2xl"
+            />
+          </div>
+
+          {/* Layer 2: Sepia/Gold (X-ray layer - revealed on hover) */}
+          <div 
+            className="absolute inset-0 transition-all duration-150 ease-out pointer-events-none"
+            style={xrayMaskStyle}
+          >
+            <img
+              src={imageLayers.xray}
+              alt="Player Sepia"
+              className="w-full h-full object-contain drop-shadow-2xl"
+            />
+          </div>
+
+          {/* Layer 3: Full Color (top layer - hidden where cursor is) */}
+          <div 
+            className="absolute inset-0 transition-all duration-150 ease-out pointer-events-none"
+            style={isHovering ? {
+              maskImage: `radial-gradient(circle 100px at ${mousePos.x * 100}% ${mousePos.y * 100}%, transparent 0%, transparent 30%, black 80%, black 100%)`,
+              WebkitMaskImage: `radial-gradient(circle 100px at ${mousePos.x * 100}% ${mousePos.y * 100}%, transparent 0%, transparent 30%, black 80%, black 100%)`
+            } : {}}
+          >
+            <img
+              src={imageLayers.base}
+              alt="Player Color"
+              className="w-full h-full object-contain drop-shadow-2xl"
+            />
+          </div>
+
+          {/* Gold glow ring around cursor */}
+          <div 
+            className="absolute inset-0 pointer-events-none transition-opacity duration-200"
+            style={{
+              ...goldGlowStyle,
+              opacity: isHovering ? 1 : 0
+            }}
+          />
+
+          {/* Inner bright core at cursor position */}
+          {isHovering && (
+            <div 
+              className="absolute w-4 h-4 rounded-full pointer-events-none transition-all duration-100"
+              style={{
+                left: `calc(${mousePos.x * 100}% - 8px)`,
+                top: `calc(${mousePos.y * 100}% - 8px)`,
+                background: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(184, 165, 116, 0.4) 50%, transparent 100%)',
+                boxShadow: '0 0 20px rgba(184, 165, 116, 0.5)'
+              }}
+            />
+          )}
         </div>
         
         {/* Image caption */}
@@ -131,23 +180,12 @@ export const CapabilityAccordion = () => {
           </div>
         </div>
 
-        {/* Image indicators */}
-        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-          {stackedImages.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                setActiveImageIndex(index);
-                setActiveIndex(index % capabilities.length);
-              }}
-              className={cn(
-                "w-2 h-2 rounded-full transition-all duration-300",
-                index === activeImageIndex 
-                  ? "bg-primary w-6" 
-                  : "bg-white/50 hover:bg-white/70"
-              )}
-            />
-          ))}
+        {/* Hover instruction */}
+        <div className={cn(
+          "absolute top-4 left-1/2 -translate-x-1/2 text-xs text-muted-foreground font-bebas uppercase tracking-wider transition-opacity duration-300",
+          isHovering ? "opacity-0" : "opacity-60"
+        )}>
+          Hover to reveal
         </div>
       </div>
 

@@ -111,7 +111,7 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
           
           {/* Content */}
           <div 
-            className="relative bg-black/95 border border-primary/30 max-w-4xl w-full mx-4 overflow-hidden rounded-lg z-[9999] max-h-[85vh] md:max-h-none flex flex-col"
+            className="relative bg-black/95 border border-primary/30 max-w-4xl w-full mx-4 overflow-hidden rounded-lg z-[9999] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
