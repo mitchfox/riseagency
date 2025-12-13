@@ -1437,7 +1437,7 @@ export const Player3DEffect = ({ className = "", imagePrefix = "player" }: Playe
       {/* Show static base image immediately while Three.js loads */}
       {isLoading && (
         <img 
-          src="/assets/player-base.png" 
+          src={`/assets/${imagePrefix}-base.png`}
           alt=""
           className="absolute inset-0 w-full h-full object-contain"
           style={{ pointerEvents: 'none' }}
