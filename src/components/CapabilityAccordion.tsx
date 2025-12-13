@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search, BarChart3, Layers, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
+import capabilityImage1 from "@/assets/capability-1.png";
+import capabilityImage2 from "@/assets/capability-2.png";
+import capabilityImage5 from "@/assets/capability-5.png";
 
 interface CapabilityItem {
   id: string;
@@ -9,7 +12,6 @@ interface CapabilityItem {
   title: string;
   subtitle: string;
   description: string;
-  image: string;
 }
 
 const capabilities: CapabilityItem[] = [
@@ -19,8 +21,7 @@ const capabilities: CapabilityItem[] = [
     stat: "950+",
     title: "Scouts Worldwide",
     subtitle: "Eyes across every league",
-    description: "Our extensive scouting network spans across Europe's top leagues and emerging markets. We identify talent at every level of the professional game, from grassroots to elite academies.",
-    image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&auto=format&fit=crop&q=60"
+    description: "Our extensive scouting network spans across Europe's top leagues and emerging markets. We identify talent at every level of the professional game, from grassroots to elite academies."
   },
   {
     id: "analysis",
@@ -28,8 +29,7 @@ const capabilities: CapabilityItem[] = [
     stat: "R90",
     title: "Analysis System",
     subtitle: "Proprietary performance metrics",
-    description: "Our R90 system provides comprehensive performance analysis through data-driven insights. Every action is tracked, measured, and optimised to maximise player potential.",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=60"
+    description: "Our R90 system provides comprehensive performance analysis through data-driven insights. Every action is tracked, measured, and optimised to maximise player potential."
   },
   {
     id: "coaching",
@@ -37,8 +37,7 @@ const capabilities: CapabilityItem[] = [
     stat: "5D",
     title: "Coaching Model",
     subtitle: "Complete player development",
-    description: "The 5D Coaching Model addresses Technical, Tactical, Physical, Psychological, and Social dimensions. A holistic approach that develops the complete footballer.",
-    image: "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&auto=format&fit=crop&q=60"
+    description: "The 5D Coaching Model addresses Technical, Tactical, Physical, Psychological, and Social dimensions. A holistic approach that develops the complete footballer."
   },
   {
     id: "history",
@@ -46,22 +45,26 @@ const capabilities: CapabilityItem[] = [
     stat: "PL",
     title: "Development History",
     subtitle: "Premier League stars developed",
-    description: "We have guided numerous players to the Premier League and Europe's top leagues. Our track record speaks to our commitment to developing elite-level talent.",
-    image: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=800&auto=format&fit=crop&q=60"
+    description: "We have guided numerous players to the Premier League and Europe's top leagues. Our track record speaks to our commitment to developing elite-level talent."
   }
+];
+
+// Stacked images for the slideshow visual effect
+const stackedImages = [
+  { src: capabilityImage1, label: "Full Color", zIndex: 3, rotate: 0, translateX: 0 },
+  { src: capabilityImage2, label: "Sepia", zIndex: 2, rotate: -6, translateX: -20 },
+  { src: capabilityImage5, label: "B&W", zIndex: 1, rotate: 6, translateX: 20 }
 ];
 
 export const CapabilityAccordion = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [imageIndex, setImageIndex] = useState(0);
-
-  const slideImages = capabilities.map(c => c.image);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const nextSlide = useCallback(() => {
     setActiveIndex((prev) => (prev + 1) % capabilities.length);
-    setImageIndex((prev) => (prev + 1) % slideImages.length);
-  }, [slideImages.length]);
+    setActiveImageIndex((prev) => (prev + 1) % stackedImages.length);
+  }, []);
 
   // Auto-rotate every 7 seconds
   useEffect(() => {
@@ -73,7 +76,7 @@ export const CapabilityAccordion = () => {
 
   const handleItemClick = (index: number) => {
     setActiveIndex(index);
-    setImageIndex(index);
+    setActiveImageIndex(index % stackedImages.length);
   };
 
   return (
@@ -82,45 +85,64 @@ export const CapabilityAccordion = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Left side - Image slideshow */}
-      <div className="relative aspect-[4/3] md:aspect-auto md:min-h-[400px] rounded-xl overflow-hidden group order-2 md:order-1">
-        {slideImages.map((image, index) => (
-          <div
-            key={index}
-            className={cn(
-              "absolute inset-0 transition-all duration-700",
-              index === imageIndex 
-                ? "opacity-100 scale-100" 
-                : "opacity-0 scale-105"
-            )}
-          >
-            <img
-              src={image}
-              alt={capabilities[index].title}
-              className="w-full h-full object-cover"
-            />
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
-          </div>
-        ))}
+      {/* Left side - Stacked images visual effect */}
+      <div className="relative aspect-[4/3] md:aspect-auto md:min-h-[400px] flex items-center justify-center order-2 md:order-1">
+        <div className="relative w-[280px] h-[340px] md:w-[320px] md:h-[400px]">
+          {stackedImages.map((image, index) => {
+            const isActive = index === activeImageIndex;
+            const offset = (index - activeImageIndex + stackedImages.length) % stackedImages.length;
+            
+            // Calculate dynamic positioning based on active state
+            const rotation = isActive ? 0 : (offset === 1 ? -8 : 8);
+            const translateX = isActive ? 0 : (offset === 1 ? -30 : 30);
+            const scale = isActive ? 1 : 0.9;
+            const zIndex = isActive ? 10 : (offset === 1 ? 5 : 1);
+            const opacity = isActive ? 1 : 0.7;
+            
+            return (
+              <div
+                key={index}
+                className="absolute inset-0 transition-all duration-700 ease-out cursor-pointer"
+                style={{
+                  transform: `translateX(${translateX}px) rotate(${rotation}deg) scale(${scale})`,
+                  zIndex,
+                  opacity
+                }}
+                onClick={() => {
+                  setActiveImageIndex(index);
+                  setActiveIndex(index % capabilities.length);
+                }}
+              >
+                <img
+                  src={image.src}
+                  alt={image.label}
+                  className="w-full h-full object-contain drop-shadow-2xl"
+                />
+              </div>
+            );
+          })}
+        </div>
         
         {/* Image caption */}
-        <div className="absolute bottom-4 left-4 right-4 z-10">
-          <div className="flex items-center gap-2 text-white/90">
-            <span className="text-3xl font-bebas text-primary">{capabilities[activeIndex].stat}</span>
-            <span className="text-sm font-bebas uppercase tracking-wider">{capabilities[activeIndex].title}</span>
+        <div className="absolute bottom-4 left-4 right-4 z-20 text-center">
+          <div className="inline-flex items-center gap-2 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full">
+            <span className="text-2xl font-bebas text-primary">{capabilities[activeIndex].stat}</span>
+            <span className="text-sm font-bebas uppercase tracking-wider text-white/90">{capabilities[activeIndex].title}</span>
           </div>
         </div>
 
-        {/* Progress dots */}
-        <div className="absolute bottom-4 right-4 flex gap-2 z-10">
-          {capabilities.map((_, index) => (
+        {/* Image indicators */}
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+          {stackedImages.map((_, index) => (
             <button
               key={index}
-              onClick={() => handleItemClick(index)}
+              onClick={() => {
+                setActiveImageIndex(index);
+                setActiveIndex(index % capabilities.length);
+              }}
               className={cn(
                 "w-2 h-2 rounded-full transition-all duration-300",
-                index === activeIndex 
+                index === activeImageIndex 
                   ? "bg-primary w-6" 
                   : "bg-white/50 hover:bg-white/70"
               )}
