@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import capabilityImage1 from "@/assets/capability-1.png";
 import capabilityImage2 from "@/assets/capability-2.png";
 import capabilityImage5 from "@/assets/capability-5.png";
+import depthMap from "@/assets/depth-map.png";
+import roughnessMap from "@/assets/roughness-map.png";
 
 interface CapabilityItem {
   id: string;
@@ -49,11 +51,13 @@ const capabilities: CapabilityItem[] = [
   }
 ];
 
-// Image layers - base (color), xray reveal (sepia), and bw layer
+// Image layers for X-ray effect
 const imageLayers = {
   base: capabilityImage1,      // Full color - default visible
   xray: capabilityImage2,      // Sepia - revealed on hover
-  bw: capabilityImage5         // B&W - deepest layer
+  bw: capabilityImage5,        // B&W - deepest layer
+  depth: depthMap,             // Depth map for lighting
+  roughness: roughnessMap      // Roughness map for edge detail
 };
 
 export const CapabilityAccordion = () => {
@@ -113,7 +117,44 @@ export const CapabilityAccordion = () => {
         onMouseLeave={() => setIsHovering(false)}
       >
         <div className="relative w-[320px] h-[400px] md:w-[360px] md:h-[450px]">
-          {/* Layer 1: B&W (deepest layer - always visible as base) */}
+          {/* Layer 0: Depth map (invisible - used for reference) */}
+          <img
+            src={imageLayers.depth}
+            alt=""
+            className="absolute inset-0 w-full h-full object-contain opacity-0 pointer-events-none"
+          />
+
+          {/* Layer 1: Roughness map as edge glow effect overlay */}
+          <div 
+            className="absolute inset-0 transition-opacity duration-300 pointer-events-none mix-blend-overlay"
+            style={{ opacity: isHovering ? 0.3 : 0 }}
+          >
+            <img
+              src={imageLayers.roughness}
+              alt=""
+              className="w-full h-full object-contain"
+              style={{ filter: 'invert(1) brightness(1.5)' }}
+            />
+          </div>
+
+          {/* Layer 2: Depth map as X-ray structural layer */}
+          <div 
+            className="absolute inset-0 transition-all duration-150 ease-out pointer-events-none"
+            style={isHovering ? {
+              maskImage: `radial-gradient(circle 140px at ${mousePos.x * 100}% ${mousePos.y * 100}%, black 0%, black 30%, transparent 80%)`,
+              WebkitMaskImage: `radial-gradient(circle 140px at ${mousePos.x * 100}% ${mousePos.y * 100}%, black 0%, black 30%, transparent 80%)`,
+              opacity: 0.8
+            } : { opacity: 0 }}
+          >
+            <img
+              src={imageLayers.depth}
+              alt="X-ray depth"
+              className="w-full h-full object-contain"
+              style={{ filter: 'brightness(1.2) contrast(1.1)' }}
+            />
+          </div>
+
+          {/* Layer 3: B&W base layer - always visible */}
           <div className="absolute inset-0 transition-opacity duration-300">
             <img
               src={imageLayers.bw}
@@ -122,7 +163,7 @@ export const CapabilityAccordion = () => {
             />
           </div>
 
-          {/* Layer 2: Sepia/Gold (X-ray layer - revealed on hover) */}
+          {/* Layer 4: Sepia/Gold (X-ray layer - revealed on hover) */}
           <div 
             className="absolute inset-0 transition-all duration-150 ease-out pointer-events-none"
             style={xrayMaskStyle}
@@ -134,7 +175,7 @@ export const CapabilityAccordion = () => {
             />
           </div>
 
-          {/* Layer 3: Full Color (top layer - hidden where cursor is) */}
+          {/* Layer 5: Full Color (top layer - hidden where cursor is) */}
           <div 
             className="absolute inset-0 transition-all duration-150 ease-out pointer-events-none"
             style={isHovering ? {
@@ -161,12 +202,12 @@ export const CapabilityAccordion = () => {
           {/* Inner bright core at cursor position */}
           {isHovering && (
             <div 
-              className="absolute w-4 h-4 rounded-full pointer-events-none transition-all duration-100"
+              className="absolute w-6 h-6 rounded-full pointer-events-none transition-all duration-100"
               style={{
-                left: `calc(${mousePos.x * 100}% - 8px)`,
-                top: `calc(${mousePos.y * 100}% - 8px)`,
-                background: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(184, 165, 116, 0.4) 50%, transparent 100%)',
-                boxShadow: '0 0 20px rgba(184, 165, 116, 0.5)'
+                left: `calc(${mousePos.x * 100}% - 12px)`,
+                top: `calc(${mousePos.y * 100}% - 12px)`,
+                background: 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(184, 165, 116, 0.5) 40%, transparent 100%)',
+                boxShadow: '0 0 30px rgba(184, 165, 116, 0.6), 0 0 60px rgba(184, 165, 116, 0.3)'
               }}
             />
           )}
