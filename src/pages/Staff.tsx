@@ -59,6 +59,7 @@ import { FinancialReports } from "@/components/staff/FinancialReports";
 import { PaymentsManagement } from "@/components/staff/PaymentsManagement";
 import { AthleteCentre } from "@/components/staff/AthleteCentre";
 import { CoachingAIChat } from "@/components/staff/coaching/CoachingAIChat";
+import { OpenAccessManagement } from "@/components/staff/OpenAccessManagement";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -110,7 +111,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'coaching' | 'coachingchat' | 'analysis' | 'highlightmaker' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'languages' | 'sitemanagement' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'openaccess' | 'coaching' | 'coachingchat' | 'analysis' | 'highlightmaker' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'languages' | 'sitemanagement' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Enable staff notifications
@@ -593,6 +594,7 @@ const Staff = () => {
         { id: 'contentcreator', title: 'Content Creator', icon: Film },
         { id: 'blog', title: 'News Articles', icon: Newspaper },
         { id: 'betweenthelines', title: 'Between The Lines', icon: FileText },
+        { id: 'openaccess', title: 'Open Access', icon: FileText },
         { id: 'visitors', title: 'Site Visitors', icon: Eye },
       ]
     },
@@ -953,6 +955,7 @@ const Staff = () => {
                   {expandedSection === 'marketingideas' && <MarketingIdeas />}
                   {expandedSection === 'blog' && <BlogManagement isAdmin={isAdmin} />}
                   {expandedSection === 'betweenthelines' && <BetweenTheLinesManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'openaccess' && <OpenAccessManagement />}
                   {expandedSection === 'submissions' && <FormSubmissionsManagement isAdmin={isAdmin} />}
                   {expandedSection === 'visitors' && <SiteVisitorsManagement isAdmin={isAdmin} />}
                   {expandedSection === 'invoices' && <InvoiceManagement isAdmin={isAdmin} />}

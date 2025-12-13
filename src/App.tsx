@@ -38,6 +38,7 @@ const Business = lazy(() => import("./pages/Business"));
 const Media = lazy(() => import("./pages/Media"));
 const Performance = lazy(() => import("./pages/NewPerformance"));
 const BetweenTheLines = lazy(() => import("./pages/BetweenTheLines"));
+const OpenAccess = lazy(() => import("./pages/OpenAccess"));
 const PerformanceReport = lazy(() => import("./pages/PerformanceReport"));
 const ImportProgramCSV = lazy(() => import("./pages/ImportProgramCSV"));
 const ReplaceProgram = lazy(() => import("./pages/ReplaceProgram"));
@@ -127,6 +128,7 @@ const App = () => {
                     {createLocalizedDynamicRoutes('/news/:articleId', <News />)}
                     {createLocalizedRoutes('/between-the-lines', <BetweenTheLines />)}
                     {createLocalizedDynamicRoutes('/between-the-lines/:articleId', <News />)}
+                    {createLocalizedRoutes('/open-access', <OpenAccess />)}
                     {createLocalizedRoutes('/contact', <Contact />)}
                     {createLocalizedRoutes('/about', <About />)}
                     {createLocalizedRoutes('/login', <Login />)}
