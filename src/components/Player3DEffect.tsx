@@ -741,46 +741,18 @@ export const Player3DEffect = ({ className = "", imagePrefix = "player" }: Playe
           compositeColor = compositeColor + totalGloss;
         }
         
-        // Kit overlay with fluctuating transparency
-        if (hasKitOverlay > 0.5) {
-          vec4 kitColor = texture2D(kitOverlayTexture, parallaxUV);
-          
-          float kitPulse = sin(time * 1.0472) * 0.5 + 0.5;
-          float kitOpacity = mix(0.55, 1.0, kitPulse);
-          
-          compositeColor = mix(compositeColor, kitColor.rgb, kitColor.a * kitOpacity);
-          
-          float kitDepthVal = 0.5;
-          if (hasKitDepth > 0.5) {
-            kitDepthVal = dot(texture2D(kitDepthTexture, parallaxUV).rgb, vec3(0.299, 0.587, 0.114));
-          }
-          
-          if (kitShinePos >= 0.0) {
-            float shineWidth = 0.15;
-            float shineDist = abs(vUv.x - kitShinePos);
-            float shineMask = 1.0 - smoothstep(0.0, shineWidth, shineDist);
-            shineMask *= kitDepthVal;
-            float shineGlow = (1.0 - smoothstep(0.0, shineWidth * 0.3, shineDist)) * 0.6 * kitDepthVal;
-            compositeColor += brightGold * shineGlow * kitColor.a * kitOpacity;
-          }
-        }
+        // Store the full color version before converting to greyscale
+        vec3 fullColorComposite = compositeColor;
+        
+        // Convert base to greyscale for normal display (color revealed through x-ray)
+        float greyValue = dot(compositeColor, vec3(0.299, 0.587, 0.114));
+        vec3 greyscaleComposite = vec3(greyValue);
         
         // ============= FLUID BLOB X-RAY (matches overlay shader) =============
         float mouseXrayMask = calculateFluidMask(vUv);
         
-        // Sample x-ray texture
-        vec2 xrayUV = (parallaxUV - 0.5) * xrayScale + 0.5 + xrayOffset;
-        vec4 xrayColor = texture2D(xrayTexture, xrayUV);
-        float xrayValid = step(0.0, xrayUV.x) * step(xrayUV.x, 1.0) * step(0.0, xrayUV.y) * step(xrayUV.y, 1.0);
-        
-        // Shadow behind x-ray
-        vec4 shadowColor = texture2D(shadowTexture, parallaxUV);
-        vec3 xrayWithShadow = xrayColor.rgb;
-        if (hasShadow > 0.5) {
-          xrayWithShadow = mix(shadowColor.rgb, xrayColor.rgb, xrayColor.a);
-        }
-        
-        vec3 finalColor = mix(compositeColor, xrayWithShadow, mouseXrayMask * xrayValid);
+        // X-ray reveals the FULL COLOR version of the player image
+        vec3 finalColor = mix(greyscaleComposite, fullColorComposite, mouseXrayMask);
         
         // Edge rim light
         float rimLeft = smoothstep(0.1, 0.0, vUv.x) * max(0.0, shadowAmount) * 0.3;
