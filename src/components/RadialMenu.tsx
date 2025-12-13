@@ -11,7 +11,7 @@ import whiteMarbleBg from "@/assets/white-marble.png";
 import smudgedMarbleBg from "@/assets/black-marble-smudged.png";
 import europeMap from "@/assets/europe-outline.gif";
 import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Trophy, Users, Handshake, Briefcase, Search, Calendar, Heart, Package, X, ChevronDown } from "lucide-react";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { StarsQuadrantCard } from "@/components/radial-menu/StarsQuadrantCard";
 import { NewsQuadrantCard } from "@/components/radial-menu/NewsQuadrantCard";
 import { PerformanceQuadrantCard, InsightsQuadrantCard, ContactQuadrantCard } from "@/components/radial-menu/SimpleQuadrantCard";
@@ -614,6 +614,15 @@ export const RadialMenu = () => {
     return defaultMenu;
   }, [currentRole, selectedRole, isSelectingRole]);
 
+  useEffect(() => {
+    console.log('RadialMenu debug', {
+      isMobile,
+      hoveredItem,
+      hasQuadrant: hoveredItem !== null ? !!menuItems[hoveredItem]?.quadrantCard : null,
+      menuLength: menuItems.length,
+    });
+  }, [isMobile, hoveredItem, menuItems]);
+
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
@@ -1014,8 +1023,20 @@ export const RadialMenu = () => {
           maxHeight = Math.max(0, Math.min(baseHeight, availableBottom));
         }
 
+        console.log('Quadrant overlay', {
+          isMobile,
+          hoveredItem,
+          position: card.position,
+          maxWidth,
+          maxHeight,
+          vw,
+          vh,
+          circleSize,
+        });
+
         // If there really isn't room, skip rendering the card rather than overlapping the menu or going off-screen
         if (maxWidth <= 0 || maxHeight <= 0) {
+          console.log('Skipping quadrant overlay due to insufficient space');
           return null;
         }
 
