@@ -602,12 +602,35 @@ export const RadialMenu = () => {
 
       </div>
 
-      {/* Quadrant cards - Desktop only, extending toward screen edge */}
+      {/* Quadrant cards - Desktop only, extending from the SAME segment toward screen edge */}
       {!isMobile && hoveredItem !== null && menuItems[hoveredItem]?.quadrantCard && (() => {
         const card = menuItems[hoveredItem].quadrantCard!;
         const CardComponent = card.component;
-
-        // Viewport and menu geometry
+        
+        // Use the EXACT same angle calculation as the dividers
+        const numItems = menuItems.length;
+        const segAngle = 360 / numItems;
+        const startAngle = hoveredItem * segAngle;
+        const endAngle = (hoveredItem + 1) * segAngle;
+        
+        // Generate wedge clip-path
+        const generateWedgeClipPath = (start: number, end: number): string => {
+          const dist = 200;
+          const points: string[] = ['50% 50%'];
+          const numArcPoints = 20;
+          for (let i = 0; i <= numArcPoints; i++) {
+            const angle = start + (end - start) * (i / numArcPoints);
+            const rad = (angle * Math.PI) / 180;
+            const x = 50 + Math.cos(rad) * dist;
+            const y = 50 + Math.sin(rad) * dist;
+            points.push(`${x}% ${y}%`);
+          }
+          return `polygon(${points.join(', ')})`;
+        };
+        
+        const clipPath = generateWedgeClipPath(startAngle, endAngle);
+        
+        // Calculate viewport and menu geometry
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         const cx = vw / 2;
@@ -646,14 +669,25 @@ export const RadialMenu = () => {
           return null;
         }
 
-        const menuRadiusPercent = (menuRadius / Math.max(vw, vh)) * 100;
+        // Convert viewport edge positions to overlay coordinates
+        const overlaySize = Math.max(vw, vh);
+        const overlayOffsetX = (overlaySize - vw) / 2;
+        const overlayOffsetY = (overlaySize - vh) / 2;
 
+        // Mask out the center circle area
+        const menuRadiusPercent = (menuRadius / overlaySize) * 100;
+        
         return (
           <div 
-            className="pointer-events-none z-[240]"
+            className="pointer-events-none z-[25]"
             style={{
               position: 'fixed',
-              inset: 0,
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: `${overlaySize}px`,
+              height: `${overlaySize}px`,
+              clipPath,
             }}
           >
             <div 
@@ -670,11 +704,11 @@ export const RadialMenu = () => {
                 width: '100%',
                 overflow: 'hidden',
                 ...(card.position === 'top-right' || card.position === 'bottom-right'
-                  ? { right: edgePadding }
-                  : { left: edgePadding }),
+                  ? { right: edgePadding + overlayOffsetX }
+                  : { left: edgePadding + overlayOffsetX }),
                 ...(card.position === 'top-right' || card.position === 'top-left'
-                  ? { top: edgePadding }
-                  : { bottom: edgePadding }),
+                  ? { top: edgePadding + overlayOffsetY }
+                  : { bottom: edgePadding + overlayOffsetY }),
               }}
             >
               <CardComponent maxWidth={maxWidth} maxHeight={maxHeight} />
