@@ -356,7 +356,7 @@ export const RadialMenu = () => {
       </DrawerClose>
 
       {/* Main radial menu container */}
-      <div className="relative" style={{
+      <div className="relative z-[20]" style={{
         width: `${circleSize}px`,
         height: `${circleSize}px`,
       }}>
