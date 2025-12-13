@@ -1301,6 +1301,68 @@ export type Database = {
           },
         ]
       }
+      open_access_issues: {
+        Row: {
+          canva_draft_link: string | null
+          created_at: string
+          id: string
+          month: string
+          published: boolean
+          updated_at: string
+        }
+        Insert: {
+          canva_draft_link?: string | null
+          created_at?: string
+          id?: string
+          month: string
+          published?: boolean
+          updated_at?: string
+        }
+        Update: {
+          canva_draft_link?: string | null
+          created_at?: string
+          id?: string
+          month?: string
+          published?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      open_access_pages: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string
+          issue_id: string
+          page_number: number
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url: string
+          issue_id: string
+          page_number: number
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          issue_id?: string
+          page_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "open_access_pages_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "open_access_issues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
