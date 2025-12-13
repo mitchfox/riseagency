@@ -628,18 +628,18 @@ const Index = () => {
                     </span>
                   </div>
 
-                  {/* Title - moves up on hover */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 transition-all duration-300 group-hover:-translate-y-16">
+                  {/* Title - stays in place, card extends down on hover */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
                     <h3 className="text-xl md:text-2xl font-bebas uppercase text-white leading-tight">
                       {article.title}
                     </h3>
-                  </div>
-
-                  {/* Read Article button - fades in where title was */}
-                  <div className="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-100">
-                    <button className="px-4 py-2 text-sm font-bebas uppercase tracking-wider text-white bg-white/10 backdrop-blur-sm border border-white/30 rounded hover:bg-white/20 transition-colors">
-                      {t("home.read_article", "Read Article")}
-                    </button>
+                    
+                    {/* Read Article button - appears below title on hover */}
+                    <div className="h-0 group-hover:h-12 overflow-hidden transition-all duration-300 ease-out">
+                      <button className="mt-3 px-4 py-2 text-sm font-bebas uppercase tracking-wider text-white bg-white/10 backdrop-blur-sm border border-white/30 rounded hover:bg-white/20 transition-colors">
+                        {t("home.read_article", "Read Article")}
+                      </button>
+                    </div>
                   </div>
                 </Link>
               ))}
