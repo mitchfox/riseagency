@@ -66,8 +66,8 @@ export const StarsQuadrantCard = () => {
         </div>
       ))}
       
-      {/* Content overlay - positioned in the corner */}
-      <div className="absolute bottom-8 right-8 text-right space-y-4">
+      {/* Content overlay - positioned in the outer corner away from center */}
+      <div className="absolute bottom-4 right-4 text-right space-y-4 max-w-[40%]">
         {/* Label */}
         <div className="inline-block bg-primary px-4 py-1">
           <span className="text-sm font-bebas uppercase tracking-wider text-black">Our Stars</span>
