@@ -604,22 +604,22 @@ export const RadialMenu = () => {
         const segmentAngle = 360 / menuItems.length;
         
         // Calculate start and end angles for this segment
-        // Use same coordinate system as segment paths: 0° = right, increasing clockwise
-        const startAngle = hoveredItem * segmentAngle;
+        // Menu starts at top (-90°) and goes clockwise, so offset by -90
+        const startAngle = hoveredItem * segmentAngle - 90;
         const endAngle = startAngle + segmentAngle;
         
         // Generate clip-path polygon points for wedge shape
-        // Points: center, then arc from startAngle to endAngle
+        // Points: center, then arc from startAngle to endAngle extending to screen edges
         const generateWedgeClipPath = (start: number, end: number): string => {
           const points: string[] = ['50% 50%']; // Center point
-          const numArcPoints = 20; // Smooth arc
+          const numArcPoints = 24; // Smooth arc
           
           for (let i = 0; i <= numArcPoints; i++) {
             const angle = start + (end - start) * (i / numArcPoints);
             const radians = (angle * Math.PI) / 180;
-            // Extend to 150% to ensure it covers beyond screen edges
-            const x = 50 + Math.cos(radians) * 150;
-            const y = 50 + Math.sin(radians) * 150;
+            // Use 200% to ensure wedge extends well beyond screen corners
+            const x = 50 + Math.cos(radians) * 200;
+            const y = 50 + Math.sin(radians) * 200;
             points.push(`${x}% ${y}%`);
           }
           
@@ -631,9 +631,9 @@ export const RadialMenu = () => {
         // Calculate center angle of the segment for content positioning
         const centerAngle = startAngle + segmentAngle / 2;
         
-        // Calculate position for content (from center toward outer edge)
+        // Calculate position for content (toward outer edge of wedge)
         const contentRadians = (centerAngle * Math.PI) / 180;
-        const contentDistance = 35; // Percentage from center
+        const contentDistance = 38; // Percentage from center
         const contentX = 50 + Math.cos(contentRadians) * contentDistance;
         const contentY = 50 + Math.sin(contentRadians) * contentDistance;
         
