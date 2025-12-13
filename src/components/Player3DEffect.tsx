@@ -6,9 +6,10 @@ import { useXRay } from "@/contexts/XRayContext"
 
 interface Player3DEffectProps {
   className?: string
+  imagePrefix?: string // e.g., "player" or "player2" for different image sets
 }
 
-export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
+export const Player3DEffect = ({ className = "", imagePrefix = "player" }: Player3DEffectProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
   const { setXrayState } = useXRay()
@@ -43,7 +44,8 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       // Import white marble from assets
       const whiteMarbleModule = await import("@/assets/white-marble.png")
 
-      // Load ALL images in parallel - no ZIP needed!
+      // Load ALL images in parallel - use imagePrefix for base, overlay, xray
+      // Fall back to default player images for depth maps and other layers
       const [
         baseImage,
         overlayImage,
@@ -57,9 +59,9 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
         bwLayerImg,
         whiteMarbleImg
       ] = await Promise.all([
-        loadImage("/assets/player-base.png"),
-        loadImage("/assets/player-gold-overlay.png"),
-        loadImage("/assets/player-xray.png"),
+        loadImage(`/assets/${imagePrefix}-base.png`),
+        loadImage(`/assets/${imagePrefix}-gold-overlay.png`),
+        loadImage(`/assets/${imagePrefix}-xray.png`),
         loadImage("/assets/player-depth-map.png"),
         loadImage("/assets/player-depth-lightened.png"),
         loadImage("/assets/player-depth-darkened.png"),
@@ -71,11 +73,11 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       ])
       
       if (!baseImage || !overlayImage || !xrayImage) {
-        console.error("Missing required images")
+        console.error("Missing required images for prefix:", imagePrefix)
         return null
       }
       
-      console.log("Images loaded:", { base: !!baseImage, overlay: !!overlayImage, xray: !!xrayImage, kitOverlay: !!kitOverlayImg, kitDepth: !!kitDepthImg, shadow: !!shadowImg, bwLayer: !!bwLayerImg, whiteMarble: !!whiteMarbleImg })
+      console.log("Images loaded:", { prefix: imagePrefix, base: !!baseImage, overlay: !!overlayImage, xray: !!xrayImage, kitOverlay: !!kitOverlayImg, kitDepth: !!kitDepthImg, shadow: !!shadowImg, bwLayer: !!bwLayerImg, whiteMarble: !!whiteMarbleImg })
       
       return { 
         baseImage,
@@ -94,7 +96,7 @@ export const Player3DEffect = ({ className = "" }: Player3DEffectProps) => {
       console.error("Error loading images:", error)
       return null
     }
-  }, [])
+  }, [imagePrefix])
 
   useEffect(() => {
     if (!containerRef.current) return
