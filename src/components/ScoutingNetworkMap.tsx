@@ -1338,9 +1338,12 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
           </div>
 
           {/* Coverage Regions - Country -> Clubs from footballClubs */}
-          <div id="coverage-regions-container" className="bg-card rounded-lg p-3 border mt-3 flex-1 min-h-0 overflow-hidden flex flex-col">
+          <div id="coverage-regions-container" className="bg-card rounded-lg p-3 border mt-3 flex-1 min-h-0 overflow-hidden flex flex-col group/coverage">
             <h4 className="font-bebas text-lg mb-2 flex-shrink-0">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
-            <div className="space-y-1 overflow-y-auto flex-1 min-h-0">
+            <div className="space-y-1 flex-1 min-h-0 max-h-[240px] overflow-hidden hover:overflow-y-auto transition-all relative">
+              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent pointer-events-none group-hover/coverage:opacity-0 transition-opacity z-10 flex items-end justify-center pb-1">
+                <ChevronDown className="w-4 h-4 text-muted-foreground animate-bounce" />
+              </div>
               {(() => {
                 // Group footballClubs by country
                 const clubsByCountry: Record<string, typeof footballClubs> = {};
