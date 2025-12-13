@@ -45,7 +45,7 @@ export const Player3DEffect = ({ className = "", imagePrefix = "player" }: Playe
       const whiteMarbleModule = await import("@/assets/white-marble.png")
 
       // Load ALL images in parallel - use imagePrefix for base, overlay, xray
-      // Fall back to default player images for depth maps and other layers
+      // Also try to load kit images with prefix, falling back to null if not found
       const [
         baseImage,
         overlayImage,
@@ -65,8 +65,9 @@ export const Player3DEffect = ({ className = "", imagePrefix = "player" }: Playe
         loadImage("/assets/player-depth-map.png"),
         loadImage("/assets/player-depth-lightened.png"),
         loadImage("/assets/player-depth-darkened.png"),
-        loadImage("/assets/player-kit-overlay.png"),
-        loadImage("/assets/player-kit-depth.png"),
+        // Try prefix-specific kit images first, will return null if not found
+        loadImage(`/assets/${imagePrefix}-kit-overlay.png`),
+        loadImage(`/assets/${imagePrefix}-kit-depth.png`),
         loadImage("/assets/player-shadow.png"),
         loadImage("/assets/player-bw-layer.png"),
         loadImage(whiteMarbleModule.default)
