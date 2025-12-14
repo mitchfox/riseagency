@@ -21,6 +21,7 @@ export type QuadrantPosition = 'top-left' | 'top-right' | 'bottom-left' | 'botto
 interface QuadrantCardProps {
   maxWidth?: number;
   maxHeight?: number;
+  align?: 'left' | 'right' | 'center';
 }
 
 interface MenuItem {
@@ -1058,6 +1059,11 @@ export const RadialMenu = () => {
         const midAngle = (startAngle + endAngle) / 2;
         const midRad = (midAngle * Math.PI) / 180;
         
+        // Determine text alignment based on which side the wedge is on
+        // Left side: angles 90-270 (cos < 0), Right side: angles 270-360 or 0-90 (cos > 0)
+        const isLeftSide = Math.cos(midRad) < 0;
+        const textAlign: 'left' | 'right' = isLeftSide ? 'left' : 'right';
+        
         // Base position along the wedge's center line
         const baseDistance = menuRadius + 60; // Slightly closer to center to stay inside wedge
         const rawX = cx + Math.cos(midRad) * baseDistance;
@@ -1109,7 +1115,7 @@ export const RadialMenu = () => {
                 maxHeight: `${cardHeight}px`,
               }}
             >
-              <CardComponent maxWidth={cardWidth} maxHeight={cardHeight} />
+              <CardComponent maxWidth={cardWidth} maxHeight={cardHeight} align={textAlign} />
             </div>
           </div>
         );

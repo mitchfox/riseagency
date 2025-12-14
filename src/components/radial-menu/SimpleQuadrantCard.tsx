@@ -9,6 +9,7 @@ interface SimpleQuadrantCardProps {
   position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
   maxWidth?: number;
   maxHeight?: number;
+  align?: 'left' | 'right' | 'center';
 }
 
 export const SimpleQuadrantCard = ({
@@ -19,6 +20,7 @@ export const SimpleQuadrantCard = ({
   position,
   maxWidth,
   maxHeight,
+  align = 'center',
 }: SimpleQuadrantCardProps) => {
   // Determine corner positioning and gradient direction based on quadrant
   // Position content at outer edges, away from center of screen
@@ -42,10 +44,13 @@ export const SimpleQuadrantCard = ({
   };
 
   const styles = positionStyles[position];
+  
+  const textAlignClass = align === 'left' ? 'text-left' : align === 'right' ? 'text-right' : 'text-center';
+  const flexAlignClass = align === 'left' ? 'items-start' : align === 'right' ? 'items-end' : 'items-center';
 
   return (
     <div
-      className="animate-[fade-in_0.3s_ease-out_forwards] text-center"
+      className={`animate-[fade-in_0.3s_ease-out_forwards] flex flex-col ${flexAlignClass}`}
       style={{
         maxWidth: maxWidth ?? 160,
         maxHeight: maxHeight ?? undefined,
@@ -59,11 +64,11 @@ export const SimpleQuadrantCard = ({
       
       {/* Stat if provided */}
       {stat && (
-        <div className="text-3xl font-bebas text-primary leading-none mb-1">{stat}</div>
+        <div className={`text-3xl font-bebas text-primary leading-none mb-1 ${textAlignClass} w-full`}>{stat}</div>
       )}
       
       {/* Description - smaller text that wraps inside wedge */}
-      <p className="text-white/80 text-xs leading-tight break-words">
+      <p className={`text-white/80 text-xs leading-tight break-words ${textAlignClass}`}>
         {description}
       </p>
     </div>
@@ -71,7 +76,7 @@ export const SimpleQuadrantCard = ({
 };
 
 // Pre-configured cards for different menu items
- type QuadrantCardProps = Pick<SimpleQuadrantCardProps, "maxWidth" | "maxHeight">;
+ type QuadrantCardProps = Pick<SimpleQuadrantCardProps, "maxWidth" | "maxHeight" | "align">;
  
 export const PerformanceQuadrantCard = (props: QuadrantCardProps) => (
   <SimpleQuadrantCard
