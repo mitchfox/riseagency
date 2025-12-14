@@ -1053,14 +1053,29 @@ export const RadialMenu = () => {
         const menuRadiusPercent = (menuRadius / overlaySize) * 100;
         
         // Position card content within the wedge - between menu edge and screen edge
-        const menuEdgeDistance = menuRadius + 40; // Distance from center to start of content
+        const cardWidth = Math.min(160, maxWidth);
+        const cardHeight = maxHeight;
         const midAngle = (startAngle + endAngle) / 2;
         const midRad = (midAngle * Math.PI) / 180;
         
-        // Calculate position along the wedge's center line
-        const contentDistance = menuRadius + 60; // Slightly closer to center to stay inside wedge
-        const contentX = Math.cos(midRad) * contentDistance;
-        const contentY = Math.sin(midRad) * contentDistance;
+        // Base position along the wedge's center line
+        const baseDistance = menuRadius + 60; // Slightly closer to center to stay inside wedge
+        const rawX = cx + Math.cos(midRad) * baseDistance;
+        const rawY = cy + Math.sin(midRad) * baseDistance;
+        
+        // Clamp card center so it never goes off-screen
+        const halfW = cardWidth / 2;
+        const halfH = cardHeight / 2;
+        const minX = edgePadding + halfW;
+        const maxXPos = vw - edgePadding - halfW;
+        const minY = edgePadding + halfH;
+        const maxYPos = vh - edgePadding - halfH;
+        const clampedX = Math.min(Math.max(rawX, minX), maxXPos);
+        const clampedY = Math.min(Math.max(rawY, minY), maxYPos);
+        
+        // Convert back to overlay-relative offset from center
+        const contentX = clampedX - cx;
+        const contentY = clampedY - cy;
         
         return (
           <div 
@@ -1090,11 +1105,11 @@ export const RadialMenu = () => {
                 left: `calc(50% + ${contentX}px)`,
                 top: `calc(50% + ${contentY}px)`,
                 transform: 'translate(-50%, -50%)',
-                width: `${Math.min(160, maxWidth)}px`,
-                maxHeight: `${maxHeight}px`,
+                width: `${cardWidth}px`,
+                maxHeight: `${cardHeight}px`,
               }}
             >
-              <CardComponent maxWidth={160} maxHeight={maxHeight} />
+              <CardComponent maxWidth={cardWidth} maxHeight={cardHeight} />
             </div>
           </div>
         );
