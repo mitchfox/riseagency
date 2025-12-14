@@ -947,7 +947,7 @@ export const RadialMenu = () => {
           <div className="absolute left-0 right-0 h-[2px] bg-primary z-10" style={{ top: '55%' }} />
           
           {/* Role selector section: 55% - 75% */}
-          <div className="absolute inset-x-0 flex items-center justify-center z-20" style={{ top: 'calc(55% + 4px)', height: '20%' }}>
+          <div className="absolute inset-x-0 flex items-center justify-center z-20" style={{ top: 'calc(55% + 2px)', height: '20%' }}>
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
               className="font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none"
