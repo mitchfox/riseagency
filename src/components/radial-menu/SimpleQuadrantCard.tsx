@@ -47,23 +47,23 @@ export const SimpleQuadrantCard = ({
     <div
       className="animate-[fade-in_0.3s_ease-out_forwards] text-center"
       style={{
-        maxWidth: maxWidth ?? undefined,
+        maxWidth: maxWidth ?? 180,
         maxHeight: maxHeight ?? undefined,
       }}
     >
       {/* Label with icon */}
-      <div className="inline-flex items-center gap-2 bg-primary px-4 py-1 mb-3">
+      <div className="inline-flex items-center gap-1.5 bg-primary px-2 py-0.5 mb-2">
         <div className="text-black">{icon}</div>
-        <span className="text-sm font-bebas uppercase tracking-wider text-black">{title}</span>
+        <span className="text-xs font-bebas uppercase tracking-wider text-black">{title}</span>
       </div>
       
       {/* Stat if provided */}
       {stat && (
-        <div className="text-5xl font-bebas text-primary leading-none mb-2">{stat}</div>
+        <div className="text-3xl font-bebas text-primary leading-none mb-1">{stat}</div>
       )}
       
-      {/* Description */}
-      <p className="text-white/80 text-sm leading-relaxed">{description}</p>
+      {/* Description - smaller text that wraps */}
+      <p className="text-white/80 text-xs leading-tight">{description}</p>
     </div>
   );
 };
