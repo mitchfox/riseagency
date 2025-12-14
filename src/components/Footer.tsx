@@ -132,6 +132,18 @@ export const Footer = () => {
           </div>
         </div>
 
+        {/* About RISE Section */}
+        <div className="pt-8 border-t border-primary/10 mb-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <h3 className="font-bebas text-2xl uppercase tracking-wider text-foreground mb-4">
+              {t("footer.about_rise_title", "About RISE")}
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {t("footer.about_rise_text", "RISE Football Agency is a performance-first agency dedicated to elevating players, coaches, and clubs through expert representation, data-driven analysis, and holistic development. Founded on the belief that success in football requires more than talent alone, we combine professional guidance with cutting-edge performance insights to help our clients reach their full potential. From career management and transfer negotiations to mental conditioning and tactical development, RISE provides comprehensive support at every stage of the journey.")}
+            </p>
+          </div>
+        </div>
+
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-primary/10">
           <p className="text-xs text-muted-foreground/80 text-center max-w-3xl mx-auto mb-6 px-4">
