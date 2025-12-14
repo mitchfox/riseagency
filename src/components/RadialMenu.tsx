@@ -913,27 +913,28 @@ export const RadialMenu = () => {
             }}
           />
           
-          {/* Gold divider at 75% */}
-          <div className="absolute left-0 w-full h-[2px] bg-primary z-10" style={{ top: '75%' }} />
+          {/* Gold divider at 75% - consistent 3px height */}
+          <div className="absolute left-0 w-full bg-primary z-10" style={{ top: '75%', height: '3px' }} />
 
-          {/* Logo section - 0% to 55% of circle height */}
+          {/* Logo section - 0% to 55% of circle height, logo fills the space */}
           <div 
-            className="absolute left-0 w-full z-20 flex items-center justify-center"
+            className="absolute left-0 w-full z-20 flex items-center justify-center overflow-hidden"
             style={{ top: '0%', height: '55%' }}
           >
             <img
               src={riseLogoBlack}
               alt="RISE"
               style={{ 
-                width: '90%',
-                height: '90%',
+                width: '100%',
+                height: '100%',
                 objectFit: 'contain',
+                transform: 'scale(1.1)',
               }}
             />
           </div>
           
-          {/* Gold divider between logo and role selector at 55% */}
-          <div className="absolute left-0 w-full h-[2px] bg-primary z-30" style={{ top: '55%' }} />
+          {/* Gold divider between logo and role selector at 55% - consistent 3px height */}
+          <div className="absolute left-0 w-full bg-primary z-30" style={{ top: '55%', height: '3px' }} />
           
           {/* Role/Menu selection button - 55% to 75% of circle height (20% height) */}
           <div 
