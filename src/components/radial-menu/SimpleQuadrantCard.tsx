@@ -1,4 +1,4 @@
-import { TrendingUp, BookOpen, MessageCircle } from "lucide-react";
+import { TrendingUp, BookOpen, MessageCircle, Route, Search } from "lucide-react";
 import { ReactNode } from "react";
 
 interface SimpleQuadrantCardProps {
@@ -69,8 +69,8 @@ export const SimpleQuadrantCard = ({
 };
 
 // Pre-configured cards for different menu items
-type QuadrantCardProps = Pick<SimpleQuadrantCardProps, "maxWidth" | "maxHeight">;
-
+ type QuadrantCardProps = Pick<SimpleQuadrantCardProps, "maxWidth" | "maxHeight">;
+ 
 export const PerformanceQuadrantCard = (props: QuadrantCardProps) => (
   <SimpleQuadrantCard
     icon={<TrendingUp className="w-4 h-4" />}
@@ -98,6 +98,36 @@ export const ContactQuadrantCard = (props: QuadrantCardProps) => (
     title="Get In Touch"
     description="Ready to elevate your career? Connect with our team today."
     position="bottom-right"
+    {...props}
+  />
+);
+
+export const YouthQuadrantCard = (props: QuadrantCardProps) => (
+  <SimpleQuadrantCard
+    icon={<TrendingUp className="w-4 h-4" />}
+    title="For Youth"
+    description="Pathways and support designed specifically for ambitious young players."
+    position="bottom-right"
+    {...props}
+  />
+);
+
+export const JourneyQuadrantCard = (props: QuadrantCardProps) => (
+  <SimpleQuadrantCard
+    icon={<Route className="w-4 h-4" />}
+    title="The Journey"
+    description="Step-by-step guidance through each stage of your professional pathway."
+    position="bottom-left"
+    {...props}
+  />
+);
+
+export const WhatWeLookForQuadrantCard = (props: QuadrantCardProps) => (
+  <SimpleQuadrantCard
+    icon={<Search className="w-4 h-4" />}
+    title="What We Look For"
+    description="Key traits and behaviours we value when evaluating players for RISE."
+    position="top-left"
     {...props}
   />
 );
