@@ -1160,7 +1160,7 @@ export const CreatePerformanceReportDialog = ({
 
         {loadingData ? (
           <div className="flex items-center justify-center py-8">
-            <div className="text-center">Loading...</div>
+            <div className="text-center">RISING...</div>
           </div>
         ) : (
           <div className="space-y-4 sm:space-y-6 pb-20">

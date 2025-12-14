@@ -168,7 +168,7 @@ const PerformanceReport = () => {
       <div className="min-h-screen bg-background">
         {!isAuthenticated && <Header />}
         <main className="container mx-auto px-4 py-8">
-          <div className="text-center">Loading...</div>
+          <div className="text-center">RISING...</div>
         </main>
         {!isAuthenticated && <Footer />}
       </div>

@@ -209,7 +209,7 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-primary font-bebas tracking-wider animate-pulse">
-            LOADING...
+            RISING...
           </div>
         </div>
       )}

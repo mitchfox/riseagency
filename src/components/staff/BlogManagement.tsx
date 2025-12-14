@@ -171,7 +171,7 @@ const BlogManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   if (loading && posts.length === 0) {
-    return <div>Loading...</div>;
+    return <div>RISING...</div>;
   }
 
   return (
