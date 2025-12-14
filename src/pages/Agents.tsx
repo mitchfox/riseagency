@@ -12,20 +12,6 @@ import {
 } from "@/components/ui/accordion";
 
 const Agents = () => {
-  const handleWhatsApp = () => {
-    window.open("https://wa.me/447508342901", "_blank");
-  };
-
-  const handleEmail = () => {
-    window.location.href = "mailto:info@risefootballagency.com?subject=Agent Collaboration Inquiry";
-  };
-
-  const stats = [
-    { value: "50+", label: "Club Connections" },
-    { value: "12", label: "Countries" },
-    { value: "£2M+", label: "Deals Facilitated" },
-    { value: "100%", label: "Confidentiality" },
-  ];
 
   const processSteps = [
     {
@@ -96,7 +82,7 @@ const Agents = () => {
         <section className="relative min-h-[70vh] flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
           
-          <div className="relative z-10 text-center max-w-4xl mx-auto">
+          <div className="relative z-10 text-center max-w-4xl mx-auto pt-12 md:pt-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-6">
               <Handshake className="h-4 w-4 text-primary" />
               <span className="text-sm font-semibold">Agent Partnerships</span>
@@ -115,32 +101,36 @@ const Agents = () => {
               player development support, or a trusted partner for complex deals - we are here to collaborate.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
-                onClick={handleWhatsApp}
-                className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg"
+                asChild
+                className="btn-shine text-lg font-bebas uppercase tracking-wider"
+                size="lg"
               >
-                <MessageCircle className="h-5 w-5" />
-                Message on WhatsApp
+                <a 
+                  href="https://wa.me/447508342901"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="mr-2 h-5 w-5" />
+                  WhatsApp
+                </a>
               </Button>
               <Button 
-                onClick={handleEmail}
+                asChild
                 variant="outline"
-                className="gap-2 border-primary/50 hover:bg-primary/10 px-8 py-6 text-lg"
+                className="text-lg font-bebas uppercase tracking-wider"
+                size="lg"
               >
-                <Mail className="h-5 w-5" />
-                Send an Email
+                <a 
+                  href="mailto:jolon.levene@risefootballagency.com?subject=Agent Collaboration Inquiry"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Mail className="mr-2 h-5 w-5" />
+                  Email
+                </a>
               </Button>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-3xl mx-auto">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center p-4 rounded-xl bg-card/50 border border-border/50">
-                  <div className="text-3xl md:text-4xl font-bebas text-primary mb-1">{stat.value}</div>
-                  <div className="text-xs md:text-sm text-muted-foreground">{stat.label}</div>
-                </div>
-              ))}
             </div>
           </div>
         </section>
@@ -493,19 +483,33 @@ const Agents = () => {
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
                 <Button 
-                  onClick={handleWhatsApp}
-                  className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg"
+                  asChild
+                  className="btn-shine text-lg font-bebas uppercase tracking-wider"
+                  size="lg"
                 >
-                  <MessageCircle className="h-5 w-5" />
-                  Start a Conversation
+                  <a 
+                    href="https://wa.me/447508342901"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="mr-2 h-5 w-5" />
+                    Start a Conversation
+                  </a>
                 </Button>
                 <Button 
-                  onClick={handleEmail}
+                  asChild
                   variant="outline"
-                  className="gap-2 border-primary/50 hover:bg-primary/10 px-8 py-6 text-lg"
+                  className="text-lg font-bebas uppercase tracking-wider"
+                  size="lg"
                 >
-                  <Mail className="h-5 w-5" />
-                  Email Us
+                  <a 
+                    href="mailto:jolon.levene@risefootballagency.com?subject=Agent Collaboration Inquiry"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Mail className="mr-2 h-5 w-5" />
+                    Email Us
+                  </a>
                 </Button>
               </div>
 
