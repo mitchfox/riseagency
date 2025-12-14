@@ -617,7 +617,9 @@ function RoleSlider({
             const bezierT = xPercent / 100;
             const controlY = 15;
             const yPos = Math.pow(1-bezierT, 2) * 87 + 2 * (1-bezierT) * bezierT * controlY + Math.pow(bezierT, 2) * 87;
-            const yPercent = (yPos / 100) * 100;
+            // Apply 4px offset for center (middle) option only
+            const centerOffset = index === centerIndex ? -4 : 0;
+            const yPercent = (yPos / 100) * 100 + centerOffset;
             
             const isHovered = hoveredIndex === index || nearestSnapIndex === index;
             const isSelected = selectedIndex === index;
