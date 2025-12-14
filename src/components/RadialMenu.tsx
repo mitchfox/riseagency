@@ -1058,7 +1058,7 @@ export const RadialMenu = () => {
         const midRad = (midAngle * Math.PI) / 180;
         
         // Calculate position along the wedge's center line
-        const contentDistance = menuRadius + 80; // How far from center
+        const contentDistance = menuRadius + 60; // Slightly closer to center to stay inside wedge
         const contentX = Math.cos(midRad) * contentDistance;
         const contentY = Math.sin(midRad) * contentDistance;
         
@@ -1090,11 +1090,11 @@ export const RadialMenu = () => {
                 left: `calc(50% + ${contentX}px)`,
                 top: `calc(50% + ${contentY}px)`,
                 transform: 'translate(-50%, -50%)',
-                width: `${Math.min(180, maxWidth)}px`,
+                width: `${Math.min(160, maxWidth)}px`,
                 maxHeight: `${maxHeight}px`,
               }}
             >
-              <CardComponent maxWidth={180} maxHeight={maxHeight} />
+              <CardComponent maxWidth={160} maxHeight={maxHeight} />
             </div>
           </div>
         );

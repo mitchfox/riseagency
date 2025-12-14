@@ -47,7 +47,7 @@ export const SimpleQuadrantCard = ({
     <div
       className="animate-[fade-in_0.3s_ease-out_forwards] text-center"
       style={{
-        maxWidth: maxWidth ?? 180,
+        maxWidth: maxWidth ?? 160,
         maxHeight: maxHeight ?? undefined,
       }}
     >
@@ -62,8 +62,10 @@ export const SimpleQuadrantCard = ({
         <div className="text-3xl font-bebas text-primary leading-none mb-1">{stat}</div>
       )}
       
-      {/* Description - smaller text that wraps */}
-      <p className="text-white/80 text-xs leading-tight">{description}</p>
+      {/* Description - smaller text that wraps inside wedge */}
+      <p className="text-white/80 text-xs leading-tight break-words">
+        {description}
+      </p>
     </div>
   );
 };
