@@ -928,58 +928,51 @@ export const RadialMenu = () => {
             }}
           />
           
-          {/* Gold divider between logo and dropdown at ~55% */}
+          {/* Gold divider between logo and role selector at 55% */}
           <div 
             className="absolute left-0 w-full h-[2px] bg-primary z-30"
-            style={{ top: 'calc(55% - 1px)' }}
+            style={{ top: '55%' }}
           />
           
-          {/* Role/Menu selection button - original vertical alignment math */}
+          {/* Role/Menu selection button - absolutely positioned between 55% and 75% */}
           <div
-            className="text-center relative z-20 w-full flex items-center justify-center"
-            style={{ 
-              transform: `translateY(${isMobile ? (-centerSize * 0.28 - 3) : (-centerSize * 0.3125)}px)` 
-            }}
+            className="absolute left-0 w-full z-20 flex items-center justify-center"
+            style={{ top: '55%', height: '20%' }}
           >
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
-              className="font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none w-full"
+              className="font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none"
               style={{ 
-                fontSize: `${isMobile ? centerSize * 0.22 : centerSize * 0.1875}px`,
-                ...(isSelectingRole ? { color: 'hsl(var(--primary))' } : {})
+                fontSize: `${centerSize * 0.18}px`,
+                lineHeight: 1,
               }}
             >
-              <span className={isSelectingRole ? '' : 'text-black hover:text-primary transition-colors'}>
+              <span className={isSelectingRole ? 'text-primary' : 'text-black hover:text-primary transition-colors'}>
                 {isSelectingRole ? t('menu.role', 'ROLE') : t(displayRoleLabelKey, displayRoleFallback).toUpperCase()}
               </span>
             </button>
           </div>
           
-          {/* Language selector in lower half */}
+          {/* Language selector - absolutely positioned in bottom 25% (75%-100%) */}
           <div 
-            className="absolute z-20" 
-            style={{ 
-              bottom: isMobile ? `${centerSize * 0.06 - 7}px` : `${centerSize * 0.04375}px`,
-              left: '50%',
-              transform: isMobile ? 'translateX(calc(-50% + 6px))' : 'translateX(calc(-50% + 5px))'
-            }}
+            className="absolute left-0 w-full z-20 flex items-center justify-center"
+            style={{ top: '75%', height: '25%' }}
           >
             <button
               onClick={() => setShowMap(!showMap)}
               className="flex items-center gap-1 font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
-              style={{ fontSize: `${isMobile ? centerSize * 0.165 * 0.7 : centerSize * 0.09375}px` }}
             >
               <img 
                 src={getFlagUrl(selectedLanguage.flagCode)} 
                 alt={selectedLanguage.name} 
                 className="rounded-sm" 
-                style={{ height: `${isMobile ? centerSize * 0.126 : centerSize * 0.105}px`, width: 'auto' }} 
+                style={{ height: `${centerSize * 0.12}px`, width: 'auto' }} 
               />
               <ChevronDown 
                 className="transition-transform duration-300"
                 style={{
-                  width: `${isMobile ? centerSize * 0.18 * 0.7 : centerSize * 0.1171875}px`,
-                  height: `${isMobile ? centerSize * 0.18 * 0.7 : centerSize * 0.1171875}px`,
+                  width: `${centerSize * 0.1}px`,
+                  height: `${centerSize * 0.1}px`,
                   transform: showMap ? 'rotate(180deg)' : 'rotate(0deg)'
                 }}
               />
@@ -1051,44 +1044,48 @@ export const RadialMenu = () => {
         const menuRadiusPercent = (menuRadius / overlaySize) * 100;
         
         return (
-          <div 
-            key={`quadrant-${hoveredItem}`}
-            className="pointer-events-none z-[215] animate-[fade-in_0.2s_ease-out_forwards]"
-            style={{
-              position: 'fixed',
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: `${overlaySize}px`,
-              height: `${overlaySize}px`,
-              clipPath,
-            }}
-          >
-            {/* Gradient overlay that masks around the menu */}
+          <>
+            {/* Gradient wedge overlay */}
             <div 
-              className="absolute inset-0"
+              key={`quadrant-bg-${hoveredItem}`}
+              className="pointer-events-none z-[210] animate-[fade-in_0.2s_ease-out_forwards]"
               style={{
-                background: `radial-gradient(circle at 50% 50%, transparent ${menuRadiusPercent}%, rgba(0,0,0,0.4) ${menuRadiusPercent + 3}%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.9) 100%)`
+                position: 'fixed',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: `${overlaySize}px`,
+                height: `${overlaySize}px`,
+                clipPath,
               }}
-            />
-            {/* Card content positioned in the quadrant */}
+            >
+              <div 
+                className="absolute inset-0"
+                style={{
+                  background: `radial-gradient(circle at 50% 50%, transparent ${menuRadiusPercent}%, rgba(0,0,0,0.4) ${menuRadiusPercent + 3}%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.9) 100%)`
+                }}
+              />
+            </div>
+            
+            {/* Card content - positioned WITHOUT clipPath so content is visible */}
             <div 
-              className="absolute"
+              key={`quadrant-card-${hoveredItem}`}
+              className="pointer-events-none z-[215] animate-[fade-in_0.2s_ease-out_forwards]"
               style={{
+                position: 'fixed',
                 width: maxWidth,
                 height: maxHeight,
-                overflow: 'visible',
                 ...(card.position === 'top-right' || card.position === 'bottom-right'
-                  ? { right: edgePadding + overlayOffsetX }
-                  : { left: edgePadding + overlayOffsetX }),
+                  ? { right: edgePadding }
+                  : { left: edgePadding }),
                 ...(card.position === 'top-right' || card.position === 'top-left'
-                  ? { top: edgePadding + overlayOffsetY }
-                  : { bottom: edgePadding + overlayOffsetY }),
+                  ? { top: edgePadding }
+                  : { bottom: edgePadding }),
               }}
             >
               <CardComponent maxWidth={maxWidth} maxHeight={maxHeight} />
             </div>
-          </div>
+          </>
         );
       })()}
 
