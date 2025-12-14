@@ -188,26 +188,45 @@ export function calculateWedgeArea(
   };
   
   // Calculate available dimensions within the wedge at this position
-  // Width: perpendicular to the mid-angle direction
-  const perpRad = midRad + Math.PI / 2;
+  // Width is constrained by the wedge edges at the content distance
   const angleSpanRad = ((endAngleDeg - startAngleDeg) * Math.PI) / 180;
   
-  // Available width is roughly the arc length at the content distance
-  const arcWidth = optimalDistance * Math.sin(angleSpanRad / 2) * 2;
+  // Find where the wedge edges are at the content distance
+  const startEdgeRad = (startAngleDeg * Math.PI) / 180;
+  const endEdgeRad = (endAngleDeg * Math.PI) / 180;
+  
+  const startEdgeAtContent: Point = {
+    x: centerX + Math.cos(startEdgeRad) * optimalDistance,
+    y: centerY + Math.sin(startEdgeRad) * optimalDistance,
+  };
+  const endEdgeAtContent: Point = {
+    x: centerX + Math.cos(endEdgeRad) * optimalDistance,
+    y: centerY + Math.sin(endEdgeRad) * optimalDistance,
+  };
+  
+  // Calculate the perpendicular distance from content center to wedge edges
+  // This gives us the maximum width that fits within the wedge at this point
+  const wedgeWidthAtContent = Math.sqrt(
+    Math.pow(endEdgeAtContent.x - startEdgeAtContent.x, 2) + 
+    Math.pow(endEdgeAtContent.y - startEdgeAtContent.y, 2)
+  );
   
   // Available height is the remaining distance to screen
   const remainingToScreen = distToScreen - optimalDistance;
   const remainingFromMenu = optimalDistance - menuRadius;
   const availableDepth = Math.min(remainingToScreen, remainingFromMenu) * 1.5;
   
-  // Also clamp by screen boundaries
+  // Clamp by screen boundaries from centroid
   const distToLeft = centroid.x - bounds.left;
   const distToRight = bounds.right - centroid.x;
   const distToTop = centroid.y - bounds.top;
   const distToBottom = bounds.bottom - centroid.y;
   
-  const availableWidth = Math.min(arcWidth, distToLeft * 2, distToRight * 2, 320);
-  const availableHeight = Math.min(availableDepth, distToTop * 2, distToBottom * 2, 220);
+  // Use 70% of wedge width to ensure content stays well within the wedge
+  const safeWedgeWidth = wedgeWidthAtContent * 0.7;
+  
+  const availableWidth = Math.min(safeWedgeWidth, distToLeft * 2, distToRight * 2, 280);
+  const availableHeight = Math.min(availableDepth, distToTop * 2, distToBottom * 2, 200);
   
   return {
     polygon,
