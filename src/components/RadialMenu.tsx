@@ -105,14 +105,15 @@ export const RadialMenu = () => {
     return null;
   }, [location.pathname]);
 
-  const displayRoleKey = selectedRole || currentRole || pathRole;
-  const displayRoleLabelKey = displayRoleKey ? `roles.${displayRoleKey}` : 'roles.main';
-  const displayRoleFallback = displayRoleKey && roleConfigs[displayRoleKey as keyof typeof roleConfigs]
+  // Default to 'players' if no role is detected
+  const effectiveRole = selectedRole || currentRole || pathRole || 'players';
+  const displayRoleKey = effectiveRole;
+  const displayRoleLabelKey = `roles.${displayRoleKey}`;
+  const displayRoleFallback = roleConfigs[displayRoleKey as keyof typeof roleConfigs]
     ? roleConfigs[displayRoleKey as keyof typeof roleConfigs].name.toUpperCase()
-    : 'MAIN';
+    : 'PLAYER';
 
-  const allRoles: Array<{ key: string | null; labelKey: string; fallback: string }> = [
-    { key: null, labelKey: "roles.main", fallback: "Main" },
+  const allRoles: Array<{ key: string; labelKey: string; fallback: string }> = [
     { key: "players", labelKey: "roles.players", fallback: "Player" },
     { key: "clubs", labelKey: "roles.clubs", fallback: "Club" },
     { key: "scouts", labelKey: "roles.scouts", fallback: "Scout" },
@@ -615,17 +616,17 @@ export const RadialMenu = () => {
     { to: "/business", labelKey: "roles.business", fallback: "BUSINESS", Icon: Package, angle: 308.5 },
   ];
 
-  // Select menu based on current role or selection mode
+  // Select menu based on current role or selection mode - always use a role menu (default to players)
   const menuItems = useMemo(() => {
     if (isSelectingRole) {
       return roleMenuItems;
     }
-    const activeRole = selectedRole || currentRole;
-    if (activeRole && roleMenus[activeRole]) {
+    const activeRole = selectedRole || currentRole || pathRole || 'players';
+    if (roleMenus[activeRole]) {
       return roleMenus[activeRole];
     }
-    return defaultMenu;
-  }, [currentRole, selectedRole, isSelectingRole]);
+    return roleMenus['players']; // Fallback to players menu
+  }, [currentRole, selectedRole, pathRole, isSelectingRole]);
 
   useEffect(() => {
     console.log('RadialMenu debug', {
