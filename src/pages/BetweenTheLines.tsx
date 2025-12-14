@@ -126,8 +126,8 @@ export default function BetweenTheLines() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEO 
-        title="Between The Lines - Football Training Insights | RISE Football Agency"
-        description="Expert football training articles covering technical skills, nutrition, psychology, tactics, strength training, and recovery. Insights from RISE Football Agency."
+        title="Between The Lines - Training Insights | RISE"
+        description="Football training articles covering technical skills, nutrition, psychology, tactics, and recovery from RISE experts."
         url="/between-the-lines"
         image="/og-preview-btl.png"
       />

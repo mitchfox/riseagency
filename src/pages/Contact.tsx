@@ -78,8 +78,8 @@ const Contact = () => {
   return (
     <>
       <SEO 
-        title="Contact Us - Get in Touch | RISE Football Agency"
-        description="Get in touch with RISE Football Agency. Contact our team for player representation, club partnerships, media inquiries, and more."
+        title="Contact Us | RISE Football Agency"
+        description="Get in touch with RISE Football Agency for player representation, club partnerships, media inquiries, and more."
         image="/og-preview-contact.png"
         url="/contact"
       />

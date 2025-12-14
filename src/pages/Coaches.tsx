@@ -17,8 +17,8 @@ const Coaches = () => {
   return (
     <div className="min-h-screen bg-background" key="coaches-page">
       <SEO 
-        title="For Coaches - Professional Representation | RISE Agency"
-        description="Professional representation for coaching excellence. We showcase your achievements, foster connections, and secure the best opportunities that reflect your coaching expertise."
+        title="For Coaches - Representation | RISE Agency"
+        description="Professional representation for coaching excellence. We showcase achievements, foster connections, and secure opportunities."
         image="/og-preview-coaches.png"
         url="/coaches"
       />

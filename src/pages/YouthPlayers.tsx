@@ -99,8 +99,8 @@ const YouthPlayers = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO 
-        title="For Youth Players & Parents - RISE Football Agency"
-        description="The pathway to the top. Learn about RISE's approach to developing talented youth players with the will and skill to make it. Transparent process, expert guidance."
+        title="For Youth Players & Parents - RISE Agency"
+        description="The pathway to the top. Learn how RISE develops youth players with the will and skill to make it. Expert guidance."
         image="/og-preview-youth.png"
         url="/youth-players"
         structuredData={faqSchema}
