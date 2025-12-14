@@ -298,7 +298,7 @@ export const MapCoordinatesManager = () => {
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Filter by country" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-[300px] overflow-y-auto z-50 bg-popover">
               <SelectItem value="all">All Countries</SelectItem>
               {uniqueCountries.map((country) => (
                 <SelectItem key={country} value={country!}>
@@ -430,8 +430,8 @@ export const MapCoordinatesManager = () => {
           No clubs found for this country.
         </div>
       ) : (
-        <Card>
-          <ScrollArea className="max-h-[500px]">
+        <Card className="flex-1 min-h-0">
+          <ScrollArea className="h-[400px]">
             <Table>
               <TableHeader>
                 <TableRow>
