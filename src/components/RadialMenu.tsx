@@ -1043,49 +1043,51 @@ export const RadialMenu = () => {
         // Mask out the center circle area
         const menuRadiusPercent = (menuRadius / overlaySize) * 100;
         
+        // Position card content within the wedge - between menu edge and screen edge
+        const menuEdgeDistance = menuRadius + 40; // Distance from center to start of content
+        const midAngle = (startAngle + endAngle) / 2;
+        const midRad = (midAngle * Math.PI) / 180;
+        
+        // Calculate position along the wedge's center line
+        const contentDistance = menuRadius + 80; // How far from center
+        const contentX = Math.cos(midRad) * contentDistance;
+        const contentY = Math.sin(midRad) * contentDistance;
+        
         return (
-          <>
-            {/* Gradient wedge overlay */}
+          <div 
+            key={`quadrant-${hoveredItem}`}
+            className="pointer-events-none z-[215] animate-[fade-in_0.2s_ease-out_forwards]"
+            style={{
+              position: 'fixed',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: `${overlaySize}px`,
+              height: `${overlaySize}px`,
+              clipPath,
+            }}
+          >
+            {/* Gradient overlay */}
             <div 
-              key={`quadrant-bg-${hoveredItem}`}
-              className="pointer-events-none z-[210] animate-[fade-in_0.2s_ease-out_forwards]"
+              className="absolute inset-0"
               style={{
-                position: 'fixed',
-                left: '50%',
-                top: '50%',
+                background: `radial-gradient(circle at 50% 50%, transparent ${menuRadiusPercent}%, rgba(0,0,0,0.4) ${menuRadiusPercent + 3}%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.9) 100%)`
+              }}
+            />
+            {/* Card content positioned within the wedge */}
+            <div 
+              className="absolute flex items-center justify-center"
+              style={{
+                left: `calc(50% + ${contentX}px)`,
+                top: `calc(50% + ${contentY}px)`,
                 transform: 'translate(-50%, -50%)',
-                width: `${overlaySize}px`,
-                height: `${overlaySize}px`,
-                clipPath,
+                width: `${Math.min(180, maxWidth)}px`,
+                maxHeight: `${maxHeight}px`,
               }}
             >
-              <div 
-                className="absolute inset-0"
-                style={{
-                  background: `radial-gradient(circle at 50% 50%, transparent ${menuRadiusPercent}%, rgba(0,0,0,0.4) ${menuRadiusPercent + 3}%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.9) 100%)`
-                }}
-              />
+              <CardComponent maxWidth={180} maxHeight={maxHeight} />
             </div>
-            
-            {/* Card content - positioned WITHOUT clipPath so content is visible */}
-            <div 
-              key={`quadrant-card-${hoveredItem}`}
-              className="pointer-events-none z-[215] animate-[fade-in_0.2s_ease-out_forwards]"
-              style={{
-                position: 'fixed',
-                width: maxWidth,
-                height: maxHeight,
-                ...(card.position === 'top-right' || card.position === 'bottom-right'
-                  ? { right: edgePadding }
-                  : { left: edgePadding }),
-                ...(card.position === 'top-right' || card.position === 'top-left'
-                  ? { top: edgePadding }
-                  : { bottom: edgePadding }),
-              }}
-            >
-              <CardComponent maxWidth={maxWidth} maxHeight={maxHeight} />
-            </div>
-          </>
+          </div>
         );
       })()}
 
