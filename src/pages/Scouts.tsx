@@ -405,18 +405,18 @@ const Scouts = () => {
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-3">
                 <Globe className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">{t('scouts.network_badge')}</span>
+                <span className="text-sm font-semibold">Eyes Across All Of Europe</span>
               </div>
               
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-3 leading-none">
-                {t('scouts.scouting_across')}
+                SCOUTING ACROSS
                 <br />
                 <span className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                  {t('scouts.europe')}
+                  ALL OF EUROPE
                 </span>
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto font-light">
-                {t('scouts.europe_desc')}
+                We scout every major European market. Wherever talent emerges, we have eyes on the ground—and we're looking for scouts who know their region.
               </p>
             </div>
 
@@ -425,6 +425,9 @@ const Scouts = () => {
               <div className="relative bg-card rounded-2xl border-2 border-border overflow-hidden">
                 <ScoutingNetworkMap />
               </div>
+              <p className="text-center text-sm text-primary mt-4 font-bebas uppercase tracking-wider">
+                Be part of something bigger. Join the network.
+              </p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
