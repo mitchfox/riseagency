@@ -5,8 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { MapPin, Wand2, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { MapPin, Wand2, CheckCircle2, AlertCircle, RefreshCw, RotateCcw } from "lucide-react";
 import { getClubCoordinates, getCountryCenter } from "@/lib/europeanCityCoordinates";
+import { hardcodedClubPositions, getHardcodedPosition } from "@/lib/hardcodedClubPositions";
 
 interface MapClub {
   id: string;
@@ -35,6 +36,45 @@ interface MapCalibrationToolProps {
 export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCalibrationToolProps) => {
   const [calibrating, setCalibrating] = useState(false);
   const [populatingCoords, setPopulatingCoords] = useState(false);
+  const [resettingPositions, setResettingPositions] = useState(false);
+
+  // Reset all club positions to their hardcoded values
+  const handleResetToHardcoded = async () => {
+    setResettingPositions(true);
+    try {
+      let updated = 0;
+      let notFound = 0;
+
+      for (const club of clubs) {
+        const hardcoded = getHardcodedPosition(club.club_name);
+        if (hardcoded) {
+          const { error } = await supabase
+            .from("club_map_positions")
+            .update({
+              x_position: hardcoded.x,
+              y_position: hardcoded.y,
+            })
+            .eq("id", club.id);
+
+          if (!error) updated++;
+        } else {
+          notFound++;
+        }
+      }
+
+      if (notFound > 0) {
+        toast.success(`Reset ${updated} clubs to hardcoded positions (${notFound} not in hardcoded list)`);
+      } else {
+        toast.success(`Reset ${updated} clubs to hardcoded positions`);
+      }
+      onRefresh();
+    } catch (error) {
+      console.error("Error resetting positions:", error);
+      toast.error("Failed to reset positions");
+    } finally {
+      setResettingPositions(false);
+    }
+  };
 
   // Get calibration stats per country
   const calibrationStats = useMemo(() => {
@@ -450,6 +490,16 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
         {/* Actions */}
         <div className="flex flex-wrap gap-2">
           <Button 
+            variant="default" 
+            size="sm"
+            onClick={handleResetToHardcoded}
+            disabled={resettingPositions}
+          >
+            <RotateCcw className={`h-3 w-3 mr-1 ${resettingPositions ? 'animate-spin' : ''}`} />
+            Reset to Hardcoded
+          </Button>
+          
+          <Button 
             variant="outline" 
             size="sm"
             onClick={handlePopulateCoordinates}
@@ -460,6 +510,7 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
           </Button>
           
           <Button 
+            variant="outline"
             size="sm"
             onClick={handleApplyGlobalCalibration}
             disabled={calibrating || allCalibrationPoints.length < 3}
