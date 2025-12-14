@@ -461,7 +461,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                         style={{ aspectRatio: '21/9', width: '85vw' }}
                       >
                         <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/30">
-                          Loading...
+                          RISING...
                         </div>
                       </div>
                     </div>

@@ -283,7 +283,7 @@ export function MarketingIdeas() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-muted-foreground text-center py-8">Loading...</p>
+            <p className="text-muted-foreground text-center py-8">RISING...</p>
           ) : filteredIdeas.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No ideas found</p>
           ) : (

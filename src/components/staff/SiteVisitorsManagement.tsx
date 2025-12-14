@@ -574,7 +574,7 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8">
-                      Loading...
+                      RISING...
                     </TableCell>
                   </TableRow>
                 ) : displayedVisits.length === 0 ? (

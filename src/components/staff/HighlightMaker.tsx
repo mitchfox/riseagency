@@ -242,7 +242,7 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
                 disabled={!selectedPlayerId || playlists.length === 0}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={loading ? "Loading..." : "Select a playlist"} />
+                  <SelectValue placeholder={loading ? "RISING..." : "Select a playlist"} />
                 </SelectTrigger>
                 <SelectContent>
                   {playlists.map(playlist => (

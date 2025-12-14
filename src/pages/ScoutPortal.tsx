@@ -27,7 +27,7 @@ const ScoutPortal = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+        <div className="text-xl">RISING...</div>
       </div>
     );
   }

@@ -420,7 +420,7 @@ export const MapCoordinatesManager = () => {
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-12">Loading clubs...</div>
+        <div className="text-center py-12">RISING...</div>
       ) : clubs.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           No clubs on the map yet. Click "Add Club" to begin.

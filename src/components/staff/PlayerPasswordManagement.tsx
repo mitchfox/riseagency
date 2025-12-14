@@ -108,7 +108,7 @@ export const PlayerPasswordManagement = () => {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center p-8">Loading...</div>;
+    return <div className="flex items-center justify-center p-8">RISING...</div>;
   }
 
   const playersWithAuth = players.filter(p => p.hasAuthAccount).length;

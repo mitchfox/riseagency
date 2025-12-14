@@ -181,7 +181,7 @@ export const PlayerPositionalGuides = () => {
             <p>Select a position above to view the tactical guide.</p>
           </div>
         ) : loading ? (
-          <div className="py-8 text-center text-muted-foreground">Loading...</div>
+          <div className="py-8 text-center text-muted-foreground">RISING...</div>
         ) : (
           <div className="space-y-4">
             <h3 className="text-xl font-bebas uppercase tracking-wider">

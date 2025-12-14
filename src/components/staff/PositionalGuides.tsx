@@ -251,7 +251,7 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
         </CardHeader>
         <CardContent className="px-3 md:px-6">
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            <div className="text-center py-8 text-muted-foreground">RISING...</div>
           ) : (
             <Accordion type="multiple" className="w-full">
               {PHASES.map(phase => (

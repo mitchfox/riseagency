@@ -232,7 +232,7 @@ export function OpenAccessManagement() {
       <Card className="bg-card border-border">
         <CardContent className="pt-6">
           {isLoading ? (
-            <p className="text-muted-foreground text-center py-8">Loading...</p>
+            <p className="text-muted-foreground text-center py-8">RISING...</p>
           ) : issues.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No issues created yet</p>
           ) : (

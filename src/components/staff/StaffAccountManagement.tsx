@@ -286,7 +286,7 @@ export const StaffAccountManagement = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return <div className="text-center py-8">RISING...</div>;
   }
 
   if (!isAdmin) {

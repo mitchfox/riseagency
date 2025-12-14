@@ -610,7 +610,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
           <ScrollArea className="flex-1 pr-4">
             {loading ? (
               <div className="flex items-center justify-center h-32">
-                <div className="text-muted-foreground">Loading...</div>
+                <div className="text-muted-foreground">RISING...</div>
               </div>
             ) : (
               <div className="space-y-2">

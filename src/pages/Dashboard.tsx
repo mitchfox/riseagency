@@ -1352,7 +1352,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <p className="text-muted-foreground p-4">Loading...</p>
+        <p className="text-muted-foreground p-4">RISING...</p>
       </div>
     );
   }
@@ -3614,7 +3614,7 @@ const Dashboard = () => {
                         <ProtectedContracts playerId={playerData.id} />
                       ) : (
                         <div className="py-8 text-center text-muted-foreground">
-                          Loading...
+                          RISING...
                         </div>
                       )}
                     </CardContent>
