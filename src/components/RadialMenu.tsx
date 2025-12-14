@@ -755,10 +755,10 @@ export const RadialMenu = () => {
           );
         })}
 
-        {/* Single SVG for all segment paths - z-30 ensures it's above center circle elements */}
+        {/* Single SVG for all segment paths - z-30 ensures it's above center circle (z-20) but below icons (z-40) */}
         <svg
           viewBox={`0 0 ${circleSize} ${circleSize}`}
-          className="absolute inset-0 pointer-events-none z-30"
+          className="absolute inset-0 z-30"
           style={{
             width: '100%',
             height: '100%',
@@ -824,7 +824,7 @@ export const RadialMenu = () => {
           })}
         </svg>
 
-        {/* Icons and labels positioned separately - delayed after center */}
+        {/* Icons and labels positioned separately - z-40 ensures they're above SVG paths (z-30) */}
         {menuItems.map((item, index) => {
           const centerAngle = index * segmentAngle + segmentAngle / 2;
           const hovered = hoveredItem === index;
@@ -833,7 +833,7 @@ export const RadialMenu = () => {
           return (
             <div
               key={`label-${item.to}-${index}`}
-              className="absolute pointer-events-none animate-[fade-in_0.25s_ease-out_both]"
+              className="absolute pointer-events-none z-40 animate-[fade-in_0.25s_ease-out_both]"
               style={{
                 left: `calc(50% + ${pos.x}px)`,
                 top: `calc(50% + ${pos.y}px)`,
@@ -975,7 +975,7 @@ export const RadialMenu = () => {
 
       </div>
 
-      {/* Quadrant cards - Desktop only, extending from the SAME segment toward screen edge */}
+      {/* Quadrant card overlay - positioned OUTSIDE main menu container, desktop only, z-[215] above menu */}
       {!isMobile && hoveredItem !== null && menuItems[hoveredItem]?.quadrantCard && (() => {
         const card = menuItems[hoveredItem].quadrantCard!;
         const CardComponent = card.component;
@@ -1038,7 +1038,8 @@ export const RadialMenu = () => {
         
         return (
           <div 
-            className="pointer-events-none z-[210]"
+            key={`quadrant-${hoveredItem}`}
+            className="pointer-events-none z-[215] animate-[fade-in_0.2s_ease-out_forwards]"
             style={{
               position: 'fixed',
               left: '50%',
@@ -1049,18 +1050,20 @@ export const RadialMenu = () => {
               clipPath,
             }}
           >
+            {/* Gradient overlay that masks around the menu */}
             <div 
               className="absolute inset-0"
               style={{
                 background: `radial-gradient(circle at 50% 50%, transparent ${menuRadiusPercent}%, rgba(0,0,0,0.4) ${menuRadiusPercent + 3}%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.9) 100%)`
               }}
             />
+            {/* Card content positioned in the quadrant */}
             <div 
               className="absolute"
               style={{
                 width: maxWidth,
                 height: maxHeight,
-                overflow: 'hidden',
+                overflow: 'visible',
                 ...(card.position === 'top-right' || card.position === 'bottom-right'
                   ? { right: edgePadding + overlayOffsetX }
                   : { left: edgePadding + overlayOffsetX }),
