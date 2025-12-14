@@ -50,16 +50,16 @@ export const SimpleQuadrantCard = ({
 
   return (
     <div
-      className={`animate-[fade-in_0.3s_ease-out_forwards] flex flex-col ${flexAlignClass}`}
+      className={`animate-[fade-in_0.3s_ease-out_forwards] flex flex-col ${flexAlignClass} w-full overflow-hidden`}
       style={{
         maxWidth: maxWidth ?? 160,
         maxHeight: maxHeight ?? undefined,
       }}
     >
       {/* Label with icon */}
-      <div className="inline-flex items-center gap-1.5 bg-primary px-2 py-0.5 mb-2">
+      <div className="inline-flex items-center gap-1.5 bg-primary px-2 py-0.5 mb-2 flex-shrink-0">
         <div className="text-black">{icon}</div>
-        <span className="text-xs font-bebas uppercase tracking-wider text-black">{title}</span>
+        <span className="text-xs font-bebas uppercase tracking-wider text-black whitespace-nowrap">{title}</span>
       </div>
       
       {/* Stat if provided */}
@@ -68,7 +68,7 @@ export const SimpleQuadrantCard = ({
       )}
       
       {/* Description - smaller text that wraps inside wedge */}
-      <p className={`text-white/80 text-xs leading-tight break-words ${textAlignClass}`}>
+      <p className={`text-white/80 text-xs leading-tight break-words hyphens-auto w-full ${textAlignClass}`}>
         {description}
       </p>
     </div>
