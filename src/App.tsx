@@ -113,7 +113,7 @@ const App = () => {
                   <Suspense fallback={<PageLoader />}>
                   <Routes location={displayLocation}>
                     <Route path="/" element={<Home />} />
-                    {createLocalizedRoutes('/players', <PlayersDraft />)}
+                    {createLocalizedRoutes('/players', <Index />)}
                     <Route path="/intro" element={<Intro />} />
                     
                     {/* Localized routes */}
