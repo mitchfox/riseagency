@@ -901,9 +901,9 @@ export const RadialMenu = () => {
           );
         })}
 
-        {/* Center circle with logo - LOADS FIRST */}
+        {/* Center circle - unified element with all children using percentage positioning */}
         <div 
-          className="absolute rounded-full flex flex-col items-center justify-center z-50 border-4 border-black overflow-hidden animate-[scale-in_0.25s_ease-out_both]"
+          className="absolute rounded-full z-50 border-4 border-black overflow-hidden animate-[scale-in_0.25s_ease-out_both]"
           style={{
             width: `${centerSize}px`,
             height: `${centerSize}px`,
@@ -911,80 +911,67 @@ export const RadialMenu = () => {
             left: `calc(50% - ${centerSize / 2}px)`,
           }}
         >
-          {/* Upper 75% with white marble */}
+          {/* Background layers */}
           <div
-            className="absolute top-0 left-0 w-full h-[75%]"
+            className="absolute inset-0"
             style={{
               backgroundImage: `url(${whiteMarbleBg})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
           />
-          
-          {/* Gold divider line at 75% */}
-          <div className="absolute left-0 w-full h-[2px] bg-primary z-10" style={{ top: '75%' }} />
-          
-          {/* Lower 25% with smudged marble */}
           <div 
-            className="absolute bottom-0 left-0 w-full h-[25%]"
+            className="absolute left-0 right-0 bottom-0"
             style={{
+              height: '25%',
               backgroundImage: `url(${smudgedMarbleBg})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
           />
-
-          {/* Logo - original tuned transform, lifted slightly */}
-          <img
-            src={riseLogoBlack}
-            alt="RISE"
-            className="mb-1 relative z-20"
-            style={{ 
-              width: `${centerSize * 0.9}px`,
-              height: `${centerSize * 0.9}px`,
-              transform: `translate(-2px, ${isMobile ? -centerSize * 0.08 : -centerSize * 0.15 + 2}px)` 
-            }}
-          />
           
-          {/* Gold divider between logo and role selector at 55% */}
-          <div 
-            className="absolute left-0 w-full h-[2px] bg-primary z-30"
-            style={{ top: '55%' }}
-          />
+          {/* Logo section: 0% - 55% */}
+          <div className="absolute inset-x-0 top-0 flex items-center justify-center" style={{ height: '55%' }}>
+            <img
+              src={riseLogoBlack}
+              alt="RISE"
+              className="w-[90%] h-[90%] object-contain"
+            />
+          </div>
           
-          {/* Role/Menu selection button - absolutely positioned between 55% and 75% */}
-          <div
-            className="absolute left-0 w-full z-20 flex items-center justify-center"
-            style={{ top: '55%', height: '20%' }}
-          >
+          {/* Gold divider at 55% */}
+          <div className="absolute left-0 right-0 h-[2px] bg-primary z-10" style={{ top: '55%' }} />
+          
+          {/* Role selector section: 55% - 75% */}
+          <div className="absolute inset-x-0 flex items-center justify-center z-20" style={{ top: '55%', height: '20%' }}>
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
               className="font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none"
-              style={{ 
-                fontSize: `${centerSize * 0.18}px`,
-                lineHeight: 1,
-              }}
+              style={{ fontSize: '18%' }}
             >
-              <span className={isSelectingRole ? 'text-primary' : 'text-black hover:text-primary transition-colors'}>
+              <span 
+                className={isSelectingRole ? 'text-primary' : 'text-black hover:text-primary transition-colors'}
+                style={{ fontSize: `${centerSize * 0.17}px` }}
+              >
                 {isSelectingRole ? t('menu.role', 'ROLE') : t(displayRoleLabelKey, displayRoleFallback).toUpperCase()}
               </span>
             </button>
           </div>
           
-          {/* Language selector - absolutely positioned in bottom 25% (75%-100%) */}
-          <div 
-            className="absolute left-0 w-full z-20 flex items-center justify-center"
-            style={{ top: '75%', height: '25%' }}
-          >
+          {/* Gold divider at 75% */}
+          <div className="absolute left-0 right-0 h-[2px] bg-primary z-10" style={{ top: '75%' }} />
+          
+          {/* Language selector section: 75% - 100% */}
+          <div className="absolute inset-x-0 flex items-center justify-center z-20" style={{ top: '75%', height: '25%' }}>
             <button
               onClick={() => setShowMap(!showMap)}
-              className="flex items-center gap-1 font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
+              className="flex items-center gap-[3%] font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
             >
               <img 
                 src={getFlagUrl(selectedLanguage.flagCode)} 
                 alt={selectedLanguage.name} 
-                className="rounded-sm" 
-                style={{ height: `${centerSize * 0.12}px`, width: 'auto' }} 
+                className="rounded-sm"
+                style={{ height: '50%', maxHeight: `${centerSize * 0.12}px`, width: 'auto' }} 
               />
               <ChevronDown 
                 className="transition-transform duration-300"
