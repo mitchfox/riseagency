@@ -916,33 +916,34 @@ export const RadialMenu = () => {
           {/* Gold divider at 75% */}
           <div className="absolute left-0 w-full h-[2px] bg-primary z-10" style={{ top: '75%' }} />
 
-          {/* Logo - large, filling most of the upper area */}
-          <img
-            src={riseLogoBlack}
-            alt="RISE"
-            className="absolute z-20"
-            style={{ 
-              width: `${centerSize * 0.95}px`,
-              height: `${centerSize * 0.55}px`,
-              top: '2%',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              objectFit: 'contain',
-            }}
-          />
-          
-          {/* Gold divider between logo and role selector */}
-          <div className="absolute left-0 w-full h-[2px] bg-primary z-30" style={{ top: '57%' }} />
-          
-          {/* Role/Menu selection button - in the white section below gold line */}
+          {/* Logo section - 0% to 55% of circle height */}
           <div 
             className="absolute left-0 w-full z-20 flex items-center justify-center"
-            style={{ top: '59%', height: '16%' }}
+            style={{ top: '0%', height: '55%' }}
+          >
+            <img
+              src={riseLogoBlack}
+              alt="RISE"
+              style={{ 
+                width: '90%',
+                height: '90%',
+                objectFit: 'contain',
+              }}
+            />
+          </div>
+          
+          {/* Gold divider between logo and role selector at 55% */}
+          <div className="absolute left-0 w-full h-[2px] bg-primary z-30" style={{ top: '55%' }} />
+          
+          {/* Role/Menu selection button - 55% to 75% of circle height (20% height) */}
+          <div 
+            className="absolute left-0 w-full z-20 flex items-center justify-center"
+            style={{ top: '55%', height: '20%' }}
           >
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
-              className="font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none"
-              style={{ fontSize: `${centerSize * 0.16}px` }}
+              className="font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none leading-none"
+              style={{ fontSize: `${centerSize * 0.2}px` }}
             >
               <span className={isSelectingRole ? 'text-primary' : 'text-black hover:text-primary transition-colors'}>
                 {isSelectingRole ? t('menu.role', 'ROLE') : t(displayRoleLabelKey, displayRoleFallback).toUpperCase()}
@@ -950,10 +951,10 @@ export const RadialMenu = () => {
             </button>
           </div>
           
-          {/* Language selector - in the dark bottom section */}
+          {/* Language selector - 75% to 100% of circle height (25% height, dark section) */}
           <div 
-            className="absolute left-1/2 -translate-x-1/2 z-20 flex items-center justify-center"
-            style={{ top: '80%', height: '18%' }}
+            className="absolute left-0 w-full z-20 flex items-center justify-center"
+            style={{ top: '75%', height: '25%' }}
           >
             <button
               onClick={() => setShowMap(!showMap)}
@@ -963,13 +964,13 @@ export const RadialMenu = () => {
                 src={getFlagUrl(selectedLanguage.flagCode)} 
                 alt={selectedLanguage.name} 
                 className="rounded-sm" 
-                style={{ height: `${centerSize * 0.11}px`, width: 'auto' }} 
+                style={{ height: `${centerSize * 0.12}px`, width: 'auto' }} 
               />
               <ChevronDown 
                 className="transition-transform duration-300"
                 style={{
-                  width: `${centerSize * 0.09}px`,
-                  height: `${centerSize * 0.09}px`,
+                  width: `${centerSize * 0.1}px`,
+                  height: `${centerSize * 0.1}px`,
                   transform: showMap ? 'rotate(180deg)' : 'rotate(0deg)'
                 }}
               />
