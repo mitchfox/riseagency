@@ -46,6 +46,9 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
       let notFound = 0;
 
       for (const club of clubs) {
+        // Do NOT move calibration points - keep the ones you've manually aligned
+        if (club.is_calibration_point) continue;
+
         const hardcoded = getHardcodedPosition(club.club_name);
         if (hardcoded) {
           const { error } = await supabase
@@ -478,12 +481,11 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
 
         {/* Instructions */}
         <div className="text-sm text-muted-foreground space-y-1">
-          <p><strong>How to calibrate:</strong></p>
+          <p><strong>How to position clubs on the map:</strong></p>
           <ol className="list-decimal list-inside space-y-1 text-xs">
-            <li>Click "Populate Coordinates" to add lat/lng to clubs</li>
-            <li>Drag 3-4 clubs per country to their correct positions on the map</li>
-            <li>Mark those clubs as calibration points</li>
-            <li>Click "Apply Calibration" to position remaining clubs</li>
+            <li>Click "Reset to Hardcoded" to snap known clubs to the artwork positions</li>
+            <li>Drag any remaining logos to their correct place on the map</li>
+            <li>Optionally mark those clubs as calibration points so they stay fixed</li>
           </ol>
         </div>
 
@@ -507,16 +509,6 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
           >
             <RefreshCw className={`h-3 w-3 mr-1 ${populatingCoords ? 'animate-spin' : ''}`} />
             Populate Coordinates
-          </Button>
-          
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={handleApplyGlobalCalibration}
-            disabled={calibrating || allCalibrationPoints.length < 3}
-          >
-            <Wand2 className={`h-3 w-3 mr-1 ${calibrating ? 'animate-spin' : ''}`} />
-            Apply Calibration
           </Button>
         </div>
 
