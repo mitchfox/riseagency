@@ -307,6 +307,9 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          is_calibration_point: boolean | null
+          latitude: number | null
+          longitude: number | null
           updated_at: string
           x_position: number | null
           y_position: number | null
@@ -317,6 +320,9 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          is_calibration_point?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           updated_at?: string
           x_position?: number | null
           y_position?: number | null
@@ -327,6 +333,9 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          is_calibration_point?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           updated_at?: string
           x_position?: number | null
           y_position?: number | null
