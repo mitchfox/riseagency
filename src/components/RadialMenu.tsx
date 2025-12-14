@@ -137,15 +137,16 @@ export const RadialMenu = () => {
   // Role-specific menu configurations
   const roleMenus: Record<string, MenuItem[]> = {
     players: [
+      // Content-rich items on SIDES (more horizontal space)
       { 
-        to: "/youth-players", 
-        labelKey: "header.youth_players", 
-        fallback: "FOR YOUTH", 
-        Icon: Sparkles, 
-        angle: 0,
+        to: "/stars", 
+        labelKey: "header.stars", 
+        fallback: "STARS", 
+        Icon: Star, 
+        angle: 0, // Right side
         quadrantCard: {
           position: getQuadrantPositionForAngle(0),
-          component: YouthQuadrantCard,
+          component: StarsQuadrantCard,
         },
       },
       { 
@@ -153,31 +154,21 @@ export const RadialMenu = () => {
         labelKey: "header.between_the_lines", 
         fallback: "INSIGHTS", 
         Icon: BookOpen, 
-        angle: 51,
+        angle: 180, // Left side
         quadrantCard: {
-          position: getQuadrantPositionForAngle(51),
+          position: getQuadrantPositionForAngle(180),
           component: InsightsQuadrantCard,
         },
       },
-      { 
-        to: "/player-journey", 
-        labelKey: "header.player_journey", 
-        fallback: "THE JOURNEY", 
-        Icon: Route, 
-        angle: 103,
-        quadrantCard: {
-          position: getQuadrantPositionForAngle(103),
-          component: JourneyQuadrantCard,
-        },
-      },
+      // Secondary content items on diagonal sides
       { 
         to: "/performance", 
         labelKey: "header.performance", 
         fallback: "PERFORMANCE", 
         Icon: TrendingUp, 
-        angle: 154,
+        angle: 51, // Upper right
         quadrantCard: {
-          position: getQuadrantPositionForAngle(154),
+          position: getQuadrantPositionForAngle(51),
           component: PerformanceQuadrantCard,
         },
       },
@@ -186,21 +177,33 @@ export const RadialMenu = () => {
         labelKey: "header.what_we_look_for", 
         fallback: "WHAT WE SEEK", 
         Icon: Search, 
-        angle: 206,
+        angle: 309, // Lower right
         quadrantCard: {
-          position: getQuadrantPositionForAngle(206),
+          position: getQuadrantPositionForAngle(309),
           component: WhatWeLookForQuadrantCard,
         },
       },
+      // Simpler items on TOP and BOTTOM (less vertical space)
       { 
-        to: "/stars", 
-        labelKey: "header.stars", 
-        fallback: "STARS", 
-        Icon: Star, 
-        angle: 257,
+        to: "/youth-players", 
+        labelKey: "header.youth_players", 
+        fallback: "FOR YOUTH", 
+        Icon: Sparkles, 
+        angle: 103, // Bottom
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(103),
+          component: YouthQuadrantCard,
+        },
+      },
+      { 
+        to: "/player-journey", 
+        labelKey: "header.player_journey", 
+        fallback: "THE JOURNEY", 
+        Icon: Route, 
+        angle: 257, // Top
         quadrantCard: {
           position: getQuadrantPositionForAngle(257),
-          component: StarsQuadrantCard,
+          component: JourneyQuadrantCard,
         },
       },
       { 
@@ -208,9 +211,9 @@ export const RadialMenu = () => {
         labelKey: "header.contact", 
         fallback: "REPRESENT ME", 
         Icon: Handshake, 
-        angle: 309,
+        angle: 154, // Lower left
         quadrantCard: {
-          position: getQuadrantPositionForAngle(309),
+          position: getQuadrantPositionForAngle(154),
           component: ContactQuadrantCard,
         },
       },
