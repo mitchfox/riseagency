@@ -160,76 +160,91 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
     }
   };
 
-  // Calculate affine transformation from calibration points
+  // Calculate affine transformation using least squares
+  // Solves: x = a*lng + b*lat + e, y = c*lng + d*lat + f
   const calculateTransformation = (points: CalibrationPoint[]) => {
     if (points.length < 3) return null;
 
-    // Use least squares to find best fit transformation
-    // [x]   [a b] [lng]   [e]
-    // [y] = [c d] [lat] + [f]
-    
     const n = points.length;
-    let sumLng = 0, sumLat = 0, sumX = 0, sumY = 0;
-    let sumLngLng = 0, sumLatLat = 0, sumLngLat = 0;
-    let sumXLng = 0, sumXLat = 0, sumYLng = 0, sumYLat = 0;
+    
+    // Build matrices for least squares: A * params = B
+    // For X: [lng, lat, 1] * [a, b, e]^T = x
+    // For Y: [lng, lat, 1] * [c, d, f]^T = y
+    
+    // Calculate sums for normal equations
+    let sumLng = 0, sumLat = 0;
+    let sumLng2 = 0, sumLat2 = 0, sumLngLat = 0;
+    let sumXLng = 0, sumXLat = 0, sumX = 0;
+    let sumYLng = 0, sumYLat = 0, sumY = 0;
     
     for (const p of points) {
       sumLng += p.lng;
       sumLat += p.lat;
-      sumX += p.x;
-      sumY += p.y;
-      sumLngLng += p.lng * p.lng;
-      sumLatLat += p.lat * p.lat;
+      sumLng2 += p.lng * p.lng;
+      sumLat2 += p.lat * p.lat;
       sumLngLat += p.lng * p.lat;
       sumXLng += p.x * p.lng;
       sumXLat += p.x * p.lat;
+      sumX += p.x;
       sumYLng += p.y * p.lng;
       sumYLat += p.y * p.lat;
+      sumY += p.y;
     }
     
-    // Solve for transformation parameters
-    const denom = n * sumLngLng * sumLatLat + 2 * sumLng * sumLat * sumLngLat 
-                - sumLat * sumLat * sumLngLng - sumLng * sumLng * sumLatLat - n * sumLngLat * sumLngLat;
+    // Solve 3x3 system using Cramer's rule
+    // | sumLng2   sumLngLat  sumLng  | | a |   | sumXLng |
+    // | sumLngLat sumLat2    sumLat  | | b | = | sumXLat |
+    // | sumLng    sumLat     n       | | e |   | sumX    |
     
-    if (Math.abs(denom) < 0.0001) {
-      // Fallback to simpler linear interpolation if matrix is singular
-      const minLng = Math.min(...points.map(p => p.lng));
-      const maxLng = Math.max(...points.map(p => p.lng));
-      const minLat = Math.min(...points.map(p => p.lat));
-      const maxLat = Math.max(...points.map(p => p.lat));
-      const minX = Math.min(...points.map(p => p.x));
-      const maxX = Math.max(...points.map(p => p.x));
-      const minY = Math.min(...points.map(p => p.y));
-      const maxY = Math.max(...points.map(p => p.y));
-      
-      return {
-        transform: (lat: number, lng: number) => {
-          const x = minX + (lng - minLng) / (maxLng - minLng) * (maxX - minX);
-          const y = maxY - (lat - minLat) / (maxLat - minLat) * (maxY - minY); // Y is inverted
-          return { x, y };
-        }
-      };
+    const det = sumLng2 * (sumLat2 * n - sumLat * sumLat)
+              - sumLngLat * (sumLngLat * n - sumLat * sumLng)
+              + sumLng * (sumLngLat * sumLat - sumLat2 * sumLng);
+    
+    if (Math.abs(det) < 0.0001) {
+      console.error("Matrix is singular, calibration failed");
+      return null;
     }
     
-    // Full affine transformation calculation
-    // For simplicity, use a scale + translate approach based on bounding box
-    const lngRange = Math.max(...points.map(p => p.lng)) - Math.min(...points.map(p => p.lng));
-    const latRange = Math.max(...points.map(p => p.lat)) - Math.min(...points.map(p => p.lat));
-    const xRange = Math.max(...points.map(p => p.x)) - Math.min(...points.map(p => p.x));
-    const yRange = Math.max(...points.map(p => p.y)) - Math.min(...points.map(p => p.y));
+    // Solve for X transformation coefficients (a, b, e)
+    const detA = sumXLng * (sumLat2 * n - sumLat * sumLat)
+               - sumLngLat * (sumXLat * n - sumLat * sumX)
+               + sumLng * (sumXLat * sumLat - sumLat2 * sumX);
     
-    const scaleX = lngRange > 0 ? xRange / lngRange : 1;
-    const scaleY = latRange > 0 ? yRange / latRange : 1;
+    const detB = sumLng2 * (sumXLat * n - sumLat * sumX)
+               - sumXLng * (sumLngLat * n - sumLat * sumLng)
+               + sumLng * (sumLngLat * sumX - sumXLat * sumLng);
     
-    const avgLng = sumLng / n;
-    const avgLat = sumLat / n;
-    const avgX = sumX / n;
-    const avgY = sumY / n;
+    const detE = sumLng2 * (sumLat2 * sumX - sumLat * sumXLat)
+               - sumLngLat * (sumLngLat * sumX - sumLat * sumXLng)
+               + sumXLng * (sumLngLat * sumLat - sumLat2 * sumLng);
+    
+    const a = detA / det;
+    const b = detB / det;
+    const e = detE / det;
+    
+    // Solve for Y transformation coefficients (c, d, f)
+    const detC = sumYLng * (sumLat2 * n - sumLat * sumLat)
+               - sumLngLat * (sumYLat * n - sumLat * sumY)
+               + sumLng * (sumYLat * sumLat - sumLat2 * sumY);
+    
+    const detD = sumLng2 * (sumYLat * n - sumLat * sumY)
+               - sumYLng * (sumLngLat * n - sumLat * sumLng)
+               + sumLng * (sumLngLat * sumY - sumYLat * sumLng);
+    
+    const detF = sumLng2 * (sumLat2 * sumY - sumLat * sumYLat)
+               - sumLngLat * (sumLngLat * sumY - sumLat * sumYLng)
+               + sumYLng * (sumLngLat * sumLat - sumLat2 * sumLng);
+    
+    const c = detC / det;
+    const d = detD / det;
+    const f = detF / det;
+    
+    console.log("Affine transformation coefficients:", { a, b, c, d, e, f });
     
     return {
       transform: (lat: number, lng: number) => {
-        const x = avgX + (lng - avgLng) * scaleX;
-        const y = avgY - (lat - avgLat) * scaleY; // Y is inverted (higher lat = lower y)
+        const x = a * lng + b * lat + e;
+        const y = c * lng + d * lat + f;
         return { x, y };
       }
     };
