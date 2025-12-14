@@ -94,24 +94,57 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
 
   // Populate lat/lng coordinates for clubs that don't have them
   const handlePopulateCoordinates = async () => {
+    const clubsToUpdate = clubs.filter(
+      (c) => c.latitude == null || c.longitude == null
+    );
+
+    if (clubsToUpdate.length === 0) {
+      toast.info("All clubs already have coordinates");
+      return;
+    }
+
     setPopulatingCoords(true);
     try {
-      const clubsToUpdate = clubs.filter(c => !c.latitude || !c.longitude);
       let updated = 0;
-      
+      let usedFallback = 0;
+
       for (const club of clubsToUpdate) {
-        const coords = getClubCoordinates(club.club_name, club.country || "");
+        let coords = getClubCoordinates(club.club_name, club.country || "");
+        let usedCountryFallback = false;
+
+        // If we can't find a specific city for this club, fall back to the
+        // geographic centre of the country so calibration can still work.
+        if (!coords && club.country) {
+          const countryCenter = getCountryCenter(club.country);
+          if (countryCenter) {
+            coords = countryCenter;
+            usedCountryFallback = true;
+          }
+        }
+
         if (coords) {
           const { error } = await supabase
             .from("club_map_positions")
             .update({ latitude: coords.lat, longitude: coords.lng })
             .eq("id", club.id);
-          
-          if (!error) updated++;
+
+          if (!error) {
+            updated++;
+            if (usedCountryFallback) usedFallback++;
+          }
         }
       }
-      
-      toast.success(`Updated coordinates for ${updated} clubs`);
+
+      if (updated === 0) {
+        toast.error("No coordinates could be found for any additional clubs");
+      } else if (usedFallback > 0) {
+        toast.success(
+          `Updated coordinates for ${updated} clubs (${usedFallback} using country centre)`
+        );
+      } else {
+        toast.success(`Updated coordinates for ${updated} clubs`);
+      }
+
       onRefresh();
     } catch (error) {
       console.error("Error populating coordinates:", error);
