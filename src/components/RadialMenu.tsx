@@ -15,6 +15,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { StarsQuadrantCard } from "@/components/radial-menu/StarsQuadrantCard";
 import { NewsQuadrantCard } from "@/components/radial-menu/NewsQuadrantCard";
 import { PerformanceQuadrantCard, InsightsQuadrantCard, ContactQuadrantCard, YouthQuadrantCard, JourneyQuadrantCard, WhatWeLookForQuadrantCard } from "@/components/radial-menu/SimpleQuadrantCard";
+import { calculateContentPlacement } from "@/lib/wedgeGeometry";
 
 export type QuadrantPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
@@ -1026,49 +1027,31 @@ export const RadialMenu = () => {
         const cx = vw / 2;
         const cy = vh / 2;
         const menuRadius = circleSize / 2;
-
         const edgePadding = 24;
-        const menuPadding = 32;
-
-        // Base content size (fixed)
-        const maxWidth = 320;
-        const maxHeight = 220;
-
-        console.log('Quadrant overlay', {
-          isMobile,
-          hoveredItem,
-          position: card.position,
-          maxWidth,
-          maxHeight,
+        
+        const placement = calculateContentPlacement(
+          cx,
+          cy,
+          startAngle,
+          endAngle,
+          menuRadius,
           vw,
           vh,
-          circleSize,
-        });
+          edgePadding
+        );
 
-        // Convert viewport edge positions to overlay coordinates
         const overlaySize = Math.max(vw, vh);
-        const overlayOffsetX = (overlaySize - vw) / 2;
-        const overlayOffsetY = (overlaySize - vh) / 2;
-
-        // Mask out the center circle area
         const menuRadiusPercent = (menuRadius / overlaySize) * 100;
         
-        // Position card content within the wedge - between menu edge and screen edge
-        const cardWidth = Math.min(160, maxWidth);
-        const cardHeight = 120;
-        const midAngle = (startAngle + endAngle) / 2;
-        const midRad = (midAngle * Math.PI) / 180;
-        
-        // Determine text alignment based on which side the wedge is on
-        const isLeftSide = Math.cos(midRad) < 0;
-        const textAlign: 'left' | 'right' = isLeftSide ? 'left' : 'right';
-        
-        // Simple approach: position at fixed distance from menu edge along the wedge direction
-        // This keeps content within the wedge and just outside the menu
-        const contentDistance = menuRadius + 70;
-        
-        const contentX = Math.cos(midRad) * contentDistance;
-        const contentY = Math.sin(midRad) * contentDistance;
+        console.log('Quadrant overlay with geometry', {
+          hoveredItem,
+          startAngle,
+          endAngle,
+          placement,
+          vw,
+          vh,
+          menuRadius,
+        });
         
         return (
           <div 
@@ -1091,18 +1074,18 @@ export const RadialMenu = () => {
                 background: `radial-gradient(circle at 50% 50%, transparent ${menuRadiusPercent}%, rgba(0,0,0,0.4) ${menuRadiusPercent + 3}%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.9) 100%)`
               }}
             />
-            {/* Card content positioned within the wedge */}
+            {/* Card content positioned within the wedge using calculated geometry */}
             <div 
               className="absolute flex items-center justify-center"
               style={{
-                left: `calc(50% + ${contentX}px)`,
-                top: `calc(50% + ${contentY}px)`,
+                left: `calc(50% + ${placement.x}px)`,
+                top: `calc(50% + ${placement.y}px)`,
                 transform: 'translate(-50%, -50%)',
-                width: `${cardWidth}px`,
-                maxHeight: `${cardHeight}px`,
+                width: `${placement.width}px`,
+                maxHeight: `${placement.height}px`,
               }}
             >
-              <CardComponent maxWidth={cardWidth} maxHeight={cardHeight} align={textAlign} />
+              <CardComponent maxWidth={placement.width} maxHeight={placement.height} align={placement.textAlign} />
             </div>
           </div>
         );
