@@ -883,9 +883,9 @@ export const RadialMenu = () => {
           );
         })}
 
-        {/* Center circle with logo - z-50 ensures it's above segments */}
+        {/* Center circle with logo - LOADS FIRST */}
         <div 
-          className="absolute rounded-full z-50 border-4 border-black overflow-hidden animate-[scale-in_0.25s_ease-out_both]"
+          className="absolute rounded-full flex flex-col items-center justify-center z-50 border-4 border-black overflow-hidden animate-[scale-in_0.25s_ease-out_both]"
           style={{
             width: `${centerSize}px`,
             height: `${centerSize}px`,
@@ -903,6 +903,9 @@ export const RadialMenu = () => {
             }}
           />
           
+          {/* Gold divider line at 75% */}
+          <div className="absolute left-0 w-full h-[2px] bg-primary z-10" style={{ top: '75%' }} />
+          
           {/* Lower 25% with smudged marble */}
           <div 
             className="absolute bottom-0 left-0 w-full h-[25%]"
@@ -912,66 +915,71 @@ export const RadialMenu = () => {
               backgroundPosition: 'center',
             }}
           />
-          
-          {/* Gold divider at 75% - consistent 3px height */}
-          <div className="absolute left-0 w-full bg-primary z-10" style={{ top: '75%', height: '3px' }} />
 
-          {/* Logo section - 0% to 55% of circle height, logo fills the space */}
-          <div 
-            className="absolute left-0 w-full z-20 flex items-center justify-center overflow-hidden"
-            style={{ top: '0%', height: '55%' }}
-          >
-            <img
-              src={riseLogoBlack}
-              alt="RISE"
-              style={{ 
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                transform: 'scale(1.1)',
-              }}
-            />
-          </div>
+          {/* Logo - original tuned transform for correct size/position */}
+          <img
+            src={riseLogoBlack}
+            alt="RISE"
+            className="mb-1 relative z-20"
+            style={{ 
+              width: `${centerSize * 0.9}px`,
+              height: `${centerSize * 0.9}px`,
+              transform: `translate(-2px, ${isMobile ? -centerSize * 0.06 + 4 : -centerSize * 0.13 + 7}px)` 
+            }}
+          />
           
-          {/* Gold divider between logo and role selector at 55% - consistent 3px height */}
-          <div className="absolute left-0 w-full bg-primary z-30" style={{ top: '55%', height: '3px' }} />
-          
-          {/* Role/Menu selection button - 55% to 75% of circle height (20% height) */}
+          {/* Gold divider between logo and dropdown at ~55% */}
           <div 
-            className="absolute left-0 w-full z-20 flex items-center justify-center"
-            style={{ top: '55%', height: '20%' }}
+            className="absolute left-0 w-full h-[2px] bg-primary z-30"
+            style={{ top: 'calc(55% - 1px)' }}
+          />
+          
+          {/* Role/Menu selection button - original vertical alignment math */}
+          <div
+            className="text-center relative z-20 w-full flex items-center justify-center"
+            style={{ 
+              transform: `translateY(${isMobile ? (-centerSize * 0.28 - 3) : (-centerSize * 0.3125)}px)` 
+            }}
           >
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
-              className="font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none leading-none"
-              style={{ fontSize: `${centerSize * 0.2}px` }}
+              className="font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none w-full"
+              style={{ 
+                fontSize: `${isMobile ? centerSize * 0.22 : centerSize * 0.1875}px`,
+                ...(isSelectingRole ? { color: 'hsl(var(--primary))' } : {})
+              }}
             >
-              <span className={isSelectingRole ? 'text-primary' : 'text-black hover:text-primary transition-colors'}>
+              <span className={isSelectingRole ? '' : 'text-black hover:text-primary transition-colors'}>
                 {isSelectingRole ? t('menu.role', 'ROLE') : t(displayRoleLabelKey, displayRoleFallback).toUpperCase()}
               </span>
             </button>
           </div>
           
-          {/* Language selector - 75% to 100% of circle height (25% height, dark section) */}
+          {/* Language selector in lower half */}
           <div 
-            className="absolute left-0 w-full z-20 flex items-center justify-center"
-            style={{ top: '75%', height: '25%' }}
+            className="absolute z-20" 
+            style={{ 
+              bottom: isMobile ? `${centerSize * 0.06 - 7}px` : `${centerSize * 0.04375}px`,
+              left: '50%',
+              transform: isMobile ? 'translateX(calc(-50% + 6px))' : 'translateX(calc(-50% + 5px))'
+            }}
           >
             <button
               onClick={() => setShowMap(!showMap)}
               className="flex items-center gap-1 font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
+              style={{ fontSize: `${isMobile ? centerSize * 0.165 * 0.7 : centerSize * 0.09375}px` }}
             >
               <img 
                 src={getFlagUrl(selectedLanguage.flagCode)} 
                 alt={selectedLanguage.name} 
                 className="rounded-sm" 
-                style={{ height: `${centerSize * 0.12}px`, width: 'auto' }} 
+                style={{ height: `${isMobile ? centerSize * 0.126 : centerSize * 0.105}px`, width: 'auto' }} 
               />
               <ChevronDown 
                 className="transition-transform duration-300"
                 style={{
-                  width: `${centerSize * 0.1}px`,
-                  height: `${centerSize * 0.1}px`,
+                  width: `${isMobile ? centerSize * 0.18 * 0.7 : centerSize * 0.1171875}px`,
+                  height: `${isMobile ? centerSize * 0.18 * 0.7 : centerSize * 0.1171875}px`,
                   transform: showMap ? 'rotate(180deg)' : 'rotate(0deg)'
                 }}
               />
@@ -979,10 +987,10 @@ export const RadialMenu = () => {
           </div>
         </div>
 
-      </div>
+        </div>
 
-      {/* Quadrant card overlay - positioned OUTSIDE main menu container, desktop only, z-[215] above menu */}
-      {!isMobile && hoveredItem !== null && menuItems[hoveredItem]?.quadrantCard && (() => {
+        {/* Quadrant card overlay - positioned OUTSIDE main menu container, desktop only, z-[215] above menu */}
+        {!isMobile && hoveredItem !== null && menuItems[hoveredItem]?.quadrantCard && (() => {
         const card = menuItems[hoveredItem].quadrantCard!;
         const CardComponent = card.component;
         
