@@ -8,6 +8,11 @@ interface SEOProps {
   type?: string;
   noindex?: boolean;
   structuredData?: object;
+  article?: {
+    publishedTime?: string;
+    modifiedTime?: string;
+    author?: string;
+  };
 }
 
 export const SEO = ({ 
@@ -17,7 +22,8 @@ export const SEO = ({
   url,
   type = "website",
   noindex = false,
-  structuredData
+  structuredData,
+  article
 }: SEOProps) => {
   const siteUrl = "https://risefootballagency.com";
   const fullUrl = url ? `${siteUrl}${url}` : (typeof window !== 'undefined' ? window.location.href : siteUrl);
@@ -37,6 +43,17 @@ export const SEO = ({
       <meta property="og:url" content={fullUrl} />
       <meta property="og:type" content={type} />
       <meta property="og:site_name" content="RISE Football Agency" />
+      
+      {/* Article specific meta tags */}
+      {article?.publishedTime && (
+        <meta property="article:published_time" content={article.publishedTime} />
+      )}
+      {article?.modifiedTime && (
+        <meta property="article:modified_time" content={article.modifiedTime} />
+      )}
+      {article?.author && (
+        <meta property="article:author" content={article.author} />
+      )}
       
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />

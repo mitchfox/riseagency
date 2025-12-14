@@ -56,8 +56,48 @@ const ArticleView = ({ article }: { article: NewsArticle }) => {
     });
   };
 
+  // Create article structured data
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    "headline": article.title,
+    "description": article.excerpt,
+    "image": article.image_url,
+    "datePublished": article.created_at,
+    "dateModified": article.created_at,
+    "author": {
+      "@type": "Organization",
+      "name": "RISE Football Agency"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "RISE Football Agency",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://risefootballagency.com/favicon.ico"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `https://risefootballagency.com/news/${createSlug(article.title)}`
+    }
+  };
+
   return (
     <>
+      <SEO 
+        title={`${article.title} | RISE Football Agency News`}
+        description={article.excerpt || article.title}
+        image={article.image_url || "/og-preview-news.png"}
+        url={`/news/${createSlug(article.title)}`}
+        type="article"
+        article={{
+          publishedTime: article.created_at,
+          modifiedTime: article.created_at,
+          author: "RISE Football Agency"
+        }}
+        structuredData={articleSchema}
+      />
       <Link to="/news">
         <Button variant="ghost" className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />

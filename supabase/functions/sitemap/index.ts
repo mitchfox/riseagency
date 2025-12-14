@@ -30,7 +30,18 @@ Deno.serve(async (req) => {
       throw error
     }
 
-    console.log(`Generating sitemap for ${players?.length || 0} players`)
+    // Fetch all published news articles
+    const { data: newsArticles, error: newsError } = await supabase
+      .from('blog_posts')
+      .select('title, created_at, updated_at')
+      .eq('published', true)
+      .eq('category', 'PLAYER NEWS')
+
+    if (newsError) {
+      console.error('Error fetching news articles:', newsError)
+    }
+
+    console.log(`Generating sitemap for ${players?.length || 0} players and ${newsArticles?.length || 0} news articles`)
 
     // Static pages with their priorities and changefreq
     const staticPages = [
@@ -48,6 +59,10 @@ Deno.serve(async (req) => {
       { loc: '/media', priority: '0.7', changefreq: 'monthly' },
       { loc: '/players', priority: '0.8', changefreq: 'monthly' },
       { loc: '/potential', priority: '0.7', changefreq: 'monthly' },
+      { loc: '/youth-players', priority: '0.8', changefreq: 'monthly' },
+      { loc: '/player-journey', priority: '0.8', changefreq: 'monthly' },
+      { loc: '/realise-potential', priority: '0.7', changefreq: 'monthly' },
+      { loc: '/open-access', priority: '0.6', changefreq: 'monthly' },
       { loc: '/privacy-policy', priority: '0.3', changefreq: 'yearly' },
       { loc: '/terms-of-service', priority: '0.3', changefreq: 'yearly' },
     ]
@@ -98,6 +113,38 @@ Deno.serve(async (req) => {
     <lastmod>${player.lastmod}</lastmod>
     <changefreq>${player.changefreq}</changefreq>
     <priority>${player.priority}</priority>
+  </url>
+`
+    }
+
+    // Generate news article URLs
+    const newsUrls = (newsArticles || []).map(article => {
+      const slug = article.title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim()
+      
+      const lastmod = article.updated_at 
+        ? new Date(article.updated_at).toISOString().split('T')[0]
+        : new Date(article.created_at).toISOString().split('T')[0]
+
+      return {
+        loc: `/news/${slug}`,
+        priority: '0.7',
+        changefreq: 'monthly',
+        lastmod
+      }
+    })
+
+    // Add news article pages
+    for (const article of newsUrls) {
+      xml += `  <url>
+    <loc>${SITE_URL}${article.loc}</loc>
+    <lastmod>${article.lastmod}</lastmod>
+    <changefreq>${article.changefreq}</changefreq>
+    <priority>${article.priority}</priority>
   </url>
 `
     }
