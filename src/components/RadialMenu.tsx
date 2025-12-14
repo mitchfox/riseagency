@@ -755,10 +755,10 @@ export const RadialMenu = () => {
           );
         })}
 
-        {/* Single SVG for all segment paths - z-30 ensures it's above center circle (z-20) but below icons (z-40) */}
+        {/* Single SVG for all segment paths - z-10 below center circle (z-20) */}
         <svg
           viewBox={`0 0 ${circleSize} ${circleSize}`}
-          className="absolute inset-0 z-30"
+          className="absolute inset-0 z-10"
           style={{
             width: '100%',
             height: '100%',
@@ -768,60 +768,67 @@ export const RadialMenu = () => {
             <pattern id="whiteMarblePattern" patternUnits="userSpaceOnUse" width="1200" height="1200" x="-300" y="-300">
               <image href={whiteMarbleBg} width="1200" height="1200" />
             </pattern>
+            {/* Mask to cut out the center circle from segments */}
+            <mask id="centerCircleMask">
+              <rect width="100%" height="100%" fill="white" />
+              <circle cx={circleSize / 2} cy={circleSize / 2} r={centerSize / 2 + 2} fill="black" />
+            </mask>
           </defs>
-          {menuItems.map((item, index) => {
-            const startAngle = index * segmentAngle;
-            const endAngle = startAngle + segmentAngle;
-            const hovered = hoveredItem === index;
+          <g mask="url(#centerCircleMask)">
+            {menuItems.map((item, index) => {
+              const startAngle = index * segmentAngle;
+              const endAngle = startAngle + segmentAngle;
+              const hovered = hoveredItem === index;
 
-            return (
-              <path
-                key={`path-${item.to}-${index}`}
-                d={`
-                  M ${circleSize / 2} ${circleSize / 2}
-                  L ${circleSize / 2 + (circleSize / 2.2) * Math.cos((startAngle * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin((startAngle * Math.PI) / 180)}
-                  A ${circleSize / 2.2} ${circleSize / 2.2} 0 0 1 ${circleSize / 2 + (circleSize / 2.2) * Math.cos(((endAngle) * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin(((endAngle) * Math.PI) / 180)}
-                  Z
-                `}
-                fill={hovered ? "url(#whiteMarblePattern)" : "rgba(128,128,128,0.1)"}
-                className="transition-colors duration-200 cursor-pointer"
-                style={{ pointerEvents: 'auto' }}
-                onMouseEnter={() => setHoveredItem(index)}
-                onMouseLeave={() => setHoveredItem(null)}
-                onTouchStart={() => setHoveredItem(index)}
-                onClick={() => {
-                  // Check if this path maps to a role subdomain
-                  const role = pathToRole[item.to];
-                  
-                  if (role) {
-                    // If on a language subdomain, stay on it and use localized route
-                    if (isOnLanguageSubdomain()) {
+              return (
+                <path
+                  key={`path-${item.to}-${index}`}
+                  d={`
+                    M ${circleSize / 2} ${circleSize / 2}
+                    L ${circleSize / 2 + (circleSize / 2.2) * Math.cos((startAngle * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin((startAngle * Math.PI) / 180)}
+                    A ${circleSize / 2.2} ${circleSize / 2.2} 0 0 1 ${circleSize / 2 + (circleSize / 2.2) * Math.cos(((endAngle) * Math.PI) / 180)} ${circleSize / 2 + (circleSize / 2.2) * Math.sin(((endAngle) * Math.PI) / 180)}
+                    Z
+                  `}
+                  fill={hovered ? "url(#whiteMarblePattern)" : "rgba(128,128,128,0.1)"}
+                  className="transition-colors duration-200 cursor-pointer"
+                  style={{ pointerEvents: 'auto' }}
+                  onMouseEnter={() => setHoveredItem(index)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  onTouchStart={() => setHoveredItem(index)}
+                  onClick={() => {
+                    // Check if this path maps to a role subdomain
+                    const role = pathToRole[item.to];
+                    
+                    if (role) {
+                      // If on a language subdomain, stay on it and use localized route
+                      if (isOnLanguageSubdomain()) {
+                        navigate(item.to);
+                        closeButtonRef.current?.click();
+                      } else {
+                        // Navigate to subdomain for role pages
+                        const url = getRoleUrl(role);
+                        if (url.startsWith('http')) {
+                          window.location.href = url;
+                        } else {
+                          navigate(url);
+                          closeButtonRef.current?.click();
+                        }
+                      }
+                    } else if (isSelectingRole) {
+                      // Non-role item in role selection mode - shouldn't happen but handle gracefully
+                      setIsSelectingRole(false);
                       navigate(item.to);
                       closeButtonRef.current?.click();
                     } else {
-                      // Navigate to subdomain for role pages
-                      const url = getRoleUrl(role);
-                      if (url.startsWith('http')) {
-                        window.location.href = url;
-                      } else {
-                        navigate(url);
-                        closeButtonRef.current?.click();
-                      }
+                      // Regular navigation for non-role pages
+                      navigate(item.to);
+                      closeButtonRef.current?.click();
                     }
-                  } else if (isSelectingRole) {
-                    // Non-role item in role selection mode - shouldn't happen but handle gracefully
-                    setIsSelectingRole(false);
-                    navigate(item.to);
-                    closeButtonRef.current?.click();
-                  } else {
-                    // Regular navigation for non-role pages
-                    navigate(item.to);
-                    closeButtonRef.current?.click();
-                  }
-                }}
-              />
-            );
-          })}
+                  }}
+                />
+              );
+            })}
+          </g>
         </svg>
 
         {/* Icons and labels positioned separately - z-40 ensures they're above SVG paths (z-30) */}
@@ -876,9 +883,9 @@ export const RadialMenu = () => {
           );
         })}
 
-        {/* Center circle with logo - LOADS FIRST */}
+        {/* Center circle with logo - z-50 ensures it's above segments */}
         <div 
-          className="absolute rounded-full z-20 border-4 border-black overflow-hidden animate-[scale-in_0.25s_ease-out_both]"
+          className="absolute rounded-full z-50 border-4 border-black overflow-hidden animate-[scale-in_0.25s_ease-out_both]"
           style={{
             width: `${centerSize}px`,
             height: `${centerSize}px`,
@@ -909,24 +916,33 @@ export const RadialMenu = () => {
           {/* Gold divider at 75% */}
           <div className="absolute left-0 w-full h-[2px] bg-primary z-10" style={{ top: '75%' }} />
 
-          {/* Logo - positioned at top, centered */}
-          <div className="absolute top-[5%] left-1/2 -translate-x-1/2 z-20" style={{ width: '80%', height: '50%' }}>
-            <img
-              src={riseLogoBlack}
-              alt="RISE"
-              className="w-full h-full object-contain"
-            />
-          </div>
+          {/* Logo - large, filling most of the upper area */}
+          <img
+            src={riseLogoBlack}
+            alt="RISE"
+            className="absolute z-20"
+            style={{ 
+              width: `${centerSize * 0.95}px`,
+              height: `${centerSize * 0.55}px`,
+              top: '2%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              objectFit: 'contain',
+            }}
+          />
           
-          {/* Gold divider between logo and role selector - at 55% */}
-          <div className="absolute left-0 w-full h-[2px] bg-primary z-30" style={{ top: '55%' }} />
+          {/* Gold divider between logo and role selector */}
+          <div className="absolute left-0 w-full h-[2px] bg-primary z-30" style={{ top: '57%' }} />
           
-          {/* Role/Menu selection button - positioned at 60% from top */}
-          <div className="absolute left-0 w-full z-20 flex items-center justify-center" style={{ top: '60%' }}>
+          {/* Role/Menu selection button - in the white section below gold line */}
+          <div 
+            className="absolute left-0 w-full z-20 flex items-center justify-center"
+            style={{ top: '59%', height: '16%' }}
+          >
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
               className="font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none"
-              style={{ fontSize: `${centerSize * 0.18}px` }}
+              style={{ fontSize: `${centerSize * 0.16}px` }}
             >
               <span className={isSelectingRole ? 'text-primary' : 'text-black hover:text-primary transition-colors'}>
                 {isSelectingRole ? t('menu.role', 'ROLE') : t(displayRoleLabelKey, displayRoleFallback).toUpperCase()}
@@ -934,24 +950,26 @@ export const RadialMenu = () => {
             </button>
           </div>
           
-          {/* Language selector - positioned at bottom, centered */}
-          <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ bottom: '5%' }}>
+          {/* Language selector - in the dark bottom section */}
+          <div 
+            className="absolute left-1/2 -translate-x-1/2 z-20 flex items-center justify-center"
+            style={{ top: '80%', height: '18%' }}
+          >
             <button
               onClick={() => setShowMap(!showMap)}
               className="flex items-center gap-1 font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
-              style={{ fontSize: `${centerSize * 0.1}px` }}
             >
               <img 
                 src={getFlagUrl(selectedLanguage.flagCode)} 
                 alt={selectedLanguage.name} 
                 className="rounded-sm" 
-                style={{ height: `${centerSize * 0.12}px`, width: 'auto' }} 
+                style={{ height: `${centerSize * 0.11}px`, width: 'auto' }} 
               />
               <ChevronDown 
                 className="transition-transform duration-300"
                 style={{
-                  width: `${centerSize * 0.1}px`,
-                  height: `${centerSize * 0.1}px`,
+                  width: `${centerSize * 0.09}px`,
+                  height: `${centerSize * 0.09}px`,
                   transform: showMap ? 'rotate(180deg)' : 'rotate(0deg)'
                 }}
               />
