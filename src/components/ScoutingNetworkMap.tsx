@@ -919,29 +919,26 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
       <div className={hideStats ? "h-full" : "grid grid-cols-1 lg:grid-cols-4 gap-4"} style={!hideStats ? { maxHeight: '650px' } : undefined}>
         {/* Map Section */}
         <div className={`${hideStats ? "h-full" : "lg:col-span-3"} bg-card rounded-lg p-2 md:p-3 border relative -mx-4 md:mx-0`}>
-          {/* Country Flag Overlay when zoomed */}
+          {/* Country Flag Overlay when zoomed - compact on mobile */}
           {selectedCountry && (
-            <div className="absolute top-6 left-6 z-10 bg-card/95 backdrop-blur-sm border border-primary/20 rounded-lg p-4 shadow-xl">
-              <div className="flex flex-col gap-3 items-center">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-primary shadow-lg">
+            <div className="absolute top-2 left-2 md:top-6 md:left-6 z-10 bg-card/95 backdrop-blur-sm border border-primary/20 rounded-lg p-2 md:p-4 shadow-xl">
+              <div className="flex items-center gap-2 md:flex-col md:gap-3 md:items-center">
+                <div className="w-8 h-8 md:w-16 md:h-16 rounded-full overflow-hidden border-2 md:border-4 border-primary shadow-lg flex-shrink-0">
                   <img 
                     src={flagImages[selectedCountry]} 
                     alt={selectedCountry}
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="text-center">
-                  <h4 className="font-bebas text-xl">{selectedCountry}</h4>
-                  <p className="text-xs text-muted-foreground">
-                    {countryMarkers.find(c => c.country === selectedCountry)?.leagues.length} leagues
-                  </p>
+                <div className="text-left md:text-center">
+                  <h4 className="font-bebas text-sm md:text-xl leading-tight">{selectedCountry}</h4>
                 </div>
                 <button
                   onClick={handleMapClick}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1 md:py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors ml-auto md:ml-0"
                 >
-                  <ZoomOut className="h-4 w-4" />
-                  <span className="text-sm font-medium">Zoom Out</span>
+                  <ZoomOut className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="text-xs md:text-sm font-medium">Back</span>
                 </button>
               </div>
             </div>
