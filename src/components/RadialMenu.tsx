@@ -14,7 +14,7 @@ import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Tro
 import { useState, useMemo, useRef, useEffect } from "react";
 import { StarsQuadrantCard } from "@/components/radial-menu/StarsQuadrantCard";
 import { NewsQuadrantCard } from "@/components/radial-menu/NewsQuadrantCard";
-import { PerformanceQuadrantCard, InsightsQuadrantCard, ContactQuadrantCard } from "@/components/radial-menu/SimpleQuadrantCard";
+import { PerformanceQuadrantCard, InsightsQuadrantCard, ContactQuadrantCard, YouthQuadrantCard, JourneyQuadrantCard, WhatWeLookForQuadrantCard } from "@/components/radial-menu/SimpleQuadrantCard";
 
 export type QuadrantPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
@@ -143,6 +143,10 @@ export const RadialMenu = () => {
         fallback: "FOR YOUTH", 
         Icon: Sparkles, 
         angle: 0,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(0),
+          component: YouthQuadrantCard,
+        },
       },
       { 
         to: "/between-the-lines", 
@@ -161,6 +165,10 @@ export const RadialMenu = () => {
         fallback: "THE JOURNEY", 
         Icon: Route, 
         angle: 103,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(103),
+          component: JourneyQuadrantCard,
+        },
       },
       { 
         to: "/performance", 
@@ -173,7 +181,17 @@ export const RadialMenu = () => {
           component: PerformanceQuadrantCard,
         },
       },
-      { to: "/playersmore", labelKey: "header.what_we_look_for", fallback: "WHAT WE SEEK", Icon: Search, angle: 206 },
+      { 
+        to: "/playersmore", 
+        labelKey: "header.what_we_look_for", 
+        fallback: "WHAT WE SEEK", 
+        Icon: Search, 
+        angle: 206,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(206),
+          component: WhatWeLookForQuadrantCard,
+        },
+      },
       { 
         to: "/stars", 
         labelKey: "header.stars", 
@@ -916,7 +934,7 @@ export const RadialMenu = () => {
             }}
           />
 
-          {/* Logo - original tuned transform for correct size/position */}
+          {/* Logo - original tuned transform, lifted slightly */}
           <img
             src={riseLogoBlack}
             alt="RISE"
@@ -924,7 +942,7 @@ export const RadialMenu = () => {
             style={{ 
               width: `${centerSize * 0.9}px`,
               height: `${centerSize * 0.9}px`,
-              transform: `translate(-2px, ${isMobile ? -centerSize * 0.06 + 4 : -centerSize * 0.13 + 7}px)` 
+              transform: `translate(-2px, ${isMobile ? -centerSize * 0.08 : -centerSize * 0.15 + 2}px)` 
             }}
           />
           
