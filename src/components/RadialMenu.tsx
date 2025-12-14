@@ -755,10 +755,10 @@ export const RadialMenu = () => {
           );
         })}
 
-        {/* Single SVG for all segment paths */}
+        {/* Single SVG for all segment paths - z-30 ensures it's above center circle elements */}
         <svg
           viewBox={`0 0 ${circleSize} ${circleSize}`}
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none z-30"
           style={{
             width: '100%',
             height: '100%',
