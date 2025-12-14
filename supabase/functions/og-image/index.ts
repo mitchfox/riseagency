@@ -11,6 +11,8 @@ const playerOgImages: Record<string, string> = {
   'michael-vit-mulligan': 'https://risefootballagency.com/og-michael-vit-mulligan.png',
 };
 
+// Note: The og-michael-vit-mulligan.png file should be uploaded to risefootballagency.com
+
 const defaultOgImage = 'https://storage.googleapis.com/gpt-engineer-file-uploads/blxFQX1QtlSc3qNcPxWdCZ730Tf1/social-images/social-1761325756417-RISE Mini Logos (1500 x 600 px) (16).png';
 
 serve(async (req) => {
