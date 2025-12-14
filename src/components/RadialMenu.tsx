@@ -136,22 +136,21 @@ export const RadialMenu = () => {
   // Role-specific menu configurations
   const roleMenus: Record<string, MenuItem[]> = {
     players: [
-      { to: "/login", labelKey: "header.portal", fallback: "PORTAL", Icon: Users, angle: 0 },
       { 
         to: "/youth-players", 
         labelKey: "header.youth_players", 
         fallback: "FOR YOUTH", 
         Icon: Sparkles, 
-        angle: 45,
+        angle: 0,
       },
       { 
         to: "/between-the-lines", 
         labelKey: "header.between_the_lines", 
         fallback: "INSIGHTS", 
         Icon: BookOpen, 
-        angle: 90,
+        angle: 51,
         quadrantCard: {
-          position: getQuadrantPositionForAngle(90),
+          position: getQuadrantPositionForAngle(51),
           component: InsightsQuadrantCard,
         },
       },
@@ -160,28 +159,28 @@ export const RadialMenu = () => {
         labelKey: "header.player_journey", 
         fallback: "THE JOURNEY", 
         Icon: Route, 
-        angle: 135,
+        angle: 103,
       },
       { 
         to: "/performance", 
         labelKey: "header.performance", 
         fallback: "PERFORMANCE", 
         Icon: TrendingUp, 
-        angle: 180,
+        angle: 154,
         quadrantCard: {
-          position: getQuadrantPositionForAngle(180),
+          position: getQuadrantPositionForAngle(154),
           component: PerformanceQuadrantCard,
         },
       },
-      { to: "/playersmore", labelKey: "header.what_we_look_for", fallback: "WHAT WE SEEK", Icon: Search, angle: 225 },
+      { to: "/playersmore", labelKey: "header.what_we_look_for", fallback: "WHAT WE SEEK", Icon: Search, angle: 206 },
       { 
         to: "/stars", 
         labelKey: "header.stars", 
         fallback: "STARS", 
         Icon: Star, 
-        angle: 270,
+        angle: 257,
         quadrantCard: {
-          position: getQuadrantPositionForAngle(270),
+          position: getQuadrantPositionForAngle(257),
           component: StarsQuadrantCard,
         },
       },
@@ -190,9 +189,9 @@ export const RadialMenu = () => {
         labelKey: "header.contact", 
         fallback: "REPRESENT ME", 
         Icon: Handshake, 
-        angle: 315,
+        angle: 309,
         quadrantCard: {
-          position: getQuadrantPositionForAngle(315),
+          position: getQuadrantPositionForAngle(309),
           component: ContactQuadrantCard,
         },
       },

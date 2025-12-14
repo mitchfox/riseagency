@@ -47,10 +47,11 @@ import belarusFlag from "@/assets/flags/belarus.png";
 interface ScoutingNetworkMapProps {
   initialCountry?: string;
   hideStats?: boolean;
+  hideGridToggle?: boolean;
   onClubPositionChange?: (clubName: string, x: number, y: number) => void;
 }
 
-const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionChange }: ScoutingNetworkMapProps = {}) => {
+const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle = false, onClubPositionChange }: ScoutingNetworkMapProps = {}) => {
   const { t } = useLanguage();
   const [viewBox, setViewBox] = useState("0 0 1000 600");
   const [zoomLevel, setZoomLevel] = useState(0); // 0 = out, 1 = medium, 2 = fully zoomed
@@ -917,7 +918,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
     <div className="w-full h-full">
       <div className={hideStats ? "h-full" : "grid grid-cols-1 lg:grid-cols-4 gap-4"} style={!hideStats ? { maxHeight: '650px' } : undefined}>
         {/* Map Section */}
-        <div className={`${hideStats ? "h-full" : "lg:col-span-3"} bg-card rounded-lg p-3 border relative`}>
+        <div className={`${hideStats ? "h-full" : "lg:col-span-3"} bg-card rounded-lg p-2 md:p-3 border relative -mx-4 md:mx-0`}>
           {/* Country Flag Overlay when zoomed */}
           {selectedCountry && (
             <div className="absolute top-6 left-6 z-10 bg-card/95 backdrop-blur-sm border border-primary/20 rounded-lg p-4 shadow-xl">
@@ -1305,15 +1306,17 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, onClubPositionC
             })}
           </svg>
 
-          {/* Legend */}
-          <div className="flex items-center justify-center gap-6 mt-2 text-sm">
-            <button
-              onClick={() => setShowGrid(!showGrid)}
-              className="flex items-center gap-2 px-3 py-1 rounded border border-border hover:bg-accent transition-colors"
-            >
-              <span>{showGrid ? t("map.hide_grid", "Hide") : t("map.show_grid", "Show")} {t("map.grid", "Grid")}</span>
-            </button>
-          </div>
+          {/* Legend - only show grid toggle when not hidden */}
+          {!hideGridToggle && (
+            <div className="flex items-center justify-center gap-6 mt-2 text-sm">
+              <button
+                onClick={() => setShowGrid(!showGrid)}
+                className="flex items-center gap-2 px-3 py-1 rounded border border-border hover:bg-accent transition-colors"
+              >
+                <span>{showGrid ? t("map.hide_grid", "Hide") : t("map.show_grid", "Show")} {t("map.grid", "Grid")}</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Stats & Details Section - only show when hideStats is false */}

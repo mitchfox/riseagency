@@ -174,7 +174,7 @@ const Index = () => {
                 If you're a professional or academy player in Europe, chances are we know about you
               </p>
             </div>
-            <ScoutingNetworkMap />
+            <ScoutingNetworkMap hideGridToggle={true} />
 
             {/* Scouting Philosophy Points */}
             <div className="mt-12 grid md:grid-cols-3 gap-6">
@@ -257,11 +257,33 @@ const Index = () => {
               </div>
             </div>
             
-            {/* Prestige Indicator */}
-            <div className="text-center mb-8">
-              <p className="text-sm font-bebas uppercase tracking-widest text-muted-foreground">
+            {/* Prestige Indicator - Big 5 Leagues */}
+            <div className="text-center mb-8 space-y-4">
+              <p className="text-lg font-bebas uppercase tracking-widest text-muted-foreground">
                 Trusted by clubs across Europe's Big 5 leagues
               </p>
+              <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-xs font-bebas uppercase tracking-wider text-foreground/50">
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary/60"></span>
+                  Premier League
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary/60"></span>
+                  La Liga
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary/60"></span>
+                  Bundesliga
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary/60"></span>
+                  Serie A
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary/60"></span>
+                  Ligue 1
+                </span>
+              </div>
             </div>
 
             {/* What We Look For - Position/Domain Table */}
