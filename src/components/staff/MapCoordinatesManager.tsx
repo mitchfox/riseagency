@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,9 +8,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, RefreshCw } from "lucide-react";
+import { Plus, Trash2, Save, RefreshCw, MapPin, CheckCircle2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
+import { MapCalibrationTool } from "./MapCalibrationTool";
+import { Badge } from "@/components/ui/badge";
 
 interface MapClub {
   id: string;
@@ -19,6 +21,9 @@ interface MapClub {
   x_position: number | null;
   y_position: number | null;
   image_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  is_calibration_point: boolean;
 }
 
 export const MapCoordinatesManager = () => {
@@ -28,7 +33,7 @@ export const MapCoordinatesManager = () => {
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string>("all");
-  const [mapKey, setMapKey] = useState(0); // Key to force map refresh
+  const [mapKey, setMapKey] = useState(0);
   const [visibleCount, setVisibleCount] = useState(20);
   const [formData, setFormData] = useState({
     name: "",
@@ -47,7 +52,7 @@ export const MapCoordinatesManager = () => {
     try {
       const { data, error } = await supabase
         .from("club_map_positions")
-        .select("id, club_name, country, x_position, y_position, image_url")
+        .select("id, club_name, country, x_position, y_position, image_url, latitude, longitude, is_calibration_point")
         .order("country", { ascending: true })
         .order("club_name", { ascending: true });
 
@@ -58,6 +63,30 @@ export const MapCoordinatesManager = () => {
       toast.error("Failed to load clubs");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleCalibrationPoint = async (clubId: string) => {
+    const club = clubs.find(c => c.id === clubId);
+    if (!club) return;
+    
+    if (!club.x_position || !club.y_position) {
+      toast.error("Position the club on the map first");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("club_map_positions")
+        .update({ is_calibration_point: !club.is_calibration_point })
+        .eq("id", clubId);
+      
+      if (error) throw error;
+      toast.success(club.is_calibration_point ? "Removed calibration point" : "Marked as calibration point");
+      fetchClubs();
+    } catch (error) {
+      console.error("Error toggling calibration point:", error);
+      toast.error("Failed to update calibration point");
     }
   };
 
@@ -257,6 +286,13 @@ export const MapCoordinatesManager = () => {
             Manage club logo positions on the Europe scouting map
           </p>
         </div>
+
+        {/* Calibration Tool */}
+        <MapCalibrationTool 
+          clubs={clubs} 
+          onRefresh={() => { fetchClubs(); setMapKey(prev => prev + 1); }}
+          selectedCountry={selectedCountry}
+        />
         <div className="flex gap-2 items-center">
           <Select value={selectedCountry} onValueChange={handleCountryChange}>
             <SelectTrigger className="w-[200px]">
@@ -408,8 +444,18 @@ export const MapCoordinatesManager = () => {
               </TableHeader>
               <TableBody>
                 {displayedClubs.map((club) => (
-                  <TableRow key={club.id}>
-                    <TableCell className="font-medium">{club.club_name}</TableCell>
+                  <TableRow key={club.id} className={club.is_calibration_point ? "bg-primary/5" : ""}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {club.club_name}
+                        {club.is_calibration_point && (
+                          <Badge variant="secondary" className="text-xs gap-1">
+                            <MapPin className="h-3 w-3" />
+                            Cal
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">{club.country || "—"}</TableCell>
                     <TableCell>
                       <Input
@@ -432,14 +478,25 @@ export const MapCoordinatesManager = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive h-8 w-8 p-0"
-                        onClick={() => handleDelete(club.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`h-8 w-8 p-0 ${club.is_calibration_point ? "text-primary" : "text-muted-foreground"}`}
+                          onClick={() => handleToggleCalibrationPoint(club.id)}
+                          title={club.is_calibration_point ? "Remove calibration point" : "Mark as calibration point"}
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive h-8 w-8 p-0"
+                          onClick={() => handleDelete(club.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
