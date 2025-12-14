@@ -347,18 +347,34 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
 
     setCalibrating(true);
     try {
-      const points: CalibrationPoint[] = allCalibrationPoints.map(c => ({
+      const calPoints: CalibrationPoint[] = allCalibrationPoints.map(c => ({
         lat: c.latitude!,
         lng: c.longitude!,
         x: c.x_position!,
         y: c.y_position!
       }));
 
-      const transformation = calculateTransformation(points);
+      const transformation = calculateTransformation(calPoints);
       if (!transformation) {
         toast.error("Failed to calculate transformation");
         return;
       }
+
+      // Determine valid coordinate bounds from calibration points
+      const xValues = calPoints.map(p => p.x);
+      const yValues = calPoints.map(p => p.y);
+      const minX = Math.min(...xValues);
+      const maxX = Math.max(...xValues);
+      const minY = Math.min(...yValues);
+      const maxY = Math.max(...yValues);
+      
+      // Add some padding (50% of range) to allow for clubs outside calibration area
+      const xRange = maxX - minX;
+      const yRange = maxY - minY;
+      const boundMinX = minX - xRange * 0.5;
+      const boundMaxX = maxX + xRange * 0.5;
+      const boundMinY = minY - yRange * 0.5;
+      const boundMaxY = maxY + yRange * 0.5;
 
       // Get all clubs that aren't calibration points and have lat/lng
       const uncalibrated = clubs.filter(c => 
@@ -368,9 +384,21 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
       );
 
       let updated = 0;
+      let skipped = 0;
+      
       for (const club of uncalibrated) {
         if (club.latitude && club.longitude) {
           const { x, y } = transformation.transform(club.latitude, club.longitude);
+          
+          // Clamp to reasonable bounds - don't let clubs fly off the map
+          const clampedX = Math.max(boundMinX, Math.min(boundMaxX, x));
+          const clampedY = Math.max(boundMinY, Math.min(boundMaxY, y));
+          
+          // Skip if value was clamped significantly (club is outside map region)
+          if (Math.abs(x - clampedX) > 50 || Math.abs(y - clampedY) > 50) {
+            skipped++;
+            continue;
+          }
           
           const randomX = (Math.random() - 0.5) * 8;
           const randomY = (Math.random() - 0.5) * 8;
@@ -378,8 +406,8 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
           const { error } = await supabase
             .from("club_map_positions")
             .update({
-              x_position: Math.round((x + randomX) * 10) / 10,
-              y_position: Math.round((y + randomY) * 10) / 10
+              x_position: Math.round((clampedX + randomX) * 10) / 10,
+              y_position: Math.round((clampedY + randomY) * 10) / 10
             })
             .eq("id", club.id);
           
@@ -387,7 +415,11 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
         }
       }
 
-      toast.success(`Calibrated ${updated} clubs using ${allCalibrationPoints.length} reference points`);
+      if (skipped > 0) {
+        toast.success(`Calibrated ${updated} clubs, skipped ${skipped} outside map bounds`);
+      } else {
+        toast.success(`Calibrated ${updated} clubs using ${allCalibrationPoints.length} reference points`);
+      }
       onRefresh();
     } catch (error) {
       console.error("Error applying calibration:", error);
