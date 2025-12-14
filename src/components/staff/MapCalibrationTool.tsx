@@ -63,6 +63,17 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
     return clubs.filter(c => c.country === selectedCountry);
   }, [clubs, selectedCountry]);
 
+  // All calibration points across the entire map
+  const allCalibrationPoints = useMemo(() => {
+    return clubs.filter(c => 
+      c.is_calibration_point && 
+      c.x_position !== null && 
+      c.y_position !== null &&
+      c.latitude !== null &&
+      c.longitude !== null
+    );
+  }, [clubs]);
+
   const calibrationPoints = useMemo(() => {
     return countryClubs.filter(c => 
       c.is_calibration_point && 
@@ -279,6 +290,65 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
     return { updated, skipped: false };
   };
 
+  // Apply calibration using ALL calibration points to ALL uncalibrated clubs
+  const handleApplyGlobalCalibration = async () => {
+    if (allCalibrationPoints.length < 3) {
+      toast.error("Need at least 3 calibration points on the map.");
+      return;
+    }
+
+    setCalibrating(true);
+    try {
+      const points: CalibrationPoint[] = allCalibrationPoints.map(c => ({
+        lat: c.latitude!,
+        lng: c.longitude!,
+        x: c.x_position!,
+        y: c.y_position!
+      }));
+
+      const transformation = calculateTransformation(points);
+      if (!transformation) {
+        toast.error("Failed to calculate transformation");
+        return;
+      }
+
+      // Get all clubs that aren't calibration points and have lat/lng
+      const uncalibrated = clubs.filter(c => 
+        !c.is_calibration_point &&
+        c.latitude !== null &&
+        c.longitude !== null
+      );
+
+      let updated = 0;
+      for (const club of uncalibrated) {
+        if (club.latitude && club.longitude) {
+          const { x, y } = transformation.transform(club.latitude, club.longitude);
+          
+          const randomX = (Math.random() - 0.5) * 8;
+          const randomY = (Math.random() - 0.5) * 8;
+          
+          const { error } = await supabase
+            .from("club_map_positions")
+            .update({
+              x_position: Math.round((x + randomX) * 10) / 10,
+              y_position: Math.round((y + randomY) * 10) / 10
+            })
+            .eq("id", club.id);
+          
+          if (!error) updated++;
+        }
+      }
+
+      toast.success(`Calibrated ${updated} clubs using ${allCalibrationPoints.length} reference points`);
+      onRefresh();
+    } catch (error) {
+      console.error("Error applying calibration:", error);
+      toast.error("Failed to apply calibration");
+    } finally {
+      setCalibrating(false);
+    }
+  };
+
   // Apply calibration to uncalibrated clubs in selected country
   const handleApplyCalibration = async () => {
     if (calibrationPoints.length < 3) {
@@ -298,41 +368,6 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
     } catch (error) {
       console.error("Error applying calibration:", error);
       toast.error("Failed to apply calibration");
-    } finally {
-      setCalibrating(false);
-    }
-  };
-
-  // Calibrate ALL countries that have enough calibration points
-  const handleCalibrateAllCountries = async () => {
-    setCalibrating(true);
-    try {
-      const countriesWithPoints = Object.entries(calibrationStats)
-        .filter(([, s]) => s.calibrated >= 3)
-        .map(([country]) => country);
-
-      if (countriesWithPoints.length === 0) {
-        toast.error("No countries have enough calibration points (need 3+ per country)");
-        return;
-      }
-
-      let totalUpdated = 0;
-      let countriesCalibrated = 0;
-
-      for (const countryName of countriesWithPoints) {
-        const countryClubsList = clubs.filter(c => c.country === countryName);
-        const result = await calibrateCountry(countryName, countryClubsList);
-        if (!result.skipped) {
-          totalUpdated += result.updated;
-          countriesCalibrated++;
-        }
-      }
-
-      toast.success(`Calibrated ${totalUpdated} clubs across ${countriesCalibrated} countries`);
-      onRefresh();
-    } catch (error) {
-      console.error("Error calibrating all countries:", error);
-      toast.error("Failed to calibrate countries");
     } finally {
       setCalibrating(false);
     }
@@ -392,24 +427,22 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
             Populate Coordinates
           </Button>
           
-          {selectedCountry !== "all" && (
-            <Button 
-              size="sm"
-              onClick={handleApplyCalibration}
-              disabled={calibrating || calibrationPoints.length < 3}
-            >
-              <Wand2 className={`h-3 w-3 mr-1 ${calibrating ? 'animate-spin' : ''}`} />
-              Apply Calibration ({uncalibratedClubs.length} clubs)
-            </Button>
-          )}
+          <Button 
+            size="sm"
+            onClick={handleApplyGlobalCalibration}
+            disabled={calibrating || allCalibrationPoints.length < 3}
+          >
+            <Wand2 className={`h-3 w-3 mr-1 ${calibrating ? 'animate-spin' : ''}`} />
+            Apply Calibration
+          </Button>
         </div>
 
         {/* Calibration points list */}
-        {selectedCountry !== "all" && calibrationPoints.length > 0 && (
+        {allCalibrationPoints.length > 0 && (
           <div className="text-xs">
-            <p className="font-medium mb-1">Calibration points:</p>
+            <p className="font-medium mb-1">Calibration points ({allCalibrationPoints.length}):</p>
             <div className="flex flex-wrap gap-1">
-              {calibrationPoints.map(c => (
+              {allCalibrationPoints.map(c => (
                 <Badge key={c.id} variant="secondary" className="text-xs">
                   {c.club_name}
                 </Badge>
@@ -419,42 +452,13 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
         )}
 
         {/* Warning if not enough calibration points */}
-        {selectedCountry !== "all" && calibrationPoints.length < 3 && (
+        {allCalibrationPoints.length < 3 && (
           <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-2 rounded">
             <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
             <span>
-              Need at least 3 calibration points for {selectedCountry}. 
+              Need at least 3 calibration points. 
               Position clubs on the map, save, then mark them as calibration points.
             </span>
-          </div>
-        )}
-
-        {/* Per-country calibration status */}
-        {selectedCountry === "all" && (
-          <div className="text-xs space-y-2">
-            <p className="font-medium">Countries ready for calibration:</p>
-            <div className="flex flex-wrap gap-1">
-              {Object.entries(calibrationStats)
-                .filter(([, s]) => s.calibrated >= 3)
-                .map(([country]) => (
-                  <Badge key={country} variant="default" className="text-xs">
-                    {country}
-                  </Badge>
-                ))}
-            </div>
-            {Object.values(calibrationStats).filter(s => s.calibrated >= 3).length === 0 ? (
-              <p className="text-muted-foreground">No countries ready yet. Select a country and add calibration points.</p>
-            ) : (
-              <Button 
-                size="sm"
-                onClick={handleCalibrateAllCountries}
-                disabled={calibrating}
-                className="mt-2"
-              >
-                <Wand2 className={`h-3 w-3 mr-1 ${calibrating ? 'animate-spin' : ''}`} />
-                Calibrate All Countries ({Object.values(calibrationStats).filter(s => s.calibrated >= 3).length})
-              </Button>
-            )}
           </div>
         )}
       </CardContent>
