@@ -224,7 +224,62 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
     };
   };
 
-  // Apply calibration to uncalibrated clubs
+  // Apply calibration to a specific country
+  const calibrateCountry = async (countryName: string, countryClubsList: MapClub[]) => {
+    const countryCalibrationPoints = countryClubsList.filter(c => 
+      c.is_calibration_point && 
+      c.x_position !== null && 
+      c.y_position !== null &&
+      c.latitude !== null &&
+      c.longitude !== null
+    );
+
+    if (countryCalibrationPoints.length < 3) {
+      return { updated: 0, skipped: true };
+    }
+
+    const points: CalibrationPoint[] = countryCalibrationPoints.map(c => ({
+      lat: c.latitude!,
+      lng: c.longitude!,
+      x: c.x_position!,
+      y: c.y_position!
+    }));
+
+    const transformation = calculateTransformation(points);
+    if (!transformation) {
+      return { updated: 0, skipped: true };
+    }
+
+    const countryUncalibratedClubs = countryClubsList.filter(c => 
+      !c.is_calibration_point &&
+      c.latitude !== null &&
+      c.longitude !== null
+    );
+
+    let updated = 0;
+    for (const club of countryUncalibratedClubs) {
+      if (club.latitude && club.longitude) {
+        const { x, y } = transformation.transform(club.latitude, club.longitude);
+        
+        const randomX = (Math.random() - 0.5) * 8;
+        const randomY = (Math.random() - 0.5) * 8;
+        
+        const { error } = await supabase
+          .from("club_map_positions")
+          .update({
+            x_position: Math.round((x + randomX) * 10) / 10,
+            y_position: Math.round((y + randomY) * 10) / 10
+          })
+          .eq("id", club.id);
+        
+        if (!error) updated++;
+      }
+    }
+
+    return { updated, skipped: false };
+  };
+
+  // Apply calibration to uncalibrated clubs in selected country
   const handleApplyCalibration = async () => {
     if (calibrationPoints.length < 3) {
       toast.error("Need at least 3 calibration points. Position and mark more clubs as calibration points.");
@@ -233,45 +288,51 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
 
     setCalibrating(true);
     try {
-      const points: CalibrationPoint[] = calibrationPoints.map(c => ({
-        lat: c.latitude!,
-        lng: c.longitude!,
-        x: c.x_position!,
-        y: c.y_position!
-      }));
-
-      const transformation = calculateTransformation(points);
-      if (!transformation) {
+      const result = await calibrateCountry(selectedCountry, countryClubs);
+      if (result.skipped) {
         toast.error("Failed to calculate transformation");
-        return;
+      } else {
+        toast.success(`Calibrated ${result.updated} clubs in ${selectedCountry}`);
       }
-
-      let updated = 0;
-      for (const club of uncalibratedClubs) {
-        if (club.latitude && club.longitude) {
-          const { x, y } = transformation.transform(club.latitude, club.longitude);
-          
-          // Add small random offset for same-city clubs
-          const randomX = (Math.random() - 0.5) * 8;
-          const randomY = (Math.random() - 0.5) * 8;
-          
-          const { error } = await supabase
-            .from("club_map_positions")
-            .update({
-              x_position: Math.round((x + randomX) * 10) / 10,
-              y_position: Math.round((y + randomY) * 10) / 10
-            })
-            .eq("id", club.id);
-          
-          if (!error) updated++;
-        }
-      }
-
-      toast.success(`Calibrated ${updated} clubs in ${selectedCountry}`);
       onRefresh();
     } catch (error) {
       console.error("Error applying calibration:", error);
       toast.error("Failed to apply calibration");
+    } finally {
+      setCalibrating(false);
+    }
+  };
+
+  // Calibrate ALL countries that have enough calibration points
+  const handleCalibrateAllCountries = async () => {
+    setCalibrating(true);
+    try {
+      const countriesWithPoints = Object.entries(calibrationStats)
+        .filter(([, s]) => s.calibrated >= 3)
+        .map(([country]) => country);
+
+      if (countriesWithPoints.length === 0) {
+        toast.error("No countries have enough calibration points (need 3+ per country)");
+        return;
+      }
+
+      let totalUpdated = 0;
+      let countriesCalibrated = 0;
+
+      for (const countryName of countriesWithPoints) {
+        const countryClubsList = clubs.filter(c => c.country === countryName);
+        const result = await calibrateCountry(countryName, countryClubsList);
+        if (!result.skipped) {
+          totalUpdated += result.updated;
+          countriesCalibrated++;
+        }
+      }
+
+      toast.success(`Calibrated ${totalUpdated} clubs across ${countriesCalibrated} countries`);
+      onRefresh();
+    } catch (error) {
+      console.error("Error calibrating all countries:", error);
+      toast.error("Failed to calibrate countries");
     } finally {
       setCalibrating(false);
     }
@@ -370,7 +431,7 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
 
         {/* Per-country calibration status */}
         {selectedCountry === "all" && (
-          <div className="text-xs space-y-1">
+          <div className="text-xs space-y-2">
             <p className="font-medium">Countries ready for calibration:</p>
             <div className="flex flex-wrap gap-1">
               {Object.entries(calibrationStats)
@@ -381,8 +442,18 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
                   </Badge>
                 ))}
             </div>
-            {Object.values(calibrationStats).filter(s => s.calibrated >= 3).length === 0 && (
+            {Object.values(calibrationStats).filter(s => s.calibrated >= 3).length === 0 ? (
               <p className="text-muted-foreground">No countries ready yet. Select a country and add calibration points.</p>
+            ) : (
+              <Button 
+                size="sm"
+                onClick={handleCalibrateAllCountries}
+                disabled={calibrating}
+                className="mt-2"
+              >
+                <Wand2 className={`h-3 w-3 mr-1 ${calibrating ? 'animate-spin' : ''}`} />
+                Calibrate All Countries ({Object.values(calibrationStats).filter(s => s.calibrated >= 3).length})
+              </Button>
             )}
           </div>
         )}
