@@ -240,11 +240,11 @@ function LandingContent() {
       }}>
         {/* Desktop */}
         <div className="hidden md:block">
-          <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[55px] w-auto" loading="eager" fetchPriority="high" />
+          <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[55px] w-auto" loading="eager" />
         </div>
         {/* Mobile */}
         <div className="md:hidden">
-          <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[42px] w-auto" loading="eager" fetchPriority="high" />
+          <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[42px] w-auto" loading="eager" />
         </div>
       </div>
       
