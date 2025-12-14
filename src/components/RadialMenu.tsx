@@ -1055,7 +1055,7 @@ export const RadialMenu = () => {
         
         // Position card content within the wedge - between menu edge and screen edge
         const cardWidth = Math.min(160, maxWidth);
-        const cardHeight = maxHeight;
+        const cardHeight = 120; // Reduced height for corners
         const midAngle = (startAngle + endAngle) / 2;
         const midRad = (midAngle * Math.PI) / 180;
         
@@ -1064,24 +1064,44 @@ export const RadialMenu = () => {
         const isLeftSide = Math.cos(midRad) < 0;
         const textAlign: 'left' | 'right' = isLeftSide ? 'left' : 'right';
         
-        // Base position along the wedge's center line
-        const baseDistance = menuRadius + 60; // Slightly closer to center to stay inside wedge
-        const rawX = cx + Math.cos(midRad) * baseDistance;
-        const rawY = cy + Math.sin(midRad) * baseDistance;
+        // Calculate available space in each direction from center
+        const spaceLeft = cx - edgePadding;
+        const spaceRight = vw - cx - edgePadding;
+        const spaceTop = cy - edgePadding;
+        const spaceBottom = vh - cy - edgePadding;
         
-        // Clamp card center so it never goes off-screen
+        // Calculate the direction vector
+        const dirX = Math.cos(midRad);
+        const dirY = Math.sin(midRad);
+        
+        // Find the maximum distance we can go in this direction before hitting:
+        // 1. The screen edge (accounting for card size)
+        // 2. But staying outside the menu
+        
         const halfW = cardWidth / 2;
         const halfH = cardHeight / 2;
-        const minX = edgePadding + halfW;
-        const maxXPos = vw - edgePadding - halfW;
-        const minY = edgePadding + halfH;
-        const maxYPos = vh - edgePadding - halfH;
-        const clampedX = Math.min(Math.max(rawX, minX), maxXPos);
-        const clampedY = Math.min(Math.max(rawY, minY), maxYPos);
         
-        // Convert back to overlay-relative offset from center
-        const contentX = clampedX - cx;
-        const contentY = clampedY - cy;
+        // Calculate max distance to screen edge in this direction
+        let maxDistToEdge = Infinity;
+        if (dirX > 0.01) {
+          maxDistToEdge = Math.min(maxDistToEdge, (spaceRight - halfW) / dirX);
+        } else if (dirX < -0.01) {
+          maxDistToEdge = Math.min(maxDistToEdge, (spaceLeft - halfW) / Math.abs(dirX));
+        }
+        if (dirY > 0.01) {
+          maxDistToEdge = Math.min(maxDistToEdge, (spaceBottom - halfH) / dirY);
+        } else if (dirY < -0.01) {
+          maxDistToEdge = Math.min(maxDistToEdge, (spaceTop - halfH) / Math.abs(dirY));
+        }
+        
+        // Minimum distance is just outside the menu
+        const minDist = menuRadius + 50;
+        
+        // Position at the midpoint between menu edge and screen edge
+        const optimalDist = Math.max(minDist, Math.min(maxDistToEdge * 0.65, minDist + 100));
+        
+        const contentX = dirX * optimalDist;
+        const contentY = dirY * optimalDist;
         
         return (
           <div 
