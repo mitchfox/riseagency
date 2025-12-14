@@ -391,17 +391,17 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Player Portal Section - Visual */}
+        {/* Player Development Section */}
         <section className="py-16 md:py-24 px-4 bg-background/90 backdrop-blur-sm">
           <div className="container mx-auto max-w-7xl">
             <div className="text-center mb-12">
               <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground">
-                {t("home.player_portal", "PLAYER")} <span className="text-primary">{t("home.portal", "PORTAL")}</span>
+                {t("home.player_development", "PLAYER")} <span className="text-primary">{t("home.development", "DEVELOPMENT")}</span>
               </h2>
-              <p className="text-muted-foreground mt-4 max-w-xl mx-auto">Every RISE player gets exclusive portal access</p>
+              <p className="text-muted-foreground mt-4 max-w-xl mx-auto">Comprehensive support to maximise your potential</p>
             </div>
 
-            {/* Portal Features - Visual Cards */}
+            {/* Development Features - Visual Cards */}
             <div className="grid md:grid-cols-3 gap-8">
               <div className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
