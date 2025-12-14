@@ -1055,53 +1055,57 @@ export const RadialMenu = () => {
         
         // Position card content within the wedge - between menu edge and screen edge
         const cardWidth = Math.min(160, maxWidth);
-        const cardHeight = 120; // Reduced height for corners
+        const cardHeight = 100;
         const midAngle = (startAngle + endAngle) / 2;
         const midRad = (midAngle * Math.PI) / 180;
         
         // Determine text alignment based on which side the wedge is on
-        // Left side: angles 90-270 (cos < 0), Right side: angles 270-360 or 0-90 (cos > 0)
         const isLeftSide = Math.cos(midRad) < 0;
         const textAlign: 'left' | 'right' = isLeftSide ? 'left' : 'right';
-        
-        // Calculate available space in each direction from center
-        const spaceLeft = cx - edgePadding;
-        const spaceRight = vw - cx - edgePadding;
-        const spaceTop = cy - edgePadding;
-        const spaceBottom = vh - cy - edgePadding;
-        
-        // Calculate the direction vector
-        const dirX = Math.cos(midRad);
-        const dirY = Math.sin(midRad);
-        
-        // Find the maximum distance we can go in this direction before hitting:
-        // 1. The screen edge (accounting for card size)
-        // 2. But staying outside the menu
         
         const halfW = cardWidth / 2;
         const halfH = cardHeight / 2;
         
-        // Calculate max distance to screen edge in this direction
-        let maxDistToEdge = Infinity;
-        if (dirX > 0.01) {
-          maxDistToEdge = Math.min(maxDistToEdge, (spaceRight - halfW) / dirX);
-        } else if (dirX < -0.01) {
-          maxDistToEdge = Math.min(maxDistToEdge, (spaceLeft - halfW) / Math.abs(dirX));
-        }
-        if (dirY > 0.01) {
-          maxDistToEdge = Math.min(maxDistToEdge, (spaceBottom - halfH) / dirY);
-        } else if (dirY < -0.01) {
-          maxDistToEdge = Math.min(maxDistToEdge, (spaceTop - halfH) / Math.abs(dirY));
-        }
+        // Calculate direction vector
+        const dirX = Math.cos(midRad);
+        const dirY = Math.sin(midRad);
+        
+        // Calculate available distance to screen edge in this direction
+        let distToEdge = Infinity;
+        if (dirX > 0.01) distToEdge = Math.min(distToEdge, (cx - edgePadding - halfW) / dirX * -1 + (vw - edgePadding - halfW - cx) / dirX);
+        if (dirX < -0.01) distToEdge = Math.min(distToEdge, (edgePadding + halfW - cx) / dirX);
+        if (dirY > 0.01) distToEdge = Math.min(distToEdge, (vh - edgePadding - halfH - cy) / dirY);
+        if (dirY < -0.01) distToEdge = Math.min(distToEdge, (edgePadding + halfH - cy) / dirY);
+        
+        // For pure horizontal (sides): go further out. For diagonal (corners): stay closer to menu
+        const absX = Math.abs(dirX);
+        const absY = Math.abs(dirY);
+        const isDiagonal = absX > 0.3 && absY > 0.3;
         
         // Minimum distance is just outside the menu
-        const minDist = menuRadius + 50;
+        const minDist = menuRadius + 40;
         
-        // Position at the midpoint between menu edge and screen edge
-        const optimalDist = Math.max(minDist, Math.min(maxDistToEdge * 0.65, minDist + 100));
+        // Calculate optimal distance - sides can go further, corners stay closer
+        let optimalDist: number;
+        if (isDiagonal) {
+          // For corners: position in the middle of available space, but closer to menu
+          optimalDist = Math.min(minDist + 30, distToEdge - 20);
+        } else {
+          // For sides: position comfortably outside menu
+          optimalDist = minDist + 50;
+        }
         
-        const contentX = dirX * optimalDist;
-        const contentY = dirY * optimalDist;
+        optimalDist = Math.max(minDist, optimalDist);
+        
+        const rawX = dirX * optimalDist;
+        const rawY = dirY * optimalDist;
+        
+        // Final clamping to ensure we stay on screen
+        const finalX = Math.max(-cx + edgePadding + halfW, Math.min(vw - cx - edgePadding - halfW, rawX));
+        const finalY = Math.max(-cy + edgePadding + halfH, Math.min(vh - cy - edgePadding - halfH, rawY));
+        
+        const contentX = finalX;
+        const contentY = finalY;
         
         return (
           <div 
