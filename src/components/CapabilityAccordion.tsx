@@ -101,7 +101,7 @@ const CapabilityAccordionContent = () => {
     >
       {/* Left side - Same Player3D effect as landing page */}
       <div 
-        className="relative aspect-[4/3] md:aspect-auto md:min-h-[400px] flex items-center justify-center order-2 md:order-1"
+        className="relative aspect-[4/3] md:aspect-auto md:min-h-[400px] flex items-center justify-center order-1 md:order-1"
         onMouseMove={handleMouseMove}
       >
         <div className="relative w-full h-full min-h-[400px] md:min-h-[500px]">
@@ -111,7 +111,7 @@ const CapabilityAccordionContent = () => {
       </div>
 
       {/* Right side - Accordion */}
-      <div className="flex flex-col gap-2 order-1 md:order-2">
+      <div className="flex flex-col gap-2 order-2 md:order-2">
         {capabilities.map((item, index) => {
           const isActive = index === activeIndex;
           
