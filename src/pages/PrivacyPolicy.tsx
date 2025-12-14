@@ -1,9 +1,16 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
 
 export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO 
+        title="Privacy Policy - RISE Football Agency"
+        description="RISE Football Agency privacy policy. Learn how we collect, use, and protect your personal information."
+        url="/privacy-policy"
+        noindex={true}
+      />
       <Header />
       <main className="flex-1 pt-32 pb-16">
         <div className="container mx-auto px-4 max-w-4xl">

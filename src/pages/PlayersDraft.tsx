@@ -2,7 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import { SEO } from "@/components/SEO";
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import footballIcon from "@/assets/football-icon.png";
@@ -83,10 +83,11 @@ const PlayersDraft = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>Players Draft | RISE Football Agency</title>
-        <meta name="robots" content="noindex, nofollow" />
-      </Helmet>
+      <SEO 
+        title="Players Draft | RISE Football Agency"
+        description="Explore the player development journey with RISE Football Agency. From attraction to performance - comprehensive support for aspiring footballers."
+        noindex={true}
+      />
 
       <Header />
 

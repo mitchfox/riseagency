@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getLocalizedPath } from "@/lib/localizedRoutes";
@@ -124,6 +125,12 @@ export default function BetweenTheLines() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO 
+        title="Between The Lines - Football Training Insights | RISE Football Agency"
+        description="Expert football training articles covering technical skills, nutrition, psychology, tactics, strength training, and recovery. Insights from RISE Football Agency."
+        url="/between-the-lines"
+        image="/og-preview-btl.png"
+      />
       <Header />
       <main className="flex-1 pt-32 pb-16 touch-pan-y overflow-x-hidden">
         <div className="container mx-auto px-4">

@@ -1,9 +1,16 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
 
 export default function TermsOfService() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO 
+        title="Terms of Service - RISE Football Agency"
+        description="RISE Football Agency terms of service. Understand the terms and conditions governing the use of our services."
+        url="/terms-of-service"
+        noindex={true}
+      />
       <Header />
       <main className="flex-1 pt-32 pb-16">
         <div className="container mx-auto px-4 max-w-4xl">

@@ -82,6 +82,20 @@ const YouthPlayers = () => {
     }
   ];
 
+  // FAQ Schema for structured data
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <SEO 
@@ -89,6 +103,7 @@ const YouthPlayers = () => {
         description="The pathway to the top. Learn about RISE's approach to developing talented youth players with the will and skill to make it. Transparent process, expert guidance."
         image="/og-preview-youth.png"
         url="/youth-players"
+        structuredData={faqSchema}
       />
       <Header />
       <RepresentationDialog open={representationOpen} onOpenChange={setRepresentationOpen} />
