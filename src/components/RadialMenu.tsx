@@ -878,7 +878,7 @@ export const RadialMenu = () => {
 
         {/* Center circle with logo - LOADS FIRST */}
         <div 
-          className="absolute rounded-full flex flex-col items-center justify-center z-20 border-4 border-black overflow-hidden animate-[scale-in_0.25s_ease-out_both]"
+          className="absolute rounded-full z-20 border-4 border-black overflow-hidden animate-[scale-in_0.25s_ease-out_both]"
           style={{
             width: `${centerSize}px`,
             height: `${centerSize}px`,
@@ -896,9 +896,6 @@ export const RadialMenu = () => {
             }}
           />
           
-          {/* Gold divider line */}
-          <div className="absolute left-0 w-full h-[2px] bg-primary z-10" style={{ top: '75%' }} />
-          
           {/* Lower 25% with smudged marble */}
           <div 
             className="absolute bottom-0 left-0 w-full h-[25%]"
@@ -908,64 +905,53 @@ export const RadialMenu = () => {
               backgroundPosition: 'center',
             }}
           />
+          
+          {/* Gold divider at 75% */}
+          <div className="absolute left-0 w-full h-[2px] bg-primary z-10" style={{ top: '75%' }} />
 
-          {/* Logo */}
-          <img
-            src={riseLogoBlack}
-            alt="RISE"
-            className="mb-1 relative z-20"
-            style={{ 
-              width: `${centerSize * 0.9}px`,
-              height: `${centerSize * 0.9}px`,
-              transform: `translate(-2px, ${isMobile ? -centerSize * 0.06 + 7 - 3 : -centerSize * 0.13 + 7}px)` 
-            }}
-          />
+          {/* Logo - positioned at top, centered */}
+          <div className="absolute top-[5%] left-1/2 -translate-x-1/2 z-20" style={{ width: '80%', height: '50%' }}>
+            <img
+              src={riseLogoBlack}
+              alt="RISE"
+              className="w-full h-full object-contain"
+            />
+          </div>
           
-          {/* Gold divider between logo and dropdown */}
-          <div 
-            className="absolute left-0 w-full h-[2px] bg-primary z-30"
-            style={{ top: 'calc(55% - 1px)' }}
-          />
+          {/* Gold divider between logo and role selector - at 55% */}
+          <div className="absolute left-0 w-full h-[2px] bg-primary z-30" style={{ top: '55%' }} />
           
-          {/* Role/Menu selection button */}
-          <div
-            className="text-center relative z-20 w-full flex items-center justify-center"
-            style={{ 
-              transform: `translateY(${isMobile ? (-centerSize * 0.28 - 4 + 1) : (-centerSize * 0.3125)}px)` 
-            }}
-          >
+          {/* Role/Menu selection button - positioned at 60% from top */}
+          <div className="absolute left-0 w-full z-20 flex items-center justify-center" style={{ top: '60%' }}>
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
-              className="font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none w-full"
-              style={{ 
-                fontSize: `${isMobile ? centerSize * 0.22 : centerSize * 0.1875}px`,
-                ...(isSelectingRole ? { color: 'hsl(var(--primary))' } : {})
-              }}
+              className="font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none"
+              style={{ fontSize: `${centerSize * 0.18}px` }}
             >
-              <span className={isSelectingRole ? '' : 'text-black hover:text-primary transition-colors'}>{isSelectingRole ? t('menu.role', 'ROLE') : t(displayRoleLabelKey, displayRoleFallback).toUpperCase()}</span>
+              <span className={isSelectingRole ? 'text-primary' : 'text-black hover:text-primary transition-colors'}>
+                {isSelectingRole ? t('menu.role', 'ROLE') : t(displayRoleLabelKey, displayRoleFallback).toUpperCase()}
+              </span>
             </button>
           </div>
           
-          {/* Language selector in lower half */}
-          <div 
-            className="absolute z-20" 
-            style={{ 
-              bottom: isMobile ? `${centerSize * 0.06 - 7}px` : `${centerSize * 0.04375}px`,
-              left: '50%',
-              transform: isMobile ? 'translateX(calc(-50% + 6px))' : 'translateX(calc(-50% + 5px))'
-            }}
-          >
+          {/* Language selector - positioned at bottom, centered */}
+          <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ bottom: '5%' }}>
             <button
               onClick={() => setShowMap(!showMap)}
               className="flex items-center gap-1 font-bebas uppercase tracking-wider text-primary hover:text-primary/80 transition-all duration-300 focus:outline-none"
-              style={{ fontSize: `${isMobile ? centerSize * 0.165 * 0.7 : centerSize * 0.09375}px` }}
+              style={{ fontSize: `${centerSize * 0.1}px` }}
             >
-              <img src={getFlagUrl(selectedLanguage.flagCode)} alt={selectedLanguage.name} className="rounded-sm" style={{ height: `${isMobile ? centerSize * 0.126 : centerSize * 0.105}px`, width: 'auto' }} />
+              <img 
+                src={getFlagUrl(selectedLanguage.flagCode)} 
+                alt={selectedLanguage.name} 
+                className="rounded-sm" 
+                style={{ height: `${centerSize * 0.12}px`, width: 'auto' }} 
+              />
               <ChevronDown 
                 className="transition-transform duration-300"
                 style={{
-                  width: `${isMobile ? centerSize * 0.18 * 0.7 : centerSize * 0.1171875}px`,
-                  height: `${isMobile ? centerSize * 0.18 * 0.7 : centerSize * 0.1171875}px`,
+                  width: `${centerSize * 0.1}px`,
+                  height: `${centerSize * 0.1}px`,
                   transform: showMap ? 'rotate(180deg)' : 'rotate(0deg)'
                 }}
               />
