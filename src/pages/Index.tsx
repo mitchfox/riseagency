@@ -5,21 +5,15 @@ import { Link } from "react-router-dom";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { IntroModal } from "@/components/IntroModal";
 import { SEO } from "@/components/SEO";
-import { VideoPortfolio } from "@/components/VideoPortfolio";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { CapabilityAccordion } from "@/components/CapabilityAccordion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { HoverText } from "@/components/HoverText";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTranslatedNews } from "@/hooks/useTranslateContent";
-import { Activity, Brain, Zap, Crosshair } from "lucide-react";
+import { Activity, Brain, Zap, Crosshair, ChevronDown } from "lucide-react";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
-import riseStarIcon from "@/assets/rise-star-icon.png";
-import playersNetwork from "@/assets/players-network.jpg";
-import clubsNetwork from "@/assets/clubs-network.jpg";
-import scoutsNetwork from "@/assets/scouts-network.jpg";
-import coachesNetwork from "@/assets/coaches-network.jpg";
 
 const domainConfig = {
   Physical: { icon: Activity, color: "text-red-500", bgColor: "bg-red-500/10", borderColor: "border-red-500/20", solidBg: "bg-red-500" },
@@ -48,13 +42,17 @@ const Index = () => {
   const [insideAccessArticles, setInsideAccessArticles] = useState<NewsArticle[]>([]);
   const [selectedPosition, setSelectedPosition] = useState<ScoutingPosition>(SCOUTING_POSITIONS[0]);
   const [expandedDomain, setExpandedDomain] = useState<keyof typeof domainConfig | null>(null);
+  const [activeSection, setActiveSection] = useState(0);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sectionsRef = useRef<(HTMLElement | null)[]>([]);
   
-  // Auto-translate news articles based on current language
   const { translatedArticles: translatedNews } = useTranslatedNews(newsArticles);
   const { translatedArticles: translatedInsideAccess } = useTranslatedNews(insideAccessArticles);
 
+  const sectionIds = ['hero', 'inside-access', 'scouting', 'development', 'skills', 'cta', 'news', 'watch', 'broadcast'];
+
   useEffect(() => {
-    // Fetch regular news articles
     const fetchNews = async () => {
       const { data, error } = await supabase
         .from('blog_posts')
@@ -69,7 +67,6 @@ const Index = () => {
       }
     };
 
-    // Fetch INSIDE:ACCESS articles
     const fetchInsideAccess = async () => {
       const { data, error } = await supabase
         .from('blog_posts')
@@ -88,6 +85,46 @@ const Index = () => {
     fetchInsideAccess();
   }, []);
 
+  // Intersection observer for active section tracking
+  useEffect(() => {
+    const observers = sectionsRef.current.map((section, index) => {
+      if (!section) return null;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+              setActiveSection(index);
+            }
+          });
+        },
+        { threshold: [0.5] }
+      );
+
+      observer.observe(section);
+      return observer;
+    });
+
+    return () => {
+      observers.forEach((observer) => observer?.disconnect());
+    };
+  }, [translatedInsideAccess.length]); // Re-run when content loads
+
+  const scrollToSection = useCallback((index: number) => {
+    if (isScrolling || !sectionsRef.current[index]) return;
+    
+    setIsScrolling(true);
+    sectionsRef.current[index]?.scrollIntoView({ behavior: "smooth" });
+    
+    setTimeout(() => setIsScrolling(false), 800);
+  }, [isScrolling]);
+
+  const handleScrollHint = () => {
+    if (activeSection < sectionIds.length - 1) {
+      scrollToSection(activeSection + 1);
+    }
+  };
+
   return (
     <>
       <SEO 
@@ -98,38 +135,73 @@ const Index = () => {
       />
       <Header />
       <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
-      <div className="bg-background min-h-screen relative z-10 snap-scroll-container">
-        {/* Hero Section */}
-        <section className="pt-28 md:pt-32 pb-12 md:pb-20 px-4 relative overflow-hidden">
+      
+      {/* Progress indicator */}
+      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-50 hidden lg:flex flex-col gap-2">
+        {sectionIds.map((id, index) => (
+          <button
+            key={id}
+            onClick={() => scrollToSection(index)}
+            className={`w-2 h-2 rounded-full transition-all duration-300 hover:scale-150 ${
+              activeSection === index 
+                ? 'bg-primary scale-125 shadow-[0_0_8px_hsl(var(--primary))]' 
+                : 'bg-white/30 hover:bg-white/50'
+            }`}
+            aria-label={`Go to section ${index + 1}`}
+          />
+        ))}
+      </div>
+
+      <div 
+        ref={containerRef}
+        className="bg-background min-h-screen relative z-10 overflow-y-auto snap-y snap-mandatory"
+        style={{ scrollBehavior: "smooth" }}
+      >
+        {/* Section 1: Hero */}
+        <section 
+          ref={(el) => (sectionsRef.current[0] = el)}
+          className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden snap-start snap-always"
+        >
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background/80"></div>
           <div className="container mx-auto max-w-7xl relative z-10">
             <div className="text-center space-y-6">
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider mb-0">
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider mb-0 animate-fade-in">
                 <span className="text-foreground">{t("home.hero_title_1", "REALISE")} </span>
                 <span className="text-primary">{t("home.hero_title_2", "POTENTIAL")}</span>
               </h1>
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic !mt-0">
+              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic !mt-0 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                 {t("home.hero_subtitle", "Elite Football Representation & Performance Optimisation")}
               </p>
               
-              {/* Capability Accordion */}
-              <div className="mt-12">
+              <div className="mt-12 animate-fade-in" style={{ animationDelay: '0.4s' }}>
                 <CapabilityAccordion />
               </div>
             </div>
           </div>
+          
+          {/* Scroll hint */}
+          <button 
+            onClick={handleScrollHint}
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <span className="text-xs uppercase tracking-wider font-bebas">Scroll</span>
+            <ChevronDown className="w-5 h-5 animate-bounce" />
+          </button>
         </section>
 
-        {/* INSIDE:ACCESS Section */}
+        {/* Section 2: INSIDE:ACCESS */}
         {translatedInsideAccess.length > 0 && (
-          <section className="py-12 md:py-16 px-4 bg-background/80 backdrop-blur-sm">
+          <section 
+            ref={(el) => (sectionsRef.current[1] = el)}
+            className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/80 backdrop-blur-sm snap-start snap-always"
+          >
             <div className="container mx-auto max-w-7xl w-full">
-              <div className="text-center mb-6 space-y-3">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  {t("home.exclusive", "Exclusive")}
-                </span>
-              </div>
+              <div className="text-center mb-8 space-y-3">
+                <div className="inline-block">
+                  <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                    {t("home.exclusive", "Exclusive")}
+                  </span>
+                </div>
                 <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
                   INSIDE<span className="text-primary">:ACCESS</span>
                 </h2>
@@ -158,8 +230,11 @@ const Index = () => {
           </section>
         )}
 
-        {/* Club Network Map Section */}
-        <section className="py-12 md:py-16 px-4 bg-background/90 backdrop-blur-sm">
+        {/* Section 3: Scouting Network */}
+        <section 
+          ref={(el) => (sectionsRef.current[2] = el)}
+          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/90 backdrop-blur-sm snap-start snap-always"
+        >
           <div className="container mx-auto max-w-7xl">
             <div className="text-center mb-8 space-y-3">
               <div className="inline-block">
@@ -176,7 +251,6 @@ const Index = () => {
             </div>
             <ScoutingNetworkMap hideGridToggle={true} />
 
-            {/* Scouting Philosophy Points */}
             <div className="mt-12 grid md:grid-cols-3 gap-6">
               <div className="p-6 border border-border/50 bg-card/30">
                 <div className="flex items-start gap-4">
@@ -223,8 +297,11 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Player Development Section - Visual Stats */}
-        <section className="py-16 md:py-24 px-4 bg-background/85 backdrop-blur-sm relative overflow-hidden">
+        {/* Section 4: Player Development */}
+        <section 
+          ref={(el) => (sectionsRef.current[3] = el)}
+          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/85 backdrop-blur-sm relative overflow-hidden snap-start snap-always"
+        >
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5 pointer-events-none" />
           <div className="container mx-auto max-w-7xl relative z-10">
             <div className="text-center mb-12">
@@ -257,8 +334,8 @@ const Index = () => {
               </div>
             </div>
             
-            {/* Prestige Indicator - Big 5 Leagues */}
-            <div className="text-center mb-8 space-y-4">
+            {/* Big 5 Leagues */}
+            <div className="text-center space-y-4">
               <p className="text-lg font-bebas uppercase tracking-widest text-muted-foreground">
                 Trusted by clubs across Europe's Big 5 leagues
               </p>
@@ -285,244 +362,14 @@ const Index = () => {
                 </span>
               </div>
             </div>
-
-            {/* What We Look For - Position/Domain Table */}
-            <div className="mt-16">
-              <div className="text-center mb-8">
-                <h3 className="text-3xl md:text-5xl font-bebas uppercase tracking-wider text-foreground">
-                  WHAT WE <span className="text-primary">LOOK FOR</span>
-                </h3>
-                <p className="text-muted-foreground mt-2">Four-corner model evaluation by position</p>
-              </div>
-
-              <div className="border-2 border-border rounded-2xl overflow-hidden bg-card/50 max-w-5xl mx-auto">
-                {/* Position Selection */}
-                <div className="grid grid-cols-4 md:grid-cols-8 gap-0 border-b-2 border-border">
-                  {SCOUTING_POSITIONS.map((position) => (
-                    <button
-                      key={position}
-                      onClick={() => setSelectedPosition(position)}
-                      className={`py-3 px-2 font-bebas uppercase tracking-wider text-xs md:text-sm transition-all border-r border-border last:border-r-0 ${
-                        selectedPosition === position
-                          ? "bg-primary/10 text-primary"
-                          : "hover:bg-muted/50"
-                      }`}
-                    >
-                      {positionInitials[position]}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Content Area with Corner Domain Selectors */}
-                <div className="relative p-0">
-                  {(() => {
-                    const positionSkills = POSITION_SKILLS[selectedPosition];
-                    const skillsByDomain = positionSkills.reduce((acc, skill) => {
-                      if (!acc[skill.domain]) acc[skill.domain] = [];
-                      acc[skill.domain].push(skill);
-                      return acc;
-                    }, {} as Record<string, typeof positionSkills>);
-
-                    const currentDomain = expandedDomain || "Physical";
-                    const config = domainConfig[currentDomain];
-                    const skills = skillsByDomain[currentDomain];
-
-                    const domainKeys = Object.keys(domainConfig) as Array<keyof typeof domainConfig>;
-                    const cornerPositions = [
-                      { domain: domainKeys[0], position: 'top-0 left-0', rounded: 'rounded-br-xl' },
-                      { domain: domainKeys[1], position: 'top-0 right-0', rounded: 'rounded-bl-xl' },
-                      { domain: domainKeys[2], position: 'bottom-0 left-0', rounded: 'rounded-bl-2xl rounded-tr-xl' },
-                      { domain: domainKeys[3], position: 'bottom-0 right-0', rounded: 'rounded-br-2xl rounded-tl-xl' }
-                    ];
-
-                    return (
-                      <>
-                        {/* Corner Domain Buttons */}
-                        {cornerPositions.map(({ domain, position, rounded }) => {
-                          const domainConf = domainConfig[domain];
-                          const DomainIcon = domainConf.icon;
-                          const isActive = currentDomain === domain;
-                          
-                          return (
-                            <button
-                              key={domain}
-                              onClick={() => setExpandedDomain(domain)}
-                              className={`absolute ${position} ${rounded} flex items-center gap-2 transition-all hover:scale-105 border-2 z-10 ${
-                                isActive 
-                                  ? 'border-primary bg-primary/20 shadow-lg shadow-primary/20 h-12 md:h-14 px-3 w-auto' 
-                                  : `${domainConf.borderColor} ${domainConf.bgColor} hover:shadow-lg h-12 md:h-14 w-12 md:w-14 justify-center`
-                              }`}
-                              title={domain}
-                            >
-                              <DomainIcon className={`h-5 w-5 ${domainConf.color} flex-shrink-0`} />
-                              {isActive && (
-                                <span className={`font-bebas uppercase tracking-wider text-sm md:text-lg ${domainConf.color} pr-1 whitespace-nowrap hidden sm:inline`}>
-                                  {domain}
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-
-                        {/* Content - Attributes Grid */}
-                        <div className="px-4 py-16 md:px-6 md:py-20">
-                          <div className="grid md:grid-cols-2 gap-3">
-                            {skills.map((skill, idx) => (
-                              <div 
-                                key={idx} 
-                                className="group bg-gradient-to-br from-muted/50 to-muted/30 rounded-lg hover:from-muted/70 hover:to-muted/50 transition-all duration-300 overflow-hidden"
-                              >
-                                <div className={`${config.solidBg} px-4 py-2`}>
-                                  <h4 className="font-bold text-black text-sm">{skill.skill_name}</h4>
-                                </div>
-                                <div className="px-4 py-3">
-                                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">{skill.description}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
-        {/* Player Development Section */}
-        <section className="py-16 md:py-24 px-4 bg-background/90 backdrop-blur-sm">
-          <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-12">
-              <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground">
-                {t("home.player_development", "PLAYER")} <span className="text-primary">{t("home.development", "DEVELOPMENT")}</span>
-              </h2>
-              <p className="text-muted-foreground mt-4 max-w-xl mx-auto">Comprehensive support to maximise your potential</p>
-            </div>
-
-            {/* Development Features - Visual Cards */}
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="relative p-8 border border-border/50 rounded-2xl bg-card/20 hover:border-primary/50 transition-all duration-300">
-                  <div className="text-6xl font-bebas text-primary/30 mb-4">PRE</div>
-                  <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-2">Pre-Match Analysis</h3>
-                  <p className="text-sm text-muted-foreground">Opponent breakdowns & tactical prep</p>
-                </div>
-              </div>
-
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="relative p-8 border border-border/50 rounded-2xl bg-card/20 hover:border-primary/50 transition-all duration-300">
-                  <div className="text-6xl font-bebas text-primary/30 mb-4">R90</div>
-                  <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-2">Performance Reports</h3>
-                  <p className="text-sm text-muted-foreground">Action-by-action scoring & analysis</p>
-                </div>
-              </div>
-
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="relative p-8 border border-border/50 rounded-2xl bg-card/20 hover:border-primary/50 transition-all duration-300">
-                  <div className="text-6xl font-bebas text-primary/30 mb-4">DEV</div>
-                  <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-2">Training Programmes</h3>
-                  <p className="text-sm text-muted-foreground">Personalised development plans</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 5 Dimensional Play Section - The Real Thing */}
-        <section className="py-16 md:py-24 px-4 bg-background/85 backdrop-blur-sm relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 pointer-events-none" />
-          <div className="container mx-auto max-w-7xl relative z-10">
-            <div className="text-center mb-16">
-              <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground mb-4">
-                <span className="text-primary">5</span>D PLAY
-              </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">Not just what you do—but how unpredictable and intelligent you are doing it</p>
-            </div>
-
-            {/* 5D Levels - Visual Progression */}
-            <div className="space-y-4">
-              {/* 2D */}
-              <div className="group relative">
-                <div className="flex items-stretch gap-6 p-6 rounded-xl border border-border/30 bg-card/10 hover:border-primary/30 hover:bg-card/20 transition-all duration-300">
-                  <div className="flex-shrink-0 w-20 md:w-28 flex items-center justify-center">
-                    <span className="text-4xl md:text-6xl font-bebas text-foreground/30 group-hover:text-foreground/50 transition-colors">2D</span>
-                  </div>
-                  <div className="flex-1 flex flex-col justify-center">
-                    <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-foreground mb-1">Predictable</h3>
-                    <p className="text-sm text-muted-foreground">Obvious to the opponent what you will do. One option, one outcome.</p>
-                  </div>
-                  <div className="hidden md:flex items-center">
-                    <div className="w-24 h-2 bg-foreground/10 rounded-full overflow-hidden">
-                      <div className="h-full w-1/4 bg-foreground/30 rounded-full" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3D */}
-              <div className="group relative">
-                <div className="flex items-stretch gap-6 p-6 rounded-xl border border-border/30 bg-card/10 hover:border-primary/40 hover:bg-card/20 transition-all duration-300">
-                  <div className="flex-shrink-0 w-20 md:w-28 flex items-center justify-center">
-                    <span className="text-4xl md:text-6xl font-bebas text-foreground/40 group-hover:text-foreground/60 transition-colors">3D</span>
-                  </div>
-                  <div className="flex-1 flex flex-col justify-center">
-                    <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-foreground mb-1">Optionality</h3>
-                    <p className="text-sm text-muted-foreground">Two or more viable options create indecision for the opponent.</p>
-                  </div>
-                  <div className="hidden md:flex items-center">
-                    <div className="w-24 h-2 bg-foreground/10 rounded-full overflow-hidden">
-                      <div className="h-full w-2/4 bg-foreground/40 rounded-full" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 4D */}
-              <div className="group relative">
-                <div className="flex items-stretch gap-6 p-6 rounded-xl border border-border/30 bg-card/10 hover:border-primary/50 hover:bg-card/20 transition-all duration-300">
-                  <div className="flex-shrink-0 w-20 md:w-28 flex items-center justify-center">
-                    <span className="text-4xl md:text-6xl font-bebas text-primary/50 group-hover:text-primary/70 transition-colors">4D</span>
-                  </div>
-                  <div className="flex-1 flex flex-col justify-center">
-                    <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-foreground mb-1">Tempo Manipulation</h3>
-                    <p className="text-sm text-muted-foreground">Controlling time and rhythm to wrong-foot the opponent.</p>
-                  </div>
-                  <div className="hidden md:flex items-center">
-                    <div className="w-24 h-2 bg-foreground/10 rounded-full overflow-hidden">
-                      <div className="h-full w-3/4 bg-primary/50 rounded-full" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 5D */}
-              <div className="group relative">
-                <div className="flex items-stretch gap-6 p-6 rounded-xl border border-primary/40 bg-primary/5 hover:border-primary hover:bg-primary/10 transition-all duration-300">
-                  <div className="flex-shrink-0 w-20 md:w-28 flex items-center justify-center">
-                    <span className="text-4xl md:text-6xl font-bebas text-primary group-hover:scale-110 transition-transform">5D</span>
-                  </div>
-                  <div className="flex-1 flex flex-col justify-center">
-                    <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-foreground mb-1">Complete Integration</h3>
-                    <p className="text-sm text-muted-foreground">Understanding the opponent. Purposely acting to counter their decision with a clear pathway for every outcome.</p>
-                  </div>
-                  <div className="hidden md:flex items-center">
-                    <div className="w-24 h-2 bg-primary/20 rounded-full overflow-hidden">
-                      <div className="h-full w-full bg-primary rounded-full" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Skills That Level Up - Visual */}
-        <section className="py-16 md:py-24 px-4 bg-background/90 backdrop-blur-sm">
+        {/* Section 5: Skills That Level Up */}
+        <section 
+          ref={(el) => (sectionsRef.current[4] = el)}
+          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/90 backdrop-blur-sm snap-start snap-always"
+        >
           <div className="container mx-auto max-w-7xl">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
@@ -548,7 +395,6 @@ const Index = () => {
                 </div>
               </div>
               
-              {/* Visual Element */}
               <div className="relative">
                 <div className="aspect-square rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent flex items-center justify-center">
                   <div className="text-center">
@@ -561,8 +407,11 @@ const Index = () => {
           </div>
         </section>
 
-        {/* CTA Section - moved above News */}
-        <section className="py-12 md:py-16 px-4 bg-background/85 backdrop-blur-sm relative overflow-hidden">
+        {/* Section 6: CTA */}
+        <section 
+          ref={(el) => (sectionsRef.current[5] = el)}
+          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/85 backdrop-blur-sm relative overflow-hidden snap-start snap-always"
+        >
           <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-primary/10"></div>
           <div className="container mx-auto max-w-4xl text-center space-y-8 relative z-10">
             <div className="space-y-4">
@@ -604,8 +453,11 @@ const Index = () => {
           </div>
         </section>
 
-        {/* News Section */}
-        <section className="py-12 md:py-16 px-4 bg-background/90 backdrop-blur-sm">
+        {/* Section 7: News */}
+        <section 
+          ref={(el) => (sectionsRef.current[6] = el)}
+          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/90 backdrop-blur-sm snap-start snap-always"
+        >
           <div className="container mx-auto max-w-7xl w-full">
             <div className="text-center mb-8 space-y-3">
               <div className="inline-block">
@@ -645,7 +497,6 @@ const Index = () => {
                     </>
                   )}
                   
-                  {/* Date/Time */}
                   <div className="absolute top-4 left-4 flex items-center gap-2 text-white/80 text-xs font-bebas uppercase tracking-wider">
                     <span className="text-primary">▶</span>
                     <span>
@@ -660,13 +511,11 @@ const Index = () => {
                     </span>
                   </div>
 
-                  {/* Title - stays in place, card extends down on hover */}
                   <div className="absolute bottom-0 left-0 right-0 p-6">
                     <h3 className="text-xl md:text-2xl font-bebas uppercase text-white leading-tight">
                       {article.title}
                     </h3>
                     
-                    {/* Read Article button - appears below title on hover */}
                     <div className="h-0 group-hover:h-12 overflow-hidden transition-all duration-300 ease-out">
                       <button className="mt-3 px-4 py-2 text-sm font-bebas uppercase tracking-wider text-white bg-white/10 backdrop-blur-sm border border-white/30 rounded hover:bg-white/20 transition-colors">
                         {t("home.read_article", "Read Article")}
@@ -679,10 +528,13 @@ const Index = () => {
           </div>
         </section>
 
-        {/* WATCH NOW Section */}
-        <section className="py-12 md:py-16 px-4 bg-background/95 backdrop-blur-sm">
+        {/* Section 8: Watch Now */}
+        <section 
+          ref={(el) => (sectionsRef.current[7] = el)}
+          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/95 backdrop-blur-sm snap-start snap-always"
+        >
           <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-6 space-y-3">
+            <div className="text-center mb-8 space-y-3">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
                   {t("home.our_work", "OUR WORK")}
@@ -693,7 +545,6 @@ const Index = () => {
               </h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Video 1 */}
               <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg">
                 <iframe
                   width="100%"
@@ -709,7 +560,6 @@ const Index = () => {
                 />
               </div>
 
-              {/* Video 2 - Hidden on mobile */}
               <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg hidden md:block">
                 <iframe
                   width="100%"
@@ -728,68 +578,11 @@ const Index = () => {
           </div>
         </section>
 
-
-
-        {/* Services Section for Players - HIDDEN */}
-        <section className="hidden">
-          <div className="container mx-auto">
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {/* Develop */}
-              <div className="group relative overflow-hidden rounded-lg border border-primary/20 hover:border-primary transition-all">
-                <div className="p-8 space-y-4">
-                  <h3 className="text-4xl font-bebas uppercase tracking-wider text-primary">
-                    {t("home.develop", "Develop")}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {t("home.develop_desc", "Receive expert training to maximise your physical capacity for performance. Push the limits of your body and mind to truly know how far you can go in your career.")}
-                  </p>
-                </div>
-              </div>
-
-              {/* Perform */}
-              <div className="group relative overflow-hidden rounded-lg border border-primary/20 hover:border-primary transition-all">
-                <div className="p-8 space-y-4">
-                  <h3 className="text-4xl font-bebas uppercase tracking-wider text-primary">
-                    {t("home.perform", "Perform")}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {t("home.perform_desc", "Play your best on a consistent basis through smart preparation, including psychological training sessions and pre-match analysis specific to your individual matchups.")}
-                  </p>
-                </div>
-              </div>
-
-              {/* Attract */}
-              <div className="group relative overflow-hidden rounded-lg border border-primary/20 hover:border-primary transition-all">
-                <div className="p-8 space-y-4">
-                  <h3 className="text-4xl font-bebas uppercase tracking-wider text-primary">
-                    {t("home.attract", "Attract")}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {t("home.attract_desc", "Through our vast scouting network, we maximise visibility across the footballing world to ensure player interest and demand.")}
-                  </p>
-                </div>
-              </div>
-
-              {/* Sign */}
-              <div className="group relative overflow-hidden rounded-lg border border-primary/20 hover:border-primary transition-all">
-                <div className="p-8 space-y-4">
-                  <h3 className="text-4xl font-bebas uppercase tracking-wider text-primary">
-                    {t("home.sign", "Sign")}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {t("home.sign_desc", "Sign the dotted line after our team of intermediaries negotiate new and improved contracts. Retain confidence knowing your career opportunities are being created and finalised.")}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-
-        {/* CTA Section moved above News */}
-
-        {/* RISE Broadcast Advertisement */}
-        <section className="py-12 md:py-16 px-4 bg-muted/30">
+        {/* Section 9: Broadcast */}
+        <section 
+          ref={(el) => (sectionsRef.current[8] = el)}
+          className="min-h-screen flex items-center justify-center py-16 px-4 bg-muted/30 snap-start snap-always"
+        >
           <div className="container mx-auto">
             <div className="max-w-3xl mx-auto p-8 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent"></div>
