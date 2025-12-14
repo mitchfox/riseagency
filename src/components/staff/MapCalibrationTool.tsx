@@ -193,93 +193,56 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
     }
   };
 
-  // Calculate affine transformation using least squares
-  // Solves: x = a*lng + b*lat + e, y = c*lng + d*lat + f
+  // Calculate simple linear transformation: x from longitude, y from latitude
+  // x = mX * lng + cX, y = mY * lat + cY using least-squares line fits
   const calculateTransformation = (points: CalibrationPoint[]) => {
-    if (points.length < 3) return null;
+    if (points.length < 2) return null;
 
-    const n = points.length;
-    
-    // Build matrices for least squares: A * params = B
-    // For X: [lng, lat, 1] * [a, b, e]^T = x
-    // For Y: [lng, lat, 1] * [c, d, f]^T = y
-    
-    // Calculate sums for normal equations
-    let sumLng = 0, sumLat = 0;
-    let sumLng2 = 0, sumLat2 = 0, sumLngLat = 0;
-    let sumXLng = 0, sumXLat = 0, sumX = 0;
-    let sumYLng = 0, sumYLat = 0, sumY = 0;
-    
-    for (const p of points) {
-      sumLng += p.lng;
-      sumLat += p.lat;
-      sumLng2 += p.lng * p.lng;
-      sumLat2 += p.lat * p.lat;
-      sumLngLat += p.lng * p.lat;
-      sumXLng += p.x * p.lng;
-      sumXLat += p.x * p.lat;
-      sumX += p.x;
-      sumYLng += p.y * p.lng;
-      sumYLat += p.y * p.lat;
-      sumY += p.y;
-    }
-    
-    // Solve 3x3 system using Cramer's rule
-    // | sumLng2   sumLngLat  sumLng  | | a |   | sumXLng |
-    // | sumLngLat sumLat2    sumLat  | | b | = | sumXLat |
-    // | sumLng    sumLat     n       | | e |   | sumX    |
-    
-    const det = sumLng2 * (sumLat2 * n - sumLat * sumLat)
-              - sumLngLat * (sumLngLat * n - sumLat * sumLng)
-              + sumLng * (sumLngLat * sumLat - sumLat2 * sumLng);
-    
-    if (Math.abs(det) < 0.0001) {
-      console.error("Matrix is singular, calibration failed");
+    const lngs = points.map((p) => p.lng);
+    const lats = points.map((p) => p.lat);
+    const xs = points.map((p) => p.x);
+    const ys = points.map((p) => p.y);
+
+    const linearFit = (input: number[], output: number[]) => {
+      const n = input.length;
+      const meanIn = input.reduce((s, v) => s + v, 0) / n;
+      const meanOut = output.reduce((s, v) => s + v, 0) / n;
+
+      let num = 0;
+      let den = 0;
+      for (let i = 0; i < n; i++) {
+        const di = input[i] - meanIn;
+        num += di * (output[i] - meanOut);
+        den += di * di;
+      }
+
+      if (Math.abs(den) < 1e-6) return null;
+      const slope = num / den;
+      const intercept = meanOut - slope * meanIn;
+      return { slope, intercept };
+    };
+
+    const xFit = linearFit(lngs, xs);
+    const yFit = linearFit(lats, ys);
+
+    if (!xFit || !yFit) {
+      console.error("Linear fit failed for calibration");
       return null;
     }
-    
-    // Solve for X transformation coefficients (a, b, e)
-    const detA = sumXLng * (sumLat2 * n - sumLat * sumLat)
-               - sumLngLat * (sumXLat * n - sumLat * sumX)
-               + sumLng * (sumXLat * sumLat - sumLat2 * sumX);
-    
-    const detB = sumLng2 * (sumXLat * n - sumLat * sumX)
-               - sumXLng * (sumLngLat * n - sumLat * sumLng)
-               + sumLng * (sumLngLat * sumX - sumXLat * sumLng);
-    
-    const detE = sumLng2 * (sumLat2 * sumX - sumLat * sumXLat)
-               - sumLngLat * (sumLngLat * sumX - sumLat * sumXLng)
-               + sumXLng * (sumLngLat * sumLat - sumLat2 * sumLng);
-    
-    const a = detA / det;
-    const b = detB / det;
-    const e = detE / det;
-    
-    // Solve for Y transformation coefficients (c, d, f)
-    const detC = sumYLng * (sumLat2 * n - sumLat * sumLat)
-               - sumLngLat * (sumYLat * n - sumLat * sumY)
-               + sumLng * (sumYLat * sumLat - sumLat2 * sumY);
-    
-    const detD = sumLng2 * (sumYLat * n - sumLat * sumY)
-               - sumYLng * (sumLngLat * n - sumLat * sumLng)
-               + sumLng * (sumLngLat * sumY - sumYLat * sumLng);
-    
-    const detF = sumLng2 * (sumLat2 * sumY - sumLat * sumYLat)
-               - sumLngLat * (sumLngLat * sumY - sumLat * sumYLng)
-               + sumYLng * (sumLngLat * sumLat - sumLat2 * sumLng);
-    
-    const c = detC / det;
-    const d = detD / det;
-    const f = detF / det;
-    
-    console.log("Affine transformation coefficients:", { a, b, c, d, e, f });
-    
+
+    console.info("Map calibration fit", {
+      xSlope: xFit.slope,
+      xIntercept: xFit.intercept,
+      ySlope: yFit.slope,
+      yIntercept: yFit.intercept,
+    });
+
     return {
       transform: (lat: number, lng: number) => {
-        const x = a * lng + b * lat + e;
-        const y = c * lng + d * lat + f;
+        const x = xFit.slope * lng + xFit.intercept;
+        const y = yFit.slope * lat + yFit.intercept;
         return { x, y };
-      }
+      },
     };
   };
 
@@ -347,11 +310,11 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
 
     setCalibrating(true);
     try {
-      const calPoints: CalibrationPoint[] = allCalibrationPoints.map(c => ({
+      const calPoints: CalibrationPoint[] = allCalibrationPoints.map((c) => ({
         lat: c.latitude!,
         lng: c.longitude!,
         x: c.x_position!,
-        y: c.y_position!
+        y: c.y_position!,
       }));
 
       const transformation = calculateTransformation(calPoints);
@@ -360,66 +323,55 @@ export const MapCalibrationTool = ({ clubs, onRefresh, selectedCountry }: MapCal
         return;
       }
 
-      // Determine valid coordinate bounds from calibration points
-      const xValues = calPoints.map(p => p.x);
-      const yValues = calPoints.map(p => p.y);
+      // Determine reasonable coordinate bounds from calibration points
+      const xValues = calPoints.map((p) => p.x);
+      const yValues = calPoints.map((p) => p.y);
       const minX = Math.min(...xValues);
       const maxX = Math.max(...xValues);
       const minY = Math.min(...yValues);
       const maxY = Math.max(...yValues);
-      
-      // Add some padding (50% of range) to allow for clubs outside calibration area
-      const xRange = maxX - minX;
-      const yRange = maxY - minY;
-      const boundMinX = minX - xRange * 0.5;
-      const boundMaxX = maxX + xRange * 0.5;
-      const boundMinY = minY - yRange * 0.5;
-      const boundMaxY = maxY + yRange * 0.5;
+
+      const xRange = maxX - minX || 1;
+      const yRange = maxY - minY || 1;
+      const padX = Math.max(30, xRange * 0.3);
+      const padY = Math.max(30, yRange * 0.3);
+
+      const boundMinX = minX - padX;
+      const boundMaxX = maxX + padX;
+      const boundMinY = minY - padY;
+      const boundMaxY = maxY + padY;
 
       // Get all clubs that aren't calibration points and have lat/lng
-      const uncalibrated = clubs.filter(c => 
-        !c.is_calibration_point &&
-        c.latitude !== null &&
-        c.longitude !== null
+      const uncalibrated = clubs.filter(
+        (c) => !c.is_calibration_point && c.latitude !== null && c.longitude !== null
       );
 
       let updated = 0;
-      let skipped = 0;
-      
+
       for (const club of uncalibrated) {
-        if (club.latitude && club.longitude) {
+        if (club.latitude != null && club.longitude != null) {
           const { x, y } = transformation.transform(club.latitude, club.longitude);
-          
-          // Clamp to reasonable bounds - don't let clubs fly off the map
+
+          // Clamp to bounds so nothing ends up far off the visible map
           const clampedX = Math.max(boundMinX, Math.min(boundMaxX, x));
           const clampedY = Math.max(boundMinY, Math.min(boundMaxY, y));
-          
-          // Skip if value was clamped significantly (club is outside map region)
-          if (Math.abs(x - clampedX) > 50 || Math.abs(y - clampedY) > 50) {
-            skipped++;
-            continue;
-          }
-          
+
           const randomX = (Math.random() - 0.5) * 8;
           const randomY = (Math.random() - 0.5) * 8;
-          
+
           const { error } = await supabase
             .from("club_map_positions")
             .update({
               x_position: Math.round((clampedX + randomX) * 10) / 10,
-              y_position: Math.round((clampedY + randomY) * 10) / 10
+              y_position: Math.round((clampedY + randomY) * 10) / 10,
             })
             .eq("id", club.id);
-          
+
           if (!error) updated++;
         }
       }
 
-      if (skipped > 0) {
-        toast.success(`Calibrated ${updated} clubs, skipped ${skipped} outside map bounds`);
-      } else {
-        toast.success(`Calibrated ${updated} clubs using ${allCalibrationPoints.length} reference points`);
-      }
+      toast.success(`Calibrated ${updated} clubs using ${allCalibrationPoints.length} reference points`);
       onRefresh();
     } catch (error) {
       console.error("Error applying calibration:", error);
