@@ -938,7 +938,8 @@ export const RadialMenu = () => {
             <img
               src={riseLogoBlack}
               alt="RISE"
-              className="w-[90%] h-[90%] object-contain"
+              className="object-contain"
+              style={{ width: '180%', height: '180%' }}
             />
           </div>
           
@@ -946,7 +947,7 @@ export const RadialMenu = () => {
           <div className="absolute left-0 right-0 h-[2px] bg-primary z-10" style={{ top: '55%' }} />
           
           {/* Role selector section: 55% - 75% */}
-          <div className="absolute inset-x-0 flex items-center justify-center z-20" style={{ top: '55%', height: '20%' }}>
+          <div className="absolute inset-x-0 flex items-center justify-center z-20" style={{ top: 'calc(55% + 4px)', height: '20%' }}>
             <button
               onClick={() => setIsSelectingRole(!isSelectingRole)}
               className="font-bebas tracking-[0.05em] transition-colors duration-300 focus:outline-none"
