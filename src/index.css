@@ -648,3 +648,17 @@ a:hover .hover-text-letter-clone,
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
+
+/* Mobile scroll snap for sections */
+@media (max-width: 768px) {
+  .snap-scroll-container {
+    scroll-snap-type: y proximity;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .snap-scroll-container > section {
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
+  }
+}

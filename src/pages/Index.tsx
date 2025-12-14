@@ -98,7 +98,7 @@ const Index = () => {
       />
       <Header />
       <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
-      <div className="bg-background min-h-screen relative z-10">
+      <div className="bg-background min-h-screen relative z-10 snap-scroll-container">
         {/* Hero Section */}
         <section className="pt-28 md:pt-32 pb-12 md:pb-20 px-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background/80"></div>
