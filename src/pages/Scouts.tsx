@@ -93,8 +93,8 @@ const Scouts = () => {
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       <SEO 
-        title="For Scouts - Discover Talent with RISE Agency"
-        description="Join RISE's scouting network. Access our database, competitive incentives, and forever commission structure. Scout smarter across Europe."
+        title="For Scouts - Join RISE Network"
+        description="Join RISE's scouting network. Access our database, competitive incentives, and forever commission structure."
         image="/og-preview-scouts.png"
         url="/scouts"
       />

@@ -84,8 +84,8 @@ const Agents = () => {
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       <SEO 
-        title="For Agents - Collaborate with RISE Football Agency"
-        description="Partner with RISE Football Agency. Collaborate on player opportunities, share networks, and grow together in the football industry."
+        title="For Agents - Collaborate with RISE"
+        description="Partner with RISE Football Agency. Collaborate on player opportunities, share networks, and grow together."
         image="/og-preview-agents.png"
         url="/agents"
       />

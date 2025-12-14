@@ -11,8 +11,8 @@ const About = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO 
-        title="About RISE - Premier Football Agency | Player Representation"
-        description="RISE Football Agency is a premier sports management agency specializing in football player representation. Founded on integrity, dedication, and excellence."
+        title="About RISE - Premier Football Agency"
+        description="Premier football agency specializing in player representation. Founded on integrity, dedication, and excellence."
         image="/og-preview-about.png"
         url="/about"
       />
