@@ -146,7 +146,7 @@ const App = () => {
                     <Route path="/potential" element={<Potential />} />
                     <Route path="/realise-potential" element={<RealisePotential />} />
                     {createLocalizedRoutes('/youth-players', <YouthPlayers />)}
-                    {createLocalizedRoutes('/player-journey', <PlayerJourney />)}
+                    {createLocalizedRoutes('/player-journey', <PlayersDraft />)}
                     <Route path="/performance-report/:slug" element={<PerformanceReport />} />
                     <Route path="/analysis/:analysisId" element={<AnalysisViewer />} />
                     <Route path="/import-program" element={<ImportProgramCSV />} />
