@@ -18,7 +18,7 @@ interface SEOProps {
 export const SEO = ({ 
   title = "RISE Football Agency - Elite Player Representation", 
   description = "Elite football representation. We scout across Europe and guide Premier League players to success through their development.",
-  image = "/og-preview-home.png",
+  image = "/og-thumbnail.png",
   url,
   type = "website",
   noindex = false,
