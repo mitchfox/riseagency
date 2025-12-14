@@ -1055,7 +1055,7 @@ export const RadialMenu = () => {
         
         // Position card content within the wedge - between menu edge and screen edge
         const cardWidth = Math.min(160, maxWidth);
-        const cardHeight = 100;
+        const cardHeight = 120;
         const midAngle = (startAngle + endAngle) / 2;
         const midRad = (midAngle * Math.PI) / 180;
         
@@ -1063,49 +1063,12 @@ export const RadialMenu = () => {
         const isLeftSide = Math.cos(midRad) < 0;
         const textAlign: 'left' | 'right' = isLeftSide ? 'left' : 'right';
         
-        const halfW = cardWidth / 2;
-        const halfH = cardHeight / 2;
+        // Simple approach: position at fixed distance from menu edge along the wedge direction
+        // This keeps content within the wedge and just outside the menu
+        const contentDistance = menuRadius + 70;
         
-        // Calculate direction vector
-        const dirX = Math.cos(midRad);
-        const dirY = Math.sin(midRad);
-        
-        // Calculate available distance to screen edge in this direction
-        let distToEdge = Infinity;
-        if (dirX > 0.01) distToEdge = Math.min(distToEdge, (cx - edgePadding - halfW) / dirX * -1 + (vw - edgePadding - halfW - cx) / dirX);
-        if (dirX < -0.01) distToEdge = Math.min(distToEdge, (edgePadding + halfW - cx) / dirX);
-        if (dirY > 0.01) distToEdge = Math.min(distToEdge, (vh - edgePadding - halfH - cy) / dirY);
-        if (dirY < -0.01) distToEdge = Math.min(distToEdge, (edgePadding + halfH - cy) / dirY);
-        
-        // For pure horizontal (sides): go further out. For diagonal (corners): stay closer to menu
-        const absX = Math.abs(dirX);
-        const absY = Math.abs(dirY);
-        const isDiagonal = absX > 0.3 && absY > 0.3;
-        
-        // Minimum distance is just outside the menu
-        const minDist = menuRadius + 40;
-        
-        // Calculate optimal distance - sides can go further, corners stay closer
-        let optimalDist: number;
-        if (isDiagonal) {
-          // For corners: position in the middle of available space, but closer to menu
-          optimalDist = Math.min(minDist + 30, distToEdge - 20);
-        } else {
-          // For sides: position comfortably outside menu
-          optimalDist = minDist + 50;
-        }
-        
-        optimalDist = Math.max(minDist, optimalDist);
-        
-        const rawX = dirX * optimalDist;
-        const rawY = dirY * optimalDist;
-        
-        // Final clamping to ensure we stay on screen
-        const finalX = Math.max(-cx + edgePadding + halfW, Math.min(vw - cx - edgePadding - halfW, rawX));
-        const finalY = Math.max(-cy + edgePadding + halfH, Math.min(vh - cy - edgePadding - halfH, rawY));
-        
-        const contentX = finalX;
-        const contentY = finalY;
+        const contentX = Math.cos(midRad) * contentDistance;
+        const contentY = Math.sin(midRad) * contentDistance;
         
         return (
           <div 
