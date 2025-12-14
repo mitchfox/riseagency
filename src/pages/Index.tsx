@@ -164,12 +164,15 @@ const Index = () => {
             <div className="text-center mb-8 space-y-3">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  {t("home.eyes_across_game", "Eyes Across The Game")}
+                  Eyes Across All Of Europe
                 </span>
               </div>
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
                 {t("home.scouting", "SCOUTING")} <span className="text-primary">{t("home.network", "NETWORK")}</span>
               </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                If you're a professional or academy player in Europe, chances are we know about you
+              </p>
             </div>
             <ScoutingNetworkMap />
 
@@ -233,25 +236,32 @@ const Index = () => {
             {/* Big Impact Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
               <div className="text-center group">
-                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">15+</div>
+                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">74</div>
                 <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Premier League Players</p>
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Professionals</p>
               </div>
               <div className="text-center group">
-                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">5</div>
+                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">18</div>
                 <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Big 5 Leagues</p>
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Big 5 League Players</p>
               </div>
               <div className="text-center group">
-                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">20+</div>
+                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">10</div>
                 <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">International Stars</p>
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">National Team Players</p>
               </div>
               <div className="text-center group">
-                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">£M</div>
+                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">£100M+</div>
                 <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Transfer Value Created</p>
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Transfer Fees Developed</p>
               </div>
+            </div>
+            
+            {/* Prestige Indicator */}
+            <div className="text-center mb-8">
+              <p className="text-sm font-bebas uppercase tracking-widest text-muted-foreground">
+                Trusted by clubs across Europe's Big 5 leagues
+              </p>
             </div>
 
             {/* What We Look For - Position/Domain Table */}

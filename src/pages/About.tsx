@@ -37,6 +37,31 @@ const About = () => {
           </div>
         </section>
 
+        {/* Our Story */}
+        <section className="py-16 md:py-24 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
+                OUR <span className="text-primary">STORY</span>
+              </h2>
+              <div className="space-y-6 text-lg text-muted-foreground">
+                <p>
+                  We started as players. We understand the journey—the sacrifices, the setbacks, and what it takes to make it.
+                </p>
+                <p>
+                  We became coaches. We learned how to develop talent, how to identify potential, and how to build players who could compete at the highest level.
+                </p>
+                <p>
+                  We developed performance teams around Premier League talents. We saw firsthand what separates good players from great ones—and it's not always what you'd expect.
+                </p>
+                <p className="text-foreground font-medium">
+                  We built this into the agency we run today. Every lesson, every insight, every connection—now focused on helping the next generation realise their potential.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Who We Are */}
         <section className="py-16 md:py-24">
           <div className="container mx-auto px-4">
@@ -46,17 +71,34 @@ const About = () => {
               </h2>
               <div className="space-y-6 text-lg text-muted-foreground">
                 <p>
-                  RISE Football Agency is a premier sports management agency specializing in football player representation. We are committed to nurturing talent and maximizing the potential of every athlete we work with.
+                  RISE Football Agency is the best agency for developing talents and guiding them to the top. We are committed to nurturing talent and maximizing the potential of every athlete we work with.
                 </p>
                 <p>
-                  Founded on the principles of integrity, dedication, and excellence, RISE has established itself as a trusted partner for players at all stages of their careers. Our team combines extensive industry knowledge with a genuine passion for the beautiful game.
+                  Founded on firsthand experience as players and coaches, RISE has established itself as a trusted partner for players at all stages of their careers. Our team combines deep development expertise with a genuine passion for the beautiful game.
                 </p>
                 <p>
-                  We understand that success in football extends beyond what happens on the pitch. That's why we provide comprehensive support covering all aspects of a player's career—from contract negotiations and transfer dealings to personal development and brand management.
+                  We understand that success in football extends beyond what happens on the pitch. That's why we provide comprehensive support covering all aspects of a player's career—from performance optimization and transfer dealings to personal development and career guidance.
                 </p>
-                <p className="text-base text-muted-foreground/90 pt-4">
-                  Our services operate within the regulatory frameworks established by FIFA and UEFA. We align our processes with the standards required for player representation and governance, contributing to the broader football ecosystem with professionalism and integrity.
-                </p>
+              </div>
+              
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
+                <div className="text-center p-4 border border-border/50 bg-card/30 rounded-lg">
+                  <div className="text-4xl font-bebas text-primary">74</div>
+                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">Professionals</p>
+                </div>
+                <div className="text-center p-4 border border-border/50 bg-card/30 rounded-lg">
+                  <div className="text-4xl font-bebas text-primary">18</div>
+                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">Big 5 League Players</p>
+                </div>
+                <div className="text-center p-4 border border-border/50 bg-card/30 rounded-lg">
+                  <div className="text-4xl font-bebas text-primary">10</div>
+                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">National Team Players</p>
+                </div>
+                <div className="text-center p-4 border border-border/50 bg-card/30 rounded-lg">
+                  <div className="text-4xl font-bebas text-primary">£100M+</div>
+                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">Transfer Fees</p>
+                </div>
               </div>
             </div>
           </div>
