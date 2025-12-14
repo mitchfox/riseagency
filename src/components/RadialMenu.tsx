@@ -10,7 +10,7 @@ import riseLogoBlack from "@/assets/RISEBlack.png";
 import whiteMarbleBg from "@/assets/white-marble.png";
 import smudgedMarbleBg from "@/assets/black-marble-smudged.png";
 import europeMap from "@/assets/europe-outline.gif";
-import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Trophy, Users, Handshake, Briefcase, Search, Calendar, Heart, Package, X, ChevronDown } from "lucide-react";
+import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Trophy, Users, Handshake, Briefcase, Search, Calendar, Heart, Package, X, ChevronDown, Sparkles, Route } from "lucide-react";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { StarsQuadrantCard } from "@/components/radial-menu/StarsQuadrantCard";
 import { NewsQuadrantCard } from "@/components/radial-menu/NewsQuadrantCard";
@@ -138,17 +138,30 @@ export const RadialMenu = () => {
     players: [
       { to: "/login", labelKey: "header.portal", fallback: "PORTAL", Icon: Users, angle: 0 },
       { 
+        to: "/youth-players", 
+        labelKey: "header.youth_players", 
+        fallback: "FOR YOUTH", 
+        Icon: Sparkles, 
+        angle: 45,
+      },
+      { 
         to: "/between-the-lines", 
         labelKey: "header.between_the_lines", 
         fallback: "INSIGHTS", 
         Icon: BookOpen, 
-        angle: 60,
+        angle: 90,
         quadrantCard: {
-          position: getQuadrantPositionForAngle(60),
+          position: getQuadrantPositionForAngle(90),
           component: InsightsQuadrantCard,
         },
       },
-      { to: "/playersmore", labelKey: "header.what_we_look_for", fallback: "WHAT WE SEEK", Icon: Search, angle: 120 },
+      { 
+        to: "/player-journey", 
+        labelKey: "header.player_journey", 
+        fallback: "THE JOURNEY", 
+        Icon: Route, 
+        angle: 135,
+      },
       { 
         to: "/performance", 
         labelKey: "header.performance", 
@@ -160,14 +173,15 @@ export const RadialMenu = () => {
           component: PerformanceQuadrantCard,
         },
       },
+      { to: "/playersmore", labelKey: "header.what_we_look_for", fallback: "WHAT WE SEEK", Icon: Search, angle: 225 },
       { 
         to: "/stars", 
         labelKey: "header.stars", 
         fallback: "STARS", 
         Icon: Star, 
-        angle: 240,
+        angle: 270,
         quadrantCard: {
-          position: getQuadrantPositionForAngle(240),
+          position: getQuadrantPositionForAngle(270),
           component: StarsQuadrantCard,
         },
       },
@@ -176,9 +190,9 @@ export const RadialMenu = () => {
         labelKey: "header.contact", 
         fallback: "REPRESENT ME", 
         Icon: Handshake, 
-        angle: 300,
+        angle: 315,
         quadrantCard: {
-          position: getQuadrantPositionForAngle(300),
+          position: getQuadrantPositionForAngle(315),
           component: ContactQuadrantCard,
         },
       },
