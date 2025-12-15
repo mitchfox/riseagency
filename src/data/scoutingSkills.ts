@@ -1,7 +1,7 @@
 // Position-specific scouting skills based on RISE methodology
 
 export interface SkillDefinition {
-  domain: "Physical" | "Psychological" | "Technical" | "Tactical";
+  domain: "Physical" | "Mental" | "Technical" | "Tactical";
   skill_name: string;
   description: string;
 }
@@ -28,11 +28,11 @@ export const POSITION_SKILLS: Record<ScoutingPosition, SkillDefinition[]> = {
     { domain: "Physical", skill_name: "Reach", description: "How well they cover the dimensions of the goal. Best seen from their saves and goals conceded. Which shots beat them? The greater area of the goal they effectively protect consistently, the better." },
     { domain: "Physical", skill_name: "Footwork", description: "Lateral power to cover the goal swiftly, launch themselves for diving saves, or quickly spring into action when rushing out to smother the ball. Most importantly this extends to their saves, pushing the ball effectively away from danger." },
     { domain: "Physical", skill_name: "Explosiveness", description: "Constantly on their toes, bouncing at the right times to gain the extra energy for pushing off in any direction. The best will apply this perfectly to cover more of the goal." },
-    // Psychological Domain (4 skills)
-    { domain: "Psychological", skill_name: "Authority", description: "Command their box with authority, inspiring confidence in their defenders. Lead the line with assertive direction, take charge of aerial situations and make decisions quickly without hesitation for the entire team." },
-    { domain: "Psychological", skill_name: "Composure", description: "Makes the right decisions in the most pivotal moments. When attacking, do they attack gaps and execute the best shot, cross or pass? Are they willing to try the unorthodox and stay on the ball to create chances." },
-    { domain: "Psychological", skill_name: "Focus", description: "The best keepers make fewest mistakes. Although everyone has one in them, this should not result from a loss of concentration. Did they close space and angles consistently through the game?" },
-    { domain: "Psychological", skill_name: "Response to Scenarios", description: "Whether or not a goal is conceded, how do they rally their team and collect themselves in important moments such as after a mistake, goal conceded or even goal scored by their team?" },
+    // Mental Domain (4 skills)
+    { domain: "Mental", skill_name: "Authority", description: "Command their box with authority, inspiring confidence in their defenders. Lead the line with assertive direction, take charge of aerial situations and make decisions quickly without hesitation for the entire team." },
+    { domain: "Mental", skill_name: "Composure", description: "Makes the right decisions in the most pivotal moments. When attacking, do they attack gaps and execute the best shot, cross or pass? Are they willing to try the unorthodox and stay on the ball to create chances." },
+    { domain: "Mental", skill_name: "Focus", description: "The best keepers make fewest mistakes. Although everyone has one in them, this should not result from a loss of concentration. Did they close space and angles consistently through the game?" },
+    { domain: "Mental", skill_name: "Response to Scenarios", description: "Whether or not a goal is conceded, how do they rally their team and collect themselves in important moments such as after a mistake, goal conceded or even goal scored by their team?" },
     // Tactical Domain (4 skills)
     { domain: "Tactical", skill_name: "Positioning", description: "Anticipation of play before it happens, positioning themselves optimally to cover angles and make saves easier. Must be aware of the situation to cut down space and anticipate the attackers' intentions to intercept their shots." },
     { domain: "Tactical", skill_name: "Timing", description: "Timing their approach, when to bounce, shift position and set their feet is vital to setting themselves up to make saves. The best will consistently read triggers in a split second to cover their goal and react correctly to the shot." },
@@ -50,11 +50,11 @@ export const POSITION_SKILLS: Record<ScoutingPosition, SkillDefinition[]> = {
     { domain: "Physical", skill_name: "Use of Body", description: "Physical presence in duels, using body to shield the ball, ride challenges while dribbling, and maintain balance when jockeying opponents." },
     { domain: "Physical", skill_name: "Anaerobic Endurance", description: "Capacity to maintain high-intensity running throughout the game, covering large distances with repeated sprints up and down the flank." },
     { domain: "Physical", skill_name: "Size", description: "How size is utilized in aerial duels and physical battles. Smaller players must compensate with timing, positioning, and technical excellence." },
-    // Psychological
-    { domain: "Psychological", skill_name: "Composure", description: "Maintains calm in defensive situations and when pressed on the ball. Makes smart decisions under pressure in both defensive and attacking phases." },
-    { domain: "Psychological", skill_name: "Aggression & Intensity", description: "Plays with controlled aggression, engaging opponents high up the pitch and committing to tackles without being reckless. Shows competitive edge." },
-    { domain: "Psychological", skill_name: "Consistency", description: "Reliable defensively while maintaining attacking output. Continues to make correct decisions throughout 90 minutes regardless of game state." },
-    { domain: "Psychological", skill_name: "Confidence", description: "Confident taking on opponents 1v1, delivering crosses, and making recovery runs. Willing to take risks in the attacking third." },
+    // Mental
+    { domain: "Mental", skill_name: "Composure", description: "Maintains calm in defensive situations and when pressed on the ball. Makes smart decisions under pressure in both defensive and attacking phases." },
+    { domain: "Mental", skill_name: "Aggression & Intensity", description: "Plays with controlled aggression, engaging opponents high up the pitch and committing to tackles without being reckless. Shows competitive edge." },
+    { domain: "Mental", skill_name: "Consistency", description: "Reliable defensively while maintaining attacking output. Continues to make correct decisions throughout 90 minutes regardless of game state." },
+    { domain: "Mental", skill_name: "Confidence", description: "Confident taking on opponents 1v1, delivering crosses, and making recovery runs. Willing to take risks in the attacking third." },
     // Technical
     { domain: "Technical", skill_name: "Defensive Technique", description: "Quality of tackling, jockeying, and body positioning in 1v1s. Ability to delay attackers and time tackles without committing fouls." },
     { domain: "Technical", skill_name: "First Touch & Ball Control", description: "Clean first touch to receive under pressure and control in tight spaces. Comfortable with both feet in all situations." },
@@ -72,11 +72,11 @@ export const POSITION_SKILLS: Record<ScoutingPosition, SkillDefinition[]> = {
     { domain: "Physical", skill_name: "Use of Body", description: "Effective body positioning to shield the ball, maintain balance in physical contests, and guide opponents away from danger areas." },
     { domain: "Physical", skill_name: "Anaerobic Endurance", description: "Stamina to maintain concentration and physical intensity throughout the match, especially during sustained defensive pressure and late-game situations." },
     { domain: "Physical", skill_name: "Size & Aerial Ability", description: "How size and jumping ability are utilized in aerial duels. Must dominate in the air both defensively and on set pieces." },
-    // Psychological
-    { domain: "Psychological", skill_name: "Composure", description: "Calm under pressure, making sound decisions with the ball and reading situations without panic. Never rushed in possession or defensive actions." },
-    { domain: "Psychological", skill_name: "Leadership & Communication", description: "Vocal and visual leadership to organize the defensive line. Commands respect and ensures teammates are in correct positions." },
-    { domain: "Psychological", skill_name: "Consistency", description: "Reliable performance with minimal errors. Makes correct decisions consistently and maintains concentration throughout the match." },
-    { domain: "Psychological", skill_name: "Confidence", description: "Self-assured in defensive actions and comfortable playing out from the back. Willing to step into midfield or engage in physical duels." },
+    // Mental
+    { domain: "Mental", skill_name: "Composure", description: "Calm under pressure, making sound decisions with the ball and reading situations without panic. Never rushed in possession or defensive actions." },
+    { domain: "Mental", skill_name: "Leadership & Communication", description: "Vocal and visual leadership to organize the defensive line. Commands respect and ensures teammates are in correct positions." },
+    { domain: "Mental", skill_name: "Consistency", description: "Reliable performance with minimal errors. Makes correct decisions consistently and maintains concentration throughout the match." },
+    { domain: "Mental", skill_name: "Confidence", description: "Self-assured in defensive actions and comfortable playing out from the back. Willing to step into midfield or engage in physical duels." },
     // Technical
     { domain: "Technical", skill_name: "Defending Technique", description: "Quality of tackling, interceptions, and blocking. Times challenges well and uses body positioning to win the ball cleanly." },
     { domain: "Technical", skill_name: "Heading & Aerial Duels", description: "Dominance in aerial battles both defensively and offensively. Powerful and accurate heading with good timing and positioning." },
@@ -89,26 +89,26 @@ export const POSITION_SKILLS: Record<ScoutingPosition, SkillDefinition[]> = {
     { domain: "Tactical", skill_name: "Covering & Recovery", description: "Provides cover for teammates, recovers into position quickly, and understands when to squeeze up or drop off." }
   ],
   "Central Defensive Midfielder": [
-    // Physical
-    { domain: "Physical", skill_name: "Strength, Power & Speed", description: "Physical presence to win duels in midfield. Power to break up play and speed to cover ground and track runners." },
-    { domain: "Physical", skill_name: "Use of Body", description: "Effective use of body to shield the ball, win physical contests, and maintain balance when pressed or pressing." },
-    { domain: "Physical", skill_name: "Anaerobic Endurance", description: "High work rate to cover ground defensively and offensively. Must maintain intensity for repeated sprints and physical contests throughout the match." },
-    { domain: "Physical", skill_name: "Size", description: "How size is utilized in duels and aerial battles. Must be effective in physical confrontations and set-piece situations." },
-    // Psychological
-    { domain: "Psychological", skill_name: "Composure", description: "Calm under pressure when receiving in tight spaces. Makes smart decisions to maintain possession and recycle the ball effectively." },
-    { domain: "Psychological", skill_name: "Tactical Intelligence", description: "Reads the game well, positioning to intercept and break up play. Understands when to press and when to hold position." },
-    { domain: "Psychological", skill_name: "Consistency", description: "Reliable performance in both defensive and possession phases. Makes correct decisions consistently throughout the match." },
-    { domain: "Psychological", skill_name: "Confidence", description: "Self-assured in defensive actions and comfortable on the ball. Willing to receive under pressure and make progressive passes." },
-    // Technical
-    { domain: "Technical", skill_name: "Defensive Technique", description: "Quality of tackling, interceptions, and positioning to break up play. Times challenges well and wins the ball cleanly." },
-    { domain: "Technical", skill_name: "First Touch & Ball Control", description: "Clean first touch to receive under pressure from all angles. Comfortable with both feet in tight spaces." },
-    { domain: "Technical", skill_name: "Passing & Distribution", description: "Range and accuracy of passing. Can play short to maintain possession and long to switch play or break lines." },
-    { domain: "Technical", skill_name: "Ball Retention", description: "Ability to keep the ball under pressure, using body and technique to protect possession and find passing options." },
-    // Tactical
-    { domain: "Tactical", skill_name: "Defensive Positioning", description: "Optimal positioning to screen the defense, cover space, and intercept passes. Understands when to engage and when to drop off." },
-    { domain: "Tactical", skill_name: "Pressing & Counterpressing", description: "Timing and intensity of pressing actions. Coordinates with teammates to win the ball back quickly in dangerous areas." },
-    { domain: "Tactical", skill_name: "Decision-Making", description: "Knows when to play forward, recycle possession, or break lines. Makes optimal choices based on game state and positioning." },
-    { domain: "Tactical", skill_name: "Reading the Game", description: "Anticipates opponent movements and passes. Positions proactively to intercept danger and provide passing options." }
+    // Physical (4 skills) - Matching PDF exactly
+    { domain: "Physical", skill_name: "Strength", description: "Wins most aerial duels, though ground position can improve on these. Good in ground duels and strong shoulder to shoulder. Excellent stiff leg. Rarely outmuscled." },
+    { domain: "Physical", skill_name: "Acceleration", description: "Sharp to change direction and quick enough for a high level when body weight is adjusted early in anticipation. First steps still need to be faster and overall acceleration can improve." },
+    { domain: "Physical", skill_name: "Mobility", description: "Turns well and adjusts body shape well. Avoids letting opponents change direction often, but has not been tested at a high level by this. Base footwork is fundamentally sound. Should continue to improve transfer of energy." },
+    { domain: "Physical", skill_name: "Aerobic Endurance", description: "Covers ground well most of the time, although arrives late a handful of times per game. Always sprints in the moments required. Retains pace and intensity throughout the game. Timing and application needs tightening." },
+    // Mental (4 skills) - Matching PDF exactly
+    { domain: "Mental", skill_name: "Work Rate", description: "Very good output across the game, commits fully to sprints and the recovery runs are excellent. There are brief moments to switch on faster to reach an elite level. Overall reliability is high with consistent repeat efforts." },
+    { domain: "Mental", skill_name: "Focus", description: "Loss of concentration is rare and he recognises the right option. Blindside runs can slip by on occasion or he can arrive a tad late, so earlier checks are needed. The base attention is sound with scope to tighten." },
+    { domain: "Mental", skill_name: "Composure", description: "Stays calm under pressure and does not rush decisions. Holds possession when isolated and remains mentally unphased. Execution matches intention in tight spaces." },
+    { domain: "Mental", skill_name: "Aggression", description: "Defensively imposes himself in duels and works to close every passing line he sees. Increased risk-taking but needs more consistent reads. Offensively can drive more, run forward more and stay connected to take over phases of play." },
+    // Tactical (4 skills) - Matching PDF exactly
+    { domain: "Tactical", skill_name: "Vertical & Horizontal Positioning", description: "Strong offensive and defensive positioning, reads when to step or drop, when to cover space vs man mark. Needs to stay connected consistently, dictate the direction of play and reduce vertical distance by cheating early." },
+    { domain: "Tactical", skill_name: "Protecting Teammates", description: "Closes distances well to support the defensive line and cover danger. Can space and cheat on limited options better when play is predictable. Position from defensive crosses needs to become consistent." },
+    { domain: "Tactical", skill_name: "Tempo Control", description: "Good basic reads on when to play fast versus hold the ball. Not involved enough offensively to control the tempo yet. Defensively slows attacks well, but in transition should lock the ball to one side." },
+    { domain: "Tactical", skill_name: "On-Ball Decision-Making", description: "Clear ideas in mind when passing and dribbling, executes simple first-time bounce passes well. Off-ball scanning can improve to find higher options on pathways more consistently." },
+    // Technical (4 skills) - Matching PDF exactly
+    { domain: "Technical", skill_name: "Body Shape & Weight", description: "Getting consistent at shifting body shape and weight with the concept nailed. Now needs to look to cheat more often to pre-load actions, in particular for turning light pressure into under pressure situations or interceptions." },
+    { domain: "Technical", skill_name: "Tackling", description: "Good stiff leg technique with slide tackles used less but timed well. Strong in contact. Next step is retaining the ball more often after the win, although already a decent rate." },
+    { domain: "Technical", skill_name: "Scanning", description: "Good scan frequency with a clear read of pressure levels. Needs greater out of play and moving into play scanning to arrive with knowledge of the pitch. Defensive awareness and pattern spotting are trending up with room to grow." },
+    { domain: "Technical", skill_name: "Playing Out From Pressure", description: "Rarely loses the ball under pressure and makes simple, smart decisions to keep it. Uses both passing and dribbling to escape. Touch quality may need sharpening against quick defensive pressing at higher levels." }
   ],
   "Central Midfielder": [
     // Physical
@@ -116,11 +116,11 @@ export const POSITION_SKILLS: Record<ScoutingPosition, SkillDefinition[]> = {
     { domain: "Physical", skill_name: "Use of Body", description: "Effective body positioning to shield the ball, ride challenges, and maintain balance in tight spaces under pressure." },
     { domain: "Physical", skill_name: "Anaerobic Endurance", description: "High work rate to contribute in all phases. Must maintain intensity for box-to-box running throughout 90 minutes." },
     { domain: "Physical", skill_name: "Size", description: "How size is utilized in physical contests and aerial duels. Must be effective in winning second balls and competing physically." },
-    // Psychological
-    { domain: "Psychological", skill_name: "Composure", description: "Calm under pressure in all phases. Makes smart decisions with the ball and maintains tempo even when pressed." },
-    { domain: "Psychological", skill_name: "Vision & Creativity", description: "Sees passes before they develop. Creative in finding solutions and willing to attempt difficult passes to break down defenses." },
-    { domain: "Psychological", skill_name: "Consistency", description: "Reliable performance in possession, progression, and defensive duties. Maintains output throughout the match." },
-    { domain: "Psychological", skill_name: "Confidence", description: "Self-assured on the ball and willing to receive in tight areas. Confident to attempt creative passes and dribbles." },
+    // Mental
+    { domain: "Mental", skill_name: "Composure", description: "Calm under pressure in all phases. Makes smart decisions with the ball and maintains tempo even when pressed." },
+    { domain: "Mental", skill_name: "Vision & Creativity", description: "Sees passes before they develop. Creative in finding solutions and willing to attempt difficult passes to break down defenses." },
+    { domain: "Mental", skill_name: "Consistency", description: "Reliable performance in possession, progression, and defensive duties. Maintains output throughout the match." },
+    { domain: "Mental", skill_name: "Confidence", description: "Self-assured on the ball and willing to receive in tight areas. Confident to attempt creative passes and dribbles." },
     // Technical
     { domain: "Technical", skill_name: "First Touch & Ball Control", description: "Exceptional first touch to control in tight spaces from all angles. Comfortable with both feet under pressure." },
     { domain: "Technical", skill_name: "Passing & Distribution", description: "Range and accuracy of passing. Can play short combinations, switch play, and deliver decisive through balls." },
@@ -138,11 +138,11 @@ export const POSITION_SKILLS: Record<ScoutingPosition, SkillDefinition[]> = {
     { domain: "Physical", skill_name: "Use of Body", description: "Effective use of body to shield the ball in tight areas, hold off defenders, and maintain balance when dribbling." },
     { domain: "Physical", skill_name: "Anaerobic Endurance", description: "Stamina to maintain creative intensity throughout the match, making repeated sprints and movements in the final third." },
     { domain: "Physical", skill_name: "Size", description: "How size is utilized to hold up the ball and compete physically. Smaller players must excel technically to compensate." },
-    // Psychological
-    { domain: "Psychological", skill_name: "Composure", description: "Calm in the final third under pressure. Makes clear decisions with the ball in tight spaces and scoring positions." },
-    { domain: "Psychological", skill_name: "Creativity & Vision", description: "Sees and attempts passes others don't. Creative problem-solver who can unlock defenses with unique solutions." },
-    { domain: "Psychological", skill_name: "Consistency", description: "Reliable creative output. Continues to attempt creative actions even when they don't come off initially." },
-    { domain: "Psychological", skill_name: "Confidence", description: "Self-assured in taking risks, attempting dribbles, and shooting from anywhere. Confidence remains high regardless of success rate." },
+    // Mental
+    { domain: "Mental", skill_name: "Composure", description: "Calm in the final third under pressure. Makes clear decisions with the ball in tight spaces and scoring positions." },
+    { domain: "Mental", skill_name: "Creativity & Vision", description: "Sees and attempts passes others don't. Creative problem-solver who can unlock defenses with unique solutions." },
+    { domain: "Mental", skill_name: "Consistency", description: "Reliable creative output. Continues to attempt creative actions even when they don't come off initially." },
+    { domain: "Mental", skill_name: "Confidence", description: "Self-assured in taking risks, attempting dribbles, and shooting from anywhere. Confidence remains high regardless of success rate." },
     // Technical
     { domain: "Technical", skill_name: "First Touch & Ball Control", description: "Exceptional first touch in tight spaces. Can receive from any angle and immediately create shooting or passing opportunities." },
     { domain: "Technical", skill_name: "Passing & Creativity", description: "Range and weight of passing to unlock defenses. Through balls, flicks, and creative passes to create chances." },
@@ -160,11 +160,11 @@ export const POSITION_SKILLS: Record<ScoutingPosition, SkillDefinition[]> = {
     { domain: "Physical", skill_name: "Use of Body", description: "Effective use of body to shield the ball, maintain balance when changing direction at speed, and hold off challenges." },
     { domain: "Physical", skill_name: "Anaerobic Endurance", description: "Capacity for repeated high-intensity sprints throughout the match. Must maintain explosive speed in later stages of the game." },
     { domain: "Physical", skill_name: "Size", description: "How size is utilized in physical battles and aerial duels. Smaller players must compensate with low center of gravity and agility." },
-    // Psychological
-    { domain: "Psychological", skill_name: "Composure", description: "Calm in 1v1 situations and when in shooting positions. Makes clear decisions under pressure in the final third." },
-    { domain: "Psychological", skill_name: "Directness & Aggression", description: "Plays with directness to attack defenders constantly. Shows aggressive intent to take on opponents and create chances." },
-    { domain: "Psychological", skill_name: "Consistency", description: "Reliable attacking output. Continues to attempt to beat opponents and create chances even when initial attempts fail." },
-    { domain: "Psychological", skill_name: "Confidence", description: "Self-assured in 1v1s, willing to shoot from anywhere, and confident to take risks. Bounces back quickly from mistakes." },
+    // Mental
+    { domain: "Mental", skill_name: "Composure", description: "Calm in 1v1 situations and when in shooting positions. Makes clear decisions under pressure in the final third." },
+    { domain: "Mental", skill_name: "Directness & Aggression", description: "Plays with directness to attack defenders constantly. Shows aggressive intent to take on opponents and create chances." },
+    { domain: "Mental", skill_name: "Consistency", description: "Reliable attacking output. Continues to attempt to beat opponents and create chances even when initial attempts fail." },
+    { domain: "Mental", skill_name: "Confidence", description: "Self-assured in 1v1s, willing to shoot from anywhere, and confident to take risks. Bounces back quickly from mistakes." },
     // Technical
     { domain: "Technical", skill_name: "Dribbling & 1v1", description: "Exceptional ability to beat opponents with pace, skill, and changes of direction. Comfortable taking on defenders in tight spaces." },
     { domain: "Technical", skill_name: "First Touch & Ball Control", description: "Clean first touch at pace to control and immediately attack space. Comfortable receiving with back to goal and turning." },
@@ -182,11 +182,11 @@ export const POSITION_SKILLS: Record<ScoutingPosition, SkillDefinition[]> = {
     { domain: "Physical", skill_name: "Use of Body", description: "Regardless of physical attributes, this player must be able to use their body effectively to hold the ball up, retain balance while dribbling and break free from opposing markers." },
     { domain: "Physical", skill_name: "Anaerobic Endurance", description: "Capacity to make repeated sprint efforts throughout the game with only marginal loss in athletic ability. Look for players who are still sharp and effective in later stages of a game." },
     { domain: "Physical", skill_name: "Size", description: "It is all about how size is used. We want players who recognise their advantages to make the most of them and reduce the negative aspects of any disadvantages to their size." },
-    // Psychological
-    { domain: "Psychological", skill_name: "Composure", description: "Should always look in control and playing at their own tempo regardless of what is around them. When they want to go fast they do so without thought and when the defence wants to rush them, they take their time while rolling into space." },
-    { domain: "Psychological", skill_name: "Killer Instinct", description: "We want a player that makes the right decisions in the most pivotal moments. When given an opportunity, no matter how big or small, do they show an unrelenting desire to make something of it and put the ball in the back of the net." },
-    { domain: "Psychological", skill_name: "Consistency", description: "Do they make the right actions regardless of the results and continue in spite of mistakes? With a focus on attacking gaps in the defensive line. Were the decisions that led to their best actions continued throughout the game?" },
-    { domain: "Psychological", skill_name: "Confidence", description: "The best will never shy away from an opportunity to attack aggressively and take shots from anywhere. We want them to turn their matchup and open into shots at every opportunity. This should continue whether having success or not." },
+    // Mental
+    { domain: "Mental", skill_name: "Composure", description: "Should always look in control and playing at their own tempo regardless of what is around them. When they want to go fast they do so without thought and when the defence wants to rush them, they take their time while rolling into space." },
+    { domain: "Mental", skill_name: "Killer Instinct", description: "We want a player that makes the right decisions in the most pivotal moments. When given an opportunity, no matter how big or small, do they show an unrelenting desire to make something of it and put the ball in the back of the net." },
+    { domain: "Mental", skill_name: "Consistency", description: "Do they make the right actions regardless of the results and continue in spite of mistakes? With a focus on attacking gaps in the defensive line. Were the decisions that led to their best actions continued throughout the game?" },
+    { domain: "Mental", skill_name: "Confidence", description: "The best will never shy away from an opportunity to attack aggressively and take shots from anywhere. We want them to turn their matchup and open into shots at every opportunity. This should continue whether having success or not." },
     // Technical
     { domain: "Technical", skill_name: "Set-Up Touches", description: "Their first touch should always fit the situation and be executed perfectly. This is important both for hold-up and link play, as well as in front of goal to quickly generate powerful shots that restrict the time keepers have to react." },
     { domain: "Technical", skill_name: "Finishing", description: "Must be able to finish clinically in all scenarios. This does not only mean finding the corners of the goal, but more dimensionally to create space for shots anywhere on the pitch and catch keepers off-guard without their feet set." },
@@ -201,7 +201,7 @@ export const POSITION_SKILLS: Record<ScoutingPosition, SkillDefinition[]> = {
 };
 
 export interface SkillEvaluation {
-  domain: "Physical" | "Psychological" | "Technical" | "Tactical";
+  domain: "Physical" | "Mental" | "Technical" | "Tactical";
   skill_name: string;
   description: string;
   grade: string;
