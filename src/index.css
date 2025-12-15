@@ -87,6 +87,17 @@ All colors MUST be HSL.
     line-height: 1.1; /* Tight headings for impact */
   }
 
+  /* Prose utilities for optimal reading width (60-80 characters) */
+  .prose-body {
+    max-width: 65ch;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .prose-body-left {
+    max-width: 65ch;
+  }
+
   /* Print styles for PDF export */
   @media print {
     body {
