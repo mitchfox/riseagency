@@ -12,7 +12,7 @@ interface CognisanceSectionProps {
   playerPosition?: string;
 }
 
-type GameType = "schemes" | "concepts" | "pre-match" | null;
+type GameType = "schemes" | "concepts" | "pre-match" | "positional-guides" | null;
 
 interface FlashcardData {
   id: string;
@@ -59,6 +59,8 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
   const [availableOppositionSchemes, setAvailableOppositionSchemes] = useState<string[]>([]);
   const [selectedTeamSchemeFilter, setSelectedTeamSchemeFilter] = useState<string>("all");
   const [selectedOppositionSchemeFilter, setSelectedOppositionSchemeFilter] = useState<string>("all");
+  const [selectedSchemePosition, setSelectedSchemePosition] = useState<string>("");
+  const [availablePositions, setAvailablePositions] = useState<string[]>([]);
   
   // Concept game state
   const [concepts, setConcepts] = useState<ConceptData[]>([]);
@@ -68,43 +70,68 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
   const [preMatchAnalyses, setPreMatchAnalyses] = useState<PreMatchData[]>([]);
   const [selectedPreMatchFilter, setSelectedPreMatchFilter] = useState<string>("all");
   
+  // Positional guides state
+  const [positionalGuidePoints, setPositionalGuidePoints] = useState<any[]>([]);
+  const [selectedGuidePosition, setSelectedGuidePosition] = useState<string>("");
+  const [availableGuidePositions, setAvailableGuidePositions] = useState<string[]>([]);
+  
   // Flashcard game state
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [score, setScore] = useState({ correct: 0, incorrect: 0 });
 
-  // Fetch schemes for the player's position
+  // Fetch all schemes (not filtered by position initially)
   const fetchSchemes = useCallback(async () => {
-    if (!playerPosition) return;
-    
-    // Normalize position
-    const positionMap: Record<string, string> = {
-      'GK': 'Goalkeeper', 'Goalkeeper': 'Goalkeeper',
-      'FB': 'Full-Back', 'Full-Back': 'Full-Back', 'Fullback': 'Full-Back',
-      'CB': 'Centre-Back', 'Centre-Back': 'Centre-Back', 'Center-Back': 'Centre-Back',
-      'CDM': 'Central Defensive-Midfielder', 'Central Defensive-Midfielder': 'Central Defensive-Midfielder',
-      'CM': 'Central Midfielder', 'Central Midfielder': 'Central Midfielder',
-      'AM': 'Attacking Midfielder', 'Attacking Midfielder': 'Attacking Midfielder', 'CAM': 'Attacking Midfielder',
-      'W': 'Winger', 'Winger': 'Winger', 'LW': 'Winger', 'RW': 'Winger',
-      'CF': 'Centre-Forward', 'Centre-Forward': 'Centre-Forward', 'ST': 'Centre-Forward', 'Striker': 'Centre-Forward',
-    };
-    
-    const normalizedPosition = positionMap[playerPosition] || playerPosition;
-    
     const { data, error } = await supabase
       .from("tactical_schemes")
-      .select("*")
-      .eq("position", normalizedPosition);
+      .select("*");
     
     if (!error && data) {
       setSchemes(data);
+      const positions = [...new Set(data.map(s => s.position))];
       const teamSchemes = [...new Set(data.map(s => s.team_scheme))];
       const oppositionSchemes = [...new Set(data.map(s => s.opposition_scheme))];
+      setAvailablePositions(positions);
       setAvailableTeamSchemes(teamSchemes);
       setAvailableOppositionSchemes(oppositionSchemes);
+      
+      // Set default position if player has one
+      if (playerPosition) {
+        const positionMap: Record<string, string> = {
+          'GK': 'Goalkeeper', 'Goalkeeper': 'Goalkeeper',
+          'FB': 'Full-Back', 'Full-Back': 'Full-Back', 'Fullback': 'Full-Back',
+          'CB': 'Centre-Back', 'Centre-Back': 'Centre-Back', 'Center-Back': 'Centre-Back',
+          'CDM': 'Central Defensive-Midfielder', 'Central Defensive-Midfielder': 'Central Defensive-Midfielder',
+          'CM': 'Central Midfielder', 'Central Midfielder': 'Central Midfielder',
+          'AM': 'Attacking Midfielder', 'Attacking Midfielder': 'Attacking Midfielder', 'CAM': 'Attacking Midfielder',
+          'W': 'Winger', 'Winger': 'Winger', 'LW': 'Winger', 'RW': 'Winger',
+          'CF': 'Centre-Forward', 'Centre-Forward': 'Centre-Forward', 'ST': 'Centre-Forward', 'Striker': 'Centre-Forward',
+        };
+        const normalized = positionMap[playerPosition] || playerPosition;
+        if (positions.includes(normalized)) {
+          setSelectedSchemePosition(normalized);
+        }
+      }
     }
   }, [playerPosition]);
+
+  // Fetch positional guide points
+  const fetchPositionalGuidePoints = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("positional_guide_points")
+      .select("*")
+      .order("display_order", { ascending: true });
+    
+    if (!error && data) {
+      setPositionalGuidePoints(data);
+      const positions = [...new Set(data.map(p => p.position))];
+      setAvailableGuidePositions(positions);
+      if (positions.length > 0 && !selectedGuidePosition) {
+        setSelectedGuidePosition(positions[0]);
+      }
+    }
+  }, []);
 
   // Fetch concepts linked to the player
   const fetchConcepts = useCallback(async () => {
@@ -175,7 +202,8 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
     fetchSchemes();
     fetchConcepts();
     fetchPreMatchAnalyses();
-  }, [fetchSchemes, fetchConcepts, fetchPreMatchAnalyses]);
+    fetchPositionalGuidePoints();
+  }, [fetchSchemes, fetchConcepts, fetchPreMatchAnalyses, fetchPositionalGuidePoints]);
 
   // Generate flashcards based on selected game type and filters
   const generateFlashcards = useCallback(() => {
@@ -184,6 +212,10 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
     if (selectedGame === "schemes") {
       let filteredSchemes = schemes;
       
+      // Filter by position
+      if (selectedSchemePosition) {
+        filteredSchemes = filteredSchemes.filter(s => s.position === selectedSchemePosition);
+      }
       if (selectedTeamSchemeFilter !== "all") {
         filteredSchemes = filteredSchemes.filter(s => s.team_scheme === selectedTeamSchemeFilter);
       }
@@ -293,6 +325,25 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
         }
       });
     }
+
+    if (selectedGame === "positional-guides") {
+      let filteredPoints = positionalGuidePoints;
+      
+      if (selectedGuidePosition) {
+        filteredPoints = filteredPoints.filter(p => p.position === selectedGuidePosition);
+      }
+      
+      filteredPoints.forEach(point => {
+        if (point.paragraphs && point.paragraphs.length > 0) {
+          cards.push({
+            id: point.id,
+            front: `${point.phase} - ${point.subcategory}\n\n${point.title}`,
+            back: point.paragraphs.join('\n\n'),
+            category: point.phase
+          });
+        }
+      });
+    }
     
     // Shuffle cards
     const shuffled = cards.sort(() => Math.random() - 0.5);
@@ -300,7 +351,7 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
     setCurrentIndex(0);
     setIsFlipped(false);
     setScore({ correct: 0, incorrect: 0 });
-  }, [selectedGame, schemes, concepts, preMatchAnalyses, selectedTeamSchemeFilter, selectedOppositionSchemeFilter, selectedConceptFilter, selectedPreMatchFilter]);
+  }, [selectedGame, schemes, concepts, preMatchAnalyses, positionalGuidePoints, selectedSchemePosition, selectedTeamSchemeFilter, selectedOppositionSchemeFilter, selectedConceptFilter, selectedPreMatchFilter, selectedGuidePosition]);
 
   const startGame = () => {
     generateFlashcards();
@@ -350,7 +401,7 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
           <p className="text-muted-foreground">Strengthen your football IQ with memory games</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card 
             className="cursor-pointer hover:border-gold/50 transition-all hover:shadow-lg hover:shadow-gold/10"
             onClick={() => setSelectedGame("schemes")}
@@ -364,6 +415,22 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
                 Test your knowledge of positional responsibilities across different formations
               </p>
               <p className="text-xs text-gold/70 mt-2">{schemes.length} schemes available</p>
+            </CardContent>
+          </Card>
+          
+          <Card 
+            className="cursor-pointer hover:border-gold/50 transition-all hover:shadow-lg hover:shadow-gold/10"
+            onClick={() => setSelectedGame("positional-guides")}
+          >
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center mx-auto mb-4">
+                <BookOpen className="w-8 h-8 text-gold" />
+              </div>
+              <h3 className="font-bebas text-xl text-gold mb-2">Positional Guides</h3>
+              <p className="text-sm text-muted-foreground">
+                Master the key principles for each position and phase of play
+              </p>
+              <p className="text-xs text-gold/70 mt-2">{positionalGuidePoints.length} points available</p>
             </CardContent>
           </Card>
           
@@ -421,41 +488,73 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
             <CardTitle className="font-bebas text-gold flex items-center gap-2">
               <Brain className="w-6 h-6" />
               {selectedGame === "schemes" && "Tactical Schemes Flashcards"}
+              {selectedGame === "positional-guides" && "Positional Guides Flashcards"}
               {selectedGame === "concepts" && "Concepts Flashcards"}
               {selectedGame === "pre-match" && "Pre-Match Analysis Flashcards"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {selectedGame === "schemes" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Team Formation</Label>
-                  <Select value={selectedTeamSchemeFilter} onValueChange={setSelectedTeamSchemeFilter}>
+                  <Label>Position</Label>
+                  <Select value={selectedSchemePosition} onValueChange={setSelectedSchemePosition}>
                     <SelectTrigger>
-                      <SelectValue placeholder="All formations" />
+                      <SelectValue placeholder="Select position" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Formations</SelectItem>
-                      {availableTeamSchemes.map(scheme => (
-                        <SelectItem key={scheme} value={scheme}>{scheme}</SelectItem>
+                      {availablePositions.map(pos => (
+                        <SelectItem key={pos} value={pos}>{pos}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Opposition Formation</Label>
-                  <Select value={selectedOppositionSchemeFilter} onValueChange={setSelectedOppositionSchemeFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All formations" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Formations</SelectItem>
-                      {availableOppositionSchemes.map(scheme => (
-                        <SelectItem key={scheme} value={scheme}>{scheme}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Team Formation</Label>
+                    <Select value={selectedTeamSchemeFilter} onValueChange={setSelectedTeamSchemeFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All formations" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Formations</SelectItem>
+                        {availableTeamSchemes.map(scheme => (
+                          <SelectItem key={scheme} value={scheme}>{scheme}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Opposition Formation</Label>
+                    <Select value={selectedOppositionSchemeFilter} onValueChange={setSelectedOppositionSchemeFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All formations" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Formations</SelectItem>
+                        {availableOppositionSchemes.map(scheme => (
+                          <SelectItem key={scheme} value={scheme}>{scheme}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
+              </div>
+            )}
+            
+            {selectedGame === "positional-guides" && (
+              <div className="space-y-2">
+                <Label>Select Position</Label>
+                <Select value={selectedGuidePosition} onValueChange={setSelectedGuidePosition}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select position" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableGuidePositions.map(pos => (
+                      <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
             

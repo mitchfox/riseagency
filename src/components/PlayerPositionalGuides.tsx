@@ -9,12 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Map, Video } from "lucide-react";
 
-interface PositionalGuide {
+interface PositionalGuidePoint {
   id: string;
   position: string;
   phase: string;
   subcategory: string;
-  content: string | null;
+  title: string;
+  paragraphs: string[] | null;
+  image_layout: string | null;
+  images: any;
+  video_url: string | null;
   display_order: number;
 }
 
@@ -55,30 +59,30 @@ const POSITION_LABELS: Record<string, string> = {
 
 export const PlayerPositionalGuides = () => {
   const [selectedPosition, setSelectedPosition] = useState<string>('');
-  const [guides, setGuides] = useState<PositionalGuide[]>([]);
+  const [guidePoints, setGuidePoints] = useState<PositionalGuidePoint[]>([]);
   const [mediaData, setMediaData] = useState<Record<string, MediaGridRow[]>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (selectedPosition) {
-      fetchGuides();
+      fetchGuidePoints();
       fetchMedia();
     }
   }, [selectedPosition]);
 
-  const fetchGuides = async () => {
+  const fetchGuidePoints = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('positional_guides')
+        .from('positional_guide_points')
         .select('*')
         .eq('position', selectedPosition)
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      setGuides(data || []);
+      setGuidePoints(data || []);
     } catch (error) {
-      console.error('Error fetching guides:', error);
+      console.error('Error fetching guide points:', error);
     } finally {
       setLoading(false);
     }
@@ -116,21 +120,19 @@ export const PlayerPositionalGuides = () => {
     return mediaData[`${phase}-${subcategory}`] || [];
   };
 
-  const getGuideForSubcategory = (phase: string, subcategory: string) => {
-    return guides.find(g => g.phase === phase && g.subcategory === subcategory);
+  const getPointsForSubcategory = (phase: string, subcategory: string): PositionalGuidePoint[] => {
+    return guidePoints.filter(g => g.phase === phase && g.subcategory === subcategory);
   };
 
-  const parseBulletPoints = (content: string | null): string[] => {
-    if (!content) return [];
-    return content.split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .map(line => line.replace(/^[•\-*]\s*/, ''));
+  // Count points per phase
+  const getPhasePointCount = (phase: string) => {
+    return guidePoints.filter(g => g.phase === phase).length;
   };
 
-  // Count guides per phase
-  const getPhaseGuideCount = (phase: string) => {
-    return guides.filter(g => g.phase === phase && g.content).length;
+  // Get all phases that have content
+  const getPhasesWithContent = () => {
+    const phasesWithContent = new Set(guidePoints.map(g => g.phase));
+    return PHASES.filter(phase => phasesWithContent.has(phase));
   };
 
   return (
@@ -183,53 +185,90 @@ export const PlayerPositionalGuides = () => {
           </div>
         ) : loading ? (
           <div className="py-8 flex justify-center"><LoadingSpinner size="md" /></div>
+        ) : guidePoints.length === 0 ? (
+          <div className="py-8 text-center text-muted-foreground">
+            <Map className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>No positional guide content available for {POSITION_LABELS[selectedPosition]} yet.</p>
+          </div>
         ) : (
           <div className="space-y-4">
             <h3 className="text-xl font-bebas uppercase tracking-wider">
               {POSITION_LABELS[selectedPosition]}
             </h3>
 
-            <Accordion type="multiple" className="w-full">
+            <Accordion type="multiple" className="w-full" defaultValue={getPhasesWithContent()}>
               {PHASES.map(phase => {
-                const guideCount = getPhaseGuideCount(phase);
+                const pointCount = getPhasePointCount(phase);
+                
+                if (pointCount === 0) return null;
                 
                 return (
                   <AccordionItem key={phase} value={phase}>
                     <AccordionTrigger className="text-lg font-semibold hover:no-underline">
                       <div className="flex items-center gap-2">
                         {phase}
-                        {guideCount > 0 && (
-                          <Badge variant="secondary" className="text-xs">
-                            {guideCount}
-                          </Badge>
-                        )}
+                        <Badge variant="secondary" className="text-xs">
+                          {pointCount}
+                        </Badge>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="space-y-4 pt-2">
+                    <AccordionContent className="space-y-6 pt-2">
                       {DEFAULT_SUBCATEGORIES[phase].map(subcategory => {
-                        const guide = getGuideForSubcategory(phase, subcategory);
-                        const points = parseBulletPoints(guide?.content || null);
+                        const points = getPointsForSubcategory(phase, subcategory);
                         const mediaRows = getMediaForSubcategory(phase, subcategory);
 
                         if (points.length === 0 && mediaRows.length === 0) return null;
 
                         return (
-                          <div key={subcategory} className="space-y-2">
-                            <h4 className="font-semibold text-accent">{subcategory}</h4>
-                            <div className="space-y-2">
-                              {points.map((point, idx) => (
-                                <div
-                                  key={idx}
-                                  className="bg-muted/50 border border-border rounded-lg p-3 hover:bg-muted/70 transition-colors"
-                                >
-                                  <div className="flex gap-2">
-                                    <span className="text-accent font-semibold mt-0.5">•</span>
-                                    <p className="text-muted-foreground flex-1">{point}</p>
+                          <div key={subcategory} className="space-y-4">
+                            <h4 className="font-semibold text-accent text-lg border-b border-border pb-2">{subcategory}</h4>
+                            
+                            {/* Display each point */}
+                            {points.map((point) => (
+                              <div key={point.id} className="space-y-3">
+                                <h5 className="font-medium text-foreground">{point.title}</h5>
+                                
+                                {/* Paragraphs */}
+                                {point.paragraphs && point.paragraphs.length > 0 && (
+                                  <div className="space-y-2">
+                                    {point.paragraphs.map((para, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="bg-muted/50 border border-border rounded-lg p-3 hover:bg-muted/70 transition-colors"
+                                      >
+                                        <div className="flex gap-2">
+                                          <span className="text-accent font-semibold mt-0.5">•</span>
+                                          <p className="text-muted-foreground flex-1">{para}</p>
+                                        </div>
+                                      </div>
+                                    ))}
                                   </div>
-                                </div>
-                              ))}
-                            </div>
-                            {/* Media Grid Display */}
+                                )}
+                                
+                                {/* Images from point */}
+                                {point.images && point.images.length > 0 && (
+                                  <div className="relative border rounded-lg p-3 bg-muted/30">
+                                    {point.video_url && (
+                                      <button
+                                        onClick={() => window.open(point.video_url!, '_blank')}
+                                        className="absolute top-2 right-2 z-10 bg-primary/90 hover:bg-primary p-1.5 rounded-md transition-colors"
+                                      >
+                                        <Video className="h-4 w-4 text-primary-foreground" />
+                                      </button>
+                                    )}
+                                    <div className={`grid gap-2 ${point.image_layout === '1' ? 'grid-cols-1' : point.image_layout === '2' ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                                      {point.images.map((img: any, idx: number) => (
+                                        <div key={idx} className="aspect-video bg-muted rounded-lg overflow-hidden">
+                                          <img src={img.url || img} alt="" className="w-full h-full object-cover" />
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                            
+                            {/* Additional Media Grid Display from positional_guide_media */}
                             {mediaRows.map((row) => (
                               <div key={row.id} className="relative border rounded-lg p-3 bg-muted/30">
                                 {row.video_url && (
@@ -252,13 +291,6 @@ export const PlayerPositionalGuides = () => {
                           </div>
                         );
                       })}
-                      
-                      {/* Show message if no content in this phase */}
-                      {guideCount === 0 && (
-                        <p className="text-sm text-muted-foreground italic py-2">
-                          No content available for this phase yet.
-                        </p>
-                      )}
                     </AccordionContent>
                   </AccordionItem>
                 );
