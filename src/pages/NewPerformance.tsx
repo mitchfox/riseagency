@@ -60,7 +60,7 @@ const NewPerformance = () => {
                   Individual Development Plans
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Each player receives a personalized development roadmap based on detailed performance data. We identify areas for improvement and create targeted training programs to address specific needs.
+                  Each player receives a personalised development roadmap based on detailed performance data. We identify areas for improvement and create targeted training programmes to address specific needs.
                 </p>
               </div>
 
@@ -110,7 +110,7 @@ const NewPerformance = () => {
                   Join RISE Broadcast on Instagram
                 </h2>
                 <p className="text-foreground mb-6 text-base md:text-lg leading-relaxed">
-                  Get daily updates on agency insights, performance optimization, coaching systems, and player development strategies
+                  Get daily updates on agency insights, performance optimisation, coaching systems, and player development strategies
                 </p>
                 <a
                   href="https://www.instagram.com/channel/AbY33s3ZhuxaNwuo/"

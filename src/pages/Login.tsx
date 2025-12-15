@@ -27,7 +27,7 @@ const portalFeatures = [
   {
     image: sessionsScreenshot,
     title: "Training Programmes",
-    description: "Personalized sessions and workout programmes designed to develop your game week by week."
+    description: "Personalised sessions and workout programmes designed to develop your game week by week."
   },
   {
     image: paosScreenshot,

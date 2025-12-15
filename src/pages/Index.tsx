@@ -274,7 +274,7 @@ const Index = () => {
                       {t("home.scouting_point_2_title", "Future-Focused Scouting")}
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t("home.scouting_point_2_desc", "Novel scouting based on qualities that level up through the game—not just what works now, but what scales with a player's career.")}
+                      {t("home.scouting_point_2_desc", "Novel scouting based on qualities that level up through the game, not just what works now, but what scales with a player's career.")}
                     </p>
                   </div>
                 </div>
@@ -288,7 +288,7 @@ const Index = () => {
                       {t("home.scouting_point_3_title", "Complete Player Knowledge")}
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t("home.scouting_point_3_desc", "For any professional or academy player, we intend to know not just who they are—but how they play, what makes them tick, and what qualities they have that level up.")}
+                      {t("home.scouting_point_3_desc", "For any professional or academy player, we intend to know not just who they are, but how they play, what makes them tick, and what qualities they have that level up.")}
                     </p>
                   </div>
                 </div>
@@ -377,7 +377,7 @@ const Index = () => {
                   SKILLS THAT <span className="text-primary">LEVEL UP</span>
                 </h2>
                 <p className="text-lg text-muted-foreground mb-8">
-                  We develop for where you're going—not just where you are.
+                  We develop for where you're going, not just where you are.
                 </p>
                 <div className="space-y-4">
                   <div className="flex items-center gap-4 p-4 border-l-4 border-primary/30 bg-card/20">
@@ -596,7 +596,7 @@ const Index = () => {
                   {t("home.join_broadcast", "Join RISE Broadcast on Instagram")}
                 </h2>
                 <p className="text-foreground mb-6 text-base md:text-lg leading-relaxed">
-                  {t("home.broadcast_desc", "Get daily updates on agency insights, performance optimization, coaching systems, and player development strategies")}
+                  {t("home.broadcast_desc", "Get daily updates on agency insights, performance optimisation, coaching systems, and player development strategies")}
                 </p>
                 <a
                   href="https://www.instagram.com/channel/AbY33s3ZhuxaNwuo/"

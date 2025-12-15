@@ -46,16 +46,16 @@ const About = () => {
               </h2>
               <div className="space-y-6 text-lg text-muted-foreground">
                 <p>
-                  We started as players. We understand the journey—the sacrifices, the setbacks, and what it takes to make it.
+                  We started as players. We understand the journey: the sacrifices, the setbacks, and what it takes to make it.
                 </p>
                 <p>
                   We became coaches. We learned how to develop talent, how to identify potential, and how to build players who could compete at the highest level.
                 </p>
                 <p>
-                  We developed performance teams around Premier League talents. We saw firsthand what separates good players from great ones—and it's not always what you'd expect.
+                  We developed performance teams around Premier League talents. We saw firsthand what separates good players from great ones, and it's not always what you'd expect.
                 </p>
                 <p className="text-foreground font-medium">
-                  We built this into the agency we run today. Every lesson, every insight, every connection—now focused on helping the next generation realise their potential.
+                  We built this into the agency we run today. Every lesson, every insight, every connection. Now focused on helping the next generation realise their potential.
                 </p>
               </div>
             </div>
@@ -77,7 +77,7 @@ const About = () => {
                   Founded on firsthand experience as players and coaches, RISE has established itself as a trusted partner for players at all stages of their careers. Our team combines deep development expertise with a genuine passion for the beautiful game.
                 </p>
                 <p>
-                  We understand that success in football extends beyond what happens on the pitch. That's why we provide comprehensive support covering all aspects of a player's career—from performance optimization and transfer dealings to personal development and career guidance.
+                  We understand that success in football extends beyond what happens on the pitch. That's why we provide comprehensive support covering all aspects of a player's career, from performance optimisation and transfer dealings to personal development and career guidance.
                 </p>
               </div>
               

@@ -314,7 +314,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                               className="h-4 w-4 object-contain"
                             />
                           )}
-                          <span className="text-sm truncate">{club || "—"}</span>
+                          <span className="text-sm truncate">{club || "-"}</span>
                         </div>
                       </div>
                       <div>
@@ -393,7 +393,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                         )}
                       </div>
                     ) : (
-                      <span className="text-sm text-foreground">{getFieldValue(player) || "—"}</span>
+                      <span className="text-sm text-foreground">{getFieldValue(player) || "-"}</span>
                     )}
                   </TableCell>
                   {isAdmin && (

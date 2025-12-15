@@ -577,31 +577,31 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               {translation.english}
                             </TableCell>
                             <TableCell className="max-w-24 truncate" title={translation.spanish || ""}>
-                              {translation.spanish || <span className="text-muted-foreground">—</span>}
+                              {translation.spanish || <span className="text-muted-foreground">-</span>}
                             </TableCell>
                             <TableCell className="max-w-24 truncate" title={translation.portuguese || ""}>
-                              {translation.portuguese || <span className="text-muted-foreground">—</span>}
+                              {translation.portuguese || <span className="text-muted-foreground">-</span>}
                             </TableCell>
                             <TableCell className="max-w-24 truncate" title={translation.french || ""}>
-                              {translation.french || <span className="text-muted-foreground">—</span>}
+                              {translation.french || <span className="text-muted-foreground">-</span>}
                             </TableCell>
                             <TableCell className="max-w-24 truncate" title={translation.german || ""}>
-                              {translation.german || <span className="text-muted-foreground">—</span>}
+                              {translation.german || <span className="text-muted-foreground">-</span>}
                             </TableCell>
                             <TableCell className="max-w-24 truncate" title={translation.italian || ""}>
-                              {translation.italian || <span className="text-muted-foreground">—</span>}
+                              {translation.italian || <span className="text-muted-foreground">-</span>}
                             </TableCell>
                             <TableCell className="max-w-24 truncate" title={translation.polish || ""}>
-                              {translation.polish || <span className="text-muted-foreground">—</span>}
+                              {translation.polish || <span className="text-muted-foreground">-</span>}
                             </TableCell>
                             <TableCell className="max-w-24 truncate" title={translation.czech || ""}>
-                              {translation.czech || <span className="text-muted-foreground">—</span>}
+                              {translation.czech || <span className="text-muted-foreground">-</span>}
                             </TableCell>
                             <TableCell className="max-w-24 truncate" title={translation.russian || ""}>
-                              {translation.russian || <span className="text-muted-foreground">—</span>}
+                              {translation.russian || <span className="text-muted-foreground">-</span>}
                             </TableCell>
                             <TableCell className="max-w-24 truncate" title={translation.turkish || ""}>
-                              {translation.turkish || <span className="text-muted-foreground">—</span>}
+                              {translation.turkish || <span className="text-muted-foreground">-</span>}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">

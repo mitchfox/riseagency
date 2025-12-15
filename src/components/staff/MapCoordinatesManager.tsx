@@ -456,7 +456,7 @@ export const MapCoordinatesManager = () => {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{club.country || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{club.country || "-"}</TableCell>
                     <TableCell>
                       <Input
                         type="number"
