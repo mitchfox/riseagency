@@ -76,12 +76,12 @@ const PlayerJourney = () => {
       icon: Rocket,
       title: "Development",
       subtitle: "The work begins",
-      description: "This is where the real journey starts. You get access to our performance teams, match analysis, development programs, and the full weight of our network and expertise.",
+      description: "This is where the real journey starts. You get access to our performance teams, match analysis, development programmes, and the full weight of our network and expertise.",
       details: [
         "Dedicated performance support",
         "Regular match analysis and feedback",
         "Career guidance and opportunity creation",
-        "Ongoing development programs"
+        "Ongoing development programmes"
       ]
     }
   ];

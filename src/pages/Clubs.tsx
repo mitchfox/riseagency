@@ -18,7 +18,7 @@ const Clubs = () => {
     <div className="min-h-screen bg-background" key="clubs-page">
       <SEO 
         title="For Clubs - Strategic Partnerships | RISE Agency"
-        description="Work with RISE to strategise, recruit, and optimize your squad. Access our network of players and development programs."
+        description="Work with RISE to strategise, recruit, and optimise your squad. Access our network of players and development programmes."
         image="/og-preview-clubs.png"
         url="/clubs"
       />

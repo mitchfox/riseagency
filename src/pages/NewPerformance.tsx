@@ -11,7 +11,7 @@ const NewPerformance = () => {
     <div className="min-h-screen bg-background">
       <SEO 
         title="Performance Analysis - Data-Driven Player Development | RISE"
-        description="Maximize player potential through data-driven insights. We provide comprehensive performance analysis, video breakdown, and individual development plans."
+        description="Maximise player potential through data-driven insights. We provide comprehensive performance analysis, video breakdown, and individual development plans."
         image="/og-preview-performance.png"
         url="/performance"
       />
@@ -89,7 +89,7 @@ const NewPerformance = () => {
         <section className="py-16 md:py-24 bg-muted/30">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-              Optimize Your Performance
+              Optimise Your Performance
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Learn how our performance analysis can elevate your game
