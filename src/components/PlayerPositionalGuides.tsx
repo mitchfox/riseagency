@@ -239,10 +239,10 @@ export const PlayerPositionalGuides = () => {
                                       {hasTwoParagraphs && hasImages ? (
                                         <>
                                           {/* First paragraph */}
-                                          <div className="bg-muted/50 border border-border rounded-lg p-4">
+                                          <div className="bg-[hsl(0,0%,96%)] rounded-lg p-4">
                                             <div className="flex gap-3">
                                               <span className="text-accent font-semibold mt-0.5 text-base">•</span>
-                                              <p className="text-foreground flex-1 text-base leading-relaxed">{point.paragraphs![0]}</p>
+                                              <p className="text-black flex-1 text-base leading-relaxed">{point.paragraphs![0]}</p>
                                             </div>
                                           </div>
                                           
@@ -266,10 +266,10 @@ export const PlayerPositionalGuides = () => {
                                           </div>
                                           
                                           {/* Second paragraph */}
-                                          <div className="bg-muted/50 border border-border rounded-lg p-4">
+                                          <div className="bg-[hsl(0,0%,96%)] rounded-lg p-4">
                                             <div className="flex gap-3">
                                               <span className="text-accent font-semibold mt-0.5 text-base">•</span>
-                                              <p className="text-foreground flex-1 text-base leading-relaxed">{point.paragraphs![1]}</p>
+                                              <p className="text-black flex-1 text-base leading-relaxed">{point.paragraphs![1]}</p>
                                             </div>
                                           </div>
                                         </>
@@ -279,13 +279,13 @@ export const PlayerPositionalGuides = () => {
                                           {point.paragraphs && point.paragraphs.length > 0 && (
                                             <div className="space-y-3">
                                               {point.paragraphs.map((para, idx) => (
-                                                <div
+                                              <div
                                                   key={idx}
-                                                  className="bg-muted/50 border border-border rounded-lg p-4"
+                                                  className="bg-[hsl(0,0%,96%)] rounded-lg p-4"
                                                 >
                                                   <div className="flex gap-3">
                                                     <span className="text-accent font-semibold mt-0.5 text-base">•</span>
-                                                    <p className="text-foreground flex-1 text-base leading-relaxed">{para}</p>
+                                                    <p className="text-black flex-1 text-base leading-relaxed">{para}</p>
                                                   </div>
                                                 </div>
                                               ))}
