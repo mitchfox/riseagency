@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Mail } from "lucide-react";
@@ -151,6 +152,7 @@ const Contact = () => {
           </div>
         </main>
       </div>
+      <Footer />
     </>
   );
 };
