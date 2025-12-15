@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Database, Sparkles, Calendar, FolderOpen } from "lucide-react";
+import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Database, Sparkles, Calendar, FolderOpen, Save } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
 import { SessionDatabaseSelector } from "./SessionDatabaseSelector";
+import { SaveToCoachingDBDialog } from "./SaveToCoachingDBDialog";
 interface ProgrammingManagementProps {
   isOpen: boolean;
   onClose: () => void;
@@ -172,11 +173,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
   const [uploadingExcel, setUploadingExcel] = useState(false);
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [showUploadProgram, setShowUploadProgram] = useState(false);
-  const [saveToCoachingDB, setSaveToCoachingDB] = useState({
-    programme: false,
-    sessions: false,
-    exercises: false
-  });
+  const [showSaveToDBDialog, setShowSaveToDBDialog] = useState(false);
   const [isExerciseSelectorOpen, setIsExerciseSelectorOpen] = useState(false);
   const [isSessionSelectorOpen, setIsSessionSelectorOpen] = useState(false);
   const [showPasteDialog, setShowPasteDialog] = useState(false);
@@ -416,11 +413,6 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
       // Reset state when loading a program
       setHasUnsavedChanges(false);
       setShowRecoveryBanner(false);
-      setSaveToCoachingDB({
-        programme: false,
-        sessions: false,
-        exercises: false
-      });
     } catch (error) {
       console.error('Error loading program details:', error);
       toast.error('Failed to load program details');
@@ -577,12 +569,6 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
           await loadProgramDetails(newProgram.id);
           // Auto-select first session tab
           setSelectedSession('preSessionA');
-          // Reset coaching database save checkboxes for new program
-          setSaveToCoachingDB({
-            programme: false,
-            sessions: false,
-            exercises: false
-          });
           toast.success('Program ready! Add exercises to any session tab.');
         }, 100);
       } else {
@@ -665,127 +651,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
 
       if (error) throw error;
 
-      // Save to coaching database if requested - create a completely independent copy
-      if (saveToCoachingDB.programme) {
-        // Deep clone all data to ensure complete independence
-        const sessionsClone = deepClone({
-          A: programmingData.sessionA,
-          B: programmingData.sessionB,
-          C: programmingData.sessionC,
-          D: programmingData.sessionD,
-          E: programmingData.sessionE,
-          F: programmingData.sessionF,
-          G: programmingData.sessionG,
-          H: programmingData.sessionH,
-          'PRE-A': programmingData.preSessionA,
-          'PRE-B': programmingData.preSessionB,
-          'PRE-C': programmingData.preSessionC,
-          'PRE-D': programmingData.preSessionD,
-          'PRE-E': programmingData.preSessionE,
-          'PRE-F': programmingData.preSessionF,
-          'PRE-G': programmingData.preSessionG,
-          'PRE-H': programmingData.preSessionH,
-        });
-        
-        const schedulesClone = deepClone(programmingData.weeklySchedules);
-        
-        await supabase.from('coaching_programmes').insert([{
-          title: programmingData.phaseName,
-          description: `${programmingData.phaseName} - ${programmingData.phaseDates}`,
-          content: programmingData.overviewText,
-          category: 'Player Programming',
-          attachments: {
-            sessions: sessionsClone,
-            weekly_schedules: schedulesClone
-          } as any
-        }]);
-      }
-
-      if (saveToCoachingDB.sessions) {
-        const sessionsToSave = [];
-        for (const [key, session] of Object.entries({
-          'Pre-A': programmingData.preSessionA,
-          'A': programmingData.sessionA,
-          'Pre-B': programmingData.preSessionB,
-          'B': programmingData.sessionB,
-          'Pre-C': programmingData.preSessionC,
-          'C': programmingData.sessionC,
-          'Pre-D': programmingData.preSessionD,
-          'D': programmingData.sessionD,
-          'Pre-E': programmingData.preSessionE,
-          'E': programmingData.sessionE,
-          'Pre-F': programmingData.preSessionF,
-          'F': programmingData.sessionF,
-          'Pre-G': programmingData.preSessionG,
-          'G': programmingData.sessionG,
-          'Pre-H': programmingData.preSessionH,
-          'H': programmingData.sessionH,
-        })) {
-          if (session.exercises.length > 0) {
-            sessionsToSave.push({
-              title: `Session ${key} - ${selectedProgram.program_name}`,
-              content: session.exercises.map((ex: Exercise) => 
-                `${ex.name}: ${ex.sets} sets x ${ex.repetitions} reps @ ${ex.load}, ${ex.recoveryTime} rest`
-              ).join('\n'),
-              category: 'Player Programming'
-            });
-          }
-        }
-        if (sessionsToSave.length > 0) {
-          await supabase.from('coaching_sessions').insert(sessionsToSave);
-        }
-      }
-
-      if (saveToCoachingDB.exercises) {
-        // Get all existing exercises
-        const { data: existing } = await supabase
-          .from('coaching_exercises')
-          .select('title');
-        
-        const existingTitles = new Set(existing?.map((e: any) => e.title) || []);
-        const allExercises = [];
-
-        for (const session of Object.values({
-          'A': programmingData.sessionA,
-          'B': programmingData.sessionB,
-          'C': programmingData.sessionC,
-          'D': programmingData.sessionD,
-          'E': programmingData.sessionE,
-          'F': programmingData.sessionF,
-          'G': programmingData.sessionG,
-          'H': programmingData.sessionH,
-          'PRE-A': programmingData.preSessionA,
-          'PRE-B': programmingData.preSessionB,
-          'PRE-C': programmingData.preSessionC,
-          'PRE-D': programmingData.preSessionD,
-          'PRE-E': programmingData.preSessionE,
-          'PRE-F': programmingData.preSessionF,
-          'PRE-G': programmingData.preSessionG,
-          'PRE-H': programmingData.preSessionH,
-        })) {
-          if (session.exercises && Array.isArray(session.exercises)) {
-            for (const ex of session.exercises) {
-              if (ex.name && !existingTitles.has(ex.name)) {
-                allExercises.push({
-                  title: ex.name,
-                  description: ex.description,
-                  content: `Video: ${ex.videoUrl || 'N/A'}`,
-                  sets: parseInt(ex.sets) || null,
-                  reps: ex.repetitions,
-                  rest_time: ex.recoveryTime ? parseInt(ex.recoveryTime.replace(/[^\d]/g, '')) : null,
-                  category: 'Player Programming'
-                });
-                existingTitles.add(ex.name);
-              }
-            }
-          }
-        }
-
-        if (allExercises.length > 0) {
-          await supabase.from('coaching_exercises').insert(allExercises);
-          toast.success(`Added ${allExercises.length} new exercises to coaching database`);
-        }
-      }
+      // Note: Save to coaching database is now handled via separate SaveToCoachingDBDialog
 
       toast.success('Program saved successfully');
       
@@ -1428,12 +1294,6 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
         setTimeout(async () => {
           await loadProgramDetails(newProgram.id);
           setSelectedSession('preSessionA');
-          // Reset coaching database save checkboxes for template-based program
-          setSaveToCoachingDB({
-            programme: false,
-            sessions: false,
-            exercises: false
-          });
           toast.success('Program ready! Add exercises to any session tab.');
         }, 100);
       } else {
@@ -2259,51 +2119,15 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
             </Tabs>
 
             <div className="flex flex-col sm:flex-row sm:flex-wrap justify-end gap-2 mt-6">
-              <div className="flex-1 space-y-2 order-2 sm:order-1">
-                <Label className="text-xs sm:text-sm font-semibold">Save to Coaching Database:</Label>
-                <p className="text-xs text-muted-foreground">
-                  ⚠️ Only check these if you want to save this player's program back to the coaching template database
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="save-programme"
-                      checked={saveToCoachingDB.programme}
-                      onCheckedChange={(checked) => 
-                        setSaveToCoachingDB(prev => ({ ...prev, programme: checked as boolean }))
-                      }
-                    />
-                    <label htmlFor="save-programme" className="text-xs sm:text-sm cursor-pointer">
-                      Save as Programme
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="save-sessions"
-                      checked={saveToCoachingDB.sessions}
-                      onCheckedChange={(checked) => 
-                        setSaveToCoachingDB(prev => ({ ...prev, sessions: checked as boolean }))
-                      }
-                    />
-                    <label htmlFor="save-sessions" className="text-xs sm:text-sm cursor-pointer">
-                      Save Sessions
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="save-exercises"
-                      checked={saveToCoachingDB.exercises}
-                      onCheckedChange={(checked) => 
-                        setSaveToCoachingDB(prev => ({ ...prev, exercises: checked as boolean }))
-                      }
-                    />
-                    <label htmlFor="save-exercises" className="text-xs sm:text-sm cursor-pointer">
-                      Save Exercises (new only)
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2 order-1 sm:order-2">
+              <div className="flex gap-2 flex-wrap">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowSaveToDBDialog(true)}
+                  className="flex-1 sm:flex-none"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save to Coaching DB
+                </Button>
                 <Button variant="outline" onClick={() => {
                   setSelectedProgram(null);
                   setProgrammingData(initialProgrammingData());
@@ -2344,6 +2168,13 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
             importSessionFromDatabase(selectedSession as SessionKey, exercises, mode);
           }
         }}
+      />
+
+      <SaveToCoachingDBDialog
+        isOpen={showSaveToDBDialog}
+        onClose={() => setShowSaveToDBDialog(false)}
+        programmingData={programmingData}
+        programName={selectedProgram?.program_name || ''}
       />
 
     <Dialog open={showPasteDialog} onOpenChange={setShowPasteDialog}>
