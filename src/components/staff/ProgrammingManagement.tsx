@@ -1362,7 +1362,7 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
         }
         onClose();
       }}>
-      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl lg:max-w-6xl max-h-[90vh] overflow-y-auto bg-background">
+      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[calc(100vw-4rem)] max-h-[90vh] overflow-y-auto bg-background">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl">Programming Management - {playerName}</DialogTitle>
         </DialogHeader>
