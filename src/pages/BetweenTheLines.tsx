@@ -103,7 +103,7 @@ export default function BetweenTheLines() {
       if (error) throw error;
       setArticles(data || []);
     } catch (error) {
-      console.error("Error fetching articles:", error);
+      // Error fetching articles - fail silently
     } finally {
       setLoading(false);
     }
@@ -154,62 +154,66 @@ export default function BetweenTheLines() {
           {/* Compact Filters */}
           <div className="flex flex-wrap justify-center gap-3 mb-8">
             {/* Category Filter */}
-            <Collapsible open={categoryOpen} onOpenChange={setCategoryOpen}>
-              <CollapsibleTrigger className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border hover:border-primary/50 transition-all text-sm font-bebas uppercase tracking-wider">
-                <span className="text-muted-foreground">Category:</span>
-                <span className="text-foreground">{selectedCategory === "ALL POSTS" ? "All" : selectedCategory}</span>
-                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${categoryOpen ? "rotate-180" : ""}`} />
-              </CollapsibleTrigger>
-              <CollapsibleContent className="absolute z-50 mt-2 p-3 rounded-lg bg-card border border-border shadow-xl max-w-sm">
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => {
-                        setSelectedCategory(category);
-                        setCategoryOpen(false);
-                      }}
-                      className={`text-xs font-bebas uppercase tracking-wider px-3 py-1.5 rounded-full transition-all ${
-                        selectedCategory === category
-                          ? "text-primary-foreground bg-primary"
-                          : "text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted"
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+            <div className="relative">
+              <Collapsible open={categoryOpen} onOpenChange={setCategoryOpen}>
+                <CollapsibleTrigger className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border hover:border-primary/50 transition-all text-sm font-bebas uppercase tracking-wider">
+                  <span className="text-muted-foreground">Category:</span>
+                  <span className="text-foreground">{selectedCategory === "ALL POSTS" ? "All" : selectedCategory}</span>
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${categoryOpen ? "rotate-180" : ""}`} />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="absolute left-0 z-50 mt-2 p-3 rounded-lg bg-card border border-border shadow-xl min-w-[280px]">
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => {
+                          setSelectedCategory(category);
+                          setCategoryOpen(false);
+                        }}
+                        className={`text-xs font-bebas uppercase tracking-wider px-3 py-1.5 rounded-full transition-all ${
+                          selectedCategory === category
+                            ? "text-primary-foreground bg-primary"
+                            : "text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted"
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
 
             {/* Position Filter */}
-            <Collapsible open={positionOpen} onOpenChange={setPositionOpen}>
-              <CollapsibleTrigger className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border hover:border-primary/50 transition-all text-sm font-bebas uppercase tracking-wider">
-                <span className="text-muted-foreground">Position:</span>
-                <span className="text-foreground">{selectedPosition === "ALL POSITIONS" ? "All" : selectedPosition}</span>
-                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${positionOpen ? "rotate-180" : ""}`} />
-              </CollapsibleTrigger>
-              <CollapsibleContent className="absolute z-50 mt-2 p-3 rounded-lg bg-card border border-border shadow-xl max-w-xs">
-                <div className="flex flex-wrap gap-2">
-                  {positions.map((position) => (
-                    <button
-                      key={position}
-                      onClick={() => {
-                        setSelectedPosition(position);
-                        setPositionOpen(false);
-                      }}
-                      className={`text-xs font-bebas uppercase tracking-wider px-3 py-1.5 rounded-full transition-all ${
-                        selectedPosition === position
-                          ? "text-primary-foreground bg-primary"
-                          : "text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted"
-                      }`}
-                    >
-                      {position}
-                    </button>
-                  ))}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+            <div className="relative">
+              <Collapsible open={positionOpen} onOpenChange={setPositionOpen}>
+                <CollapsibleTrigger className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border hover:border-primary/50 transition-all text-sm font-bebas uppercase tracking-wider">
+                  <span className="text-muted-foreground">Position:</span>
+                  <span className="text-foreground">{selectedPosition === "ALL POSITIONS" ? "All" : selectedPosition}</span>
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${positionOpen ? "rotate-180" : ""}`} />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="absolute left-0 z-50 mt-2 p-3 rounded-lg bg-card border border-border shadow-xl min-w-[240px]">
+                  <div className="flex flex-wrap gap-2">
+                    {positions.map((position) => (
+                      <button
+                        key={position}
+                        onClick={() => {
+                          setSelectedPosition(position);
+                          setPositionOpen(false);
+                        }}
+                        className={`text-xs font-bebas uppercase tracking-wider px-3 py-1.5 rounded-full transition-all ${
+                          selectedPosition === position
+                            ? "text-primary-foreground bg-primary"
+                            : "text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted"
+                        }`}
+                      >
+                        {position}
+                      </button>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
 
             {/* Clear Filters */}
             {(selectedCategory !== "ALL POSTS" || selectedPosition !== "ALL POSITIONS") && (
