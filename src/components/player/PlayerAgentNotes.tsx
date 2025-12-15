@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Loader2 } from "lucide-react";
-
+import { MessageSquare } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 interface PlayerAgentNotesProps {
   playerId: string;
 }
@@ -38,9 +38,7 @@ export const PlayerAgentNotes = ({ playerId }: PlayerAgentNotesProps) => {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
+          <LoadingSpinner size="md" className="py-8" />
         ) : notes ? (
           <div className="space-y-4">
             <div className="border rounded-lg p-4 bg-muted/30">

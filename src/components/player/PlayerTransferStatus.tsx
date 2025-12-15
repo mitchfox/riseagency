@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Loader2 } from "lucide-react";
-
+import { TrendingUp } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 interface PlayerTransferStatusProps {
   playerId: string;
 }
@@ -107,9 +107,7 @@ export const PlayerTransferStatus = ({ playerId }: PlayerTransferStatusProps) =>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
+          <LoadingSpinner size="md" className="py-8" />
         ) : (
           <div className="space-y-6">
             <div className="text-center py-6 border rounded-lg bg-muted/30">

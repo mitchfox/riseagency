@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Loader2, Save } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { toast } from "sonner";
 
 interface Player {
@@ -129,9 +130,7 @@ export const TransferStatusManagement = ({ players, selectedPlayer }: TransferSt
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
+          <LoadingSpinner size="md" className="py-8" />
         ) : (
           <Table>
             <TableHeader>

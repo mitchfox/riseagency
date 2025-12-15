@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Mail, Users, Briefcase, FileText, Eye } from "lucide-react";
+import { Mail, Users, Briefcase, FileText, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 interface FormSubmission {
   id: string;
@@ -65,11 +65,7 @@ export const FormSubmissionsWidget = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-4">
-        <Loader2 className="h-4 w-4 animate-spin" />
-      </div>
-    );
+    return <LoadingSpinner size="sm" className="py-4" />;
   }
 
   if (submissions.length === 0) {

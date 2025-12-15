@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, FileText, Copy, Check, MoreHorizontal, CheckCircle, CreditCard, DollarSign } from "lucide-react";
 import { format } from "date-fns";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 interface Invoice {
   id: string;
@@ -585,7 +586,7 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
             {/* Invoices Table */}
             {loading ? (
-              <div className="text-center py-8">Loading invoices...</div>
+              <LoadingSpinner size="md" className="py-8" />
             ) : (
               <Card>
                 <CardContent className="p-0">

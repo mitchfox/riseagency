@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, LineChart, Search, Sparkles, ChevronDown } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -407,9 +408,7 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
                 {/* Show xG Map for Shots category */}
                 
                 {loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                  </div>
+                  <LoadingSpinner size="lg" className="py-12" />
                 ) : ratings.length === 0 ? (
                   selectedCategory === 'Shots' ? (
                     <div className="text-center py-12 space-y-4">

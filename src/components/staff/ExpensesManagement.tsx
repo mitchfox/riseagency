@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Calculator, Plus, Edit, Trash2, Receipt, Loader2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -198,9 +199,7 @@ export const ExpensesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div>
+            <LoadingSpinner size="md" className="py-8" />
           ) : filteredExpenses.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Receipt className="h-12 w-12 mx-auto mb-4 opacity-50" />

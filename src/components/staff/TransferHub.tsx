@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Building2, FileText, Users, TrendingUp, MessageSquare, Plus, Loader2, Search, Edit, Phone, Mail, User, CalendarDays } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ClubOutreachManagement } from "./ClubOutreachManagement";
@@ -148,9 +149,7 @@ export const TransferHub = ({ isAdmin }: { isAdmin: boolean }) => {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
+                <LoadingSpinner size="md" className="py-8" />
               ) : (
                 <Table>
                   <TableHeader>

@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Search, Edit, ChevronDown } from 'lucide-react';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 interface PlayerData {
   id: string;
   player_name: string;
@@ -178,7 +179,7 @@ export const PlayerDatabase = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading player database...</div>;
+    return <LoadingSpinner size="md" className="py-8" text="Loading player database..." />;
   }
 
   return (

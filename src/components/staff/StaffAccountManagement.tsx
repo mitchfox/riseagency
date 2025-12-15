@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { UserPlus, Trash2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 interface StaffAccount {
   email: string;
@@ -286,7 +287,7 @@ export const StaffAccountManagement = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-8">RISING...</div>;
+    return <LoadingSpinner size="md" className="py-8" />;
   }
 
   if (!isAdmin) {

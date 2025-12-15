@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Eye, EyeOff, Users } from "lucide-react";
 import { format } from "date-fns";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 interface Update {
   id: string;
@@ -198,7 +199,7 @@ export function UpdatesManagement({ isAdmin }: { isAdmin: boolean }) {
   };
 
   if (loading) {
-    return <div className="p-4">RISING...</div>;
+    return <LoadingSpinner size="md" className="p-4" />;
   }
 
   return (

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { RefreshCw, Key, CheckCircle, XCircle } from 'lucide-react';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 interface Player {
   id: string;
@@ -108,7 +109,7 @@ export const PlayerPasswordManagement = () => {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center p-8">RISING...</div>;
+    return <LoadingSpinner size="md" className="p-8" />;
   }
 
   const playersWithAuth = players.filter(p => p.hasAuthAccount).length;
