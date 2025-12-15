@@ -992,7 +992,8 @@ const Dashboard = () => {
           title: concept.title || "Untitled Concept",
           concept: concept.content || concept.description || null,
           explanation: concept.content || concept.description || null,
-          points: Array.isArray(concept.attachments) ? concept.attachments : []
+          points: Array.isArray(concept.attachments) ? concept.attachments : [],
+          created_at: concept.created_at
         }));
         setConcepts(normalizedConcepts);
       }
