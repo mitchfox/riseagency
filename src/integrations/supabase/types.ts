@@ -2098,6 +2098,7 @@ export type Database = {
           next_program_notes: string | null
           position: string
           preferred_currency: string | null
+          programming_notes: string | null
           representation_status: string | null
           transfer_priority: string | null
           transfer_status: string | null
@@ -2126,6 +2127,7 @@ export type Database = {
           next_program_notes?: string | null
           position: string
           preferred_currency?: string | null
+          programming_notes?: string | null
           representation_status?: string | null
           transfer_priority?: string | null
           transfer_status?: string | null
@@ -2154,6 +2156,7 @@ export type Database = {
           next_program_notes?: string | null
           position?: string
           preferred_currency?: string | null
+          programming_notes?: string | null
           representation_status?: string | null
           transfer_priority?: string | null
           transfer_status?: string | null
