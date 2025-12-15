@@ -1642,6 +1642,9 @@ const Dashboard = () => {
                 }
               }, 300);
             }}
+            onNavigateToSchedule={() => {
+              setActiveTab("physical");
+            }}
           />
         )}
 

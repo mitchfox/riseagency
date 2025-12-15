@@ -37,9 +37,10 @@ interface HubProps {
   onNavigateToAnalysis: () => void;
   onNavigateToForm?: () => void;
   onNavigateToSession?: (sessionKey: string) => void;
+  onNavigateToSchedule?: () => void;
 }
 
-export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateToAnalysis, onNavigateToForm, onNavigateToSession }: HubProps) => {
+export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateToAnalysis, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
   const [imagesPreloaded, setImagesPreloaded] = React.useState(false);
   const hasAnimated = React.useRef(false);
@@ -377,6 +378,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
               <Button 
                 variant="ghost" 
                 size="sm"
+                onClick={onNavigateToSchedule}
                 className="flex items-center justify-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
               >
                 See All
