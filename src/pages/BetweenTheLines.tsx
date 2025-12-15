@@ -149,41 +149,50 @@ export default function BetweenTheLines() {
             </p>
           </div>
 
-          {/* Category Filters */}
-          <div className="mb-6 pb-4 border-b border-border/50 overflow-x-auto">
-            <div className="flex gap-4 min-w-max">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`text-sm font-bebas uppercase tracking-wider px-4 py-2 rounded transition-all whitespace-nowrap ${
-                    selectedCategory === category
-                      ? "text-primary bg-primary/10 border border-primary/30"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
+          {/* Filters Section */}
+          <div className="space-y-6 mb-12">
+            {/* Category Filters */}
+            <div className="space-y-3">
+              <span className="text-xs font-bebas uppercase tracking-widest text-muted-foreground">
+                Category
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`text-sm font-bebas uppercase tracking-wider px-4 py-2 rounded-full transition-all ${
+                      selectedCategory === category
+                        ? "text-primary-foreground bg-primary"
+                        : "text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted"
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Position Filters */}
-          <div className="mb-12 pb-4 border-b border-border/50 overflow-x-auto">
-            <div className="flex gap-4 min-w-max">
-              {positions.map((position) => (
-                <button
-                  key={position}
-                  onClick={() => setSelectedPosition(position)}
-                  className={`text-sm font-bebas uppercase tracking-wider px-4 py-2 rounded transition-all whitespace-nowrap ${
-                    selectedPosition === position
-                      ? "text-primary bg-primary/10 border border-primary/30"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  }`}
-                >
-                  {position}
-                </button>
-              ))}
+            {/* Position Filters */}
+            <div className="space-y-3">
+              <span className="text-xs font-bebas uppercase tracking-widest text-muted-foreground">
+                Position
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {positions.map((position) => (
+                  <button
+                    key={position}
+                    onClick={() => setSelectedPosition(position)}
+                    className={`text-sm font-bebas uppercase tracking-wider px-4 py-2 rounded-full transition-all ${
+                      selectedPosition === position
+                        ? "text-primary-foreground bg-primary"
+                        : "text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted"
+                    }`}
+                  >
+                    {position}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
