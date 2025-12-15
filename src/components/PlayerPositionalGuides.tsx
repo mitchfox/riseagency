@@ -231,23 +231,23 @@ export const PlayerPositionalGuides = () => {
                                 
                                 return (
                                   <AccordionItem key={point.id} value={point.id} className="border-b-0">
-                                    <AccordionTrigger className="hover:no-underline py-2">
-                                      <h5 className="font-medium text-foreground text-left">{point.title}</h5>
+                                    <AccordionTrigger className="hover:no-underline py-3">
+                                      <h5 className="font-medium text-foreground text-left text-base">{point.title}</h5>
                                     </AccordionTrigger>
-                                    <AccordionContent className="space-y-3 pt-1">
+                                    <AccordionContent className="space-y-4 pt-2">
                                       {/* If 2 paragraphs: first paragraph, then images, then second paragraph */}
                                       {hasTwoParagraphs && hasImages ? (
                                         <>
                                           {/* First paragraph */}
-                                          <div className="bg-muted/50 border border-border rounded-lg p-3">
-                                            <div className="flex gap-2">
-                                              <span className="text-accent font-semibold mt-0.5">•</span>
-                                              <p className="text-muted-foreground flex-1">{point.paragraphs![0]}</p>
+                                          <div className="bg-muted/50 border border-border rounded-lg p-4">
+                                            <div className="flex gap-3">
+                                              <span className="text-accent font-semibold mt-0.5 text-base">•</span>
+                                              <p className="text-foreground flex-1 text-base leading-relaxed">{point.paragraphs![0]}</p>
                                             </div>
                                           </div>
                                           
                                           {/* Images between paragraphs - full width */}
-                                          <div className="relative">
+                                          <div className="relative my-4">
                                             {point.video_url && (
                                               <button
                                                 onClick={() => window.open(point.video_url!, '_blank')}
@@ -256,7 +256,7 @@ export const PlayerPositionalGuides = () => {
                                                 <Video className="h-4 w-4 text-primary-foreground" />
                                               </button>
                                             )}
-                                            <div className="grid grid-cols-1 gap-3">
+                                            <div className="grid grid-cols-1 gap-4">
                                               {point.images.map((img: any, idx: number) => (
                                                 <div key={idx} className="w-full rounded-lg overflow-hidden">
                                                   <img src={img.url || img} alt="" className="w-full h-auto object-contain" />
@@ -266,10 +266,10 @@ export const PlayerPositionalGuides = () => {
                                           </div>
                                           
                                           {/* Second paragraph */}
-                                          <div className="bg-muted/50 border border-border rounded-lg p-3">
-                                            <div className="flex gap-2">
-                                              <span className="text-accent font-semibold mt-0.5">•</span>
-                                              <p className="text-muted-foreground flex-1">{point.paragraphs![1]}</p>
+                                          <div className="bg-muted/50 border border-border rounded-lg p-4">
+                                            <div className="flex gap-3">
+                                              <span className="text-accent font-semibold mt-0.5 text-base">•</span>
+                                              <p className="text-foreground flex-1 text-base leading-relaxed">{point.paragraphs![1]}</p>
                                             </div>
                                           </div>
                                         </>
@@ -277,15 +277,15 @@ export const PlayerPositionalGuides = () => {
                                         <>
                                           {/* Standard layout: paragraphs then images */}
                                           {point.paragraphs && point.paragraphs.length > 0 && (
-                                            <div className="space-y-2">
+                                            <div className="space-y-3">
                                               {point.paragraphs.map((para, idx) => (
                                                 <div
                                                   key={idx}
-                                                  className="bg-muted/50 border border-border rounded-lg p-3"
+                                                  className="bg-muted/50 border border-border rounded-lg p-4"
                                                 >
-                                                  <div className="flex gap-2">
-                                                    <span className="text-accent font-semibold mt-0.5">•</span>
-                                                    <p className="text-muted-foreground flex-1">{para}</p>
+                                                  <div className="flex gap-3">
+                                                    <span className="text-accent font-semibold mt-0.5 text-base">•</span>
+                                                    <p className="text-foreground flex-1 text-base leading-relaxed">{para}</p>
                                                   </div>
                                                 </div>
                                               ))}
@@ -294,7 +294,7 @@ export const PlayerPositionalGuides = () => {
                                           
                                           {/* Images - full width */}
                                           {hasImages && (
-                                            <div className="relative">
+                                            <div className="relative mt-4">
                                               {point.video_url && (
                                                 <button
                                                   onClick={() => window.open(point.video_url!, '_blank')}
@@ -303,7 +303,7 @@ export const PlayerPositionalGuides = () => {
                                                   <Video className="h-4 w-4 text-primary-foreground" />
                                                 </button>
                                               )}
-                                              <div className="grid grid-cols-1 gap-3">
+                                              <div className="grid grid-cols-1 gap-4">
                                                 {point.images.map((img: any, idx: number) => (
                                                   <div key={idx} className="w-full rounded-lg overflow-hidden">
                                                     <img src={img.url || img} alt="" className="w-full h-auto object-contain" />
