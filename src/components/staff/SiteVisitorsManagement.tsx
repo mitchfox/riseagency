@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -574,7 +575,7 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8">
-                      RISING...
+                      <LoadingSpinner size="md" />
                     </TableCell>
                   </TableRow>
                 ) : displayedVisits.length === 0 ? (

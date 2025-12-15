@@ -1,4 +1,5 @@
 import { useScoutAuth } from "@/hooks/useScoutAuth";
+import { PageLoading } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogOut, Target, TrendingUp, Users, FileText } from "lucide-react";
@@ -25,11 +26,7 @@ const ScoutPortal = () => {
   });
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-xl">RISING...</div>
-      </div>
-    );
+    return <PageLoading />;
   }
 
   const statusCounts = {

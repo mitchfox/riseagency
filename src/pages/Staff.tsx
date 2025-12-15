@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -431,11 +432,7 @@ const Staff = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">RISING...</div>
-      </div>
-    );
+    return <PageLoading />;
   }
 
   // Show login form if not authenticated

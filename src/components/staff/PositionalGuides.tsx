@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -251,7 +252,7 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
         </CardHeader>
         <CardContent className="px-3 md:px-6">
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">RISING...</div>
+            <div className="flex justify-center py-8"><LoadingSpinner size="md" /></div>
           ) : (
             <Accordion type="multiple" className="w-full">
               {PHASES.map(phase => (

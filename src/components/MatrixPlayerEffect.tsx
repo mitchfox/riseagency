@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 interface MatrixPlayerEffectProps {
   className?: string;
@@ -208,9 +209,7 @@ export const MatrixPlayerEffect = ({ className = "" }: MatrixPlayerEffectProps) 
     >
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-primary font-bebas tracking-wider animate-pulse">
-            RISING...
-          </div>
+          <LoadingSpinner size="md" />
         </div>
       )}
       <canvas

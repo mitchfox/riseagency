@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -1350,11 +1351,7 @@ const Dashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <p className="text-muted-foreground p-4">RISING...</p>
-      </div>
-    );
+    return <PageLoading />;
   }
 
   return (
@@ -3613,8 +3610,8 @@ const Dashboard = () => {
                       {playerData?.id ? (
                         <ProtectedContracts playerId={playerData.id} />
                       ) : (
-                        <div className="py-8 text-center text-muted-foreground">
-                          RISING...
+                        <div className="py-8 flex justify-center">
+                          <LoadingSpinner size="md" />
                         </div>
                       )}
                     </CardContent>
