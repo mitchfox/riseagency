@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, TrendingDown, DollarSign, FileText, Download, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, FileText, Download } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
 interface InvoiceSummary {
@@ -120,9 +121,7 @@ export const FinancialReports = ({ isAdmin }: { isAdmin: boolean }) => {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
+        <LoadingSpinner size="lg" className="py-12" />
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>

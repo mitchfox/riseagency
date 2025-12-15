@@ -12,6 +12,7 @@ import { StaffSchedule } from "./StaffSchedule";
 import { format, startOfWeek, addDays, isSameDay, parseISO, addWeeks, startOfMonth, endOfMonth, getDay } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 interface StaffMember {
   id: string;
@@ -283,7 +284,7 @@ export const StaffSchedulesManagement = () => {
   const monthlyWeeks = generateMonthlyWeeks();
 
   if (loading) {
-    return <div className="text-center py-8">Loading staff members...</div>;
+    return <LoadingSpinner size="md" className="py-8" text="Loading staff members..." />;
   }
 
   if (staffMembers.length === 0) {

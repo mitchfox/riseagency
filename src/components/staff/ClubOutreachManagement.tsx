@@ -12,9 +12,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Building, User, Briefcase, Clock, MessageSquare, Loader2, UserCircle, Search } from "lucide-react";
+import { Plus, Building, User, Briefcase, Clock, MessageSquare, UserCircle, Search, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 interface ClubOutreach {
   id: string;
   player_id: string;
@@ -406,9 +406,7 @@ export const ClubOutreachManagement = () => {
 
             <TabsContent value="staff">
               {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
+                <LoadingSpinner size="md" className="py-8" />
               ) : clubGroups.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No outreach records yet. Click "Add Outreach" to create one.
@@ -466,9 +464,7 @@ export const ClubOutreachManagement = () => {
 
             <TabsContent value="player">
               {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
+                <LoadingSpinner size="md" className="py-8" />
               ) : playerSubmissions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No player submissions yet. Players can add clubs they've contacted from their portal.
@@ -722,9 +718,7 @@ export const ClubOutreachManagement = () => {
                   Update History
                 </Label>
                 {updatesLoading ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  </div>
+                  <LoadingSpinner size="sm" className="py-4" />
                 ) : outreachUpdates.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No updates yet.</p>
                 ) : (

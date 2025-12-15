@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Building, User, Clock, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { format } from "date-fns";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -171,11 +172,7 @@ export const PlayerClubInterest = ({ playerId }: PlayerClubInterestProps) => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
-    );
+    return <LoadingSpinner size="md" className="py-8" />;
   }
 
   return (
@@ -238,9 +235,7 @@ export const PlayerClubInterest = ({ playerId }: PlayerClubInterestProps) => {
                         Update History
                       </h4>
                       {updatesLoading ? (
-                        <div className="flex items-center justify-center py-4">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
+                        <LoadingSpinner size="sm" className="py-4" />
                       ) : outreachUpdates.length === 0 ? (
                         <p className="text-sm text-muted-foreground">No detailed updates available.</p>
                       ) : (

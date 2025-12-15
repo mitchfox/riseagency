@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, X, Edit, ExternalLink, Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Check, X, Edit, ExternalLink, Clock, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
-
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 interface MarketingIdea {
   id: string;
   title: string;
@@ -164,11 +164,7 @@ export const IdeasReview = () => {
   );
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <LoadingSpinner size="md" className="py-12" />;
   }
 
   return (

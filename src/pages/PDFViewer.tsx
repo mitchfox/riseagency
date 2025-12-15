@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
-
+import { PageLoading } from "@/components/LoadingSpinner";
 const PDFViewer = () => {
   const [searchParams] = useSearchParams();
   const pdfUrl = searchParams.get("url");
@@ -22,11 +21,7 @@ const PDFViewer = () => {
   }, [pdfUrl]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoading text="Loading PDF..." />;
   }
 
   if (error || !blobUrl) {

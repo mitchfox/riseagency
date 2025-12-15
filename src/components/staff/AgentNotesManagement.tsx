@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Loader2, Save, User } from "lucide-react";
+import { MessageSquare, Save, User, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 interface Player {
   id: string;
@@ -81,9 +82,7 @@ export const AgentNotesManagement = ({ players, selectedPlayer }: AgentNotesMana
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
+          <LoadingSpinner size="md" className="py-8" />
         ) : (
           <div className="space-y-6">
             {filteredPlayers.map(player => (

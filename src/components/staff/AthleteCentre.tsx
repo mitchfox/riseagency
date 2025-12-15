@@ -10,6 +10,7 @@ import {
   User, FileText, Dumbbell, LineChart, Target, Calendar,
   Save, Loader2, ChevronRight, ClipboardList
 } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { PlayerScoutingReports } from "@/components/PlayerScoutingReports";
@@ -127,11 +128,7 @@ export const AthleteCentre = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <LoadingSpinner size="lg" className="py-12" />;
   }
 
   return (
