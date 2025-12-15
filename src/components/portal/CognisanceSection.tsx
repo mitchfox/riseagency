@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { Brain, Shuffle, ChevronLeft, ChevronRight, RotateCcw, Target, Lightbulb, BookOpen, Eye } from "lucide-react";
+import { Brain, ChevronLeft, RotateCcw, Target, Lightbulb, BookOpen, Eye, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface CognisanceSectionProps {
   playerId: string;
@@ -16,9 +17,19 @@ type GameType = "schemes" | "concepts" | "pre-match" | "positional-guides" | nul
 
 interface FlashcardData {
   id: string;
-  front: string;
-  back: string;
-  category?: string;
+  cardKey: string;
+  title: string;
+  content: string;
+  category: string;
+  subcategory?: string;
+}
+
+interface CardProgress {
+  card_key: string;
+  ease_factor: number;
+  interval_days: number;
+  repetitions: number;
+  next_review: string;
 }
 
 interface SchemeData {
@@ -48,40 +59,109 @@ interface PreMatchData {
   points: any[] | null;
 }
 
+// SM-2 Algorithm for spaced repetition
+function calculateNextReview(quality: number, progress: CardProgress | null) {
+  // quality: 1 = Again, 2 = Hard, 3 = Good, 4 = Easy
+  const defaultProgress = {
+    ease_factor: 2.5,
+    interval_days: 0,
+    repetitions: 0
+  };
+  
+  const p = progress || defaultProgress;
+  let newEaseFactor = p.ease_factor;
+  let newInterval = p.interval_days;
+  let newRepetitions = p.repetitions;
+  
+  if (quality < 2) {
+    // Failed - reset
+    newRepetitions = 0;
+    newInterval = 0;
+  } else {
+    // Success
+    if (newRepetitions === 0) {
+      newInterval = 1;
+    } else if (newRepetitions === 1) {
+      newInterval = 3;
+    } else {
+      newInterval = Math.round(p.interval_days * newEaseFactor);
+    }
+    newRepetitions += 1;
+  }
+  
+  // Adjust ease factor based on quality
+  newEaseFactor = Math.max(1.3, p.ease_factor + (0.1 - (4 - quality) * (0.08 + (4 - quality) * 0.02)));
+  
+  // Bonus for easy
+  if (quality === 4) {
+    newInterval = Math.round(newInterval * 1.3);
+  }
+  
+  const nextReview = new Date();
+  nextReview.setDate(nextReview.getDate() + newInterval);
+  
+  return {
+    ease_factor: newEaseFactor,
+    interval_days: newInterval,
+    repetitions: newRepetitions,
+    next_review: nextReview.toISOString()
+  };
+}
+
 export function CognisanceSection({ playerId, playerPosition }: CognisanceSectionProps) {
   const [selectedGame, setSelectedGame] = useState<GameType>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(false);
   
-  // Scheme game state
+  // Data state
   const [schemes, setSchemes] = useState<SchemeData[]>([]);
-  const [selectedSchemeFilter, setSelectedSchemeFilter] = useState<string>("all");
-  const [availableTeamSchemes, setAvailableTeamSchemes] = useState<string[]>([]);
-  const [availableOppositionSchemes, setAvailableOppositionSchemes] = useState<string[]>([]);
-  const [selectedTeamSchemeFilter, setSelectedTeamSchemeFilter] = useState<string>("all");
-  const [selectedOppositionSchemeFilter, setSelectedOppositionSchemeFilter] = useState<string>("all");
+  const [concepts, setConcepts] = useState<ConceptData[]>([]);
+  const [preMatchAnalyses, setPreMatchAnalyses] = useState<PreMatchData[]>([]);
+  const [positionalGuidePoints, setPositionalGuidePoints] = useState<any[]>([]);
+  
+  // Filter state
   const [selectedSchemePosition, setSelectedSchemePosition] = useState<string>("");
   const [availablePositions, setAvailablePositions] = useState<string[]>([]);
-  
-  // Concept game state
-  const [concepts, setConcepts] = useState<ConceptData[]>([]);
-  const [selectedConceptFilter, setSelectedConceptFilter] = useState<string>("all");
-  
-  // Pre-match game state
-  const [preMatchAnalyses, setPreMatchAnalyses] = useState<PreMatchData[]>([]);
-  const [selectedPreMatchFilter, setSelectedPreMatchFilter] = useState<string>("all");
-  
-  // Positional guides state
-  const [positionalGuidePoints, setPositionalGuidePoints] = useState<any[]>([]);
+  const [selectedTeamSchemeFilter, setSelectedTeamSchemeFilter] = useState<string>("all");
+  const [selectedOppositionSchemeFilter, setSelectedOppositionSchemeFilter] = useState<string>("all");
+  const [availableTeamSchemes, setAvailableTeamSchemes] = useState<string[]>([]);
+  const [availableOppositionSchemes, setAvailableOppositionSchemes] = useState<string[]>([]);
   const [selectedGuidePosition, setSelectedGuidePosition] = useState<string>("");
   const [availableGuidePositions, setAvailableGuidePositions] = useState<string[]>([]);
+  const [selectedConceptFilter, setSelectedConceptFilter] = useState<string>("all");
+  const [selectedPreMatchFilter, setSelectedPreMatchFilter] = useState<string>("all");
   
-  // Flashcard game state
+  // Game state
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [score, setScore] = useState({ correct: 0, incorrect: 0 });
+  const [cardProgress, setCardProgress] = useState<Record<string, CardProgress>>({});
+  const [sessionStats, setSessionStats] = useState({ reviewed: 0, newCards: 0, dueCards: 0 });
 
-  // Fetch all schemes (not filtered by position initially)
+  // Fetch card progress from database
+  const fetchCardProgress = useCallback(async () => {
+    if (!playerId) return;
+    
+    const { data, error } = await supabase
+      .from("flashcard_progress")
+      .select("*")
+      .eq("player_id", playerId);
+    
+    if (!error && data) {
+      const progressMap: Record<string, CardProgress> = {};
+      data.forEach(p => {
+        progressMap[p.card_key] = {
+          card_key: p.card_key,
+          ease_factor: Number(p.ease_factor),
+          interval_days: p.interval_days,
+          repetitions: p.repetitions,
+          next_review: p.next_review
+        };
+      });
+      setCardProgress(progressMap);
+    }
+  }, [playerId]);
+
+  // Fetch schemes
   const fetchSchemes = useCallback(async () => {
     const { data, error } = await supabase
       .from("tactical_schemes")
@@ -96,17 +176,16 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
       setAvailableTeamSchemes(teamSchemes);
       setAvailableOppositionSchemes(oppositionSchemes);
       
-      // Set default position if player has one
       if (playerPosition) {
         const positionMap: Record<string, string> = {
           'GK': 'Goalkeeper', 'Goalkeeper': 'Goalkeeper',
-          'FB': 'Full-Back', 'Full-Back': 'Full-Back', 'Fullback': 'Full-Back',
-          'CB': 'Centre-Back', 'Centre-Back': 'Centre-Back', 'Center-Back': 'Centre-Back',
-          'CDM': 'Central Defensive-Midfielder', 'Central Defensive-Midfielder': 'Central Defensive-Midfielder',
-          'CM': 'Central Midfielder', 'Central Midfielder': 'Central Midfielder',
-          'AM': 'Attacking Midfielder', 'Attacking Midfielder': 'Attacking Midfielder', 'CAM': 'Attacking Midfielder',
-          'W': 'Winger', 'Winger': 'Winger', 'LW': 'Winger', 'RW': 'Winger',
-          'CF': 'Centre-Forward', 'Centre-Forward': 'Centre-Forward', 'ST': 'Centre-Forward', 'Striker': 'Centre-Forward',
+          'FB': 'Full-Back', 'Full-Back': 'Full-Back',
+          'CB': 'Centre-Back', 'Centre-Back': 'Centre-Back',
+          'CDM': 'Central Defensive-Midfielder',
+          'CM': 'Central Midfielder',
+          'AM': 'Attacking Midfielder', 'CAM': 'Attacking Midfielder',
+          'W': 'Winger', 'LW': 'Winger', 'RW': 'Winger',
+          'CF': 'Centre-Forward', 'ST': 'Centre-Forward',
         };
         const normalized = positionMap[playerPosition] || playerPosition;
         if (positions.includes(normalized)) {
@@ -133,9 +212,8 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
     }
   }, []);
 
-  // Fetch concepts linked to the player
+  // Fetch concepts
   const fetchConcepts = useCallback(async () => {
-    // Get player_analysis records with concept type
     const { data: analysisData } = await supabase
       .from("player_analysis")
       .select("analysis_writer_id")
@@ -143,10 +221,7 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
     
     if (!analysisData || analysisData.length === 0) return;
     
-    const linkedIds = analysisData
-      .filter(a => a.analysis_writer_id)
-      .map(a => a.analysis_writer_id);
-    
+    const linkedIds = analysisData.filter(a => a.analysis_writer_id).map(a => a.analysis_writer_id);
     if (linkedIds.length === 0) return;
     
     const { data: conceptsData } = await supabase
@@ -165,7 +240,7 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
     }
   }, [playerId]);
 
-  // Fetch pre-match analyses linked to the player
+  // Fetch pre-match analyses
   const fetchPreMatchAnalyses = useCallback(async () => {
     const { data: analysisData } = await supabase
       .from("player_analysis")
@@ -174,10 +249,7 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
     
     if (!analysisData || analysisData.length === 0) return;
     
-    const linkedIds = analysisData
-      .filter(a => a.analysis_writer_id)
-      .map(a => a.analysis_writer_id);
-    
+    const linkedIds = analysisData.filter(a => a.analysis_writer_id).map(a => a.analysis_writer_id);
     if (linkedIds.length === 0) return;
     
     const { data: preMatchData } = await supabase
@@ -203,16 +275,28 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
     fetchConcepts();
     fetchPreMatchAnalyses();
     fetchPositionalGuidePoints();
-  }, [fetchSchemes, fetchConcepts, fetchPreMatchAnalyses, fetchPositionalGuidePoints]);
+    fetchCardProgress();
+  }, [fetchSchemes, fetchConcepts, fetchPreMatchAnalyses, fetchPositionalGuidePoints, fetchCardProgress]);
 
-  // Generate flashcards based on selected game type and filters
+  // Parse scheme content into individual points
+  const parseSchemePoints = (content: string): string[] => {
+    if (!content) return [];
+    // Split by newlines and filter out empty lines
+    const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    // If it's a single block of text, return as one point
+    if (lines.length === 1) return lines;
+    // Otherwise return individual points
+    return lines;
+  };
+
+  // Generate flashcards with spaced repetition ordering
   const generateFlashcards = useCallback(() => {
     const cards: FlashcardData[] = [];
+    const now = new Date();
     
     if (selectedGame === "schemes") {
       let filteredSchemes = schemes;
       
-      // Filter by position
       if (selectedSchemePosition) {
         filteredSchemes = filteredSchemes.filter(s => s.position === selectedSchemePosition);
       }
@@ -233,99 +317,24 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
         
         phases.forEach(phase => {
           if (phase.content) {
-            cards.push({
-              id: `${scheme.id}-${phase.name}`,
-              front: `${scheme.team_scheme} vs ${scheme.opposition_scheme}\n\nWhat are your responsibilities in ${phase.name}?`,
-              back: phase.content,
-              category: phase.name
+            // Split into individual points
+            const points = parseSchemePoints(phase.content);
+            points.forEach((point, idx) => {
+              const cardKey = `scheme-${scheme.id}-${phase.name}-${idx}`;
+              cards.push({
+                id: `${scheme.id}-${phase.name}-${idx}`,
+                cardKey,
+                title: `${scheme.team_scheme} vs ${scheme.opposition_scheme}`,
+                content: point,
+                category: phase.name,
+                subcategory: `Point ${idx + 1}`
+              });
             });
           }
         });
       });
     }
     
-    if (selectedGame === "concepts") {
-      let filteredConcepts = concepts;
-      
-      if (selectedConceptFilter !== "all") {
-        filteredConcepts = filteredConcepts.filter(c => c.id === selectedConceptFilter);
-      }
-      
-      filteredConcepts.forEach(concept => {
-        if (concept.points && concept.points.length > 0) {
-          concept.points.forEach((point: any, idx: number) => {
-            if (point.title && point.description) {
-              cards.push({
-                id: `${concept.id}-${idx}`,
-                front: `${concept.title}\n\n${point.title}`,
-                back: point.description,
-                category: concept.title
-              });
-            }
-          });
-        }
-        
-        if (concept.explanation) {
-          cards.push({
-            id: `${concept.id}-explanation`,
-            front: `Explain the concept: ${concept.title}`,
-            back: concept.explanation,
-            category: concept.title
-          });
-        }
-      });
-    }
-    
-    if (selectedGame === "pre-match") {
-      let filteredPreMatch = preMatchAnalyses;
-      
-      if (selectedPreMatchFilter !== "all") {
-        filteredPreMatch = filteredPreMatch.filter(p => p.id === selectedPreMatchFilter);
-      }
-      
-      filteredPreMatch.forEach(analysis => {
-        if (analysis.opposition_strengths) {
-          cards.push({
-            id: `${analysis.id}-strengths`,
-            front: `${analysis.title}\n\nWhat are the opposition's STRENGTHS?`,
-            back: analysis.opposition_strengths,
-            category: "Opposition Strengths"
-          });
-        }
-        
-        if (analysis.opposition_weaknesses) {
-          cards.push({
-            id: `${analysis.id}-weaknesses`,
-            front: `${analysis.title}\n\nWhat are the opposition's WEAKNESSES?`,
-            back: analysis.opposition_weaknesses,
-            category: "Opposition Weaknesses"
-          });
-        }
-        
-        if (analysis.key_details) {
-          cards.push({
-            id: `${analysis.id}-details`,
-            front: `${analysis.title}\n\nWhat are the KEY DETAILS to remember?`,
-            back: analysis.key_details,
-            category: "Key Details"
-          });
-        }
-        
-        if (analysis.points && Array.isArray(analysis.points)) {
-          analysis.points.forEach((point: any, idx: number) => {
-            if (point.title && point.description) {
-              cards.push({
-                id: `${analysis.id}-point-${idx}`,
-                front: `${analysis.title}\n\n${point.title}`,
-                back: point.description,
-                category: analysis.title
-              });
-            }
-          });
-        }
-      });
-    }
-
     if (selectedGame === "positional-guides") {
       let filteredPoints = positionalGuidePoints;
       
@@ -335,45 +344,192 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
       
       filteredPoints.forEach(point => {
         if (point.paragraphs && point.paragraphs.length > 0) {
-          cards.push({
-            id: point.id,
-            front: `${point.phase} - ${point.subcategory}\n\n${point.title}`,
-            back: point.paragraphs.join('\n\n'),
-            category: point.phase
+          // Create a card for each paragraph
+          point.paragraphs.forEach((para: string, idx: number) => {
+            const cardKey = `guide-${point.id}-${idx}`;
+            cards.push({
+              id: `${point.id}-${idx}`,
+              cardKey,
+              title: point.title,
+              content: para,
+              category: `${point.phase} - ${point.subcategory}`,
+              subcategory: point.paragraphs.length > 1 ? `Part ${idx + 1}` : undefined
+            });
           });
         }
       });
     }
     
-    // Shuffle cards
-    const shuffled = cards.sort(() => Math.random() - 0.5);
-    setFlashcards(shuffled);
+    if (selectedGame === "concepts") {
+      let filteredConcepts = concepts;
+      if (selectedConceptFilter !== "all") {
+        filteredConcepts = filteredConcepts.filter(c => c.id === selectedConceptFilter);
+      }
+      
+      filteredConcepts.forEach(concept => {
+        if (concept.points && concept.points.length > 0) {
+          concept.points.forEach((point: any, idx: number) => {
+            if (point.title && point.description) {
+              const cardKey = `concept-${concept.id}-${idx}`;
+              cards.push({
+                id: `${concept.id}-${idx}`,
+                cardKey,
+                title: point.title,
+                content: point.description,
+                category: concept.title
+              });
+            }
+          });
+        }
+        if (concept.explanation) {
+          const cardKey = `concept-${concept.id}-explanation`;
+          cards.push({
+            id: `${concept.id}-explanation`,
+            cardKey,
+            title: concept.title,
+            content: concept.explanation,
+            category: "Concept Explanation"
+          });
+        }
+      });
+    }
+    
+    if (selectedGame === "pre-match") {
+      let filteredPreMatch = preMatchAnalyses;
+      if (selectedPreMatchFilter !== "all") {
+        filteredPreMatch = filteredPreMatch.filter(p => p.id === selectedPreMatchFilter);
+      }
+      
+      filteredPreMatch.forEach(analysis => {
+        if (analysis.opposition_strengths) {
+          const cardKey = `prematch-${analysis.id}-strengths`;
+          cards.push({
+            id: `${analysis.id}-strengths`,
+            cardKey,
+            title: `${analysis.title} - Opposition Strengths`,
+            content: analysis.opposition_strengths,
+            category: "Opposition Strengths"
+          });
+        }
+        if (analysis.opposition_weaknesses) {
+          const cardKey = `prematch-${analysis.id}-weaknesses`;
+          cards.push({
+            id: `${analysis.id}-weaknesses`,
+            cardKey,
+            title: `${analysis.title} - Opposition Weaknesses`,
+            content: analysis.opposition_weaknesses,
+            category: "Opposition Weaknesses"
+          });
+        }
+        if (analysis.key_details) {
+          const cardKey = `prematch-${analysis.id}-details`;
+          cards.push({
+            id: `${analysis.id}-details`,
+            cardKey,
+            title: `${analysis.title} - Key Details`,
+            content: analysis.key_details,
+            category: "Key Details"
+          });
+        }
+        if (analysis.points && Array.isArray(analysis.points)) {
+          analysis.points.forEach((point: any, idx: number) => {
+            if (point.title && point.description) {
+              const cardKey = `prematch-${analysis.id}-point-${idx}`;
+              cards.push({
+                id: `${analysis.id}-point-${idx}`,
+                cardKey,
+                title: point.title,
+                content: point.description,
+                category: analysis.title
+              });
+            }
+          });
+        }
+      });
+    }
+    
+    // Sort cards: due cards first (by how overdue), then new cards shuffled
+    const dueCards: FlashcardData[] = [];
+    const newCards: FlashcardData[] = [];
+    
+    cards.forEach(card => {
+      const progress = cardProgress[card.cardKey];
+      if (progress) {
+        const nextReview = new Date(progress.next_review);
+        if (nextReview <= now) {
+          dueCards.push(card);
+        }
+      } else {
+        newCards.push(card);
+      }
+    });
+    
+    // Sort due cards by how overdue they are
+    dueCards.sort((a, b) => {
+      const aReview = new Date(cardProgress[a.cardKey]?.next_review || now);
+      const bReview = new Date(cardProgress[b.cardKey]?.next_review || now);
+      return aReview.getTime() - bReview.getTime();
+    });
+    
+    // Shuffle new cards
+    newCards.sort(() => Math.random() - 0.5);
+    
+    // Combine: due cards first, then new cards
+    const sortedCards = [...dueCards, ...newCards];
+    
+    setFlashcards(sortedCards);
     setCurrentIndex(0);
-    setIsFlipped(false);
-    setScore({ correct: 0, incorrect: 0 });
-  }, [selectedGame, schemes, concepts, preMatchAnalyses, positionalGuidePoints, selectedSchemePosition, selectedTeamSchemeFilter, selectedOppositionSchemeFilter, selectedConceptFilter, selectedPreMatchFilter, selectedGuidePosition]);
+    setIsRevealed(false);
+    setSessionStats({ reviewed: 0, newCards: newCards.length, dueCards: dueCards.length });
+  }, [selectedGame, schemes, concepts, preMatchAnalyses, positionalGuidePoints, cardProgress, selectedSchemePosition, selectedTeamSchemeFilter, selectedOppositionSchemeFilter, selectedGuidePosition, selectedConceptFilter, selectedPreMatchFilter]);
 
   const startGame = () => {
     generateFlashcards();
     setIsPlaying(true);
   };
 
-  const handleNext = (wasCorrect: boolean) => {
-    setScore(prev => ({
-      correct: prev.correct + (wasCorrect ? 1 : 0),
-      incorrect: prev.incorrect + (wasCorrect ? 0 : 1)
+  // Handle recall grade (1-4)
+  const handleGrade = async (quality: number) => {
+    const currentCard = flashcards[currentIndex];
+    if (!currentCard) return;
+    
+    const progress = cardProgress[currentCard.cardKey];
+    const newProgress = calculateNextReview(quality, progress);
+    
+    // Update local state
+    setCardProgress(prev => ({
+      ...prev,
+      [currentCard.cardKey]: {
+        card_key: currentCard.cardKey,
+        ...newProgress
+      }
     }));
     
+    // Save to database
+    const { error } = await supabase
+      .from("flashcard_progress")
+      .upsert({
+        player_id: playerId,
+        card_key: currentCard.cardKey,
+        card_type: selectedGame,
+        ease_factor: newProgress.ease_factor,
+        interval_days: newProgress.interval_days,
+        repetitions: newProgress.repetitions,
+        next_review: newProgress.next_review,
+        last_reviewed: new Date().toISOString()
+      }, { onConflict: 'player_id,card_key' });
+    
+    if (error) {
+      console.error("Error saving progress:", error);
+      toast.error("Failed to save progress");
+    }
+    
+    setSessionStats(prev => ({ ...prev, reviewed: prev.reviewed + 1 }));
+    
+    // Move to next card
     if (currentIndex < flashcards.length - 1) {
       setCurrentIndex(prev => prev + 1);
-      setIsFlipped(false);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-      setIsFlipped(false);
+      setIsRevealed(false);
     }
   };
 
@@ -381,15 +537,7 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
     setIsPlaying(false);
     setFlashcards([]);
     setCurrentIndex(0);
-    setIsFlipped(false);
-    setScore({ correct: 0, incorrect: 0 });
-  };
-
-  const shuffleCards = () => {
-    const shuffled = [...flashcards].sort(() => Math.random() - 0.5);
-    setFlashcards(shuffled);
-    setCurrentIndex(0);
-    setIsFlipped(false);
+    setIsRevealed(false);
   };
 
   // Game selection view
@@ -398,7 +546,7 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
       <div className="space-y-6">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bebas text-gold mb-2">Cognisance</h2>
-          <p className="text-muted-foreground">Strengthen your football IQ with memory games</p>
+          <p className="text-muted-foreground">Strengthen your football IQ with spaced repetition learning</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -412,7 +560,7 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
               </div>
               <h3 className="font-bebas text-xl text-gold mb-2">Tactical Schemes</h3>
               <p className="text-sm text-muted-foreground">
-                Test your knowledge of positional responsibilities across different formations
+                Learn your positional responsibilities across different formations
               </p>
               <p className="text-xs text-gold/70 mt-2">{schemes.length} schemes available</p>
             </CardContent>
@@ -460,7 +608,7 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
               </div>
               <h3 className="font-bebas text-xl text-gold mb-2">Pre-Match Analysis</h3>
               <p className="text-sm text-muted-foreground">
-                Review opposition strengths, weaknesses and key details before a match
+                Review opposition strengths, weaknesses and key details
               </p>
               <p className="text-xs text-gold/70 mt-2">{preMatchAnalyses.length} analyses available</p>
             </CardContent>
@@ -470,7 +618,7 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
     );
   }
 
-  // Game setup view
+  // Setup view (before playing)
   if (!isPlaying) {
     return (
       <div className="space-y-6">
@@ -487,15 +635,20 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
           <CardHeader>
             <CardTitle className="font-bebas text-gold flex items-center gap-2">
               <Brain className="w-6 h-6" />
-              {selectedGame === "schemes" && "Tactical Schemes Flashcards"}
-              {selectedGame === "positional-guides" && "Positional Guides Flashcards"}
-              {selectedGame === "concepts" && "Concepts Flashcards"}
-              {selectedGame === "pre-match" && "Pre-Match Analysis Flashcards"}
+              {selectedGame === "schemes" && "Tactical Schemes"}
+              {selectedGame === "positional-guides" && "Positional Guides"}
+              {selectedGame === "concepts" && "Concepts"}
+              {selectedGame === "pre-match" && "Pre-Match Analysis"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            <p className="text-muted-foreground text-sm">
+              Review each point and grade how well you remembered it. Cards you struggle with will appear more often.
+            </p>
+            
+            {/* Filters */}
             {selectedGame === "schemes" && (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Position</Label>
                   <Select value={selectedSchemePosition} onValueChange={setSelectedSchemePosition}>
@@ -509,42 +662,40 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Team Formation</Label>
-                    <Select value={selectedTeamSchemeFilter} onValueChange={setSelectedTeamSchemeFilter}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="All formations" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Formations</SelectItem>
-                        {availableTeamSchemes.map(scheme => (
-                          <SelectItem key={scheme} value={scheme}>{scheme}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Opposition Formation</Label>
-                    <Select value={selectedOppositionSchemeFilter} onValueChange={setSelectedOppositionSchemeFilter}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="All formations" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Formations</SelectItem>
-                        {availableOppositionSchemes.map(scheme => (
-                          <SelectItem key={scheme} value={scheme}>{scheme}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label>Team Scheme</Label>
+                  <Select value={selectedTeamSchemeFilter} onValueChange={setSelectedTeamSchemeFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All team schemes" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Team Schemes</SelectItem>
+                      {availableTeamSchemes.map(s => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Opposition Scheme</Label>
+                  <Select value={selectedOppositionSchemeFilter} onValueChange={setSelectedOppositionSchemeFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All opposition schemes" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Opposition Schemes</SelectItem>
+                      {availableOppositionSchemes.map(s => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}
             
             {selectedGame === "positional-guides" && (
               <div className="space-y-2">
-                <Label>Select Position</Label>
+                <Label>Position</Label>
                 <Select value={selectedGuidePosition} onValueChange={setSelectedGuidePosition}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select position" />
@@ -558,34 +709,34 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
               </div>
             )}
             
-            {selectedGame === "concepts" && (
+            {selectedGame === "concepts" && concepts.length > 0 && (
               <div className="space-y-2">
-                <Label>Select Concept</Label>
+                <Label>Filter by Concept</Label>
                 <Select value={selectedConceptFilter} onValueChange={setSelectedConceptFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="All concepts" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Concepts</SelectItem>
-                    {concepts.map(concept => (
-                      <SelectItem key={concept.id} value={concept.id}>{concept.title}</SelectItem>
+                    {concepts.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             )}
             
-            {selectedGame === "pre-match" && (
+            {selectedGame === "pre-match" && preMatchAnalyses.length > 0 && (
               <div className="space-y-2">
-                <Label>Select Pre-Match Analysis</Label>
+                <Label>Filter by Analysis</Label>
                 <Select value={selectedPreMatchFilter} onValueChange={setSelectedPreMatchFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="All analyses" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Pre-Match Analyses</SelectItem>
-                    {preMatchAnalyses.map(analysis => (
-                      <SelectItem key={analysis.id} value={analysis.id}>{analysis.title}</SelectItem>
+                    <SelectItem value="all">All Analyses</SelectItem>
+                    {preMatchAnalyses.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -594,7 +745,7 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
             
             <Button onClick={startGame} className="w-full bg-gold text-gold-foreground hover:bg-gold/90">
               <Brain className="w-4 h-4 mr-2" />
-              Start Flashcards
+              Start Learning
             </Button>
           </CardContent>
         </Card>
@@ -604,7 +755,8 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
 
   // Playing view
   const currentCard = flashcards[currentIndex];
-  const isComplete = currentIndex === flashcards.length - 1 && isFlipped;
+  const isComplete = currentIndex === flashcards.length - 1 && isRevealed;
+  const currentProgress = currentCard ? cardProgress[currentCard.cardKey] : null;
 
   if (flashcards.length === 0) {
     return (
@@ -620,7 +772,9 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
         
         <Card>
           <CardContent className="p-12 text-center">
-            <p className="text-muted-foreground">No flashcards available with the current filters.</p>
+            <Check className="w-16 h-16 text-green-500 mx-auto mb-4" />
+            <h3 className="font-bebas text-2xl text-gold mb-2">All Caught Up!</h3>
+            <p className="text-muted-foreground">No cards due for review with the current filters.</p>
             <Button onClick={resetGame} variant="outline" className="mt-4">
               Try Different Filters
             </Button>
@@ -642,129 +796,125 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
           Exit
         </Button>
         
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">
-            Card {currentIndex + 1} of {flashcards.length}
-          </span>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-green-500">✓ {score.correct}</span>
-            <span className="text-red-500">✗ {score.incorrect}</span>
-          </div>
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <span>Card {currentIndex + 1} of {flashcards.length}</span>
+          <span className="text-gold">{sessionStats.reviewed} reviewed</span>
         </div>
-        
-        <Button variant="ghost" size="sm" onClick={shuffleCards}>
-          <Shuffle className="w-4 h-4" />
-        </Button>
       </div>
       
       {/* Flashcard */}
-      <div 
-        className="min-h-[400px] perspective-1000 cursor-pointer"
-        onClick={() => setIsFlipped(!isFlipped)}
-      >
-        <Card 
-          className={cn(
-            "min-h-[400px] transition-all duration-500 transform-style-3d relative",
-            isFlipped && "rotate-y-180"
-          )}
-        >
-          {/* Front */}
-          <CardContent 
-            className={cn(
-              "absolute inset-0 p-8 flex flex-col items-center justify-center backface-hidden",
-              isFlipped && "invisible"
-            )}
-          >
-            {currentCard?.category && (
-              <span className="text-xs text-gold/70 uppercase tracking-wider mb-4">
-                {currentCard.category}
+      <Card className="min-h-[400px]">
+        <CardContent className="p-6 min-h-[400px] flex flex-col">
+          {/* Category header */}
+          <div className="text-center mb-4">
+            <span className="text-xs text-gold/70 uppercase tracking-wider">
+              {currentCard?.category}
+            </span>
+            {currentCard?.subcategory && (
+              <span className="text-xs text-muted-foreground ml-2">
+                • {currentCard.subcategory}
               </span>
             )}
-            <p className="text-lg text-center whitespace-pre-line font-medium">
-              {currentCard?.front}
-            </p>
-            <p className="text-sm text-muted-foreground mt-8">Tap to reveal answer</p>
-          </CardContent>
+          </div>
           
-          {/* Back */}
-          <CardContent 
-            className={cn(
-              "absolute inset-0 p-8 flex flex-col items-center justify-center backface-hidden rotate-y-180 overflow-y-auto",
-              !isFlipped && "invisible"
-            )}
-          >
-            <p className="text-sm text-center whitespace-pre-line leading-relaxed">
-              {currentCard?.back}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          {/* Title */}
+          <h3 className="text-xl font-semibold text-center mb-6">
+            {currentCard?.title}
+          </h3>
+          
+          {/* Prompt when not revealed */}
+          {!isRevealed && (
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <p className="text-muted-foreground mb-6 text-center">
+                Can you remember this point?
+              </p>
+              <Button 
+                onClick={() => setIsRevealed(true)}
+                className="bg-gold text-gold-foreground hover:bg-gold/90"
+              >
+                Show Content
+              </Button>
+            </div>
+          )}
+          
+          {/* Content when revealed */}
+          {isRevealed && (
+            <div className="flex-1 flex flex-col">
+              <div className="flex-1 flex items-center justify-center">
+                <p className="text-base leading-relaxed text-center max-w-2xl">
+                  {currentCard?.content}
+                </p>
+              </div>
+              
+              {/* Progress indicator */}
+              {currentProgress && (
+                <p className="text-xs text-muted-foreground text-center mb-4">
+                  Reviewed {currentProgress.repetitions} times • Next review in {currentProgress.interval_days} days
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
       
-      {/* Navigation */}
-      <div className="flex items-center justify-center gap-4">
-        <Button 
-          variant="outline" 
-          onClick={handlePrevious}
-          disabled={currentIndex === 0}
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
-        
-        {isFlipped && !isComplete && (
-          <>
+      {/* Grade buttons when revealed */}
+      {isRevealed && !isComplete && (
+        <div className="space-y-3">
+          <p className="text-center text-sm text-muted-foreground">How well did you remember this?</p>
+          <div className="grid grid-cols-4 gap-2">
             <Button 
               variant="outline"
-              className="border-red-500/50 text-red-500 hover:bg-red-500/10"
-              onClick={() => handleNext(false)}
+              className="border-red-500/50 text-red-500 hover:bg-red-500/10 flex-col h-auto py-3"
+              onClick={() => handleGrade(1)}
             >
-              Incorrect
+              <span className="font-semibold">Again</span>
+              <span className="text-xs opacity-70">Forgot</span>
             </Button>
             <Button 
               variant="outline"
-              className="border-green-500/50 text-green-500 hover:bg-green-500/10"
-              onClick={() => handleNext(true)}
+              className="border-orange-500/50 text-orange-500 hover:bg-orange-500/10 flex-col h-auto py-3"
+              onClick={() => handleGrade(2)}
             >
-              Correct
+              <span className="font-semibold">Hard</span>
+              <span className="text-xs opacity-70">Struggled</span>
             </Button>
-          </>
-        )}
-        
-        {isComplete && (
-          <Button onClick={resetGame} className="bg-gold text-gold-foreground hover:bg-gold/90">
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Play Again
-          </Button>
-        )}
-        
-        <Button 
-          variant="outline" 
-          onClick={() => handleNext(false)}
-          disabled={currentIndex === flashcards.length - 1 || !isFlipped}
-        >
-          <ChevronRight className="w-4 h-4" />
-        </Button>
-      </div>
+            <Button 
+              variant="outline"
+              className="border-blue-500/50 text-blue-500 hover:bg-blue-500/10 flex-col h-auto py-3"
+              onClick={() => handleGrade(3)}
+            >
+              <span className="font-semibold">Good</span>
+              <span className="text-xs opacity-70">Remembered</span>
+            </Button>
+            <Button 
+              variant="outline"
+              className="border-green-500/50 text-green-500 hover:bg-green-500/10 flex-col h-auto py-3"
+              onClick={() => handleGrade(4)}
+            >
+              <span className="font-semibold">Easy</span>
+              <span className="text-xs opacity-70">Perfect</span>
+            </Button>
+          </div>
+        </div>
+      )}
       
-      {/* Score Summary at end */}
+      {/* Completion view */}
       {isComplete && (
         <Card className="border-gold/30">
           <CardContent className="p-6 text-center">
+            <Check className="w-12 h-12 text-green-500 mx-auto mb-4" />
             <h3 className="font-bebas text-2xl text-gold mb-2">Session Complete!</h3>
-            <div className="flex items-center justify-center gap-8 text-lg">
-              <div>
-                <span className="text-green-500 font-bebas text-3xl">{score.correct}</span>
-                <p className="text-sm text-muted-foreground">Correct</p>
-              </div>
-              <div>
-                <span className="text-red-500 font-bebas text-3xl">{score.incorrect}</span>
-                <p className="text-sm text-muted-foreground">Incorrect</p>
-              </div>
-              <div>
-                <span className="text-gold font-bebas text-3xl">
-                  {Math.round((score.correct / flashcards.length) * 100)}%
-                </span>
-                <p className="text-sm text-muted-foreground">Accuracy</p>
-              </div>
+            <p className="text-muted-foreground mb-4">
+              You reviewed {sessionStats.reviewed} cards
+            </p>
+            <div className="flex items-center justify-center gap-4">
+              <Button onClick={resetGame} className="bg-gold text-gold-foreground hover:bg-gold/90">
+                <RotateCcw className="w-4 h-4 mr-2" />
+                New Session
+              </Button>
+              <Button variant="outline" onClick={() => setSelectedGame(null)}>
+                Back to Games
+              </Button>
             </div>
           </CardContent>
         </Card>
