@@ -175,7 +175,7 @@ export const RadialMenu = () => {
         },
       },
       { 
-        to: "/playersmore", 
+        to: "/learnmore", 
         labelKey: "header.what_we_look_for", 
         fallback: "WHAT WE SEEK", 
         Icon: Search, 
@@ -347,7 +347,7 @@ export const RadialMenu = () => {
       },
     ],
     scouts: [
-      { to: "/playersmore", labelKey: "header.what_we_look_for", fallback: "WHAT WE SEEK", Icon: Search, angle: 0 },
+      { to: "/learnmore", labelKey: "header.what_we_look_for", fallback: "WHAT WE SEEK", Icon: Search, angle: 0 },
       { to: "/login", labelKey: "header.portal", fallback: "PORTAL", Icon: Users, angle: 60 },
       { to: "/scouts", labelKey: "header.jobs", fallback: "OPPORTUNITIES", Icon: Briefcase, angle: 120 },
       { 
@@ -630,7 +630,7 @@ export const RadialMenu = () => {
 
   // Role selection menu items
   const roleMenuItems: MenuItem[] = [
-    { to: "/playersmore", labelKey: "roles.players", fallback: "PLAYER", Icon: Users, angle: 0 },
+    { to: "/players", labelKey: "roles.players", fallback: "PLAYER", Icon: Users, angle: 0 },
     { to: "/clubs", labelKey: "roles.clubs", fallback: "CLUB", Icon: Trophy, angle: 51.4 },
     { to: "/scouts", labelKey: "roles.scouts", fallback: "SCOUT", Icon: Search, angle: 102.8 },
     { to: "/agents", labelKey: "roles.agents", fallback: "AGENT", Icon: Briefcase, angle: 154.3 },

@@ -84,7 +84,7 @@ const subdomainSubHeaders: Record<string, SubHeaderConfig> = {
   },
   scouts: {
     left: [
-      { type: 'link', to: '/playersmore', labelKey: 'header.what_we_look_for', fallback: 'What We Look For', mobileFallback: 'Look For', icon: Search },
+      { type: 'link', to: '/learnmore', labelKey: 'header.what_we_look_for', fallback: 'What We Look For', mobileFallback: 'Look For', icon: Search },
       { type: 'link', to: '/login', labelKey: 'header.portal', fallback: 'Portal', mobileFallback: 'Portal', icon: LogIn },
     ],
     right: [
@@ -136,7 +136,7 @@ const subdomainSubHeaders: Record<string, SubHeaderConfig> = {
 
 // Route-to-role mapping for detecting role from current path
 const routeToRole: Record<string, string> = {
-  '/playersmore': 'players',
+  '/learnmore': 'players',
   '/players': 'players',
   '/clubs': 'clubs',
   '/scouts': 'scouts',
@@ -489,7 +489,7 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
               if (path.startsWith('/agents')) return '/agents';
               if (path.startsWith('/business')) return '/business';
               if (path.startsWith('/media')) return '/media';
-              if (path.startsWith('/players') || path.startsWith('/playersmore') || path.startsWith('/stars') || path.startsWith('/performance') || path.startsWith('/news') || path.startsWith('/between-the-lines')) return '/playersmore';
+              if (path.startsWith('/players') || path.startsWith('/learnmore') || path.startsWith('/stars') || path.startsWith('/performance') || path.startsWith('/news') || path.startsWith('/between-the-lines')) return '/players';
               
               // Only return '/' if truly on the main landing page with no subdomain
               return '/';
