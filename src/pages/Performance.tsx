@@ -26,11 +26,14 @@ const Performance = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background" />
           
           <div className="relative container mx-auto px-4 text-center z-10">
+            <p className="text-sm sm:text-base md:text-lg uppercase tracking-widest text-primary mb-2 md:mb-4">
+              Player Development & Career Support
+            </p>
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bebas uppercase tracking-wider text-white mb-2 md:mb-4">
               REALISE POTENTIAL
             </h1>
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto px-4">
-              Elevating your game through comprehensive support and development
+              We develop our players on and off the pitch — because better players create better careers
             </p>
           </div>
         </section>
