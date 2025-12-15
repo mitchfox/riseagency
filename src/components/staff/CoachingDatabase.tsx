@@ -980,7 +980,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                     </Button>
                   )}
                   <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+                <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
                   <DialogHeader>
                     <DialogTitle>{editingItem ? 'Edit' : 'Add'} {config.singular}</DialogTitle>
                   </DialogHeader>
