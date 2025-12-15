@@ -127,6 +127,7 @@ const Dashboard = () => {
   const [isSubheaderVisible, setIsSubheaderVisible] = useState(true);
   const [selectedFormMetric, setSelectedFormMetric] = useState<string>("r90");
   const [schemes, setSchemes] = useState<any[]>([]);
+  const [selectedSchemePosition, setSelectedSchemePosition] = useState<string>('');
   const [selectedTeamScheme, setSelectedTeamScheme] = useState<string>('');
   const [selectedOppositionScheme, setSelectedOppositionScheme] = useState<string>('');
   
@@ -889,9 +890,9 @@ const Dashboard = () => {
 
       setPlayerData(parsedPlayerData);
 
-      // Fetch tactical schemes for this player's position
+      // Set initial scheme position to player's position
       if (parsedPlayerData.position) {
-        await fetchSchemes(parsedPlayerData.position);
+        setSelectedSchemePosition(parsedPlayerData.position);
       }
 
       // Extract highlights with bulletproof fallbacks
@@ -1096,7 +1097,7 @@ const Dashboard = () => {
       
       const normalizedPosition = normalizePosition(position);
       
-      // Fetch tactical schemes for the player's position that have at least one field filled
+      // Fetch tactical schemes for the selected position that have at least one field filled
       const { data: schemesData, error: schemesError } = await supabase
         .from("tactical_schemes")
         .select("*")
@@ -1113,10 +1114,20 @@ const Dashboard = () => {
       );
       
       setSchemes(filledSchemes);
+      // Reset scheme selections when position changes
+      setSelectedTeamScheme('');
+      setSelectedOppositionScheme('');
     } catch (error: any) {
       console.error("Error fetching schemes:", error);
     }
   };
+
+  // Fetch schemes when selectedSchemePosition changes
+  useEffect(() => {
+    if (selectedSchemePosition) {
+      fetchSchemes(selectedSchemePosition);
+    }
+  }, [selectedSchemePosition]);
 
   // Set up real-time subscription for player_analysis updates
   useEffect(() => {
@@ -1885,9 +1896,46 @@ const Dashboard = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="container mx-auto px-4 space-y-6">
-                      {schemes.length === 0 ? (
+                      {/* Position Selector */}
+                      <div className="space-y-3">
+                        <Label>Select Position</Label>
+                        <Select value={selectedSchemePosition} onValueChange={setSelectedSchemePosition}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose a position to view" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Goalkeeper">Goalkeeper</SelectItem>
+                            <SelectItem value="Full-Back">Full-Back</SelectItem>
+                            <SelectItem value="Centre-Back">Centre-Back</SelectItem>
+                            <SelectItem value="Central Defensive-Midfielder">Central Defensive-Midfielder</SelectItem>
+                            <SelectItem value="Central Midfielder">Central Midfielder</SelectItem>
+                            <SelectItem value="Attacking Midfielder">Attacking Midfielder</SelectItem>
+                            <SelectItem value="Winger">Winger</SelectItem>
+                            <SelectItem value="Centre-Forward">Centre-Forward</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="flex flex-wrap gap-2">
+                          {['Goalkeeper', 'Full-Back', 'Centre-Back', 'Central Defensive-Midfielder', 'Central Midfielder', 'Attacking Midfielder', 'Winger', 'Centre-Forward'].map(pos => (
+                            <Button
+                              key={pos}
+                              variant={selectedSchemePosition === pos ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setSelectedSchemePosition(pos)}
+                              className="font-bold text-xs"
+                            >
+                              {pos}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {!selectedSchemePosition ? (
+                        <div className="py-8 text-center text-muted-foreground">
+                          <p>Select a position to view tactical schemes.</p>
+                        </div>
+                      ) : schemes.length === 0 ? (
                         <div className="py-8">
-                          <p className="text-center text-muted-foreground">No tactical schemes available for your position yet.</p>
+                          <p className="text-center text-muted-foreground">No tactical schemes available for {selectedSchemePosition} yet.</p>
                         </div>
                       ) : (
                         <div className="space-y-6">
