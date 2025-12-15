@@ -137,7 +137,7 @@ const App = () => {
                     {createLocalizedRoutes('/portal', <Dashboard />)}
                     
                     {/* Non-localized routes */}
-                    {createLocalizedRoutes('/playersmore', <Players />)}
+                    {createLocalizedRoutes('/learnmore', <Players />)}
                     <Route path="/players-list" element={<PlayersList />} />
                     <Route path="/players-draft" element={<PlayersDraft />} />
                     {/* Club Network is now only accessible via Staff page */}

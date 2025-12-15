@@ -22,7 +22,7 @@ export const roleConfigs: Record<Exclude<RoleSubdomain, null>, RoleConfig> = {
 
 // Map routes to their role subdomains
 export const pathToRole: Record<string, Exclude<RoleSubdomain, null>> = {
-  '/playersmore': 'players',
+  '/learnmore': 'players',
   '/players': 'players',
   '/clubs': 'clubs',
   '/scouts': 'scouts',
