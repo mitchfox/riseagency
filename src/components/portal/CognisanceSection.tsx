@@ -212,10 +212,10 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
     }
   }, []);
 
-  // Fetch all concepts (available to all players)
+  // Fetch all concepts from coaching_analysis (available to all players)
   const fetchConcepts = useCallback(async () => {
     const { data: conceptsData, error } = await supabase
-      .from("analyses")
+      .from("coaching_analysis")
       .select("*")
       .eq("analysis_type", "concept");
     
@@ -223,8 +223,8 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
       setConcepts(conceptsData.map(c => ({
         id: c.id,
         title: c.title || "Untitled Concept",
-        points: Array.isArray(c.points) ? c.points : [],
-        explanation: c.explanation || undefined
+        points: Array.isArray(c.attachments) ? c.attachments : [],
+        explanation: c.content || c.description || undefined
       })));
     }
   }, []);
