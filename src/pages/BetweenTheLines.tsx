@@ -8,6 +8,8 @@ import { getLocalizedPath } from "@/lib/localizedRoutes";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HoverText } from "@/components/HoverText";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -64,6 +66,8 @@ export default function BetweenTheLines() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("ALL POSTS");
   const [selectedPosition, setSelectedPosition] = useState("ALL POSITIONS");
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [positionOpen, setPositionOpen] = useState(false);
   const [autoplayPlugin] = useState(() =>
     Autoplay({ delay: 2000, stopOnInteraction: false, stopOnMouseEnter: true })
   );
@@ -132,78 +136,103 @@ export default function BetweenTheLines() {
         image="/og-preview-btl.png"
       />
       <Header />
-      <main className="flex-1 pt-32 pb-16 touch-pan-y overflow-x-hidden">
+      <main className="flex-1 pt-28 pb-12 touch-pan-y overflow-x-hidden">
         <div className="container mx-auto px-4">
           {/* Page Title */}
-          <div className="text-center mb-12 space-y-3 animate-fade-in">
-            <div className="inline-block">
-              <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                {t('btl.badge')}
-              </span>
-            </div>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider text-foreground mb-4">
+          <div className="text-center mb-8 space-y-2 animate-fade-in">
+            <span className="text-xs font-bebas uppercase tracking-widest text-primary">
+              {t('btl.badge')}
+            </span>
+            <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
               {t('btl.title_part1')} <span className="text-primary">{t('btl.title_part2')}</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto">
               {t('btl.subtitle')}
             </p>
           </div>
 
-          {/* Filters Section */}
-          <div className="space-y-6 mb-12">
-            {/* Category Filters */}
-            <div className="space-y-3">
-              <span className="text-xs font-bebas uppercase tracking-widest text-muted-foreground">
-                Category
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`text-sm font-bebas uppercase tracking-wider px-4 py-2 rounded-full transition-all ${
-                      selectedCategory === category
-                        ? "text-primary-foreground bg-primary"
-                        : "text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted"
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-            </div>
+          {/* Compact Filters */}
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            {/* Category Filter */}
+            <Collapsible open={categoryOpen} onOpenChange={setCategoryOpen}>
+              <CollapsibleTrigger className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border hover:border-primary/50 transition-all text-sm font-bebas uppercase tracking-wider">
+                <span className="text-muted-foreground">Category:</span>
+                <span className="text-foreground">{selectedCategory === "ALL POSTS" ? "All" : selectedCategory}</span>
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${categoryOpen ? "rotate-180" : ""}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="absolute z-50 mt-2 p-3 rounded-lg bg-card border border-border shadow-xl max-w-sm">
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => {
+                        setSelectedCategory(category);
+                        setCategoryOpen(false);
+                      }}
+                      className={`text-xs font-bebas uppercase tracking-wider px-3 py-1.5 rounded-full transition-all ${
+                        selectedCategory === category
+                          ? "text-primary-foreground bg-primary"
+                          : "text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted"
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
-            {/* Position Filters */}
-            <div className="space-y-3">
-              <span className="text-xs font-bebas uppercase tracking-widest text-muted-foreground">
-                Position
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {positions.map((position) => (
-                  <button
-                    key={position}
-                    onClick={() => setSelectedPosition(position)}
-                    className={`text-sm font-bebas uppercase tracking-wider px-4 py-2 rounded-full transition-all ${
-                      selectedPosition === position
-                        ? "text-primary-foreground bg-primary"
-                        : "text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted"
-                    }`}
-                  >
-                    {position}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Position Filter */}
+            <Collapsible open={positionOpen} onOpenChange={setPositionOpen}>
+              <CollapsibleTrigger className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border hover:border-primary/50 transition-all text-sm font-bebas uppercase tracking-wider">
+                <span className="text-muted-foreground">Position:</span>
+                <span className="text-foreground">{selectedPosition === "ALL POSITIONS" ? "All" : selectedPosition}</span>
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${positionOpen ? "rotate-180" : ""}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="absolute z-50 mt-2 p-3 rounded-lg bg-card border border-border shadow-xl max-w-xs">
+                <div className="flex flex-wrap gap-2">
+                  {positions.map((position) => (
+                    <button
+                      key={position}
+                      onClick={() => {
+                        setSelectedPosition(position);
+                        setPositionOpen(false);
+                      }}
+                      className={`text-xs font-bebas uppercase tracking-wider px-3 py-1.5 rounded-full transition-all ${
+                        selectedPosition === position
+                          ? "text-primary-foreground bg-primary"
+                          : "text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted"
+                      }`}
+                    >
+                      {position}
+                    </button>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Clear Filters */}
+            {(selectedCategory !== "ALL POSTS" || selectedPosition !== "ALL POSITIONS") && (
+              <button
+                onClick={() => {
+                  setSelectedCategory("ALL POSTS");
+                  setSelectedPosition("ALL POSITIONS");
+                }}
+                className="text-xs font-bebas uppercase tracking-wider px-4 py-2 rounded-full text-muted-foreground hover:text-foreground transition-all"
+              >
+                Clear Filters
+              </button>
+            )}
           </div>
 
           {/* Articles Carousel */}
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="space-y-4">
-                  <Skeleton className="h-80 w-full rounded-lg" />
+                <div key={i} className="space-y-3">
+                  <Skeleton className="h-64 w-full rounded-lg" />
                   <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-5 w-full" />
                 </div>
               ))}
             </div>
@@ -272,21 +301,21 @@ export default function BetweenTheLines() {
           )}
 
           {/* RISE Broadcast Advertisement */}
-          <section className="py-8">
-            <div className="max-w-3xl mx-auto p-8 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
+          <section className="py-6 mt-8">
+            <div className="max-w-2xl mx-auto p-6 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent"></div>
               <div className="text-center relative z-10">
-                <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary mb-3">
+                <h2 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-primary mb-2">
                   {t('btl.broadcast_title')}
                 </h2>
-                <p className="text-foreground mb-6 text-base md:text-lg leading-relaxed">
+                <p className="text-foreground mb-4 text-sm md:text-base leading-relaxed">
                   {t('btl.broadcast_description')}
                 </p>
                 <a
                   href="https://www.instagram.com/channel/AbY33s3ZhuxaNwuo/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 hover:scale-105 transition-all rounded shadow-lg"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-background font-bebas uppercase tracking-wider hover:bg-primary/90 hover:scale-105 transition-all rounded shadow-lg"
                 >
                   <HoverText text={t('btl.join_channel')} />
                 </a>
