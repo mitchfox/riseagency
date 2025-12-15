@@ -2037,15 +2037,15 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               <TabsContent value="programming" className="mt-4 md:mt-0">
                 {/* Player Notes and Next Program Notes - Side by Side - MOVED TO TOP */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  {/* Player Notes Card */}
+                  {/* Agent Notes Card - Shows in Transfer Hub for players */}
                   <Card>
                     <CardHeader className="px-3 md:px-6 py-3 md:py-4">
-                      <CardTitle className="text-base">Player Notes</CardTitle>
-                      <p className="text-xs text-muted-foreground">Health, needs, and general notes</p>
+                      <CardTitle className="text-base">Agent Notes</CardTitle>
+                      <p className="text-xs text-muted-foreground">These notes appear in the player's Transfer Hub under "Notes from Your Agent"</p>
                     </CardHeader>
                     <CardContent className="px-3 md:px-6 py-4">
                       <Textarea
-                        placeholder="Add notes about the player's health, specific needs, training considerations..."
+                        placeholder="Add notes for the player about transfers, club interest, contract updates..."
                         value={selectedPlayer?.agent_notes || ''}
                         onChange={async (e) => {
                           const newValue = e.target.value;
