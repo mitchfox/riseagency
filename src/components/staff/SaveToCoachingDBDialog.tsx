@@ -74,23 +74,16 @@ interface SaveToCoachingDBDialogProps {
   programName: string;
 }
 
-const sessionLabels = [
-  { key: 'preSessionA', label: 'Pre-A' },
-  { key: 'sessionA', label: 'Session A' },
-  { key: 'preSessionB', label: 'Pre-B' },
-  { key: 'sessionB', label: 'Session B' },
-  { key: 'preSessionC', label: 'Pre-C' },
-  { key: 'sessionC', label: 'Session C' },
-  { key: 'preSessionD', label: 'Pre-D' },
-  { key: 'sessionD', label: 'Session D' },
-  { key: 'preSessionE', label: 'Pre-E' },
-  { key: 'sessionE', label: 'Session E' },
-  { key: 'preSessionF', label: 'Pre-F' },
-  { key: 'sessionF', label: 'Session F' },
-  { key: 'preSessionG', label: 'Pre-G' },
-  { key: 'sessionG', label: 'Session G' },
-  { key: 'preSessionH', label: 'Pre-H' },
-  { key: 'sessionH', label: 'Session H' },
+// Main sessions only - pre-sessions are bundled with their main session
+const mainSessionLabels = [
+  { key: 'sessionA', preKey: 'preSessionA', label: 'Session A' },
+  { key: 'sessionB', preKey: 'preSessionB', label: 'Session B' },
+  { key: 'sessionC', preKey: 'preSessionC', label: 'Session C' },
+  { key: 'sessionD', preKey: 'preSessionD', label: 'Session D' },
+  { key: 'sessionE', preKey: 'preSessionE', label: 'Session E' },
+  { key: 'sessionF', preKey: 'preSessionF', label: 'Session F' },
+  { key: 'sessionG', preKey: 'preSessionG', label: 'Session G' },
+  { key: 'sessionH', preKey: 'preSessionH', label: 'Session H' },
 ];
 
 // Deep clone utility to ensure complete independence
@@ -123,11 +116,13 @@ export const SaveToCoachingDBDialog = ({
       setProgrammeName(programmingData.phaseName || programName || 'Untitled Programme');
       setSaveProgramme(false);
       
-      // Initialize session settings
+      // Initialize session settings - only main sessions (pre-sessions bundled)
       const initialSettings: { [key: string]: { selected: boolean; name: string } } = {};
-      sessionLabels.forEach(({ key, label }) => {
-        const session = programmingData[key as keyof typeof programmingData] as SessionData;
-        const hasExercises = session?.exercises?.length > 0;
+      mainSessionLabels.forEach(({ key, preKey, label }) => {
+        const mainSession = programmingData[key as keyof typeof programmingData] as SessionData;
+        const preSession = programmingData[preKey as keyof typeof programmingData] as SessionData;
+        const mainCount = mainSession?.exercises?.length || 0;
+        const preCount = preSession?.exercises?.length || 0;
         initialSettings[key] = {
           selected: false,
           name: `${label} - ${programmingData.phaseName || programName || 'Untitled'}`
@@ -137,9 +132,18 @@ export const SaveToCoachingDBDialog = ({
     }
   }, [isOpen, programmingData, programName]);
 
+  // Get total exercise count for a main session (includes pre-session)
   const getSessionExerciseCount = (key: string): number => {
-    const session = programmingData[key as keyof typeof programmingData] as SessionData;
-    return session?.exercises?.length || 0;
+    const sessionInfo = mainSessionLabels.find(s => s.key === key);
+    if (!sessionInfo) return 0;
+    
+    const mainSession = programmingData[key as keyof typeof programmingData] as SessionData;
+    const preSession = programmingData[sessionInfo.preKey as keyof typeof programmingData] as SessionData;
+    
+    const mainCount = mainSession?.exercises?.length || 0;
+    const preCount = preSession?.exercises?.length || 0;
+    
+    return mainCount + preCount;
   };
 
   const toggleSessionSelection = (key: string) => {
@@ -159,7 +163,7 @@ export const SaveToCoachingDBDialog = ({
   const selectAllSessions = () => {
     setSessionSaveSettings(prev => {
       const updated = { ...prev };
-      sessionLabels.forEach(({ key }) => {
+      mainSessionLabels.forEach(({ key }) => {
         if (getSessionExerciseCount(key) > 0) {
           updated[key] = { ...updated[key], selected: true };
         }
@@ -227,21 +231,27 @@ export const SaveToCoachingDBDialog = ({
         toast.success(`Programme "${programmeName}" saved to database`);
       }
 
-      // Save selected sessions
+      // Save selected sessions (including bundled pre-sessions)
       if (selectedSessions.length > 0) {
         const sessionsToSave = selectedSessions.map(([key, settings]) => {
-          const session = programmingData[key as keyof typeof programmingData] as SessionData;
-          // Deep clone exercises to ensure complete independence
-          const exercisesClone = deepClone(session.exercises);
+          // Find the corresponding session info with preKey
+          const sessionInfo = mainSessionLabels.find(s => s.key === key);
+          
+          const mainSession = programmingData[key as keyof typeof programmingData] as SessionData;
+          const preSession = sessionInfo 
+            ? programmingData[sessionInfo.preKey as keyof typeof programmingData] as SessionData
+            : { exercises: [] };
+          
+          // Combine pre-session and main session exercises
+          const preExercises = deepClone(preSession?.exercises || []);
+          const mainExercises = deepClone(mainSession?.exercises || []);
+          const allExercises = [...preExercises, ...mainExercises];
           
           return {
             title: settings.name,
-            description: `Saved from programming - ${exercisesClone.length} exercises`,
+            description: `Saved from programming - ${allExercises.length} exercises (${preExercises.length} pre + ${mainExercises.length} main)`,
             category: 'Player Programming',
-            exercises: exercisesClone as unknown as any,
-            content: exercisesClone.map((ex: Exercise) => 
-              `${ex.name}: ${ex.sets} sets x ${ex.repetitions} reps @ ${ex.load}, ${ex.recoveryTime} rest`
-            ).join('\n')
+            exercises: allExercises as unknown as any
           };
         });
 
@@ -260,7 +270,7 @@ export const SaveToCoachingDBDialog = ({
   };
 
   const selectedSessionCount = Object.values(sessionSaveSettings).filter(s => s.selected).length;
-  const sessionsWithExercises = sessionLabels.filter(({ key }) => getSessionExerciseCount(key) > 0);
+  const sessionsWithExercises = mainSessionLabels.filter(({ key }) => getSessionExerciseCount(key) > 0);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -336,9 +346,15 @@ export const SaveToCoachingDBDialog = ({
 
             <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-2">
-                {sessionLabels.map(({ key, label }) => {
+                {mainSessionLabels.map(({ key, preKey, label }) => {
                   const exerciseCount = getSessionExerciseCount(key);
                   const settings = sessionSaveSettings[key];
+                  
+                  // Get breakdown of pre vs main exercises
+                  const mainSession = programmingData[key as keyof typeof programmingData] as SessionData;
+                  const preSession = programmingData[preKey as keyof typeof programmingData] as SessionData;
+                  const mainCount = mainSession?.exercises?.length || 0;
+                  const preCount = preSession?.exercises?.length || 0;
                   
                   if (exerciseCount === 0) return null;
                   
@@ -363,9 +379,16 @@ export const SaveToCoachingDBDialog = ({
                             >
                               {label}
                             </label>
-                            <Badge variant="secondary" className="text-xs">
-                              {exerciseCount} exercises
-                            </Badge>
+                            <div className="flex gap-1">
+                              {preCount > 0 && (
+                                <Badge variant="outline" className="text-xs">
+                                  {preCount} pre
+                                </Badge>
+                              )}
+                              <Badge variant="secondary" className="text-xs">
+                                {mainCount} main
+                              </Badge>
+                            </div>
                           </div>
                           {settings?.selected && (
                             <Input
