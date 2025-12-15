@@ -963,32 +963,23 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                         <Upload className="w-4 h-4 mr-2" />
                         {Object.keys(uploadProgress).length > 0 ? 'Uploading...' : 'Upload PDFs'}
                       </Button>
-                      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Button onClick={resetForm} variant="outline" className="w-full sm:w-auto">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add Manually
-                          </Button>
-                        </DialogTrigger>
-                      </Dialog>
+                      <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} variant="outline" className="w-full sm:w-auto">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Manually
+                      </Button>
                     </>
                   ) : key === 'coaching_concepts' ? (
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button onClick={resetForm} className="w-full sm:w-auto">
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Concept
-                        </Button>
-                      </DialogTrigger>
-                    </Dialog>
+                    <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} className="w-full sm:w-auto">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Concept
+                    </Button>
                   ) : (
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button onClick={resetForm} className="w-full sm:w-auto">
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add {config.singular}
-                        </Button>
-                      </DialogTrigger>
+                    <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} className="w-full sm:w-auto">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add {config.singular}
+                    </Button>
+                  )}
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
                   <DialogHeader>
                     <DialogTitle>{editingItem ? 'Edit' : 'Add'} {config.singular}</DialogTitle>
@@ -1140,7 +1131,6 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                   </ScrollArea>
                 </DialogContent>
               </Dialog>
-                  )}
                 </>
               )}
             </div>
