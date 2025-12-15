@@ -1084,15 +1084,26 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                               required
                             />
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="description">Description</Label>
-                            <Textarea
-                              id="description"
-                              value={formData.description}
-                              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                              placeholder="Brief description"
-                              rows={2}
-                            />
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="description">Description</Label>
+                              <Textarea
+                                id="description"
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                placeholder="Brief description"
+                                rows={3}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="category">Category</Label>
+                              <Input
+                                id="category"
+                                value={formData.category}
+                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                placeholder="Category (optional)"
+                              />
+                            </div>
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="content">Content</Label>
@@ -1101,16 +1112,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                               value={formData.content}
                               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                               placeholder="Full concept content..."
-                              rows={6}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="category">Category</Label>
-                            <Input
-                              id="category"
-                              value={formData.category}
-                              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                              placeholder="Category (optional)"
+                              rows={4}
                             />
                           </div>
                         </>
