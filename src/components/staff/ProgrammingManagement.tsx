@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Database, Sparkles, Calendar } from "lucide-react";
+import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Database, Sparkles, Calendar, FolderOpen } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
+import { SessionDatabaseSelector } from "./SessionDatabaseSelector";
 interface ProgrammingManagementProps {
   isOpen: boolean;
   onClose: () => void;
@@ -177,6 +178,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
     exercises: false
   });
   const [isExerciseSelectorOpen, setIsExerciseSelectorOpen] = useState(false);
+  const [isSessionSelectorOpen, setIsSessionSelectorOpen] = useState(false);
   const [showPasteDialog, setShowPasteDialog] = useState(false);
   const [pasteText, setPasteText] = useState("");
   const [showPasteScheduleDialog, setShowPasteScheduleDialog] = useState(false);
@@ -914,6 +916,32 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
       ...session,
       exercises: [...exercisesClone, exerciseClone]
     });
+  };
+
+  const importSessionFromDatabase = (sessionKey: SessionKey, exercises: Exercise[], mode: 'replace' | 'append') => {
+    const session = programmingData[sessionKey] as SessionData;
+    if (!session) {
+      console.error('Session not found:', sessionKey);
+      return;
+    }
+    
+    // Deep clone the imported exercises
+    const importedExercises = deepClone(exercises);
+    
+    if (mode === 'replace') {
+      updateField(sessionKey, {
+        ...session,
+        exercises: importedExercises
+      });
+      toast.success(`Replaced with ${exercises.length} exercise(s)`);
+    } else {
+      const existingExercises = deepClone(session.exercises || []);
+      updateField(sessionKey, {
+        ...session,
+        exercises: [...existingExercises, ...importedExercises]
+      });
+      toast.success(`Added ${exercises.length} exercise(s)`);
+    }
   };
 
   const parsePastedExercises = () => {
@@ -1810,7 +1838,16 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                             <Label className="text-lg font-semibold">
                               {sessionLabels.find(s => s.key === selectedSession)?.label} Exercises
                             </Label>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setIsSessionSelectorOpen(true)}
+                              >
+                                <FolderOpen className="w-4 h-4 mr-2" />
+                                Import Session
+                              </Button>
                               <Button
                                 type="button"
                                 size="sm"
@@ -2298,6 +2335,16 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
         }
       }}
     />
+
+      <SessionDatabaseSelector
+        isOpen={isSessionSelectorOpen}
+        onClose={() => setIsSessionSelectorOpen(false)}
+        onImport={(exercises, mode) => {
+          if (selectedSession) {
+            importSessionFromDatabase(selectedSession as SessionKey, exercises, mode);
+          }
+        }}
+      />
 
     <Dialog open={showPasteDialog} onOpenChange={setShowPasteDialog}>
       <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-3xl max-h-[85vh] overflow-y-auto">
