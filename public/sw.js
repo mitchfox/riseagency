@@ -1,5 +1,5 @@
 // UPDATE THIS VERSION NUMBER WHEN YOU DEPLOY NEW CHANGES
-const CACHE_VERSION = 'rise-v1.3.5';
+const CACHE_VERSION = 'rise-v1.4.0';
 const CACHE_NAME = `${CACHE_VERSION}`;
 const ASSETS_CACHE = `${CACHE_VERSION}-assets`;
 
@@ -143,25 +143,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For navigation requests (HTML pages), try cache first to enable offline
+  // For navigation requests (HTML pages), network-first to always get latest
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      caches.match('/').then((cachedResponse) => {
-        if (cachedResponse) {
-          console.log('[Service Worker] Serving index from cache for navigation');
-          return addCrossOriginHeaders(cachedResponse);
+      fetch(event.request).then((response) => {
+        if (response && response.status === 200) {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put('/', responseToCache);
+          });
         }
-        
-        // If not cached, try network
-        return fetch(event.request).then((response) => {
-          if (response && response.status === 200) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put('/', responseToCache);
-            });
+        return addCrossOriginHeaders(response);
+      }).catch(() => {
+        // Fallback to cache only if offline
+        return caches.match('/').then((cachedResponse) => {
+          if (cachedResponse) {
+            console.log('[Service Worker] Serving index from cache (offline)');
+            return addCrossOriginHeaders(cachedResponse);
           }
-          return addCrossOriginHeaders(response);
-        }).catch(() => {
           return new Response(
             `<!DOCTYPE html>
             <html>
