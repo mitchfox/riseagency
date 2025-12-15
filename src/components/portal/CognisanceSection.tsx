@@ -212,25 +212,14 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
     }
   }, []);
 
-  // Fetch concepts
+  // Fetch all concepts (available to all players)
   const fetchConcepts = useCallback(async () => {
-    const { data: analysisData } = await supabase
-      .from("player_analysis")
-      .select("analysis_writer_id")
-      .eq("player_id", playerId);
-    
-    if (!analysisData || analysisData.length === 0) return;
-    
-    const linkedIds = analysisData.filter(a => a.analysis_writer_id).map(a => a.analysis_writer_id);
-    if (linkedIds.length === 0) return;
-    
-    const { data: conceptsData } = await supabase
+    const { data: conceptsData, error } = await supabase
       .from("analyses")
       .select("*")
-      .in("id", linkedIds)
       .eq("analysis_type", "concept");
     
-    if (conceptsData) {
+    if (!error && conceptsData) {
       setConcepts(conceptsData.map(c => ({
         id: c.id,
         title: c.title || "Untitled Concept",
@@ -238,7 +227,7 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
         explanation: c.explanation || undefined
       })));
     }
-  }, [playerId]);
+  }, []);
 
   // Fetch pre-match analyses
   const fetchPreMatchAnalyses = useCallback(async () => {
