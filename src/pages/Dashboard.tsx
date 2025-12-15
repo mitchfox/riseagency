@@ -1189,12 +1189,13 @@ const Dashboard = () => {
       
       setPrograms(normalizedPrograms);
       
-      // Set the current program as default
-      const currentProgram = normalizedPrograms?.find(p => p.is_current);
+      // Set the current program as default (excluding Testing Protocol)
+      const nonTestingPrograms = normalizedPrograms?.filter(p => p.program_name !== 'Testing Protocol');
+      const currentProgram = nonTestingPrograms?.find(p => p.is_current);
       if (currentProgram) {
         setSelectedProgramId(currentProgram.id);
-      } else if (programsData && programsData.length > 0) {
-        setSelectedProgramId(programsData[0].id);
+      } else if (nonTestingPrograms && nonTestingPrograms.length > 0) {
+        setSelectedProgramId(nonTestingPrograms[0].id);
       }
     } catch (error: any) {
       console.error("Error fetching programs:", error);
@@ -2725,15 +2726,15 @@ const Dashboard = () => {
                     <CardTitle className="font-heading tracking-tight">
                       Physical Programming
                     </CardTitle>
-                    {programs.length > 1 && (
+                    {programs.filter(p => p.program_name !== 'Testing Protocol').length > 1 && (
                       <Select value={selectedProgramId || undefined} onValueChange={setSelectedProgramId}>
                         <SelectTrigger className="w-full md:w-[250px]">
                           <SelectValue placeholder="Select program" />
                         </SelectTrigger>
                         <SelectContent>
-                          {programs.map((program) => (
+                          {programs.filter(p => p.program_name !== 'Testing Protocol').map((program) => (
                             <SelectItem key={program.id} value={program.id}>
-                              {program.program_name} {program.is_current && "(Current)"}
+                              {program.phase_dates || program.program_name} {program.is_current && "(Current)"}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -2745,11 +2746,11 @@ const Dashboard = () => {
                   {/* Programming Notes from Coach */}
                   {playerData?.id && <PlayerProgrammingNotes playerId={playerData.id} />}
                   
-                  {programs.length === 0 ? (
+                  {programs.filter(p => p.program_name !== 'Testing Protocol').length === 0 ? (
                     <div className="py-8"></div>
                   ) : (
                     <>
-                      {programs.filter(p => p.id === selectedProgramId).map((program) => {
+                      {programs.filter(p => p.id === selectedProgramId && p.program_name !== 'Testing Protocol').map((program) => {
                         const hasContent = 
                           program.overview_text || 
                           program.phase_image_url || 
