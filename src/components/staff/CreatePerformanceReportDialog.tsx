@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1160,7 +1161,7 @@ export const CreatePerformanceReportDialog = ({
 
         {loadingData ? (
           <div className="flex items-center justify-center py-8">
-            <div className="text-center">RISING...</div>
+            <LoadingSpinner size="md" />
           </div>
         ) : (
           <div className="space-y-4 sm:space-y-6 pb-20">

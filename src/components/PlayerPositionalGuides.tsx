@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -181,7 +182,7 @@ export const PlayerPositionalGuides = () => {
             <p>Select a position above to view the tactical guide.</p>
           </div>
         ) : loading ? (
-          <div className="py-8 text-center text-muted-foreground">RISING...</div>
+          <div className="py-8 flex justify-center"><LoadingSpinner size="md" /></div>
         ) : (
           <div className="space-y-4">
             <h3 className="text-xl font-bebas uppercase tracking-wider">

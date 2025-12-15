@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -182,7 +183,7 @@ const BetweenTheLinesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   if (loading && posts.length === 0) {
-    return <div>RISING...</div>;
+    return <div className="flex justify-center py-8"><LoadingSpinner size="md" /></div>;
   }
 
   return (

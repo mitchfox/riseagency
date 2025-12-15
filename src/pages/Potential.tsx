@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PageLoading } from "@/components/LoadingSpinner";
 import { useScoutAuth } from "@/hooks/useScoutAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -343,11 +344,7 @@ const Potential = () => {
   );
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-xl">RISING...</div>
-      </div>
-    );
+    return <PageLoading />;
   }
 
   return (

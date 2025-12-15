@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -420,7 +421,7 @@ export const MapCoordinatesManager = () => {
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-12">RISING...</div>
+        <div className="flex justify-center py-12"><LoadingSpinner size="md" /></div>
       ) : clubs.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           No clubs on the map yet. Click "Add Club" to begin.

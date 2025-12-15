@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -168,7 +169,7 @@ const PerformanceReport = () => {
       <div className="min-h-screen bg-background">
         {!isAuthenticated && <Header />}
         <main className="container mx-auto px-4 py-8">
-          <div className="text-center">RISING...</div>
+          <LoadingSpinner size="md" />
         </main>
         {!isAuthenticated && <Footer />}
       </div>

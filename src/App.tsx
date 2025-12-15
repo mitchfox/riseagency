@@ -58,11 +58,8 @@ const PlayerJourney = lazy(() => import("./pages/PlayerJourney"));
 const FluidCursor = lazy(() => import("./components/FluidCursor"));
 
 // Loading fallback component
-const PageLoader = () => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
-    <div className="animate-pulse text-primary font-bebas text-2xl tracking-wider">RISING...</div>
-  </div>
-);
+import { PageLoading } from "@/components/LoadingSpinner";
+const PageLoader = () => <PageLoading />;
 
 const queryClient = new QueryClient();
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -232,7 +233,7 @@ export function OpenAccessManagement() {
       <Card className="bg-card border-border">
         <CardContent className="pt-6">
           {isLoading ? (
-            <p className="text-muted-foreground text-center py-8">RISING...</p>
+            <div className="flex justify-center py-8"><LoadingSpinner size="md" /></div>
           ) : issues.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No issues created yet</p>
           ) : (

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -610,7 +611,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
           <ScrollArea className="flex-1 pr-4">
             {loading ? (
               <div className="flex items-center justify-center h-32">
-                <div className="text-muted-foreground">RISING...</div>
+                <LoadingSpinner size="md" />
               </div>
             ) : (
               <div className="space-y-2">

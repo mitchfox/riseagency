@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Calendar, TrendingUp, ArrowRight, Trophy, X } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine, Rectangle } from "recharts";
@@ -460,8 +461,8 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                         className="relative bg-muted animate-pulse" 
                         style={{ aspectRatio: '21/9', width: '85vw' }}
                       >
-                        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/30">
-                          RISING...
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <LoadingSpinner size="sm" />
                         </div>
                       </div>
                     </div>
