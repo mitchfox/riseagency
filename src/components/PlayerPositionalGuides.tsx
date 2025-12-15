@@ -223,50 +223,102 @@ export const PlayerPositionalGuides = () => {
                           <div key={subcategory} className="space-y-4">
                             <h4 className="font-semibold text-accent text-lg border-b border-border pb-2">{subcategory}</h4>
                             
-                            {/* Display each point */}
-                            {points.map((point) => (
-                              <div key={point.id} className="space-y-3">
-                                <h5 className="font-medium text-foreground">{point.title}</h5>
+                            {/* Display each point - collapsible */}
+                            <Accordion type="multiple" className="w-full">
+                              {points.map((point) => {
+                                const hasImages = point.images && point.images.length > 0;
+                                const hasTwoParagraphs = point.paragraphs && point.paragraphs.length === 2;
                                 
-                                {/* Paragraphs */}
-                                {point.paragraphs && point.paragraphs.length > 0 && (
-                                  <div className="space-y-2">
-                                    {point.paragraphs.map((para, idx) => (
-                                      <div
-                                        key={idx}
-                                        className="bg-muted/50 border border-border rounded-lg p-3 hover:bg-muted/70 transition-colors"
-                                      >
-                                        <div className="flex gap-2">
-                                          <span className="text-accent font-semibold mt-0.5">•</span>
-                                          <p className="text-muted-foreground flex-1">{para}</p>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                                
-                                {/* Images from point */}
-                                {point.images && point.images.length > 0 && (
-                                  <div className="relative border rounded-lg p-3 bg-muted/30">
-                                    {point.video_url && (
-                                      <button
-                                        onClick={() => window.open(point.video_url!, '_blank')}
-                                        className="absolute top-2 right-2 z-10 bg-primary/90 hover:bg-primary p-1.5 rounded-md transition-colors"
-                                      >
-                                        <Video className="h-4 w-4 text-primary-foreground" />
-                                      </button>
-                                    )}
-                                    <div className={`grid gap-2 ${point.image_layout === '1' ? 'grid-cols-1' : point.image_layout === '2' ? 'grid-cols-2' : 'grid-cols-3'}`}>
-                                      {point.images.map((img: any, idx: number) => (
-                                        <div key={idx} className="aspect-video bg-muted rounded-lg overflow-hidden">
-                                          <img src={img.url || img} alt="" className="w-full h-full object-cover" />
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
+                                return (
+                                  <AccordionItem key={point.id} value={point.id} className="border-b-0">
+                                    <AccordionTrigger className="hover:no-underline py-2">
+                                      <h5 className="font-medium text-foreground text-left">{point.title}</h5>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="space-y-3 pt-1">
+                                      {/* If 2 paragraphs: first paragraph, then images, then second paragraph */}
+                                      {hasTwoParagraphs && hasImages ? (
+                                        <>
+                                          {/* First paragraph */}
+                                          <div className="bg-muted/50 border border-border rounded-lg p-3">
+                                            <div className="flex gap-2">
+                                              <span className="text-accent font-semibold mt-0.5">•</span>
+                                              <p className="text-muted-foreground flex-1">{point.paragraphs![0]}</p>
+                                            </div>
+                                          </div>
+                                          
+                                          {/* Images between paragraphs - full width */}
+                                          <div className="relative">
+                                            {point.video_url && (
+                                              <button
+                                                onClick={() => window.open(point.video_url!, '_blank')}
+                                                className="absolute top-2 right-2 z-10 bg-primary/90 hover:bg-primary p-1.5 rounded-md transition-colors"
+                                              >
+                                                <Video className="h-4 w-4 text-primary-foreground" />
+                                              </button>
+                                            )}
+                                            <div className="grid grid-cols-1 gap-3">
+                                              {point.images.map((img: any, idx: number) => (
+                                                <div key={idx} className="w-full rounded-lg overflow-hidden">
+                                                  <img src={img.url || img} alt="" className="w-full h-auto object-contain" />
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                          
+                                          {/* Second paragraph */}
+                                          <div className="bg-muted/50 border border-border rounded-lg p-3">
+                                            <div className="flex gap-2">
+                                              <span className="text-accent font-semibold mt-0.5">•</span>
+                                              <p className="text-muted-foreground flex-1">{point.paragraphs![1]}</p>
+                                            </div>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <>
+                                          {/* Standard layout: paragraphs then images */}
+                                          {point.paragraphs && point.paragraphs.length > 0 && (
+                                            <div className="space-y-2">
+                                              {point.paragraphs.map((para, idx) => (
+                                                <div
+                                                  key={idx}
+                                                  className="bg-muted/50 border border-border rounded-lg p-3"
+                                                >
+                                                  <div className="flex gap-2">
+                                                    <span className="text-accent font-semibold mt-0.5">•</span>
+                                                    <p className="text-muted-foreground flex-1">{para}</p>
+                                                  </div>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          )}
+                                          
+                                          {/* Images - full width */}
+                                          {hasImages && (
+                                            <div className="relative">
+                                              {point.video_url && (
+                                                <button
+                                                  onClick={() => window.open(point.video_url!, '_blank')}
+                                                  className="absolute top-2 right-2 z-10 bg-primary/90 hover:bg-primary p-1.5 rounded-md transition-colors"
+                                                >
+                                                  <Video className="h-4 w-4 text-primary-foreground" />
+                                                </button>
+                                              )}
+                                              <div className="grid grid-cols-1 gap-3">
+                                                {point.images.map((img: any, idx: number) => (
+                                                  <div key={idx} className="w-full rounded-lg overflow-hidden">
+                                                    <img src={img.url || img} alt="" className="w-full h-auto object-contain" />
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </>
+                                      )}
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                );
+                              })}
+                            </Accordion>
                             
                             {/* Additional Media Grid Display from positional_guide_media */}
                             {mediaRows.map((row) => (
