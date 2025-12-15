@@ -256,20 +256,42 @@ const PlayersDraft = () => {
         </div>
       </div>
 
-      {/* Progress indicator */}
-      <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 hidden lg:flex flex-col gap-3">
-        {sections.map((section, index) => (
-          <button
-            key={section.id}
-            onClick={() => scrollToSection(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 hover:scale-125 ${
-              activeSection === index 
-                ? 'bg-primary scale-125 shadow-[0_0_10px_hsl(var(--primary))]' 
-                : 'bg-white/30 hover:bg-white/50'
-            }`}
-            aria-label={`Go to section ${index + 1}`}
-          />
-        ))}
+      {/* Progress indicator - Left side with section titles */}
+      <div className="fixed left-6 top-1/2 -translate-y-1/2 z-50 hidden lg:flex flex-col gap-3">
+        {sections.map((section, index) => {
+          const isActive = activeSection === index;
+          const sectionTitle = section.type === 'hero' 
+            ? t('players.hero_nav', 'Start')
+            : section.type === 'services'
+            ? t('players.services_nav', 'Services')
+            : section.type === 'cta'
+            ? t('players.cta_nav', 'Join')
+            : t(section.titleKey || '', section.titleFallback || '');
+          
+          return (
+            <button
+              key={section.id}
+              onClick={() => scrollToSection(index)}
+              className={`flex items-center gap-3 transition-all duration-300 group ${
+                isActive ? 'opacity-100' : 'opacity-60 hover:opacity-100'
+              }`}
+              aria-label={`Go to ${sectionTitle}`}
+            >
+              <div className={`w-3 h-3 rounded-full transition-all duration-300 flex-shrink-0 ${
+                isActive 
+                  ? 'bg-primary scale-125 shadow-[0_0_10px_hsl(var(--primary))]' 
+                  : 'bg-white/30 group-hover:bg-white/50 group-hover:scale-110'
+              }`} />
+              <span className={`text-sm font-bebas uppercase tracking-wider transition-all duration-300 whitespace-nowrap ${
+                isActive 
+                  ? 'text-primary translate-x-0 opacity-100' 
+                  : 'text-white/50 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 group-hover:text-white/70'
+              }`}>
+                {sectionTitle}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Hero Section */}
