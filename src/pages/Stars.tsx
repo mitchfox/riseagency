@@ -168,25 +168,6 @@ const Stars = () => {
                 {t('stars.subtitle', 'Elite Football Representation & Performance Optimisation')}
               </p>
               
-              {/* Capability Tiles */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 max-w-4xl mx-auto">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
-                  <Search className="w-5 h-5 text-primary shrink-0" />
-                  <span className="text-sm text-foreground/80">Extensive Scouting Network</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
-                  <BarChart3 className="w-5 h-5 text-primary shrink-0" />
-                  <span className="text-sm text-foreground/80">Deep Analysis Models</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
-                  <GraduationCap className="w-5 h-5 text-primary shrink-0" />
-                  <span className="text-sm text-foreground/80">Expert Coaching</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-card/30 border border-border/50">
-                  <Trophy className="w-5 h-5 text-primary shrink-0" />
-                  <span className="text-sm text-foreground/80">Premier League Background</span>
-                </div>
-              </div>
               
               <p className="text-muted-foreground mt-6 max-w-3xl mx-auto text-sm">
                 {t('stars.description', 'Because of our background, we have the mandate to many top players across Europe\'s major divisions not under exclusive representation. Clubs can request our full portfolio through the button below.')}
