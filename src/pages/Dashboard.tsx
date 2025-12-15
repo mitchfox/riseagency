@@ -980,7 +980,24 @@ const Dashboard = () => {
 
       setAnalyses(analysesWithXGChain);
 
-      // Fetch all analyses (pre-match, post-match, concepts) linked to this player
+      // Fetch all concepts from coaching_analysis (available to all players)
+      const { data: conceptsData, error: conceptsError } = await supabase
+        .from("coaching_analysis")
+        .select("*")
+        .eq("analysis_type", "concept");
+
+      if (!conceptsError && conceptsData) {
+        const normalizedConcepts = conceptsData.map(concept => ({
+          id: concept.id,
+          title: concept.title || "Untitled Concept",
+          concept: concept.content || concept.description || null,
+          explanation: concept.content || concept.description || null,
+          points: Array.isArray(concept.attachments) ? concept.attachments : []
+        }));
+        setConcepts(normalizedConcepts);
+      }
+
+      // Fetch all analyses (pre-match, post-match) linked to this player
       const linkedAnalysisIds = (analysisData || [])
         .filter(a => a.analysis_writer_id)
         .map(a => a.analysis_writer_id);
@@ -992,20 +1009,6 @@ const Dashboard = () => {
           .in("id", linkedAnalysisIds);
 
         if (!allAnalysesError && allAnalysesData) {
-          // Separate concepts from other analyses and normalize
-          const normalizedConcepts = allAnalysesData
-            .filter(a => a.analysis_type === "concept")
-            .map(concept => {
-              const points = concept.points && typeof concept.points === 'object' && Array.isArray(concept.points)
-                ? concept.points.map((point: any) => ({
-                    ...point,
-                    images: Array.isArray(point?.images) ? point.images : []
-                  }))
-                : [];
-              return { ...concept, points };
-            });
-          setConcepts(normalizedConcepts);
-          
           // Add pre-match and post-match analyses to the analyses array
           const matchAnalyses = allAnalysesData.filter(a => 
             a.analysis_type === "pre-match" || a.analysis_type === "post-match"
