@@ -306,57 +306,6 @@ function LandingContent() {
               <RoleSlider navLinks={desktopNavLinks} navigateToRole={navigateToRole} t={t} setShowRepresentation={setShowRepresentation} setShowDeclareInterest={setShowDeclareInterest} />
             </div>
 
-            {/* OLD Tablet Layout - REMOVED, now uses desktop slider */}
-            <div className="hidden flex-col items-center gap-0 mt-4">
-              {/* Buttons row - with divider line */}
-              <div className="border-t border-primary/40 pt-2 pb-2 flex justify-center" style={{
-              width: '50%'
-            }}>
-                <div className="flex gap-2">
-                  <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-xs px-3 h-7" hoverEffect>
-                    {t("landing.represent_me", "Represent Me")}
-                  </Button>
-                  <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider text-xs px-3 h-7" hoverEffect>
-                    {t("landing.declare_interest_short", "Declare Interest")}
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Top row: Players, Coaches, Clubs */}
-              <div className="border-t border-primary/40 pt-1 pb-1" style={{
-              width: '70%'
-            }}>
-                <nav className="flex items-center justify-center gap-2">
-                  {desktopNavLinks.slice(0, 3).map((link, index) => <div key={link.to} className="flex items-center">
-                      <button onClick={() => navigateToRole(link.to)} className="px-2 py-1 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap">
-                        <HoverText text={t(link.labelKey, link.fallback)} />
-                      </button>
-                      {index < 2 && <div className="w-px h-3 bg-primary/40" />}
-                    </div>)}
-                </nav>
-              </div>
-              
-              {/* Bottom row: Agents, Scouts, Business, Media */}
-              <div className="border-t border-primary/40 pt-1" style={{
-              width: '90%'
-            }}>
-                <nav className="flex items-center justify-center gap-1">
-                  {desktopNavLinks.slice(3).map((link, index) => <div key={link.to} className="flex items-center">
-                      <button onClick={() => navigateToRole(link.to)} className="px-2 py-1 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap">
-                        <HoverText text={t(link.labelKey, link.fallback)} />
-                      </button>
-                      {index < 3 && <div className="w-px h-3 bg-primary/40" />}
-                    </div>)}
-                </nav>
-              </div>
-              
-              {/* Select role text */}
-              <div className="text-center pt-1">
-                <span className="text-[10px] font-bebas uppercase tracking-[0.15em] text-white/40">
-                  {t("landing.select_role_enter", "Select Your Role To Enter Site")}
-                </span>
-              </div>
-            </div>
 
             {/* Mobile Layout - pushed down with proper divider lines */}
             <div className="md:hidden flex flex-col items-center gap-0 mt-0 hover-text-no-shift" style={{

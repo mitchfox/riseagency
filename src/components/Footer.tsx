@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LocalizedLink } from "@/components/LocalizedLink";
 import { SubdomainLink } from "@/components/SubdomainLink";
-// Build version - update this to verify deployments
-const BUILD_VERSION = "v2024.11.27.001";
 
 export const Footer = () => {
   const { t } = useLanguage();
@@ -191,10 +189,6 @@ export const Footer = () => {
               </a>
             </div>
           </div>
-          {/* Version indicator for deployment debugging */}
-          <p className="text-[10px] text-muted-foreground/40 text-center mt-4">
-            Build: {BUILD_VERSION}
-          </p>
         </div>
       </div>
     </footer>
