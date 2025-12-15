@@ -40,7 +40,7 @@ export default function TermsOfService() {
               </p>
               <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
                 <li>Professional football player representation</li>
-                <li>Performance optimization and training programs</li>
+                <li>Performance optimisation and training programmes</li>
                 <li>Career development and management services</li>
                 <li>Club and scout networking opportunities</li>
                 <li>Coaching and tactical analysis resources</li>

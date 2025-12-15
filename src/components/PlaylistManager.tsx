@@ -632,7 +632,7 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
   };
 
   const formatDuration = (seconds: number | undefined): string => {
-    if (seconds === undefined) return '—';
+    if (seconds === undefined) return '-';
     if (!seconds) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;

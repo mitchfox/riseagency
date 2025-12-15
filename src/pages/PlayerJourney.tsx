@@ -27,7 +27,7 @@ const PlayerJourney = () => {
       icon: Search,
       title: "Discovery",
       subtitle: "How we connect",
-      description: "The journey begins when we find you—through our extensive European scouting network—or when you reach out to us. Either way, it starts with recognition of talent worth investing in.",
+      description: "The journey begins when we find you, through our extensive European scouting network, or when you reach out to us. Either way, it starts with recognition of talent worth investing in.",
       details: [
         "We scout across all of Europe's professional leagues",
         "Players can also request representation directly",
@@ -56,7 +56,7 @@ const PlayerJourney = () => {
         "Clear explanation of our services and approach",
         "Discussion of development pathway",
         "Parent/guardian involvement for youth players",
-        "No pressure—take the time you need"
+        "No pressure. Take the time you need"
       ]
     },
     {
@@ -116,7 +116,7 @@ const PlayerJourney = () => {
               HOW WE WORK <span className="text-primary">WITH PLAYERS</span>
             </h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-              From discovery to development—a transparent look at the journey
+              From discovery to development: a transparent look at the journey
             </p>
           </div>
         </section>

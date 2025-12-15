@@ -60,9 +60,9 @@ const PlayersDraft = () => {
       subtitleKey: "players.develop_subtitle",
       subtitleFallback: "Growth & Excellence",
       contentKey: "players.develop_desc",
-      contentFallback: "Development never stops. Our specialist coaching team creates personalized programs to enhance every aspect of your game—physical conditioning, technical refinement, tactical understanding, and mental resilience. We push boundaries to unlock your full potential.",
+      contentFallback: "Development never stops. Our specialist coaching team creates personalised programmes to enhance every aspect of your game: physical conditioning, technical refinement, tactical understanding, and mental resilience. We push boundaries to unlock your full potential.",
       detailsKey: "players.develop_details",
-      detailsFallback: "• Bespoke physical training programs\n• Technical and tactical coaching\n• Sports psychology and mental performance\n• Nutrition and recovery optimization",
+      detailsFallback: "• Bespoke physical training programmes\n• Technical and tactical coaching\n• Sports psychology and mental performance\n• Nutrition and recovery optimisation",
       position: { x: 55, y: 55 }
     },
     {
@@ -92,7 +92,7 @@ const PlayersDraft = () => {
       contentKey: "players.progress_desc",
       contentFallback: "Your success creates opportunity. As you develop and perform, we leverage our club relationships and market knowledge to secure the right moves at the right time—whether that's a step up, a new challenge, or securing your legacy at the top level.",
       detailsKey: "players.progress_details",
-      detailsFallback: "• Strategic transfer planning\n• Club relationship management\n• Career milestone optimization\n• Long-term wealth and legacy planning",
+      detailsFallback: "• Strategic transfer planning\n• Club relationship management\n• Career milestone optimisation\n• Long-term wealth and legacy planning",
       position: { x: 90, y: 70 }
     },
     {
