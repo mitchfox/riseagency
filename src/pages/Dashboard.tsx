@@ -37,6 +37,7 @@ import { PlayerPositionalGuides } from "@/components/PlayerPositionalGuides";
 import { ProtectedContracts } from "@/components/player/ProtectedContracts";
 import { PaymentOptions } from "@/components/player/PaymentOptions";
 import { PlayerTransferHub } from "@/components/player/TransferHub";
+import { PlayerProgrammingNotes } from "@/components/player/PlayerProgrammingNotes";
 import { CognisanceSection } from "@/components/portal/CognisanceSection";
 
 interface Analysis {
@@ -2690,6 +2691,9 @@ const Dashboard = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="container mx-auto px-4">
+                  {/* Programming Notes from Coach */}
+                  {playerData?.id && <PlayerProgrammingNotes playerId={playerData.id} />}
+                  
                   {programs.length === 0 ? (
                     <div className="py-8"></div>
                   ) : (

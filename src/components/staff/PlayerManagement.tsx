@@ -54,6 +54,7 @@ interface Player {
   highlighted_match?: any;
   agent_notes?: string | null;
   next_program_notes?: string | null;
+  programming_notes?: string | null;
 }
 
 interface PlayerStats {
@@ -2037,28 +2038,28 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               <TabsContent value="programming" className="mt-4 md:mt-0">
                 {/* Player Notes and Next Program Notes - Side by Side - MOVED TO TOP */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  {/* Agent Notes Card - Shows in Transfer Hub for players */}
+                  {/* Programming Notes Card - Shows in player's Physical Programming section */}
                   <Card>
                     <CardHeader className="px-3 md:px-6 py-3 md:py-4">
-                      <CardTitle className="text-base">Agent Notes</CardTitle>
-                      <p className="text-xs text-muted-foreground">These notes appear in the player's Transfer Hub under "Notes from Your Agent"</p>
+                      <CardTitle className="text-base">Programming Notes</CardTitle>
+                      <p className="text-xs text-muted-foreground">Health, needs, training considerations - visible in player's programming section</p>
                     </CardHeader>
                     <CardContent className="px-3 md:px-6 py-4">
                       <Textarea
-                        placeholder="Add notes for the player about transfers, club interest, contract updates..."
-                        value={selectedPlayer?.agent_notes || ''}
+                        placeholder="Add notes about the player's health, specific needs, training considerations..."
+                        value={(selectedPlayer as any)?.programming_notes || ''}
                         onChange={async (e) => {
                           const newValue = e.target.value;
                           // Optimistic update
                           setPlayers(prev => prev.map(p => 
-                            p.id === selectedPlayerId ? { ...p, agent_notes: newValue } : p
+                            p.id === selectedPlayerId ? { ...p, programming_notes: newValue } : p
                           ));
                         }}
                         onBlur={async (e) => {
                           try {
                             const { error } = await supabase
                               .from('players')
-                              .update({ agent_notes: e.target.value })
+                              .update({ programming_notes: e.target.value } as any)
                               .eq('id', selectedPlayerId);
                             if (error) throw error;
                           } catch (error: any) {
