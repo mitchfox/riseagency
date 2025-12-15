@@ -78,7 +78,7 @@ const RealisePotential = () => {
     <>
       <SEO
         title="Realise Potential - RISE Football Agency"
-        description="Discover how RISE optimizes player development through a comprehensive match week approach - from training to highlights."
+        description="Discover how RISE optimises player development through a comprehensive match week approach - from training to highlights."
         url="/realise-potential"
       />
       <Header />

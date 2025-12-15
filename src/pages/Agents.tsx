@@ -298,7 +298,7 @@ const Agents = () => {
                   </h3>
                 </div>
                 <p className="text-muted-foreground leading-relaxed mb-4">
-                  Have a player who could benefit from our development programs or network? 
+                  Have a player who could benefit from our development programmes or network? 
                   We offer fair referral arrangements that benefit all parties, ensuring 
                   the player gets the best opportunities.
                 </p>
@@ -358,7 +358,7 @@ const Agents = () => {
                   </h3>
                 </div>
                 <p className="text-muted-foreground leading-relaxed mb-4">
-                  For complex deals or players requiring specialized support, we offer 
+                  For complex deals or players requiring specialised support, we offer 
                   joint representation arrangements that leverage both parties' strengths 
                   and networks.
                 </p>

@@ -12,7 +12,7 @@ const About = () => {
     <div className="min-h-screen bg-background">
       <SEO 
         title="About RISE - Premier Football Agency"
-        description="Premier football agency specializing in player representation. Founded on integrity, dedication, and excellence."
+        description="Premier football agency specialising in player representation. Founded on integrity, dedication, and excellence."
         image="/og-preview-about.png"
         url="/about"
       />

@@ -270,7 +270,7 @@ const Scouts = () => {
                             Team Schemes
                           </h4>
                           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                            How the team sets up tactically: formations (4-3-3, 4-4-2, 3-5-2), build-up patterns, pressing structures, and defensive organization.
+                            How the team sets up tactically: formations (4-3-3, 4-4-2, 3-5-2), build-up patterns, pressing structures, and defensive organisation.
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {["4-3-3", "4-4-2", "3-5-2", "4-2-3-1"].map(formation => (
@@ -286,7 +286,7 @@ const Scouts = () => {
                             Opposition Analysis
                           </h4>
                           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                            Understanding the opponent's tactical approach, identifying weaknesses to exploit, and recognizing their strengths to neutralize.
+                            Understanding the opponent's tactical approach, identifying weaknesses to exploit, and recognising their strengths to neutralise.
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {["High Press", "Low Block", "Counter Attack", "Possession"].map(style => (
@@ -311,7 +311,7 @@ const Scouts = () => {
                             Game Phases
                           </h4>
                           <p className="text-sm text-muted-foreground leading-relaxed">
-                            Player performance across all phases: build-up play, offensive transition, attacking, defensive transition, and defensive organization.
+                            Player performance across all phases: build-up play, offensive transition, attacking, defensive transition, and defensive organisation.
                           </p>
                         </Card>
                       </div>

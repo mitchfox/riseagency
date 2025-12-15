@@ -53,9 +53,9 @@ export default function PrivacyPolicy() {
               </p>
               <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
                 <li>Provide, operate, and maintain our services</li>
-                <li>Improve and personalize your experience</li>
+                <li>Improve and personalise your experience</li>
                 <li>Communicate with you about opportunities and updates</li>
-                <li>Analyze usage patterns and optimize our website</li>
+                <li>Analyse usage patterns and optimise our website</li>
                 <li>Send marketing and promotional communications (with your consent)</li>
                 <li>Comply with legal obligations and protect our rights</li>
               </ul>
@@ -77,7 +77,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2 className="text-3xl font-bebas uppercase tracking-wider text-foreground mb-4">Data Security</h2>
               <p className="text-muted-foreground leading-relaxed">
-                We implement appropriate technical and organizational security measures to protect your personal information. However, no method of transmission over the internet is 100% secure, and we cannot guarantee absolute security.
+                We implement appropriate technical and organisational security measures to protect your personal information. However, no method of transmission over the internet is 100% secure, and we cannot guarantee absolute security.
               </p>
             </section>
 
@@ -99,7 +99,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2 className="text-3xl font-bebas uppercase tracking-wider text-foreground mb-4">Cookies and Tracking</h2>
               <p className="text-muted-foreground leading-relaxed">
-                We use cookies and similar tracking technologies to enhance your browsing experience, analyze site traffic, and understand user behavior. You can control cookie settings through your browser preferences.
+                We use cookies and similar tracking technologies to enhance your browsing experience, analyse site traffic, and understand user behaviour. You can control cookie settings through your browser preferences.
               </p>
             </section>
 
