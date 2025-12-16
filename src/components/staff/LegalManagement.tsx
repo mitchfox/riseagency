@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, FileText, Scale, Download, Wallet } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Scale, Download, Wallet, GitCompare } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PaymentsManagement from "./PaymentsManagement";
+import ContractCrossReference from "./ContractCrossReference";
 
 interface LegalDocument {
   id: string;
@@ -39,6 +40,7 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
     effective_date: '',
   });
   const [activeTab, setActiveTab] = useState<'contract' | 'regulation' | 'payments'>('contract');
+  const [showCrossReference, setShowCrossReference] = useState(false);
 
   useEffect(() => {
     fetchDocuments();
@@ -188,15 +190,27 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
         </TabsList>
 
         <TabsContent value="contract" className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center flex-wrap gap-2">
             <h3 className="text-base sm:text-lg md:text-xl font-semibold">Contracts</h3>
-            {isAdmin && (
-              <Button onClick={() => openAddDialog('contract')} size="sm" className="text-xs sm:text-sm">
-                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Add Contract</span>
-                <span className="sm:hidden">Add</span>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => setShowCrossReference(true)} 
+                size="sm" 
+                variant="outline"
+                className="text-xs sm:text-sm"
+              >
+                <GitCompare className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Cross-Reference</span>
+                <span className="sm:hidden">Compare</span>
               </Button>
-            )}
+              {isAdmin && (
+                <Button onClick={() => openAddDialog('contract')} size="sm" className="text-xs sm:text-sm">
+                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Add Contract</span>
+                  <span className="sm:hidden">Add</span>
+                </Button>
+              )}
+            </div>
           </div>
 
           {contracts.length === 0 ? (
@@ -417,6 +431,11 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ContractCrossReference 
+        open={showCrossReference} 
+        onOpenChange={setShowCrossReference} 
+      />
     </div>
   );
 };
