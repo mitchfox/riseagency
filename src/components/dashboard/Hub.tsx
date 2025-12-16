@@ -438,7 +438,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                         />
                       )}
                       <div className="text-[10px] md:text-sm font-bold text-center">
-                        {sessionValue || '-'}
+                        {sessionValue ? sessionValue.toUpperCase() : '-'}
                       </div>
                     </button>
                   );
