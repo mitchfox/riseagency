@@ -1992,7 +1992,7 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                                           })()
                                         }}
                                       >
-                                        {schedule[day as keyof WeeklySchedule]}
+                                        {(schedule[day as keyof WeeklySchedule] as string)?.toUpperCase()}
                                       </div>
                                     )}
                                     {/* Display fixture as greyed out below session */}

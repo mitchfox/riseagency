@@ -2949,7 +2949,7 @@ const Dashboard = () => {
                                                                textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)'
                                                              }}
                                                            >
-                                                             {sessionValue}
+                                                             {sessionValue.toUpperCase()}
                                                            </span>
                                                          )}
                                                       </div>
