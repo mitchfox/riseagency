@@ -278,9 +278,12 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
         
         // Determine opponent - "For" is a placeholder for player's team
         let opponentName = "";
-        if (playerFixture.fixtures.home_team === "For" || playerFixture.fixtures.home_team.toLowerCase().includes("for")) {
+        const homeIsFor = playerFixture.fixtures.home_team.toLowerCase() === "for" || playerFixture.fixtures.home_team.toLowerCase().startsWith("for ");
+        const awayIsFor = playerFixture.fixtures.away_team.toLowerCase() === "for" || playerFixture.fixtures.away_team.toLowerCase().startsWith("for ");
+        
+        if (homeIsFor) {
           opponentName = playerFixture.fixtures.away_team;
-        } else if (playerFixture.fixtures.away_team === "For" || playerFixture.fixtures.away_team.toLowerCase().includes("for")) {
+        } else if (awayIsFor) {
           opponentName = playerFixture.fixtures.home_team;
         } else if (playerTeam) {
           const isHomeTeam = playerFixture.fixtures.home_team.toLowerCase().includes(playerTeam.toLowerCase());

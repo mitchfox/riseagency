@@ -452,10 +452,18 @@ export const CreatePerformanceReportDialog = ({
     setSelectedFixtureId(fixtureId);
     const fixture = fixtures.find(f => f.id === fixtureId);
     if (fixture) {
-      // Intelligently determine opponent based on player's club
+      // Intelligently determine opponent based on player's club or "For" placeholder
       let opponentTeam = fixture.away_team; // Default to away team
       
-      if (playerClub) {
+      // First check for "For" placeholder (used to represent player's team)
+      const homeIsFor = fixture.home_team.toLowerCase() === "for" || fixture.home_team.toLowerCase().includes("for ");
+      const awayIsFor = fixture.away_team.toLowerCase() === "for" || fixture.away_team.toLowerCase().includes("for ");
+      
+      if (homeIsFor) {
+        opponentTeam = fixture.away_team;
+      } else if (awayIsFor) {
+        opponentTeam = fixture.home_team;
+      } else if (playerClub) {
         // Check if player's club matches home or away team
         if (fixture.home_team === playerClub) {
           opponentTeam = fixture.away_team;
@@ -1173,12 +1181,20 @@ export const CreatePerformanceReportDialog = ({
                 <SelectValue placeholder="Choose a fixture" />
               </SelectTrigger>
               <SelectContent>
-                {fixtures.map((fixture) => (
-                  <SelectItem key={fixture.id} value={fixture.id}>
-                    {new Date(fixture.match_date).toLocaleDateString('en-GB')} - {fixture.home_team} vs {fixture.away_team}
-                    {fixture.competition && ` (${fixture.competition})`}
-                  </SelectItem>
-                ))}
+                {fixtures.map((fixture) => {
+                  // Determine the opponent for display (handle "For" placeholder)
+                  const homeIsFor = fixture.home_team.toLowerCase() === "for" || fixture.home_team.toLowerCase().startsWith("for ");
+                  const awayIsFor = fixture.away_team.toLowerCase() === "for" || fixture.away_team.toLowerCase().startsWith("for ");
+                  const hasForPlaceholder = homeIsFor || awayIsFor;
+                  const displayOpponent = homeIsFor ? fixture.away_team : awayIsFor ? fixture.home_team : null;
+                  
+                  return (
+                    <SelectItem key={fixture.id} value={fixture.id}>
+                      {new Date(fixture.match_date).toLocaleDateString('en-GB')} - {hasForPlaceholder ? `vs ${displayOpponent}` : `${fixture.home_team} vs ${fixture.away_team}`}
+                      {fixture.competition && ` (${fixture.competition})`}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
