@@ -152,13 +152,31 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
     if (!analysis?.striker_stats) return [];
     
     const excludeKeys = ['selected_stats', 'stats_order'];
-    const stats: { key: string; value: number | string }[] = [];
+    const stats: { key: string; value: number | string; per90Value?: number | string }[] = [];
     
-    for (const [key, value] of Object.entries(analysis.striker_stats)) {
+    // Get ordered stats if available
+    const statsOrder = analysis.striker_stats.stats_order as string[] | undefined;
+    const selectedStats = analysis.striker_stats.selected_stats as string[] | undefined;
+    
+    // Use stats_order if available, otherwise use selected_stats, otherwise use all keys
+    const keysToShow = statsOrder || selectedStats || Object.keys(analysis.striker_stats);
+    
+    for (const key of keysToShow) {
       if (excludeKeys.includes(key)) continue;
-      if (typeof value === 'number' || typeof value === 'string') {
-        stats.push({ key, value });
-      }
+      if (key.includes('_per90')) continue; // Skip per90 variants, we'll show them with the main stat
+      
+      const value = analysis.striker_stats[key];
+      if (value === null || value === undefined || value === '') continue;
+      if (typeof value !== 'number' && typeof value !== 'string') continue;
+      
+      const per90Key = `${key}_per90`;
+      const per90Value = analysis.striker_stats[per90Key];
+      
+      stats.push({ 
+        key, 
+        value,
+        per90Value: per90Value !== null && per90Value !== undefined ? per90Value as number | string : undefined
+      });
     }
     
     return stats;
@@ -261,10 +279,15 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                      {advancedStats.map(({ key, value }) => (
+                      {advancedStats.map(({ key, value, per90Value }) => (
                         <div key={key} className="text-center p-3 bg-accent/10 rounded-lg">
                           <p className="text-xs text-muted-foreground mb-1 capitalize">{formatStatLabel(key)}</p>
                           <p className="text-lg font-bold">{typeof value === 'number' ? value.toFixed(2) : value}</p>
+                          {per90Value !== undefined && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              per 90: {typeof per90Value === 'number' ? per90Value.toFixed(2) : per90Value}
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -307,7 +330,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                           {actions.map((action) => (
                             <tr key={action.id} className="border-b border-border/50">
                               <td className="py-2 px-2">{action.action_number}</td>
-                              <td className="py-2 px-2">{action.minute}'</td>
+                              <td className="py-2 px-2">{(action.minute ?? 0).toFixed(2)}'</td>
                               <td className="py-2 px-2">{action.action_type}</td>
                               <td className="py-2 px-2">{action.action_description}</td>
                               <td className="py-2 px-2 text-muted-foreground">{action.notes || "-"}</td>
