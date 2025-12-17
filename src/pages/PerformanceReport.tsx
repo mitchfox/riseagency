@@ -485,7 +485,7 @@ const PerformanceReport = () => {
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex gap-3">
                           <span className="font-semibold text-lg">#{action.action_number}</span>
-                          <span className="text-sm text-muted-foreground">{(action.minute ?? 0).toFixed(2)}'</span>
+                          <span className="text-sm text-muted-foreground">{action.minute}'</span>
                         </div>
                         <span className={`text-sm font-bold ${getActionScoreColor(action.action_score ?? 0)}`}>
                           {(action.action_score ?? 0).toFixed(5)}
@@ -519,7 +519,7 @@ const PerformanceReport = () => {
                       {actions.map((action) => (
                         <tr key={action.id} className="border-b hover:bg-accent/50">
                           <td className="p-2 text-sm whitespace-nowrap">{action.action_number}</td>
-                          <td className="p-2 text-sm whitespace-nowrap">{(action.minute ?? 0).toFixed(2)}</td>
+                          <td className="p-2 text-sm whitespace-nowrap">{action.minute}</td>
                           <td className={`p-2 text-sm whitespace-nowrap ${getActionScoreColor(action.action_score ?? 0)}`}>
                             {(action.action_score ?? 0).toFixed(5)}
                           </td>
