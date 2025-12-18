@@ -226,14 +226,14 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-y-auto p-0">
-        <div className="sticky top-0 z-10 bg-background border-b p-4 flex items-center justify-between">
-          <h2 className="text-xl font-bebas uppercase tracking-wider">Performance Report</h2>
-          <div className="flex gap-2">
-            <Button onClick={handleSaveAsPDF} variant="default" size="sm">
+        <div className="sticky top-0 z-10 bg-background border-b p-3 md:p-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <h2 className="text-lg md:text-xl font-bebas uppercase tracking-wider">Performance Report</h2>
+          <div className="flex gap-2 flex-wrap">
+            <Button onClick={handleSaveAsPDF} variant="default" size="sm" className="flex-1 md:flex-none">
               <Download className="mr-2 h-4 w-4" />
               Save as PDF
             </Button>
-            <Button onClick={() => onOpenChange(false)} variant="outline" size="sm">
+            <Button onClick={() => onOpenChange(false)} variant="outline" size="sm" className="flex-1 md:flex-none">
               <X className="mr-2 h-4 w-4" />
               Close
             </Button>
@@ -251,7 +251,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-4 gap-4 p-4 bg-accent/20 rounded-lg">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-accent/20 rounded-lg">
                 {[1, 2, 3, 4].map((i) => (
                   <div key={i} className="text-center">
                     <div className="h-4 w-16 bg-muted rounded mx-auto mb-2"></div>
@@ -360,7 +360,32 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                     <CardTitle className="text-lg">Performance Actions ({actions.length})</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="overflow-x-auto">
+                    {/* Mobile: Card layout */}
+                    <div className="block md:hidden space-y-3">
+                      {actions.map((action) => (
+                        <div key={action.id} className="p-3 bg-muted/30 rounded-lg">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex gap-3">
+                              <span className="font-semibold">#{action.action_number}</span>
+                              <span className="text-sm text-muted-foreground">{action.minute}'</span>
+                            </div>
+                            <span className={`text-sm font-bold ${getActionScoreColor(action.action_score)}`}>
+                              {action.action_score?.toFixed(5)}
+                            </span>
+                          </div>
+                          <div className="font-medium text-sm mb-1">{action.action_type}</div>
+                          <div className="text-sm text-foreground/80">{action.action_description}</div>
+                          {action.notes && (
+                            <div className="text-xs text-muted-foreground italic mt-2 pt-2 border-t border-border/50">
+                              {action.notes}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Desktop: Table layout */}
+                    <div className="hidden md:block overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b">
