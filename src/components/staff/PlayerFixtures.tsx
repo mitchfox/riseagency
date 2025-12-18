@@ -527,6 +527,16 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
 
       const minutesValue = editGameData.minutes_played ? parseInt(editGameData.minutes_played) : null;
 
+      // Update the fixtures table with the new match date
+      const { error: fixturesTableError } = await supabase
+        .from("fixtures")
+        .update({
+          match_date: editGameData.match_date,
+        })
+        .eq("id", editingPlayerFixture.fixture_id);
+
+      if (fixturesTableError) throw fixturesTableError;
+
       // Update player_fixtures minutes
       const { error: fixtureError } = await supabase
         .from("player_fixtures")
