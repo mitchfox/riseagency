@@ -17,6 +17,14 @@ import { calculateAdjustedScore, isDefensiveR90Category } from "@/lib/zoneMultip
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
+// Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
+const formatMinute = (minute: number | null | undefined): string => {
+  if (minute === null || minute === undefined) return "-";
+  const minPart = Math.floor(minute);
+  const secPart = Math.round((minute - minPart) * 100);
+  return `${minPart}.${secPart.toString().padStart(2, '0')}`;
+};
+
 interface PerformanceAction {
   id?: string;
   action_number: number;
@@ -735,7 +743,7 @@ export const PerformanceActionsDialog = ({
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-wrap min-w-0">
                         <span className="font-bold text-muted-foreground whitespace-nowrap">#{action.action_number}</span>
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">{Math.round(action.minute ?? 0)}'</span>
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">{formatMinute(action.minute)}'</span>
                         <span className={`text-sm font-mono whitespace-nowrap ${getActionScoreColor(action.action_score ?? 0)}`}>
                           {(action.action_score ?? 0).toFixed(5)}
                         </span>
