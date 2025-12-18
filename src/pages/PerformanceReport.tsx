@@ -363,7 +363,7 @@ const PerformanceReport = () => {
                               <p className="text-xs text-muted-foreground">{paired.successful} / {paired.attempted}</p>
                               {per90Value !== undefined && per90Value !== null && (
                                 <p className="text-xs text-muted-foreground mt-1">
-                                  per 90: {typeof per90Value === 'number' ? (isIntegerStat(key) ? Math.round(per90Value) : per90Value.toFixed(1)) : per90Value}
+                                  per 90: {per90Value}
                                 </p>
                               )}
                             </div>
@@ -392,42 +392,10 @@ const PerformanceReport = () => {
                         return (
                           <div key={key} className="text-center p-3 bg-background rounded-md">
                             <p className="text-xs text-muted-foreground mb-1">{displayName}</p>
-                            <p className="font-bold text-lg">
-                              {(() => {
-                                if (typeof displayValue === 'number') {
-                                  // Integer stats should show as whole numbers
-                                  if (isIntegerStat(key)) {
-                                    return Math.round(displayValue);
-                                  }
-                                  // xG, xA, and other decimal stats show with 3 decimals
-                                  return displayValue.toFixed(3);
-                                }
-                                if (Array.isArray(displayValue)) {
-                                  return displayValue.filter(v => v != null).map(v => String(v)).join(', ') || '-';
-                                }
-                                if (displayValue !== null && typeof displayValue === 'object') {
-                                  return JSON.stringify(displayValue);
-                                }
-                                return String(displayValue);
-                              })()}
-                            </p>
+                            <p className="font-bold text-lg">{value}</p>
                             {displayPer90 !== undefined && displayPer90 !== null && (
                               <p className="text-xs text-muted-foreground mt-1">
-                                per 90: {(() => {
-                                  if (typeof displayPer90 === 'number') {
-                                    if (isIntegerStat(key)) {
-                                      return Math.round(displayPer90);
-                                    }
-                                    return displayPer90.toFixed(3);
-                                  }
-                                  if (Array.isArray(displayPer90)) {
-                                    return displayPer90.filter(v => v != null).map(v => String(v)).join(', ') || '-';
-                                  }
-                                  if (displayPer90 !== null && typeof displayPer90 === 'object') {
-                                    return JSON.stringify(displayPer90);
-                                  }
-                                  return String(displayPer90);
-                                })()}
+                                per 90: {displayPer90}
                               </p>
                             )}
                           </div>
