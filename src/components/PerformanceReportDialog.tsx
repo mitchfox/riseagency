@@ -152,7 +152,16 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
     if (!analysis?.striker_stats) return [];
     
     const excludeKeys = ['selected_stats', 'stats_order'];
-    const stats: { key: string; value: number | string; per90Value?: number | string }[] = [];
+    const stats: { 
+      key: string; 
+      value: number | string; 
+      per90Value?: number | string;
+      isPaired?: boolean;
+      successful?: number;
+      attempted?: number;
+      percentage?: string;
+    }[] = [];
+    const processedKeys = new Set<string>();
     
     // Get ordered stats if available
     const statsOrder = analysis.striker_stats.stats_order as string[] | undefined;
@@ -163,10 +172,40 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
     
     for (const key of keysToShow) {
       if (excludeKeys.includes(key)) continue;
-      if (key.includes('_per90')) continue; // Skip per90 variants, we'll show them with the main stat
+      if (key.includes('_per90')) continue;
+      if (processedKeys.has(key)) continue;
       
       const value = analysis.striker_stats[key];
       if (value === null || value === undefined || value === '') continue;
+      
+      // Check for paired stat (e.g., dribbles + dribbles_attempted)
+      const attemptedKey = `${key}_attempted`;
+      if (analysis.striker_stats[attemptedKey] != null && !key.endsWith('_attempted')) {
+        const attempted = Number(analysis.striker_stats[attemptedKey]);
+        const successful = Number(value);
+        if (attempted > 0 && !isNaN(successful)) {
+          processedKeys.add(attemptedKey);
+          const per90Key = `${key}_per90`;
+          const per90Value = analysis.striker_stats[per90Key];
+          stats.push({
+            key,
+            value: successful,
+            per90Value: per90Value !== null && per90Value !== undefined ? per90Value as number | string : undefined,
+            isPaired: true,
+            successful,
+            attempted,
+            percentage: ((successful / attempted) * 100).toFixed(1)
+          });
+          continue;
+        }
+      }
+      
+      // Skip _attempted keys (they're shown with their pair)
+      if (key.endsWith('_attempted')) {
+        processedKeys.add(key);
+        continue;
+      }
+      
       if (typeof value !== 'number' && typeof value !== 'string') continue;
       
       const per90Key = `${key}_per90`;
@@ -279,13 +318,20 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                      {advancedStats.map(({ key, value, per90Value }) => (
-                        <div key={key} className="text-center p-3 bg-accent/10 rounded-lg">
-                          <p className="text-xs text-muted-foreground mb-1 capitalize">{formatStatLabel(key)}</p>
-                          <p className="text-lg font-bold">{value}</p>
-                          {per90Value !== undefined && (
+                      {advancedStats.map((stat) => (
+                        <div key={stat.key} className="text-center p-3 bg-accent/10 rounded-lg">
+                          <p className="text-xs text-muted-foreground mb-1 capitalize">{formatStatLabel(stat.key)}</p>
+                          {stat.isPaired ? (
+                            <>
+                              <p className="text-lg font-bold">{stat.percentage}%</p>
+                              <p className="text-xs text-muted-foreground">{stat.successful} / {stat.attempted}</p>
+                            </>
+                          ) : (
+                            <p className="text-lg font-bold">{stat.value}</p>
+                          )}
+                          {stat.per90Value !== undefined && (
                             <p className="text-xs text-muted-foreground mt-1">
-                              per 90: {per90Value}
+                              per 90: {stat.per90Value}
                             </p>
                           )}
                         </div>
