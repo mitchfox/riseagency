@@ -402,13 +402,13 @@ const PerformanceReport = () => {
                           return null;
                         }
 
-                        const per90Key = `${key}_per90`;
-                        const per90Value = analysis.striker_stats![per90Key];
-                        
-                        // Only show per90 for rate-based stats (xG, xA, xC types), not count-based stats
+                        // Only show per90 for rate-based stats (xG, xA, xC, xGChain types), not count-based stats
                         const keyLower = key.toLowerCase();
-                        const rateBasedPrefixes = ['xg', 'xa', 'xc', 'movement_', 'triple_threat', 'crossing_movement'];
+                        const rateBasedPrefixes = ['xg', 'xa', 'xc', 'xgchain'];
                         const isRateBased = rateBasedPrefixes.some(prefix => keyLower.includes(prefix));
+                        
+                        const per90Key = `${key}_per90`;
+                        const per90Value = isRateBased ? analysis.striker_stats![per90Key] : undefined;
                         
                         const displayName = key
                           .replace(/_/g, ' ')
