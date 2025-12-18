@@ -307,12 +307,25 @@ const PerformanceReport = () => {
 
                     // Helper to detect paired success/attempt stats
                     const getPairedStat = (key: string, stats: StrikerStats) => {
-                      // Check if this is a success stat with a corresponding attempted stat
-                      if (key.endsWith('_attempted') || key.endsWith('_successful')) return null;
+                      // Skip if this is already an _attempted key
+                      if (key.endsWith('_attempted')) return null;
                       
+                      // Check for pattern: key + key_attempted (e.g., dribbles + dribbles_attempted)
                       const attemptedKey = `${key}_attempted`;
-                      const successfulKey = `${key}_successful`;
+                      if (stats[attemptedKey] != null && stats[key] != null) {
+                        const attempted = Number(stats[attemptedKey]);
+                        const successful = Number(stats[key]);
+                        if (attempted > 0) {
+                          return {
+                            percentage: ((successful / attempted) * 100).toFixed(1),
+                            successful,
+                            attempted
+                          };
+                        }
+                      }
                       
+                      // Also check for pattern: key_successful + key_attempted
+                      const successfulKey = `${key}_successful`;
                       if (stats[attemptedKey] != null && stats[successfulKey] != null) {
                         const attempted = Number(stats[attemptedKey]);
                         const successful = Number(stats[successfulKey]);
@@ -320,7 +333,8 @@ const PerformanceReport = () => {
                           return {
                             percentage: ((successful / attempted) * 100).toFixed(1),
                             successful,
-                            attempted
+                            attempted,
+                            useSuccessfulKey: true
                           };
                         }
                       }
