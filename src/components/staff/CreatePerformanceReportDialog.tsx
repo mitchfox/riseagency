@@ -320,7 +320,7 @@ export const CreatePerformanceReportDialog = ({
 
     // Auto-calculate per90 ONLY for rate-based stats (xG, xA, xC, xGChain types)
     // Do NOT calculate per90 for count-based stats (dribbles, passes, shots, touches, etc.)
-    const rateBasedStatPrefixes = ['xg', 'xa', 'xc', 'movement_', 'triple_threat', 'crossing_movement'];
+    const rateBasedStatPrefixes = ['xg', 'xa', 'xc', 'xgchain'];
     const updatedStats: Record<string, string> = { ...additionalStats };
     Object.keys(additionalStats).forEach(key => {
       if (!key.endsWith('_per90')) {
