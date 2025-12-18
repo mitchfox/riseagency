@@ -25,6 +25,7 @@ import { IdeasNotesWidget } from "./widgets/IdeasNotesWidget";
 import { FormSubmissionsWidget } from "./widgets/FormSubmissionsWidget";
 import { ProductivityInsightsWidget } from "./widgets/ProductivityInsightsWidget";
 import { QuickLinksWidget } from "./widgets/QuickLinksWidget";
+import { FocusedTasksSection } from "./FocusedTasksSection";
 
 interface Goal {
   id: string;
@@ -1283,6 +1284,11 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
             })}
           </DndContext>
         )}
+      </div>
+
+      {/* Focused Tasks Section */}
+      <div className="mt-8">
+        <FocusedTasksSection />
       </div>
     </div>
   );
