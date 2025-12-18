@@ -174,30 +174,31 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
       
       if (isMobile) {
-        // On mobile, convert to PNG blob and open in new tab for long-press save
-        // WebP support varies on mobile, PNG is more reliable
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const blobUrl = URL.createObjectURL(blob);
-            // Open image in new tab - user can long-press to save
-            const newTab = window.open(blobUrl, '_blank');
-            if (newTab) {
-              toast.success('Image opened - long-press to save');
-            } else {
-              // If popup blocked, try download anyway
-              const link = document.createElement('a');
-              link.href = blobUrl;
-              link.download = `${fileName}.png`;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-              toast.success('Image saved');
-            }
-          } else {
-            toast.error('Failed to create image');
-          }
-        }, 'image/png', 0.95);
+        // On mobile, convert to PNG dataURL and open in new tab for long-press save
+        // Using dataURL instead of blob for better mobile compatibility
+        const dataUrl = canvas.toDataURL('image/png', 0.95);
+        
+        if (!dataUrl || dataUrl === 'data:,') {
+          toast.error('Failed to create image');
+          return;
+        }
+        
+        // Open image in new tab - user can long-press to save
+        const newTab = window.open();
+        if (newTab) {
+          newTab.document.write(`<html><head><title>${fileName}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#000;}</style></head><body><img src="${dataUrl}" style="max-width:100%;height:auto;" /></body></html>`);
+          newTab.document.close();
+          toast.success('Image opened - long-press to save');
+        } else {
+          // If popup blocked, try download
+          const link = document.createElement('a');
+          link.href = dataUrl;
+          link.download = `${fileName}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast.success('Image saved');
+        }
       } else {
         // On desktop, use WebP with direct download
         const dataUrl = canvas.toDataURL('image/webp', 0.9);
