@@ -426,12 +426,9 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                       }}
                     >
                       {/* Top 1/4 - Date */}
-                      <div className="h-1/4 flex flex-col items-center justify-center px-1 bg-black/20">
-                        <div className="text-[8px] md:text-xs font-medium opacity-70 uppercase leading-tight">
-                          {dayInfo.displayDay}
-                        </div>
-                        <div className="text-[10px] md:text-sm font-bold leading-tight">
-                          {dayInfo.displayDate}
+                      <div className="h-1/4 flex items-center justify-center px-1 bg-black/20">
+                        <div className="text-[8px] md:text-xs font-bold leading-tight">
+                          {dayInfo.displayDay} {dayInfo.displayDate}
                         </div>
                       </div>
                       
@@ -453,9 +450,9 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                       </div>
                       
                       {/* Bottom 1/4 - Team training */}
-                      <div className="h-1/4 flex items-center justify-center bg-black/30">
+                      <div className="h-1/4 flex items-center justify-center bg-black/30 px-1">
                         {teamSessionValue && (
-                          <div className="text-[8px] md:text-xs font-bold text-center" style={{ color: 'hsl(45, 100%, 80%)' }}>
+                          <div className="text-[6px] md:text-[8px] font-bold text-center truncate w-full" style={{ color: 'hsl(45, 100%, 80%)' }}>
                             {teamSessionValue}
                           </div>
                         )}
