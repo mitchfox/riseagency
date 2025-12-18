@@ -68,6 +68,13 @@ interface WeeklySchedule {
   fridayFixture?: string;
   saturdayFixture?: string;
   sundayFixture?: string;
+  mondayTeam?: string;
+  tuesdayTeam?: string;
+  wednesdayTeam?: string;
+  thursdayTeam?: string;
+  fridayTeam?: string;
+  saturdayTeam?: string;
+  sundayTeam?: string;
   scheduleNotes: string;
 }
 
@@ -135,6 +142,7 @@ const emptyWeeklySchedule = (): WeeklySchedule => ({
   mondayColor: '', tuesdayColor: '', wednesdayColor: '', thursdayColor: '', fridayColor: '', saturdayColor: '', sundayColor: '',
   mondayImage: '', tuesdayImage: '', wednesdayImage: '', thursdayImage: '', fridayImage: '', saturdayImage: '', sundayImage: '',
   mondayFixture: '', tuesdayFixture: '', wednesdayFixture: '', thursdayFixture: '', fridayFixture: '', saturdayFixture: '', sundayFixture: '',
+  mondayTeam: '', tuesdayTeam: '', wednesdayTeam: '', thursdayTeam: '', fridayTeam: '', saturdayTeam: '', sundayTeam: '',
   scheduleNotes: ''
 });
 
@@ -1955,6 +1963,14 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                                 <div key={day} className="space-y-2">
                                   <Label className="text-xs capitalize font-semibold">{day}</Label>
                                   <div className="space-y-1">
+                                    {/* Team Session Input */}
+                                    <Input
+                                      placeholder="Team session"
+                                      value={schedule[`${day}Team` as keyof WeeklySchedule] as string || ''}
+                                      onChange={(e) => updateWeeklySchedule(idx, `${day}Team` as keyof WeeklySchedule, e.target.value)}
+                                      className="text-xs text-center bg-amber-500/10 border-amber-500/30 placeholder:text-amber-500/50"
+                                    />
+                                    {/* Individual Session Input */}
                                     <Input
                                       placeholder="A / B / Rest"
                                       value={schedule[day as keyof WeeklySchedule] as string || ''}
