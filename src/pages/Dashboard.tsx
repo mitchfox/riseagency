@@ -2890,6 +2890,7 @@ const Dashboard = () => {
                                                   {/* Day Cells */}
                                                   {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day, dayIdx) => {
                                                     const sessionValue = week[day] || '';
+                                                    const teamSessionValue = week[`${day}Team`] || '';
                                                     const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
                                                     const weekDates = getWeekDates(week.week_start_date);
                                                     const dayDate = weekDates ? weekDates[day as keyof typeof weekDates] : null;
@@ -2899,23 +2900,50 @@ const Dashboard = () => {
                                                     return (
                                                       <div 
                                                         key={day}
-                                                        onClick={() => sessionValue && handleSessionClick(sessionValue)}
-                                                        className={`p-1 md:p-3 flex items-center justify-center rounded-lg min-h-[50px] md:min-h-[60px] transition-all relative ${sessionValue ? 'cursor-pointer hover:scale-105' : ''}`}
+                                                        className={`flex flex-col rounded-lg min-h-[50px] md:min-h-[60px] overflow-hidden transition-all relative ${sessionValue ? 'cursor-pointer hover:scale-105' : ''}`}
                                                         style={{ 
-                                                          backgroundColor: colors.bg,
                                                           border: '1px solid rgba(255, 255, 255, 0.1)'
                                                         }}
-                                                        onMouseEnter={(e) => {
-                                                          if (sessionValue && colors.hover) {
-                                                            e.currentTarget.style.backgroundColor = colors.hover;
-                                                          }
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                          if (sessionValue) {
-                                                            e.currentTarget.style.backgroundColor = colors.bg;
-                                                          }
-                                                        }}
                                                       >
+                                                        {/* Team Session - Top 25% */}
+                                                        {teamSessionValue ? (
+                                                          <div 
+                                                            className="flex items-center justify-center px-1 py-0.5"
+                                                            style={{ 
+                                                              height: '25%',
+                                                              minHeight: '14px',
+                                                              backgroundColor: 'hsl(45, 70%, 25%)',
+                                                              borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                                                            }}
+                                                          >
+                                                            <span 
+                                                              className="font-medium text-[8px] md:text-[10px] uppercase truncate"
+                                                              style={{ color: 'hsl(45, 100%, 80%)' }}
+                                                            >
+                                                              {teamSessionValue}
+                                                            </span>
+                                                          </div>
+                                                        ) : null}
+                                                        
+                                                        {/* Individual Session - Bottom 75% (or 100% if no team session) */}
+                                                        <div 
+                                                          onClick={() => sessionValue && handleSessionClick(sessionValue)}
+                                                          className={`flex-1 flex items-center justify-center relative ${sessionValue ? 'cursor-pointer' : ''}`}
+                                                          style={{ 
+                                                            backgroundColor: colors.bg,
+                                                            minHeight: teamSessionValue ? '37.5px' : '50px'
+                                                          }}
+                                                          onMouseEnter={(e) => {
+                                                            if (sessionValue && colors.hover) {
+                                                              e.currentTarget.style.backgroundColor = colors.hover;
+                                                            }
+                                                          }}
+                                                          onMouseLeave={(e) => {
+                                                            if (sessionValue) {
+                                                              e.currentTarget.style.backgroundColor = colors.bg;
+                                                            }
+                                                          }}
+                                                        >
                                                          {/* Day number in top right */}
                                                          {dayDate && (
                                                            <span 
@@ -2952,6 +2980,7 @@ const Dashboard = () => {
                                                              {sessionValue.toUpperCase()}
                                                            </span>
                                                          )}
+                                                        </div>
                                                       </div>
                                                    );
                                                  })}

@@ -42,6 +42,13 @@ interface WeeklySchedule {
   fridayColor: string;
   saturdayColor: string;
   sundayColor: string;
+  mondayTeam?: string;
+  tuesdayTeam?: string;
+  wednesdayTeam?: string;
+  thursdayTeam?: string;
+  fridayTeam?: string;
+  saturdayTeam?: string;
+  sundayTeam?: string;
   scheduleNotes: string;
   [key: string]: string | undefined;
 }
