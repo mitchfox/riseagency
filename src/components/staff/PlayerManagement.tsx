@@ -1879,30 +1879,36 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           <Eye className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
                                           <span className="hidden md:inline">View</span>
                                         </Button>
-                                        {analysis.pdf_url && (
-                                          <Button
-                                            variant="outline"
-                                            size="icon"
-                                            className="h-8 w-8"
-                                            onClick={() => {
-                                              window.open(analysis.pdf_url, '_blank');
-                                            }}
-                                            title="Download PDF"
-                                          >
-                                            <FileDown className="w-4 h-4" />
-                                          </Button>
-                                        )}
+                                        <Button
+                                          variant="outline"
+                                          size="icon"
+                                          className="h-8 w-8"
+                                          onClick={() => {
+                                            // Open report in new tab - the page has a print button
+                                            const reportUrl = `/performance-report/${analysis.id}-${selectedPlayer?.name.toLowerCase().replace(/\s+/g, '-')}-vs-${analysis.opponent?.toLowerCase().replace(/\s+/g, '-') || 'opponent'}`;
+                                            const newWindow = window.open(reportUrl, '_blank');
+                                            // Auto-trigger print after page loads
+                                            if (newWindow) {
+                                              newWindow.addEventListener('load', () => {
+                                                setTimeout(() => newWindow.print(), 500);
+                                              });
+                                            }
+                                          }}
+                                          title="Save as PDF"
+                                        >
+                                          <FileDown className="w-4 h-4" />
+                                        </Button>
                                         <Button
                                           variant="outline"
                                           size="icon"
                                           className="h-8 w-8"
                                           onClick={async () => {
-                                            // Open report in new tab for printing/saving as webp
-                                            const reportUrl = `/performance-report/${analysis.id}-${selectedPlayer?.name.toLowerCase().replace(/\s+/g, '-')}-vs-${analysis.opponent.toLowerCase().replace(/\s+/g, '-')}`;
-                                            window.open(reportUrl, '_blank');
-                                            toast.info('Use browser print or screenshot to save as image');
+                                            // Open the dialog and capture it
+                                            setSelectedReportAnalysisId(analysis.id);
+                                            setPerformanceReportDialogOpen(true);
+                                            toast.info('Report opened - use the Save as Image button in the dialog');
                                           }}
-                                          title="Save as Image"
+                                          title="Save as WEBP"
                                         >
                                           <ImageIcon className="w-4 h-4" />
                                         </Button>
