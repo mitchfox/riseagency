@@ -413,53 +413,61 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                   const isClickableSession = sessionValue && /^[A-H]$/i.test(sessionValue);
                   
                   return (
-                    <button
-                      key={index}
-                      onClick={() => isClickableSession && onNavigateToSession?.(sessionValue.toUpperCase())}
-                      disabled={!isClickableSession}
-                      className="relative rounded-lg transition-all flex flex-col min-h-[80px] md:min-h-[100px] disabled:cursor-default overflow-hidden"
-                      style={{
-                        backgroundColor: colors.bg,
-                        color: colors.text,
-                        cursor: isClickableSession ? 'pointer' : 'default',
-                      }}
-                    >
-                      {/* Top 1/4 - Date */}
-                      <div className="h-1/4 flex flex-col items-center justify-center px-1 bg-black/20">
-                        <div className="text-[8px] md:text-xs font-medium opacity-70 uppercase leading-tight">
-                          {dayInfo.displayDay}
-                        </div>
-                        <div className="text-[10px] md:text-sm font-bold leading-tight">
-                          {dayInfo.displayDate}
-                        </div>
-                      </div>
+                    (() => {
+                      // Parse session value to separate regular session from team
+                      const hasTeam = /TEAM/i.test(sessionValue);
+                      const regularSession = sessionValue.replace(/\s*\+?\s*TEAM\s*/gi, '').trim();
                       
-                      {/* Middle 2/4 - Session content */}
-                      <div className="h-2/4 flex flex-col items-center justify-center">
-                        {clubLogoUrl && (
-                          <img 
-                            src={clubLogoUrl} 
-                            alt={`${dayInfo.dayName} opponent`}
-                            className="w-4 h-4 md:w-6 md:h-6 object-contain"
-                          />
-                        )}
-                        {!clubLogoUrl && sessionValue && !/^TEAM$/i.test(sessionValue) && (
-                          <div className="text-[10px] md:text-sm font-bold text-center">
-                            {sessionValue.toUpperCase()}
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => isClickableSession && onNavigateToSession?.(sessionValue.toUpperCase())}
+                          disabled={!isClickableSession}
+                          className="relative rounded-lg transition-all flex flex-col min-h-[80px] md:min-h-[100px] disabled:cursor-default overflow-hidden"
+                          style={{
+                            backgroundColor: colors.bg,
+                            color: colors.text,
+                            cursor: isClickableSession ? 'pointer' : 'default',
+                          }}
+                        >
+                          {/* Top 1/4 - Date */}
+                          <div className="h-1/4 flex flex-col items-center justify-center px-1 bg-black/20">
+                            <div className="text-[8px] md:text-xs font-medium opacity-70 uppercase leading-tight">
+                              {dayInfo.displayDay}
+                            </div>
+                            <div className="text-[10px] md:text-sm font-bold leading-tight">
+                              {dayInfo.displayDate}
+                            </div>
                           </div>
-                        )}
-                        {!clubLogoUrl && !sessionValue && (
-                          <div className="text-[10px] md:text-sm font-bold text-center opacity-50">-</div>
-                        )}
-                      </div>
-                      
-                      {/* Bottom 1/4 - Team training */}
-                      <div className="h-1/4 flex items-center justify-center bg-black/30">
-                        <div className="text-[8px] md:text-xs font-bold text-center opacity-80">
-                          {/TEAM/i.test(sessionValue) ? 'TEAM' : ''}
-                        </div>
-                      </div>
-                    </button>
+                          
+                          {/* Middle 2/4 - Regular session content */}
+                          <div className="h-2/4 flex flex-col items-center justify-center">
+                            {clubLogoUrl ? (
+                              <img 
+                                src={clubLogoUrl} 
+                                alt={`${dayInfo.dayName} opponent`}
+                                className="w-4 h-4 md:w-6 md:h-6 object-contain"
+                              />
+                            ) : regularSession ? (
+                              <div className="text-[10px] md:text-sm font-bold text-center">
+                                {regularSession.toUpperCase()}
+                              </div>
+                            ) : !hasTeam ? (
+                              <div className="text-[10px] md:text-sm font-bold text-center opacity-50">-</div>
+                            ) : null}
+                          </div>
+                          
+                          {/* Bottom 1/4 - Team training */}
+                          <div className="h-1/4 flex items-center justify-center bg-black/30">
+                            {hasTeam && (
+                              <div className="text-[8px] md:text-xs font-bold text-center opacity-80">
+                                TEAM
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })()
                   );
                 })}
               </div>
