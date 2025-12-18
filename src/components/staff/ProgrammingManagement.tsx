@@ -75,6 +75,13 @@ interface WeeklySchedule {
   fridayTeam?: string;
   saturdayTeam?: string;
   sundayTeam?: string;
+  mondayTeamImage?: string;
+  tuesdayTeamImage?: string;
+  wednesdayTeamImage?: string;
+  thursdayTeamImage?: string;
+  fridayTeamImage?: string;
+  saturdayTeamImage?: string;
+  sundayTeamImage?: string;
   scheduleNotes: string;
 }
 
@@ -143,6 +150,7 @@ const emptyWeeklySchedule = (): WeeklySchedule => ({
   mondayImage: '', tuesdayImage: '', wednesdayImage: '', thursdayImage: '', fridayImage: '', saturdayImage: '', sundayImage: '',
   mondayFixture: '', tuesdayFixture: '', wednesdayFixture: '', thursdayFixture: '', fridayFixture: '', saturdayFixture: '', sundayFixture: '',
   mondayTeam: '', tuesdayTeam: '', wednesdayTeam: '', thursdayTeam: '', fridayTeam: '', saturdayTeam: '', sundayTeam: '',
+  mondayTeamImage: '', tuesdayTeamImage: '', wednesdayTeamImage: '', thursdayTeamImage: '', fridayTeamImage: '', saturdayTeamImage: '', sundayTeamImage: '',
   scheduleNotes: ''
 });
 
@@ -1970,6 +1978,55 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                                       onChange={(e) => updateWeeklySchedule(idx, `${day}Team` as keyof WeeklySchedule, e.target.value)}
                                       className="text-xs text-center bg-amber-500/10 border-amber-500/30 placeholder:text-amber-500/50"
                                     />
+                                    {/* Team Session Image Upload */}
+                                    <Input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        
+                                        try {
+                                          const fileExt = file.name.split('.').pop();
+                                          const fileName = `team-${Math.random()}.${fileExt}`;
+                                          const filePath = `${fileName}`;
+
+                                          const { error: uploadError } = await supabase.storage
+                                            .from('blog-images')
+                                            .upload(filePath, file);
+
+                                          if (uploadError) throw uploadError;
+
+                                          const { data: { publicUrl } } = supabase.storage
+                                            .from('blog-images')
+                                            .getPublicUrl(filePath);
+
+                                          updateWeeklySchedule(idx, `${day}TeamImage` as keyof WeeklySchedule, publicUrl);
+                                          toast.success('Team logo uploaded');
+                                        } catch (error) {
+                                          console.error('Error uploading:', error);
+                                          toast.error('Failed to upload team logo');
+                                        }
+                                      }}
+                                      className="text-xs h-7 bg-amber-500/5 border-amber-500/20"
+                                    />
+                                    {schedule[`${day}TeamImage` as keyof WeeklySchedule] && (
+                                      <div className="relative">
+                                        <img 
+                                          src={schedule[`${day}TeamImage` as keyof WeeklySchedule] as string}
+                                          alt={`${day} team logo`}
+                                          className="w-full h-10 object-contain rounded border border-amber-500/30"
+                                        />
+                                        <Button
+                                          variant="destructive"
+                                          size="icon"
+                                          className="absolute -top-2 -right-2 h-5 w-5"
+                                          onClick={() => updateWeeklySchedule(idx, `${day}TeamImage` as keyof WeeklySchedule, '')}
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                      </div>
+                                    )}
                                     {/* Individual Session Input */}
                                     <Input
                                       placeholder="A / B / Rest"
