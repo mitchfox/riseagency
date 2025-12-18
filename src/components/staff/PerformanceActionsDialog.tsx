@@ -735,7 +735,7 @@ export const PerformanceActionsDialog = ({
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-wrap min-w-0">
                         <span className="font-bold text-muted-foreground whitespace-nowrap">#{action.action_number}</span>
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">{(action.minute ?? 0).toFixed(2)}'</span>
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">{Math.round(action.minute ?? 0)}'</span>
                         <span className={`text-sm font-mono whitespace-nowrap ${getActionScoreColor(action.action_score ?? 0)}`}>
                           {(action.action_score ?? 0).toFixed(5)}
                         </span>

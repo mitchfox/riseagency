@@ -594,7 +594,7 @@ export const CreatePerformanceReportDialog = ({
           actionsData.map((action) => ({
             id: action.id,
             action_number: action.action_number,
-            minute: action.minute !== null ? Number(action.minute).toFixed(2) : "",
+            minute: action.minute !== null ? String(Math.round(Number(action.minute))) : "",
             action_score: action.action_score !== null ? action.action_score.toString() : "",
             action_type: action.action_type || "",
             action_description: action.action_description || "",
@@ -697,7 +697,7 @@ export const CreatePerformanceReportDialog = ({
           actionsData.map((action) => ({
             id: action.id,
             action_number: action.action_number,
-            minute: action.minute !== null ? Number(action.minute).toFixed(2) : "",
+            minute: action.minute !== null ? String(Math.round(Number(action.minute))) : "",
             action_score: action.action_score !== null ? action.action_score.toString() : "",
             action_type: action.action_type || "",
             action_description: action.action_description || "",
@@ -1681,7 +1681,7 @@ export const CreatePerformanceReportDialog = ({
                         type="text"
                         value={action.minute}
                         onChange={(e) => updateAction(index, "minute", e.target.value)}
-                        placeholder="2.30"
+                        placeholder="45"
                         className="text-sm"
                       />
                     </div>
@@ -1815,7 +1815,7 @@ export const CreatePerformanceReportDialog = ({
                           type="text"
                           value={action.minute}
                           onChange={(e) => updateAction(index, "minute", e.target.value)}
-                          placeholder="2.30"
+                          placeholder="45"
                           className="w-20 text-sm"
                         />
                       </td>
