@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, X } from "lucide-react";
+import { Download, X, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
+import html2canvas from "html2canvas";
 
 interface PerformanceAction {
   id: string;
@@ -44,6 +45,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
   const [analysis, setAnalysis] = useState<AnalysisDetails | null>(null);
   const [actions, setActions] = useState<PerformanceAction[]>([]);
   const [prefetchedId, setPrefetchedId] = useState<string | null>(null);
+  const [savingImage, setSavingImage] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Pre-fetch data when analysisId changes (even before dialog opens)
   useEffect(() => {
@@ -136,6 +139,35 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
 
   const handleSaveAsPDF = () => {
     window.print();
+  };
+
+  const handleSaveAsWebp = async () => {
+    if (!contentRef.current || !analysis) return;
+    
+    setSavingImage(true);
+    try {
+      const canvas = await html2canvas(contentRef.current, {
+        background: '#000000',
+        useCORS: true,
+        logging: false,
+      } as any);
+      
+      // Convert to webp
+      const dataUrl = canvas.toDataURL('image/webp', 0.9);
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.download = `${analysis.player_name}-vs-${analysis.opponent}-performance-report.webp`;
+      link.href = dataUrl;
+      link.click();
+      
+      toast.success('Image saved successfully');
+    } catch (error) {
+      console.error('Error saving image:', error);
+      toast.error('Failed to save image');
+    } finally {
+      setSavingImage(false);
+    }
   };
 
   // Format stat key to readable label
@@ -233,6 +265,10 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
               <Download className="mr-2 h-4 w-4" />
               Save as PDF
             </Button>
+            <Button onClick={handleSaveAsWebp} variant="secondary" size="sm" className="flex-1 md:flex-none" disabled={savingImage || loading}>
+              <ImageIcon className="mr-2 h-4 w-4" />
+              {savingImage ? 'Saving...' : 'Save as WEBP'}
+            </Button>
             <Button onClick={() => onOpenChange(false)} variant="outline" size="sm" className="flex-1 md:flex-none">
               <X className="mr-2 h-4 w-4" />
               Close
@@ -264,7 +300,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
           ) : !analysis ? (
             <div className="text-center py-8 text-muted-foreground">Performance report not found</div>
           ) : (
-            <div className="space-y-6">
+            <div ref={contentRef} className="space-y-6">
               {/* Player Info */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
