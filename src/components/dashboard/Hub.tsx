@@ -409,65 +409,61 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                   const dayImageKey = `${dayInfo.dayName}Image`;
                   const clubLogoUrl = currentSchedule[dayImageKey];
                   
+                  // Parse session value to separate regular session from team
+                  const hasTeam = /TEAM/i.test(sessionValue);
+                  const regularSession = sessionValue.replace(/\s*\+?\s*TEAM\s*/gi, '').trim();
+                  
                   // Check if it's a clickable session (A-H)
-                  const isClickableSession = sessionValue && /^[A-H]$/i.test(sessionValue);
+                  const isClickableSession = regularSession && /^[A-H]$/i.test(regularSession);
                   
                   return (
-                    (() => {
-                      // Parse session value to separate regular session from team
-                      const hasTeam = /TEAM/i.test(sessionValue);
-                      const regularSession = sessionValue.replace(/\s*\+?\s*TEAM\s*/gi, '').trim();
+                    <button
+                      key={index}
+                      onClick={() => isClickableSession && onNavigateToSession?.(regularSession.toUpperCase())}
+                      disabled={!isClickableSession}
+                      className="relative rounded-lg transition-all flex flex-col min-h-[80px] md:min-h-[100px] disabled:cursor-default overflow-hidden"
+                      style={{
+                        backgroundColor: colors.bg,
+                        color: colors.text,
+                        cursor: isClickableSession ? 'pointer' : 'default',
+                      }}
+                    >
+                      {/* Top 1/4 - Date */}
+                      <div className="h-1/4 flex flex-col items-center justify-center px-1 bg-black/20">
+                        <div className="text-[8px] md:text-xs font-medium opacity-70 uppercase leading-tight">
+                          {dayInfo.displayDay}
+                        </div>
+                        <div className="text-[10px] md:text-sm font-bold leading-tight">
+                          {dayInfo.displayDate}
+                        </div>
+                      </div>
                       
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => isClickableSession && onNavigateToSession?.(sessionValue.toUpperCase())}
-                          disabled={!isClickableSession}
-                          className="relative rounded-lg transition-all flex flex-col min-h-[80px] md:min-h-[100px] disabled:cursor-default overflow-hidden"
-                          style={{
-                            backgroundColor: colors.bg,
-                            color: colors.text,
-                            cursor: isClickableSession ? 'pointer' : 'default',
-                          }}
-                        >
-                          {/* Top 1/4 - Date */}
-                          <div className="h-1/4 flex flex-col items-center justify-center px-1 bg-black/20">
-                            <div className="text-[8px] md:text-xs font-medium opacity-70 uppercase leading-tight">
-                              {dayInfo.displayDay}
-                            </div>
-                            <div className="text-[10px] md:text-sm font-bold leading-tight">
-                              {dayInfo.displayDate}
-                            </div>
+                      {/* Middle 2/4 - Regular session content */}
+                      <div className="h-2/4 flex flex-col items-center justify-center">
+                        {clubLogoUrl ? (
+                          <img 
+                            src={clubLogoUrl} 
+                            alt={`${dayInfo.dayName} session`}
+                            className="w-6 h-6 md:w-8 md:h-8 object-contain"
+                          />
+                        ) : regularSession ? (
+                          <div className="text-base md:text-lg font-bold text-center">
+                            {regularSession.toUpperCase()}
                           </div>
-                          
-                          {/* Middle 2/4 - Regular session content */}
-                          <div className="h-2/4 flex flex-col items-center justify-center">
-                            {clubLogoUrl ? (
-                              <img 
-                                src={clubLogoUrl} 
-                                alt={`${dayInfo.dayName} opponent`}
-                                className="w-4 h-4 md:w-6 md:h-6 object-contain"
-                              />
-                            ) : regularSession ? (
-                              <div className="text-[10px] md:text-sm font-bold text-center">
-                                {regularSession.toUpperCase()}
-                              </div>
-                            ) : !hasTeam ? (
-                              <div className="text-[10px] md:text-sm font-bold text-center opacity-50">-</div>
-                            ) : null}
+                        ) : !hasTeam ? (
+                          <div className="text-base md:text-lg font-bold text-center opacity-50">-</div>
+                        ) : null}
+                      </div>
+                      
+                      {/* Bottom 1/4 - Team training */}
+                      <div className="h-1/4 flex items-center justify-center bg-black/30">
+                        {hasTeam && (
+                          <div className="text-[8px] md:text-xs font-bold text-center opacity-80">
+                            TEAM
                           </div>
-                          
-                          {/* Bottom 1/4 - Team training */}
-                          <div className="h-1/4 flex items-center justify-center bg-black/30">
-                            {hasTeam && (
-                              <div className="text-[8px] md:text-xs font-bold text-center opacity-80">
-                                TEAM
-                              </div>
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })()
+                        )}
+                      </div>
+                    </button>
                   );
                 })}
               </div>
