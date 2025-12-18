@@ -404,6 +404,12 @@ const PerformanceReport = () => {
 
                         const per90Key = `${key}_per90`;
                         const per90Value = analysis.striker_stats![per90Key];
+                        
+                        // Only show per90 for rate-based stats (xG, xA, xC types), not count-based stats
+                        const keyLower = key.toLowerCase();
+                        const rateBasedPrefixes = ['xg', 'xa', 'xc', 'movement_', 'triple_threat', 'crossing_movement'];
+                        const isRateBased = rateBasedPrefixes.some(prefix => keyLower.includes(prefix));
+                        
                         const displayName = key
                           .replace(/_/g, ' ')
                           .replace(/\b\w/g, l => l.toUpperCase())
@@ -412,8 +418,7 @@ const PerformanceReport = () => {
                           .replace(/Xc/g, 'xC')
                           .replace(/Adj/g, '(adj.)');
                         
-                        const displayValue = value;
-                        const displayPer90 = per90Value;
+                        const displayPer90 = isRateBased ? per90Value : undefined;
                         
                         return (
                           <div key={key} className="text-center p-3 bg-background rounded-md">

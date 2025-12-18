@@ -259,8 +259,13 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
       
       if (typeof value !== 'number' && typeof value !== 'string') continue;
       
+      // Only show per90 for rate-based stats (xG, xA, xC types), not count-based stats
+      const keyLower = key.toLowerCase();
+      const rateBasedPrefixes = ['xg', 'xa', 'xc', 'movement_', 'triple_threat', 'crossing_movement'];
+      const isRateBased = rateBasedPrefixes.some(prefix => keyLower.includes(prefix));
+      
       const per90Key = `${key}_per90`;
-      const per90Value = analysis.striker_stats[per90Key];
+      const per90Value = isRateBased ? analysis.striker_stats[per90Key] : undefined;
       
       stats.push({ 
         key, 

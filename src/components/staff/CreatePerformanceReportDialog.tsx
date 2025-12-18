@@ -318,12 +318,18 @@ export const CreatePerformanceReportDialog = ({
       progressive_passes_adj_per90: calculatePer90(prev.progressive_passes_adj),
     }));
 
-    // Auto-calculate per90 for additional stats
+    // Auto-calculate per90 ONLY for rate-based stats (xG, xA, xC, xGChain types)
+    // Do NOT calculate per90 for count-based stats (dribbles, passes, shots, touches, etc.)
+    const rateBasedStatPrefixes = ['xg', 'xa', 'xc', 'movement_', 'triple_threat', 'crossing_movement'];
     const updatedStats: Record<string, string> = { ...additionalStats };
     Object.keys(additionalStats).forEach(key => {
       if (!key.endsWith('_per90')) {
-        const per90Key = `${key}_per90`;
-        updatedStats[per90Key] = calculatePer90(additionalStats[key]);
+        const keyLower = key.toLowerCase();
+        const isRateBasedStat = rateBasedStatPrefixes.some(prefix => keyLower.includes(prefix));
+        if (isRateBasedStat) {
+          const per90Key = `${key}_per90`;
+          updatedStats[per90Key] = calculatePer90(additionalStats[key]);
+        }
       }
     });
     setAdditionalStats(updatedStats);
