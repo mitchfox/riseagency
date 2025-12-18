@@ -21,6 +21,14 @@ import { R90RatingsViewer } from "./R90RatingsViewer";
 import { formatScoreWithFrequency } from "@/lib/utils";
 import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
 
+// Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
+const formatMinuteForInput = (minute: number | null): string => {
+  if (minute === null) return "";
+  const minPart = Math.floor(minute);
+  const secPart = Math.round((minute - minPart) * 100);
+  return `${minPart}.${secPart.toString().padStart(2, '0')}`;
+};
+
 interface CreatePerformanceReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -594,7 +602,7 @@ export const CreatePerformanceReportDialog = ({
           actionsData.map((action) => ({
             id: action.id,
             action_number: action.action_number,
-            minute: action.minute !== null ? String(Math.round(Number(action.minute))) : "",
+            minute: formatMinuteForInput(action.minute),
             action_score: action.action_score !== null ? action.action_score.toString() : "",
             action_type: action.action_type || "",
             action_description: action.action_description || "",
@@ -697,7 +705,7 @@ export const CreatePerformanceReportDialog = ({
           actionsData.map((action) => ({
             id: action.id,
             action_number: action.action_number,
-            minute: action.minute !== null ? String(Math.round(Number(action.minute))) : "",
+            minute: formatMinuteForInput(action.minute),
             action_score: action.action_score !== null ? action.action_score.toString() : "",
             action_type: action.action_type || "",
             action_description: action.action_description || "",

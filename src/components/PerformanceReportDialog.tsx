@@ -8,6 +8,14 @@ import { Download, X, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 
+// Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
+const formatMinute = (minute: number | null | undefined): string => {
+  if (minute === null || minute === undefined) return "-";
+  const minPart = Math.floor(minute);
+  const secPart = Math.round((minute - minPart) * 100);
+  return `${minPart}.${secPart.toString().padStart(2, '0')}`;
+};
+
 interface PerformanceAction {
   id: string;
   action_number: number;
@@ -414,7 +422,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex gap-3">
                               <span className="font-semibold">#{action.action_number}</span>
-                              <span className="text-sm text-muted-foreground">{action.minute}'</span>
+                              <span className="text-sm text-muted-foreground">{formatMinute(action.minute)}'</span>
                             </div>
                             <span className={`text-sm font-bold ${getActionScoreColor(action.action_score)}`}>
                               {action.action_score?.toFixed(5)}
@@ -448,7 +456,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                           {actions.map((action) => (
                             <tr key={action.id} className="border-b border-border/50">
                               <td className="py-2 px-2">{action.action_number}</td>
-                              <td className="py-2 px-2">{action.minute}'</td>
+                              <td className="py-2 px-2">{formatMinute(action.minute)}'</td>
                               <td className="py-2 px-2">{action.action_type}</td>
                               <td className="py-2 px-2">{action.action_description}</td>
                               <td className="py-2 px-2 text-muted-foreground">{action.notes || "-"}</td>
