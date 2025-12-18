@@ -417,28 +417,47 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                       key={index}
                       onClick={() => isClickableSession && onNavigateToSession?.(sessionValue.toUpperCase())}
                       disabled={!isClickableSession}
-                      className="relative p-2 md:p-4 rounded-lg transition-all flex flex-col items-center justify-center min-h-[60px] md:min-h-[80px] disabled:cursor-default"
+                      className="relative rounded-lg transition-all flex flex-col min-h-[80px] md:min-h-[100px] disabled:cursor-default overflow-hidden"
                       style={{
                         backgroundColor: colors.bg,
                         color: colors.text,
                         cursor: isClickableSession ? 'pointer' : 'default',
                       }}
                     >
-                      <div className="text-[8px] md:text-xs font-medium mb-1 opacity-70 uppercase">
-                        {dayInfo.displayDay}
+                      {/* Top 1/4 - Date */}
+                      <div className="h-1/4 flex flex-col items-center justify-center px-1 bg-black/20">
+                        <div className="text-[8px] md:text-xs font-medium opacity-70 uppercase leading-tight">
+                          {dayInfo.displayDay}
+                        </div>
+                        <div className="text-[10px] md:text-sm font-bold leading-tight">
+                          {dayInfo.displayDate}
+                        </div>
                       </div>
-                      <div className="text-[10px] md:text-sm font-bold mb-1">
-                        {dayInfo.displayDate}
+                      
+                      {/* Middle 2/4 - Session content */}
+                      <div className="h-2/4 flex flex-col items-center justify-center">
+                        {clubLogoUrl && (
+                          <img 
+                            src={clubLogoUrl} 
+                            alt={`${dayInfo.dayName} opponent`}
+                            className="w-4 h-4 md:w-6 md:h-6 object-contain"
+                          />
+                        )}
+                        {!clubLogoUrl && sessionValue && !/^TEAM$/i.test(sessionValue) && (
+                          <div className="text-[10px] md:text-sm font-bold text-center">
+                            {sessionValue.toUpperCase()}
+                          </div>
+                        )}
+                        {!clubLogoUrl && !sessionValue && (
+                          <div className="text-[10px] md:text-sm font-bold text-center opacity-50">-</div>
+                        )}
                       </div>
-                      {clubLogoUrl && (
-                        <img 
-                          src={clubLogoUrl} 
-                          alt={`${dayInfo.dayName} opponent`}
-                          className="w-4 h-4 md:w-6 md:h-6 object-contain mb-1"
-                        />
-                      )}
-                      <div className="text-[10px] md:text-sm font-bold text-center">
-                        {sessionValue ? sessionValue.toUpperCase() : '-'}
+                      
+                      {/* Bottom 1/4 - Team training */}
+                      <div className="h-1/4 flex items-center justify-center bg-black/30">
+                        <div className="text-[8px] md:text-xs font-bold text-center opacity-80">
+                          {/TEAM/i.test(sessionValue) ? 'TEAM' : ''}
+                        </div>
                       </div>
                     </button>
                   );
