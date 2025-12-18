@@ -2894,8 +2894,12 @@ const Dashboard = () => {
                                                     const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
                                                     const weekDates = getWeekDates(week.week_start_date);
                                                     const dayDate = weekDates ? weekDates[day as keyof typeof weekDates] : null;
-                                                    const dayImageKey = `${day}Image`; // Use camelCase for image field
+                                                    const dayImageKey = `${day}Image`;
                                                     const clubLogoUrl = week[dayImageKey];
+                                                    
+                                                    const hasBoth = teamSessionValue && sessionValue;
+                                                    const onlyTeam = teamSessionValue && !sessionValue;
+                                                    const onlySession = !teamSessionValue && sessionValue;
                                                     
                                                     return (
                                                       <div 
@@ -2905,82 +2909,108 @@ const Dashboard = () => {
                                                           border: '1px solid rgba(255, 255, 255, 0.1)'
                                                         }}
                                                       >
-                                                        {/* Team Session - Top 25% */}
-                                                        {teamSessionValue ? (
+                                                        {/* Team Session Only - Full 100% */}
+                                                        {onlyTeam && (
                                                           <div 
-                                                            className="flex items-center justify-center px-1 py-0.5"
+                                                            className="flex-1 flex items-center justify-center px-1 py-0.5"
                                                             style={{ 
-                                                              height: '25%',
-                                                              minHeight: '14px',
                                                               backgroundColor: 'hsl(45, 70%, 25%)',
-                                                              borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
                                                             }}
                                                           >
+                                                            {dayDate && (
+                                                              <span 
+                                                                className="absolute top-0.5 right-0.5 text-[8px] md:text-xs opacity-50 leading-none z-30"
+                                                                style={{ color: 'hsl(45, 100%, 80%)' }}
+                                                              >
+                                                                {format(dayDate, 'd')}
+                                                              </span>
+                                                            )}
                                                             <span 
-                                                              className="font-medium text-[8px] md:text-[10px] uppercase truncate"
+                                                              className="font-medium text-xs md:text-sm uppercase truncate"
                                                               style={{ color: 'hsl(45, 100%, 80%)' }}
                                                             >
                                                               {teamSessionValue}
                                                             </span>
                                                           </div>
-                                                        ) : null}
+                                                        )}
                                                         
-                                                        {/* Individual Session - Bottom 75% (or 100% if no team session) */}
-                                                        <div 
-                                                          onClick={() => sessionValue && handleSessionClick(sessionValue)}
-                                                          className={`flex-1 flex items-center justify-center relative ${sessionValue ? 'cursor-pointer' : ''}`}
-                                                          style={{ 
-                                                            backgroundColor: colors.bg,
-                                                            minHeight: teamSessionValue ? '37.5px' : '50px'
-                                                          }}
-                                                          onMouseEnter={(e) => {
-                                                            if (sessionValue && colors.hover) {
-                                                              e.currentTarget.style.backgroundColor = colors.hover;
-                                                            }
-                                                          }}
-                                                          onMouseLeave={(e) => {
-                                                            if (sessionValue) {
-                                                              e.currentTarget.style.backgroundColor = colors.bg;
-                                                            }
-                                                          }}
-                                                        >
-                                                         {/* Day number in top right */}
-                                                         {dayDate && (
-                                                           <span 
-                                                             className="absolute top-0.5 right-0.5 text-[8px] md:text-xs opacity-50 leading-none z-30"
-                                                             style={{ color: colors.text }}
-                                                           >
-                                                             {format(dayDate, 'd')}
-                                                           </span>
-                                                         )}
-                                                         
-                                                         {/* Display club logo if available - BEHIND the session letter */}
-                                                         {clubLogoUrl && (
-                                                           <div className="absolute inset-0 flex items-center justify-center p-3 z-0">
-                                                             <img 
-                                                               src={clubLogoUrl} 
-                                                               alt={`${day} club logo`}
-                                                               className="max-w-full max-h-full object-contain opacity-25"
-                                                               onError={(e) => {
-                                                                 console.error('Failed to load club logo:', clubLogoUrl);
-                                                                 e.currentTarget.style.display = 'none';
-                                                               }}
-                                                             />
-                                                           </div>
-                                                         )}
-                                                         
-                                                         {sessionValue && (
-                                                           <span 
-                                                             className="font-bebas text-base md:text-2xl uppercase font-bold relative z-20"
-                                                             style={{ 
-                                                               color: 'hsl(43, 49%, 61%)',
-                                                               textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)'
-                                                             }}
-                                                           >
-                                                             {sessionValue.toUpperCase()}
-                                                           </span>
-                                                         )}
-                                                        </div>
+                                                        {/* Both Team and Individual Session - Split 25%/75% */}
+                                                        {hasBoth && (
+                                                          <>
+                                                            <div 
+                                                              className="flex items-center justify-center px-1 py-0.5"
+                                                              style={{ 
+                                                                height: '25%',
+                                                                minHeight: '14px',
+                                                                backgroundColor: 'hsl(45, 70%, 25%)',
+                                                                borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                                                              }}
+                                                            >
+                                                              <span 
+                                                                className="font-medium text-[8px] md:text-[10px] uppercase truncate"
+                                                                style={{ color: 'hsl(45, 100%, 80%)' }}
+                                                              >
+                                                                {teamSessionValue}
+                                                              </span>
+                                                            </div>
+                                                            <div 
+                                                              onClick={() => handleSessionClick(sessionValue)}
+                                                              className="flex-1 flex items-center justify-center relative cursor-pointer"
+                                                              style={{ backgroundColor: colors.bg }}
+                                                              onMouseEnter={(e) => {
+                                                                if (colors.hover) e.currentTarget.style.backgroundColor = colors.hover;
+                                                              }}
+                                                              onMouseLeave={(e) => {
+                                                                e.currentTarget.style.backgroundColor = colors.bg;
+                                                              }}
+                                                            >
+                                                              {dayDate && (
+                                                                <span className="absolute top-0.5 right-0.5 text-[8px] md:text-xs opacity-50 leading-none z-30" style={{ color: colors.text }}>
+                                                                  {format(dayDate, 'd')}
+                                                                </span>
+                                                              )}
+                                                              {clubLogoUrl && (
+                                                                <div className="absolute inset-0 flex items-center justify-center p-3 z-0">
+                                                                  <img src={clubLogoUrl} alt={`${day} club logo`} className="max-w-full max-h-full object-contain opacity-25" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                                                                </div>
+                                                              )}
+                                                              <span className="font-bebas text-base md:text-2xl uppercase font-bold relative z-20" style={{ color: 'hsl(43, 49%, 61%)', textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' }}>
+                                                                {sessionValue.toUpperCase()}
+                                                              </span>
+                                                            </div>
+                                                          </>
+                                                        )}
+                                                        
+                                                        {/* Individual Session Only or Empty - Full 100% */}
+                                                        {(onlySession || (!teamSessionValue && !sessionValue)) && (
+                                                          <div 
+                                                            onClick={() => sessionValue && handleSessionClick(sessionValue)}
+                                                            className={`flex-1 flex items-center justify-center relative ${sessionValue ? 'cursor-pointer' : ''}`}
+                                                            style={{ backgroundColor: colors.bg }}
+                                                            onMouseEnter={(e) => {
+                                                              if (sessionValue && colors.hover) e.currentTarget.style.backgroundColor = colors.hover;
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                              if (sessionValue) e.currentTarget.style.backgroundColor = colors.bg;
+                                                            }}
+                                                          >
+                                                            {dayDate && (
+                                                              <span className="absolute top-0.5 right-0.5 text-[8px] md:text-xs opacity-50 leading-none z-30" style={{ color: colors.text }}>
+                                                                {format(dayDate, 'd')}
+                                                              </span>
+                                                            )}
+                                                            {clubLogoUrl && (
+                                                              <div className="absolute inset-0 flex items-center justify-center p-3 z-0">
+                                                                <img src={clubLogoUrl} alt={`${day} club logo`} className="max-w-full max-h-full object-contain opacity-25" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                                                              </div>
+                                                            )}
+                                                            {sessionValue && (
+                                                              <span className="font-bebas text-base md:text-2xl uppercase font-bold relative z-20" style={{ color: 'hsl(43, 49%, 61%)', textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' }}>
+                                                                {sessionValue.toUpperCase()}
+                                                              </span>
+                                                            )}
+                                                          </div>
+                                                        )}
                                                       </div>
                                                    );
                                                  })}
