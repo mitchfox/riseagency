@@ -146,11 +146,19 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
     
     setSavingImage(true);
     try {
+      // Temporarily add background for capture
+      const originalBg = contentRef.current.style.backgroundColor;
+      contentRef.current.style.backgroundColor = '#000000';
+      
       const canvas = await html2canvas(contentRef.current, {
-        background: '#000000',
+        backgroundColor: '#000000',
         useCORS: true,
         logging: false,
+        scale: 2,
       } as any);
+      
+      // Restore original background
+      contentRef.current.style.backgroundColor = originalBg;
       
       // Convert to webp
       const dataUrl = canvas.toDataURL('image/webp', 0.9);
@@ -303,7 +311,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
           ) : !analysis ? (
             <div className="text-center py-8 text-muted-foreground">Performance report not found</div>
           ) : (
-            <div ref={contentRef} className="space-y-6">
+            <div ref={contentRef} className="space-y-6 bg-background p-4 rounded-lg">
               {/* Player Info */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
