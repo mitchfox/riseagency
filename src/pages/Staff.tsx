@@ -61,6 +61,7 @@ import { PaymentsManagement } from "@/components/staff/PaymentsManagement";
 import { AthleteCentre } from "@/components/staff/AthleteCentre";
 import { CoachingAIChat } from "@/components/staff/coaching/CoachingAIChat";
 import { OpenAccessManagement } from "@/components/staff/OpenAccessManagement";
+import { FocusedTasksSection } from "@/components/staff/FocusedTasksSection";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -112,7 +113,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'openaccess' | 'coaching' | 'coachingchat' | 'analysis' | 'highlightmaker' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'languages' | 'sitemanagement' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'openaccess' | 'coaching' | 'coachingchat' | 'analysis' | 'highlightmaker' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'languages' | 'sitemanagement' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Enable staff notifications
@@ -535,6 +536,7 @@ const Staff = () => {
       icon: Calendar,
       sections: [
         { id: 'overview', title: 'Overview', icon: Calendar },
+        { id: 'focusedtasks', title: 'Focused Tasks', icon: Target },
         { id: 'goalstasks', title: 'Goals & Tasks', icon: Target },
         { id: 'staffschedules', title: 'Staff Schedules', icon: Users },
       ],
@@ -927,6 +929,7 @@ const Staff = () => {
                 </CardHeader>
                 <CardContent>
                   {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} userId={user?.id} />}
+                  {expandedSection === 'focusedtasks' && <FocusedTasksSection />}
                   {expandedSection === 'schedule' && (
                     <div className="space-y-6">
                       <div className="mb-6">
