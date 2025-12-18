@@ -2911,36 +2911,46 @@ const Dashboard = () => {
                                                           border: '1px solid rgba(255, 255, 255, 0.1)'
                                                         }}
                                                       >
-                                                        {/* Team Session Only - Full 100% */}
+                                                        {/* Team Session Only - Top 25% only */}
                                                         {onlyTeam && (
-                                                          <div 
-                                                            className="flex-1 flex items-center justify-center px-1 py-0.5 gap-1"
-                                                            style={{ 
-                                                              backgroundColor: 'hsl(45, 70%, 25%)',
-                                                            }}
-                                                          >
-                                                            {dayDate && (
+                                                          <>
+                                                            <div 
+                                                              className="flex items-center justify-center px-1 py-0.5 gap-1"
+                                                              style={{ 
+                                                                height: '25%',
+                                                                minHeight: '14px',
+                                                                backgroundColor: 'hsl(45, 70%, 25%)',
+                                                                borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                                                              }}
+                                                            >
+                                                              {teamImageUrl && (
+                                                                <img 
+                                                                  src={teamImageUrl} 
+                                                                  alt="Team" 
+                                                                  className="h-3 md:h-4 w-auto object-contain"
+                                                                />
+                                                              )}
                                                               <span 
-                                                                className="absolute top-0.5 right-0.5 text-[8px] md:text-xs opacity-50 leading-none z-30"
+                                                                className="font-medium text-[8px] md:text-[10px] uppercase truncate"
                                                                 style={{ color: 'hsl(45, 100%, 80%)' }}
                                                               >
-                                                                {format(dayDate, 'd')}
+                                                                {teamSessionValue}
                                                               </span>
-                                                            )}
-                                                            {teamImageUrl && (
-                                                              <img 
-                                                                src={teamImageUrl} 
-                                                                alt="Team" 
-                                                                className="h-6 md:h-8 w-auto object-contain"
-                                                              />
-                                                            )}
-                                                            <span 
-                                                              className="font-medium text-xs md:text-sm uppercase truncate"
-                                                              style={{ color: 'hsl(45, 100%, 80%)' }}
+                                                            </div>
+                                                            <div 
+                                                              className="flex-1 flex items-center justify-center relative"
+                                                              style={{ backgroundColor: 'hsl(0, 0%, 10%)' }}
                                                             >
-                                                              {teamSessionValue}
-                                                            </span>
-                                                          </div>
+                                                              {dayDate && (
+                                                                <span 
+                                                                  className="absolute top-0.5 right-0.5 text-[8px] md:text-xs opacity-50 leading-none z-30"
+                                                                  style={{ color: 'hsl(0, 0%, 50%)' }}
+                                                                >
+                                                                  {format(dayDate, 'd')}
+                                                                </span>
+                                                              )}
+                                                            </div>
+                                                          </>
                                                         )}
                                                         
                                                         {/* Both Team and Individual Session - Split 25%/75% */}
