@@ -344,24 +344,28 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-accent/20 rounded-lg">
                 <div className="text-center">
                   <p className="text-xs md:text-sm text-muted-foreground mb-1">Raw Score</p>
-                  <p className="text-xl md:text-2xl font-bold">{calculateRScore().toFixed(5)}</p>
+                  <p className="text-xl md:text-2xl font-bold">
+                    {actions.length > 0 ? calculateRScore().toFixed(5) : (analysis.r90_score !== null && analysis.minutes_played ? ((analysis.r90_score / 90) * analysis.minutes_played).toFixed(5) : "N/A")}
+                  </p>
                 </div>
                 <div className="text-center bg-primary text-primary-foreground rounded-lg p-4">
                   <p className="text-xs md:text-sm mb-1 opacity-90">R90 Score</p>
                   <p className="text-2xl md:text-3xl font-bold">
-                    {analysis.minutes_played 
-                      ? ((calculateRScore() / analysis.minutes_played) * 90).toFixed(2)
-                      : "N/A"
+                    {analysis.r90_score !== null 
+                      ? analysis.r90_score.toFixed(2)
+                      : analysis.minutes_played && actions.length > 0
+                        ? ((calculateRScore() / analysis.minutes_played) * 90).toFixed(2)
+                        : "N/A"
                     }
                   </p>
                 </div>
                 <div className="text-center">
                   <p className="text-xs md:text-sm text-muted-foreground mb-1">xG Chain</p>
-                  <p className="text-xl md:text-2xl font-bold">{calculateXGChain().toFixed(3)}</p>
+                  <p className="text-xl md:text-2xl font-bold">{actions.length > 0 ? calculateXGChain().toFixed(3) : "N/A"}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-xs md:text-sm text-muted-foreground mb-1">Minutes Played</p>
-                  <p className="text-xl md:text-2xl font-bold">{analysis.minutes_played || "N/A"}</p>
+                  <p className="text-xl md:text-2xl font-bold">{analysis.minutes_played ?? "N/A"}</p>
                 </div>
               </div>
 
