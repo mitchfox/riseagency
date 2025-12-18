@@ -282,10 +282,10 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                       {advancedStats.map(({ key, value, per90Value }) => (
                         <div key={key} className="text-center p-3 bg-accent/10 rounded-lg">
                           <p className="text-xs text-muted-foreground mb-1 capitalize">{formatStatLabel(key)}</p>
-                          <p className="text-lg font-bold">{typeof value === 'number' ? value.toFixed(2) : value}</p>
+                          <p className="text-lg font-bold">{value}</p>
                           {per90Value !== undefined && (
                             <p className="text-xs text-muted-foreground mt-1">
-                              per 90: {typeof per90Value === 'number' ? per90Value.toFixed(2) : per90Value}
+                              per 90: {per90Value}
                             </p>
                           )}
                         </div>
