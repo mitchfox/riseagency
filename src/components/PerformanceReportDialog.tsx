@@ -168,16 +168,47 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
       // Restore original background
       contentRef.current.style.backgroundColor = originalBg;
       
-      // Convert to webp
-      const dataUrl = canvas.toDataURL('image/webp', 0.9);
+      const fileName = `${analysis.player_name}-vs-${analysis.opponent}-performance-report`;
       
-      // Create download link
-      const link = document.createElement('a');
-      link.download = `${analysis.player_name}-vs-${analysis.opponent}-performance-report.webp`;
-      link.href = dataUrl;
-      link.click();
+      // Check if on mobile (touch device or small screen)
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
       
-      toast.success('Image saved successfully');
+      if (isMobile) {
+        // On mobile, convert to PNG blob and open in new tab for long-press save
+        // WebP support varies on mobile, PNG is more reliable
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const blobUrl = URL.createObjectURL(blob);
+            // Open image in new tab - user can long-press to save
+            const newTab = window.open(blobUrl, '_blank');
+            if (newTab) {
+              toast.success('Image opened - long-press to save');
+            } else {
+              // If popup blocked, try download anyway
+              const link = document.createElement('a');
+              link.href = blobUrl;
+              link.download = `${fileName}.png`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+              toast.success('Image saved');
+            }
+          } else {
+            toast.error('Failed to create image');
+          }
+        }, 'image/png', 0.95);
+      } else {
+        // On desktop, use WebP with direct download
+        const dataUrl = canvas.toDataURL('image/webp', 0.9);
+        const link = document.createElement('a');
+        link.download = `${fileName}.webp`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Image saved successfully');
+      }
     } catch (error) {
       console.error('Error saving image:', error);
       toast.error('Failed to save image');
