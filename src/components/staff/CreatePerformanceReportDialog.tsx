@@ -409,11 +409,14 @@ export const CreatePerformanceReportDialog = ({
         
         if (!statsError && stats) {
           setAvailableStats(stats);
-          // Auto-select position-specific stats (excluding per90 stats and hidden stats)
-          const nonPer90Keys = stats
-            .filter(s => !s.stat_key.endsWith('_per90') && !hiddenKeys.includes(s.stat_key))
-            .map(s => s.stat_key);
-          setSelectedStatKeys(nonPer90Keys);
+          // Only auto-select position stats in CREATE mode, not edit mode
+          // In edit mode, selectedStatKeys will be set by fetchExistingData
+          if (!analysisId) {
+            const nonPer90Keys = stats
+              .filter(s => !s.stat_key.endsWith('_per90') && !hiddenKeys.includes(s.stat_key))
+              .map(s => s.stat_key);
+            setSelectedStatKeys(nonPer90Keys);
+          }
         }
       }
     } catch (error: any) {
@@ -534,13 +537,18 @@ export const CreatePerformanceReportDialog = ({
         });
         
         // Populate additional stats (any keys not in legacy striker stats)
+        // Only truly legacy stats that are NOT in the performance_statistics table
+        // xG_adj, xA_adj, etc. are now in performance_statistics and should load via additionalStats
         const legacyKeys = new Set([
-          'xGChain', 'xGChain_per90', 'xG_adj', 'xG_adj_per90', 'xA_adj', 'xA_adj_per90',
-          'movement_in_behind_xC', 'movement_in_behind_xC_per90', 'movement_down_side_xC', 
-          'movement_down_side_xC_per90', 'triple_threat_xC', 'triple_threat_xC_per90',
-          'movement_to_feet_xC', 'movement_to_feet_xC_per90', 'crossing_movement_xC',
-          'crossing_movement_xC_per90', 'interceptions', 'interceptions_per90',
-          'regains_adj', 'regains_adj_per90', 'turnovers_adj', 'turnovers_adj_per90',
+          'xGChain', 'xGChain_per90',
+          'movement_in_behind_xC', 'movement_in_behind_xC_per90', 
+          'movement_down_side_xC', 'movement_down_side_xC_per90', 
+          'triple_threat_xC', 'triple_threat_xC_per90',
+          'movement_to_feet_xC', 'movement_to_feet_xC_per90', 
+          'crossing_movement_xC', 'crossing_movement_xC_per90',
+          'interceptions', 'interceptions_per90',
+          'regains_adj', 'regains_adj_per90', 
+          'turnovers_adj', 'turnovers_adj_per90',
           'progressive_passes_adj', 'progressive_passes_adj_per90'
         ]);
         
