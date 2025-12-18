@@ -208,7 +208,10 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
       if (processedKeys.has(key)) continue;
       
       const value = analysis.striker_stats[key];
-      if (value === null || value === undefined || value === '') continue;
+      // Skip stats that haven't been filled in
+      if (value === null || value === undefined) continue;
+      if (typeof value === 'string' && value.trim() === '') continue;
+      if (typeof value === 'number' && isNaN(value)) continue;
       
       // Check for paired stat (e.g., dribbles + dribbles_attempted)
       const attemptedKey = `${key}_attempted`;
