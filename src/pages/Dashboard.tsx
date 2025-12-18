@@ -2896,6 +2896,8 @@ const Dashboard = () => {
                                                     const dayDate = weekDates ? weekDates[day as keyof typeof weekDates] : null;
                                                     const dayImageKey = `${day}Image`;
                                                     const clubLogoUrl = week[dayImageKey];
+                                                    const teamImageKey = `${day}TeamImage`;
+                                                    const teamImageUrl = week[teamImageKey];
                                                     
                                                     const hasBoth = teamSessionValue && sessionValue;
                                                     const onlyTeam = teamSessionValue && !sessionValue;
@@ -2912,7 +2914,7 @@ const Dashboard = () => {
                                                         {/* Team Session Only - Full 100% */}
                                                         {onlyTeam && (
                                                           <div 
-                                                            className="flex-1 flex items-center justify-center px-1 py-0.5"
+                                                            className="flex-1 flex items-center justify-center px-1 py-0.5 gap-1"
                                                             style={{ 
                                                               backgroundColor: 'hsl(45, 70%, 25%)',
                                                             }}
@@ -2924,6 +2926,13 @@ const Dashboard = () => {
                                                               >
                                                                 {format(dayDate, 'd')}
                                                               </span>
+                                                            )}
+                                                            {teamImageUrl && (
+                                                              <img 
+                                                                src={teamImageUrl} 
+                                                                alt="Team" 
+                                                                className="h-6 md:h-8 w-auto object-contain"
+                                                              />
                                                             )}
                                                             <span 
                                                               className="font-medium text-xs md:text-sm uppercase truncate"
@@ -2938,7 +2947,7 @@ const Dashboard = () => {
                                                         {hasBoth && (
                                                           <>
                                                             <div 
-                                                              className="flex items-center justify-center px-1 py-0.5"
+                                                              className="flex items-center justify-center px-1 py-0.5 gap-1"
                                                               style={{ 
                                                                 height: '25%',
                                                                 minHeight: '14px',
@@ -2946,6 +2955,13 @@ const Dashboard = () => {
                                                                 borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
                                                               }}
                                                             >
+                                                              {teamImageUrl && (
+                                                                <img 
+                                                                  src={teamImageUrl} 
+                                                                  alt="Team" 
+                                                                  className="h-3 md:h-4 w-auto object-contain"
+                                                                />
+                                                              )}
                                                               <span 
                                                                 className="font-medium text-[8px] md:text-[10px] uppercase truncate"
                                                                 style={{ color: 'hsl(45, 100%, 80%)' }}

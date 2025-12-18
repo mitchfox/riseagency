@@ -49,6 +49,13 @@ interface WeeklySchedule {
   fridayTeam?: string;
   saturdayTeam?: string;
   sundayTeam?: string;
+  mondayTeamImage?: string;
+  tuesdayTeamImage?: string;
+  wednesdayTeamImage?: string;
+  thursdayTeamImage?: string;
+  fridayTeamImage?: string;
+  saturdayTeamImage?: string;
+  sundayTeamImage?: string;
   scheduleNotes: string;
   [key: string]: string | undefined;
 }
