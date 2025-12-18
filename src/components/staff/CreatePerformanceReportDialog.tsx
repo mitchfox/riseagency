@@ -545,16 +545,24 @@ export const CreatePerformanceReportDialog = ({
         ]);
         
         const newStats: Record<string, string> = {};
-        const statsKeys: string[] = [];
+        // Use stats_order if available for proper ordering
+        const savedStatsOrder = stats.stats_order as string[] | undefined;
+        let statsKeys: string[] = [];
+        
         Object.entries(stats).forEach(([key, value]) => {
-          if (!legacyKeys.has(key) && value != null) {
+          if (!legacyKeys.has(key) && key !== 'stats_order' && value != null) {
             newStats[key] = value.toString();
             // Only add non-per90 keys to selectedStatKeys (per90 will be auto-calculated)
-            if (!key.endsWith('_per90')) {
+            if (!key.endsWith('_per90') && !savedStatsOrder) {
               statsKeys.push(key);
             }
           }
         });
+        
+        // Use saved order if available
+        if (savedStatsOrder && savedStatsOrder.length > 0) {
+          statsKeys = savedStatsOrder;
+        }
         
         if (Object.keys(newStats).length > 0) {
           setAdditionalStats(newStats);
@@ -1055,8 +1063,16 @@ export const CreatePerformanceReportDialog = ({
           Object.entries(additionalStats)
             .filter(([_, value]) => value !== "")
             .forEach(([key, value]) => {
-              strikerStatsJson[key] = parseInt(value);
+              strikerStatsJson[key] = parseFloat(value);
             });
+        }
+        
+        // Save the stats order so display knows which stats to show and in what order
+        const statsToSave = selectedStatKeys.filter(key => 
+          additionalStats[key] !== undefined && additionalStats[key] !== ""
+        );
+        if (statsToSave.length > 0) {
+          strikerStatsJson.stats_order = statsToSave;
         }
       }
 
