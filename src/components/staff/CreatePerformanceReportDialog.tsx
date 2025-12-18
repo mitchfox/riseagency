@@ -1096,13 +1096,14 @@ export const CreatePerformanceReportDialog = ({
 
       if (analysisId) {
         // Edit mode - update existing record
+        const parsedMinutes = parseInt(minutesPlayed);
         const { error: analysisError } = await supabase
           .from("player_analysis")
           .update({
             fixture_id: selectedFixtureId,
             analysis_date: fixture?.match_date,
             r90_score: calculatedR90,
-            minutes_played: parseInt(minutesPlayed),
+            minutes_played: !isNaN(parsedMinutes) ? parsedMinutes : null,
             opponent: opponent,
             result: result || null,
             striker_stats: strikerStatsJson,
@@ -1135,6 +1136,7 @@ export const CreatePerformanceReportDialog = ({
         }
 
         // Insert new record
+        const parsedMinutesInsert = parseInt(minutesPlayed);
         const { data: analysisData, error: analysisError } = await supabase
           .from("player_analysis")
           .insert({
@@ -1142,7 +1144,7 @@ export const CreatePerformanceReportDialog = ({
             fixture_id: selectedFixtureId,
             analysis_date: fixture?.match_date,
             r90_score: calculatedR90,
-            minutes_played: parseInt(minutesPlayed),
+            minutes_played: !isNaN(parsedMinutesInsert) ? parsedMinutesInsert : null,
             opponent: opponent,
             result: result || null,
             striker_stats: strikerStatsJson,
