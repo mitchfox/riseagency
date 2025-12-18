@@ -2949,6 +2949,11 @@ const Dashboard = () => {
                                                                   {format(dayDate, 'd')}
                                                                 </span>
                                                               )}
+                                                              {clubLogoUrl && (
+                                                                <div className="absolute inset-0 flex items-center justify-center p-2 z-0">
+                                                                  <img src={clubLogoUrl} alt={`${day} club logo`} className="max-w-full max-h-full object-contain opacity-40" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                                                                </div>
+                                                              )}
                                                             </div>
                                                           </>
                                                         )}
