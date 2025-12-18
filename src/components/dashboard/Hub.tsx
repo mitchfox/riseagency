@@ -405,21 +405,18 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                 {/* Day Cells - Rolling 7 days from today */}
                 {rolling7Days.map((dayInfo, index) => {
                   const sessionValue = currentSchedule[dayInfo.dayName] || '';
+                  const teamSessionValue = currentSchedule[`${dayInfo.dayName}Team`] || '';
                   const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
                   const dayImageKey = `${dayInfo.dayName}Image`;
                   const clubLogoUrl = currentSchedule[dayImageKey];
                   
-                  // Parse session value to separate regular session from team
-                  const hasTeam = /TEAM/i.test(sessionValue);
-                  const regularSession = sessionValue.replace(/\s*\+?\s*TEAM\s*/gi, '').trim();
-                  
                   // Check if it's a clickable session (A-H)
-                  const isClickableSession = regularSession && /^[A-H]$/i.test(regularSession);
+                  const isClickableSession = sessionValue && /^[A-H]$/i.test(sessionValue);
                   
                   return (
                     <button
                       key={index}
-                      onClick={() => isClickableSession && onNavigateToSession?.(regularSession.toUpperCase())}
+                      onClick={() => isClickableSession && onNavigateToSession?.(sessionValue.toUpperCase())}
                       disabled={!isClickableSession}
                       className="relative rounded-lg transition-all flex flex-col min-h-[80px] md:min-h-[100px] disabled:cursor-default overflow-hidden"
                       style={{
@@ -446,20 +443,20 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                             alt={`${dayInfo.dayName} session`}
                             className="w-6 h-6 md:w-8 md:h-8 object-contain"
                           />
-                        ) : regularSession ? (
+                        ) : sessionValue ? (
                           <div className="text-base md:text-lg font-bold text-center">
-                            {regularSession.toUpperCase()}
+                            {sessionValue.toUpperCase()}
                           </div>
-                        ) : !hasTeam ? (
+                        ) : !teamSessionValue ? (
                           <div className="text-base md:text-lg font-bold text-center opacity-50">-</div>
                         ) : null}
                       </div>
                       
                       {/* Bottom 1/4 - Team training */}
                       <div className="h-1/4 flex items-center justify-center bg-black/30">
-                        {hasTeam && (
-                          <div className="text-[8px] md:text-xs font-bold text-center opacity-80">
-                            TEAM
+                        {teamSessionValue && (
+                          <div className="text-[8px] md:text-xs font-bold text-center" style={{ color: 'hsl(45, 100%, 80%)' }}>
+                            {teamSessionValue}
                           </div>
                         )}
                       </div>
