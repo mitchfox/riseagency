@@ -217,6 +217,9 @@ export const CreatePerformanceReportDialog = ({
   // Dynamic stats based on position
   const [additionalStats, setAdditionalStats] = useState<Record<string, string>>({});
   
+  // Store original striker_stats from database to preserve unmodified fields
+  const [originalStrikerStats, setOriginalStrikerStats] = useState<Record<string, any> | null>(null);
+  
   // Striker stats (keeping for backwards compatibility)
   const [strikerStats, setStrikerStats] = useState({
     xGChain: "",
@@ -515,6 +518,8 @@ export const CreatePerformanceReportDialog = ({
       // Populate striker stats if they exist
       if (analysisData.striker_stats) {
         const stats = analysisData.striker_stats as any;
+        // Store original stats to preserve any fields not loaded into form
+        setOriginalStrikerStats(stats);
         
         // Populate legacy striker stats
         setStrikerStats({
@@ -656,6 +661,7 @@ export const CreatePerformanceReportDialog = ({
     setPerformanceOverview("");
     setShowStrikerStats(false);
     setAdditionalStats({});
+    setOriginalStrikerStats(null);
     setSelectedStatKeys(availableStats.filter(s => !s.stat_key.endsWith('_per90') && !hiddenStatKeys.includes(s.stat_key)).map(s => s.stat_key)); // Reset to position-specific stats (excluding per90 and hidden)
     setStrikerStats({
       xGChain: "",
@@ -1061,9 +1067,10 @@ export const CreatePerformanceReportDialog = ({
       const hasStrikerStats = Object.values(strikerStats).some(v => v !== "");
       const hasAdditionalStats = Object.values(additionalStats).some(v => v !== "");
       
-      let strikerStatsJson = null;
-      if (hasStrikerStats || hasAdditionalStats) {
-        strikerStatsJson = {};
+      let strikerStatsJson: Record<string, any> | null = null;
+      if (hasStrikerStats || hasAdditionalStats || originalStrikerStats) {
+        // Start with original stats to preserve any fields not in the form
+        strikerStatsJson = originalStrikerStats ? { ...originalStrikerStats } : {};
         
         // Add legacy striker stats
         if (hasStrikerStats) {
