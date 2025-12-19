@@ -1,12 +1,20 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { 
   Building2,
   Users,
   Megaphone,
   MessageSquare,
   Lightbulb,
-  FolderOpen
+  FolderOpen,
+  Menu
 } from "lucide-react";
 import { ClubOutreachManagement } from "./ClubOutreachManagement";
 import { QuickMessageSection } from "./QuickMessageSection";
@@ -14,107 +22,119 @@ import { PlayerOutreach } from "./PlayerOutreach";
 import { MarketingIdeas } from "./marketing/MarketingIdeas";
 import { MarketingResources } from "./marketing/MarketingResources";
 
-interface FocusedTask {
-  id: string;
-  name: string;
-  icon: React.ElementType;
-}
+type TaskType = "club-networking" | "player-networking" | "content-creation";
 
-const FOCUSED_TASKS: FocusedTask[] = [
-  { id: "club-networking", name: "Club", icon: Building2 },
-  { id: "player-networking", name: "Player", icon: Users },
-  { id: "content-creation", name: "Content", icon: Megaphone }
-];
+const TASK_CONFIG = {
+  "club-networking": { name: "Club Networking", icon: Building2 },
+  "player-networking": { name: "Player Networking", icon: Users },
+  "content-creation": { name: "Content Creation", icon: Megaphone }
+};
 
 export const FocusedTasksSection = () => {
-  const [activeTask, setActiveTask] = useState(FOCUSED_TASKS[0].id);
+  const [activeTask, setActiveTask] = useState<TaskType>("club-networking");
   const [clubSubTab, setClubSubTab] = useState("outreach");
   const [playerSubTab, setPlayerSubTab] = useState("outreach");
   const [contentSubTab, setContentSubTab] = useState("ideas");
 
-  return (
-    <Tabs value={activeTask} onValueChange={setActiveTask} className="w-full">
-      <TabsList className="h-8 gap-0.5 bg-muted/30 p-0.5 w-auto">
-        {FOCUSED_TASKS.map((task) => {
-          const Icon = task.icon;
-          return (
-            <TabsTrigger
-              key={task.id}
-              value={task.id}
-              className="gap-1 text-xs py-1 px-2.5 h-7"
-            >
-              <Icon className="h-3 w-3" />
-              <span>{task.name}</span>
-            </TabsTrigger>
-          );
-        })}
-      </TabsList>
+  const ActiveIcon = TASK_CONFIG[activeTask].icon;
 
-      {/* Club Networking Tab */}
-      <TabsContent value="club-networking" className="mt-3 space-y-3">
-        <Tabs value={clubSubTab} onValueChange={setClubSubTab}>
-          <TabsList className="h-7 bg-muted/20 p-0.5">
-            <TabsTrigger value="outreach" className="text-xs h-6 px-2 gap-1">
-              <Building2 className="h-3 w-3" />
+  return (
+    <div className="w-full">
+      {/* Header with dropdown */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <ActiveIcon className="h-4 w-4" />
+          <span>{TASK_CONFIG[activeTask].name}</span>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-7 w-7">
+              <Menu className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-popover">
+            {(Object.keys(TASK_CONFIG) as TaskType[]).map((taskId) => {
+              const Icon = TASK_CONFIG[taskId].icon;
+              return (
+                <DropdownMenuItem
+                  key={taskId}
+                  onClick={() => setActiveTask(taskId)}
+                  className={activeTask === taskId ? "bg-accent" : ""}
+                >
+                  <Icon className="h-4 w-4 mr-2" />
+                  {TASK_CONFIG[taskId].name}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Club Networking */}
+      {activeTask === "club-networking" && (
+        <Tabs value={clubSubTab} onValueChange={setClubSubTab} className="w-full">
+          <TabsList className="w-full h-10 p-1 grid grid-cols-2">
+            <TabsTrigger value="outreach" className="gap-2">
+              <Building2 className="h-4 w-4" />
               Outreach
             </TabsTrigger>
-            <TabsTrigger value="messages" className="text-xs h-6 px-2 gap-1">
-              <MessageSquare className="h-3 w-3" />
+            <TabsTrigger value="messages" className="gap-2">
+              <MessageSquare className="h-4 w-4" />
               Templates
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="outreach" className="mt-2">
+          <TabsContent value="outreach" className="mt-3">
             <ClubOutreachManagement />
           </TabsContent>
-          <TabsContent value="messages" className="mt-2">
+          <TabsContent value="messages" className="mt-3">
             <QuickMessageSection />
           </TabsContent>
         </Tabs>
-      </TabsContent>
+      )}
 
-      {/* Player Networking Tab */}
-      <TabsContent value="player-networking" className="mt-3 space-y-3">
-        <Tabs value={playerSubTab} onValueChange={setPlayerSubTab}>
-          <TabsList className="h-7 bg-muted/20 p-0.5">
-            <TabsTrigger value="outreach" className="text-xs h-6 px-2 gap-1">
-              <Users className="h-3 w-3" />
+      {/* Player Networking */}
+      {activeTask === "player-networking" && (
+        <Tabs value={playerSubTab} onValueChange={setPlayerSubTab} className="w-full">
+          <TabsList className="w-full h-10 p-1 grid grid-cols-2">
+            <TabsTrigger value="outreach" className="gap-2">
+              <Users className="h-4 w-4" />
               Outreach
             </TabsTrigger>
-            <TabsTrigger value="messages" className="text-xs h-6 px-2 gap-1">
-              <MessageSquare className="h-3 w-3" />
+            <TabsTrigger value="messages" className="gap-2">
+              <MessageSquare className="h-4 w-4" />
               Templates
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="outreach" className="mt-2">
+          <TabsContent value="outreach" className="mt-3">
             <PlayerOutreach isAdmin={true} />
           </TabsContent>
-          <TabsContent value="messages" className="mt-2">
+          <TabsContent value="messages" className="mt-3">
             <QuickMessageSection />
           </TabsContent>
         </Tabs>
-      </TabsContent>
+      )}
 
-      {/* Content Creation Tab */}
-      <TabsContent value="content-creation" className="mt-3 space-y-3">
-        <Tabs value={contentSubTab} onValueChange={setContentSubTab}>
-          <TabsList className="h-7 bg-muted/20 p-0.5">
-            <TabsTrigger value="ideas" className="text-xs h-6 px-2 gap-1">
-              <Lightbulb className="h-3 w-3" />
+      {/* Content Creation */}
+      {activeTask === "content-creation" && (
+        <Tabs value={contentSubTab} onValueChange={setContentSubTab} className="w-full">
+          <TabsList className="w-full h-10 p-1 grid grid-cols-2">
+            <TabsTrigger value="ideas" className="gap-2">
+              <Lightbulb className="h-4 w-4" />
               Ideas
             </TabsTrigger>
-            <TabsTrigger value="resources" className="text-xs h-6 px-2 gap-1">
-              <FolderOpen className="h-3 w-3" />
+            <TabsTrigger value="resources" className="gap-2">
+              <FolderOpen className="h-4 w-4" />
               Resources
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="ideas" className="mt-2">
+          <TabsContent value="ideas" className="mt-3">
             <MarketingIdeas />
           </TabsContent>
-          <TabsContent value="resources" className="mt-2">
+          <TabsContent value="resources" className="mt-3">
             <MarketingResources />
           </TabsContent>
         </Tabs>
-      </TabsContent>
-    </Tabs>
+      )}
+    </div>
   );
 };
