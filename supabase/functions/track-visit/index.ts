@@ -14,107 +14,54 @@ serve(async (req) => {
   try {
     const { visitorId, pagePath, duration, referrer, isInitial, visitId } = await req.json();
     
-    console.log("Track visit request:", { visitorId, pagePath, duration, isInitial, visitId });
-    
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get location info from IP
-    const forwardedFor = req.headers.get("x-forwarded-for");
-    const ip = forwardedFor ? forwardedFor.split(",")[0] : "unknown";
-    
-    // Get user agent
     const userAgent = req.headers.get("user-agent") || "unknown";
-    
-    // Try to get location data
-    let location = {};
-    try {
-      if (ip !== "unknown" && !ip.startsWith("::") && !ip.startsWith("127.")) {
-        const geoResponse = await fetch(`http://ip-api.com/json/${ip}`);
-        if (geoResponse.ok) {
-          const geoData = await geoResponse.json();
-          if (geoData.status === "success") {
-            location = {
-              country: geoData.country,
-              city: geoData.city,
-              region: geoData.regionName,
-              timezone: geoData.timezone,
-            };
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Failed to get location:", error);
-    }
-
-    let data;
-    let error;
 
     if (isInitial) {
-      // Initial visit - create new record
-      const result = await supabase
+      // Create new visit record
+      const { data, error } = await supabase
         .from("site_visits")
         .insert({
           visitor_id: visitorId,
           page_path: pagePath,
           duration: 0,
-          location,
+          location: {},
           user_agent: userAgent,
           referrer: referrer || null,
         })
-        .select()
+        .select("id")
         .single();
-      
-      data = result.data;
-      error = result.error;
 
-      if (!error && data) {
-        return new Response(JSON.stringify({ success: true, visitId: data.id }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (error) {
+        console.error("Insert error:", error);
+        throw error;
       }
-    } else {
-      // Update existing visit with duration
-      if (visitId) {
-        // Update specific visit by ID
-        const result = await supabase
-          .from("site_visits")
-          .update({ duration })
-          .eq("id", visitId)
-          .select()
-          .single();
-        
-        data = result.data;
-        error = result.error;
-      } else {
-        // Fallback: find most recent visit for this visitor and page
-        const { data: recentVisit } = await supabase
-          .from("site_visits")
-          .select("id")
-          .eq("visitor_id", visitorId)
-          .eq("page_path", pagePath)
-          .order("visited_at", { ascending: false })
-          .limit(1)
-          .single();
 
-        if (recentVisit) {
-          const result = await supabase
-            .from("site_visits")
-            .update({ duration })
-            .eq("id", recentVisit.id)
-            .select()
-            .single();
-          
-          data = result.data;
-          error = result.error;
-        }
+      return new Response(JSON.stringify({ success: true, visitId: data.id }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } else if (visitId && duration !== undefined) {
+      // Update visit duration
+      const { error } = await supabase
+        .from("site_visits")
+        .update({ duration })
+        .eq("id", visitId);
+
+      if (error) {
+        console.error("Update error:", error);
+        throw error;
       }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    if (error) throw error;
-
-    return new Response(JSON.stringify({ success: true, data }), {
+    return new Response(JSON.stringify({ error: "Invalid request" }), {
+      status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
