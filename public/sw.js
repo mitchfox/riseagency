@@ -1,12 +1,18 @@
 // UPDATE THIS VERSION NUMBER WHEN YOU DEPLOY NEW CHANGES
-const CACHE_VERSION = 'rise-v1.5.0';
+const CACHE_VERSION = 'rise-v1.6.0';
 const CACHE_NAME = `${CACHE_VERSION}`;
 const ASSETS_CACHE = `${CACHE_VERSION}-assets`;
 
 // Critical files to cache - minimal set for faster updates
+// Include common PWA entry points to prevent 404 on app launch
 const urlsToCache = [
   '/',
+  '/index.html',
+  '/portal',
+  '/staff',
   '/manifest.json',
+  '/manifest-player.json',
+  '/manifest-staff.json',
   '/lovable-uploads/icon-192x192.png',
   '/lovable-uploads/icon-512x512.png',
   '/RISEWhite.png'
@@ -144,9 +150,30 @@ self.addEventListener('fetch', (event) => {
   }
 
   // For navigation requests (HTML pages), network-first to always get latest
+  // IMPORTANT: For SPA routing, ALL navigation requests should serve the index.html
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).then((response) => {
+        // If we get a 404, serve the index.html instead (SPA routing)
+        if (response.status === 404) {
+          console.log('[Service Worker] 404 for navigation, serving index.html for SPA routing');
+          return caches.match('/').then((cachedResponse) => {
+            if (cachedResponse) {
+              return addCrossOriginHeaders(cachedResponse);
+            }
+            // Fetch the root if not cached
+            return fetch('/').then((rootResponse) => {
+              if (rootResponse && rootResponse.status === 200) {
+                const responseToCache = rootResponse.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                  cache.put('/', responseToCache);
+                });
+              }
+              return addCrossOriginHeaders(rootResponse);
+            });
+          });
+        }
+        
         if (response && response.status === 200) {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -155,7 +182,8 @@ self.addEventListener('fetch', (event) => {
         }
         return addCrossOriginHeaders(response);
       }).catch(() => {
-        // Fallback to cache only if offline
+        // Fallback to cache only if offline - serve index.html for any route
+        console.log('[Service Worker] Offline - serving cached index.html');
         return caches.match('/').then((cachedResponse) => {
           if (cachedResponse) {
             console.log('[Service Worker] Serving index from cache (offline)');
