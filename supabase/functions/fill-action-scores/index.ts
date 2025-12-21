@@ -11,6 +11,29 @@ interface ActionToScore {
   action_description: string;
 }
 
+// Normalize text for fuzzy matching
+function normalizeText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Calculate simple word overlap similarity
+function calculateSimilarity(text1: string, text2: string): number {
+  const words1 = new Set(normalizeText(text1).split(' '));
+  const words2 = new Set(normalizeText(text2).split(' '));
+  
+  let matches = 0;
+  for (const word of words1) {
+    if (words2.has(word)) matches++;
+  }
+  
+  const maxWords = Math.max(words1.size, words2.size);
+  return maxWords > 0 ? matches / maxWords : 0;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -26,11 +49,10 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!LOVABLE_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error('Missing required environment variables');
     }
 
@@ -47,72 +69,65 @@ serve(async (req) => {
       throw new Error('Failed to fetch R90 ratings');
     }
 
-    console.log(`Fetched ${ratings?.length || 0} R90 ratings`);
+    console.log(`Fetched ${ratings?.length || 0} R90 ratings for direct lookup`);
 
-    // Process each action
+    // Process each action with direct lookup
     const scoredActions = [];
     
     for (const action of actions) {
       try {
-        // Create a structured prompt for AI
-        const systemPrompt = `You are an expert football/soccer analyst specializing in R90 performance ratings. Your task is to match player actions to the most appropriate R90 rating entry and return the correct score.
-
-R90 Rating Database (${ratings?.length || 0} entries):
-${ratings?.map(r => `
-ID: ${r.id}
-Title: ${r.title}
-Category: ${r.category}${r.subcategory ? ` - ${r.subcategory}` : ''}
-Score: ${r.score !== null && r.score !== undefined ? r.score : 'N/A'}
-Description: ${r.description || 'N/A'}
-Details: ${r.content || 'N/A'}
----`).join('\n')}
-
-Instructions:
-1. Analyze the action type and description provided
-2. Find the BEST matching R90 rating entry from the database above by comparing the action to the Title, Category, Description, and Details
-3. Return the Score value from that matching entry
-4. Consider context: successful vs unsuccessful, location on field, pressure situation, and match the subcategory if relevant
-5. Return ONLY the numerical score value from the matching entry (e.g., 0.0672, -0.0054, 0.012)
-6. If the entry has a score field, use that value directly
-7. If no good match exists or score is N/A, return 0`;
-
-        const userPrompt = `Action Type: ${action.action_type}
-Action Description: ${action.action_description}
-
-What is the R90 score for this action? Find the matching R90 rating entry and return its score value.`;
-
-        // Call Lovable AI
-        const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt }
-            ]
-          }),
-        });
-
-        if (!aiResponse.ok) {
-          const errorText = await aiResponse.text();
-          console.error('AI Gateway error:', aiResponse.status, errorText);
-          scoredActions.push({ score: 0, error: 'AI service unavailable' });
-          continue;
+        const actionText = `${action.action_type} ${action.action_description}`.toLowerCase();
+        
+        let bestMatch = null;
+        let bestScore = 0;
+        
+        // Find best matching rating using direct text comparison
+        for (const rating of ratings || []) {
+          // Build search text from rating fields
+          const ratingText = [
+            rating.title || '',
+            rating.category || '',
+            rating.subcategory || '',
+            rating.description || '',
+          ].join(' ').toLowerCase();
+          
+          // Check for exact action type match in title/category first
+          const actionTypeNormalized = normalizeText(action.action_type);
+          const titleNormalized = normalizeText(rating.title || '');
+          const categoryNormalized = normalizeText(rating.category || '');
+          
+          // Prioritize exact matches
+          if (titleNormalized.includes(actionTypeNormalized) || 
+              actionTypeNormalized.includes(titleNormalized)) {
+            const similarity = calculateSimilarity(actionText, ratingText);
+            if (similarity > bestScore || (rating.score !== null && bestMatch?.score === null)) {
+              bestScore = similarity;
+              bestMatch = rating;
+            }
+          } else if (categoryNormalized.includes(actionTypeNormalized)) {
+            // Category match is secondary
+            const similarity = calculateSimilarity(actionText, ratingText) * 0.8;
+            if (similarity > bestScore) {
+              bestScore = similarity;
+              bestMatch = rating;
+            }
+          } else {
+            // General similarity match
+            const similarity = calculateSimilarity(actionText, ratingText) * 0.6;
+            if (similarity > bestScore) {
+              bestScore = similarity;
+              bestMatch = rating;
+            }
+          }
         }
-
-        const aiData = await aiResponse.json();
-        const aiContent = aiData.choices?.[0]?.message?.content || '0';
         
-        // Extract number from AI response
-        const numberMatch = aiContent.match(/-?\d+\.?\d*/);
-        const score = numberMatch ? parseFloat(numberMatch[0]) : 0;
-        
-        console.log(`Action: "${action.action_type}" -> Score: ${score}`);
-        scoredActions.push({ score });
+        if (bestMatch && bestMatch.score !== null && bestMatch.score !== undefined) {
+          console.log(`Action: "${action.action_type}" -> Matched: "${bestMatch.title}" -> Score: ${bestMatch.score}`);
+          scoredActions.push({ score: bestMatch.score, matchedTitle: bestMatch.title });
+        } else {
+          console.log(`Action: "${action.action_type}" -> No match found, score: 0`);
+          scoredActions.push({ score: 0, matchedTitle: null });
+        }
         
       } catch (actionError) {
         console.error('Error processing action:', actionError);

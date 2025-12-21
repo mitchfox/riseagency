@@ -2,10 +2,18 @@ import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
+// Routes to skip tracking for
+const EXCLUDED_ROUTES = ['/staff', '/dashboard', '/login', '/portal'];
+
+const shouldTrackRoute = (pathname: string): boolean => {
+  return !EXCLUDED_ROUTES.some(route => pathname.startsWith(route));
+};
+
 export const usePageTracking = () => {
   const location = useLocation();
   const startTimeRef = useRef<number>(Date.now());
   const visitorIdRef = useRef<string>("");
+  const visitIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Get or create visitor ID
@@ -18,25 +26,35 @@ export const usePageTracking = () => {
   }, []);
 
   useEffect(() => {
+    // Skip tracking for excluded routes
+    if (!shouldTrackRoute(location.pathname)) {
+      return;
+    }
+
     const startTime = Date.now();
     startTimeRef.current = startTime;
-    let visitId: string | null = null;
+    visitIdRef.current = null;
 
-    // Track page view immediately when page loads
+    // Track page view with direct DB insert
     const trackPageView = async () => {
       try {
-        const response = await supabase.functions.invoke("track-visit", {
-          body: {
-            visitorId: visitorIdRef.current,
-            pagePath: location.pathname,
+        const { data, error } = await supabase
+          .from("site_visits")
+          .insert({
+            visitor_id: visitorIdRef.current,
+            page_path: location.pathname,
             duration: 0,
-            referrer: document.referrer,
-            isInitial: true,
-          },
-        });
-        
-        if (response.data?.visitId) {
-          visitId = response.data.visitId;
+            referrer: document.referrer || null,
+            user_agent: navigator.userAgent,
+            location: {},
+          })
+          .select('id')
+          .single();
+
+        if (!error && data) {
+          visitIdRef.current = data.id;
+        } else if (error) {
+          console.error("Failed to track page view:", error);
         }
       } catch (error) {
         console.error("Failed to track page view:", error);
@@ -47,30 +65,20 @@ export const usePageTracking = () => {
 
     return () => {
       const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
-      
+      const visitId = visitIdRef.current;
+
       // Update the visit duration when leaving the page
       if (duration >= 1 && visitId) {
-        const updateData = {
-          visitorId: visitorIdRef.current,
-          pagePath: location.pathname,
-          duration,
-          referrer: document.referrer,
-          isInitial: false,
-          visitId: visitId,
-        };
-
-        // Use fetch with keepalive for reliable tracking on page unload
-        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-visit`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify(updateData),
-          keepalive: true,
-        }).catch((error) => {
-          console.error("Failed to update visit duration:", error);
-        });
+        // Use direct DB update - fire and forget
+        supabase
+          .from("site_visits")
+          .update({ duration })
+          .eq("id", visitId)
+          .then(({ error }) => {
+            if (error) {
+              console.error("Failed to update visit duration:", error);
+            }
+          });
       }
     };
   }, [location.pathname]);
