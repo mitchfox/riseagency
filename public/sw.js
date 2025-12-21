@@ -1,15 +1,12 @@
 // UPDATE THIS VERSION NUMBER WHEN YOU DEPLOY NEW CHANGES
-const CACHE_VERSION = 'rise-v1.6.0';
+const CACHE_VERSION = 'rise-v1.7.0';
 const CACHE_NAME = `${CACHE_VERSION}`;
 const ASSETS_CACHE = `${CACHE_VERSION}-assets`;
 
-// Critical files to cache - minimal set for faster updates
-// Include common PWA entry points to prevent 404 on app launch
+// Critical files to cache - only files that actually exist on the server
+// SPA routes like /portal and /staff are handled by serving index.html
 const urlsToCache = [
   '/',
-  '/index.html',
-  '/portal',
-  '/staff',
   '/manifest.json',
   '/manifest-player.json',
   '/manifest-staff.json',
@@ -25,7 +22,14 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('[Service Worker] Caching essential resources');
-        return cache.addAll(urlsToCache);
+        // Use individual requests to handle failures gracefully
+        return Promise.all(
+          urlsToCache.map(url => 
+            cache.add(url).catch(err => {
+              console.warn('[Service Worker] Failed to cache:', url, err);
+            })
+          )
+        );
       })
       .then(() => {
         console.log('[Service Worker] Installation complete, skipping waiting');
@@ -40,7 +44,7 @@ self.addEventListener('install', (event) => {
         });
         return self.skipWaiting();
       })
-  );
+  )
 });
 
 // Activate event - clean up old caches
@@ -149,32 +153,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For navigation requests (HTML pages), network-first to always get latest
-  // IMPORTANT: For SPA routing, ALL navigation requests should serve the index.html
+  // For navigation requests (HTML pages), serve index.html for SPA routing
+  // This is critical for PWA - /portal and /staff don't exist as files, they're SPA routes
   if (event.request.mode === 'navigate') {
     event.respondWith(
+      // First try to fetch from network
       fetch(event.request).then((response) => {
-        // If we get a 404, serve the index.html instead (SPA routing)
-        if (response.status === 404) {
-          console.log('[Service Worker] 404 for navigation, serving index.html for SPA routing');
+        // For SPA: if server returns 404, serve cached index.html
+        if (!response.ok) {
+          console.log('[Service Worker] Navigation failed, serving index.html for SPA routing:', url.pathname);
           return caches.match('/').then((cachedResponse) => {
             if (cachedResponse) {
               return addCrossOriginHeaders(cachedResponse);
             }
-            // Fetch the root if not cached
-            return fetch('/').then((rootResponse) => {
-              if (rootResponse && rootResponse.status === 200) {
-                const responseToCache = rootResponse.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                  cache.put('/', responseToCache);
-                });
-              }
-              return addCrossOriginHeaders(rootResponse);
-            });
+            // If not cached, fetch root
+            return fetch('/').then(addCrossOriginHeaders);
           });
         }
         
-        if (response && response.status === 200) {
+        // Cache the successful response as our index
+        if (response.status === 200) {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put('/', responseToCache);
@@ -182,19 +180,19 @@ self.addEventListener('fetch', (event) => {
         }
         return addCrossOriginHeaders(response);
       }).catch(() => {
-        // Fallback to cache only if offline - serve index.html for any route
-        console.log('[Service Worker] Offline - serving cached index.html');
+        // Offline - serve cached index.html for ALL navigation requests
+        console.log('[Service Worker] Offline - serving cached index.html for:', url.pathname);
         return caches.match('/').then((cachedResponse) => {
           if (cachedResponse) {
-            console.log('[Service Worker] Serving index from cache (offline)');
             return addCrossOriginHeaders(cachedResponse);
           }
+          // No cached index - show offline page
           return new Response(
             `<!DOCTYPE html>
             <html>
               <head>
                 <meta charset="utf-8">
-                <title>Offline - RISE Portal</title>
+                <title>Offline - RISE</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1">
                 <style>
                   body { 
@@ -210,12 +208,14 @@ self.addEventListener('fetch', (event) => {
                   .container { text-align: center; max-width: 400px; padding: 2rem; }
                   h1 { font-size: 2rem; margin-bottom: 1rem; }
                   p { color: #999; }
+                  a { color: #C8A871; }
                 </style>
               </head>
               <body>
                 <div class="container">
                   <h1>You're Offline</h1>
-                  <p>RISE Portal is not available right now. Please check your internet connection and try again.</p>
+                  <p>Please check your internet connection and try again.</p>
+                  <p><a href="javascript:location.reload()">Tap to retry</a></p>
                 </div>
               </body>
             </html>`,
@@ -223,9 +223,7 @@ self.addEventListener('fetch', (event) => {
               status: 200,
               statusText: 'OK',
               headers: new Headers({
-                'Content-Type': 'text/html',
-                'Cross-Origin-Opener-Policy': 'same-origin',
-                'Cross-Origin-Embedder-Policy': 'credentialless'
+                'Content-Type': 'text/html'
               })
             }
           );
