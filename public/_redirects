@@ -8,5 +8,12 @@
 /stars/jaroslav-svoboda /og-pages/jaroslav-svoboda.html 200
 /stars/sandra-soares-martins /og-pages/sandra-soares-martins.html 200
 
-# SPA fallback
+# PWA Entry Points - serve dedicated HTML with correct manifest for each portal
+# These ensure the PWA is installed with the correct start_url and manifest
+/portal /portal.html 200
+/portal/* /portal.html 200
+/staff /staff.html 200
+/staff/* /staff.html 200
+
+# SPA fallback for all other routes
 /*    /index.html   200
