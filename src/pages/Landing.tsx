@@ -13,7 +13,9 @@ import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerDialog";
 import { Button } from "@/components/ui/button";
 import { useRoleSubdomain, pathToRole, RoleSubdomain } from "@/hooks/useRoleSubdomain";
+import { useIsPWA } from "@/hooks/useIsPWA";
 import riseLogoWhite from "@/assets/logo.png";
+
 // Inner component that uses the XRay context for full-page tracking
 function LandingContent() {
   const {
@@ -22,12 +24,14 @@ function LandingContent() {
   const {
     getRoleUrl
   } = useRoleSubdomain();
+  const isPWA = useIsPWA();
   
   const [languagePopupOpen, setLanguagePopupOpen] = useState(false);
   const [showRepresentation, setShowRepresentation] = useState(false);
   const [showDeclareInterest, setShowDeclareInterest] = useState(false);
   const [topLogoHovered, setTopLogoHovered] = useState(false);
   const [coneAngle, setConeAngle] = useState(26); // Dynamic angle based on viewport
+  const [viewportReady, setViewportReady] = useState(false); // Track if viewport is stable for PWA
   const {
     setXrayState,
     xrayState
@@ -36,6 +40,7 @@ function LandingContent() {
 
   // Calculate cone angle based on viewport aspect ratio
   // Cone apex at (49.3%, 65%), edges go to (-0.7%, 100%) and (99.3%, 100%)
+  // Calculate cone angle based on viewport aspect ratio - with PWA delay for stable viewport
   useEffect(() => {
     const calculateConeAngle = () => {
       const vw = window.innerWidth;
@@ -50,10 +55,32 @@ function LandingContent() {
       setConeAngle(angleDeg);
     };
 
-    calculateConeAngle();
-    window.addEventListener('resize', calculateConeAngle);
-    return () => window.removeEventListener('resize', calculateConeAngle);
-  }, []);
+    // In PWA mode, wait for viewport to stabilize before calculating
+    if (isPWA) {
+      // Delay calculation to ensure viewport is stable after PWA launch
+      const timer = setTimeout(() => {
+        calculateConeAngle();
+        setViewportReady(true);
+      }, 100);
+      
+      // Recalculate after a longer delay as well (iOS safe areas)
+      const secondTimer = setTimeout(() => {
+        calculateConeAngle();
+      }, 500);
+      
+      window.addEventListener('resize', calculateConeAngle);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(secondTimer);
+        window.removeEventListener('resize', calculateConeAngle);
+      };
+    } else {
+      calculateConeAngle();
+      setViewportReady(true);
+      window.addEventListener('resize', calculateConeAngle);
+      return () => window.removeEventListener('resize', calculateConeAngle);
+    }
+  }, [isPWA]);
   const navigateToRole = (path: string) => {
     const role = pathToRole[path];
     if (role) {
@@ -179,10 +206,16 @@ function LandingContent() {
       clearInterval(inactivityInterval);
     };
   }, [setXrayState]);
-  return <div className="landing-no-scroll bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none" style={{
+  // PWA-specific class for additional styling adjustments
+  const pwaClass = isPWA ? 'pwa-standalone' : '';
+  
+  return <div className={`landing-no-scroll bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none ${pwaClass}`} style={{
     height: '100dvh',
     maxHeight: '100dvh',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    // PWA safe area padding
+    paddingTop: isPWA ? 'env(safe-area-inset-top, 0px)' : undefined,
+    paddingBottom: isPWA ? 'env(safe-area-inset-bottom, 0px)' : undefined,
   }}>
       
       {/* Custom Landing Page Cursor */}
@@ -284,14 +317,18 @@ function LandingContent() {
       </div>
       
       {/* 3D Player Effect - Single instance with responsive CSS positioning */}
-      <div className="absolute inset-0 pointer-events-none z-[2]">
-        {/* Mobile: translateX(1px) translateY(32px), Desktop: translateX(-39px) translateY(-28px) */}
-        <div 
-          className="absolute inset-0 translate-x-[1px] translate-y-[32px] md:translate-x-[-39px] md:translate-y-[-28px]"
-        >
-          <LazyPlayer3D className="pointer-events-none w-full h-full" />
+      {/* Only render when viewport is ready (important for PWA mode) */}
+      {viewportReady && (
+        <div className="absolute inset-0 pointer-events-none z-[2]">
+          {/* Mobile: translateX(1px) translateY(32px), Desktop: translateX(-39px) translateY(-28px) */}
+          {/* PWA mode: Additional adjustment for safe areas */}
+          <div 
+            className={`absolute inset-0 translate-x-[1px] translate-y-[32px] md:translate-x-[-39px] md:translate-y-[-28px] ${isPWA ? 'pwa-player-container' : ''}`}
+          >
+            <LazyPlayer3D className="pointer-events-none w-full h-full" />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Bottom Section - Menu area */}
       <div className="pb-0 md:pb-8 z-50 relative w-full pointer-events-auto">

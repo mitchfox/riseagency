@@ -1,19 +1,36 @@
-// UPDATE THIS VERSION NUMBER WHEN YOU DEPLOY NEW CHANGES
-const CACHE_VERSION = 'rise-v1.7.0';
+// ================================================================
+// RISE Football Agency - Progressive Web App Service Worker
+// ================================================================
+// Cache version - increment to force cache refresh
+const CACHE_VERSION = 'rise-v1.8.0';
 const CACHE_NAME = `${CACHE_VERSION}`;
 const ASSETS_CACHE = `${CACHE_VERSION}-assets`;
 
-// Critical files to cache - only files that actually exist on the server
-// SPA routes like /portal and /staff are handled by serving index.html
+// Critical files to cache - include all HTML entry points for proper PWA routing
 const urlsToCache = [
   '/',
+  '/index.html',
+  '/portal.html',
+  '/staff.html',
   '/manifest.json',
   '/manifest-player.json',
   '/manifest-staff.json',
   '/lovable-uploads/icon-192x192.png',
   '/lovable-uploads/icon-512x512.png',
-  '/RISEWhite.png'
+  '/RISEWhite.png',
+  '/favicon.png'
 ];
+
+// Helper function to determine which HTML file to serve for a given path
+function getHTMLForPath(pathname) {
+  if (pathname.startsWith('/portal')) {
+    return '/portal.html';
+  }
+  if (pathname.startsWith('/staff')) {
+    return '/staff.html';
+  }
+  return '/index.html';
+}
 
 // Install event - cache essential resources
 self.addEventListener('install', (event) => {
@@ -153,40 +170,51 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For navigation requests (HTML pages), serve index.html for SPA routing
-  // This is critical for PWA - /portal and /staff don't exist as files, they're SPA routes
+  // For navigation requests (HTML pages), serve the correct HTML for SPA routing
+  // This is critical for PWA - /portal and /staff now have dedicated HTML files with correct manifests
   if (event.request.mode === 'navigate') {
+    const htmlFile = getHTMLForPath(url.pathname);
+    console.log('[Service Worker] Navigation request for:', url.pathname, '-> serving:', htmlFile);
+    
     event.respondWith(
       // First try to fetch from network
       fetch(event.request).then((response) => {
-        // For SPA: if server returns 404, serve cached index.html
+        // For SPA: if server returns 404, serve the correct cached HTML
         if (!response.ok) {
-          console.log('[Service Worker] Navigation failed, serving index.html for SPA routing:', url.pathname);
-          return caches.match('/').then((cachedResponse) => {
+          console.log('[Service Worker] Navigation failed, serving cached HTML for SPA routing:', url.pathname, '->', htmlFile);
+          return caches.match(htmlFile).then((cachedResponse) => {
             if (cachedResponse) {
               return addCrossOriginHeaders(cachedResponse);
             }
-            // If not cached, fetch root
-            return fetch('/').then(addCrossOriginHeaders);
+            // If specific HTML not cached, try index.html
+            return caches.match('/index.html').then((indexResponse) => {
+              if (indexResponse) return addCrossOriginHeaders(indexResponse);
+              // Last resort - fetch the HTML file
+              return fetch(htmlFile).then(addCrossOriginHeaders);
+            });
           });
         }
         
-        // Cache the successful response as our index
+        // Cache the successful response
         if (response.status === 200) {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put('/', responseToCache);
+            // Cache under the actual HTML file path for proper routing
+            cache.put(htmlFile, responseToCache);
           });
         }
         return addCrossOriginHeaders(response);
       }).catch(() => {
-        // Offline - serve cached index.html for ALL navigation requests
-        console.log('[Service Worker] Offline - serving cached index.html for:', url.pathname);
-        return caches.match('/').then((cachedResponse) => {
+        // Offline - serve cached HTML for the appropriate route
+        console.log('[Service Worker] Offline - serving cached HTML for:', url.pathname, '->', htmlFile);
+        return caches.match(htmlFile).then((cachedResponse) => {
           if (cachedResponse) {
             return addCrossOriginHeaders(cachedResponse);
           }
-          // No cached index - show offline page
+          // Fallback to index.html if specific HTML not cached
+          return caches.match('/index.html').then((indexResponse) => {
+            if (indexResponse) return addCrossOriginHeaders(indexResponse);
+            // No cached HTML - show offline page
           return new Response(
             `<!DOCTYPE html>
             <html>
