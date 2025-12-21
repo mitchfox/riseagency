@@ -32,11 +32,13 @@ export function useTranslateContent() {
       return text;
     }
 
-    // Check cache first
+    const targetLang = languageColumnMap[language as LanguageCode];
+    
+    // Check memory cache first
     const cacheKey = `${contentId}`;
     const cached = translationCache.get(cacheKey);
-    if (cached && cached[languageColumnMap[language as LanguageCode]]) {
-      return cached[languageColumnMap[language as LanguageCode]];
+    if (cached && cached[targetLang]) {
+      return cached[targetLang];
     }
 
     // Check localStorage cache
@@ -45,7 +47,6 @@ export function useTranslateContent() {
       const localCached = localStorage.getItem(localCacheKey);
       if (localCached) {
         const parsed = JSON.parse(localCached);
-        const targetLang = languageColumnMap[language as LanguageCode];
         if (parsed[targetLang]) {
           translationCache.set(cacheKey, parsed);
           return parsed[targetLang];
@@ -55,30 +56,53 @@ export function useTranslateContent() {
       // Ignore localStorage errors
     }
 
-    // Fetch translation from AI
+    // Query translations database first - parse contentId to get page_name and text_key
+    // Format: "page_name:text_key" or just use as text_key
     setIsTranslating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-translate', {
-        body: { text }
-      });
+      const [pageName, textKey] = contentId.includes(':') 
+        ? contentId.split(':') 
+        : ['general', contentId];
+      
+      const { data: dbTranslation, error: dbError } = await supabase
+        .from('translations')
+        .select('*')
+        .eq('page_name', pageName)
+        .eq('text_key', textKey)
+        .maybeSingle();
 
-      if (error) {
-        console.error('Translation error:', error);
-        return text;
+      if (!dbError && dbTranslation && dbTranslation[targetLang]) {
+        // Found in database - cache and return
+        const translationData = {
+          english: dbTranslation.english,
+          spanish: dbTranslation.spanish,
+          portuguese: dbTranslation.portuguese,
+          french: dbTranslation.french,
+          german: dbTranslation.german,
+          italian: dbTranslation.italian,
+          polish: dbTranslation.polish,
+          czech: dbTranslation.czech,
+          russian: dbTranslation.russian,
+          turkish: dbTranslation.turkish,
+          croatian: dbTranslation.croatian,
+          norwegian: dbTranslation.norwegian,
+        };
+        
+        translationCache.set(cacheKey, translationData);
+        try {
+          localStorage.setItem(localCacheKey, JSON.stringify(translationData));
+        } catch (e) {
+          // Ignore localStorage errors
+        }
+        
+        return dbTranslation[targetLang] as string;
       }
 
-      // Cache the result
-      translationCache.set(cacheKey, data);
-      try {
-        localStorage.setItem(localCacheKey, JSON.stringify(data));
-      } catch (e) {
-        // Ignore localStorage errors
-      }
-
-      const targetLang = languageColumnMap[language as LanguageCode];
-      return data[targetLang] || text;
+      // Not found in database - return original text (no AI fallback)
+      console.log(`Translation not found in database for: ${pageName}:${textKey}`);
+      return text;
     } catch (err) {
-      console.error('Translation failed:', err);
+      console.error('Translation lookup failed:', err);
       return text;
     } finally {
       setIsTranslating(false);
@@ -88,7 +112,7 @@ export function useTranslateContent() {
   return { translateText, isTranslating, language };
 }
 
-// Hook specifically for translating news articles using BATCH translation
+// Hook specifically for translating news articles - uses database first
 export function useTranslatedNews<T extends { id: string; title: string; excerpt: string | null }>(articles: T[]) {
   const { language } = useLanguage();
   const [translatedArticles, setTranslatedArticles] = useState<T[]>(articles);
@@ -104,83 +128,44 @@ export function useTranslatedNews<T extends { id: string; title: string; excerpt
       setIsLoading(true);
       const targetLang = languageColumnMap[language as LanguageCode];
       
-      // Collect all texts to translate and track which article/field they belong to
-      const textsToTranslate: string[] = [];
-      const textMap: { articleIndex: number; field: 'title' | 'excerpt' }[] = [];
-      const cachedTranslations: { articleIndex: number; field: 'title' | 'excerpt'; value: string }[] = [];
+      // Try to get translations from database for all articles
+      const articleIds = articles.map(a => a.id);
       
-      articles.forEach((article, articleIndex) => {
-        // Check title cache
-        const titleCacheKey = `translation_news_title_${article.id}_${language}`;
-        const excerptCacheKey = `translation_news_excerpt_${article.id}_${language}`;
-        
-        try {
-          const cachedTitle = localStorage.getItem(titleCacheKey);
-          if (cachedTitle) {
-            cachedTranslations.push({ articleIndex, field: 'title', value: cachedTitle });
-          } else {
-            textsToTranslate.push(article.title);
-            textMap.push({ articleIndex, field: 'title' });
-          }
-        } catch {
-          textsToTranslate.push(article.title);
-          textMap.push({ articleIndex, field: 'title' });
-        }
-        
-        // Check excerpt cache
-        if (article.excerpt) {
-          try {
-            const cachedExcerpt = localStorage.getItem(excerptCacheKey);
-            if (cachedExcerpt) {
-              cachedTranslations.push({ articleIndex, field: 'excerpt', value: cachedExcerpt });
-            } else {
-              textsToTranslate.push(article.excerpt);
-              textMap.push({ articleIndex, field: 'excerpt' });
-            }
-          } catch {
-            textsToTranslate.push(article.excerpt);
-            textMap.push({ articleIndex, field: 'excerpt' });
-          }
-        }
-      });
-      
-      // Start with original articles
-      const result = articles.map(a => ({ ...a })) as T[];
-      
-      // Apply cached translations
-      cachedTranslations.forEach(({ articleIndex, field, value }) => {
-        (result[articleIndex] as any)[field] = value;
-      });
-      
-      // Batch translate uncached texts
-      if (textsToTranslate.length > 0) {
-        try {
-          const { data, error } = await supabase.functions.invoke('ai-translate-batch', {
-            body: { texts: textsToTranslate }
-          });
+      try {
+        // Query translations table for news articles
+        const { data: dbTranslations, error: dbError } = await supabase
+          .from('translations')
+          .select('*')
+          .eq('page_name', 'news')
+          .in('text_key', articleIds.flatMap(id => [`${id}_title`, `${id}_excerpt`]));
+
+        const result = articles.map(article => {
+          const copy = { ...article } as T;
           
-          if (!error && data?.translations) {
-            data.translations.forEach((translation: Record<string, string>, i: number) => {
-              const mapping = textMap[i];
-              const translatedText = translation[targetLang];
-              if (translatedText) {
-                (result[mapping.articleIndex] as any)[mapping.field] = translatedText;
-                // Cache the translation
-                const article = articles[mapping.articleIndex];
-                const cacheKey = `translation_news_${mapping.field}_${article.id}_${language}`;
-                try {
-                  localStorage.setItem(cacheKey, translatedText);
-                } catch {}
-              }
-            });
+          if (!dbError && dbTranslations) {
+            // Look for title translation
+            const titleTrans = dbTranslations.find(t => t.text_key === `${article.id}_title`);
+            if (titleTrans && titleTrans[targetLang]) {
+              (copy as any).title = titleTrans[targetLang];
+            }
+            
+            // Look for excerpt translation
+            const excerptTrans = dbTranslations.find(t => t.text_key === `${article.id}_excerpt`);
+            if (excerptTrans && excerptTrans[targetLang]) {
+              (copy as any).excerpt = excerptTrans[targetLang];
+            }
           }
-        } catch (e) {
-          console.error('Batch news translation failed:', e);
-        }
+          
+          return copy;
+        });
+        
+        setTranslatedArticles(result);
+      } catch (e) {
+        console.error('News translation lookup failed:', e);
+        setTranslatedArticles(articles);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setTranslatedArticles(result);
-      setIsLoading(false);
     };
 
     translateArticles();
