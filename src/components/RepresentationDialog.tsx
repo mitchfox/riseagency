@@ -8,6 +8,7 @@ import { MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface RepresentationDialogProps {
   open: boolean;
@@ -24,6 +25,7 @@ const representationSchema = z.object({
 });
 
 export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialogProps) => {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
@@ -47,8 +49,8 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
       if (error) throw error;
       
       toast({
-        title: "Request Submitted",
-        description: "We'll be in touch soon!",
+        title: t('representation.success_title', 'Request Submitted'),
+        description: t('representation.success_desc', "We'll be in touch soon!"),
       });
       
       onOpenChange(false);
@@ -56,15 +58,15 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
-          title: "Validation Error",
+          title: t('common.validation_error', 'Validation Error'),
           description: error.errors[0].message,
           variant: "destructive",
         });
       } else {
         console.error("Error submitting form:", error);
         toast({
-          title: "Error",
-          description: "Failed to submit request. Please try again.",
+          title: t('common.error', 'Error'),
+          description: t('representation.error_desc', 'Failed to submit request. Please try again.'),
           variant: "destructive",
         });
       }
@@ -83,16 +85,16 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
       <DialogContent className="w-[95vw] max-w-[700px] z-[150]">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
-            Request Representation
+            {t('representation.title', 'Request Representation')}
           </DialogTitle>
           <DialogDescription>
-            Fill out the form below or contact us directly on WhatsApp
+            {t('representation.description', 'Fill out the form below or contact us directly on WhatsApp')}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name *</Label>
+            <Label htmlFor="name">{t('representation.full_name', 'Full Name')} *</Label>
             <Input
               id="name"
               value={formData.name}
@@ -105,7 +107,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number *</Label>
+              <Label htmlFor="phone">{t('representation.phone', 'Phone Number')} *</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -118,7 +120,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('representation.email', 'Email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -132,7 +134,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="currentClub">Current Club *</Label>
+              <Label htmlFor="currentClub">{t('representation.current_club', 'Current Club')} *</Label>
               <Input
                 id="currentClub"
                 value={formData.currentClub}
@@ -144,7 +146,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="position">Position</Label>
+              <Label htmlFor="position">{t('representation.position', 'Position')}</Label>
               <Input
                 id="position"
                 value={formData.position}
@@ -156,12 +158,12 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="message">Additional Information</Label>
+            <Label htmlFor="message">{t('representation.additional_info', 'Additional Information')}</Label>
             <Textarea
               id="message"
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-              placeholder="Tell us about your experience and goals..."
+              placeholder={t('representation.message_placeholder', 'Tell us about your experience and goals...')}
               className="min-h-[40px] sm:min-h-[80px]"
             />
           </div>
@@ -172,7 +174,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
               hoverEffect
               className="flex-1 btn-shine font-bebas uppercase tracking-wider"
             >
-              Submit Request
+              {t('representation.submit', 'Submit Request')}
             </Button>
             <Button
               type="button"
@@ -182,7 +184,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
               className="flex-1 font-bebas uppercase tracking-wider gap-2"
             >
               <MessageCircle className="h-5 w-5" />
-              WhatsApp Us
+              {t('representation.whatsapp', 'WhatsApp Us')}
             </Button>
           </div>
         </form>
