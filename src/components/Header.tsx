@@ -208,7 +208,9 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
   
   useEffect(() => {
     const topBarPaths = ['/', '/players', '/scouts', '/clubs', '/agents', '/coaches', '/business', '/media'];
-    setShowTopBar(topBarPaths.includes(location.pathname));
+    // Check both the current path AND its English equivalent for localized routes
+    const englishPath = getEnglishPath(location.pathname);
+    setShowTopBar(topBarPaths.includes(location.pathname) || topBarPaths.includes(englishPath));
   }, [location.pathname]);
   
   useEffect(() => {
@@ -297,8 +299,9 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
   
   useEffect(() => {
     const scrollEnabledPaths = ['/', '/players', '/scouts', '/clubs', '/agents', '/coaches', '/business', '/media'];
+    const englishPath = getEnglishPath(location.pathname);
     const handleScroll = () => {
-      if (scrollEnabledPaths.includes(location.pathname)) {
+      if (scrollEnabledPaths.includes(location.pathname) || scrollEnabledPaths.includes(englishPath)) {
         setIsScrolled(window.scrollY > 50);
       } else {
         setIsScrolled(false);
