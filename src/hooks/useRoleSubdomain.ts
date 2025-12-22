@@ -11,7 +11,7 @@ interface RoleConfig {
 }
 
 export const roleConfigs: Record<Exclude<RoleSubdomain, null>, RoleConfig> = {
-  players: { name: 'PLAYER', subdomain: 'players', route: '/players' },
+  players: { name: 'PLAYER', subdomain: 'players', route: '/learnmore' },
   clubs: { name: 'CLUB', subdomain: 'clubs', route: '/clubs' },
   agents: { name: 'AGENT', subdomain: 'agents', route: '/agents' },
   coaches: { name: 'COACH', subdomain: 'coaches', route: '/coaches' },
