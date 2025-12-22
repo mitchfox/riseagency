@@ -34,13 +34,13 @@ const subdomainToRole: Record<Exclude<RoleSubdomain, null>, Role> = {
 
 // Role label translations
 const roleTranslations: Record<string, Record<string, string>> = {
-  player: { en: "Player", es: "Jugador", pt: "Jogador", fr: "Joueur", de: "Spieler", it: "Giocatore", pl: "Zawodnik", cs: "Hráč", ru: "Игрок", tr: "Oyuncu" },
-  coach: { en: "Coach", es: "Entrenador", pt: "Treinador", fr: "Entraîneur", de: "Trainer", it: "Allenatore", pl: "Trener", cs: "Trenér", ru: "Тренер", tr: "Antrenör" },
-  club: { en: "Club", es: "Club", pt: "Clube", fr: "Club", de: "Verein", it: "Club", pl: "Klub", cs: "Klub", ru: "Клуб", tr: "Kulüp" },
-  agent: { en: "Agent", es: "Agente", pt: "Agente", fr: "Agent", de: "Agent", it: "Agente", pl: "Agent", cs: "Agent", ru: "Агент", tr: "Menajer" },
-  parent: { en: "Parent", es: "Padre/Madre", pt: "Pai/Mãe", fr: "Parent", de: "Elternteil", it: "Genitore", pl: "Rodzic", cs: "Rodič", ru: "Родитель", tr: "Veli" },
-  media: { en: "Media", es: "Medios", pt: "Mídia", fr: "Média", de: "Medien", it: "Media", pl: "Media", cs: "Média", ru: "СМИ", tr: "Medya" },
-  other: { en: "Other", es: "Otro", pt: "Outro", fr: "Autre", de: "Andere", it: "Altro", pl: "Inne", cs: "Jiné", ru: "Другое", tr: "Diğer" },
+  player: { en: "Player", es: "Jugador", pt: "Jogador", fr: "Joueur", de: "Spieler", it: "Giocatore", pl: "Zawodnik", cs: "Hráč", ru: "Игрок", tr: "Oyuncu", hr: "Igrač", no: "Spiller" },
+  coach: { en: "Coach", es: "Entrenador", pt: "Treinador", fr: "Entraîneur", de: "Trainer", it: "Allenatore", pl: "Trener", cs: "Trenér", ru: "Тренер", tr: "Antrenör", hr: "Trener", no: "Trener" },
+  club: { en: "Club", es: "Club", pt: "Clube", fr: "Club", de: "Verein", it: "Club", pl: "Klub", cs: "Klub", ru: "Клуб", tr: "Kulüp", hr: "Klub", no: "Klubb" },
+  agent: { en: "Agent", es: "Agente", pt: "Agente", fr: "Agent", de: "Agent", it: "Agente", pl: "Agent", cs: "Agent", ru: "Агент", tr: "Menajer", hr: "Agent", no: "Agent" },
+  parent: { en: "Parent", es: "Padre/Madre", pt: "Pai/Mãe", fr: "Parent", de: "Elternteil", it: "Genitore", pl: "Rodzic", cs: "Rodič", ru: "Родитель", tr: "Veli", hr: "Roditelj", no: "Forelder" },
+  media: { en: "Media", es: "Medios", pt: "Mídia", fr: "Média", de: "Medien", it: "Media", pl: "Media", cs: "Média", ru: "СМИ", tr: "Medya", hr: "Mediji", no: "Media" },
+  other: { en: "Other", es: "Otro", pt: "Outro", fr: "Autre", de: "Andere", it: "Altro", pl: "Inne", cs: "Jiné", ru: "Другое", tr: "Diğer", hr: "Ostalo", no: "Annet" },
 };
 
 const dialogTranslations: Record<string, Record<string, string>> = {
@@ -54,7 +54,9 @@ const dialogTranslations: Record<string, Record<string, string>> = {
     pl: "Wybierz swoją rolę, aby kontynuować", 
     cs: "Vyberte svou roli pro pokračování", 
     ru: "Выберите вашу роль, чтобы продолжить", 
-    tr: "Devam etmek için lütfen rolünüzü seçin" 
+    tr: "Devam etmek için lütfen rolünüzü seçin",
+    hr: "Odaberite svoju ulogu za nastavak",
+    no: "Velg din rolle for å fortsette"
   },
   otherOptions: { 
     en: "Other Options", 
@@ -66,7 +68,9 @@ const dialogTranslations: Record<string, Record<string, string>> = {
     pl: "Inne opcje", 
     cs: "Další možnosti", 
     ru: "Другие варианты", 
-    tr: "Diğer seçenekler" 
+    tr: "Diğer seçenekler",
+    hr: "Ostale opcije",
+    no: "Andre alternativer"
   },
   backToRoleSelection: { 
     en: "← Back to role selection", 
@@ -78,8 +82,42 @@ const dialogTranslations: Record<string, Record<string, string>> = {
     pl: "← Powrót do wyboru roli", 
     cs: "← Zpět na výběr role", 
     ru: "← Назад к выбору роли", 
-    tr: "← Rol seçimine geri dön" 
+    tr: "← Rol seçimine geri dön",
+    hr: "← Natrag na odabir uloge",
+    no: "← Tilbake til rollevalg"
   },
+  fullName: { en: "Full Name *", es: "Nombre Completo *", pt: "Nome Completo *", fr: "Nom Complet *", de: "Vollständiger Name *", it: "Nome Completo *", pl: "Imię i Nazwisko *", cs: "Celé jméno *", ru: "Полное имя *", tr: "Tam Ad *", hr: "Puno ime *", no: "Fullt navn *" },
+  email: { en: "Email *", es: "Correo Electrónico *", pt: "E-mail *", fr: "E-mail *", de: "E-Mail *", it: "E-mail *", pl: "E-mail *", cs: "E-mail *", ru: "Электронная почта *", tr: "E-posta *", hr: "E-mail *", no: "E-post *" },
+  whatsapp: { en: "WhatsApp Number *", es: "Número de WhatsApp *", pt: "Número do WhatsApp *", fr: "Numéro WhatsApp *", de: "WhatsApp-Nummer *", it: "Numero WhatsApp *", pl: "Numer WhatsApp *", cs: "Číslo WhatsApp *", ru: "Номер WhatsApp *", tr: "WhatsApp Numarası *", hr: "WhatsApp broj *", no: "WhatsApp-nummer *" },
+  position: { en: "Position *", es: "Posición *", pt: "Posição *", fr: "Poste *", de: "Position *", it: "Posizione *", pl: "Pozycja *", cs: "Pozice *", ru: "Позиция *", tr: "Pozisyon *", hr: "Pozicija *", no: "Posisjon *" },
+  age: { en: "Age *", es: "Edad *", pt: "Idade *", fr: "Âge *", de: "Alter *", it: "Età *", pl: "Wiek *", cs: "Věk *", ru: "Возраст *", tr: "Yaş *", hr: "Dob *", no: "Alder *" },
+  currentClub: { en: "Current Club", es: "Club Actual", pt: "Clube Atual", fr: "Club Actuel", de: "Aktueller Verein", it: "Club Attuale", pl: "Obecny Klub", cs: "Současný klub", ru: "Текущий клуб", tr: "Mevcut Kulüp", hr: "Trenutni klub", no: "Nåværende klubb" },
+  tellAboutYourself: { en: "Tell us about yourself", es: "Cuéntanos sobre ti", pt: "Conte-nos sobre você", fr: "Parlez-nous de vous", de: "Erzählen Sie uns von sich", it: "Parlaci di te", pl: "Opowiedz nam o sobie", cs: "Řekněte nám o sobě", ru: "Расскажите о себе", tr: "Kendinizden bahsedin", hr: "Recite nam o sebi", no: "Fortell oss om deg selv" },
+  submitApplication: { en: "Submit Application", es: "Enviar Solicitud", pt: "Enviar Candidatura", fr: "Soumettre la Candidature", de: "Bewerbung Einreichen", it: "Invia Candidatura", pl: "Wyślij Aplikację", cs: "Odeslat přihlášku", ru: "Отправить заявку", tr: "Başvuruyu Gönder", hr: "Pošalji prijavu", no: "Send søknad" },
+  submitInquiry: { en: "Submit Inquiry", es: "Enviar Consulta", pt: "Enviar Consulta", fr: "Soumettre la Demande", de: "Anfrage Einreichen", it: "Invia Richiesta", pl: "Wyślij Zapytanie", cs: "Odeslat dotaz", ru: "Отправить запрос", tr: "Sorguyu Gönder", hr: "Pošalji upit", no: "Send forespørsel" },
+  specialization: { en: "Specialization *", es: "Especialización *", pt: "Especialização *", fr: "Spécialisation *", de: "Spezialisierung *", it: "Specializzazione *", pl: "Specjalizacja *", cs: "Specializace *", ru: "Специализация *", tr: "Uzmanlık *", hr: "Specijalizacija *", no: "Spesialisering *" },
+  licenses: { en: "Coaching Licenses", es: "Licencias de Entrenador", pt: "Licenças de Treinador", fr: "Licences d'Entraîneur", de: "Trainerlizenzen", it: "Licenze Allenatore", pl: "Licencje Trenerskie", cs: "Trenérské licence", ru: "Тренерские лицензии", tr: "Antrenör Lisansları", hr: "Trenerske licence", no: "Trenerlisenser" },
+  experience: { en: "Years of Experience *", es: "Años de Experiencia *", pt: "Anos de Experiência *", fr: "Années d'Expérience *", de: "Jahre Erfahrung *", it: "Anni di Esperienza *", pl: "Lata Doświadczenia *", cs: "Roky zkušeností *", ru: "Лет опыта *", tr: "Deneyim Yılı *", hr: "Godine iskustva *", no: "År med erfaring *" },
+  coachingPhilosophy: { en: "Tell us about your coaching philosophy", es: "Cuéntanos sobre tu filosofía de entrenamiento", pt: "Conte-nos sobre sua filosofia de treinamento", fr: "Parlez-nous de votre philosophie d'entraînement", de: "Erzählen Sie uns von Ihrer Trainingsphilosophie", it: "Parlaci della tua filosofia di allenamento", pl: "Opowiedz nam o swojej filozofii trenerskiej", cs: "Řekněte nám o své trenérské filozofii", ru: "Расскажите о своей тренерской философии", tr: "Antrenörlük felsefenizi anlatın", hr: "Recite nam o svojoj trenerskoj filozofiji", no: "Fortell oss om din treningsfilosofi" },
+  clubName: { en: "Club Name *", es: "Nombre del Club *", pt: "Nome do Clube *", fr: "Nom du Club *", de: "Vereinsname *", it: "Nome del Club *", pl: "Nazwa Klubu *", cs: "Název klubu *", ru: "Название клуба *", tr: "Kulüp Adı *", hr: "Naziv kluba *", no: "Klubbnavn *" },
+  contactPerson: { en: "Contact Person *", es: "Persona de Contacto *", pt: "Pessoa de Contato *", fr: "Personne de Contact *", de: "Ansprechpartner *", it: "Persona di Contatto *", pl: "Osoba Kontaktowa *", cs: "Kontaktní osoba *", ru: "Контактное лицо *", tr: "İletişim Kişisi *", hr: "Kontakt osoba *", no: "Kontaktperson *" },
+  league: { en: "League/Division *", es: "Liga/División *", pt: "Liga/Divisão *", fr: "Ligue/Division *", de: "Liga/Division *", it: "Campionato/Divisione *", pl: "Liga/Dywizja *", cs: "Liga/Divize *", ru: "Лига/Дивизион *", tr: "Lig/Bölüm *", hr: "Liga/Divizija *", no: "Liga/Divisjon *" },
+  whatLookingFor: { en: "What are you looking for?", es: "¿Qué estás buscando?", pt: "O que você está procurando?", fr: "Que recherchez-vous?", de: "Was suchen Sie?", it: "Cosa stai cercando?", pl: "Czego szukasz?", cs: "Co hledáte?", ru: "Что вы ищете?", tr: "Ne arıyorsunuz?", hr: "Što tražite?", no: "Hva ser du etter?" },
+  agencyName: { en: "Agency Name", es: "Nombre de la Agencia", pt: "Nome da Agência", fr: "Nom de l'Agence", de: "Agenturname", it: "Nome Agenzia", pl: "Nazwa Agencji", cs: "Název agentury", ru: "Название агентства", tr: "Ajans Adı", hr: "Naziv agencije", no: "Byråets navn" },
+  fifaLicense: { en: "FIFA License Number", es: "Número de Licencia FIFA", pt: "Número da Licença FIFA", fr: "Numéro de Licence FIFA", de: "FIFA-Lizenznummer", it: "Numero Licenza FIFA", pl: "Numer Licencji FIFA", cs: "Číslo licence FIFA", ru: "Номер лицензии FIFA", tr: "FIFA Lisans Numarası", hr: "Broj FIFA licence", no: "FIFA-lisensnummer" },
+  howCollaborate: { en: "How can we collaborate?", es: "¿Cómo podemos colaborar?", pt: "Como podemos colaborar?", fr: "Comment pouvons-nous collaborer?", de: "Wie können wir zusammenarbeiten?", it: "Come possiamo collaborare?", pl: "Jak możemy współpracować?", cs: "Jak můžeme spolupracovat?", ru: "Как мы можем сотрудничать?", tr: "Nasıl işbirliği yapabiliriz?", hr: "Kako možemo surađivati?", no: "Hvordan kan vi samarbeide?" },
+  playerName: { en: "Player's Name *", es: "Nombre del Jugador *", pt: "Nome do Jogador *", fr: "Nom du Joueur *", de: "Name des Spielers *", it: "Nome del Giocatore *", pl: "Imię Zawodnika *", cs: "Jméno hráče *", ru: "Имя игрока *", tr: "Oyuncu Adı *", hr: "Ime igrača *", no: "Spillerens navn *" },
+  playerAge: { en: "Player's Age *", es: "Edad del Jugador *", pt: "Idade do Jogador *", fr: "Âge du Joueur *", de: "Alter des Spielers *", it: "Età del Giocatore *", pl: "Wiek Zawodnika *", cs: "Věk hráče *", ru: "Возраст игрока *", tr: "Oyuncu Yaşı *", hr: "Dob igrača *", no: "Spillerens alder *" },
+  currentClubAcademy: { en: "Current Club/Academy", es: "Club/Academia Actual", pt: "Clube/Academia Atual", fr: "Club/Académie Actuel", de: "Aktueller Verein/Akademie", it: "Club/Accademia Attuale", pl: "Obecny Klub/Akademia", cs: "Současný klub/Akademie", ru: "Текущий клуб/Академия", tr: "Mevcut Kulüp/Akademi", hr: "Trenutni klub/Akademija", no: "Nåværende klubb/akademi" },
+  tellAboutPlayer: { en: "Tell us about the player", es: "Cuéntanos sobre el jugador", pt: "Conte-nos sobre o jogador", fr: "Parlez-nous du joueur", de: "Erzählen Sie uns vom Spieler", it: "Parlaci del giocatore", pl: "Opowiedz nam o zawodniku", cs: "Řekněte nám o hráči", ru: "Расскажите об игроке", tr: "Oyuncu hakkında bilgi verin", hr: "Recite nam o igraču", no: "Fortell oss om spilleren" },
+  mediaOutlet: { en: "Media Outlet *", es: "Medio de Comunicación *", pt: "Veículo de Mídia *", fr: "Média *", de: "Medienunternehmen *", it: "Media *", pl: "Medium *", cs: "Médium *", ru: "СМИ *", tr: "Medya Kuruluşu *", hr: "Medij *", no: "Mediehus *" },
+  yourRole: { en: "Your Role *", es: "Tu Rol *", pt: "Sua Função *", fr: "Votre Rôle *", de: "Ihre Rolle *", it: "Il Tuo Ruolo *", pl: "Twoja Rola *", cs: "Vaše role *", ru: "Ваша роль *", tr: "Rolünüz *", hr: "Vaša uloga *", no: "Din rolle *" },
+  inquiryAbout: { en: "What's your inquiry about?", es: "¿Sobre qué es tu consulta?", pt: "Qual é sua consulta?", fr: "Quel est l'objet de votre demande?", de: "Worum geht es in Ihrer Anfrage?", it: "Di cosa tratta la tua richiesta?", pl: "O co chodzi w twoim zapytaniu?", cs: "O čem je váš dotaz?", ru: "О чём ваш запрос?", tr: "Sorgunuz ne hakkında?", hr: "O čemu je vaš upit?", no: "Hva gjelder forespørselen din?" },
+  subject: { en: "Subject *", es: "Asunto *", pt: "Assunto *", fr: "Sujet *", de: "Betreff *", it: "Oggetto *", pl: "Temat *", cs: "Předmět *", ru: "Тема *", tr: "Konu *", hr: "Predmet *", no: "Emne *" },
+  message: { en: "Message *", es: "Mensaje *", pt: "Mensagem *", fr: "Message *", de: "Nachricht *", it: "Messaggio *", pl: "Wiadomość *", cs: "Zpráva *", ru: "Сообщение *", tr: "Mesaj *", hr: "Poruka *", no: "Melding *" },
+  howCanWeHelp: { en: "Tell us how we can help you...", es: "Cuéntanos cómo podemos ayudarte...", pt: "Conte-nos como podemos ajudá-lo...", fr: "Dites-nous comment nous pouvons vous aider...", de: "Sagen Sie uns, wie wir Ihnen helfen können...", it: "Dicci come possiamo aiutarti...", pl: "Powiedz nam, jak możemy ci pomóc...", cs: "Řekněte nám, jak vám můžeme pomoci...", ru: "Расскажите, чем мы можем помочь...", tr: "Size nasıl yardımcı olabileceğimizi anlatın...", hr: "Recite nam kako vam možemo pomoći...", no: "Fortell oss hvordan vi kan hjelpe deg..." },
+  applicationTitle: { en: "Application", es: "Solicitud", pt: "Candidatura", fr: "Candidature", de: "Bewerbung", it: "Candidatura", pl: "Aplikacja", cs: "Přihláška", ru: "Заявка", tr: "Başvuru", hr: "Prijava", no: "Søknad" },
+  formDescription: { en: "Fill out the form below and we'll get back to you soon", es: "Completa el formulario a continuación y te responderemos pronto", pt: "Preencha o formulário abaixo e entraremos em contato em breve", fr: "Remplissez le formulaire ci-dessous et nous vous répondrons bientôt", de: "Füllen Sie das Formular aus und wir melden uns bald bei Ihnen", it: "Compila il modulo qui sotto e ti risponderemo presto", pl: "Wypełnij poniższy formularz, a wkrótce się z tobą skontaktujemy", cs: "Vyplňte formulář níže a brzy se vám ozveme", ru: "Заполните форму ниже, и мы скоро свяжемся с вами", tr: "Aşağıdaki formu doldurun, en kısa sürede size geri dönelim", hr: "Ispunite obrazac ispod i javit ćemo vam se uskoro", no: "Fyll ut skjemaet nedenfor, så kontakter vi deg snart" },
 };
 
 interface WorkWithUsDialogProps {
@@ -238,15 +276,15 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
     const commonFields = (
       <>
         <div className="space-y-2">
-          <Label htmlFor="name">Full Name *</Label>
+          <Label htmlFor="name">{getTranslation("fullName")}</Label>
           <Input id="name" name="name" placeholder="John Doe" required />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">Email *</Label>
+          <Label htmlFor="email">{getTranslation("email")}</Label>
           <Input id="email" name="email" type="email" placeholder="john@example.com" required />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="whatsapp">WhatsApp Number *</Label>
+          <Label htmlFor="whatsapp">{getTranslation("whatsapp")}</Label>
           <Input id="whatsapp" name="whatsapp" type="tel" placeholder="+1 (555) 000-0000" required />
         </div>
       </>
