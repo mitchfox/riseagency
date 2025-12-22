@@ -124,7 +124,7 @@ const PlayerJourney = () => {
         {/* Journey Steps */}
         <section className="py-16 md:py-24 bg-background">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto space-y-12">
+            <div className="max-w-6xl mx-auto space-y-12">
               {journeySteps.map((step, index) => (
                 <div key={step.step} className="relative">
                   {/* Connector line */}
@@ -185,7 +185,7 @@ const PlayerJourney = () => {
               </h2>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
               <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg">
                 <div className="text-5xl md:text-6xl font-bebas text-primary mb-2">74</div>
                 <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Professionals</p>

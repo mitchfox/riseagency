@@ -41,7 +41,7 @@ const PerformancePage = () => {
 
         {/* Content Sections */}
         <section className="py-16 md:py-24 px-4">
-          <div className="container mx-auto max-w-4xl">
+          <div className="container mx-auto max-w-6xl">
             <div className="space-y-16">
               <div>
                 <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
@@ -106,7 +106,7 @@ const PerformancePage = () => {
         {/* RISE Broadcast Advertisement */}
         <section className="py-12 md:py-16 px-4 bg-background">
           <div className="container mx-auto">
-            <div className="max-w-3xl mx-auto p-8 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
+            <div className="max-w-5xl mx-auto p-8 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent"></div>
               <div className="text-center relative z-10">
                 <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary mb-3">

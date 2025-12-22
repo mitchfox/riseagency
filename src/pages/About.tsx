@@ -40,7 +40,7 @@ const About = () => {
         {/* Our Story */}
         <section className="py-16 md:py-24 bg-muted/30">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
                 {t('about.our_story', 'OUR')} <span className="text-primary">{t('about.story', 'STORY')}</span>
               </h2>
@@ -57,7 +57,7 @@ const About = () => {
         {/* Who We Are */}
         <section className="py-16 md:py-24">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
                 {t('about.who_we_are')}
               </h2>
@@ -93,7 +93,7 @@ const About = () => {
         {/* Our Mission */}
         <section className="py-12 md:py-16 bg-muted/30">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
                 {t('about.our_mission')}
               </h2>
@@ -109,7 +109,7 @@ const About = () => {
         {/* What We Do */}
         <section className="py-12 md:py-16">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-12">
                 {t('about.what_we_do')}
               </h2>
