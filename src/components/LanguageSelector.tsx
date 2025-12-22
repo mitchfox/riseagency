@@ -27,14 +27,14 @@ const languages = [
 const getFlagUrl = (flagCode: string) => `https://flagcdn.com/w40/${flagCode}.png`;
 
 const languageUrlSubdomains: Record<string, string> = {
-  en: "en",
+  en: "", // English uses base domain (no subdomain)
   es: "es", 
   pt: "pt",
   fr: "fr",
   de: "de",
   it: "it",
   pl: "pl",
-  cs: "cs",
+  cs: "cz", // DNS uses 'cz' for Czech
   ru: "ru",
   tr: "tr",
   hr: "hr",
@@ -67,8 +67,10 @@ export const LanguageSelector = () => {
     // Use shared utility to extract base domain
     const info = getSubdomainInfo();
     
-    // Navigate to language subdomain
-    const newUrl = `https://${subdomain}.${info.baseDomain}${currentPath}`;
+    // Navigate to language subdomain (or base domain for English)
+    const newUrl = subdomain 
+      ? `https://${subdomain}.${info.baseDomain}${currentPath}`
+      : `https://${info.baseDomain}${currentPath}`;
     window.location.href = newUrl;
   };
 
