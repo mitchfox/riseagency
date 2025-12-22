@@ -35,6 +35,17 @@ const domainConfig = {
   }
 };
 
+const positionKeys: Record<ScoutingPosition, string> = {
+  "Goalkeeper": "scouts.pos_gk",
+  "Full-Back": "scouts.pos_fb",
+  "Centre-Back": "scouts.pos_cb",
+  "Central Defensive Midfielder": "scouts.pos_cdm",
+  "Central Midfielder": "scouts.pos_cm",
+  "Central Attacking Midfielder": "scouts.pos_cam",
+  "Winger / Wide Forward": "scouts.pos_winger",
+  "Centre Forward / Striker": "scouts.pos_striker"
+};
+
 const positionInitials: Record<ScoutingPosition, string> = {
   "Goalkeeper": "GK",
   "Full-Back": "FB",
@@ -57,9 +68,14 @@ export const WhatWeLookForDialog = ({ open, onOpenChange }: WhatWeLookForDialogP
   const [expandedDomain, setExpandedDomain] = useState<keyof typeof domainConfig>("Physical");
 
   const positionSkills = POSITION_SKILLS[selectedPosition];
+  
+  // Map Mental domain from data to Psychological for display
+  const mapDomain = (domain: string) => domain === "Mental" ? "Psychological" : domain;
+  
   const skillsByDomain = positionSkills.reduce((acc, skill) => {
-    if (!acc[skill.domain]) acc[skill.domain] = [];
-    acc[skill.domain].push(skill);
+    const displayDomain = mapDomain(skill.domain);
+    if (!acc[displayDomain]) acc[displayDomain] = [];
+    acc[displayDomain].push(skill);
     return acc;
   }, {} as Record<string, typeof positionSkills>);
 
@@ -86,6 +102,7 @@ export const WhatWeLookForDialog = ({ open, onOpenChange }: WhatWeLookForDialogP
               <button
                 key={position}
                 onClick={() => setSelectedPosition(position)}
+                title={t(positionKeys[position], position)}
                 className={`py-3 px-2 font-bebas uppercase tracking-wider text-xs md:text-sm transition-all ${
                   selectedPosition === position
                     ? "bg-primary/20 text-primary"
