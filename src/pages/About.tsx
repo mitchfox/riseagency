@@ -42,21 +42,13 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
-                OUR <span className="text-primary">STORY</span>
+                {t('about.our_story', 'OUR')} <span className="text-primary">{t('about.story', 'STORY')}</span>
               </h2>
               <div className="space-y-6 text-lg text-muted-foreground">
-                <p>
-                  We started as players. We understand the journey: the sacrifices, the setbacks, and what it takes to make it.
-                </p>
-                <p>
-                  We became coaches. We learned how to develop talent, how to identify potential, and how to build players who could compete at the highest level.
-                </p>
-                <p>
-                  We developed performance teams around Premier League talents. We saw firsthand what separates good players from great ones, and it's not always what you'd expect.
-                </p>
-                <p className="text-foreground font-medium">
-                  We built this into the agency we run today. Every lesson, every insight, every connection. Now focused on helping the next generation realise their potential.
-                </p>
+                <p>{t('about.story_p1', 'We started as players. We understand the journey: the sacrifices, the setbacks, and what it takes to make it.')}</p>
+                <p>{t('about.story_p2', 'We became coaches. We learned how to develop talent, how to identify potential, and how to build players who could compete at the highest level.')}</p>
+                <p>{t('about.story_p3', "We developed performance teams around Premier League talents. We saw firsthand what separates good players from great ones, and it's not always what you'd expect.")}</p>
+                <p className="text-foreground font-medium">{t('about.story_p4', 'We built this into the agency we run today. Every lesson, every insight, every connection. Now focused on helping the next generation realise their potential.')}</p>
               </div>
             </div>
           </div>
@@ -70,34 +62,28 @@ const About = () => {
                 {t('about.who_we_are')}
               </h2>
               <div className="space-y-6 text-lg text-muted-foreground">
-                <p>
-                  RISE Football Agency is the best agency for developing talents and guiding them to the top. We are committed to nurturing talent and maximizing the potential of every athlete we work with.
-                </p>
-                <p>
-                  Founded on firsthand experience as players and coaches, RISE has established itself as a trusted partner for players at all stages of their careers. Our team combines deep development expertise with a genuine passion for the beautiful game.
-                </p>
-                <p>
-                  We understand that success in football extends beyond what happens on the pitch. That's why we provide comprehensive support covering all aspects of a player's career, from performance optimisation and transfer dealings to personal development and career guidance.
-                </p>
+                <p>{t('about.who_p1', 'RISE Football Agency is the best agency for developing talents and guiding them to the top. We are committed to nurturing talent and maximizing the potential of every athlete we work with.')}</p>
+                <p>{t('about.who_p2', 'Founded on firsthand experience as players and coaches, RISE has established itself as a trusted partner for players at all stages of their careers. Our team combines deep development expertise with a genuine passion for the beautiful game.')}</p>
+                <p>{t('about.who_p3', "We understand that success in football extends beyond what happens on the pitch. That's why we provide comprehensive support covering all aspects of a player's career, from performance optimisation and transfer dealings to personal development and career guidance.")}</p>
               </div>
               
               {/* Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
                 <div className="text-center p-4 border border-border/50 bg-card/30 rounded-lg">
                   <div className="text-4xl font-bebas text-primary">74</div>
-                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">Professionals</p>
+                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">{t('about.stat_professionals', 'Professionals')}</p>
                 </div>
                 <div className="text-center p-4 border border-border/50 bg-card/30 rounded-lg">
                   <div className="text-4xl font-bebas text-primary">18</div>
-                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">Big 5 League Players</p>
+                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">{t('about.stat_big5', 'Big 5 League Players')}</p>
                 </div>
                 <div className="text-center p-4 border border-border/50 bg-card/30 rounded-lg">
                   <div className="text-4xl font-bebas text-primary">10</div>
-                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">National Team Players</p>
+                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">{t('about.stat_national', 'National Team Players')}</p>
                 </div>
                 <div className="text-center p-4 border border-border/50 bg-card/30 rounded-lg">
                   <div className="text-4xl font-bebas text-primary">£100M+</div>
-                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">Transfer Fees</p>
+                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">{t('about.stat_transfers', 'Transfer Fees')}</p>
                 </div>
               </div>
             </div>
@@ -112,15 +98,9 @@ const About = () => {
                 {t('about.our_mission')}
               </h2>
               <div className="space-y-6 text-lg text-muted-foreground">
-                <p>
-                  Our mission is simple: to help footballers reach their full potential both on and off the field. We believe every player deserves expert guidance, unwavering support, and opportunities to showcase their abilities on the biggest stages.
-                </p>
-                <p>
-                  Through our extensive network of clubs, scouts, and industry professionals, we create pathways for players to achieve their dreams. We pride ourselves on building lasting relationships based on trust, transparency, and mutual respect.
-                </p>
-                <p className="text-base text-muted-foreground/90 pt-4">
-                  Our work supports player development within the governance structures that maintain football's integrity. We operate as responsible participants in the regulatory environment, ensuring our services complement and respect the frameworks set by football's governing bodies.
-                </p>
+                <p>{t('about.mission_p1', 'Our mission is simple: to help footballers reach their full potential both on and off the field. We believe every player deserves expert guidance, unwavering support, and opportunities to showcase their abilities on the biggest stages.')}</p>
+                <p>{t('about.mission_p2', "Through our extensive network of clubs, scouts, and industry professionals, we create pathways for players to achieve their dreams. We pride ourselves on building lasting relationships based on trust, transparency, and mutual respect.")}</p>
+                <p className="text-base text-muted-foreground/90 pt-4">{t('about.mission_p3', "Our work supports player development within the governance structures that maintain football's integrity. We operate as responsible participants in the regulatory environment, ensuring our services complement and respect the frameworks set by football's governing bodies.")}</p>
               </div>
             </div>
           </div>
