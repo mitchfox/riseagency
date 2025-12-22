@@ -253,24 +253,24 @@ const Scouts = () => {
                       <div className="text-center mb-8">
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-3">
                           <Target className="h-4 w-4 text-primary" />
-                          <span className="text-sm font-semibold">Tactical Understanding</span>
+                          <span className="text-sm font-semibold">{t('scouts.tactical_badge', 'Tactical Understanding')}</span>
                         </div>
                         
                         <h3 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-3 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                          Tactical Schemes
+                          {t('scouts.tactical_title', 'Tactical Schemes')}
                         </h3>
                         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                          Understanding player roles within different tactical formations and systems
+                          {t('scouts.tactical_desc', 'Understanding player roles within different tactical formations and systems')}
                         </p>
                       </div>
 
                       <div className="grid md:grid-cols-2 gap-6">
                         <Card className="p-6 bg-gradient-to-br from-muted/50 to-muted/30 border-primary/20">
                           <h4 className="font-bebas text-2xl uppercase tracking-wider text-primary mb-3">
-                            Team Schemes
+                            {t('scouts.team_schemes', 'Team Schemes')}
                           </h4>
                           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                            How the team sets up tactically: formations (4-3-3, 4-4-2, 3-5-2), build-up patterns, pressing structures, and defensive organisation.
+                            {t('scouts.team_schemes_desc', 'How the team sets up tactically: formations (4-3-3, 4-4-2, 3-5-2), build-up patterns, pressing structures, and defensive organisation.')}
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {["4-3-3", "4-4-2", "3-5-2", "4-2-3-1"].map(formation => (
@@ -283,10 +283,10 @@ const Scouts = () => {
 
                         <Card className="p-6 bg-gradient-to-br from-muted/50 to-muted/30 border-primary/20">
                           <h4 className="font-bebas text-2xl uppercase tracking-wider text-primary mb-3">
-                            Opposition Analysis
+                            {t('scouts.opposition_analysis', 'Opposition Analysis')}
                           </h4>
                           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                            Understanding the opponent's tactical approach, identifying weaknesses to exploit, and recognising their strengths to neutralise.
+                            {t('scouts.opposition_analysis_desc', "Understanding the opponent's tactical approach, identifying weaknesses to exploit, and recognising their strengths to neutralise.")}
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {["High Press", "Low Block", "Counter Attack", "Possession"].map(style => (
@@ -299,19 +299,19 @@ const Scouts = () => {
 
                         <Card className="p-6 bg-gradient-to-br from-muted/50 to-muted/30 border-primary/20">
                           <h4 className="font-bebas text-2xl uppercase tracking-wider text-primary mb-3">
-                            Position-Specific Roles
+                            {t('scouts.position_roles', 'Position-Specific Roles')}
                           </h4>
                           <p className="text-sm text-muted-foreground leading-relaxed">
-                            How each position operates within different systems: inverted full-backs, false 9s, box-to-box midfielders, and other tactical variations.
+                            {t('scouts.position_roles_desc', 'How each position operates within different systems: inverted full-backs, false 9s, box-to-box midfielders, and other tactical variations.')}
                           </p>
                         </Card>
 
                         <Card className="p-6 bg-gradient-to-br from-muted/50 to-muted/30 border-primary/20">
                           <h4 className="font-bebas text-2xl uppercase tracking-wider text-primary mb-3">
-                            Game Phases
+                            {t('scouts.game_phases', 'Game Phases')}
                           </h4>
                           <p className="text-sm text-muted-foreground leading-relaxed">
-                            Player performance across all phases: build-up play, offensive transition, attacking, defensive transition, and defensive organisation.
+                            {t('scouts.game_phases_desc', 'Player performance across all phases: build-up play, offensive transition, attacking, defensive transition, and defensive organisation.')}
                           </p>
                         </Card>
                       </div>
@@ -352,10 +352,10 @@ const Scouts = () => {
                   </div>
                   
                   <h3 className="text-2xl font-bebas uppercase tracking-wider mb-2 group-hover:text-primary transition-colors">
-                    Player Profiles
+                    {t('scouts.player_profiles', 'Player Profiles')}
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Detailed profiles with comprehensive stats, video analysis, and in-depth match reports
+                    {t('scouts.player_profiles_desc', 'Detailed profiles with comprehensive stats, video analysis, and in-depth match reports')}
                   </p>
                 </div>
               </Card>
@@ -369,10 +369,10 @@ const Scouts = () => {
                   </div>
                   
                   <h3 className="text-2xl font-bebas uppercase tracking-wider mb-2 group-hover:text-primary transition-colors">
-                    Advanced Analytics
+                    {t('scouts.advanced_analytics', 'Advanced Analytics')}
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    R90 ratings, detailed skill evaluations, and comprehensive performance tracking
+                    {t('scouts.advanced_analytics_desc', 'R90 ratings, detailed skill evaluations, and comprehensive performance tracking')}
                   </p>
                 </div>
               </Card>
@@ -386,10 +386,10 @@ const Scouts = () => {
                   </div>
                   
                   <h3 className="text-2xl font-bebas uppercase tracking-wider mb-2 group-hover:text-primary transition-colors">
-                    Scouting Reports
+                    {t('scouts.scouting_reports', 'Scouting Reports')}
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Standardized professional reports with comprehensive player assessments
+                    {t('scouts.scouting_reports_desc', 'Standardized professional reports with comprehensive player assessments')}
                   </p>
                 </div>
               </Card>
@@ -405,18 +405,18 @@ const Scouts = () => {
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-3">
                 <Globe className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">Eyes Across All Of Europe</span>
+                <span className="text-sm font-semibold">{t('scouts.europe_badge', 'Eyes Across All Of Europe')}</span>
               </div>
               
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-3 leading-none">
-                SCOUTING ACROSS
+                {t('scouts.scouting_across', 'SCOUTING ACROSS')}
                 <br />
                 <span className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                  ALL OF EUROPE
+                  {t('scouts.all_of_europe', 'ALL OF EUROPE')}
                 </span>
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto font-light">
-                We scout every major European market. Wherever talent emerges, we have eyes on the ground—and we're looking for scouts who know their region.
+                {t('scouts.europe_desc', "We scout every major European market. Wherever talent emerges, we have eyes on the ground—and we're looking for scouts who know their region.")}
               </p>
             </div>
 
@@ -426,7 +426,7 @@ const Scouts = () => {
                 <ScoutingNetworkMap />
               </div>
               <p className="text-center text-sm text-primary mt-4 font-bebas uppercase tracking-wider">
-                Be part of something bigger. Join the network.
+                {t('scouts.join_network', 'Be part of something bigger. Join the network.')}
               </p>
             </div>
 
@@ -440,10 +440,10 @@ const Scouts = () => {
                   </div>
                   
                   <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">
-                    Deep Understanding
+                    {t('scouts.deep_understanding', 'Deep Understanding')}
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    We don't just watch players—we analyze their tactical intelligence, technical ability, and mental attributes through comprehensive match analysis.
+                    {t('scouts.deep_understanding_desc', "We don't just watch players—we analyze their tactical intelligence, technical ability, and mental attributes through comprehensive match analysis.")}
                   </p>
                 </div>
               </Card>
@@ -457,10 +457,10 @@ const Scouts = () => {
                   </div>
                   
                   <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">
-                    Lower Leagues Focus
+                    {t('scouts.lower_leagues', 'Lower Leagues Focus')}
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Our network extends beyond top divisions, discovering talent in lower leagues where players develop fundamental skills and hunger to succeed.
+                    {t('scouts.lower_leagues_desc', 'Our network extends beyond top divisions, discovering talent in lower leagues where players develop fundamental skills and hunger to succeed.')}
                   </p>
                 </div>
               </Card>
@@ -474,10 +474,10 @@ const Scouts = () => {
                   </div>
                   
                   <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">
-                    Data-Driven Approach
+                    {t('scouts.data_driven', 'Data-Driven Approach')}
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Every report includes position-specific metrics, performance statistics, and tactical analysis to support our qualitative assessments.
+                    {t('scouts.data_driven_desc', 'Every report includes position-specific metrics, performance statistics, and tactical analysis to support our qualitative assessments.')}
                   </p>
                 </div>
               </Card>
@@ -513,12 +513,12 @@ const Scouts = () => {
                     <div className="h-12 w-12 bg-primary/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                       <Sparkles className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="text-3xl font-bebas text-primary">Forever Commission</div>
+                    <div className="text-3xl font-bebas text-primary">{t('scouts.forever_commission', 'Forever Commission')}</div>
                   </div>
                   
-                  <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3">Lifetime Earnings</h3>
+                  <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3">{t('scouts.lifetime_earnings', 'Lifetime Earnings')}</h3>
                   <p className="text-muted-foreground mb-4 leading-relaxed text-sm">
-                    Receive commission on all earnings from players you discover, throughout their entire career. Your scouting work pays dividends for years to come.
+                    {t('scouts.lifetime_earnings_desc', 'Receive commission on all earnings from players you discover, throughout their entire career. Your scouting work pays dividends for years to come.')}
                   </p>
                   
                   <ul className="space-y-2">
@@ -526,19 +526,19 @@ const Scouts = () => {
                       <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover/item:scale-110 transition-transform">
                         <span className="text-primary text-xs">✓</span>
                       </div>
-                      <span className="text-sm text-foreground">Commission on initial signing fees</span>
+                      <span className="text-sm text-foreground">{t('scouts.initial_signing', 'Commission on initial signing fees')}</span>
                     </li>
                     <li className="flex items-start gap-2 group/item">
                       <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover/item:scale-110 transition-transform">
                         <span className="text-primary text-xs">✓</span>
                       </div>
-                      <span className="text-sm text-foreground">Percentage of future transfers</span>
+                      <span className="text-sm text-foreground">{t('scouts.future_transfers', 'Percentage of future transfers')}</span>
                     </li>
                     <li className="flex items-start gap-2 group/item">
                       <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover/item:scale-110 transition-transform">
                         <span className="text-primary text-xs">✓</span>
                       </div>
-                      <span className="text-sm text-foreground">Ongoing representation earnings</span>
+                      <span className="text-sm text-foreground">{t('scouts.ongoing_earnings', 'Ongoing representation earnings')}</span>
                     </li>
                   </ul>
                 </div>
@@ -552,12 +552,12 @@ const Scouts = () => {
                     <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                       <TrendingUp className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="text-3xl font-bebas text-primary">Development Support</div>
+                    <div className="text-3xl font-bebas text-primary">{t('scouts.development_support', 'Development Support')}</div>
                   </div>
                   
-                  <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3">Enhance Your Skills</h3>
+                  <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3">{t('scouts.enhance_skills', 'Enhance Your Skills')}</h3>
                   <p className="text-muted-foreground mb-4 leading-relaxed text-sm">
-                    Access training, resources, and mentorship to develop your scouting expertise and industry knowledge.
+                    {t('scouts.enhance_skills_desc', 'Access training, resources, and mentorship to develop your scouting expertise and industry knowledge.')}
                   </p>
                   
                   <ul className="space-y-2">
@@ -565,19 +565,19 @@ const Scouts = () => {
                       <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover/item:scale-110 transition-transform">
                         <span className="text-primary text-xs">✓</span>
                       </div>
-                      <span className="text-sm text-foreground">Regular training sessions</span>
+                      <span className="text-sm text-foreground">{t('scouts.training_sessions', 'Regular training sessions')}</span>
                     </li>
                     <li className="flex items-start gap-2 group/item">
                       <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover/item:scale-110 transition-transform">
                         <span className="text-primary text-xs">✓</span>
                       </div>
-                      <span className="text-sm text-foreground">Access to our database and tools</span>
+                      <span className="text-sm text-foreground">{t('scouts.database_tools', 'Access to our database and tools')}</span>
                     </li>
                     <li className="flex items-start gap-2 group/item">
                       <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover/item:scale-110 transition-transform">
                         <span className="text-primary text-xs">✓</span>
                       </div>
-                      <span className="text-sm text-foreground">Industry networking opportunities</span>
+                      <span className="text-sm text-foreground">{t('scouts.networking', 'Industry networking opportunities')}</span>
                     </li>
                   </ul>
                 </div>
@@ -589,16 +589,16 @@ const Scouts = () => {
               
               <div className="relative p-6">
                 <div className="text-center mb-6">
-                  <h3 className="text-3xl font-bebas uppercase tracking-wider mb-2">How It Works</h3>
+                  <h3 className="text-3xl font-bebas uppercase tracking-wider mb-2">{t('scouts.how_it_works', 'How It Works')}</h3>
                   <div className="h-1 w-24 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto" />
                 </div>
                 
                 <div className="grid md:grid-cols-4 gap-6">
                   {[
-                    { num: "1", title: "Scout & Report", desc: "Identify talented players using our position-specific criteria" },
-                    { num: "2", title: "Submit to Database", desc: "Add detailed reports to our comprehensive system" },
-                    { num: "3", title: "We Represent", desc: "We work to develop and place the player effectively" },
-                    { num: "4", title: "You Earn", desc: "Receive forever commission on all player earnings" }
+                    { num: "1", title: t('scouts.step1_title', 'Scout & Report'), desc: t('scouts.step1_desc', 'Identify talented players using our position-specific criteria') },
+                    { num: "2", title: t('scouts.step2_title', 'Submit to Database'), desc: t('scouts.step2_desc', 'Add detailed reports to our comprehensive system') },
+                    { num: "3", title: t('scouts.step3_title', 'We Represent'), desc: t('scouts.step3_desc', 'We work to develop and place the player effectively') },
+                    { num: "4", title: t('scouts.step4_title', 'You Earn'), desc: t('scouts.step4_desc', 'Receive forever commission on all player earnings') }
                   ].map((step, idx) => (
                     <div key={idx} className="relative text-center group">
                       <div className="relative mb-4">
