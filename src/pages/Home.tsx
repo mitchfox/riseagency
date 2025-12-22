@@ -8,7 +8,7 @@ import Media from './Media';
 import Business from './Business';
 import Dashboard from './Dashboard';
 import Potential from './Potential';
-import Players from './Performance';
+import Index from './Index';
 import { getSubdomainInfo } from '@/lib/subdomainUtils';
 
 // Map subdomains to their page components
@@ -16,7 +16,7 @@ const subdomainComponents: Record<string, React.ComponentType> = {
   'portal': Dashboard,
   'scouts': Scouts,
   'potential': Potential,
-  'players': Players,
+  'players': Index,
   'clubs': Clubs,
   'agents': Agents,
   'coaches': Coaches,
