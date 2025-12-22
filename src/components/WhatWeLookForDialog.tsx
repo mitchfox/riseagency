@@ -103,6 +103,7 @@ export const WhatWeLookForDialog = ({ open, onOpenChange }: WhatWeLookForDialogP
               const domainConf = domainConfig[domain];
               const DomainIcon = domainConf.icon;
               const isActive = currentDomain === domain;
+              const domainKey = `scouts.domain_${domain.toLowerCase()}`;
               
               return (
                 <button
@@ -116,7 +117,7 @@ export const WhatWeLookForDialog = ({ open, onOpenChange }: WhatWeLookForDialogP
                 >
                   <DomainIcon className={`h-4 w-4 ${domainConf.color}`} />
                   <span className={`font-bebas uppercase tracking-wider text-sm ${isActive ? 'text-primary' : domainConf.color}`}>
-                    {domain}
+                    {t(domainKey, domain)}
                   </span>
                 </button>
               );
