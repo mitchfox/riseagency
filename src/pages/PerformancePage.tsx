@@ -4,14 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { HoverText } from "@/components/HoverText";
+import { useLanguage } from "@/contexts/LanguageContext";
 import bannerHero from "@/assets/banner-hero.jpg";
 
-const NewPerformance = () => {
+const PerformancePage = () => {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen bg-background">
       <SEO 
-        title="Performance Analysis - Data-Driven Player Development | RISE"
-        description="Maximise player potential through data-driven insights. We provide comprehensive performance analysis, video breakdown, and individual development plans."
+        title={t('performance.seo_title', 'Performance Analysis - Data-Driven Player Development | RISE')}
+        description={t('performance.seo_description', 'Maximise player potential through data-driven insights. We provide comprehensive performance analysis, video breakdown, and individual development plans.')}
         image="/og-preview-performance.png"
         url="/performance"
       />
@@ -28,10 +31,10 @@ const NewPerformance = () => {
           
           <div className="relative container mx-auto px-4 text-center z-10">
             <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-white mb-6">
-              Performance
+              {t('performance.hero_title', 'Performance')}
             </h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-              Maximizing potential through data-driven insights
+              {t('performance.hero_subtitle', 'Maximizing potential through data-driven insights')}
             </p>
           </div>
         </section>
@@ -42,43 +45,43 @@ const NewPerformance = () => {
             <div className="space-y-16">
               <div>
                 <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-                  Performance Analysis
+                  {t('performance.analysis_title', 'Performance Analysis')}
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed mb-4">
-                  We utilize cutting-edge technology and data analytics to track and improve player performance. Our comprehensive analysis covers:
+                  {t('performance.analysis_intro', 'We utilize cutting-edge technology and data analytics to track and improve player performance. Our comprehensive analysis covers:')}
                 </p>
                 <ul className="list-disc list-inside text-lg text-muted-foreground space-y-2 ml-4">
-                  <li>Physical metrics and fitness tracking</li>
-                  <li>Technical skills assessment</li>
-                  <li>Tactical understanding and decision-making</li>
-                  <li>Match performance statistics</li>
+                  <li>{t('performance.analysis_item1', 'Physical metrics and fitness tracking')}</li>
+                  <li>{t('performance.analysis_item2', 'Technical skills assessment')}</li>
+                  <li>{t('performance.analysis_item3', 'Tactical understanding and decision-making')}</li>
+                  <li>{t('performance.analysis_item4', 'Match performance statistics')}</li>
                 </ul>
               </div>
 
               <div>
                 <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-                  Individual Development Plans
+                  {t('performance.development_title', 'Individual Development Plans')}
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Each player receives a personalised development roadmap based on detailed performance data. We identify areas for improvement and create targeted training programmes to address specific needs.
+                  {t('performance.development_text', 'Each player receives a personalised development roadmap based on detailed performance data. We identify areas for improvement and create targeted training programmes to address specific needs.')}
                 </p>
               </div>
 
               <div>
                 <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-                  Video Analysis
+                  {t('performance.video_title', 'Video Analysis')}
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Our team provides detailed video breakdowns of match performances, training sessions, and specific skill work. This visual feedback helps players understand their strengths and areas for development.
+                  {t('performance.video_text', 'Our team provides detailed video breakdowns of match performances, training sessions, and specific skill work. This visual feedback helps players understand their strengths and areas for development.')}
                 </p>
               </div>
 
               <div>
                 <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-                  Benchmarking
+                  {t('performance.benchmarking_title', 'Benchmarking')}
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  We compare player statistics against professional standards at various levels, providing clear targets and realistic progression pathways.
+                  {t('performance.benchmarking_text', 'We compare player statistics against professional standards at various levels, providing clear targets and realistic progression pathways.')}
                 </p>
               </div>
             </div>
@@ -89,13 +92,13 @@ const NewPerformance = () => {
         <section className="py-16 md:py-24 bg-muted/30">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-              Optimise Your Performance
+              {t('performance.cta_title', 'Optimise Your Performance')}
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Learn how our performance analysis can elevate your game
+              {t('performance.cta_subtitle', 'Learn how our performance analysis can elevate your game')}
             </p>
             <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider">
-              <Link to="/contact">Get Started</Link>
+              <Link to="/contact">{t('common.get_started', 'Get Started')}</Link>
             </Button>
           </div>
         </section>
@@ -107,10 +110,10 @@ const NewPerformance = () => {
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent"></div>
               <div className="text-center relative z-10">
                 <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary mb-3">
-                  Join RISE Broadcast on Instagram
+                  {t('common.broadcast_title', 'Join RISE Broadcast on Instagram')}
                 </h2>
                 <p className="text-foreground mb-6 text-base md:text-lg leading-relaxed">
-                  Get daily updates on agency insights, performance optimisation, coaching systems, and player development strategies
+                  {t('common.broadcast_description', 'Get daily updates on agency insights, performance optimisation, coaching systems, and player development strategies')}
                 </p>
                 <a
                   href="https://www.instagram.com/channel/AbY33s3ZhuxaNwuo/"
@@ -118,7 +121,7 @@ const NewPerformance = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 hover:scale-105 transition-all rounded shadow-lg"
                 >
-                  <HoverText text="Join the Channel" />
+                  <HoverText text={t('common.join_channel', 'Join the Channel')} />
                 </a>
               </div>
             </div>
@@ -131,4 +134,4 @@ const NewPerformance = () => {
   );
 };
 
-export default NewPerformance;
+export default PerformancePage;
