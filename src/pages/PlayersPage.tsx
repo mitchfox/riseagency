@@ -413,7 +413,7 @@ const Index = () => {
           className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/85 backdrop-blur-sm relative overflow-hidden snap-start snap-always"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-primary/10"></div>
-          <div className="container mx-auto max-w-4xl text-center space-y-8 relative z-10">
+          <div className="container mx-auto max-w-6xl text-center space-y-8 relative z-10">
             <div className="space-y-4">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
@@ -584,7 +584,7 @@ const Index = () => {
           className="min-h-screen flex items-center justify-center py-16 px-4 bg-muted/30 snap-start snap-always"
         >
           <div className="container mx-auto">
-            <div className="max-w-3xl mx-auto p-8 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
+            <div className="max-w-5xl mx-auto p-8 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent"></div>
               <div className="text-center relative z-10 space-y-4">
                 <div className="inline-block">

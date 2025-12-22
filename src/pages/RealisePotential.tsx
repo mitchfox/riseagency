@@ -156,7 +156,7 @@ const RealisePotential = () => {
 
         {/* Summary Statement */}
         <section className="py-20 px-4">
-          <div className="container mx-auto max-w-4xl text-center">
+          <div className="container mx-auto max-w-6xl text-center">
             <div className="border border-primary/20 bg-primary/5 p-12">
               <p className="text-xl md:text-2xl text-foreground leading-relaxed font-light">
                 {t('realise.summary')}
@@ -167,7 +167,7 @@ const RealisePotential = () => {
 
         {/* CTA Section */}
         <section className="py-16 px-4 bg-muted/30">
-          <div className="container mx-auto max-w-4xl text-center space-y-8">
+          <div className="container mx-auto max-w-6xl text-center space-y-8">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-foreground">
               {t('realise.cta_title')}
             </h2>
