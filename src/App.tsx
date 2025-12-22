@@ -25,8 +25,8 @@ import NotFound from "./pages/NotFound";
 
 // Lazy-loaded pages for better initial load performance
 const Landing = lazy(() => import("./pages/Landing"));
-const Index = lazy(() => import("./pages/Index"));
-const Players = lazy(() => import("./pages/Performance"));
+const PlayersPage = lazy(() => import("./pages/PlayersPage"));
+const LearnMorePage = lazy(() => import("./pages/LearnMorePage"));
 const Staff = lazy(() => import("./pages/Staff"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const About = lazy(() => import("./pages/About"));
@@ -36,7 +36,7 @@ const Scouts = lazy(() => import("./pages/Scouts"));
 const Agents = lazy(() => import("./pages/Agents"));
 const Business = lazy(() => import("./pages/Business"));
 const Media = lazy(() => import("./pages/Media"));
-const Performance = lazy(() => import("./pages/NewPerformance"));
+const PerformancePage = lazy(() => import("./pages/PerformancePage"));
 const BetweenTheLines = lazy(() => import("./pages/BetweenTheLines"));
 const OpenAccess = lazy(() => import("./pages/OpenAccess"));
 const PerformanceReport = lazy(() => import("./pages/PerformanceReport"));
@@ -110,7 +110,7 @@ const App = () => {
                   <Suspense fallback={<PageLoader />}>
                   <Routes location={displayLocation}>
                     <Route path="/" element={<Home />} />
-                    {createLocalizedRoutes('/players', <Index />)}
+                    {createLocalizedRoutes('/players', <PlayersPage />)}
                     <Route path="/intro" element={<Intro />} />
                     
                     {/* Localized routes */}
@@ -122,7 +122,7 @@ const App = () => {
                     {createLocalizedRoutes('/agents', <Agents />)}
                     {createLocalizedRoutes('/business', <Business />)}
                     {createLocalizedRoutes('/media', <Media />)}
-                    {createLocalizedRoutes('/performance', <Performance />)}
+                    {createLocalizedRoutes('/performance', <PerformancePage />)}
                     {createLocalizedRoutes('/news', <News />)}
                     {createLocalizedDynamicRoutes('/news/:articleId', <News />)}
                     {createLocalizedRoutes('/between-the-lines', <BetweenTheLines />)}
@@ -134,7 +134,7 @@ const App = () => {
                     {createLocalizedRoutes('/portal', <Dashboard />)}
                     
                     {/* Non-localized routes */}
-                    {createLocalizedRoutes('/learnmore', <Players />)}
+                    {createLocalizedRoutes('/learnmore', <LearnMorePage />)}
                     <Route path="/players-list" element={<PlayersList />} />
                     <Route path="/players-draft" element={<PlayersDraft />} />
                     {/* Club Network is now only accessible via Staff page */}
