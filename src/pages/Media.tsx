@@ -12,7 +12,7 @@ const Media = () => {
   const { t } = useLanguage();
   
   return (
-    <div className="min-h-screen bg-background" key="media-page">
+    <div className="min-h-screen bg-background overflow-x-hidden" key="media-page">
       <SEO 
         title="Media & Press - Request Interviews & Content | RISE Football Agency"
         description="Media professionals can request interviews, access content, and arrange coverage of RISE Football Agency players and activities."

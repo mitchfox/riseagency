@@ -369,7 +369,7 @@ const PlayerDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
         {!isModal && <Header />}
         <div className="flex-shrink-0 text-center py-16">
           <h1 className="text-2xl font-bold text-foreground">{loadingPlayerLabel}</h1>
@@ -380,7 +380,7 @@ const PlayerDetail = () => {
 
   if (!player) {
     return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       <div className="flex-shrink-0 text-center py-8">
         <h1 className="text-4xl font-bold text-foreground mb-4">{playerNotFoundLabel}</h1>
         <Button onClick={() => navigate("/")}>

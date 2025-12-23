@@ -133,7 +133,7 @@ const Stars = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background overflow-x-hidden">
         <Header />
         <main className="pt-16">
           <div className="container mx-auto px-4 py-24 text-center">
@@ -146,7 +146,7 @@ const Stars = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
         title="Our Stars - Professional Football Players | RISE Agency"
         description="Meet our talented roster of professional footballers across Europe. View player profiles, positions, and clubs from our extensive network."

@@ -11,7 +11,7 @@ const PerformancePage = () => {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
         title={t('performance.seo_title', 'Performance Analysis - Data-Driven Player Development | RISE')}
         description={t('performance.seo_description', 'Maximise player potential through data-driven insights. We provide comprehensive performance analysis, video breakdown, and individual development plans.')}
