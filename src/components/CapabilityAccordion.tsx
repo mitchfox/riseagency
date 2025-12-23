@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Search, BarChart3, Layers, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LazyPlayer3D } from "@/components/LazyPlayer3D";
 import { XRayProvider, useXRay } from "@/contexts/XRayContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface CapabilityItem {
   id: string;
@@ -13,50 +14,52 @@ interface CapabilityItem {
   description: string;
 }
 
-const capabilities: CapabilityItem[] = [
-  {
-    id: "scouts",
-    icon: <Search className="w-5 h-5" />,
-    stat: "950+",
-    title: "Scouts Worldwide",
-    subtitle: "Eyes across every league",
-    description: "Our extensive scouting network spans across Europe's top leagues and emerging markets. We identify talent at every level of the professional game, from grassroots to elite academies."
-  },
-  {
-    id: "analysis",
-    icon: <BarChart3 className="w-5 h-5" />,
-    stat: "R90",
-    title: "Analysis System",
-    subtitle: "Proprietary performance metrics",
-    description: "Our R90 system provides comprehensive performance analysis through data-driven insights. Every action is tracked, measured, and optimised to maximise player potential."
-  },
-  {
-    id: "coaching",
-    icon: <Layers className="w-5 h-5" />,
-    stat: "5D",
-    title: "Coaching Model",
-    subtitle: "Complete player development",
-    description: "The 5D Coaching Model addresses Technical, Tactical, Physical, Psychological, and Social dimensions. A holistic approach that develops the complete footballer."
-  },
-  {
-    id: "history",
-    icon: <Trophy className="w-5 h-5" />,
-    stat: "PL",
-    title: "Development History",
-    subtitle: "Premier League stars developed",
-    description: "We have guided numerous players to the Premier League and Europe's top leagues. Our track record speaks to our commitment to developing elite-level talent."
-  }
-];
-
 // Inner component that uses XRay context
 const CapabilityAccordionContent = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const { setXrayState } = useXRay();
+  const { t } = useLanguage();
+
+  // Create capabilities with translations
+  const capabilities: CapabilityItem[] = useMemo(() => [
+    {
+      id: "scouts",
+      icon: <Search className="w-5 h-5" />,
+      stat: "950+",
+      title: t("cap.scouts_title", "Scouts Worldwide"),
+      subtitle: t("cap.scouts_sub", "Eyes across every league"),
+      description: t("cap.scouts_desc", "Our extensive scouting network spans across Europe's top leagues and emerging markets. We identify talent at every level of the professional game, from grassroots to elite academies.")
+    },
+    {
+      id: "analysis",
+      icon: <BarChart3 className="w-5 h-5" />,
+      stat: "R90",
+      title: t("cap.analysis_title", "Analysis System"),
+      subtitle: t("cap.analysis_sub", "Proprietary performance metrics"),
+      description: t("cap.analysis_desc", "Our R90 system provides comprehensive performance analysis through data-driven insights. Every action is tracked, measured, and optimised to maximise player potential.")
+    },
+    {
+      id: "coaching",
+      icon: <Layers className="w-5 h-5" />,
+      stat: "5D",
+      title: t("cap.coaching_title", "Coaching Model"),
+      subtitle: t("cap.coaching_sub", "Complete player development"),
+      description: t("cap.coaching_desc", "The 5D Coaching Model addresses Technical, Tactical, Physical, Psychological, and Social dimensions. A holistic approach that develops the complete footballer.")
+    },
+    {
+      id: "history",
+      icon: <Trophy className="w-5 h-5" />,
+      stat: "PL",
+      title: t("cap.history_title", "Development History"),
+      subtitle: t("cap.history_sub", "Premier League stars developed"),
+      description: t("cap.history_desc", "We have guided numerous players to the Premier League and Europe's top leagues. Our track record speaks to our commitment to developing elite-level talent.")
+    }
+  ], [t]);
 
   const nextSlide = useCallback(() => {
     setActiveIndex((prev) => (prev + 1) % capabilities.length);
-  }, []);
+  }, [capabilities.length]);
 
   // Auto-rotate every 7 seconds
   useEffect(() => {
