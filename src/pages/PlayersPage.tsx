@@ -128,8 +128,8 @@ const Index = () => {
   return (
     <>
       <SEO 
-        title="RISE Football Agency - Elite Player Representation"
-        description="RISE Football Agency scouts elite talent across Europe. We guide Premier League players to success with expert representation."
+        title={t("seo.home_title", "RISE Football Agency - Elite Player Representation")}
+        description={t("seo.home_desc", "RISE Football Agency scouts elite talent across Europe. We guide Premier League players to success with expert representation.")}
         image="/og-preview-home.png"
         url="/"
       />
@@ -184,7 +184,7 @@ const Index = () => {
             onClick={handleScrollHint}
             className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
-            <span className="text-xs uppercase tracking-wider font-bebas">Scroll</span>
+            <span className="text-xs uppercase tracking-wider font-bebas">{t("home.scroll", "Scroll")}</span>
             <ChevronDown className="w-5 h-5 animate-bounce" />
           </button>
         </section>
@@ -239,14 +239,14 @@ const Index = () => {
             <div className="text-center mb-8 space-y-3">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Eyes Across All Of Europe
+                  {t("home.eyes_across_europe", "Eyes Across All Of Europe")}
                 </span>
               </div>
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
                 {t("home.scouting", "SCOUTING")} <span className="text-primary">{t("home.network", "NETWORK")}</span>
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                If you're a professional or academy player in Europe, chances are we know about you
+                {t("home.scouting_desc", "If you're a professional or academy player in Europe, chances are we know about you")}
               </p>
             </div>
             <ScoutingNetworkMap hideGridToggle={true} />
@@ -315,29 +315,29 @@ const Index = () => {
               <div className="text-center group">
                 <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">74</div>
                 <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Professionals</p>
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("home.stat_professionals", "Professionals")}</p>
               </div>
               <div className="text-center group">
                 <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">18</div>
                 <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Big 5 League Players</p>
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("home.stat_big5", "Big 5 League Players")}</p>
               </div>
               <div className="text-center group">
                 <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">10</div>
                 <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">National Team Players</p>
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("home.stat_national", "National Team Players")}</p>
               </div>
               <div className="text-center group">
                 <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">£100M+</div>
                 <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Transfer Fees Developed</p>
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("home.stat_transfer", "Transfer Fees Developed")}</p>
               </div>
             </div>
             
             {/* Big 5 Leagues */}
             <div className="text-center space-y-4">
               <p className="text-lg font-bebas uppercase tracking-widest text-muted-foreground">
-                Trusted by clubs across Europe's Big 5 leagues
+                {t("home.trusted_clubs", "Trusted by clubs across Europe's Big 5 leagues")}
               </p>
               <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-xs font-bebas uppercase tracking-wider text-foreground/50">
                 <span className="flex items-center gap-2">
@@ -374,23 +374,23 @@ const Index = () => {
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
                 <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground mb-6">
-                  SKILLS THAT <span className="text-primary">LEVEL UP</span>
+                  {t("home.skills_that", "SKILLS THAT")} <span className="text-primary">{t("home.level_up", "LEVEL UP")}</span>
                 </h2>
                 <p className="text-lg text-muted-foreground mb-8">
-                  We develop for where you're going, not just where you are.
+                  {t("home.skills_desc", "We develop for where you're going, not just where you are.")}
                 </p>
                 <div className="space-y-4">
                   <div className="flex items-center gap-4 p-4 border-l-4 border-primary/30 bg-card/20">
                     <span className="text-3xl font-bebas text-primary">01</span>
-                    <span className="text-foreground">Qualities that scale with competition level</span>
+                    <span className="text-foreground">{t("home.skill_1", "Qualities that scale with competition level")}</span>
                   </div>
                   <div className="flex items-center gap-4 p-4 border-l-4 border-primary/50 bg-card/20">
                     <span className="text-3xl font-bebas text-primary">02</span>
-                    <span className="text-foreground">Techniques that adapt as pace increases</span>
+                    <span className="text-foreground">{t("home.skill_2", "Techniques that adapt as pace increases")}</span>
                   </div>
                   <div className="flex items-center gap-4 p-4 border-l-4 border-primary bg-card/20">
                     <span className="text-3xl font-bebas text-primary">03</span>
-                    <span className="text-foreground">Prepared for target destination demands</span>
+                    <span className="text-foreground">{t("home.skill_3", "Prepared for target destination demands")}</span>
                   </div>
                 </div>
               </div>
@@ -399,7 +399,7 @@ const Index = () => {
                 <div className="aspect-square rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent flex items-center justify-center">
                   <div className="text-center">
                     <div className="text-8xl md:text-9xl font-bebas text-primary/20">↑</div>
-                    <p className="text-xl font-bebas uppercase tracking-widest text-foreground/60 mt-4">TRAJECTORY</p>
+                    <p className="text-xl font-bebas uppercase tracking-widest text-foreground/60 mt-4">{t("home.trajectory", "TRAJECTORY")}</p>
                   </div>
                 </div>
               </div>
