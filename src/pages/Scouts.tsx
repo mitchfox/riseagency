@@ -231,25 +231,29 @@ const Scouts = () => {
                               {/* Content - Attributes Grid */}
                               <div className="px-6 py-20 md:px-8">
                                 <div className="grid md:grid-cols-2 gap-4">
-                                  {skills.map((skill, idx) => (
-                                    <div 
-                                      key={idx} 
-                                      className={`group bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl hover:${config.bgColor} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:${config.borderColor} overflow-hidden`}
-                                    >
-                                      {/* Colored Header Box */}
-                                      <div className={`${config.solidBg} px-5 py-3`}>
-                                        <h4 className="font-bold text-black text-base">
-                                          {t(`scouts.skill_${skill.skill_name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`, skill.skill_name)}
-                                        </h4>
+                                  {skills.map((skill, idx) => {
+                                    // Normalize key: lowercase, replace non-alphanumeric with _, collapse multiple _ to single _
+                                    const skillKey = skill.skill_name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                                    return (
+                                      <div 
+                                        key={idx} 
+                                        className={`group bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl hover:${config.bgColor} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:${config.borderColor} overflow-hidden`}
+                                      >
+                                        {/* Colored Header Box */}
+                                        <div className={`${config.solidBg} px-5 py-3`}>
+                                          <h4 className="font-bold text-black text-base">
+                                            {t(`scouts.skill_${skillKey}`, skill.skill_name)}
+                                          </h4>
+                                        </div>
+                                        {/* Description */}
+                                        <div className="px-5 py-4">
+                                          <p className="text-sm text-muted-foreground leading-relaxed">
+                                            {t(`scouts.skill_${skillKey}_desc`, skill.description)}
+                                          </p>
+                                        </div>
                                       </div>
-                                      {/* Description */}
-                                      <div className="px-5 py-4">
-                                        <p className="text-sm text-muted-foreground leading-relaxed">
-                                          {t(`scouts.skill_${skill.skill_name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_desc`, skill.description)}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  ))}
+                                    );
+                                  })}
                                 </div>
                               </div>
                             </>
