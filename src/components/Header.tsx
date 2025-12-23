@@ -339,7 +339,7 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
 
   return <>
       {/* Top Utility Bar - only on homepage and only when not scrolled */}
-      {showTopBar && !isScrolled && <div className="fixed top-14 md:top-16 left-0 right-0 z-[99] bg-background/95 backdrop-blur-md transition-all duration-500 border-b-2 border-primary">
+      {showTopBar && !isScrolled && <div className="fixed top-14 md:top-16 inset-x-0 z-[99] w-full max-w-full overflow-hidden bg-background/95 backdrop-blur-md transition-all duration-500 border-b-2 border-primary">
           <div className="container mx-auto px-2 md:px-4">
           <div className="flex items-center h-8 md:h-10 relative">
             {/* Left items - hidden on mobile, shown on tablet+ */}
