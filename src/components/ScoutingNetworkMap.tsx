@@ -1388,7 +1388,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                           {flagImage && (
                             <img src={flagImage} alt={country} className="w-5 h-4 object-cover rounded-sm flex-shrink-0" />
                           )}
-                          <span className="font-medium text-sm flex-1">{country}</span>
+                          <span className="font-medium text-sm flex-1">{t(`countries.${country.toLowerCase().replace(/ /g, '_')}`, country)}</span>
                         </button>
                         
                         {isCountryExpanded && (
