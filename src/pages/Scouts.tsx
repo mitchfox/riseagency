@@ -239,13 +239,13 @@ const Scouts = () => {
                                       {/* Colored Header Box */}
                                       <div className={`${config.solidBg} px-5 py-3`}>
                                         <h4 className="font-bold text-black text-base">
-                                          {skill.skill_name}
+                                          {t(`scouts.skill_${skill.skill_name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`, skill.skill_name)}
                                         </h4>
                                       </div>
                                       {/* Description */}
                                       <div className="px-5 py-4">
                                         <p className="text-sm text-muted-foreground leading-relaxed">
-                                          {skill.description}
+                                          {t(`scouts.skill_${skill.skill_name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_desc`, skill.description)}
                                         </p>
                                       </div>
                                     </div>
