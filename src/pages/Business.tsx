@@ -358,23 +358,29 @@ const Business = () => {
                 {
                   step: "01",
                   titleKey: "business.discovery",
-                  descKey: "business.discovery_desc"
+                  titleFallback: "Discovery",
+                  descKey: "business.discovery_desc",
+                  descFallback: "Every successful partnership begins with understanding. We take time to learn about your brand identity, marketing objectives, target demographics, and campaign vision. This discovery phase allows us to identify the ideal talent match from our roster—ensuring authentic alignment between your brand values and the athlete's persona."
                 },
                 {
                   step: "02",
                   titleKey: "business.strategy",
-                  descKey: "business.strategy_desc"
+                  titleFallback: "Strategy",
+                  descKey: "business.strategy_desc",
+                  descFallback: "With insights from discovery, our team crafts a bespoke partnership strategy tailored to your goals. We define deliverables, content formats, activation timelines, and success metrics. Whether it's social media integration, event appearances, or long-term ambassadorship, we design a framework that maximizes impact and ROI."
                 },
                 {
                   step: "03",
                   titleKey: "business.execution",
-                  descKey: "business.execution_desc"
+                  titleFallback: "Execution",
+                  descKey: "business.execution_desc",
+                  descFallback: "From contract negotiation to final campaign delivery, we manage every detail with precision. Our team coordinates schedules, oversees content production, ensures brand compliance, and handles logistics. We provide regular progress updates and post-campaign analytics, delivering a seamless experience from start to finish."
                 }
               ].map((item, index) => (
                 <div key={index} className="relative p-8 bg-card/50 border border-border/50 rounded-xl group hover:border-primary/50 transition-colors duration-500">
                   <div className="text-6xl font-bebas text-primary/20 absolute top-4 right-4">{item.step}</div>
-                  <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-4">{t(item.titleKey, item.titleKey.split('.')[1] || '')}</h3>
-                  <p className="text-muted-foreground">{t(item.descKey, '')}</p>
+                  <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-4">{t(item.titleKey, item.titleFallback)}</h3>
+                  <p className="text-muted-foreground">{t(item.descKey, item.descFallback)}</p>
                 </div>
               ))}
             </div>
