@@ -97,18 +97,20 @@ export const RadialMenu = () => {
   const selectedLanguage = languages.find(l => l.code === language) ?? languages[0];
 
   const pathRole = useMemo(() => {
-    if (location.pathname.startsWith('/players')) return 'players';
-    if (location.pathname.startsWith('/clubs')) return 'clubs';
-    if (location.pathname.startsWith('/scouts')) return 'scouts';
-    if (location.pathname.startsWith('/agents')) return 'agents';
-    if (location.pathname.startsWith('/coaches')) return 'coaches';
-    if (location.pathname.startsWith('/media')) return 'media';
-    if (location.pathname.startsWith('/business')) return 'business';
+    const path = location.pathname.toLowerCase();
+    if (path.startsWith('/players') || path.startsWith('/learnmore') || path.startsWith('/youth-players')) return 'players';
+    if (path.startsWith('/clubs')) return 'clubs';
+    if (path.startsWith('/scouts')) return 'scouts';
+    if (path.startsWith('/agents')) return 'agents';
+    if (path.startsWith('/coaches')) return 'coaches';
+    if (path.startsWith('/media')) return 'media';
+    if (path.startsWith('/business')) return 'business';
     return null;
   }, [location.pathname]);
 
-  // Default to 'players' if no role is detected
-  const effectiveRole = selectedRole || currentRole || pathRole || 'players';
+  // Priority: user selection > subdomain role > path-based role > default 'players'
+  // pathRole should take precedence over currentRole when on a specific role page
+  const effectiveRole = selectedRole || pathRole || currentRole || 'players';
   const displayRoleKey = effectiveRole;
   const displayRoleLabelKey = `roles.${displayRoleKey}`;
   const displayRoleFallback = roleConfigs[displayRoleKey as keyof typeof roleConfigs]
@@ -644,7 +646,7 @@ export const RadialMenu = () => {
     if (isSelectingRole) {
       return roleMenuItems;
     }
-    const activeRole = selectedRole || currentRole || pathRole || 'players';
+    const activeRole = selectedRole || pathRole || currentRole || 'players';
     if (roleMenus[activeRole]) {
       return roleMenus[activeRole];
     }
