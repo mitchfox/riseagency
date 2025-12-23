@@ -43,15 +43,29 @@ const domainConfig = {
   }
 };
 
-const positionInitials: Record<ScoutingPosition, string> = {
-  "Goalkeeper": "GK",
-  "Full-Back": "FB",
-  "Centre-Back": "CB",
-  "Central Defensive Midfielder": "CDM",
-  "Central Midfielder": "CM",
-  "Central Attacking Midfielder": "CAM",
-  "Winger / Wide Forward": "W/WF",
-  "Centre Forward / Striker": "CF/ST"
+const getPositionInitials = (position: ScoutingPosition, t: (key: string, fallback?: string) => string): string => {
+  const initials: Record<ScoutingPosition, string> = {
+    "Goalkeeper": t('scouts.pos_gk', 'GK'),
+    "Full-Back": t('scouts.pos_fb', 'FB'),
+    "Centre-Back": t('scouts.pos_cb', 'CB'),
+    "Central Defensive Midfielder": t('scouts.pos_cdm', 'CDM'),
+    "Central Midfielder": t('scouts.pos_cm', 'CM'),
+    "Central Attacking Midfielder": t('scouts.pos_cam', 'CAM'),
+    "Winger / Wide Forward": t('scouts.pos_winger', 'W/WF'),
+    "Centre Forward / Striker": t('scouts.pos_striker', 'CF/ST')
+  };
+  return initials[position];
+};
+
+const getDomainTranslation = (domain: string, t: (key: string, fallback?: string) => string): string => {
+  const translations: Record<string, string> = {
+    "Physical": t('scouts.domain_physical', 'Physical'),
+    "Psychological": t('scouts.domain_psychological', 'Psychological'),
+    "Mental": t('scouts.domain_mental', 'Mental'),
+    "Technical": t('scouts.domain_technical', 'Technical'),
+    "Tactical": t('scouts.domain_tactical', 'Tactical')
+  };
+  return translations[domain] || domain;
 };
 
 const Scouts = () => {
@@ -157,7 +171,7 @@ const Scouts = () => {
                                 : "hover:bg-muted/50"
                             }`}
                           >
-                            {positionInitials[position]}
+                            {getPositionInitials(position, t)}
                           </button>
                         ))}
                       </div>
@@ -202,12 +216,12 @@ const Scouts = () => {
                                         ? 'border-primary bg-primary/20 shadow-lg shadow-primary/20 h-16 px-4 w-auto' 
                                         : `${domainConf.borderColor} ${domainConf.bgColor} hover:shadow-lg h-16 w-16 justify-center`
                                     }`}
-                                    title={domain}
+                                    title={getDomainTranslation(domain, t)}
                                   >
                                     <DomainIcon className={`h-6 w-6 ${domainConf.color} flex-shrink-0`} />
                                     {isActive && (
                                       <span className={`font-bebas uppercase tracking-wider text-xl ${domainConf.color} pr-2 whitespace-nowrap`}>
-                                        {domain}
+                                        {getDomainTranslation(domain, t)}
                                       </span>
                                     )}
                                   </button>
