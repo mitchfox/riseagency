@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ArrangeMeetingDialogProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface ArrangeMeetingDialogProps {
 }
 
 export const ArrangeMeetingDialog = ({ open, onOpenChange }: ArrangeMeetingDialogProps) => {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -35,12 +37,12 @@ export const ArrangeMeetingDialog = ({ open, onOpenChange }: ArrangeMeetingDialo
 
       if (error) throw error;
 
-      toast.success("Meeting request submitted! We'll be in touch soon.");
+      toast.success(t('dialogs.meeting_success', "Meeting request submitted! We'll be in touch soon."));
       setFormData({ name: "", email: "", organization: "", preferredDate: "", message: "" });
       onOpenChange(false);
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error("Failed to submit request. Please try again.");
+      toast.error(t('dialogs.meeting_error', "Failed to submit request. Please try again."));
     } finally {
       setIsSubmitting(false);
     }
@@ -52,13 +54,13 @@ export const ArrangeMeetingDialog = ({ open, onOpenChange }: ArrangeMeetingDialo
         <DialogHeader>
           <DialogTitle className="font-bebas text-2xl tracking-wider flex items-center gap-2">
             <Calendar className="w-6 h-6 text-primary" />
-            ARRANGE A MEETING
+            {t('dialogs.arrange_meeting', 'ARRANGE A MEETING')}
           </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name" className="font-bebas tracking-wider">Name</Label>
+            <Label htmlFor="name" className="font-bebas tracking-wider">{t('dialogs.name', 'Name')}</Label>
             <Input
               id="name"
               value={formData.name}
@@ -69,7 +71,7 @@ export const ArrangeMeetingDialog = ({ open, onOpenChange }: ArrangeMeetingDialo
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email" className="font-bebas tracking-wider">Email</Label>
+            <Label htmlFor="email" className="font-bebas tracking-wider">{t('dialogs.email', 'Email')}</Label>
             <Input
               id="email"
               type="email"
@@ -81,7 +83,7 @@ export const ArrangeMeetingDialog = ({ open, onOpenChange }: ArrangeMeetingDialo
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="organization" className="font-bebas tracking-wider">Organization / Club</Label>
+            <Label htmlFor="organization" className="font-bebas tracking-wider">{t('dialogs.organization', 'Organization / Club')}</Label>
             <Input
               id="organization"
               value={formData.organization}
@@ -91,7 +93,7 @@ export const ArrangeMeetingDialog = ({ open, onOpenChange }: ArrangeMeetingDialo
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="preferredDate" className="font-bebas tracking-wider">Preferred Date</Label>
+            <Label htmlFor="preferredDate" className="font-bebas tracking-wider">{t('dialogs.preferred_date', 'Preferred Date')}</Label>
             <Input
               id="preferredDate"
               type="date"
@@ -102,12 +104,12 @@ export const ArrangeMeetingDialog = ({ open, onOpenChange }: ArrangeMeetingDialo
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="message" className="font-bebas tracking-wider">Message</Label>
+            <Label htmlFor="message" className="font-bebas tracking-wider">{t('dialogs.message', 'Message')}</Label>
             <Textarea
               id="message"
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-              placeholder="Tell us what you'd like to discuss..."
+              placeholder={t('dialogs.message_placeholder', "Tell us what you'd like to discuss...")}
               className="bg-background/50 border-white/20 focus:border-primary min-h-[100px]"
             />
           </div>
@@ -118,7 +120,7 @@ export const ArrangeMeetingDialog = ({ open, onOpenChange }: ArrangeMeetingDialo
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bebas tracking-wider"
           >
             <Send className="w-4 h-4 mr-2" />
-            {isSubmitting ? "SUBMITTING..." : "REQUEST MEETING"}
+            {isSubmitting ? t('dialogs.submitting', 'SUBMITTING...') : t('dialogs.request_meeting', 'REQUEST MEETING')}
           </Button>
         </form>
       </DialogContent>
