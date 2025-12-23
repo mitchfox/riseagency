@@ -326,11 +326,11 @@ const News = () => {
                       className="font-bebas uppercase"
                     >
                       <ChevronLeft className="w-4 h-4 mr-1" />
-                      Previous
+                      {t("news.previous", "Previous")}
                     </Button>
                     
                     <span className="text-sm text-muted-foreground font-bebas">
-                      Page {currentPage} of {Math.ceil(newsItems.length / ARTICLES_PER_PAGE)}
+                      {t("news.page", "Page")} {currentPage} {t("news.of", "of")} {Math.ceil(newsItems.length / ARTICLES_PER_PAGE)}
                     </span>
                     
                     <Button
@@ -340,7 +340,7 @@ const News = () => {
                       disabled={currentPage === Math.ceil(newsItems.length / ARTICLES_PER_PAGE)}
                       className="font-bebas uppercase"
                     >
-                      Next
+                      {t("news.next", "Next")}
                       <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
