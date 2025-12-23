@@ -12,86 +12,80 @@ import { cn } from "@/lib/utils";
 interface ShowcaseCard {
   id: string;
   category: "featured" | "case-study" | "collaboration" | "service";
-  categoryLabel: string;
-  title: string;
-  description?: string;
+  categoryLabelKey: string;
+  titleKey: string;
+  descriptionKey?: string;
   bgGradient: string;
   bgImage?: string;
   icon?: React.ReactNode;
-  ctaText: string;
+  ctaTextKey: string;
   ctaLink?: string;
 }
 
-const showcaseCards: ShowcaseCard[] = [
+const showcaseCardsConfig: Omit<ShowcaseCard, 'icon'>[] = [
   {
     id: "player-brands",
     category: "featured",
-    categoryLabel: "Featured",
-    title: "Player Brand Building",
-    description: "Authentic personal branding for athletes",
+    categoryLabelKey: "business.featured",
+    titleKey: "business.player_brand",
+    descriptionKey: "business.player_brand_desc",
     bgGradient: "from-primary/40 via-primary/20 to-black/90",
-    icon: <Sparkles className="w-12 h-12" />,
-    ctaText: "Explore Services",
+    ctaTextKey: "business.explore_services",
   },
   {
     id: "sponsorship",
     category: "case-study",
-    categoryLabel: "Case Study",
-    title: "Strategic Sponsorship Deals",
-    description: "Connecting brands with rising talent",
+    categoryLabelKey: "business.case_study",
+    titleKey: "business.sponsorship",
+    descriptionKey: "business.sponsorship_desc",
     bgGradient: "from-amber-900/60 via-amber-800/30 to-black/90",
-    icon: <Handshake className="w-12 h-12" />,
-    ctaText: "View Case",
+    ctaTextKey: "business.view_case",
   },
   {
     id: "commercial",
     category: "collaboration",
-    categoryLabel: "Collaboration",
-    title: "Commercial Partnerships",
-    description: "End-to-end campaign management",
+    categoryLabelKey: "business.collaboration",
+    titleKey: "business.partnerships",
+    descriptionKey: "business.partnerships_desc",
     bgGradient: "from-blue-900/60 via-blue-800/30 to-black/90",
-    icon: <Briefcase className="w-12 h-12" />,
-    ctaText: "Learn More",
+    ctaTextKey: "business.learn_more",
   },
   {
     id: "talent-access",
     category: "service",
-    categoryLabel: "Service",
-    title: "Exclusive Talent Access",
-    description: "Connect with our roster of professionals",
+    categoryLabelKey: "business.service",
+    titleKey: "business.talent_access",
+    descriptionKey: "business.talent_access_desc",
     bgGradient: "from-purple-900/60 via-purple-800/30 to-black/90",
-    icon: <Users className="w-12 h-12" />,
-    ctaText: "View Roster",
+    ctaTextKey: "business.view_roster",
     ctaLink: "/stars",
   },
   {
     id: "market-intel",
     category: "service",
-    categoryLabel: "Service",
-    title: "Market Intelligence",
-    description: "Data-driven insights and analytics",
+    categoryLabelKey: "business.service",
+    titleKey: "business.market_intel",
+    descriptionKey: "business.market_intel_desc",
     bgGradient: "from-emerald-900/60 via-emerald-800/30 to-black/90",
-    icon: <Target className="w-12 h-12" />,
-    ctaText: "Discover",
+    ctaTextKey: "business.discover",
   },
   {
     id: "investment",
     category: "case-study",
-    categoryLabel: "Case Study",
-    title: "Player Investment",
-    description: "Strategic football investment opportunities",
+    categoryLabelKey: "business.case_study",
+    titleKey: "business.player_investment",
+    descriptionKey: "business.player_investment_desc",
     bgGradient: "from-rose-900/60 via-rose-800/30 to-black/90",
-    icon: <TrendingUp className="w-12 h-12" />,
-    ctaText: "Explore",
+    ctaTextKey: "business.explore",
   },
 ];
 
-// Stats data
-const stats = [
-  { value: "50+", label: "Active Players" },
-  { value: "12", label: "Countries" },
-  { value: "5M+", label: "Combined Reach" },
-  { value: "100%", label: "Commitment" },
+// Stats data keys
+const statsConfig = [
+  { value: "50+", labelKey: "business.active_players" },
+  { value: "12", labelKey: "business.countries" },
+  { value: "5M+", labelKey: "business.combined_reach" },
+  { value: "100%", labelKey: "business.commitment" },
 ];
 
 const Business = () => {
@@ -99,6 +93,32 @@ const Business = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+
+  // Build translated showcase cards with icons
+  const showcaseCards = showcaseCardsConfig.map((card, index) => {
+    const icons = [
+      <Sparkles className="w-12 h-12" key="sparkles" />,
+      <Handshake className="w-12 h-12" key="handshake" />,
+      <Briefcase className="w-12 h-12" key="briefcase" />,
+      <Users className="w-12 h-12" key="users" />,
+      <Target className="w-12 h-12" key="target" />,
+      <TrendingUp className="w-12 h-12" key="trending" />,
+    ];
+    return {
+      ...card,
+      categoryLabel: t(card.categoryLabelKey, card.categoryLabelKey.split('.')[1] || ''),
+      title: t(card.titleKey, card.titleKey.split('.')[1] || ''),
+      description: card.descriptionKey ? t(card.descriptionKey, '') : undefined,
+      ctaText: t(card.ctaTextKey, card.ctaTextKey.split('.')[1] || ''),
+      icon: icons[index],
+    };
+  });
+
+  // Build translated stats
+  const stats = statsConfig.map(stat => ({
+    value: stat.value,
+    label: t(stat.labelKey, stat.labelKey.split('.')[1] || ''),
+  }));
 
   const checkScrollPosition = () => {
     if (scrollContainerRef.current) {
@@ -329,7 +349,7 @@ const Business = () => {
                 {t('business.how_we_collaborate', 'How We Collaborate')}
               </h2>
               <p className="text-lg text-muted-foreground">
-                From initial briefing to campaign execution, we partner with brands to create authentic football-driven marketing campaigns.
+                {t('business.collaborate_desc', 'From initial briefing to campaign execution, we partner with brands to create authentic football-driven marketing campaigns.')}
               </p>
             </div>
             
@@ -337,24 +357,24 @@ const Business = () => {
               {[
                 {
                   step: "01",
-                  title: "Discovery",
-                  description: "We learn about your brand, objectives, and target audience to identify the perfect talent match."
+                  titleKey: "business.discovery",
+                  descKey: "business.discovery_desc"
                 },
                 {
                   step: "02",
-                  title: "Strategy",
-                  description: "Our team develops a bespoke partnership strategy that aligns with your marketing goals."
+                  titleKey: "business.strategy",
+                  descKey: "business.strategy_desc"
                 },
                 {
                   step: "03",
-                  title: "Execution",
-                  description: "From contract negotiation to campaign delivery, we manage every detail for seamless execution."
+                  titleKey: "business.execution",
+                  descKey: "business.execution_desc"
                 }
               ].map((item, index) => (
                 <div key={index} className="relative p-8 bg-card/50 border border-border/50 rounded-xl group hover:border-primary/50 transition-colors duration-500">
                   <div className="text-6xl font-bebas text-primary/20 absolute top-4 right-4">{item.step}</div>
-                  <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-4">{item.title}</h3>
-                  <p className="text-muted-foreground">{item.description}</p>
+                  <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-4">{t(item.titleKey, item.titleKey.split('.')[1] || '')}</h3>
+                  <p className="text-muted-foreground">{t(item.descKey, '')}</p>
                 </div>
               ))}
             </div>
