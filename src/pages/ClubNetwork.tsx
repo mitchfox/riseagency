@@ -15,7 +15,7 @@ const ClubNetwork = () => {
         title="Club Network - RISE Football Agency"
         description="Access our extensive network of football clubs and contacts across Europe. Connect with scouts, directors, and key decision-makers."
       />
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
         <Header />
         <main className="flex-1">
           <div className="container mx-auto px-4 py-8 md:py-12">

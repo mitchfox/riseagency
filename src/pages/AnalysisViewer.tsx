@@ -111,7 +111,7 @@ const AnalysisViewer = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background overflow-x-hidden">
         <Header />
         <div className="pt-24 px-4">
           <p className="text-muted-foreground">Loading analysis...</p>
@@ -122,7 +122,7 @@ const AnalysisViewer = () => {
 
   if (!analysis) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background overflow-x-hidden">
         <Header />
         <div className="pt-24 px-4">
           <p className="text-muted-foreground">Analysis not found</p>
@@ -136,7 +136,7 @@ const AnalysisViewer = () => {
   const isConcept = analysis.analysis_type === "concept";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Header />
       <main className="pt-24 pb-12 px-4">
         <div className="container mx-auto max-w-5xl">

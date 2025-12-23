@@ -16,7 +16,7 @@ const Performance = () => {
   const { t } = useLanguage();
   
   return (
-    <div className="min-h-screen bg-background" key="players-page">
+    <div className="min-h-screen bg-background overflow-x-hidden" key="players-page">
       <Header />
       
       <main className="pt-32 md:pt-24">

@@ -135,7 +135,7 @@ const Business = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background" key="business-page">
+    <div className="min-h-screen bg-background overflow-x-hidden" key="business-page">
       <SEO 
         title="Business Solutions - Commercial Football Partnerships | RISE Agency"
         description="Partner with RISE for strategic commercial partnerships, sponsorship opportunities, and business development in professional football."

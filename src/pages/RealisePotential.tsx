@@ -82,7 +82,7 @@ const RealisePotential = () => {
         url="/realise-potential"
       />
       <Header />
-      <div className="bg-background min-h-screen">
+      <div className="bg-background min-h-screen overflow-x-hidden">
         {/* Hero Section */}
         <section className="pt-32 pb-20 px-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />

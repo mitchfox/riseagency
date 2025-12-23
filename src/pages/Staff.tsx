@@ -439,7 +439,7 @@ const Staff = () => {
   // Show login form if not authenticated
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background overflow-x-hidden">
         <Header />
         <main className="py-20">
           <div className="max-w-md mx-4 md:mx-auto">
@@ -503,7 +503,7 @@ const Staff = () => {
   // Show access denied if user is authenticated but not staff
   if (!isStaff) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background overflow-x-hidden">
         <Header />
         <main className="py-20">
           <div className="max-w-md mx-4 md:mx-auto">

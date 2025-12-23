@@ -9,7 +9,7 @@ import bannerHero from "@/assets/banner-hero.jpg";
 const About = () => {
   const { t } = useLanguage();
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
         title="About RISE - Premier Football Agency"
         description="Premier football agency specialising in player representation. Founded on integrity, dedication, and excellence."
