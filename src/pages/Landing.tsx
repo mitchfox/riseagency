@@ -209,10 +209,13 @@ function LandingContent() {
   // PWA-specific class for additional styling adjustments
   const pwaClass = isPWA ? 'pwa-standalone' : '';
   
-  return <div className={`landing-no-scroll bg-black flex flex-col items-center justify-end relative overflow-hidden cursor-none md:cursor-none ${pwaClass}`} style={{
+  return <div className={`landing-no-scroll bg-black flex flex-col items-center justify-end relative cursor-none md:cursor-none ${pwaClass}`} style={{
     height: '100dvh',
     maxHeight: '100dvh',
+    width: '100%',
+    maxWidth: '100%',
     overflow: 'hidden',
+    overflowX: 'clip',
     // PWA safe area padding
     paddingTop: isPWA ? 'env(safe-area-inset-top, 0px)' : undefined,
     paddingBottom: isPWA ? 'env(safe-area-inset-bottom, 0px)' : undefined,
@@ -307,7 +310,7 @@ function LandingContent() {
       </div>
       
       {/* Portal & Staff links - subtle top right */}
-      <div className="absolute top-6 md:top-8 right-4 md:right-8 z-50 flex items-center gap-3">
+      <div className="absolute top-6 md:top-8 right-2 md:right-4 z-50 flex items-center gap-3">
         <Link to="/staff" className="text-white/20 hover:text-white/50 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
           {t("header.staff", "Staff")}
         </Link>

@@ -137,7 +137,7 @@ const Index = () => {
       <IntroModal open={showIntroModal} onOpenChange={setShowIntroModal} />
       
       {/* Progress indicator */}
-      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-50 hidden lg:flex flex-col gap-2">
+      <div className="fixed right-2 top-1/2 -translate-y-1/2 z-50 hidden lg:flex flex-col gap-2 pointer-events-auto">
         {sectionIds.map((id, index) => (
           <button
             key={id}
@@ -154,7 +154,7 @@ const Index = () => {
 
       <div 
         ref={containerRef}
-        className="bg-background min-h-screen relative z-10 overflow-y-auto snap-y snap-mandatory"
+        className="bg-background min-h-screen w-full max-w-full relative z-10 overflow-y-auto overflow-x-hidden snap-y snap-mandatory"
         style={{ scrollBehavior: "smooth" }}
       >
         {/* Section 1: Hero */}
