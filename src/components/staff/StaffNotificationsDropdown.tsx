@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, Check, CheckCheck, Trash2 } from "lucide-react";
+import { Bell, Check, CheckCheck, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,8 +11,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDistanceToNow } from "date-fns";
+import { format, isToday, isYesterday, startOfDay, differenceInDays } from "date-fns";
 
 interface Notification {
   id: string;
@@ -28,18 +29,30 @@ interface StaffNotificationsDropdownProps {
   userId: string;
 }
 
+interface GroupedNotifications {
+  label: string;
+  date: Date;
+  notifications: Notification[];
+  unreadCount: number;
+}
+
 export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdownProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["Today"]));
 
   const fetchNotifications = async () => {
     try {
+      // Fetch last 7 days of notifications
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
       const { data, error } = await supabase
         .from("staff_notification_events")
         .select("*")
-        .order("created_at", { ascending: false })
-        .limit(50);
+        .gte("created_at", sevenDaysAgo.toISOString())
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setNotifications(data || []);
@@ -64,7 +77,7 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
           table: "staff_notification_events",
         },
         (payload) => {
-          setNotifications((prev) => [payload.new as Notification, ...prev.slice(0, 49)]);
+          setNotifications((prev) => [payload.new as Notification, ...prev]);
         }
       )
       .subscribe();
@@ -77,6 +90,48 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
   const unreadCount = notifications.filter(
     (n) => !n.read_by?.includes(userId)
   ).length;
+
+  const groupNotificationsByDay = (): GroupedNotifications[] => {
+    const groups: Map<string, GroupedNotifications> = new Map();
+    
+    notifications.forEach((notification) => {
+      const date = new Date(notification.created_at);
+      const dayStart = startOfDay(date);
+      let label: string;
+      
+      if (isToday(date)) {
+        label = "Today";
+      } else if (isYesterday(date)) {
+        label = "Yesterday";
+      } else {
+        const daysAgo = differenceInDays(new Date(), date);
+        if (daysAgo <= 7) {
+          label = format(date, "EEEE"); // Day name
+        } else {
+          label = format(date, "MMM d");
+        }
+      }
+      
+      const key = dayStart.toISOString();
+      
+      if (!groups.has(key)) {
+        groups.set(key, {
+          label,
+          date: dayStart,
+          notifications: [],
+          unreadCount: 0,
+        });
+      }
+      
+      const group = groups.get(key)!;
+      group.notifications.push(notification);
+      if (!notification.read_by?.includes(userId)) {
+        group.unreadCount++;
+      }
+    });
+    
+    return Array.from(groups.values()).sort((a, b) => b.date.getTime() - a.date.getTime());
+  };
 
   const markAsRead = async (notificationId: string) => {
     const notification = notifications.find((n) => n.id === notificationId);
@@ -110,6 +165,18 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
     }
   };
 
+  const toggleSection = (label: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      return next;
+    });
+  };
+
   const getNotificationIcon = (eventType: string) => {
     switch (eventType) {
       case "visitor":
@@ -120,6 +187,14 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
         return "🎬";
       case "playlist_change":
         return "📋";
+      case "calendar_event":
+        return "📅";
+      case "task_assigned":
+        return "✅";
+      case "task_completed":
+        return "🎉";
+      case "goal_added":
+        return "🎯";
       default:
         return "🔔";
     }
@@ -137,6 +212,14 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
         return "Clip Uploaded";
       case "playlist_change":
         return "Playlist Updated";
+      case "calendar_event":
+        return "Calendar Event Added";
+      case "task_assigned":
+        return "Task Assigned";
+      case "task_completed":
+        return "Task Completed";
+      case "goal_added":
+        return "New Goal Added";
       default:
         return "Notification";
     }
@@ -155,10 +238,20 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
         return data?.player_name ? `Clip for ${data.player_name}` : "New clip uploaded";
       case "playlist_change":
         return data?.event ? `Playlist ${data.event.toLowerCase()}` : "Playlist updated";
+      case "calendar_event":
+        return data?.title ? `${data.title}` : "New event added to your calendar";
+      case "task_assigned":
+        return data?.title ? `${data.title}` : "You've been assigned a new task";
+      case "task_completed":
+        return data?.title ? `${data.title} marked complete` : "A task was completed";
+      case "goal_added":
+        return data?.title ? `${data.title}` : "A new goal was set";
       default:
         return "";
     }
   };
+
+  const groupedNotifications = groupNotificationsByDay();
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -179,7 +272,7 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
         className="w-80 bg-popover border border-border shadow-lg z-50"
       >
         <DropdownMenuLabel className="flex items-center justify-between">
-          <span>Notifications</span>
+          <span>Notifications (Last 7 Days)</span>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
@@ -196,48 +289,80 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <ScrollArea className="h-[300px]">
+        <ScrollArea className="h-[400px]">
           {loading ? (
             <div className="p-4 text-center text-muted-foreground text-sm">
               Loading...
             </div>
-          ) : notifications.length === 0 ? (
+          ) : groupedNotifications.length === 0 ? (
             <div className="p-4 text-center text-muted-foreground text-sm">
-              No notifications yet
+              No notifications in the last 7 days
             </div>
           ) : (
-            notifications.map((notification) => {
-              const isRead = notification.read_by?.includes(userId);
-              return (
-                <DropdownMenuItem
-                  key={notification.id}
-                  className={`flex items-start gap-3 p-3 cursor-pointer ${
-                    !isRead ? "bg-primary/5" : ""
-                  }`}
-                  onClick={() => markAsRead(notification.id)}
+            <div className="p-1">
+              {groupedNotifications.map((group) => (
+                <Collapsible
+                  key={group.label}
+                  open={expandedSections.has(group.label)}
+                  onOpenChange={() => toggleSection(group.label)}
                 >
-                  <span className="text-lg flex-shrink-0">
-                    {getNotificationIcon(notification.event_type)}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${!isRead ? "font-medium" : ""}`}>
-                      {getNotificationTitle(notification)}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {getNotificationBody(notification)}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formatDistanceToNow(new Date(notification.created_at), {
-                        addSuffix: true,
-                      })}
-                    </p>
-                  </div>
-                  {!isRead && (
-                    <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1" />
-                  )}
-                </DropdownMenuItem>
-              );
-            })
+                  <CollapsibleTrigger asChild>
+                    <div className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-muted/50 rounded-md">
+                      <div className="flex items-center gap-2">
+                        {expandedSections.has(group.label) ? (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        <span className="font-medium text-sm">{group.label}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {group.notifications.length} notification{group.notifications.length !== 1 ? 's' : ''}
+                        </span>
+                        {group.unreadCount > 0 && (
+                          <Badge variant="destructive" className="h-5 px-1.5 text-xs">
+                            {group.unreadCount}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    {group.notifications.map((notification) => {
+                      const isRead = notification.read_by?.includes(userId);
+                      return (
+                        <div
+                          key={notification.id}
+                          className={`flex items-start gap-3 p-3 cursor-pointer rounded-md ml-4 ${
+                            !isRead ? "bg-primary/5" : "hover:bg-muted/50"
+                          }`}
+                          onClick={() => markAsRead(notification.id)}
+                        >
+                          <span className="text-lg flex-shrink-0">
+                            {getNotificationIcon(notification.event_type)}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm ${!isRead ? "font-medium" : ""}`}>
+                              {getNotificationTitle(notification)}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {getNotificationBody(notification)}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {format(new Date(notification.created_at), "h:mm a")}
+                            </p>
+                          </div>
+                          {!isRead && (
+                            <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </CollapsibleContent>
+                </Collapsible>
+              ))}
+            </div>
           )}
         </ScrollArea>
       </DropdownMenuContent>
