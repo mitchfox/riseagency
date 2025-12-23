@@ -62,6 +62,8 @@ import { AthleteCentre } from "@/components/staff/AthleteCentre";
 import { CoachingAIChat } from "@/components/staff/coaching/CoachingAIChat";
 import { OpenAccessManagement } from "@/components/staff/OpenAccessManagement";
 import { FocusedTasksSection } from "@/components/staff/FocusedTasksSection";
+import { StaffNotificationsDropdown } from "@/components/staff/StaffNotificationsDropdown";
+import { NotificationSettingsManagement } from "@/components/staff/NotificationSettingsManagement";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -113,7 +115,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'openaccess' | 'coaching' | 'coachingchat' | 'analysis' | 'highlightmaker' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'languages' | 'sitemanagement' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'openaccess' | 'coaching' | 'coachingchat' | 'analysis' | 'highlightmaker' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'languages' | 'sitemanagement' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Enable staff notifications
@@ -539,6 +541,9 @@ const Staff = () => {
         { id: 'focusedtasks', title: 'Focused Tasks', icon: Target },
         { id: 'goalstasks', title: 'Goals & Tasks', icon: Target },
         { id: 'staffschedules', title: 'Staff Schedules', icon: Users },
+        ...(user?.email === 'jolonlevene98@gmail.com' ? [
+          { id: 'notifications', title: 'Notifications', icon: BellRing }
+        ] : []),
       ],
       locked: false
     },
@@ -657,12 +662,16 @@ const Staff = () => {
       {/* Header with Logo - always visible */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center h-16">
+          <div className="flex items-center justify-between h-16">
+            <div className="w-10" /> {/* Spacer for balance */}
             <img 
               src="/RISEWhite.png"
               alt="RISE"
               className="h-10 w-auto"
             />
+            <div className="flex items-center gap-2">
+              {user && <StaffNotificationsDropdown userId={user.id} />}
+            </div>
           </div>
         </div>
       </header>
@@ -977,6 +986,7 @@ const Staff = () => {
                   {expandedSection === 'pwainstall' && isAdmin && <StaffPWAInstall />}
                   {expandedSection === 'offlinemanager' && isAdmin && <StaffOfflineManager />}
                   {expandedSection === 'pushnotifications' && isAdmin && <StaffPushNotifications />}
+                  {expandedSection === 'notifications' && user?.email === 'jolonlevene98@gmail.com' && <NotificationSettingsManagement />}
                 </CardContent>
               </Card>
             </div>
