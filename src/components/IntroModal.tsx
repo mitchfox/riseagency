@@ -98,7 +98,7 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
       {imageLoaded && (
         <Dialog open={open} onOpenChange={handleDialogChange}>
           <DialogContent 
-            className="max-w-lg w-full p-0 border-0 bg-transparent [&>button]:hidden overflow-hidden sm:max-w-lg max-w-[95vw]"
+            className="w-[95vw] max-w-[900px] p-0 border-0 bg-transparent [&>button]:hidden overflow-hidden"
             aria-describedby="intro-modal-description"
           >
             <div className="relative w-full">

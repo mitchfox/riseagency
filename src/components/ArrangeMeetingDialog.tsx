@@ -48,7 +48,7 @@ export const ArrangeMeetingDialog = ({ open, onOpenChange }: ArrangeMeetingDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-background border-primary/20">
+      <DialogContent className="w-[95vw] max-w-[900px] bg-background border-primary/20">
         <DialogHeader>
           <DialogTitle className="font-bebas text-2xl tracking-wider flex items-center gap-2">
             <Calendar className="w-6 h-6 text-primary" />
