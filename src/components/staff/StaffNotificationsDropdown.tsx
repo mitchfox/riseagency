@@ -195,6 +195,16 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
         return "🎉";
       case "goal_added":
         return "🎯";
+      case "portal_login":
+        return "🚪";
+      case "portal_performance_view":
+        return "📊";
+      case "portal_analysis_view":
+        return "🔍";
+      case "portal_transfer_submission":
+        return "📤";
+      case "portal_club_submission":
+        return "🏢";
       default:
         return "🔔";
     }
@@ -220,6 +230,16 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
         return "Task Completed";
       case "goal_added":
         return "New Goal Added";
+      case "portal_login":
+        return "Player Portal Login";
+      case "portal_performance_view":
+        return "Performance Report Viewed";
+      case "portal_analysis_view":
+        return "Analysis Viewed";
+      case "portal_transfer_submission":
+        return "Transfer Hub Submission";
+      case "portal_club_submission":
+        return "Club Suggestion Submitted";
       default:
         return "Notification";
     }
@@ -246,6 +266,16 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
         return data?.title ? `${data.title} marked complete` : "A task was completed";
       case "goal_added":
         return data?.title ? `${data.title}` : "A new goal was set";
+      case "portal_login":
+        return data?.player_name ? `${data.player_name} logged in` : "A player logged into their portal";
+      case "portal_performance_view":
+        return data?.player_name ? `${data.player_name} viewed their reports` : "Player viewed performance reports";
+      case "portal_analysis_view":
+        return data?.player_name ? `${data.player_name} viewed analysis` : "Player viewed analysis content";
+      case "portal_transfer_submission":
+        return data?.player_name ? `${data.player_name} made a submission` : "New transfer hub submission";
+      case "portal_club_submission":
+        return data?.player_name ? `${data.player_name} suggested a club` : "New club suggestion submitted";
       default:
         return "";
     }

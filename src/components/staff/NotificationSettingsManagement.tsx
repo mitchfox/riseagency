@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Users, Eye, FileText, Film, ClipboardList, Loader2, Save, Calendar, CheckSquare, Target, PartyPopper } from "lucide-react";
+import { Bell, Users, Eye, FileText, Film, ClipboardList, Loader2, Save, Calendar, CheckSquare, Target, PartyPopper, LogIn, BarChart3, FileSearch, Send, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,14 +16,22 @@ interface NotificationSetting {
 }
 
 const EVENT_TYPES = [
-  { id: "visitor", label: "Site Visitors", icon: Eye, description: "When someone visits the site" },
-  { id: "form_submission", label: "Form Submissions", icon: FileText, description: "When a form is submitted" },
-  { id: "clip_upload", label: "Clip Uploads", icon: Film, description: "When a new clip is uploaded" },
-  { id: "playlist_change", label: "Playlist Changes", icon: ClipboardList, description: "When playlists are modified" },
-  { id: "calendar_event", label: "Calendar Events", icon: Calendar, description: "When schedule items are added to their calendar" },
-  { id: "task_assigned", label: "Task Assignments", icon: CheckSquare, description: "When tasks are assigned to someone" },
-  { id: "task_completed", label: "Task Completions", icon: PartyPopper, description: "When a task is marked complete" },
-  { id: "goal_added", label: "Goals Added", icon: Target, description: "When new goals are set" },
+  // Site & Content
+  { id: "visitor", label: "Site Visitors", icon: Eye, description: "When someone visits the site", category: "Site & Content" },
+  { id: "form_submission", label: "Form Submissions", icon: FileText, description: "When a form is submitted", category: "Site & Content" },
+  { id: "clip_upload", label: "Clip Uploads", icon: Film, description: "When a new clip is uploaded", category: "Site & Content" },
+  { id: "playlist_change", label: "Playlist Changes", icon: ClipboardList, description: "When playlists are modified", category: "Site & Content" },
+  // Staff Actions
+  { id: "calendar_event", label: "Calendar Events", icon: Calendar, description: "When schedule items are added to their calendar", category: "Staff Actions" },
+  { id: "task_assigned", label: "Task Assignments", icon: CheckSquare, description: "When tasks are assigned to someone", category: "Staff Actions" },
+  { id: "task_completed", label: "Task Completions", icon: PartyPopper, description: "When a task is marked complete", category: "Staff Actions" },
+  { id: "goal_added", label: "Goals Added", icon: Target, description: "When new goals are set", category: "Staff Actions" },
+  // Portal Activity
+  { id: "portal_login", label: "Portal Logins", icon: LogIn, description: "When a player logs into their portal", category: "Portal Activity" },
+  { id: "portal_performance_view", label: "Performance Report Views", icon: BarChart3, description: "When a player views their performance reports", category: "Portal Activity" },
+  { id: "portal_analysis_view", label: "Analysis Views", icon: FileSearch, description: "When a player views analysis content", category: "Portal Activity" },
+  { id: "portal_transfer_submission", label: "Transfer Hub Submissions", icon: Send, description: "When a player submits in their transfer hub", category: "Portal Activity" },
+  { id: "portal_club_submission", label: "Club Submissions", icon: Building2, description: "When a player submits a club suggestion", category: "Portal Activity" },
 ];
 
 const ROLES = [
