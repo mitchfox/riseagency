@@ -8,6 +8,7 @@ import { MessageCircle, ArrowLeft, Search, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DeclareInterestPlayerDialogProps {
   open: boolean;
@@ -30,6 +31,7 @@ const interestSchema = z.object({
 });
 
 export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = false }: DeclareInterestPlayerDialogProps) => {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [step, setStep] = useState<"select" | "form">("select");
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
@@ -120,8 +122,8 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
       if (error) throw error;
       
       toast({
-        title: "Interest Declared",
-        description: `We'll be in touch regarding ${selectedPlayers.length === 1 ? selectedPlayers[0].name : `${selectedPlayers.length} players`}!`,
+        title: t('dialogs.interest_declared', 'Interest Declared'),
+        description: t('dialogs.interest_success', "We'll be in touch regarding your interest!"),
       });
       
       onOpenChange(false);
@@ -132,15 +134,15 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
-          title: "Validation Error",
+          title: t('dialogs.validation_error', 'Validation Error'),
           description: error.errors[0].message,
           variant: "destructive",
         });
       } else {
         console.error("Error submitting form:", error);
         toast({
-          title: "Error",
-          description: "Failed to submit. Please try again.",
+          title: t('dialogs.error', 'Error'),
+          description: t('dialogs.submit_failed', 'Failed to submit. Please try again.'),
           variant: "destructive",
         });
       }
@@ -172,13 +174,13 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
           <>
             <DialogHeader>
               <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
-                Select Player(s)
+                {t('dialogs.select_players', 'Select Player(s)')}
               </DialogTitle>
               <DialogDescription>
-                Choose the player(s) you are interested in
+                {t('dialogs.select_players_desc', 'Choose the player(s) you are interested in')}
                 {selectedPlayers.length > 0 && (
                   <span className="ml-2 text-primary font-semibold">
-                    ({selectedPlayers.length} selected)
+                    ({selectedPlayers.length} {t('dialogs.selected', 'selected')})
                   </span>
                 )}
               </DialogDescription>
@@ -188,7 +190,7 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search players..."
+                placeholder={t('dialogs.search_players', 'Search players...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -196,7 +198,7 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
             </div>
 
             {loading ? (
-              <div className="py-8 text-center text-muted-foreground">Loading players...</div>
+              <div className="py-8 text-center text-muted-foreground">{t('dialogs.loading_players', 'Loading players...')}</div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-4 max-h-[400px] overflow-y-auto">
                 {filteredPlayers.map((player) => {
@@ -227,7 +229,7 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                            No image
+                            {t('dialogs.no_image', 'No image')}
                           </div>
                         )}
                       </div>
@@ -246,7 +248,7 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
                 })}
                 {filteredPlayers.length === 0 && (
                   <div className="col-span-full py-8 text-center text-muted-foreground">
-                    No players found
+                    {t('dialogs.no_players_found', 'No players found')}
                   </div>
                 )}
               </div>
@@ -259,7 +261,7 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
               hoverEffect
               className="w-full font-bebas uppercase tracking-wider"
             >
-              Next ({selectedPlayers.length} selected)
+              {t('dialogs.next', 'Next')} ({selectedPlayers.length} {t('dialogs.selected', 'selected')})
             </Button>
           </>
         ) : (
@@ -275,15 +277,15 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
-                  Declare Interest
+                  {t('dialogs.declare_interest', 'Declare Interest')}
                 </DialogTitle>
               </div>
               <DialogDescription>
-                Interested in{" "}
+                {t('dialogs.interested_in', 'Interested in')}{" "}
                 <span className="text-primary font-semibold">
                   {selectedPlayers.length === 1 
                     ? selectedPlayers[0].name 
-                    : `${selectedPlayers.length} players`}
+                    : `${selectedPlayers.length} ${t('dialogs.players', 'players')}`}
                 </span>
                 {selectedPlayers.length > 1 && (
                   <span className="block text-xs mt-1 text-muted-foreground">
@@ -295,50 +297,50 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="interest-name">Your Name *</Label>
+                <Label htmlFor="interest-name">{t('dialogs.your_name', 'Your Name')} *</Label>
                 <Input
                   id="interest-name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
-                  placeholder="John Smith"
+                  placeholder={t('dialogs.name_placeholder', 'John Smith')}
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="interest-role">Your Role *</Label>
+                  <Label htmlFor="interest-role">{t('dialogs.your_role', 'Your Role')} *</Label>
                   <Input
                     id="interest-role"
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
-                    placeholder="e.g., Scout, Director"
+                    placeholder={t('dialogs.role_placeholder', 'e.g., Scout, Director')}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="interest-club">Club/Company *</Label>
+                  <Label htmlFor="interest-club">{t('dialogs.club_company', 'Club/Company')} *</Label>
                   <Input
                     id="interest-club"
                     value={formData.clubCompany}
                     onChange={(e) => setFormData({ ...formData, clubCompany: e.target.value })}
                     onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
-                    placeholder="e.g., Manchester United"
+                    placeholder={t('dialogs.club_placeholder', 'e.g., Manchester United')}
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="interest-request">Your Request</Label>
+                <Label htmlFor="interest-request">{t('dialogs.your_request', 'Your Request')}</Label>
                 <Textarea
                   id="interest-request"
                   value={formData.request}
                   onChange={(e) => setFormData({ ...formData, request: e.target.value })}
-                  placeholder="Tell us more about your interest..."
+                  placeholder={t('dialogs.request_placeholder', 'Tell us more about your interest...')}
                   className="min-h-[80px]"
                 />
               </div>
@@ -349,7 +351,7 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
                   hoverEffect
                   className="flex-1 btn-shine font-bebas uppercase tracking-wider"
                 >
-                  Submit Interest
+                  {t('dialogs.submit_interest', 'Submit Interest')}
                 </Button>
                 <Button
                   type="button"
@@ -359,7 +361,7 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
                   className="flex-1 font-bebas uppercase tracking-wider gap-2"
                 >
                   <MessageCircle className="h-5 w-5" />
-                  WhatsApp Us
+                  {t('dialogs.whatsapp_us', 'WhatsApp Us')}
                 </Button>
               </div>
             </form>

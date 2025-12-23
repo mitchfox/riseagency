@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ContactDialogProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface ContactDialogProps {
 }
 
 export const ContactDialog = ({ open, onOpenChange }: ContactDialogProps) => {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -38,12 +40,12 @@ export const ContactDialog = ({ open, onOpenChange }: ContactDialogProps) => {
 
       if (error) throw error;
 
-      toast.success("Message sent successfully! We'll get back to you soon.");
+      toast.success(t('dialogs.contact_success', "Message sent successfully! We'll get back to you soon."));
       setFormData({ name: "", email: "", subject: "", message: "" });
       onOpenChange(false);
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error("Failed to send message. Please try again.");
+      toast.error(t('dialogs.contact_error', "Failed to send message. Please try again."));
     } finally {
       setSubmitting(false);
     }
@@ -54,13 +56,13 @@ export const ContactDialog = ({ open, onOpenChange }: ContactDialogProps) => {
       <DialogContent className="w-full max-w-3xl sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
-            Contact Us
+            {t('dialogs.contact_us', 'Contact Us')}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">{t('dialogs.name', 'Name')}</Label>
             <Input
               id="name"
               value={formData.name}
@@ -70,7 +72,7 @@ export const ContactDialog = ({ open, onOpenChange }: ContactDialogProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('dialogs.email', 'Email')}</Label>
             <Input
               id="email"
               type="email"
@@ -81,7 +83,7 @@ export const ContactDialog = ({ open, onOpenChange }: ContactDialogProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="subject">Subject</Label>
+            <Label htmlFor="subject">{t('dialogs.subject', 'Subject')}</Label>
             <Input
               id="subject"
               value={formData.subject}
@@ -91,7 +93,7 @@ export const ContactDialog = ({ open, onOpenChange }: ContactDialogProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="message">Message</Label>
+            <Label htmlFor="message">{t('dialogs.message', 'Message')}</Label>
             <Textarea
               id="message"
               rows={5}
@@ -106,7 +108,7 @@ export const ContactDialog = ({ open, onOpenChange }: ContactDialogProps) => {
             disabled={submitting}
             className="w-full font-bebas uppercase tracking-wider text-lg"
           >
-            {submitting ? "Sending..." : "Send Message"}
+            {submitting ? t('dialogs.sending', 'Sending...') : t('dialogs.send_message', 'Send Message')}
           </Button>
         </form>
       </DialogContent>

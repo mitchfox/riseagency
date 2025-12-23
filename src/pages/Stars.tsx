@@ -148,8 +148,8 @@ const Stars = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
-        title="Our Stars - Professional Football Players | RISE Agency"
-        description="Meet our talented roster of professional footballers across Europe. View player profiles, positions, and clubs from our extensive network."
+        title={t('stars.seo_title', 'Our Stars - Professional Football Players | RISE Agency')}
+        description={t('stars.seo_description', 'Meet our talented roster of professional footballers across Europe. View player profiles, positions, and clubs from our extensive network.')}
         image="/og-preview-stars.png"
         url="/stars"
       />

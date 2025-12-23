@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 import { players } from "@/data/players";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DeclareInterestDialogProps {
   open: boolean;
@@ -23,6 +24,7 @@ const interestSchema = z.object({
 });
 
 export const DeclareInterestDialog = ({ open, onOpenChange }: DeclareInterestDialogProps) => {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [step, setStep] = useState<"select" | "form">("select");
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
@@ -68,8 +70,8 @@ export const DeclareInterestDialog = ({ open, onOpenChange }: DeclareInterestDia
       if (error) throw error;
       
       toast({
-        title: "Interest Declared",
-        description: `We'll be in touch regarding ${player?.name}!`,
+        title: t('dialogs.interest_declared', 'Interest Declared'),
+        description: t('dialogs.interest_success', "We'll be in touch regarding your interest!"),
       });
       
       onOpenChange(false);
@@ -79,15 +81,15 @@ export const DeclareInterestDialog = ({ open, onOpenChange }: DeclareInterestDia
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
-          title: "Validation Error",
+          title: t('dialogs.validation_error', 'Validation Error'),
           description: error.errors[0].message,
           variant: "destructive",
         });
       } else {
         console.error("Error submitting form:", error);
         toast({
-          title: "Error",
-          description: "Failed to submit. Please try again.",
+          title: t('dialogs.error', 'Error'),
+          description: t('dialogs.submit_failed', 'Failed to submit. Please try again.'),
           variant: "destructive",
         });
       }
@@ -119,10 +121,10 @@ export const DeclareInterestDialog = ({ open, onOpenChange }: DeclareInterestDia
           <>
             <DialogHeader>
               <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
-                Select Player
+                {t('dialogs.select_player', 'Select Player')}
               </DialogTitle>
               <DialogDescription>
-                Choose the player you are interested in
+                {t('dialogs.select_player_desc', 'Choose the player you are interested in')}
               </DialogDescription>
             </DialogHeader>
 
@@ -165,60 +167,60 @@ export const DeclareInterestDialog = ({ open, onOpenChange }: DeclareInterestDia
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
-                  Declare Interest
+                  {t('dialogs.declare_interest', 'Declare Interest')}
                 </DialogTitle>
               </div>
               <DialogDescription>
-                Fill out the form or contact us on WhatsApp
+                {t('dialogs.form_desc', 'Fill out the form or contact us on WhatsApp')}
               </DialogDescription>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="interest-name">Your Name *</Label>
+                <Label htmlFor="interest-name">{t('dialogs.your_name', 'Your Name')} *</Label>
                 <Input
                   id="interest-name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
-                  placeholder="John Smith"
+                  placeholder={t('dialogs.name_placeholder', 'John Smith')}
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="interest-role">Your Role *</Label>
+                  <Label htmlFor="interest-role">{t('dialogs.your_role', 'Your Role')} *</Label>
                   <Input
                     id="interest-role"
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
-                    placeholder="e.g., Scout, Director"
+                    placeholder={t('dialogs.role_placeholder', 'e.g., Scout, Director')}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="interest-club">Club/Company *</Label>
+                  <Label htmlFor="interest-club">{t('dialogs.club_company', 'Club/Company')} *</Label>
                   <Input
                     id="interest-club"
                     value={formData.clubCompany}
                     onChange={(e) => setFormData({ ...formData, clubCompany: e.target.value })}
                     onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
-                    placeholder="e.g., Manchester United"
+                    placeholder={t('dialogs.club_placeholder', 'e.g., Manchester United')}
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="interest-request">Your Request</Label>
+                <Label htmlFor="interest-request">{t('dialogs.your_request', 'Your Request')}</Label>
                 <Textarea
                   id="interest-request"
                   value={formData.request}
                   onChange={(e) => setFormData({ ...formData, request: e.target.value })}
-                  placeholder="Tell us more about your interest..."
+                  placeholder={t('dialogs.request_placeholder', 'Tell us more about your interest...')}
                   className="min-h-[80px]"
                 />
               </div>
@@ -229,7 +231,7 @@ export const DeclareInterestDialog = ({ open, onOpenChange }: DeclareInterestDia
                   hoverEffect
                   className="flex-1 btn-shine font-bebas uppercase tracking-wider"
                 >
-                  Submit Interest
+                  {t('dialogs.submit_interest', 'Submit Interest')}
                 </Button>
                 <Button
                   type="button"
@@ -239,7 +241,7 @@ export const DeclareInterestDialog = ({ open, onOpenChange }: DeclareInterestDia
                   className="flex-1 font-bebas uppercase tracking-wider gap-2"
                 >
                   <MessageCircle className="h-5 w-5" />
-                  WhatsApp Us
+                  {t('dialogs.whatsapp_us', 'WhatsApp Us')}
                 </Button>
               </div>
             </form>

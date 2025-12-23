@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PortfolioRequestDialogProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface PortfolioRequestDialogProps {
 }
 
 export const PortfolioRequestDialog = ({ open, onOpenChange }: PortfolioRequestDialogProps) => {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: "",
     club: "",
@@ -38,12 +40,12 @@ export const PortfolioRequestDialog = ({ open, onOpenChange }: PortfolioRequestD
 
       if (error) throw error;
 
-      toast.success("Portfolio request submitted! We'll be in touch shortly.");
+      toast.success(t('dialogs.portfolio_success', "Portfolio request submitted! We'll be in touch shortly."));
       setFormData({ name: "", club: "", email: "", phone: "" });
       onOpenChange(false);
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error("Failed to submit request. Please try again.");
+      toast.error(t('dialogs.portfolio_error', "Failed to submit request. Please try again."));
     } finally {
       setSubmitting(false);
     }
@@ -54,51 +56,51 @@ export const PortfolioRequestDialog = ({ open, onOpenChange }: PortfolioRequestD
       <DialogContent className="w-full max-w-3xl sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
-            Request Full Portfolio
+            {t('dialogs.request_portfolio', 'Request Full Portfolio')}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Please provide your details and we'll send you our complete player portfolio.
+            {t('dialogs.portfolio_desc', "Please provide your details and we'll send you our complete player portfolio.")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="name">Your Name *</Label>
+              <Label htmlFor="name">{t('dialogs.your_name', 'Your Name')} *</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="John Smith"
+                placeholder={t('dialogs.name_placeholder', 'John Smith')}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="club">Club / Organization *</Label>
+              <Label htmlFor="club">{t('dialogs.club_organization', 'Club / Organization')} *</Label>
               <Input
                 id="club"
                 value={formData.club}
                 onChange={(e) => setFormData({ ...formData, club: e.target.value })}
-                placeholder="FC Example"
+                placeholder={t('dialogs.club_placeholder_fc', 'FC Example')}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="email">{t('dialogs.email', 'Email')} *</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="john@example.com"
+                placeholder={t('dialogs.email_placeholder', 'john@example.com')}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="phone">{t('dialogs.phone_number', 'Phone Number')}</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -114,7 +116,7 @@ export const PortfolioRequestDialog = ({ open, onOpenChange }: PortfolioRequestD
             disabled={submitting}
             className="w-full font-bebas uppercase tracking-wider text-lg"
           >
-            {submitting ? "Submitting..." : "Request Portfolio"}
+            {submitting ? t('dialogs.submitting', 'Submitting...') : t('dialogs.request_portfolio_btn', 'Request Portfolio')}
           </Button>
         </form>
       </DialogContent>

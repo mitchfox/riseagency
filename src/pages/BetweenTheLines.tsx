@@ -28,28 +28,6 @@ interface Article {
   created_at: string;
 }
 
-const categories = [
-  "ALL POSTS",
-  "TECHNICAL",
-  "NUTRITION",
-  "PSYCHOLOGY",
-  "TACTICAL",
-  "STRENGTH, POWER & SPEED",
-  "RECOVERY",
-  "COACHING",
-  "AGENTS",
-];
-
-const positions = [
-  "ALL POSITIONS",
-  "CENTRAL MIDFIELDER",
-  "CENTRE BACK",
-  "FULL BACK",
-  "GOALKEEPER",
-  "STRIKER",
-  "WINGER",
-];
-
 const createSlug = (title: string): string => {
   return title
     .toLowerCase()
@@ -71,6 +49,30 @@ export default function BetweenTheLines() {
   const [autoplayPlugin] = useState(() =>
     Autoplay({ delay: 2000, stopOnInteraction: false, stopOnMouseEnter: true })
   );
+
+  // Translated categories with values for filtering
+  const categories = [
+    { value: "ALL POSTS", label: t('btl.cat_all', 'ALL POSTS') },
+    { value: "TECHNICAL", label: t('btl.cat_technical', 'TECHNICAL') },
+    { value: "NUTRITION", label: t('btl.cat_nutrition', 'NUTRITION') },
+    { value: "PSYCHOLOGY", label: t('btl.cat_psychology', 'PSYCHOLOGY') },
+    { value: "TACTICAL", label: t('btl.cat_tactical', 'TACTICAL') },
+    { value: "STRENGTH, POWER & SPEED", label: t('btl.cat_strength', 'STRENGTH, POWER & SPEED') },
+    { value: "RECOVERY", label: t('btl.cat_recovery', 'RECOVERY') },
+    { value: "COACHING", label: t('btl.cat_coaching', 'COACHING') },
+    { value: "AGENTS", label: t('btl.cat_agents', 'AGENTS') },
+  ];
+
+  // Translated positions with values for filtering
+  const positions = [
+    { value: "ALL POSITIONS", label: t('btl.pos_all', 'ALL POSITIONS') },
+    { value: "CENTRAL MIDFIELDER", label: t('btl.pos_cm', 'CENTRAL MIDFIELDER') },
+    { value: "CENTRE BACK", label: t('btl.pos_cb', 'CENTRE BACK') },
+    { value: "FULL BACK", label: t('btl.pos_fb', 'FULL BACK') },
+    { value: "GOALKEEPER", label: t('btl.pos_gk', 'GOALKEEPER') },
+    { value: "STRIKER", label: t('btl.pos_st', 'STRIKER') },
+    { value: "WINGER", label: t('btl.pos_wg', 'WINGER') },
+  ];
 
   useEffect(() => {
     fetchArticles();
@@ -127,11 +129,21 @@ export default function BetweenTheLines() {
     setFilteredArticles(filtered);
   };
 
+  const getSelectedCategoryLabel = () => {
+    const cat = categories.find(c => c.value === selectedCategory);
+    return selectedCategory === "ALL POSTS" ? t('btl.all', 'All') : (cat?.label || selectedCategory);
+  };
+
+  const getSelectedPositionLabel = () => {
+    const pos = positions.find(p => p.value === selectedPosition);
+    return selectedPosition === "ALL POSITIONS" ? t('btl.all', 'All') : (pos?.label || selectedPosition);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEO 
-        title="Between The Lines - Training Insights | RISE"
-        description="Football training articles covering technical skills, nutrition, psychology, tactics, and recovery from RISE experts."
+        title={t('btl.seo_title', 'Between The Lines - Training Insights | RISE')}
+        description={t('btl.seo_description', 'Football training articles covering technical skills, nutrition, psychology, tactics, and recovery from RISE experts.')}
         url="/between-the-lines"
         image="/og-preview-btl.png"
       />
@@ -157,26 +169,26 @@ export default function BetweenTheLines() {
             <div className="relative">
               <Collapsible open={categoryOpen} onOpenChange={setCategoryOpen}>
                 <CollapsibleTrigger className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border hover:border-primary/50 transition-all text-sm font-bebas uppercase tracking-wider">
-                  <span className="text-muted-foreground">Category:</span>
-                  <span className="text-foreground">{selectedCategory === "ALL POSTS" ? "All" : selectedCategory}</span>
+                  <span className="text-muted-foreground">{t('btl.category_label', 'Category')}:</span>
+                  <span className="text-foreground">{getSelectedCategoryLabel()}</span>
                   <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${categoryOpen ? "rotate-180" : ""}`} />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="absolute left-0 z-50 mt-2 p-3 rounded-lg bg-card border border-border shadow-xl min-w-[280px]">
                   <div className="flex flex-wrap gap-2">
                     {categories.map((category) => (
                       <button
-                        key={category}
+                        key={category.value}
                         onClick={() => {
-                          setSelectedCategory(category);
+                          setSelectedCategory(category.value);
                           setCategoryOpen(false);
                         }}
                         className={`text-xs font-bebas uppercase tracking-wider px-3 py-1.5 rounded-full transition-all ${
-                          selectedCategory === category
+                          selectedCategory === category.value
                             ? "text-primary-foreground bg-primary"
                             : "text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted"
                         }`}
                       >
-                        {category}
+                        {category.label}
                       </button>
                     ))}
                   </div>
@@ -188,26 +200,26 @@ export default function BetweenTheLines() {
             <div className="relative">
               <Collapsible open={positionOpen} onOpenChange={setPositionOpen}>
                 <CollapsibleTrigger className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border hover:border-primary/50 transition-all text-sm font-bebas uppercase tracking-wider">
-                  <span className="text-muted-foreground">Position:</span>
-                  <span className="text-foreground">{selectedPosition === "ALL POSITIONS" ? "All" : selectedPosition}</span>
+                  <span className="text-muted-foreground">{t('btl.position_label', 'Position')}:</span>
+                  <span className="text-foreground">{getSelectedPositionLabel()}</span>
                   <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${positionOpen ? "rotate-180" : ""}`} />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="absolute left-0 z-50 mt-2 p-3 rounded-lg bg-card border border-border shadow-xl min-w-[240px]">
                   <div className="flex flex-wrap gap-2">
                     {positions.map((position) => (
                       <button
-                        key={position}
+                        key={position.value}
                         onClick={() => {
-                          setSelectedPosition(position);
+                          setSelectedPosition(position.value);
                           setPositionOpen(false);
                         }}
                         className={`text-xs font-bebas uppercase tracking-wider px-3 py-1.5 rounded-full transition-all ${
-                          selectedPosition === position
+                          selectedPosition === position.value
                             ? "text-primary-foreground bg-primary"
                             : "text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted"
                         }`}
                       >
-                        {position}
+                        {position.label}
                       </button>
                     ))}
                   </div>
@@ -224,7 +236,7 @@ export default function BetweenTheLines() {
                 }}
                 className="text-xs font-bebas uppercase tracking-wider px-4 py-2 rounded-full text-muted-foreground hover:text-foreground transition-all"
               >
-                Clear Filters
+                {t('btl.clear_filters', 'Clear Filters')}
               </button>
             )}
           </div>
@@ -274,7 +286,7 @@ export default function BetweenTheLines() {
                           </>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-muted">
-                            <p className="text-muted-foreground">No image</p>
+                            <p className="text-muted-foreground">{t('btl.no_image', 'No image')}</p>
                           </div>
                         )}
                         {article.category && (
