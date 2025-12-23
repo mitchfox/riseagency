@@ -576,7 +576,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-[900px] max-h-[90vh] overflow-y-auto">
         {!selectedRole && (
           <div className="flex justify-center pt-4 mb-4">
             <img src={logo} alt="RISE Football Agency" className="h-16" />

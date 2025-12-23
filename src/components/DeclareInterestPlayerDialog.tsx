@@ -167,7 +167,7 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
 
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-[900px] max-h-[90vh] overflow-y-auto">
         {step === "select" ? (
           <>
             <DialogHeader>
