@@ -21,7 +21,7 @@ import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { MapCoordinatesManager } from "./MapCoordinatesManager";
 
 // Import pitch background
-import pitchBg from "@/assets/scouting-pitch-bg.jpg";
+import pitchBg from "@/assets/scouting-pitch-gold.png";
 
 // Import player images
 import buffon from "@/assets/scouting-players/buffon.jpg";
