@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Users, Eye, FileText, Film, ClipboardList, Loader2, Save } from "lucide-react";
+import { Bell, Users, Eye, FileText, Film, ClipboardList, Loader2, Save, Calendar, CheckSquare, Target, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -20,6 +20,10 @@ const EVENT_TYPES = [
   { id: "form_submission", label: "Form Submissions", icon: FileText, description: "When a form is submitted" },
   { id: "clip_upload", label: "Clip Uploads", icon: Film, description: "When a new clip is uploaded" },
   { id: "playlist_change", label: "Playlist Changes", icon: ClipboardList, description: "When playlists are modified" },
+  { id: "calendar_event", label: "Calendar Events", icon: Calendar, description: "When schedule items are added to their calendar" },
+  { id: "task_assigned", label: "Task Assignments", icon: CheckSquare, description: "When tasks are assigned to someone" },
+  { id: "task_completed", label: "Task Completions", icon: PartyPopper, description: "When a task is marked complete" },
+  { id: "goal_added", label: "Goals Added", icon: Target, description: "When new goals are set" },
 ];
 
 const ROLES = [
