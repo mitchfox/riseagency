@@ -180,15 +180,15 @@ const Business = () => {
               {/* Large outlined text */}
               <h1 className="text-[15vw] md:text-[12vw] lg:text-[10vw] font-bebas uppercase leading-[0.85] tracking-tight text-transparent" 
                   style={{ WebkitTextStroke: "1px hsl(var(--foreground) / 0.15)" }}>
-                READY?
+                {t('business.ready', 'READY?')}
               </h1>
               <div className="flex items-baseline gap-4 md:gap-8">
                 <h1 className="text-[15vw] md:text-[12vw] lg:text-[10vw] font-bebas uppercase leading-[0.85] tracking-tight text-transparent" 
                     style={{ WebkitTextStroke: "1px hsl(var(--foreground) / 0.15)" }}>
-                  SET.
+                  {t('business.set', 'SET.')}
                 </h1>
                 <h1 className="text-[15vw] md:text-[12vw] lg:text-[10vw] font-bebas uppercase leading-[0.85] tracking-tight text-foreground">
-                  GO.
+                  {t('business.go', 'GO.')}
                 </h1>
               </div>
               
