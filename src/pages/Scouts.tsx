@@ -20,7 +20,7 @@ const domainConfig = {
     borderColor: "border-red-500/20",
     solidBg: "bg-red-500"
   },
-  Psychological: {
+  Mental: {
     icon: Brain,
     color: "text-purple-500",
     bgColor: "bg-purple-500/10",
