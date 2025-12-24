@@ -1238,20 +1238,26 @@ export const CreatePerformanceReportDialog = ({
                 <SelectValue placeholder="Choose a fixture" />
               </SelectTrigger>
               <SelectContent>
-                {fixtures.map((fixture) => {
-                  // Determine the opponent for display (handle "For" placeholder)
-                  const homeIsFor = fixture.home_team.toLowerCase() === "for" || fixture.home_team.toLowerCase().startsWith("for ");
-                  const awayIsFor = fixture.away_team.toLowerCase() === "for" || fixture.away_team.toLowerCase().startsWith("for ");
-                  const hasForPlaceholder = homeIsFor || awayIsFor;
-                  const displayOpponent = homeIsFor ? fixture.away_team : awayIsFor ? fixture.home_team : null;
-                  
-                  return (
-                    <SelectItem key={fixture.id} value={fixture.id}>
-                      {new Date(fixture.match_date).toLocaleDateString('en-GB')} - {hasForPlaceholder ? `vs ${displayOpponent}` : `${fixture.home_team} vs ${fixture.away_team}`}
-                      {fixture.competition && ` (${fixture.competition})`}
-                    </SelectItem>
-                  );
-                })}
+                {fixtures.length === 0 ? (
+                  <div className="p-2 text-sm text-muted-foreground text-center">
+                    No fixtures found. Add fixtures in the Fixtures tab first.
+                  </div>
+                ) : (
+                  fixtures.map((fixture) => {
+                    // Determine the opponent for display (handle "For" placeholder)
+                    const homeIsFor = fixture.home_team.toLowerCase() === "for" || fixture.home_team.toLowerCase().startsWith("for ");
+                    const awayIsFor = fixture.away_team.toLowerCase() === "for" || fixture.away_team.toLowerCase().startsWith("for ");
+                    const hasForPlaceholder = homeIsFor || awayIsFor;
+                    const displayOpponent = homeIsFor ? fixture.away_team : awayIsFor ? fixture.home_team : null;
+                    
+                    return (
+                      <SelectItem key={fixture.id} value={fixture.id}>
+                        {new Date(fixture.match_date).toLocaleDateString('en-GB')} - {hasForPlaceholder ? `vs ${displayOpponent}` : `${fixture.home_team} vs ${fixture.away_team}`}
+                        {fixture.competition && ` (${fixture.competition})`}
+                      </SelectItem>
+                    );
+                  })
+                )}
               </SelectContent>
             </Select>
           </div>
