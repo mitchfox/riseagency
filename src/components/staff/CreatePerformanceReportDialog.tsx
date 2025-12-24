@@ -461,6 +461,16 @@ export const CreatePerformanceReportDialog = ({
 
         if (fError) throw fError;
         setFixtures(fixturesData || []);
+      } else {
+        // No linked fixtures - fetch all recent fixtures for scouted players
+        const { data: allFixtures, error: allError } = await supabase
+          .from("fixtures")
+          .select("*")
+          .order("match_date", { ascending: false })
+          .limit(100);
+
+        if (allError) throw allError;
+        setFixtures(allFixtures || []);
       }
     } catch (error: any) {
       console.error("Error fetching fixtures:", error);
