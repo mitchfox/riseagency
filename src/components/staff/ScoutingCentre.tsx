@@ -575,7 +575,7 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
             <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-6 gap-1 h-auto p-1 mb-4">
               <TabsTrigger value="reports" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
                 <FileText className="h-3 w-3 md:h-4 md:w-4" />
-                <span className="hidden sm:inline">Create & View </span>Reports
+                Reports
               </TabsTrigger>
               <TabsTrigger value="scouted-players" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
                 <UserCheck className="h-3 w-3 md:h-4 md:w-4" />
@@ -595,7 +595,7 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
               </TabsTrigger>
               <TabsTrigger value="map-coords" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
                 <MapPin className="h-3 w-3 md:h-4 md:w-4" />
-                <span className="hidden sm:inline">Map </span>Coords
+                Map
               </TabsTrigger>
             </TabsList>
           </div>
