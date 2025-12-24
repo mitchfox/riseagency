@@ -10,13 +10,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Search, User, FileText, Calendar, Target, ChevronLeft, Eye, Plus, UserPlus, Loader2, Link2, ExternalLink } from "lucide-react";
+import { Search, User, FileText, Calendar, Target, ChevronLeft, Eye, Plus, UserPlus, Loader2, Link2, ExternalLink, ClipboardList } from "lucide-react";
 import { format } from "date-fns";
 import { PlayerScoutingManagement } from "./PlayerScoutingManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
+
 interface ScoutedPlayer {
   id: string;
   name: string;
@@ -39,6 +40,20 @@ interface PlayerAnalysis {
   minutes_played: number | null;
   video_url: string | null;
   performance_overview: string | null;
+  player_id?: string;
+  player_name?: string;
+}
+
+interface AllReportItem {
+  id: string;
+  type: 'performance' | 'scouting';
+  player_name: string;
+  player_id?: string;
+  date: string;
+  opponent?: string | null;
+  r90_score?: number | null;
+  status?: string;
+  position?: string | null;
 }
 
 export const ScoutedPlayersSection = () => {
@@ -52,6 +67,9 @@ export const ScoutedPlayersSection = () => {
   const [viewingReportId, setViewingReportId] = useState<string | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const [addingPlayer, setAddingPlayer] = useState(false);
+  const [mainView, setMainView] = useState<"players" | "all-reports">("players");
+  const [allReports, setAllReports] = useState<AllReportItem[]>([]);
+  const [loadingReports, setLoadingReports] = useState(false);
   const [newPlayerForm, setNewPlayerForm] = useState({
     name: "",
     position: "",
@@ -69,6 +87,12 @@ export const ScoutedPlayersSection = () => {
       fetchPlayerAnalyses(selectedPlayer.id);
     }
   }, [selectedPlayer]);
+
+  useEffect(() => {
+    if (mainView === "all-reports") {
+      fetchAllReports();
+    }
+  }, [mainView]);
 
   const fetchScoutedPlayers = async () => {
     setLoading(true);
@@ -102,6 +126,71 @@ export const ScoutedPlayersSection = () => {
     } catch (error) {
       console.error("Error fetching player analyses:", error);
       setPlayerAnalyses([]);
+    }
+  };
+
+  const fetchAllReports = async () => {
+    setLoadingReports(true);
+    try {
+      // Fetch performance reports for scouted players
+      const { data: performanceData, error: perfError } = await supabase
+        .from("player_analysis")
+        .select(`
+          id, 
+          analysis_date, 
+          opponent, 
+          r90_score,
+          player_id,
+          players!inner(id, name, category)
+        `)
+        .eq("players.category", "Scouted")
+        .order("analysis_date", { ascending: false });
+
+      if (perfError) throw perfError;
+
+      // Fetch scouting reports
+      const { data: scoutingData, error: scoutError } = await supabase
+        .from("scouting_reports")
+        .select("id, player_name, scouting_date, status, position")
+        .order("scouting_date", { ascending: false });
+
+      if (scoutError) throw scoutError;
+
+      // Combine into unified list
+      const reports: AllReportItem[] = [];
+
+      (performanceData || []).forEach((item: any) => {
+        reports.push({
+          id: item.id,
+          type: 'performance',
+          player_name: item.players?.name || 'Unknown',
+          player_id: item.player_id,
+          date: item.analysis_date,
+          opponent: item.opponent,
+          r90_score: item.r90_score,
+        });
+      });
+
+      (scoutingData || []).forEach((item: any) => {
+        reports.push({
+          id: item.id,
+          type: 'scouting',
+          player_name: item.player_name,
+          date: item.scouting_date,
+          status: item.status,
+          position: item.position,
+        });
+      });
+
+      // Sort by date descending
+      reports.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      setAllReports(reports);
+    } catch (error) {
+      console.error("Error fetching all reports:", error);
+      toast.error("Failed to load reports");
+    } finally {
+      setLoadingReports(false);
     }
   };
 
@@ -386,72 +475,185 @@ export const ScoutedPlayersSection = () => {
   // Players List View
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold">Scouted Players</h3>
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search players..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Button onClick={() => setIsAddPlayerOpen(true)} size="sm">
-            <UserPlus className="h-4 w-4 mr-1" />
-            Add Player
-          </Button>
-        </div>
+      {/* View Toggle */}
+      <div className="flex items-center gap-2 border-b pb-3">
+        <Button 
+          variant={mainView === "players" ? "default" : "ghost"} 
+          size="sm"
+          onClick={() => setMainView("players")}
+        >
+          <User className="h-4 w-4 mr-1" />
+          Players
+        </Button>
+        <Button 
+          variant={mainView === "all-reports" ? "default" : "ghost"} 
+          size="sm"
+          onClick={() => setMainView("all-reports")}
+        >
+          <ClipboardList className="h-4 w-4 mr-1" />
+          All Reports
+        </Button>
       </div>
 
-      {filteredPlayers.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            {players.length === 0 
-              ? "No scouted players yet. Click 'Add Player' to add one."
-              : "No players match your search"
-            }
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredPlayers.map((player) => (
-            <Card 
-              key={player.id}
-              className="cursor-pointer hover:border-primary transition-colors"
-              onClick={() => handlePlayerSelect(player)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={player.image_url || undefined} alt={player.name} />
-                    <AvatarFallback className="text-sm">
-                      {player.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{player.name}</p>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {player.position} • {player.age} yrs
-                    </p>
-                    {player.club && (
-                      <div className="flex items-center gap-1.5 mt-1">
-                        {player.club_logo && (
-                          <img src={player.club_logo} alt="" className="h-4 w-4 object-contain" />
-                        )}
-                        <span className="text-xs text-muted-foreground truncate">{player.club}</span>
-                      </div>
-                    )}
-                  </div>
-                  <Badge variant="outline" className="shrink-0">
-                    {player.nationality}
-                  </Badge>
-                </div>
+      {mainView === "all-reports" ? (
+        // All Reports View
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="text-lg font-semibold">All Reports</h3>
+            <div className="relative max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search reports..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+
+          {loadingReports ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : allReports.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                No reports found
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            <div className="space-y-2">
+              {allReports
+                .filter(report => 
+                  report.player_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  report.opponent?.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((report) => (
+                  <Card 
+                    key={`${report.type}-${report.id}`}
+                    className="cursor-pointer hover:border-primary transition-colors"
+                    onClick={() => {
+                      if (report.type === 'performance') {
+                        setViewingReportId(report.id);
+                      }
+                    }}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-base">{report.player_name}</p>
+                            <Badge variant={report.type === 'performance' ? 'default' : 'secondary'} className="text-xs">
+                              {report.type === 'performance' ? 'Performance' : 'Scouting'}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {format(new Date(report.date), "dd MMM yyyy")}
+                            {report.type === 'performance' && report.opponent && ` • vs ${report.opponent}`}
+                            {report.type === 'scouting' && report.position && ` • ${report.position}`}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {report.type === 'performance' && report.r90_score && (
+                            <Badge variant="outline" className="font-bold">
+                              R90: {report.r90_score}
+                            </Badge>
+                          )}
+                          {report.type === 'scouting' && report.status && (
+                            <Badge variant="outline" className="capitalize">
+                              {report.status}
+                            </Badge>
+                          )}
+                          {report.type === 'performance' && (
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          )}
         </div>
+      ) : (
+        // Players View
+        <>
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="text-lg font-semibold">Scouted Players</h3>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search players..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Button onClick={() => setIsAddPlayerOpen(true)} size="sm">
+                <UserPlus className="h-4 w-4 mr-1" />
+                Add Player
+              </Button>
+            </div>
+          </div>
+
+          {filteredPlayers.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                {players.length === 0 
+                  ? "No scouted players yet. Click 'Add Player' to add one."
+                  : "No players match your search"
+                }
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {filteredPlayers.map((player) => (
+                <Card 
+                  key={player.id}
+                  className="cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => handlePlayerSelect(player)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-12 w-12 shrink-0">
+                        <AvatarImage src={player.image_url || undefined} alt={player.name} />
+                        <AvatarFallback className="text-sm">
+                          {player.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-base">{player.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {player.position} • {player.age} yrs • {player.nationality}
+                        </p>
+                        {player.club && (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            {player.club_logo && (
+                              <img src={player.club_logo} alt="" className="h-4 w-4 object-contain" />
+                            )}
+                            <span className="text-xs text-muted-foreground">{player.club}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* View Report Dialog for All Reports view */}
+      {viewingReportId && mainView === "all-reports" && (
+        <PerformanceReportDialog
+          open={!!viewingReportId}
+          onOpenChange={(open) => !open && setViewingReportId(null)}
+          analysisId={viewingReportId}
+        />
       )}
 
       {/* Add Player Dialog */}
