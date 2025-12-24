@@ -263,6 +263,7 @@ export const AddPlayerDialog = ({
                       <SelectContent>
                         <SelectItem value="represented">Represented</SelectItem>
                         <SelectItem value="mandated">Mandated</SelectItem>
+                        <SelectItem value="scouted">Scouted</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>

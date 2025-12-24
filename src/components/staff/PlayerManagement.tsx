@@ -1140,15 +1140,16 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const selectedPlayerSeasonStats = selectedPlayer ? getSeasonStats(selectedPlayer) : null;
 
   // Group players by representation status in order: represented, mandated, other
+  // EXCLUDE scouted players - they are managed in Scouting Centre
   const groupedPlayers = {
     represented: players.filter(p => p.representation_status === 'represented'),
     mandated: players.filter(p => p.representation_status === 'mandated'),
-    other: players.filter(p => p.representation_status === 'other' || !p.representation_status),
+    other: players.filter(p => (p.representation_status === 'other' || !p.representation_status) && p.representation_status !== 'scouted'),
   };
 
-  // Group players by category
+  // Group players by category (kept for backwards compatibility)
   const categoryGroups = {
-    scouted: players.filter(p => p.category === 'Scouted'),
+    scouted: players.filter(p => p.representation_status === 'scouted'),
   };
 
   if (loading) {
@@ -3128,6 +3129,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         <SelectContent>
                           <SelectItem value="represented">Represented</SelectItem>
                           <SelectItem value="mandated">Mandated</SelectItem>
+                          <SelectItem value="scouted">Scouted</SelectItem>
                           <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>

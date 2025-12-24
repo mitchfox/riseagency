@@ -12,13 +12,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Edit2, Trash2, UserPlus, Eye, Filter, Search, Sparkles, FileText, Target, Users, Globe, MapPin, ChevronDown } from "lucide-react";
+import { Plus, Edit2, Trash2, UserPlus, Eye, Filter, Search, Sparkles, FileText, Target, Users, Globe, MapPin, ChevronDown, UserCheck } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { SkillEvaluationForm } from "./SkillEvaluationForm";
 import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { MapCoordinatesManager } from "./MapCoordinatesManager";
+import { ScoutedPlayersSection } from "./ScoutedPlayersSection";
 
 // Import pitch background
 import pitchBg from "@/assets/scouting-pitch-gold.png";
@@ -130,7 +131,7 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
     notes: ""
   });
   const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
-  const [mainTab, setMainTab] = useState<"reports" | "all-players" | "network" | "scouts" | "map-coords">("reports");
+  const [mainTab, setMainTab] = useState<"reports" | "all-players" | "scouted-players" | "network" | "scouts" | "map-coords">("reports");
   const [groupBy, setGroupBy] = useState<"country" | "club" | "scout">("country");
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -571,14 +572,18 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
           
         <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as any)} className="flex-1 flex flex-col">
           <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-            <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-5 gap-1 h-auto p-1 mb-4">
+            <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-6 gap-1 h-auto p-1 mb-4">
               <TabsTrigger value="reports" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
                 <FileText className="h-3 w-3 md:h-4 md:w-4" />
                 <span className="hidden sm:inline">Create & View </span>Reports
               </TabsTrigger>
+              <TabsTrigger value="scouted-players" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
+                <UserCheck className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">Scouted </span>Players
+              </TabsTrigger>
               <TabsTrigger value="all-players" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
                 <Users className="h-3 w-3 md:h-4 md:w-4" />
-                <span className="hidden sm:inline">All </span>Players
+                <span className="hidden sm:inline">All </span>Reports
               </TabsTrigger>
               <TabsTrigger value="scouts" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
                 <Target className="h-3 w-3 md:h-4 md:w-4" />
@@ -933,11 +938,19 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
               </ScrollArea>
             </TabsContent>
 
+            <TabsContent value="scouted-players" className="flex-1 mt-0">
+              <ScrollArea className="h-[calc(100vh-350px)]">
+                <div className="pr-4">
+                  <ScoutedPlayersSection />
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
             <TabsContent value="all-players" className="flex-1 mt-0">
               <ScrollArea className="h-[calc(100vh-350px)]">
                 <div className="space-y-4 pr-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">All Scouted Players</h3>
+                    <h3 className="text-lg font-semibold">All Scouting Reports</h3>
                     <Select value={groupBy} onValueChange={(v) => setGroupBy(v as any)}>
                       <SelectTrigger className="w-[180px]">
                         <SelectValue />
