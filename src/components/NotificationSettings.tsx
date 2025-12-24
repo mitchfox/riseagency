@@ -13,6 +13,9 @@ interface NotificationPreferences {
   programmes: boolean;
   highlights: boolean;
   clips: boolean;
+  post_ideas: boolean;
+  post_idea_status: boolean;
+  post_idea_canva: boolean;
 }
 
 interface NotificationSettingsProps {
@@ -28,6 +31,9 @@ export const NotificationSettings = ({ playerId }: NotificationSettingsProps) =>
     programmes: true,
     highlights: true,
     clips: true,
+    post_ideas: true,
+    post_idea_status: true,
+    post_idea_canva: true,
   });
 
   useEffect(() => {
@@ -55,6 +61,9 @@ export const NotificationSettings = ({ playerId }: NotificationSettingsProps) =>
           programmes: data.programmes,
           highlights: data.highlights,
           clips: data.clips,
+          post_ideas: data.post_ideas ?? true,
+          post_idea_status: data.post_idea_status ?? true,
+          post_idea_canva: data.post_idea_canva ?? true,
         });
       }
     } catch (error) {
@@ -162,6 +171,44 @@ export const NotificationSettings = ({ playerId }: NotificationSettingsProps) =>
               id="clips"
               checked={preferences.clips}
               onCheckedChange={(checked) => updatePreferences('clips', checked)}
+              disabled={loading}
+            />
+          </div>
+          
+          <div className="pt-4 border-t border-border">
+            <p className="text-sm font-medium text-muted-foreground mb-4">Marketing Post Ideas</p>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label htmlFor="post_ideas" className="cursor-pointer">
+              New Post Ideas
+            </Label>
+            <Switch
+              id="post_ideas"
+              checked={preferences.post_ideas}
+              onCheckedChange={(checked) => updatePreferences('post_ideas', checked)}
+              disabled={loading}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="post_idea_status" className="cursor-pointer">
+              Post Idea Status Changes
+            </Label>
+            <Switch
+              id="post_idea_status"
+              checked={preferences.post_idea_status}
+              onCheckedChange={(checked) => updatePreferences('post_idea_status', checked)}
+              disabled={loading}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="post_idea_canva" className="cursor-pointer">
+              Canva Link Added
+            </Label>
+            <Switch
+              id="post_idea_canva"
+              checked={preferences.post_idea_canva}
+              onCheckedChange={(checked) => updatePreferences('post_idea_canva', checked)}
               disabled={loading}
             />
           </div>
