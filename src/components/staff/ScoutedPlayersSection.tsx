@@ -66,7 +66,7 @@ export const ScoutedPlayersSection = () => {
       const { data, error } = await supabase
         .from("players")
         .select("id, name, position, age, nationality, club, club_logo, image_url, bio, category")
-        .eq("representation_status", "scouted")
+        .eq("category", "Scouted")
         .order("name");
 
       if (error) throw error;
