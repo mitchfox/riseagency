@@ -1310,6 +1310,9 @@ export type Database = {
           id: string
           performance_reports: boolean
           player_id: string
+          post_idea_canva: boolean
+          post_idea_status: boolean
+          post_ideas: boolean
           programmes: boolean
           updated_at: string
         }
@@ -1321,6 +1324,9 @@ export type Database = {
           id?: string
           performance_reports?: boolean
           player_id: string
+          post_idea_canva?: boolean
+          post_idea_status?: boolean
+          post_ideas?: boolean
           programmes?: boolean
           updated_at?: string
         }
@@ -1332,6 +1338,9 @@ export type Database = {
           id?: string
           performance_reports?: boolean
           player_id?: string
+          post_idea_canva?: boolean
+          post_idea_status?: boolean
+          post_ideas?: boolean
           programmes?: boolean
           updated_at?: string
         }
