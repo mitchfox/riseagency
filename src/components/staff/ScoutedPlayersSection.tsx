@@ -10,12 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Search, User, FileText, Calendar, Target, ChevronLeft, Eye, Plus, UserPlus, Loader2, Link2, ExternalLink } from "lucide-react";
+import { Search, User, FileText, Calendar, Target, ChevronLeft, Plus, UserPlus, Loader2, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { PlayerScoutingManagement } from "./PlayerScoutingManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
-import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
+
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 
 interface ScoutedPlayer {
@@ -52,7 +52,6 @@ export const ScoutedPlayersSection = () => {
   const [activeTab, setActiveTab] = useState<"info" | "reports" | "fixtures" | "scouting">("info");
   const [playerAnalyses, setPlayerAnalyses] = useState<PlayerAnalysis[]>([]);
   const [isCreateReportOpen, setIsCreateReportOpen] = useState(false);
-  const [viewingReportId, setViewingReportId] = useState<string | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const [addingPlayer, setAddingPlayer] = useState(false);
   const [newPlayerForm, setNewPlayerForm] = useState({
@@ -275,17 +274,31 @@ export const ScoutedPlayersSection = () => {
                       ? `${window.location.origin}${createPerformanceReportSlug(selectedPlayer.name, analysis.opponent, analysis.id)}`
                       : `${window.location.origin}/performance-report/${analysis.id}`;
                     
+                    // R90 color function matching player management
+                    const getR90Color = (score: number) => {
+                      if (score < 0) return "bg-red-950";
+                      if (score >= 0 && score < 0.2) return "bg-red-600";
+                      if (score >= 0.2 && score < 0.4) return "bg-red-400";
+                      if (score >= 0.4 && score < 0.6) return "bg-orange-700";
+                      if (score >= 0.6 && score < 0.8) return "bg-orange-500";
+                      if (score >= 0.8 && score < 1.0) return "bg-yellow-400";
+                      if (score >= 1.0 && score < 1.4) return "bg-lime-400";
+                      if (score >= 1.4 && score < 1.8) return "bg-green-500";
+                      if (score >= 1.8 && score < 2.5) return "bg-green-700";
+                      return "bg-gold";
+                    };
+                    const r90Color = analysis.r90_score !== null && analysis.r90_score !== undefined 
+                      ? getR90Color(analysis.r90_score) 
+                      : "bg-gray-500";
+                    
                     return (
                       <Card 
                         key={analysis.id} 
                         className="hover:border-primary transition-colors"
                       >
                         <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div 
-                              className="cursor-pointer flex-1"
-                              onClick={() => setViewingReportId(analysis.id)}
-                            >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex-1 min-w-0">
                               <p className="font-medium">
                                 {analysis.opponent ? `vs ${analysis.opponent}` : "Match Analysis"}
                               </p>
@@ -294,45 +307,22 @@ export const ScoutedPlayersSection = () => {
                                 {analysis.minutes_played && ` • ${analysis.minutes_played} mins`}
                               </p>
                             </div>
-                            <div className="flex items-center gap-2">
-                              {analysis.r90_score && (
-                                <Badge variant="outline" className="text-lg font-bold">
-                                  R90: {analysis.r90_score}
-                                </Badge>
+                            <div className="flex items-center gap-2 flex-wrap justify-end">
+                              {analysis.r90_score !== null && analysis.r90_score !== undefined && (
+                                <div className={`${r90Color} text-white text-sm font-bold px-3 py-1 rounded`}>
+                                  R90: {analysis.r90_score.toFixed(2)}
+                                </div>
                               )}
                               {analysis.result && (
                                 <Badge variant="secondary">{analysis.result}</Badge>
                               )}
                               <Button 
-                                variant="ghost" 
+                                variant="outline" 
                                 size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigator.clipboard.writeText(publicUrl);
-                                  toast.success("Public link copied to clipboard!");
-                                }}
-                                title="Copy public link"
+                                onClick={() => window.open(publicUrl, '_blank')}
                               >
-                                <Link2 className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  window.open(publicUrl, '_blank');
-                                }}
-                                title="Open in new tab"
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => setViewingReportId(analysis.id)}
-                                title="View report"
-                              >
-                                <Eye className="h-4 w-4" />
+                                <ExternalLink className="h-4 w-4 mr-1" />
+                                Open Link
                               </Button>
                             </div>
                           </div>
@@ -356,14 +346,6 @@ export const ScoutedPlayersSection = () => {
               }}
             />
 
-            {/* View Report Dialog */}
-            {viewingReportId && (
-              <PerformanceReportDialog
-                open={!!viewingReportId}
-                onOpenChange={(open) => !open && setViewingReportId(null)}
-                analysisId={viewingReportId}
-              />
-            )}
           </TabsContent>
 
           {/* Fixtures Tab */}
