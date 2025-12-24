@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Search, User, FileText, Calendar, Target, ChevronLeft, Plus, UserPlus, Loader2, ExternalLink } from "lucide-react";
+import { Search, User, FileText, Calendar, Target, ChevronLeft, Plus, UserPlus, Loader2, ExternalLink, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { PlayerScoutingManagement } from "./PlayerScoutingManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
@@ -52,6 +52,7 @@ export const ScoutedPlayersSection = () => {
   const [activeTab, setActiveTab] = useState<"info" | "reports" | "fixtures" | "scouting">("info");
   const [playerAnalyses, setPlayerAnalyses] = useState<PlayerAnalysis[]>([]);
   const [isCreateReportOpen, setIsCreateReportOpen] = useState(false);
+  const [editingReportId, setEditingReportId] = useState<string | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const [addingPlayer, setAddingPlayer] = useState(false);
   const [newPlayerForm, setNewPlayerForm] = useState({
@@ -319,6 +320,14 @@ export const ScoutedPlayersSection = () => {
                               <Button 
                                 variant="outline" 
                                 size="sm"
+                                onClick={() => setEditingReportId(analysis.id)}
+                              >
+                                <Pencil className="h-4 w-4 mr-1" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
                                 onClick={() => window.open(publicUrl, '_blank')}
                               >
                                 <ExternalLink className="h-4 w-4 mr-1" />
@@ -345,6 +354,21 @@ export const ScoutedPlayersSection = () => {
                 setIsCreateReportOpen(false);
               }}
             />
+
+            {/* Edit Report Dialog */}
+            {editingReportId && (
+              <CreatePerformanceReportDialog
+                open={!!editingReportId}
+                onOpenChange={(open) => !open && setEditingReportId(null)}
+                playerId={selectedPlayer.id}
+                playerName={selectedPlayer.name}
+                analysisId={editingReportId}
+                onSuccess={() => {
+                  fetchPlayerAnalyses(selectedPlayer.id);
+                  setEditingReportId(null);
+                }}
+              />
+            )}
 
           </TabsContent>
 
