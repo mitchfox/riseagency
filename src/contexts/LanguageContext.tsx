@@ -191,9 +191,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       setTranslationsLoaded(false);
       try {
+        // Fetch all translations - use range to get more than default 1000 limit
         const { data, error } = await supabase
           .from('translations')
-          .select('*');
+          .select('*')
+          .range(0, 9999);
 
         if (error) {
           console.error('Error fetching translations:', error);
