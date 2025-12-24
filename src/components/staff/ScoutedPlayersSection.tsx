@@ -10,13 +10,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Search, User, FileText, Calendar, Target, ChevronLeft, Eye, Plus, UserPlus, Loader2 } from "lucide-react";
+import { Search, User, FileText, Calendar, Target, ChevronLeft, Eye, Plus, UserPlus, Loader2, Link2, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { PlayerScoutingManagement } from "./PlayerScoutingManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
-
+import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 interface ScoutedPlayer {
   id: string;
   name: string;
@@ -266,40 +266,76 @@ export const ScoutedPlayersSection = () => {
                 </Card>
               ) : (
                 <div className="grid gap-3">
-                  {playerAnalyses.map((analysis) => (
-                    <Card 
-                      key={analysis.id} 
-                      className="cursor-pointer hover:border-primary transition-colors"
-                      onClick={() => setViewingReportId(analysis.id)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">
-                              {analysis.opponent ? `vs ${analysis.opponent}` : "Match Analysis"}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {format(new Date(analysis.analysis_date), "dd MMM yyyy")}
-                              {analysis.minutes_played && ` • ${analysis.minutes_played} mins`}
-                            </p>
+                  {playerAnalyses.map((analysis) => {
+                    const publicUrl = analysis.opponent 
+                      ? `${window.location.origin}${createPerformanceReportSlug(selectedPlayer.name, analysis.opponent, analysis.id)}`
+                      : `${window.location.origin}/performance-report/${analysis.id}`;
+                    
+                    return (
+                      <Card 
+                        key={analysis.id} 
+                        className="hover:border-primary transition-colors"
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div 
+                              className="cursor-pointer flex-1"
+                              onClick={() => setViewingReportId(analysis.id)}
+                            >
+                              <p className="font-medium">
+                                {analysis.opponent ? `vs ${analysis.opponent}` : "Match Analysis"}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {format(new Date(analysis.analysis_date), "dd MMM yyyy")}
+                                {analysis.minutes_played && ` • ${analysis.minutes_played} mins`}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {analysis.r90_score && (
+                                <Badge variant="outline" className="text-lg font-bold">
+                                  R90: {analysis.r90_score}
+                                </Badge>
+                              )}
+                              {analysis.result && (
+                                <Badge variant="secondary">{analysis.result}</Badge>
+                              )}
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigator.clipboard.writeText(publicUrl);
+                                  toast.success("Public link copied to clipboard!");
+                                }}
+                                title="Copy public link"
+                              >
+                                <Link2 className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(publicUrl, '_blank');
+                                }}
+                                title="Open in new tab"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setViewingReportId(analysis.id)}
+                                title="View report"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            {analysis.r90_score && (
-                              <Badge variant="outline" className="text-lg font-bold">
-                                R90: {analysis.r90_score}
-                              </Badge>
-                            )}
-                            {analysis.result && (
-                              <Badge variant="secondary">{analysis.result}</Badge>
-                            )}
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </div>
