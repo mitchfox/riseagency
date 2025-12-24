@@ -317,13 +317,9 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
         <div className="sticky top-0 z-10 bg-background border-b p-3 md:p-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <h2 className="text-lg md:text-xl font-bebas uppercase tracking-wider">Performance Report</h2>
           <div className="flex gap-2 flex-wrap">
-            <Button onClick={handleSaveAsPDF} variant="default" size="sm" className="flex-1 md:flex-none">
-              <Download className="mr-2 h-4 w-4" />
-              Save as PDF
-            </Button>
-            <Button onClick={handleSaveAsWebp} variant="secondary" size="sm" className="flex-1 md:flex-none" disabled={savingImage || loading}>
+            <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="flex-1 md:flex-none" disabled={savingImage || loading}>
               <ImageIcon className="mr-2 h-4 w-4" />
-              {savingImage ? 'Saving...' : 'Save as WEBP'}
+              {savingImage ? 'Saving...' : 'Save as Image'}
             </Button>
             <Button onClick={() => onOpenChange(false)} variant="outline" size="sm" className="flex-1 md:flex-none">
               <X className="mr-2 h-4 w-4" />

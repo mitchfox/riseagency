@@ -39,7 +39,7 @@ import { MarketingManagement } from "@/components/staff/MarketingManagement";
 import { ContentCreator, MarketingIdeas } from "@/components/staff/marketing";
 import { RecruitmentManagement } from "@/components/staff/RecruitmentManagement";
 import { ScoutingCentreManagement } from "@/components/staff/ScoutingCentreManagement";
-import { ScoutsManagement } from "@/components/staff/ScoutsManagement";
+
 import { PlayerDatabaseManagement } from "@/components/staff/PlayerDatabaseManagement";
 import { StaffAccountManagement } from "@/components/staff/StaffAccountManagement";
 import { PlayerPasswordManagement } from "@/components/staff/PlayerPasswordManagement";
@@ -588,7 +588,6 @@ const Staff = () => {
           { id: 'playerlist', title: 'Player List', icon: Users },
           { id: 'recruitment', title: 'Recruitment', icon: Target },
           { id: 'playerdatabase', title: 'Player Database', icon: Users },
-          { id: 'scouts', title: 'Scouts', icon: Users },
           { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
           { id: 'submissions', title: 'Form Submissions', icon: Mail },
         ]
@@ -960,7 +959,7 @@ const Staff = () => {
                   {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
                   {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={isAdmin} />}
                   {expandedSection === 'playerdatabase' && <PlayerDatabaseManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'scouts' && <ScoutsManagement isAdmin={isAdmin} />}
+                  
                   {expandedSection === 'scoutingcentre' && <ScoutingCentreManagement isAdmin={isAdmin} />}
                   {expandedSection === 'coaching' && <CoachingDatabase isAdmin={isAdmin} />}
                   {expandedSection === 'analysis' && <AnalysisManagement isAdmin={isAdmin} />}
