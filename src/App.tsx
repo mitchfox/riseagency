@@ -13,6 +13,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSubdomainRouter } from "@/hooks/useSubdomainRouter";
 import { useLocalizedRedirect } from "@/hooks/useLocalizedRedirect";
 import { getAllPathVariants } from "@/lib/localizedRoutes";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Critical pages - loaded immediately
 import Home from "./pages/Home";
@@ -138,7 +139,7 @@ const App = () => {
                     <Route path="/players-list" element={<PlayersList />} />
                     <Route path="/players-draft" element={<PlayersDraft />} />
                     {/* Club Network is now only accessible via Staff page */}
-                    <Route path="/staff" element={<Staff />} />
+                    <Route path="/staff" element={<ErrorBoundary><Staff /></ErrorBoundary>} />
                     <Route path="/scout-portal" element={<ScoutPortal />} />
                     <Route path="/potential" element={<Potential />} />
                     <Route path="/realise-potential" element={<RealisePotential />} />
