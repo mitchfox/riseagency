@@ -3,10 +3,12 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Home, ArrowLeft } from "lucide-react";
 import { SEO } from "@/components/SEO";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const NotFound = () => {
   const location = useLocation();
   const [countdown, setCountdown] = useState(10);
+  const { t } = useLanguage();
 
   useEffect(() => {
     console.log("404 Error: Page not found:", location.pathname);
@@ -30,8 +32,8 @@ const NotFound = () => {
   return (
     <>
       <SEO 
-        title="Page Not Found | RISE Football Agency"
-        description="The page you're looking for doesn't exist. Return to RISE Football Agency homepage."
+        title={t("error_page_title", "Page Not Found | RISE Football Agency")}
+        description={t("error_page_description", "The page you're looking for doesn't exist. Return to RISE Football Agency homepage.")}
       />
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center space-y-8 max-w-lg">
@@ -41,17 +43,17 @@ const NotFound = () => {
               404
             </h1>
             <h2 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider text-foreground">
-              Page Not Found
+              {t("error_page_not_found", "Page Not Found")}
             </h2>
             <p className="text-muted-foreground text-lg">
-              The page you're looking for doesn't exist or has been moved.
+              {t("error_page_message", "The page you're looking for doesn't exist or has been moved.")}
             </p>
           </div>
 
           {/* Countdown */}
           <p className="text-sm text-muted-foreground">
-            Redirecting to homepage in{" "}
-            <span className="text-primary font-bold">{countdown}</span> seconds
+            {t("error_redirecting", "Redirecting to homepage in")}{" "}
+            <span className="text-primary font-bold">{countdown}</span> {t("error_seconds", "seconds")}
           </p>
 
           {/* Action Buttons */}
@@ -59,7 +61,7 @@ const NotFound = () => {
             <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider">
               <Link to="/">
                 <Home className="mr-2 h-5 w-5" />
-                Go Home
+                {t("error_go_home", "Go Home")}
               </Link>
             </Button>
             <Button
@@ -69,31 +71,31 @@ const NotFound = () => {
               className="font-bebas uppercase tracking-wider"
             >
               <ArrowLeft className="mr-2 h-5 w-5" />
-              Go Back
+              {t("error_go_back", "Go Back")}
             </Button>
           </div>
 
           {/* Quick Links */}
           <div className="pt-8 border-t border-border">
-            <p className="text-sm text-muted-foreground mb-4">Or try these popular pages:</p>
+            <p className="text-sm text-muted-foreground mb-4">{t("error_try_pages", "Or try these popular pages:")}</p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link to="/players" className="text-primary hover:underline text-sm">
-                Players
+                {t("nav_players", "Players")}
               </Link>
               <Link to="/about" className="text-primary hover:underline text-sm">
-                About Us
+                {t("nav_about", "About Us")}
               </Link>
               <Link to="/news" className="text-primary hover:underline text-sm">
-                News
+                {t("nav_news", "News")}
               </Link>
               <Link to="/contact" className="text-primary hover:underline text-sm">
-                Contact
+                {t("nav_contact", "Contact")}
               </Link>
               <Link to="/portal" className="text-primary hover:underline text-sm">
-                Portal
+                {t("nav_portal", "Portal")}
               </Link>
               <Link to="/staff" className="text-primary hover:underline text-sm">
-                Staff
+                {t("nav_staff", "Staff")}
               </Link>
             </div>
           </div>
