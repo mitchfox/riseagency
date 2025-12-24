@@ -157,7 +157,8 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
     status: "pending",
     priority: "",
     auto_generated_review: "",
-    linked_player_id: ""
+    linked_player_id: "",
+    full_match_url: ""
   });
 
   useEffect(() => {
@@ -242,6 +243,7 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
         competition: formData.competition || null,
         match_context: formData.match_context || null,
         video_url: formData.video_url || null,
+        full_match_url: formData.full_match_url || null,
         profile_image_url: formData.profile_image_url || null,
         contact_email: formData.contact_email || null,
         contact_phone: formData.contact_phone || null,
@@ -361,7 +363,8 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
       status: report.status,
       priority: report.priority || "",
       auto_generated_review: report.auto_generated_review || "",
-      linked_player_id: report.linked_player_id || ""
+      linked_player_id: report.linked_player_id || "",
+      full_match_url: (report as any).full_match_url || ""
     });
     setIsAddingNew(true);
   };
@@ -448,7 +451,8 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
       status: "pending",
       priority: "",
       auto_generated_review: "",
-      linked_player_id: ""
+      linked_player_id: "",
+      full_match_url: ""
     });
     setSkillEvaluations([]);
     setEditingReport(null);
@@ -1441,12 +1445,22 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="video_url">Match Video URL</Label>
+                      <Label htmlFor="video_url">Match Highlights/Clips URL</Label>
                       <Input
                         id="video_url"
                         type="url"
                         value={formData.video_url}
                         onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="full_match_url">Full Match URL</Label>
+                      <Input
+                        id="full_match_url"
+                        type="url"
+                        value={formData.full_match_url}
+                        onChange={(e) => setFormData({ ...formData, full_match_url: e.target.value })}
                         placeholder="https://..."
                       />
                     </div>

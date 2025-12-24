@@ -2704,6 +2704,7 @@ export type Database = {
           created_at: string
           current_club: string | null
           date_of_birth: string | null
+          full_match_url: string | null
           height_cm: number | null
           id: string
           linked_player_id: string | null
@@ -2747,6 +2748,7 @@ export type Database = {
           created_at?: string
           current_club?: string | null
           date_of_birth?: string | null
+          full_match_url?: string | null
           height_cm?: number | null
           id?: string
           linked_player_id?: string | null
@@ -2790,6 +2792,7 @@ export type Database = {
           created_at?: string
           current_club?: string | null
           date_of_birth?: string | null
+          full_match_url?: string | null
           height_cm?: number | null
           id?: string
           linked_player_id?: string | null
