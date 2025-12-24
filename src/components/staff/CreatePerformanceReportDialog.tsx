@@ -275,7 +275,8 @@ export const CreatePerformanceReportDialog = ({
   };
 
   useEffect(() => {
-    if (open) {
+    if (open && playerId) {
+      console.log('CreatePerformanceReportDialog opened for player:', playerId);
       fetchActionTypes();
       if (analysisId) {
         // Edit mode
@@ -289,7 +290,7 @@ export const CreatePerformanceReportDialog = ({
       fetchFixtures();
       fetchPlayerClub();
     }
-  }, [open, analysisId]);
+  }, [open, analysisId, playerId]);
 
   // Auto-calculate per90 statistics
   useEffect(() => {
@@ -442,11 +443,14 @@ export const CreatePerformanceReportDialog = ({
   };
 
   const fetchFixtures = async () => {
+    console.log('fetchFixtures called for playerId:', playerId);
     try {
       const { data: playerFixtures, error: pfError } = await supabase
         .from("player_fixtures")
         .select("fixture_id")
         .eq("player_id", playerId);
+
+      console.log('player_fixtures result:', playerFixtures, 'error:', pfError);
 
       if (pfError) throw pfError;
 
@@ -459,15 +463,20 @@ export const CreatePerformanceReportDialog = ({
           .in("id", fixtureIds)
           .order("match_date", { ascending: false });
 
+        console.log('fixtures data:', fixturesData, 'error:', fError);
+
         if (fError) throw fError;
         setFixtures(fixturesData || []);
       } else {
         // No linked fixtures - fetch all recent fixtures for scouted players
+        console.log('No linked fixtures, fetching all fixtures');
         const { data: allFixtures, error: allError } = await supabase
           .from("fixtures")
           .select("*")
           .order("match_date", { ascending: false })
           .limit(100);
+
+        console.log('all fixtures:', allFixtures?.length, 'error:', allError);
 
         if (allError) throw allError;
         setFixtures(allFixtures || []);
