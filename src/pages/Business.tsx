@@ -94,6 +94,16 @@ const Business = () => {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
+  // Fallback content for cards
+  const cardFallbacks: Record<string, { category: string; title: string; desc: string; cta: string }> = {
+    "player-brands": { category: "Featured", title: "Player Brand Building", desc: "Authentic personal branding for athletes", cta: "Explore Services" },
+    "sponsorship": { category: "Case Study", title: "Strategic Sponsorship Deals", desc: "Connecting brands with rising talent", cta: "View Case" },
+    "commercial": { category: "Collaboration", title: "Commercial Partnerships", desc: "End-to-end campaign management", cta: "Learn More" },
+    "talent-access": { category: "Service", title: "Exclusive Talent Access", desc: "Connect with our roster of professionals", cta: "View Roster" },
+    "market-intel": { category: "Service", title: "Market Intelligence", desc: "Data-driven insights and analytics", cta: "Discover" },
+    "investment": { category: "Case Study", title: "Player Investment", desc: "Strategic football investment opportunities", cta: "Explore" },
+  };
+
   // Build translated showcase cards with icons
   const showcaseCards = showcaseCardsConfig.map((card, index) => {
     const icons = [
@@ -104,20 +114,22 @@ const Business = () => {
       <Target className="w-12 h-12" key="target" />,
       <TrendingUp className="w-12 h-12" key="trending" />,
     ];
+    const fallback = cardFallbacks[card.id];
     return {
       ...card,
-      categoryLabel: t(card.categoryLabelKey, card.categoryLabelKey.split('.')[1] || ''),
-      title: t(card.titleKey, card.titleKey.split('.')[1] || ''),
-      description: card.descriptionKey ? t(card.descriptionKey, '') : undefined,
-      ctaText: t(card.ctaTextKey, card.ctaTextKey.split('.')[1] || ''),
+      categoryLabel: t(card.categoryLabelKey, fallback.category),
+      title: t(card.titleKey, fallback.title),
+      description: card.descriptionKey ? t(card.descriptionKey, fallback.desc) : undefined,
+      ctaText: t(card.ctaTextKey, fallback.cta),
       icon: icons[index],
     };
   });
 
   // Build translated stats
-  const stats = statsConfig.map(stat => ({
+  const statsFallbacks = ["Active Players", "Countries", "Combined Reach", "Commitment"];
+  const stats = statsConfig.map((stat, index) => ({
     value: stat.value,
-    label: t(stat.labelKey, stat.labelKey.split('.')[1] || ''),
+    label: t(stat.labelKey, statsFallbacks[index]),
   }));
 
   const checkScrollPosition = () => {
