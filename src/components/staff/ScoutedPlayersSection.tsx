@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Search, User, FileText, Calendar, Target, ChevronLeft, Eye, Plus } from "lucide-react";
+import { Search, User, FileText, Calendar, Target, ChevronLeft, Eye, Plus, UserPlus, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { PlayerScoutingManagement } from "./PlayerScoutingManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
@@ -49,6 +50,15 @@ export const ScoutedPlayersSection = () => {
   const [playerAnalyses, setPlayerAnalyses] = useState<PlayerAnalysis[]>([]);
   const [isCreateReportOpen, setIsCreateReportOpen] = useState(false);
   const [viewingReportId, setViewingReportId] = useState<string | null>(null);
+  const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
+  const [addingPlayer, setAddingPlayer] = useState(false);
+  const [newPlayerForm, setNewPlayerForm] = useState({
+    name: "",
+    position: "",
+    age: "",
+    nationality: "",
+    club: "",
+  });
 
   useEffect(() => {
     fetchScoutedPlayers();
@@ -110,6 +120,38 @@ export const ScoutedPlayersSection = () => {
   const handleBackToList = () => {
     setSelectedPlayer(null);
     setPlayerAnalyses([]);
+  };
+
+  const handleAddPlayer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPlayerForm.name || !newPlayerForm.position || !newPlayerForm.age || !newPlayerForm.nationality) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setAddingPlayer(true);
+    try {
+      const { error } = await supabase.from("players").insert({
+        name: newPlayerForm.name,
+        position: newPlayerForm.position,
+        age: parseInt(newPlayerForm.age),
+        nationality: newPlayerForm.nationality,
+        club: newPlayerForm.club || null,
+        category: "Scouted",
+      });
+
+      if (error) throw error;
+
+      toast.success("Player added successfully");
+      setIsAddPlayerOpen(false);
+      setNewPlayerForm({ name: "", position: "", age: "", nationality: "", club: "" });
+      fetchScoutedPlayers();
+    } catch (error: any) {
+      console.error("Error adding player:", error);
+      toast.error("Failed to add player");
+    } finally {
+      setAddingPlayer(false);
+    }
   };
 
   if (loading) {
@@ -310,14 +352,20 @@ export const ScoutedPlayersSection = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <h3 className="text-lg font-semibold">Scouted Players</h3>
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search players..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search players..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Button onClick={() => setIsAddPlayerOpen(true)} size="sm">
+            <UserPlus className="h-4 w-4 mr-1" />
+            Add Player
+          </Button>
         </div>
       </div>
 
@@ -325,7 +373,7 @@ export const ScoutedPlayersSection = () => {
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             {players.length === 0 
-              ? "No scouted players yet. Add players with 'Scouted' representation status to see them here."
+              ? "No scouted players yet. Click 'Add Player' to add one."
               : "No players match your search"
             }
           </CardContent>
@@ -369,6 +417,78 @@ export const ScoutedPlayersSection = () => {
           ))}
         </div>
       )}
+
+      {/* Add Player Dialog */}
+      <Dialog open={isAddPlayerOpen} onOpenChange={setIsAddPlayerOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Scouted Player</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddPlayer} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="player-name">Name *</Label>
+              <Input
+                id="player-name"
+                value={newPlayerForm.name}
+                onChange={(e) => setNewPlayerForm({ ...newPlayerForm, name: e.target.value })}
+                placeholder="Player name"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="player-position">Position *</Label>
+                <Input
+                  id="player-position"
+                  value={newPlayerForm.position}
+                  onChange={(e) => setNewPlayerForm({ ...newPlayerForm, position: e.target.value })}
+                  placeholder="e.g., Striker"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="player-age">Age *</Label>
+                <Input
+                  id="player-age"
+                  type="number"
+                  value={newPlayerForm.age}
+                  onChange={(e) => setNewPlayerForm({ ...newPlayerForm, age: e.target.value })}
+                  placeholder="e.g., 22"
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="player-nationality">Nationality *</Label>
+              <Input
+                id="player-nationality"
+                value={newPlayerForm.nationality}
+                onChange={(e) => setNewPlayerForm({ ...newPlayerForm, nationality: e.target.value })}
+                placeholder="e.g., English"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="player-club">Current Club</Label>
+              <Input
+                id="player-club"
+                value={newPlayerForm.club}
+                onChange={(e) => setNewPlayerForm({ ...newPlayerForm, club: e.target.value })}
+                placeholder="e.g., Manchester United"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsAddPlayerOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={addingPlayer}>
+                {addingPlayer && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Add Player
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
