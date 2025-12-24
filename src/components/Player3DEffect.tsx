@@ -751,8 +751,13 @@ export const Player3DEffect = ({ className = "", imagePrefix = "player" }: Playe
         // ============= FLUID BLOB X-RAY (matches overlay shader) =============
         float mouseXrayMask = calculateFluidMask(vUv);
         
-        // X-ray reveals the FULL COLOR version of the player image
-        vec3 finalColor = mix(greyscaleComposite, fullColorComposite, mouseXrayMask);
+        // Sample the xray texture (yellow kit image) with parallax
+        vec4 xrayColor = texture2D(xrayTexture, parallaxUV);
+        
+        // X-ray reveals the YELLOW KIT image from xrayTexture
+        // Use the xray image where it has content, blend with full color elsewhere
+        vec3 xrayReveal = mix(fullColorComposite, xrayColor.rgb, xrayColor.a);
+        vec3 finalColor = mix(greyscaleComposite, xrayReveal, mouseXrayMask);
         
         // Edge rim light
         float rimLeft = smoothstep(0.1, 0.0, vUv.x) * max(0.0, shadowAmount) * 0.3;
