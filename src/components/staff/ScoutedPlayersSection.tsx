@@ -271,9 +271,10 @@ export const ScoutedPlayersSection = () => {
               ) : (
                 <div className="grid gap-3">
                   {playerAnalyses.map((analysis) => {
-                    const publicUrl = analysis.opponent 
-                      ? `${window.location.origin}${createPerformanceReportSlug(selectedPlayer.name, analysis.opponent, analysis.id)}`
-                      : `${window.location.origin}/performance-report/${analysis.id}`;
+                    // Use relative path - works in both preview and production
+                    const reportPath = analysis.opponent 
+                      ? createPerformanceReportSlug(selectedPlayer.name, analysis.opponent, analysis.id)
+                      : `/performance-report/${analysis.id}`;
                     
                     // R90 color function matching player management
                     const getR90Color = (score: number) => {
@@ -328,7 +329,7 @@ export const ScoutedPlayersSection = () => {
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => window.open(publicUrl, '_blank')}
+                                onClick={() => window.open(reportPath, '_blank')}
                               >
                                 <ExternalLink className="h-4 w-4 mr-1" />
                                 Open Link
