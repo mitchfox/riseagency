@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Users, Eye, FileText, Film, ClipboardList, Loader2, Save, Calendar, CheckSquare, Target, PartyPopper, LogIn, BarChart3, FileSearch, Send, Building2 } from "lucide-react";
+import { Bell, Users, Eye, FileText, Film, ClipboardList, Loader2, Save, Calendar, CheckSquare, Target, PartyPopper, LogIn, BarChart3, FileSearch, Send, Building2, Lightbulb, RefreshCw, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,6 +32,10 @@ const EVENT_TYPES = [
   { id: "portal_analysis_view", label: "Analysis Views", icon: FileSearch, description: "When a player views analysis content", category: "Portal Activity" },
   { id: "portal_transfer_submission", label: "Transfer Hub Submissions", icon: Send, description: "When a player submits in their transfer hub", category: "Portal Activity" },
   { id: "portal_club_submission", label: "Club Submissions", icon: Building2, description: "When a player submits a club suggestion", category: "Portal Activity" },
+  // Marketing Post Ideas
+  { id: "post_idea_new", label: "New Post Ideas", icon: Lightbulb, description: "When a new post idea is created", category: "Marketing" },
+  { id: "post_idea_status", label: "Post Idea Status Changes", icon: RefreshCw, description: "When a post idea status changes", category: "Marketing" },
+  { id: "post_idea_canva", label: "Canva Link Added", icon: Link, description: "When a Canva link is added to a post idea", category: "Marketing" },
 ];
 
 const ROLES = [
