@@ -32,7 +32,7 @@ const languageColumnMap: Record<string, string> = {
 const PlayerDetail = () => {
   const { playername } = useParams<{ playername: string }>();
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [currentFormationIndex, setCurrentFormationIndex] = useState(0);
   const [currentVideoType, setCurrentVideoType] = useState<'season' | number>(0);
   const [dbHighlights, setDbHighlights] = useState<any[]>([]);
@@ -627,10 +627,10 @@ const PlayerDetail = () => {
                   <p className="text-foreground/60 font-bebas text-lg md:text-xl uppercase tracking-wider text-center">
                     {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.name
                       ? dbHighlights[currentVideoType].name
-                      : 'Highlights'}
+                      : t('player.highlights', 'Highlights')}
                   </p>
                   <p className="text-xs md:text-sm text-muted-foreground">
-                    Coming Soon
+                    {t('player.coming_soon', 'Coming Soon')}
                   </p>
                 </div>
               )}
