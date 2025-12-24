@@ -248,10 +248,13 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
     const selectedStats = analysis.striker_stats.selected_stats as string[] | undefined;
     
     // Use stats_order if available, otherwise use selected_stats, otherwise use all keys
-    const keysToShow = statsOrder || selectedStats || Object.keys(analysis.striker_stats);
+    // Filter out internal keys from whatever source we use
+    const rawKeysToShow = statsOrder || selectedStats || Object.keys(analysis.striker_stats);
+    const keysToShow = rawKeysToShow.filter(key => !excludeKeys.includes(key));
     
     for (const key of keysToShow) {
-      if (excludeKeys.includes(key)) continue;
+      if (key.includes('_per90')) continue;
+      if (processedKeys.has(key)) continue;
       if (key.includes('_per90')) continue;
       if (processedKeys.has(key)) continue;
       
