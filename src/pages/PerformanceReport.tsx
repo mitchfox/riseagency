@@ -163,8 +163,33 @@ const PerformanceReport = () => {
     return xgChain;
   };
 
-  const handleSaveAsPDF = () => {
-    window.print();
+  const handleSaveAsWebp = async () => {
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      const element = document.querySelector('main');
+      if (!element) {
+        toast.error("Could not find content to save");
+        return;
+      }
+      
+      toast.info("Generating image...");
+      
+      const canvas = await html2canvas(element as HTMLElement);
+      
+      // Convert to webp
+      const dataUrl = canvas.toDataURL('image/webp', 0.9);
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.download = `${analysis?.player_name || 'performance'}-report-${analysis?.opponent || 'match'}.webp`;
+      link.href = dataUrl;
+      link.click();
+      
+      toast.success("Image saved successfully");
+    } catch (error) {
+      console.error("Error saving as webp:", error);
+      toast.error("Failed to save image");
+    }
   };
 
 
@@ -217,7 +242,7 @@ const PerformanceReport = () => {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <CardTitle className="text-2xl md:text-3xl">Performance Report</CardTitle>
               <div className="flex gap-2 print:hidden flex-wrap">
-                <Button onClick={handleSaveAsPDF} variant="default" size="sm" className="flex-1 md:flex-none">
+                <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="flex-1 md:flex-none">
                   <Download className="mr-2 h-4 w-4" />
                   Save as .webp
                 </Button>

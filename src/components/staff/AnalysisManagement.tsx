@@ -947,11 +947,10 @@ Title: ${formData.scheme_title || 'Not specified'}`;
     <div className="space-y-4">
       <Tabs defaultValue="pre-match" className="space-y-4">
         <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-          <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-4 gap-1 h-auto p-1">
+          <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-3 gap-1 h-auto p-1">
             <TabsTrigger value="pre-match" className="text-xs md:text-sm px-3 md:px-4 py-2 whitespace-nowrap">Pre-Match</TabsTrigger>
             <TabsTrigger value="post-match" className="text-xs md:text-sm px-3 md:px-4 py-2 whitespace-nowrap">Post-Match</TabsTrigger>
-            <TabsTrigger value="concepts" className="text-xs md:text-sm px-3 md:px-4 py-2 whitespace-nowrap">Concepts</TabsTrigger>
-            <TabsTrigger value="other" className="text-xs md:text-sm px-3 md:px-4 py-2 whitespace-nowrap">Other</TabsTrigger>
+            <TabsTrigger value="concepts" className="text-xs md:text-sm px-3 md:px-4 py-2 whitespace-nowrap">Positional</TabsTrigger>
           </TabsList>
         </div>
 
@@ -1251,28 +1250,6 @@ Title: ${formData.scheme_title || 'Not specified'}`;
           </div>
         </TabsContent>
 
-        <TabsContent value="other" className="space-y-4">
-          <div className="flex gap-2 flex-wrap">
-            <Button 
-              onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'other', paragraph1Info: '', paragraph2Info: '' })}
-              variant="outline"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              AI Point Writer
-            </Button>
-            <Button 
-              onClick={() => {
-                setExamplesCategory('other');
-                setExamplesType('point');
-                setExamplesDialogOpen(true);
-                fetchExamples('other', 'point');
-              }}
-              variant="outline"
-            >
-              Examples Database
-            </Button>
-          </div>
-        </TabsContent>
       </Tabs>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -1291,11 +1268,10 @@ Title: ${formData.scheme_title || 'Not specified'}`;
             </DialogHeader>
 
             <Tabs defaultValue="pre-match" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="pre-match">Pre-Match</TabsTrigger>
                 <TabsTrigger value="post-match">Post-Match</TabsTrigger>
-                <TabsTrigger value="concepts">Concepts</TabsTrigger>
-                <TabsTrigger value="other">Other</TabsTrigger>
+                <TabsTrigger value="concepts">Positional</TabsTrigger>
               </TabsList>
 
               <TabsContent value="pre-match" className="space-y-4">
@@ -1931,220 +1907,6 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                         </CardContent>
                       </Card>
                   </div>
-              </TabsContent>
-
-              <TabsContent value="other" className="space-y-4">
-                
-                <Card className="bg-secondary/20">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Sparkles className="w-5 h-5" />
-                      AI Point Writer
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label>Paragraph 1 Info</Label>
-                      <Textarea
-                        placeholder="Enter key information for paragraph 1..."
-                        value={aiWriter.paragraph1Info}
-                        onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value, category: 'other' })}
-                      />
-                    </div>
-                    <div>
-                      <Label>Paragraph 2 Info</Label>
-                      <Textarea
-                        placeholder="Enter key information for paragraph 2..."
-                        value={aiWriter.paragraph2Info}
-                        onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value, category: 'other' })}
-                      />
-                    </div>
-                    <Button 
-                      onClick={generateWithAIWriter} 
-                      disabled={aiGenerating}
-                      className="w-full"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      {aiGenerating ? "Generating..." : "Generate Point"}
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Link to Player Performance Report */}
-                <div className="space-y-4 border-t pt-4">
-                <h3 className="font-semibold">Link to Performance Report</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Player</Label>
-                    <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select player" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {players.map((player) => (
-                          <SelectItem key={player.id} value={player.id}>
-                            {player.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Performance Report</Label>
-                    <Select 
-                      value={selectedPerformanceReportId} 
-                      onValueChange={setSelectedPerformanceReportId}
-                      disabled={!selectedPlayerId || selectedPlayerId === "none"}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select report" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {performanceReports.map((report) => (
-                          <SelectItem key={report.id} value={report.id}>
-                            {report.opponent} - {new Date(report.analysis_date).toLocaleDateString()}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-                {/* Points section - common for all types */}
-                {(analysisType === "pre-match" || analysisType === "post-match" || analysisType === "concept") && (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-semibold">
-                      {analysisType === "concept" ? "Images" : "Points"}
-                    </h3>
-                    <Button size="sm" onClick={addPoint}>
-                      <Plus className="w-4 h-4 mr-1" /> Add{" "}
-                      {analysisType === "concept" ? "Images" : "Point"}
-                    </Button>
-                  </div>
-
-                  {formData.points?.map((point, index) => (
-                    <Card key={index} className="p-4">
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-start">
-                          <h4 className="font-medium">
-                            {analysisType === "concept" ? `Image Set ${index + 1}` : `Point ${index + 1}`}
-                          </h4>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removePoint(index)}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-
-                        {analysisType !== "concept" && (
-                          <>
-                            <div>
-                              <div className="flex items-center justify-between">
-                                <Label>Title</Label>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => generateWithAI('point_title', index)}
-                                  disabled={aiGenerating}
-                                >
-                                  <Sparkles className="w-3 h-3 mr-1" />
-                                  {aiGenerating ? 'Generating...' : 'Use AI'}
-                                </Button>
-                              </div>
-                              <Input
-                                value={point.title}
-                                onChange={(e) =>
-                                  updatePoint(index, "title", e.target.value)
-                                }
-                              />
-                            </div>
-                            <div>
-                              <div className="flex items-center justify-between">
-                                <Label>Paragraph 1</Label>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => generateWithAI('point_paragraph_1', index)}
-                                  disabled={aiGenerating}
-                                >
-                                  <Sparkles className="w-3 h-3 mr-1" />
-                                  {aiGenerating ? 'Generating...' : 'Use AI'}
-                                </Button>
-                              </div>
-                              <Textarea
-                                value={point.paragraph_1}
-                                onChange={(e) =>
-                                  updatePoint(index, "paragraph_1", e.target.value)
-                                }
-                              />
-                            </div>
-                            <div>
-                              <div className="flex items-center justify-between">
-                                <Label>Paragraph 2</Label>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => generateWithAI('point_paragraph_2', index)}
-                                  disabled={aiGenerating}
-                                >
-                                  <Sparkles className="w-3 h-3 mr-1" />
-                                  {aiGenerating ? 'Generating...' : 'Use AI'}
-                                </Button>
-                              </div>
-                              <Textarea
-                                value={point.paragraph_2}
-                                onChange={(e) =>
-                                  updatePoint(index, "paragraph_2", e.target.value)
-                                }
-                              />
-                            </div>
-                          </>
-                        )}
-
-                        <div>
-                          <Label>Images</Label>
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) =>
-                              handleImageUpload(e, "point_image", index, true)
-                            }
-                            disabled={uploadingImage}
-                          />
-                          <div className="flex flex-wrap gap-2 sm:gap-4 mt-2">
-                            {point.images?.map((img, imgIndex) => (
-                              <div key={imgIndex} className="relative">
-                                <img
-                                  src={img}
-                                  alt={`Point ${index + 1} Image ${imgIndex + 1}`}
-                                  className="w-32 h-32 sm:w-48 sm:h-48 object-cover rounded shadow-lg"
-                                />
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  className="absolute -top-2 -right-2 h-6 w-6 p-0"
-                                  onClick={() => removeImageFromPoint(index, imgIndex)}
-                                >
-                                  <X className="w-3 h-3" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-                )}
               </TabsContent>
             </Tabs>
 
