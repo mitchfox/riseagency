@@ -3,9 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Eye, Link as LinkIcon, Unlink, ExternalLink } from "lucide-react";
+import { Eye, Link as LinkIcon, Unlink, Plus, Search } from "lucide-react";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SkillEvaluationForm } from "./SkillEvaluationForm";
+import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, ScoutingPosition } from "@/data/scoutingSkills";
 
 interface ScoutingReport {
   id: string;
@@ -29,6 +37,26 @@ interface PlayerScoutingManagementProps {
 export const PlayerScoutingManagement = ({ playerId, playerName }: PlayerScoutingManagementProps) => {
   const [scoutingReports, setScoutingReports] = useState<ScoutingReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [unlinkedReports, setUnlinkedReports] = useState<ScoutingReport[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [linking, setLinking] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [activeTab, setActiveTab] = useState("basic");
+  const [skillEvaluations, setSkillEvaluations] = useState<SkillEvaluation[]>([]);
+  const [formData, setFormData] = useState({
+    position: "",
+    scouting_date: format(new Date(), "yyyy-MM-dd"),
+    current_club: "",
+    nationality: "",
+    location: "",
+    competition: "",
+    match_context: "",
+    video_url: "",
+    scout_name: "",
+    auto_generated_review: "",
+  });
 
   useEffect(() => {
     fetchScoutingReports();
@@ -52,6 +80,22 @@ export const PlayerScoutingManagement = ({ playerId, playerName }: PlayerScoutin
     }
   };
 
+  const fetchUnlinkedReports = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("scouting_reports")
+        .select("*")
+        .is("linked_player_id", null)
+        .order("scouting_date", { ascending: false });
+
+      if (error) throw error;
+      setUnlinkedReports(data || []);
+    } catch (error) {
+      console.error("Error fetching unlinked reports:", error);
+      toast.error("Failed to load available reports");
+    }
+  };
+
   const handleUnlink = async (reportId: string) => {
     try {
       const { error } = await supabase
@@ -69,85 +113,394 @@ export const PlayerScoutingManagement = ({ playerId, playerName }: PlayerScoutin
     }
   };
 
+  const handleLinkReport = async (reportId: string) => {
+    setLinking(true);
+    try {
+      const { error } = await supabase
+        .from("scouting_reports")
+        .update({ linked_player_id: playerId })
+        .eq("id", reportId);
+
+      if (error) throw error;
+      
+      toast.success("Scouting report linked successfully");
+      setIsLinkDialogOpen(false);
+      fetchScoutingReports();
+    } catch (error) {
+      console.error("Error linking report:", error);
+      toast.error("Failed to link report");
+    } finally {
+      setLinking(false);
+    }
+  };
+
   const handleViewReport = (reportId: string) => {
     window.open(`/staff?section=recruitment&view=scouting&report=${reportId}`, '_blank');
   };
+
+  const handleOpenLinkDialog = () => {
+    setIsLinkDialogOpen(true);
+    fetchUnlinkedReports();
+    setSearchTerm("");
+  };
+
+  const handlePositionChange = (position: string) => {
+    setFormData({ ...formData, position });
+    const newEvaluations = initializeSkillEvaluations(position);
+    setSkillEvaluations(newEvaluations);
+  };
+
+  const handleCreateReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.scouting_date) {
+      toast.error("Scouting date is required");
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const reportData = {
+        player_name: playerName,
+        position: formData.position || null,
+        current_club: formData.current_club || null,
+        nationality: formData.nationality || null,
+        scouting_date: formData.scouting_date,
+        location: formData.location || null,
+        competition: formData.competition || null,
+        match_context: formData.match_context || null,
+        video_url: formData.video_url || null,
+        scout_name: formData.scout_name || null,
+        skill_evaluations: skillEvaluations as any,
+        auto_generated_review: formData.auto_generated_review || null,
+        linked_player_id: playerId,
+        status: "pending",
+      };
+
+      const { error } = await supabase
+        .from("scouting_reports")
+        .insert(reportData);
+
+      if (error) throw error;
+
+      toast.success("Scouting report created and linked");
+      setIsCreateDialogOpen(false);
+      resetForm();
+      fetchScoutingReports();
+    } catch (error) {
+      console.error("Error creating scouting report:", error);
+      toast.error("Failed to create scouting report");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      position: "",
+      scouting_date: format(new Date(), "yyyy-MM-dd"),
+      current_club: "",
+      nationality: "",
+      location: "",
+      competition: "",
+      match_context: "",
+      video_url: "",
+      scout_name: "",
+      auto_generated_review: "",
+    });
+    setSkillEvaluations([]);
+    setActiveTab("basic");
+  };
+
+  const filteredUnlinkedReports = unlinkedReports.filter(report =>
+    report.player_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    report.current_club?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    report.position?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading) {
     return <div className="text-center py-8">Loading scouting reports...</div>;
   }
 
   return (
-    <Card>
-      <CardHeader className="px-3 md:px-6 py-3 md:py-4">
-        <CardTitle className="text-lg">Linked Scouting Reports</CardTitle>
-      </CardHeader>
-      <CardContent className="px-3 md:px-6 py-4">
-        {scoutingReports.length > 0 ? (
-          <div className="space-y-3">
-            {scoutingReports.map((report) => (
-              <div
-                key={report.id}
-                className="p-4 rounded-lg bg-muted/30 border border-border/50"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold">{report.player_name}</h4>
-                      {report.overall_rating && (
-                        <span className="text-sm px-2 py-0.5 rounded bg-primary/20 text-primary">
-                          {report.overall_rating}/10
-                        </span>
-                      )}
+    <>
+      <Card>
+        <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Scouting Reports</CardTitle>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={handleOpenLinkDialog}>
+                <LinkIcon className="h-4 w-4 mr-1" />
+                Link Existing
+              </Button>
+              <Button size="sm" onClick={() => setIsCreateDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" />
+                Create New
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="px-3 md:px-6 py-4">
+          {scoutingReports.length > 0 ? (
+            <div className="space-y-3">
+              {scoutingReports.map((report) => (
+                <div
+                  key={report.id}
+                  className="p-4 rounded-lg bg-muted/30 border border-border/50"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold">{report.player_name}</h4>
+                        {report.overall_rating && (
+                          <span className="text-sm px-2 py-0.5 rounded bg-primary/20 text-primary">
+                            {report.overall_rating}/10
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        {report.position && <div>Position: {report.position}</div>}
+                        {report.current_club && <div>Club: {report.current_club}</div>}
+                        {report.nationality && <div>Nationality: {report.nationality}</div>}
+                        <div>Date: {format(new Date(report.scouting_date), "MMM dd, yyyy")}</div>
+                        {report.scout_name && <div>Scout: {report.scout_name}</div>}
+                        {report.recommendation && (
+                          <div className="mt-2">
+                            <span className="font-medium">Recommendation:</span> {report.recommendation}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      {report.position && <div>Position: {report.position}</div>}
-                      {report.current_club && <div>Club: {report.current_club}</div>}
-                      {report.nationality && <div>Nationality: {report.nationality}</div>}
-                      <div>Date: {format(new Date(report.scouting_date), "MMM dd, yyyy")}</div>
-                      {report.scout_name && <div>Scout: {report.scout_name}</div>}
-                      {report.recommendation && (
-                        <div className="mt-2">
-                          <span className="font-medium">Recommendation:</span> {report.recommendation}
-                        </div>
-                      )}
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleViewReport(report.id)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleUnlink(report.id)}
+                      >
+                        <Unlink className="h-4 w-4 mr-1" />
+                        Unlink
+                      </Button>
                     </div>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleViewReport(report.id)}
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      View
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleUnlink(report.id)}
-                    >
-                      <Unlink className="h-4 w-4 mr-1" />
-                      Unlink
-                    </Button>
                   </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="mb-4">No scouting reports linked to {playerName}</p>
+              <div className="flex justify-center gap-2">
+                <Button variant="outline" onClick={handleOpenLinkDialog}>
+                  <LinkIcon className="h-4 w-4 mr-2" />
+                  Link Existing Report
+                </Button>
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create New Report
+                </Button>
               </div>
-            ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Link Existing Report Dialog */}
+      <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Link Existing Scouting Report</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search reports..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <ScrollArea className="h-[400px]">
+              {filteredUnlinkedReports.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No unlinked scouting reports available
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredUnlinkedReports.map((report) => (
+                    <div
+                      key={report.id}
+                      className="p-3 rounded-lg border border-border/50 hover:border-primary transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{report.player_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {report.position && `${report.position} • `}
+                            {report.current_club && `${report.current_club} • `}
+                            {format(new Date(report.scouting_date), "MMM dd, yyyy")}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => handleLinkReport(report.id)}
+                          disabled={linking}
+                        >
+                          <LinkIcon className="h-4 w-4 mr-1" />
+                          Link
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
           </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            <p className="mb-4">No scouting reports linked to {playerName}</p>
-            <Button
-              variant="outline"
-              onClick={() => window.open('/staff?section=recruitment&view=scouting', '_blank')}
-            >
-              <LinkIcon className="h-4 w-4 mr-2" />
-              Go to Scouting Centre to link reports
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create New Report Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Scouting Report for {playerName}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateReport}>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid grid-cols-3 w-full mb-4">
+                <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                <TabsTrigger value="skills">Skill Evaluation</TabsTrigger>
+                <TabsTrigger value="notes">Notes</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="basic" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Position</Label>
+                    <Select value={formData.position} onValueChange={handlePositionChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select position" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SCOUTING_POSITIONS.map((pos) => (
+                          <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Scouting Date *</Label>
+                    <Input
+                      type="date"
+                      value={formData.scouting_date}
+                      onChange={(e) => setFormData({ ...formData, scouting_date: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Current Club</Label>
+                    <Input
+                      value={formData.current_club}
+                      onChange={(e) => setFormData({ ...formData, current_club: e.target.value })}
+                      placeholder="Enter club name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Nationality</Label>
+                    <Input
+                      value={formData.nationality}
+                      onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
+                      placeholder="Enter nationality"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Location</Label>
+                    <Input
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      placeholder="Match location"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Competition</Label>
+                    <Input
+                      value={formData.competition}
+                      onChange={(e) => setFormData({ ...formData, competition: e.target.value })}
+                      placeholder="Competition name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Scout Name</Label>
+                    <Input
+                      value={formData.scout_name}
+                      onChange={(e) => setFormData({ ...formData, scout_name: e.target.value })}
+                      placeholder="Scout name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Video URL</Label>
+                    <Input
+                      value={formData.video_url}
+                      onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                      placeholder="Video link"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Match Context</Label>
+                  <Textarea
+                    value={formData.match_context}
+                    onChange={(e) => setFormData({ ...formData, match_context: e.target.value })}
+                    placeholder="Describe the match context..."
+                    rows={3}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="skills" className="space-y-4">
+                {formData.position && skillEvaluations.length > 0 ? (
+                  <SkillEvaluationForm
+                    skillEvaluations={skillEvaluations}
+                    onChange={setSkillEvaluations}
+                  />
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Please select a position first to evaluate skills
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="notes" className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Review / Notes</Label>
+                  <Textarea
+                    value={formData.auto_generated_review}
+                    onChange={(e) => setFormData({ ...formData, auto_generated_review: e.target.value })}
+                    placeholder="Write your assessment of the player..."
+                    rows={8}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={creating}>
+                {creating ? "Creating..." : "Create Report"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
