@@ -2984,6 +2984,42 @@ export type Database = {
         }
         Relationships: []
       }
+      site_text: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          english_text: string
+          id: string
+          page_name: string
+          section_name: string | null
+          text_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          english_text: string
+          id?: string
+          page_name: string
+          section_name?: string | null
+          text_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          english_text?: string
+          id?: string
+          page_name?: string
+          section_name?: string | null
+          text_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       site_visits: {
         Row: {
           created_at: string
