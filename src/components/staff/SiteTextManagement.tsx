@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Edit, Trash2, Search, FileText, Save, GripVertical } from "lucide-react";
+import { Plus, Edit, Trash2, Search, FileText, Save, GripVertical, Download, Copy } from "lucide-react";
 
 interface SiteText {
   id: string;
@@ -269,18 +269,34 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               <FileText className="h-6 w-6 text-primary" />
               <CardTitle>Site Text Management</CardTitle>
             </div>
-            {isAdmin && (
+            <div className="flex gap-2">
               <Button
                 onClick={() => {
-                  resetForm();
-                  setIsDialogOpen(true);
+                  const code = siteTexts.map(t => 
+                    `t("${t.text_key}", "${t.english_text.replace(/"/g, '\\"')}")`
+                  ).join('\n');
+                  navigator.clipboard.writeText(code);
+                  toast.success("Code copied to clipboard!");
                 }}
                 size="sm"
+                variant="outline"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Text
+                <Copy className="h-4 w-4 mr-2" />
+                Export Code
               </Button>
-            )}
+              {isAdmin && (
+                <Button
+                  onClick={() => {
+                    resetForm();
+                    setIsDialogOpen(true);
+                  }}
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Text
+                </Button>
+              )}
+            </div>
           </div>
           <p className="text-sm text-muted-foreground mt-2">
             Manage all English text on the site. Edit text here to update it across the site.
