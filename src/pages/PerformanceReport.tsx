@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, X } from "lucide-react";
+import { Download } from "lucide-react";
 import { toast } from "sonner";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { SEO } from "@/components/SEO";
@@ -48,7 +48,6 @@ interface AnalysisDetails {
 
 const PerformanceReport = () => {
   const { slug } = useParams();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [analysis, setAnalysis] = useState<AnalysisDetails | null>(null);
   const [actions, setActions] = useState<PerformanceAction[]>([]);
@@ -245,15 +244,6 @@ const PerformanceReport = () => {
                 <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="flex-1 md:flex-none">
                   <Download className="mr-2 h-4 w-4" />
                   Save as .webp
-                </Button>
-                <Button 
-                  onClick={() => window.history.back()} 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1 md:flex-none"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Close
                 </Button>
               </div>
             </div>
