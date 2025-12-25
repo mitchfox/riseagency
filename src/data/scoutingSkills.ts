@@ -19,7 +19,46 @@ export const SCOUTING_POSITIONS = [
 
 export type ScoutingPosition = typeof SCOUTING_POSITIONS[number];
 
-export const SKILL_GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"] as const;
+export const SKILL_GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "E+", "E", "E-", "U"] as const;
+
+// Grade to numeric value for averaging
+export const GRADE_VALUES: Record<string, number> = {
+  "A+": 16, "A": 15, "A-": 14,
+  "B+": 13, "B": 12, "B-": 11,
+  "C+": 10, "C": 9, "C-": 8,
+  "D+": 7, "D": 6, "D-": 5,
+  "E+": 4, "E": 3, "E-": 2,
+  "U": 1
+};
+
+export const VALUE_TO_GRADE: Record<number, string> = {
+  16: "A+", 15: "A", 14: "A-",
+  13: "B+", 12: "B", 11: "B-",
+  10: "C+", 9: "C", 8: "C-",
+  7: "D+", 6: "D", 5: "D-",
+  4: "E+", 3: "E", 2: "E-",
+  1: "U"
+};
+
+export const calculateOverallGrade = (evaluations: SkillEvaluation[]): string => {
+  const gradedEvaluations = evaluations.filter(e => e.grade && GRADE_VALUES[e.grade] !== undefined);
+  if (gradedEvaluations.length === 0) return "";
+  
+  const total = gradedEvaluations.reduce((sum, e) => sum + GRADE_VALUES[e.grade], 0);
+  const average = Math.round(total / gradedEvaluations.length);
+  
+  return VALUE_TO_GRADE[average] || "";
+};
+
+export const calculateDomainGrade = (evaluations: SkillEvaluation[], domain: string): string => {
+  const domainEvaluations = evaluations.filter(e => e.domain === domain && e.grade && GRADE_VALUES[e.grade] !== undefined);
+  if (domainEvaluations.length === 0) return "";
+  
+  const total = domainEvaluations.reduce((sum, e) => sum + GRADE_VALUES[e.grade], 0);
+  const average = Math.round(total / domainEvaluations.length);
+  
+  return VALUE_TO_GRADE[average] || "";
+};
 
 export const POSITION_SKILLS: Record<ScoutingPosition, SkillDefinition[]> = {
   "Goalkeeper": [

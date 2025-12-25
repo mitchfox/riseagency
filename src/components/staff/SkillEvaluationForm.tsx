@@ -6,17 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2 } from "lucide-react";
-import { SkillEvaluation, SKILL_GRADES } from "@/data/scoutingSkills";
+import { SkillEvaluation, SKILL_GRADES, calculateOverallGrade, calculateDomainGrade } from "@/data/scoutingSkills";
 
 interface SkillEvaluationFormProps {
   skillEvaluations: SkillEvaluation[];
   onChange: (evaluations: SkillEvaluation[]) => void;
+  showOverallGrade?: boolean;
 }
 
-export const SkillEvaluationForm = ({ skillEvaluations, onChange }: SkillEvaluationFormProps) => {
+export const SkillEvaluationForm = ({ skillEvaluations, onChange, showOverallGrade = true }: SkillEvaluationFormProps) => {
   const [activeNote, setActiveNote] = useState<{ skillIndex: number; note: string }>({ skillIndex: -1, note: "" });
 
-  const domains = ["Physical", "Psychological", "Technical", "Tactical"] as const;
+  // Use Psychological instead of Mental for display, but map to Mental in data
+  const domains = [
+    { key: "Physical", label: "Physical" },
+    { key: "Technical", label: "Technical" },
+    { key: "Tactical", label: "Tactical" },
+    { key: "Mental", label: "Psychological" }
+  ] as const;
 
   const updateGrade = (skillIndex: number, grade: string) => {
     const updated = [...skillEvaluations];
@@ -43,18 +50,56 @@ export const SkillEvaluationForm = ({ skillEvaluations, onChange }: SkillEvaluat
     if (grade.startsWith("A")) return "bg-green-500/20 text-green-700 border-green-500/50";
     if (grade.startsWith("B")) return "bg-blue-500/20 text-blue-700 border-blue-500/50";
     if (grade.startsWith("C")) return "bg-yellow-500/20 text-yellow-700 border-yellow-500/50";
-    return "bg-red-500/20 text-red-700 border-red-500/50";
+    if (grade.startsWith("D")) return "bg-orange-500/20 text-orange-700 border-orange-500/50";
+    if (grade.startsWith("E")) return "bg-red-400/20 text-red-600 border-red-400/50";
+    if (grade === "U") return "bg-red-600/20 text-red-800 border-red-600/50";
+    return "bg-muted text-muted-foreground border-border";
   };
+
+  const overallGrade = calculateOverallGrade(skillEvaluations);
 
   return (
     <div className="space-y-6">
-      {domains.map((domain) => {
-        const domainSkills = skillEvaluations.filter(s => s.domain === domain);
+      {/* Overall Grade Display */}
+      {showOverallGrade && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-lg">Overall Grade</h3>
+                <p className="text-sm text-muted-foreground">Auto-calculated from all attribute grades</p>
+              </div>
+              <div className="text-right">
+                {overallGrade ? (
+                  <Badge className={`text-2xl px-4 py-2 ${getGradeColor(overallGrade)}`}>
+                    {overallGrade}
+                  </Badge>
+                ) : (
+                  <span className="text-muted-foreground text-sm">Grade all attributes to see overall</span>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {domains.map(({ key, label }) => {
+        const domainSkills = skillEvaluations.filter(s => s.domain === key);
+        const domainGrade = calculateDomainGrade(skillEvaluations, key);
+        
+        if (domainSkills.length === 0) return null;
         
         return (
-          <Card key={domain} className="border-border/50">
+          <Card key={key} className="border-border/50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">{domain}</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">{label}</CardTitle>
+                {domainGrade && (
+                  <Badge variant="outline" className={getGradeColor(domainGrade)}>
+                    Domain: {domainGrade}
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {domainSkills.map((skill) => {
@@ -74,7 +119,7 @@ export const SkillEvaluationForm = ({ skillEvaluations, onChange }: SkillEvaluat
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
+                        <p className="text-xs text-muted-foreground leading-relaxed italic">
                           {skill.description}
                         </p>
                       </div>
