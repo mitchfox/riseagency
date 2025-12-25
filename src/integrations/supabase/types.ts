@@ -44,6 +44,45 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_training_materials: {
+        Row: {
+          category: string
+          content: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          external_link: string | null
+          file_url: string | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          external_link?: string | null
+          file_url?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          external_link?: string | null
+          file_url?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       analyses: {
         Row: {
           analysis_type: string
@@ -299,6 +338,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      business_documents: {
+        Row: {
+          category: string
+          content: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          external_link: string | null
+          file_url: string | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          external_link?: string | null
+          file_url?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          external_link?: string | null
+          file_url?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       club_map_positions: {
         Row: {
