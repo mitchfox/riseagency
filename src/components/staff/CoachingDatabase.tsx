@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote, LineChart, Settings, Upload } from "lucide-react";
+import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote, LineChart, Settings, Upload, Grid, List, SortAsc, FileText, ExternalLink, FolderPlus } from "lucide-react";
 import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
 import { R90RatingsManagement } from "./R90RatingsManagement";
 import { TacticalSchemes } from "./TacticalSchemes";
@@ -225,6 +225,11 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
   const [isImporting, setIsImporting] = useState(false);
   const [isR90ManagementOpen, setIsR90ManagementOpen] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, { status: 'uploading' | 'processing' | 'success' | 'error', progress: number, added?: number, error?: string }>>({});
+  const [analysisViewMode, setAnalysisViewMode] = useState<'grid' | 'list'>('grid');
+  const [analysisSortAlpha, setAnalysisSortAlpha] = useState(false);
+  const [analysisCategories, setAnalysisCategories] = useState<string[]>([]);
+  const [showAddCategoryDialog, setShowAddCategoryDialog] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   useEffect(() => {
     setCurrentPage(1);
@@ -244,6 +249,13 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
   useEffect(() => {
     fetchItems();
   }, [currentPage]);
+
+  // Refetch when analysis sort changes
+  useEffect(() => {
+    if (activeTab === 'coaching_analysis') {
+      fetchItems();
+    }
+  }, [analysisSortAlpha]);
 
   const fetchCategories = async () => {
     // Skip for aphorisms, tactical schemes, performance statistics, scheme view, and positional guides as they don't have category/tags
@@ -297,6 +309,11 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
       setMuscleGroups(Array.from(uniqueMuscleGroups).sort());
       setPositions(Array.from(uniquePositions).sort());
       setSkills(Array.from(uniqueSkills).sort());
+      
+      // Also set analysis categories if on analysis tab
+      if (activeTab === 'coaching_analysis') {
+        setAnalysisCategories(Array.from(uniqueCategories).sort());
+      }
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
@@ -316,10 +333,14 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
       // Map coaching_concepts to coaching_analysis table
       const tableName = activeTab === 'coaching_concepts' ? 'coaching_analysis' : activeTab;
       
+      // Determine sort order
+      const sortColumn = (activeTab === 'coaching_analysis' && analysisSortAlpha) ? 'title' : 'created_at';
+      const sortAscending = (activeTab === 'coaching_analysis' && analysisSortAlpha) ? true : false;
+      
       let query: any = supabase
         .from(tableName as any)
         .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false });
+        .order(sortColumn, { ascending: sortAscending });
 
       // Apply filters based on table type
       if (activeTab === 'coaching_exercises') {
@@ -348,6 +369,10 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
       } else if (activeTab === 'coaching_analysis') {
         // Analysis tab shows non-concept items
         query = query.or('analysis_type.is.null,analysis_type.neq.concept');
+        // Apply category filter for analysis
+        if (selectedCategory !== 'all') {
+          query = query.eq('category', selectedCategory);
+        }
       } else if (activeTab === 'coaching_concepts') {
         // Concepts tab shows only concept items
         query = query.eq('analysis_type', 'concept');
@@ -1217,6 +1242,59 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                     </SelectContent>
                   </Select>
                 )}
+                
+                {activeTab === 'coaching_analysis' && (
+                  <>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger className="w-full sm:w-48">
+                        <SelectValue placeholder="All Categories" />
+                      </SelectTrigger>
+                      <SelectContent className="z-50">
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {analysisCategories.map((cat) => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => setShowAddCategoryDialog(true)}
+                      title="Add Category"
+                    >
+                      <FolderPlus className="w-4 h-4" />
+                    </Button>
+                    
+                    <Button 
+                      variant={analysisSortAlpha ? "default" : "outline"}
+                      size="icon"
+                      onClick={() => setAnalysisSortAlpha(!analysisSortAlpha)}
+                      title={analysisSortAlpha ? "Sort by Date" : "Sort A-Z"}
+                    >
+                      <SortAsc className="w-4 h-4" />
+                    </Button>
+                    
+                    <div className="flex border rounded-md">
+                      <Button 
+                        variant={analysisViewMode === 'grid' ? "default" : "ghost"}
+                        size="icon"
+                        className="rounded-r-none"
+                        onClick={() => setAnalysisViewMode('grid')}
+                      >
+                        <Grid className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant={analysisViewMode === 'list' ? "default" : "ghost"}
+                        size="icon"
+                        className="rounded-l-none"
+                        onClick={() => setAnalysisViewMode('list')}
+                      >
+                        <List className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -1258,7 +1336,65 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
               </div>
             )}
 
-            {/* Items Grid */}
+            {/* Items Grid/List */}
+            {activeTab === 'coaching_analysis' && analysisViewMode === 'list' ? (
+              <div className="space-y-2">
+                {items.length === 0 ? (
+                  <Card className="border-dashed">
+                    <CardContent className="pt-12 pb-12 text-center">
+                      <config.icon className="w-12 h-12 mx-auto mb-4 text-muted-foreground/40" />
+                      <p className="text-muted-foreground mb-4">No analysis found</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  items.map((item) => (
+                    <Card key={item.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                          <div className="p-2 rounded-lg bg-cyan-500/10 flex-shrink-0">
+                            {item.content?.includes('.pdf') ? (
+                              <FileText className="w-5 h-5 text-cyan-600" />
+                            ) : (
+                              <Database className="w-5 h-5 text-cyan-600" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium truncate">{item.title}</h4>
+                            {item.description && (
+                              <p className="text-sm text-muted-foreground truncate">{item.description}</p>
+                            )}
+                          </div>
+                          {item.category && (
+                            <Badge variant="secondary" className="flex-shrink-0">{item.category}</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {item.content?.includes('http') && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => window.open(item.content!, '_blank')}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {isAdmin && (
+                            <>
+                              <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {items.length === 0 ? (
                 <div className="col-span-full">
