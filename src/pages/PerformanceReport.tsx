@@ -219,7 +219,7 @@ const PerformanceReport = () => {
               <div className="flex gap-2 print:hidden flex-wrap">
                 <Button onClick={handleSaveAsPDF} variant="default" size="sm" className="flex-1 md:flex-none">
                   <Download className="mr-2 h-4 w-4" />
-                  Save as PDF
+                  Save as .webp
                 </Button>
                 <Button 
                   onClick={() => window.history.back()} 
@@ -363,6 +363,8 @@ const PerformanceReport = () => {
                         !key.includes('_per90') &&
                         !key.toLowerCase().includes('xgchain') &&
                         !key.toLowerCase().includes('xg_chain') &&
+                        key !== 'stats_order' &&
+                        key !== 'selected_stats' &&
                         !processedKeys.has(key)
                       )
                       .map(([key, value]) => {
