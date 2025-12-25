@@ -1589,7 +1589,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                 })
               )}
             </div>
-
+            )}
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 mt-6">
@@ -1662,6 +1662,44 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         open={isR90ManagementOpen}
         onOpenChange={setIsR90ManagementOpen}
       />
+
+      {/* Add Category Dialog */}
+      <Dialog open={showAddCategoryDialog} onOpenChange={setShowAddCategoryDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Category</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-category">Category Name</Label>
+              <Input
+                id="new-category"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="Enter category name"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => {
+                setShowAddCategoryDialog(false);
+                setNewCategoryName('');
+              }}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                if (newCategoryName.trim()) {
+                  setAnalysisCategories(prev => [...prev, newCategoryName.trim()].sort());
+                  toast.success(`Category "${newCategoryName.trim()}" added`);
+                  setNewCategoryName('');
+                  setShowAddCategoryDialog(false);
+                }
+              }}>
+                Add Category
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
