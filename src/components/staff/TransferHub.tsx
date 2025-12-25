@@ -114,7 +114,7 @@ export const TransferHub = ({ isAdmin }: { isAdmin: boolean }) => {
           <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-5 gap-1 h-auto p-1 bg-muted min-w-full">
             <TabsTrigger value="outreach" className="font-medium text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
               <Building2 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Club </span>Outreach
+              Club Outreach
             </TabsTrigger>
             <TabsTrigger value="roster" className="font-medium text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
               <Users className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
@@ -122,7 +122,7 @@ export const TransferHub = ({ isAdmin }: { isAdmin: boolean }) => {
             </TabsTrigger>
             <TabsTrigger value="market" className="font-medium text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
               <TrendingUp className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Transfer </span>Status
+              Transfer Status
             </TabsTrigger>
             <TabsTrigger value="notes" className="font-medium text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
               <MessageSquare className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />

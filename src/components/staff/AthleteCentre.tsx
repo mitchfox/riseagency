@@ -134,15 +134,9 @@ export const AthleteCentre = () => {
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col gap-3 md:gap-4">
-        <div>
-          <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-            <User className="h-5 w-5 md:h-6 md:w-6" />
-            Athlete Centre
-          </h2>
-          <p className="text-sm md:text-base text-muted-foreground mt-1">
-            Comprehensive player development hub
-          </p>
-        </div>
+        <p className="text-sm md:text-base text-muted-foreground">
+          Comprehensive player development hub
+        </p>
 
         {/* Player Selector - Horizontal Scroll */}
         <ScrollArea className="w-full whitespace-nowrap">
@@ -239,7 +233,7 @@ export const AthleteCentre = () => {
                       className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm whitespace-nowrap"
                     >
                       <Calendar className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                      <span className="hidden md:inline">Long-Term </span>Plan
+                      Long-Term Plan
                     </TabsTrigger>
                   </TabsList>
                   <ScrollBar orientation="horizontal" />

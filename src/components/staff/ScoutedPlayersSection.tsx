@@ -313,7 +313,7 @@ export const ScoutedPlayersSection = () => {
                               {analysis.r90_score !== null && analysis.r90_score !== undefined && (
                                 <div 
                                   className={`${r90Color} text-white text-sm font-bold px-3 py-1 rounded cursor-pointer hover:opacity-80 transition-opacity`}
-                                  onClick={() => window.open(reportPath, '_blank')}
+                                  onClick={() => window.location.href = reportPath}
                                   title="Click to view report"
                                 >
                                   R90: {analysis.r90_score.toFixed(2)}
@@ -330,10 +330,10 @@ export const ScoutedPlayersSection = () => {
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => window.open(reportPath, '_blank')}
+                                onClick={() => window.location.href = reportPath}
                               >
                                 <ExternalLink className="h-4 w-4 mr-1" />
-                                Open Link
+                                View
                               </Button>
                             </div>
                           </div>

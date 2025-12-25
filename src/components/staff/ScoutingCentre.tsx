@@ -570,24 +570,16 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
   return (
     <>
       <div className="space-y-4 md:space-y-6">
-        <div>
-          <h2 className="text-xl md:text-2xl font-bold">Scouting Centre</h2>
-        </div>
-          
         <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as any)} className="flex-1 flex flex-col">
           <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-            <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-6 gap-1 h-auto p-1 mb-4">
+            <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-5 gap-1 h-auto p-1 mb-4">
               <TabsTrigger value="reports" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
                 <FileText className="h-3 w-3 md:h-4 md:w-4" />
                 Reports
               </TabsTrigger>
               <TabsTrigger value="scouted-players" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
                 <UserCheck className="h-3 w-3 md:h-4 md:w-4" />
-                <span className="hidden sm:inline">Scouted </span>Players
-              </TabsTrigger>
-              <TabsTrigger value="all-players" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
-                <Users className="h-3 w-3 md:h-4 md:w-4" />
-                <span className="hidden sm:inline">All </span>Reports
+                Scouted Players
               </TabsTrigger>
               <TabsTrigger value="scouts" className="gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-2 whitespace-nowrap">
                 <Target className="h-3 w-3 md:h-4 md:w-4" />
@@ -644,11 +636,10 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
                   <Card key={`fw-${idx}`} className="w-32 lg:w-40 xl:w-48 bg-card/95 backdrop-blur hover:bg-card transition-all border-2 border-white/20">
                     <CardHeader className="p-2 lg:p-3 xl:pb-2">
                       <div className="w-10 h-10 lg:w-12 lg:h-12 xl:w-16 xl:h-16 mx-auto mb-1 lg:mb-2 rounded-lg overflow-hidden border-2 border-primary">
-                        <img src={item.img} alt={item.player} className="w-full h-full object-cover" />
+                        <img src={item.img} alt={item.label} className="w-full h-full object-cover" />
                       </div>
                       <CardTitle className="text-xs lg:text-sm text-center font-bold">{item.label}</CardTitle>
                       <p className="text-[10px] lg:text-xs text-muted-foreground text-center leading-tight">{item.pos}</p>
-                      <p className="text-[10px] lg:text-xs text-primary font-semibold text-center mt-0.5 lg:mt-1">{item.player}</p>
                     </CardHeader>
                     <CardContent className="space-y-1 p-2 lg:p-3 pt-0">
                       <Button variant="outline" size="sm" className="w-full h-6 lg:h-7 text-[10px] lg:text-xs" onClick={() => handleViewPositionAnalysis(item.pos as ScoutingPosition)}>
@@ -674,11 +665,10 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
                   <Card key={`mid-${idx}`} className="w-32 lg:w-40 xl:w-48 bg-card/95 backdrop-blur hover:bg-card transition-all border-2 border-white/20">
                     <CardHeader className="p-2 lg:p-3 xl:pb-2">
                       <div className="w-10 h-10 lg:w-12 lg:h-12 xl:w-16 xl:h-16 mx-auto mb-1 lg:mb-2 rounded-lg overflow-hidden border-2 border-primary">
-                        <img src={item.img} alt={item.player} className="w-full h-full object-cover" />
+                        <img src={item.img} alt={item.label} className="w-full h-full object-cover" />
                       </div>
                       <CardTitle className="text-xs lg:text-sm text-center font-bold">{item.label}</CardTitle>
                       <p className="text-[10px] lg:text-xs text-muted-foreground text-center leading-tight">{item.pos}</p>
-                      <p className="text-[10px] lg:text-xs text-primary font-semibold text-center mt-0.5 lg:mt-1">{item.player}</p>
                     </CardHeader>
                     <CardContent className="space-y-1 p-2 lg:p-3 pt-0">
                       <Button variant="outline" size="sm" className="w-full h-6 lg:h-7 text-[10px] lg:text-xs" onClick={() => handleViewPositionAnalysis(item.pos as ScoutingPosition)}>
@@ -700,11 +690,10 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
                 <Card className="w-32 lg:w-40 xl:w-48 bg-card/95 backdrop-blur hover:bg-card transition-all border-2 border-white/20">
                   <CardHeader className="p-2 lg:p-3 xl:pb-2">
                     <div className="w-10 h-10 lg:w-12 lg:h-12 xl:w-16 xl:h-16 mx-auto mb-1 lg:mb-2 rounded-lg overflow-hidden border-2 border-primary">
-                      <img src={kante} alt="Kanté" className="w-full h-full object-cover" />
+                      <img src={kante} alt="CDM" className="w-full h-full object-cover" />
                     </div>
                     <CardTitle className="text-xs lg:text-sm text-center font-bold">CDM</CardTitle>
                     <p className="text-[10px] lg:text-xs text-muted-foreground text-center leading-tight">Central Defensive Midfielder</p>
-                    <p className="text-[10px] lg:text-xs text-primary font-semibold text-center mt-0.5 lg:mt-1">Kanté</p>
                   </CardHeader>
                   <CardContent className="space-y-1 p-2 lg:p-3 pt-0">
                     <Button variant="outline" size="sm" className="w-full h-6 lg:h-7 text-[10px] lg:text-xs" onClick={() => handleViewPositionAnalysis("Central Defensive Midfielder")}>
@@ -731,11 +720,10 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
                   <Card key={`def-${idx}`} className="w-28 lg:w-36 xl:w-44 bg-card/95 backdrop-blur hover:bg-card transition-all border-2 border-white/20">
                     <CardHeader className="p-2 lg:p-2">
                       <div className="w-8 h-8 lg:w-10 lg:h-10 xl:w-14 xl:h-14 mx-auto mb-1 lg:mb-2 rounded-lg overflow-hidden border-2 border-primary">
-                        <img src={item.img} alt={item.player} className="w-full h-full object-cover" />
+                        <img src={item.img} alt={item.label} className="w-full h-full object-cover" />
                       </div>
                       <CardTitle className="text-[10px] lg:text-xs text-center font-bold">{item.label}</CardTitle>
                       <p className="text-[9px] lg:text-[10px] text-muted-foreground text-center leading-tight">{item.pos}</p>
-                      <p className="text-[9px] lg:text-[10px] text-primary font-semibold text-center mt-0.5">{item.player}</p>
                     </CardHeader>
                     <CardContent className="space-y-1 p-2 pt-0">
                       <Button variant="outline" size="sm" className="w-full h-5 lg:h-6 xl:h-7 text-[9px] lg:text-[10px] xl:text-xs" onClick={() => handleViewPositionAnalysis(item.pos as ScoutingPosition)}>
@@ -757,11 +745,10 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
                 <Card className="w-32 lg:w-40 xl:w-48 bg-card/95 backdrop-blur hover:bg-card transition-all border-2 border-white/20">
                   <CardHeader className="p-2 lg:p-3 xl:pb-2">
                     <div className="w-10 h-10 lg:w-12 lg:h-12 xl:w-16 xl:h-16 mx-auto mb-1 lg:mb-2 rounded-lg overflow-hidden border-2 border-primary">
-                      <img src={buffon} alt="Buffon" className="w-full h-full object-cover" />
+                      <img src={buffon} alt="GK" className="w-full h-full object-cover" />
                     </div>
                     <CardTitle className="text-xs lg:text-sm text-center font-bold">GK</CardTitle>
                     <p className="text-[10px] lg:text-xs text-muted-foreground text-center leading-tight">Goalkeeper</p>
-                    <p className="text-[10px] lg:text-xs text-primary font-semibold text-center mt-0.5 lg:mt-1">Buffon</p>
                   </CardHeader>
                   <CardContent className="space-y-1 p-2 lg:p-3 pt-0">
                     <Button variant="outline" size="sm" className="w-full h-6 lg:h-7 text-[10px] lg:text-xs" onClick={() => handleViewPositionAnalysis("Goalkeeper")}>
