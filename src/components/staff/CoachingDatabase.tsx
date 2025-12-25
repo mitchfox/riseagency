@@ -836,7 +836,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
           title: file.name.replace('.pdf', ''),
           description: `Uploaded PDF: ${file.name}`,
           content: urlData.publicUrl,
-          category: 'PDF Document',
+          category: 'Uncategorized',
         });
 
         if (dbError) throw dbError;
