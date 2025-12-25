@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Eye, Link as LinkIcon, Unlink, Plus, Search } from "lucide-react";
 import { format } from "date-fns";
@@ -13,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SkillEvaluationForm } from "./SkillEvaluationForm";
-import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, ScoutingPosition } from "@/data/scoutingSkills";
+import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, ScoutingPosition, calculateOverallGrade, calculateDomainGrade } from "@/data/scoutingSkills";
 
 interface ScoutingReport {
   id: string;
@@ -27,12 +28,34 @@ interface ScoutingReport {
   status: string;
   recommendation: string | null;
   scout_name: string | null;
+  skill_evaluations?: any;
+  auto_generated_review?: string | null;
 }
 
 interface PlayerScoutingManagementProps {
   playerId: string;
   playerName: string;
 }
+
+// Generate month options
+const MONTHS = [
+  { value: "01", label: "January" },
+  { value: "02", label: "February" },
+  { value: "03", label: "March" },
+  { value: "04", label: "April" },
+  { value: "05", label: "May" },
+  { value: "06", label: "June" },
+  { value: "07", label: "July" },
+  { value: "08", label: "August" },
+  { value: "09", label: "September" },
+  { value: "10", label: "October" },
+  { value: "11", label: "November" },
+  { value: "12", label: "December" },
+];
+
+// Generate year options (current year and 5 years back)
+const currentYear = new Date().getFullYear();
+const YEARS = Array.from({ length: 6 }, (_, i) => (currentYear - i).toString());
 
 export const PlayerScoutingManagement = ({ playerId, playerName }: PlayerScoutingManagementProps) => {
   const [scoutingReports, setScoutingReports] = useState<ScoutingReport[]>([]);
@@ -47,7 +70,8 @@ export const PlayerScoutingManagement = ({ playerId, playerName }: PlayerScoutin
   const [skillEvaluations, setSkillEvaluations] = useState<SkillEvaluation[]>([]);
   const [formData, setFormData] = useState({
     position: "",
-    scouting_date: format(new Date(), "yyyy-MM-dd"),
+    scouting_month: format(new Date(), "MM"),
+    scouting_year: format(new Date(), "yyyy"),
     current_club: "",
     nationality: "",
     location: "",
@@ -153,10 +177,13 @@ export const PlayerScoutingManagement = ({ playerId, playerName }: PlayerScoutin
   const handleCreateReport = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.scouting_date) {
-      toast.error("Scouting date is required");
+    if (!formData.scouting_month || !formData.scouting_year) {
+      toast.error("Scouting month and year are required");
       return;
     }
+
+    // Create date from month/year (use 1st of the month)
+    const scoutingDate = `${formData.scouting_year}-${formData.scouting_month}-01`;
 
     setCreating(true);
     try {
@@ -165,7 +192,7 @@ export const PlayerScoutingManagement = ({ playerId, playerName }: PlayerScoutin
         position: formData.position || null,
         current_club: formData.current_club || null,
         nationality: formData.nationality || null,
-        scouting_date: formData.scouting_date,
+        scouting_date: scoutingDate,
         location: formData.location || null,
         competition: formData.competition || null,
         match_context: formData.match_context || null,
@@ -198,7 +225,8 @@ export const PlayerScoutingManagement = ({ playerId, playerName }: PlayerScoutin
   const resetForm = () => {
     setFormData({
       position: "",
-      scouting_date: format(new Date(), "yyyy-MM-dd"),
+      scouting_month: format(new Date(), "MM"),
+      scouting_year: format(new Date(), "yyyy"),
       current_club: "",
       nationality: "",
       location: "",
@@ -396,13 +424,30 @@ export const PlayerScoutingManagement = ({ playerId, playerName }: PlayerScoutin
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Scouting Date *</Label>
-                    <Input
-                      type="date"
-                      value={formData.scouting_date}
-                      onChange={(e) => setFormData({ ...formData, scouting_date: e.target.value })}
-                      required
-                    />
+                    <Label>Month *</Label>
+                    <Select value={formData.scouting_month} onValueChange={(value) => setFormData({ ...formData, scouting_month: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select month" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MONTHS.map((month) => (
+                          <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Year *</Label>
+                    <Select value={formData.scouting_year} onValueChange={(value) => setFormData({ ...formData, scouting_year: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {YEARS.map((year) => (
+                          <SelectItem key={year} value={year}>{year}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Current Club</Label>
