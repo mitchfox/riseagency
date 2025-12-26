@@ -6,6 +6,76 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Map of common club countries for phone number formatting
+const clubCountryCodes: Record<string, string> = {
+  // UK
+  "arsenal": "+44", "chelsea": "+44", "manchester united": "+44", "manchester city": "+44",
+  "liverpool": "+44", "tottenham": "+44", "west ham": "+44", "newcastle": "+44",
+  "brighton": "+44", "aston villa": "+44", "everton": "+44", "fulham": "+44",
+  "crystal palace": "+44", "wolves": "+44", "leicester": "+44", "leeds": "+44",
+  "nottingham forest": "+44", "bournemouth": "+44", "brentford": "+44",
+  // Spain
+  "barcelona": "+34", "real madrid": "+34", "atletico madrid": "+34", "sevilla": "+34",
+  "valencia": "+34", "villarreal": "+34", "real sociedad": "+34", "athletic bilbao": "+34",
+  // Germany
+  "bayern munich": "+49", "borussia dortmund": "+49", "rb leipzig": "+49", "bayer leverkusen": "+49",
+  // Italy
+  "juventus": "+39", "ac milan": "+39", "inter milan": "+39", "roma": "+39", "napoli": "+39", "lazio": "+39",
+  // France
+  "psg": "+33", "paris saint-germain": "+33", "marseille": "+33", "lyon": "+33", "monaco": "+33",
+  // Portugal
+  "benfica": "+351", "porto": "+351", "sporting": "+351",
+  // Netherlands
+  "ajax": "+31", "psv": "+31", "feyenoord": "+31",
+  // Belgium
+  "club brugge": "+32", "anderlecht": "+32",
+  // Turkey
+  "galatasaray": "+90", "fenerbahce": "+90", "besiktas": "+90",
+  // Russia
+  "spartak moscow": "+7", "cska moscow": "+7", "zenit": "+7",
+  // USA
+  "la galaxy": "+1", "inter miami": "+1",
+  // Brazil
+  "flamengo": "+55", "palmeiras": "+55", "santos": "+55", "sao paulo": "+55",
+  // Argentina
+  "boca juniors": "+54", "river plate": "+54",
+};
+
+async function getLocationFromIP(request: Request): Promise<{ city?: string; region?: string; country?: string; ip?: string }> {
+  try {
+    // Get client IP from headers
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const realIP = request.headers.get("x-real-ip");
+    const cfConnectingIP = request.headers.get("cf-connecting-ip");
+    
+    const clientIP = cfConnectingIP || (forwardedFor ? forwardedFor.split(",")[0].trim() : realIP) || "";
+    
+    if (!clientIP || clientIP === "127.0.0.1" || clientIP.startsWith("192.168.") || clientIP.startsWith("10.")) {
+      return { ip: clientIP };
+    }
+
+    // Use ip-api.com free tier (no API key needed, 45 requests per minute)
+    const response = await fetch(`http://ip-api.com/json/${clientIP}?fields=status,city,regionName,country`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.status === "success") {
+        return {
+          city: data.city || undefined,
+          region: data.regionName || undefined,
+          country: data.country || undefined,
+          ip: clientIP,
+        };
+      }
+    }
+    
+    return { ip: clientIP };
+  } catch (error) {
+    console.error("Error getting location from IP:", error);
+    return {};
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -21,6 +91,9 @@ serve(async (req) => {
     const userAgent = req.headers.get("user-agent") || "unknown";
 
     if (isInitial) {
+      // Get location from IP
+      const location = await getLocationFromIP(req);
+      
       // Create new visit record
       const { data, error } = await supabase
         .from("site_visits")
@@ -28,7 +101,7 @@ serve(async (req) => {
           visitor_id: visitorId,
           page_path: pagePath,
           duration: 0,
-          location: {},
+          location: location,
           user_agent: userAgent,
           referrer: referrer || null,
         })
