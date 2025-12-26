@@ -157,7 +157,7 @@ const Agents = () => {
         </section>
 
         {/* Why Partner Section */}
-        <section className="py-16 md:py-24 px-4 relative">
+        <section className="py-8 md:py-12 px-4 relative">
           <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/30 to-background" />
           
           <div className="container mx-auto relative z-10">
@@ -253,7 +253,7 @@ const Agents = () => {
         </section>
 
         {/* Process Section */}
-        <section className="py-16 md:py-24 px-4 relative bg-muted/20">
+        <section className="py-8 md:py-12 px-4 relative bg-muted/20">
           <div className="container mx-auto">
             <div className="text-center mb-12">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-4">
@@ -292,7 +292,7 @@ const Agents = () => {
         </section>
 
         {/* Collaboration Types Section */}
-        <section className="py-16 md:py-24 px-4 relative">
+        <section className="py-8 md:py-12 px-4 relative">
           <div className="container mx-auto">
             <div className="text-center mb-12">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-4">
@@ -425,7 +425,7 @@ const Agents = () => {
         </section>
 
         {/* FAQ Section */}
-        <section className="py-16 md:py-24 px-4 relative bg-muted/20">
+        <section className="py-8 md:py-12 px-4 relative bg-muted/20">
           <div className="container mx-auto max-w-4xl">
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">

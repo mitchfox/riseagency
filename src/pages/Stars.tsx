@@ -155,7 +155,7 @@ const Stars = () => {
       
       <main className="pt-16">
         {/* Hero Section */}
-        <section className="relative py-16 md:py-24 px-4 overflow-hidden">
+        <section className="relative py-8 md:py-12 px-4 overflow-hidden">
           {/* Background accent */}
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
@@ -252,7 +252,7 @@ const Stars = () => {
         </section>
 
         {/* Player Grid Section */}
-        <section className="px-4 pb-16">
+        <section className="px-4 pb-8">
           <div className="container mx-auto">
             {/* Controls Bar */}
             <div className="flex items-center justify-between border-y border-border py-4 mb-8">

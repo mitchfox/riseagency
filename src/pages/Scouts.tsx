@@ -342,7 +342,7 @@ const Scouts = () => {
         </section>
 
         {/* Scouting Database Section */}
-        <section className="py-10 md:py-16 px-4 relative overflow-hidden">
+        <section className="py-5 md:py-8 px-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/30 to-background" />
           
           <div className="container mx-auto relative z-10">
@@ -416,7 +416,7 @@ const Scouts = () => {
         </section>
 
         {/* European Coverage Section */}
-        <section className="py-10 md:py-16 px-4 relative overflow-hidden">
+        <section className="py-5 md:py-8 px-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-background via-primary/10 to-background" />
           
           <div className="container mx-auto relative z-10">
@@ -504,7 +504,7 @@ const Scouts = () => {
         </section>
 
         {/* Incentive Structure Section */}
-        <section className="py-10 md:py-16 px-4 relative overflow-hidden">
+        <section className="py-5 md:py-8 px-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-primary/5" />
           
           <div className="container mx-auto max-w-6xl relative z-10">
@@ -638,7 +638,7 @@ const Scouts = () => {
         </section>
 
         {/* Hero Section - Scout With RISE */}
-        <section className="relative min-h-[45vh] flex items-center justify-center overflow-hidden py-10 md:py-16">
+        <section className="relative min-h-[45vh] flex items-center justify-center overflow-hidden py-5 md:py-8">
           <div className="absolute inset-0 bg-gradient-to-br from-background via-primary/10 to-background" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
           
@@ -685,7 +685,7 @@ const Scouts = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-10 md:py-16 relative overflow-hidden">
+        <section className="py-5 md:py-8 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-background via-primary/10 to-background" />
           
           <div className="container mx-auto px-4 text-center relative z-10">

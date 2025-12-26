@@ -340,7 +340,7 @@ const Business = () => {
         </section>
 
         {/* Stats Section */}
-        <section className="py-16 md:py-24 border-t border-border/30">
+        <section className="py-8 md:py-12 border-t border-border/30">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
               {stats.map((stat, index) => (
@@ -354,7 +354,7 @@ const Business = () => {
         </section>
 
         {/* How We Collaborate Section */}
-        <section className="py-16 md:py-24 bg-muted/20">
+        <section className="py-8 md:py-12 bg-muted/20">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center mb-16">
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-6">
@@ -400,7 +400,7 @@ const Business = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 md:py-32 relative overflow-hidden">
+        <section className="py-10 md:py-16 relative overflow-hidden">
           {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
           
