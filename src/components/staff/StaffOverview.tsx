@@ -116,9 +116,12 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [visibleWidgets, setVisibleWidgets] = useState<string[]>([]);
   const [layouts, setLayouts] = useState<WidgetLayout[]>(DEFAULT_LAYOUTS);
+  const [savedLayouts, setSavedLayouts] = useState<WidgetLayout[]>(DEFAULT_LAYOUTS);
+  const [savedVisibleWidgets, setSavedVisibleWidgets] = useState<string[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [newTaskInput, setNewTaskInput] = useState("");
   const [scheduleFullscreen, setScheduleFullscreen] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const isMobile = useIsMobile();
 
   // Widget data hooks
@@ -147,24 +150,57 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed.visibleWidgets) setVisibleWidgets(parsed.visibleWidgets);
-        if (parsed.layouts) setLayouts(parsed.layouts);
+        if (parsed.visibleWidgets) {
+          setVisibleWidgets(parsed.visibleWidgets);
+          setSavedVisibleWidgets(parsed.visibleWidgets);
+        }
+        if (parsed.layouts) {
+          setLayouts(parsed.layouts);
+          setSavedLayouts(parsed.layouts);
+        }
       } catch {
-        setVisibleWidgets(WIDGET_CONFIGS.filter(w => w.defaultVisible).map(w => w.id));
+        const defaults = WIDGET_CONFIGS.filter(w => w.defaultVisible).map(w => w.id);
+        setVisibleWidgets(defaults);
+        setSavedVisibleWidgets(defaults);
         setLayouts(DEFAULT_LAYOUTS);
+        setSavedLayouts(DEFAULT_LAYOUTS);
       }
     } else {
-      setVisibleWidgets(WIDGET_CONFIGS.filter(w => w.defaultVisible).map(w => w.id));
+      const defaults = WIDGET_CONFIGS.filter(w => w.defaultVisible).map(w => w.id);
+      setVisibleWidgets(defaults);
+      setSavedVisibleWidgets(defaults);
       setLayouts(DEFAULT_LAYOUTS);
+      setSavedLayouts(DEFAULT_LAYOUTS);
     }
   }, [userId]);
 
-  // Save settings to localStorage
-  const saveSettings = (newVisibleWidgets: string[], newLayouts: WidgetLayout[]) => {
-    const storageKey = userId ? `staff_overview_settings_${userId}` : 'staff_overview_settings';
-    localStorage.setItem(storageKey, JSON.stringify({ visibleWidgets: newVisibleWidgets, layouts: newLayouts }));
+  // Check for unsaved changes
+  useEffect(() => {
+    const layoutsChanged = JSON.stringify(layouts) !== JSON.stringify(savedLayouts);
+    const widgetsChanged = JSON.stringify(visibleWidgets.sort()) !== JSON.stringify([...savedVisibleWidgets].sort());
+    setHasUnsavedChanges(layoutsChanged || widgetsChanged);
+  }, [layouts, savedLayouts, visibleWidgets, savedVisibleWidgets]);
+
+  // Save settings to localStorage (only updates local state, doesn't persist)
+  const updateLayoutState = (newVisibleWidgets: string[], newLayouts: WidgetLayout[]) => {
     setVisibleWidgets(newVisibleWidgets);
     setLayouts(newLayouts);
+  };
+
+  // Persist changes to localStorage
+  const confirmSaveChanges = () => {
+    const storageKey = userId ? `staff_overview_settings_${userId}` : 'staff_overview_settings';
+    localStorage.setItem(storageKey, JSON.stringify({ visibleWidgets, layouts }));
+    setSavedLayouts(layouts);
+    setSavedVisibleWidgets(visibleWidgets);
+    setHasUnsavedChanges(false);
+  };
+
+  // Discard changes
+  const discardChanges = () => {
+    setLayouts(savedLayouts);
+    setVisibleWidgets(savedVisibleWidgets);
+    setHasUnsavedChanges(false);
   };
 
   const toggleWidgetVisibility = (widgetId: string) => {
@@ -182,12 +218,17 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
       }
     }
     
-    saveSettings(newWidgets, newLayouts);
+    updateLayoutState(newWidgets, newLayouts);
   };
 
   const resetToDefaults = () => {
     const defaults = WIDGET_CONFIGS.filter(w => w.defaultVisible).map(w => w.id);
-    saveSettings(defaults, DEFAULT_LAYOUTS);
+    updateLayoutState(defaults, DEFAULT_LAYOUTS);
+    // Also persist immediately when resetting
+    const storageKey = userId ? `staff_overview_settings_${userId}` : 'staff_overview_settings';
+    localStorage.setItem(storageKey, JSON.stringify({ visibleWidgets: defaults, layouts: DEFAULT_LAYOUTS }));
+    setSavedLayouts(DEFAULT_LAYOUTS);
+    setSavedVisibleWidgets(defaults);
   };
 
   const handleResize = (widgetId: string, newWidthPercent: number, newHeightPx: number) => {
@@ -202,7 +243,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
       const newLayouts = layouts.map(l => 
         l.id === widgetId ? { ...l, widthPercent: 100, heightPx: newHeightPx } : l
       );
-      saveSettings(visibleWidgets, newLayouts);
+      updateLayoutState(visibleWidgets, newLayouts);
       return;
     }
     
@@ -230,7 +271,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
       return l;
     });
 
-    saveSettings(visibleWidgets, newLayouts);
+    updateLayoutState(visibleWidgets, newLayouts);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -286,7 +327,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
         row: rowMapping.get(l.row) ?? l.row
       }));
 
-      saveSettings(visibleWidgets, newLayouts);
+      updateLayoutState(visibleWidgets, newLayouts);
       return;
     }
 
@@ -349,7 +390,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
       row: rowMapping.get(l.row) ?? l.row
     }));
 
-    saveSettings(visibleWidgets, newLayouts);
+    updateLayoutState(visibleWidgets, newLayouts);
   };
 
   useEffect(() => {
@@ -1098,8 +1139,35 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
 
   return (
     <div className="relative">
+      {/* Unsaved Changes Banner */}
+      {hasUnsavedChanges && (
+        <div className="absolute -top-14 md:-top-16 left-0 right-0 z-20 flex items-center justify-between gap-3 px-4 py-2 bg-amber-500/20 border border-amber-500/40 rounded-lg backdrop-blur-sm">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <Layers className="h-4 w-4" />
+            <span className="text-sm font-medium">Layout changes not saved</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={discardChanges}
+              className="h-7 text-xs text-muted-foreground hover:text-foreground"
+            >
+              Discard
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={confirmSaveChanges}
+              className="h-7 text-xs bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              Save Changes
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Preferences Button */}
-      <div className="absolute -top-10 md:-top-12 right-0 z-10">
+      <div className={`absolute ${hasUnsavedChanges ? '-top-4 md:-top-4' : '-top-10 md:-top-12'} right-0 z-10 transition-all`}>
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3">

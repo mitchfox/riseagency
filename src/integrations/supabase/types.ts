@@ -566,6 +566,36 @@ export type Database = {
           },
         ]
       }
+      club_ratings: {
+        Row: {
+          academy_rating: string
+          club_name: string
+          country: string
+          created_at: string
+          first_team_rating: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          academy_rating?: string
+          club_name: string
+          country: string
+          created_at?: string
+          first_team_rating?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          academy_rating?: string
+          club_name?: string
+          country?: string
+          created_at?: string
+          first_team_rating?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coaching_analysis: {
         Row: {
           analysis_type: string | null
