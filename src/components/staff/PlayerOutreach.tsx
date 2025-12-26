@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -7,12 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Edit, Users, Save, MessageCircle } from "lucide-react";
+import { Plus, Edit, Users, Save, MessageCircle, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Helper to format Instagram handle
 const formatIgHandle = (handle: string | null) => {
@@ -37,6 +38,90 @@ const InstagramIconLink = ({ handle }: { handle: string | null }) => {
     >
       <MessageCircle className="h-4 w-4" />
     </a>
+  );
+};
+
+// Club rating interface
+interface ClubRating {
+  club_name: string;
+  first_team_rating: string;
+  academy_rating: string;
+}
+
+// Normalize club name for matching
+const normalizeClubName = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/[''`]/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/^(fc|sc|ac|as|ss|us|usl|afc|rfc|fk|nk|sk|bv|sv|tsv|vfb|vfl|1\.|)\s+/i, '')
+    .replace(/\s+(fc|sc|ac|cf|city|united|athletic|athletico|atletico|rovers|wanderers|town|utd|1861|1892|1893|1899|1904|1906|1907|1909|1911|1919|1920|1948|1961|1991|1995|04|05|09)$/i, '')
+    .replace(/[^a-z0-9]/g, '')
+    .trim();
+};
+
+// Find matching club rating with fuzzy matching
+const findClubRating = (clubName: string | null, ratings: ClubRating[], isYouth: boolean): string | null => {
+  if (!clubName || ratings.length === 0) return null;
+  
+  const normalizedSearch = normalizeClubName(clubName);
+  if (!normalizedSearch) return null;
+  
+  // First try exact normalized match
+  for (const rating of ratings) {
+    const normalizedClub = normalizeClubName(rating.club_name);
+    if (normalizedClub === normalizedSearch) {
+      return isYouth ? rating.academy_rating : rating.first_team_rating;
+    }
+  }
+  
+  // Then try contains match (either direction)
+  for (const rating of ratings) {
+    const normalizedClub = normalizeClubName(rating.club_name);
+    if (normalizedClub.includes(normalizedSearch) || normalizedSearch.includes(normalizedClub)) {
+      return isYouth ? rating.academy_rating : rating.first_team_rating;
+    }
+  }
+  
+  // Try matching by significant words (at least 4 chars)
+  const searchWords = normalizedSearch.match(/[a-z]{4,}/g) || [];
+  for (const rating of ratings) {
+    const normalizedClub = normalizeClubName(rating.club_name);
+    for (const word of searchWords) {
+      if (normalizedClub.includes(word)) {
+        return isYouth ? rating.academy_rating : rating.first_team_rating;
+      }
+    }
+  }
+  
+  return null;
+};
+
+// Rating badge component
+const ClubRatingBadge = ({ rating }: { rating: string | null }) => {
+  if (!rating) return null;
+  
+  const colorMap: Record<string, string> = {
+    'R1': 'bg-emerald-500/20 text-emerald-600 border-emerald-500/30',
+    'R2': 'bg-green-500/20 text-green-600 border-green-500/30',
+    'R3': 'bg-amber-500/20 text-amber-600 border-amber-500/30',
+    'R4': 'bg-orange-500/20 text-orange-600 border-orange-500/30',
+    'R5': 'bg-red-500/20 text-red-600 border-red-500/30',
+  };
+  
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="outline" className={`text-[10px] px-1 py-0 ml-1 ${colorMap[rating] || ''}`}>
+            {rating}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Club Rating: {rating}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
@@ -71,6 +156,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   const [activeTab, setActiveTab] = useState("youth");
   const [youthData, setYouthData] = useState<YouthOutreach[]>([]);
   const [proData, setProData] = useState<ProOutreach[]>([]);
+  const [clubRatings, setClubRatings] = useState<ClubRating[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<YouthOutreach | ProOutreach | null>(null);
@@ -107,9 +193,10 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const fetchData = async () => {
     try {
-      const [youthResult, proResult] = await Promise.all([
+      const [youthResult, proResult, ratingsResult] = await Promise.all([
         supabase.from("player_outreach_youth").select("*").order("created_at", { ascending: false }),
-        supabase.from("player_outreach_pro").select("*").order("created_at", { ascending: false })
+        supabase.from("player_outreach_pro").select("*").order("created_at", { ascending: false }),
+        supabase.from("club_ratings").select("club_name, first_team_rating, academy_rating")
       ]);
 
       if (youthResult.error) throw youthResult.error;
@@ -117,6 +204,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
 
       setYouthData(youthResult.data || []);
       setProData(proResult.data || []);
+      setClubRatings(ratingsResult.data || []);
     } catch (error: any) {
       console.error("Error fetching outreach data:", error);
       toast.error("Failed to load data");
@@ -392,7 +480,12 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                   <TableRow key={item.id}>
                     <TableCell className="bg-muted/30 font-bold">{item.player_name}</TableCell>
                     <TableCell className="text-center"><InstagramIconLink handle={item.ig_handle} /></TableCell>
-                    <TableCell>{item.current_club || "-"}</TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center">
+                        {item.current_club || "-"}
+                        <ClubRatingBadge rating={findClubRating(item.current_club, clubRatings, true)} />
+                      </span>
+                    </TableCell>
                     <TableCell>{item.parents_name || "-"}</TableCell>
                     <TableCell className="text-center"><InstagramIconLink handle={item.parent_contact} /></TableCell>
                     <TableCell className="text-center">
@@ -449,7 +542,12 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                 <div className="flex justify-between items-start">
                   <div className="bg-muted/30 px-2 py-1 rounded">
                     <h3 className="font-bold text-base">{item.player_name}</h3>
-                    {item.current_club && <p className="text-xs text-muted-foreground">{item.current_club}</p>}
+                    {item.current_club && (
+                      <p className="text-xs text-muted-foreground inline-flex items-center">
+                        {item.current_club}
+                        <ClubRatingBadge rating={findClubRating(item.current_club, clubRatings, true)} />
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     {item.ig_handle && <InstagramIconLink handle={item.ig_handle} />}
@@ -535,7 +633,12 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                   <TableRow key={item.id}>
                     <TableCell className="bg-muted/30 font-bold">{item.player_name}</TableCell>
                     <TableCell className="text-center"><InstagramIconLink handle={item.ig_handle} /></TableCell>
-                    <TableCell>{item.current_club || "-"}</TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center">
+                        {item.current_club || "-"}
+                        <ClubRatingBadge rating={findClubRating(item.current_club, clubRatings, false)} />
+                      </span>
+                    </TableCell>
                     <TableCell className="text-center">
                       {canEdit ? (
                         <Checkbox
@@ -580,7 +683,12 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                 <div className="flex justify-between items-start">
                   <div className="bg-muted/30 px-2 py-1 rounded">
                     <h3 className="font-bold text-base">{item.player_name}</h3>
-                    {item.current_club && <p className="text-xs text-muted-foreground">{item.current_club}</p>}
+                    {item.current_club && (
+                      <p className="text-xs text-muted-foreground inline-flex items-center">
+                        {item.current_club}
+                        <ClubRatingBadge rating={findClubRating(item.current_club, clubRatings, false)} />
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     {item.ig_handle && <InstagramIconLink handle={item.ig_handle} />}
