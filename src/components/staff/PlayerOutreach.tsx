@@ -14,16 +14,16 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 
-// Helper to format Instagram handle and create DM link
+// Helper to format Instagram handle
 const formatIgHandle = (handle: string | null) => {
   if (!handle) return null;
-  // Remove @ if present
   const cleanHandle = handle.replace(/^@/, '').trim();
   if (!cleanHandle) return null;
   return cleanHandle;
 };
 
-const InstagramDMLink = ({ handle }: { handle: string | null }) => {
+// Icon-only Instagram link for tables
+const InstagramIconLink = ({ handle }: { handle: string | null }) => {
   const cleanHandle = formatIgHandle(handle);
   if (!cleanHandle) return <span className="text-muted-foreground">-</span>;
   
@@ -32,10 +32,10 @@ const InstagramDMLink = ({ handle }: { handle: string | null }) => {
       href={`https://instagram.com/${cleanHandle}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-primary hover:underline"
+      className="inline-flex items-center justify-center text-primary hover:text-primary/80"
+      title={`@${cleanHandle}`}
     >
-      <MessageCircle className="h-3.5 w-3.5" />
-      @{cleanHandle}
+      <MessageCircle className="h-4 w-4" />
     </a>
   );
 };
@@ -44,6 +44,7 @@ interface YouthOutreach {
   id: string;
   player_name: string;
   ig_handle: string | null;
+  current_club: string | null;
   messaged: boolean;
   response_received: boolean;
   parents_name: string | null;
@@ -57,6 +58,7 @@ interface ProOutreach {
   id: string;
   player_name: string;
   ig_handle: string | null;
+  current_club: string | null;
   messaged: boolean;
   response_received: boolean;
   initial_message: string | null;
@@ -74,6 +76,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   const [youthFormData, setYouthFormData] = useState({
     player_name: "",
     ig_handle: "",
+    current_club: "",
     messaged: false,
     response_received: false,
     parents_name: "",
@@ -85,13 +88,13 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   const [proFormData, setProFormData] = useState({
     player_name: "",
     ig_handle: "",
+    current_club: "",
     messaged: false,
     response_received: false,
     initial_message: "",
     notes: ""
   });
 
-  // Staff can also edit (not just admins)
   const canEdit = true;
 
   useEffect(() => {
@@ -129,13 +132,11 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
         if (error) throw error;
         toast.success("Youth outreach updated");
       } else {
-        // Insert into player_outreach_youth
         const { error: outreachError } = await supabase
           .from("player_outreach_youth")
           .insert([youthFormData]);
         if (outreachError) throw outreachError;
         
-        // Also add to scouting_reports
         const { error: scoutingError } = await supabase
           .from("scouting_reports")
           .insert([{
@@ -167,13 +168,11 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
         if (error) throw error;
         toast.success("Pro outreach updated");
       } else {
-        // Insert into player_outreach_pro
         const { error: outreachError } = await supabase
           .from("player_outreach_pro")
           .insert([proFormData]);
         if (outreachError) throw outreachError;
         
-        // Also add to scouting_reports
         const { error: scoutingError } = await supabase
           .from("scouting_reports")
           .insert([{
@@ -196,7 +195,6 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const handleSaveAll = async () => {
     try {
-      // Save all youth changes
       for (const item of youthData) {
         const { error } = await supabase
           .from("player_outreach_youth")
@@ -209,7 +207,6 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
         if (error) throw error;
       }
 
-      // Save all pro changes
       for (const item of proData) {
         const { error } = await supabase
           .from("player_outreach_pro")
@@ -236,12 +233,10 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
     
     const newValue = !item[field];
     
-    // Update local state immediately
     setYouthData(prev => prev.map(i => 
       i.id === id ? { ...i, [field]: newValue } : i
     ));
     
-    // Auto-save to database
     try {
       const { error } = await supabase
         .from("player_outreach_youth")
@@ -251,7 +246,6 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
     } catch (error: any) {
       console.error("Error saving:", error);
       toast.error("Failed to save");
-      // Revert on error
       setYouthData(prev => prev.map(i => 
         i.id === id ? { ...i, [field]: !newValue } : i
       ));
@@ -264,12 +258,10 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
     
     const newValue = !item[field];
     
-    // Update local state immediately
     setProData(prev => prev.map(i => 
       i.id === id ? { ...i, [field]: newValue } : i
     ));
     
-    // Auto-save to database
     try {
       const { error } = await supabase
         .from("player_outreach_pro")
@@ -279,7 +271,6 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
     } catch (error: any) {
       console.error("Error saving:", error);
       toast.error("Failed to save");
-      // Revert on error
       setProData(prev => prev.map(i => 
         i.id === id ? { ...i, [field]: !newValue } : i
       ));
@@ -292,6 +283,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
       setYouthFormData({
         player_name: item.player_name,
         ig_handle: item.ig_handle || "",
+        current_club: item.current_club || "",
         messaged: item.messaged,
         response_received: item.response_received,
         parents_name: item.parents_name || "",
@@ -304,6 +296,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
       setProFormData({
         player_name: item.player_name,
         ig_handle: item.ig_handle || "",
+        current_club: item.current_club || "",
         messaged: item.messaged,
         response_received: item.response_received,
         initial_message: item.initial_message || "",
@@ -318,6 +311,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
     setYouthFormData({
       player_name: "",
       ig_handle: "",
+      current_club: "",
       messaged: false,
       response_received: false,
       parents_name: "",
@@ -329,6 +323,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
     setProFormData({
       player_name: "",
       ig_handle: "",
+      current_club: "",
       messaged: false,
       response_received: false,
       initial_message: "",
@@ -367,10 +362,11 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
             <TableHeader>
               <TableRow>
                 <TableHead>Player Name</TableHead>
-                <TableHead>IG Handle</TableHead>
+                <TableHead className="w-12 text-center">IG</TableHead>
+                <TableHead>Club</TableHead>
                 <TableHead>Parents Name</TableHead>
-                <TableHead>Parent Contact</TableHead>
-                <TableHead className="text-center">Parent Approval</TableHead>
+                <TableHead className="w-12 text-center">Parent IG</TableHead>
+                <TableHead className="text-center">Approval</TableHead>
                 <TableHead className="text-center">Messaged</TableHead>
                 <TableHead className="text-center">Response</TableHead>
                 {canEdit && <TableHead>Actions</TableHead>}
@@ -379,7 +375,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
             <TableBody>
               {data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 8 : 7} className="text-center text-muted-foreground">
+                  <TableCell colSpan={canEdit ? 9 : 8} className="text-center text-muted-foreground">
                     No entries
                   </TableCell>
                 </TableRow>
@@ -387,9 +383,10 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                 data.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="bg-muted/30 font-bold">{item.player_name}</TableCell>
-                    <TableCell><InstagramDMLink handle={item.ig_handle} /></TableCell>
+                    <TableCell className="text-center"><InstagramIconLink handle={item.ig_handle} /></TableCell>
+                    <TableCell>{item.current_club || "-"}</TableCell>
                     <TableCell>{item.parents_name || "-"}</TableCell>
-                    <TableCell><InstagramDMLink handle={item.parent_contact} /></TableCell>
+                    <TableCell className="text-center"><InstagramIconLink handle={item.parent_contact} /></TableCell>
                     <TableCell className="text-center">
                       {canEdit ? (
                         <Checkbox
@@ -444,25 +441,25 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                 <div className="flex justify-between items-start">
                   <div className="bg-muted/30 px-2 py-1 rounded">
                     <h3 className="font-bold text-base">{item.player_name}</h3>
-                    {item.ig_handle && <div className="text-sm"><InstagramDMLink handle={item.ig_handle} /></div>}
+                    {item.current_club && <p className="text-xs text-muted-foreground">{item.current_club}</p>}
                   </div>
-                  {canEdit && (
-                    <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {item.ig_handle && <InstagramIconLink handle={item.ig_handle} />}
+                    {canEdit && (
+                      <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-1.5 text-sm">
                   {item.parents_name && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Parent:</span>
-                      <span>{item.parents_name}</span>
-                    </div>
-                  )}
-                  {item.parent_contact && (
                     <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Contact:</span>
-                      <InstagramDMLink handle={item.parent_contact} />
+                      <span className="text-muted-foreground">Parent:</span>
+                      <div className="flex items-center gap-2">
+                        <span>{item.parents_name}</span>
+                        {item.parent_contact && <InstagramIconLink handle={item.parent_contact} />}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -511,7 +508,8 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
             <TableHeader>
               <TableRow>
                 <TableHead>Player Name</TableHead>
-                <TableHead>IG Handle</TableHead>
+                <TableHead className="w-12 text-center">IG</TableHead>
+                <TableHead>Club</TableHead>
                 <TableHead className="text-center">Messaged</TableHead>
                 <TableHead className="text-center">Response</TableHead>
                 {canEdit && <TableHead>Actions</TableHead>}
@@ -520,7 +518,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
             <TableBody>
               {data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 5 : 4} className="text-center text-muted-foreground">
+                  <TableCell colSpan={canEdit ? 6 : 5} className="text-center text-muted-foreground">
                     No entries
                   </TableCell>
                 </TableRow>
@@ -528,7 +526,8 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                 data.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="bg-muted/30 font-bold">{item.player_name}</TableCell>
-                    <TableCell><InstagramDMLink handle={item.ig_handle} /></TableCell>
+                    <TableCell className="text-center"><InstagramIconLink handle={item.ig_handle} /></TableCell>
+                    <TableCell>{item.current_club || "-"}</TableCell>
                     <TableCell className="text-center">
                       {canEdit ? (
                         <Checkbox
@@ -573,13 +572,16 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                 <div className="flex justify-between items-start">
                   <div className="bg-muted/30 px-2 py-1 rounded">
                     <h3 className="font-bold text-base">{item.player_name}</h3>
-                    {item.ig_handle && <div className="text-sm"><InstagramDMLink handle={item.ig_handle} /></div>}
+                    {item.current_club && <p className="text-xs text-muted-foreground">{item.current_club}</p>}
                   </div>
-                  {canEdit && (
-                    <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {item.ig_handle && <InstagramIconLink handle={item.ig_handle} />}
+                    {canEdit && (
+                      <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 {canEdit && (
                   <div className="space-y-2 pt-2 border-t">
@@ -659,6 +661,14 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                       />
                     </div>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="current_club">Current Club</Label>
+                    <Input
+                      id="current_club"
+                      value={youthFormData.current_club}
+                      onChange={(e) => setYouthFormData({ ...youthFormData, current_club: e.target.value })}
+                    />
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="parents_name">Parents Name</Label>
@@ -669,7 +679,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="parent_contact">Parent Contact</Label>
+                      <Label htmlFor="parent_contact">Parent Contact (IG)</Label>
                       <Input
                         id="parent_contact"
                         value={youthFormData.parent_contact}
@@ -745,6 +755,14 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                         onChange={(e) => setProFormData({ ...proFormData, ig_handle: e.target.value })}
                       />
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="current_club_pro">Current Club</Label>
+                    <Input
+                      id="current_club_pro"
+                      value={proFormData.current_club}
+                      onChange={(e) => setProFormData({ ...proFormData, current_club: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="initial_message">Initial Message</Label>
