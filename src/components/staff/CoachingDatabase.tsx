@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote, LineChart, Settings, Upload, Grid, List, SortAsc, FileText, ExternalLink, FolderPlus, Building2 } from "lucide-react";
+import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote, LineChart, Settings, Upload, Grid, List, SortAsc, FileText, Download, FolderPlus, Building2 } from "lucide-react";
 import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
 import { R90RatingsManagement } from "./R90RatingsManagement";
 import { TacticalSchemes } from "./TacticalSchemes";
@@ -1384,9 +1384,10 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                             <Button 
                               variant="ghost" 
                               size="icon"
-                              onClick={() => downloadFile(item.content!)}
+                              onClick={() => downloadFile(item.content!, item.title + '.pdf')}
+                              title="Download PDF"
                             >
-                              <ExternalLink className="w-4 h-4" />
+                              <Download className="w-4 h-4" />
                             </Button>
                           )}
                           {isAdmin && (
@@ -1513,10 +1514,10 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
-                                onClick={() => downloadFile(item.content!)}
-                                title="View PDF"
+                                onClick={() => downloadFile(item.content!, item.title + '.pdf')}
+                                title="Download PDF"
                               >
-                                <ExternalLink className="w-4 h-4" />
+                                <Download className="w-4 h-4" />
                               </Button>
                             )}
                             {isAdmin && (
