@@ -242,11 +242,30 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       toast.info("No changes to export");
       return;
     }
+    
+    const header = `/* SITE TEXT CHANGES - Paste this to Lovable AI
+   
+   IMPORTANT: After updating the code, also add translations:
+   1. Go to Staff > Languages Management
+   2. Add translations for each text_key below in all supported languages
+   3. Ensure the text_key matches exactly for translations to work
+   
+*/\n\n`;
+    
     const code = changed.map(t => 
-      `// ${t.page_name} - ${t.section_name || 'general'}\nt("${t.text_key}", "${t.english_text.replace(/"/g, '\\"').replace(/\n/g, '\\n')}")`
+      `// Page: ${t.page_name} | Section: ${t.section_name || 'general'} | Key: ${t.text_key}\n// New text: "${t.english_text.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`
     ).join('\n\n');
-    navigator.clipboard.writeText(code);
+    
+    navigator.clipboard.writeText(header + code);
     toast.success(`${changed.length} change(s) copied to clipboard!`);
+    
+    // Clear changes after export
+    setChangedIds(new Set());
+    setOriginalTexts(siteTexts.map(t => ({
+      id: t.id,
+      text_key: t.text_key,
+      english_text: t.english_text
+    })));
   };
 
   const clearChanges = () => {
@@ -330,38 +349,15 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </div>
             <div className="flex flex-wrap gap-2">
               {changedIds.size > 0 && (
-                <>
-                  <Button
-                    onClick={exportChangesCode}
-                    size="sm"
-                    variant="default"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export {changedIds.size} Change{changedIds.size !== 1 ? 's' : ''}
-                  </Button>
-                  <Button
-                    onClick={clearChanges}
-                    size="sm"
-                    variant="outline"
-                  >
-                    Clear Changes
-                  </Button>
-                </>
+                <Button
+                  onClick={exportChangesCode}
+                  size="sm"
+                  variant="default"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export {changedIds.size} Change{changedIds.size !== 1 ? 's' : ''}
+                </Button>
               )}
-              <Button
-                onClick={() => {
-                  const code = siteTexts.map(t => 
-                    `t("${t.text_key}", "${t.english_text.replace(/"/g, '\\"')}")`
-                  ).join('\n');
-                  navigator.clipboard.writeText(code);
-                  toast.success("Code copied to clipboard!");
-                }}
-                size="sm"
-                variant="outline"
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Export All
-              </Button>
               {isAdmin && (
                 <Button
                   onClick={() => {
