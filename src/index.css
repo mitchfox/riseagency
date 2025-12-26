@@ -58,40 +58,40 @@ All colors MUST be HSL.
   }
 
   .light {
-    --background: 40 10% 95%; /* Light cream/gray outer background */
+    --background: 40 10% 92%; /* Light cream/gray outer background */
     --foreground: 0 0% 10%; /* Near black for text */
-    --card: 40 8% 88%; /* Darker warm gray for cards/widgets */
-    --card-foreground: 0 0% 10%;
+    --card: 0 0% 15%; /* Dark/black for cards/widgets */
+    --card-foreground: 0 0% 95%; /* Light text on dark cards */
 
-    --popover: 40 8% 90%;
-    --popover-foreground: 0 0% 10%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 43 49% 45%; /* Slightly darker gold for light mode */
-    --primary-foreground: 0 0% 100%;
+    --primary: 43 49% 55%; /* Gold for light mode */
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 40 8% 85%;
-    --secondary-foreground: 0 0% 15%;
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 40 8% 82%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 70%;
 
-    --accent: 43 49% 45%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 43 49% 55%;
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 84% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 8% 78%;
-    --input: 40 8% 85%;
-    --ring: 43 49% 45%;
+    --border: 0 0% 25%;
+    --input: 0 0% 20%;
+    --ring: 43 49% 55%;
 
     /* Custom design tokens for light mode */
-    --gold: 43 49% 45%;
-    --gold-muted: 43 35% 50%;
-    --text-primary: 0 0% 10%;
-    --text-secondary: 43 40% 35%;
-    --bg-dark: 40 10% 95%;
-    --bg-card: 40 8% 88%;
+    --gold: 43 49% 55%;
+    --gold-muted: 43 40% 60%;
+    --text-primary: 0 0% 95%;
+    --text-secondary: 43 50% 60%;
+    --bg-dark: 40 10% 92%;
+    --bg-card: 0 0% 15%;
   }
 }
 
