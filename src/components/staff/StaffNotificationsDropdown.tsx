@@ -228,13 +228,24 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
     }
   };
 
+  const formatLocation = (location: any) => {
+    if (!location) return "";
+    const parts = [location.city, location.country].filter(Boolean);
+    return parts.length > 0 ? parts.join(", ") : "";
+  };
+
   const getNotificationBody = (notification: Notification) => {
-    if (notification.body) return notification.body;
-    
     const data = notification.event_data;
+    
     switch (notification.event_type) {
-      case "visitor":
-        return data?.page ? `Visited ${data.page}` : "New site visit";
+      case "visitor": {
+        const page = data?.page || "/";
+        const location = formatLocation(data?.location);
+        if (location) {
+          return `${location} • ${page}`;
+        }
+        return `Visited ${page}`;
+      }
       case "form_submission":
         return data?.form_type ? `${data.form_type} form submitted` : "New form submission";
       case "clip_upload":
@@ -260,7 +271,7 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
       case "portal_club_submission":
         return data?.player_name ? `${data.player_name} suggested a club` : "New club suggestion submitted";
       default:
-        return "";
+        return notification.body || "";
     }
   };
 
