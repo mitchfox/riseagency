@@ -29,7 +29,7 @@ const InstagramDMLink = ({ handle }: { handle: string | null }) => {
   
   return (
     <a
-      href={`https://ig.me/m/${cleanHandle}`}
+      href={`https://instagram.com/${cleanHandle}`}
       target="_blank"
       rel="noopener noreferrer"
       className="inline-flex items-center gap-1 text-primary hover:underline"
