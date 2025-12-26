@@ -63,34 +63,34 @@ All colors MUST be HSL.
     --card: 40 12% 90%; /* Slightly darker warm gray for cards/widgets */
     --card-foreground: 0 0% 10%;
 
-    --popover: 40 12% 92%;
-    --popover-foreground: 0 0% 10%;
+    --popover: 0 0% 8%; /* Dark popover for contrast */
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 43 49% 45%; /* Slightly darker gold for light mode */
-    --primary-foreground: 0 0% 100%;
+    --primary: 0 0% 5%; /* Black for buttons/headers */
+    --primary-foreground: 0 0% 100%; /* White text on black */
 
-    --secondary: 40 10% 88%;
-    --secondary-foreground: 0 0% 15%;
+    --secondary: 0 0% 10%; /* Dark secondary */
+    --secondary-foreground: 0 0% 95%;
 
     --muted: 40 10% 85%;
     --muted-foreground: 0 0% 40%;
 
-    --accent: 43 49% 45%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 43 49% 55%; /* Gold accent */
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 84% 50%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 40 10% 80%;
     --input: 40 10% 85%;
-    --ring: 43 49% 45%;
+    --ring: 0 0% 20%;
 
     /* Custom design tokens for light mode */
-    --gold: 43 49% 45%;
+    --gold: 43 49% 55%;
     --gold-muted: 43 35% 50%;
     --text-primary: 0 0% 10%;
-    --text-secondary: 43 40% 35%;
-    --bg-dark: 40 10% 95%;
+    --text-secondary: 0 0% 30%;
+    --bg-dark: 0 0% 5%; /* Black for headers */
     --bg-card: 40 12% 90%;
   }
 }
