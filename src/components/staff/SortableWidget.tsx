@@ -14,7 +14,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useTheme } from "next-themes";
 import marbleOverlay from "@/assets/smudged-marble-overlay.png";
+import whiteMarbleOverlay from "@/assets/white-marble-overlay.png";
 import { cn } from "@/lib/utils";
 
 export interface WidgetLayout {
@@ -56,6 +58,7 @@ export const SortableWidget = ({
   children,
   rowHeight,
 }: SortableWidgetProps) => {
+  const { theme } = useTheme();
   const [isResizingWidth, setIsResizingWidth] = useState(false);
   const [isResizingHeight, setIsResizingHeight] = useState(false);
   const [resizePreview, setResizePreview] = useState<{ width?: number; height?: number } | null>(null);
@@ -65,6 +68,9 @@ export const SortableWidget = ({
   
   // Use refs to track current values for event handlers (avoids stale closure)
   const resizePreviewRef = useRef<{ width?: number; height?: number } | null>(null);
+  
+  // Select marble overlay based on theme
+  const currentMarbleOverlay = theme === 'light' ? whiteMarbleOverlay : marbleOverlay;
 
   const {
     attributes,
@@ -193,7 +199,7 @@ export const SortableWidget = ({
           <div
             className="absolute inset-0 opacity-20 pointer-events-none z-0"
             style={{
-              backgroundImage: `url(${marbleOverlay})`,
+              backgroundImage: `url(${currentMarbleOverlay})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
               mixBlendMode: "overlay",
@@ -203,7 +209,7 @@ export const SortableWidget = ({
             <div
               className="absolute inset-0 opacity-30 pointer-events-none z-0"
               style={{
-                backgroundImage: `url(${marbleOverlay})`,
+                backgroundImage: `url(${currentMarbleOverlay})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 mixBlendMode: "overlay",
@@ -261,7 +267,7 @@ export const SortableWidget = ({
           <div
             className="absolute inset-0 opacity-20 pointer-events-none z-0"
             style={{
-              backgroundImage: `url(${marbleOverlay})`,
+              backgroundImage: `url(${currentMarbleOverlay})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
               mixBlendMode: "overlay",
@@ -271,7 +277,7 @@ export const SortableWidget = ({
             <div
               className="absolute inset-0 opacity-30 pointer-events-none z-0"
               style={{
-                backgroundImage: `url(${marbleOverlay})`,
+                backgroundImage: `url(${currentMarbleOverlay})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 mixBlendMode: "overlay",
