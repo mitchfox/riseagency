@@ -45,6 +45,7 @@ interface YouthOutreach {
   player_name: string;
   ig_handle: string | null;
   current_club: string | null;
+  date_of_birth: string | null;
   messaged: boolean;
   response_received: boolean;
   parents_name: string | null;
@@ -59,6 +60,7 @@ interface ProOutreach {
   player_name: string;
   ig_handle: string | null;
   current_club: string | null;
+  date_of_birth: string | null;
   messaged: boolean;
   response_received: boolean;
   initial_message: string | null;
@@ -77,6 +79,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
     player_name: "",
     ig_handle: "",
     current_club: "",
+    date_of_birth: "",
     messaged: false,
     response_received: false,
     parents_name: "",
@@ -89,6 +92,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
     player_name: "",
     ig_handle: "",
     current_club: "",
+    date_of_birth: "",
     messaged: false,
     response_received: false,
     initial_message: "",
@@ -284,6 +288,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
         player_name: item.player_name,
         ig_handle: item.ig_handle || "",
         current_club: item.current_club || "",
+        date_of_birth: item.date_of_birth || "",
         messaged: item.messaged,
         response_received: item.response_received,
         parents_name: item.parents_name || "",
@@ -297,6 +302,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
         player_name: item.player_name,
         ig_handle: item.ig_handle || "",
         current_club: item.current_club || "",
+        date_of_birth: item.date_of_birth || "",
         messaged: item.messaged,
         response_received: item.response_received,
         initial_message: item.initial_message || "",
@@ -312,6 +318,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
       player_name: "",
       ig_handle: "",
       current_club: "",
+      date_of_birth: "",
       messaged: false,
       response_received: false,
       parents_name: "",
@@ -324,6 +331,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
       player_name: "",
       ig_handle: "",
       current_club: "",
+      date_of_birth: "",
       messaged: false,
       response_received: false,
       initial_message: "",
@@ -661,13 +669,24 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="current_club">Current Club</Label>
-                    <Input
-                      id="current_club"
-                      value={youthFormData.current_club}
-                      onChange={(e) => setYouthFormData({ ...youthFormData, current_club: e.target.value })}
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="current_club">Current Club</Label>
+                      <Input
+                        id="current_club"
+                        value={youthFormData.current_club}
+                        onChange={(e) => setYouthFormData({ ...youthFormData, current_club: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="date_of_birth">Date of Birth</Label>
+                      <Input
+                        id="date_of_birth"
+                        type="date"
+                        value={youthFormData.date_of_birth}
+                        onChange={(e) => setYouthFormData({ ...youthFormData, date_of_birth: e.target.value })}
+                      />
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -756,13 +775,24 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="current_club_pro">Current Club</Label>
-                    <Input
-                      id="current_club_pro"
-                      value={proFormData.current_club}
-                      onChange={(e) => setProFormData({ ...proFormData, current_club: e.target.value })}
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="current_club_pro">Current Club</Label>
+                      <Input
+                        id="current_club_pro"
+                        value={proFormData.current_club}
+                        onChange={(e) => setProFormData({ ...proFormData, current_club: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="date_of_birth_pro">Date of Birth</Label>
+                      <Input
+                        id="date_of_birth_pro"
+                        type="date"
+                        value={proFormData.date_of_birth}
+                        onChange={(e) => setProFormData({ ...proFormData, date_of_birth: e.target.value })}
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="initial_message">Initial Message</Label>
