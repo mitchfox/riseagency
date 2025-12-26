@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { Bell, Check, CheckCheck, ChevronDown, ChevronRight } from "lucide-react";
+import { Bell, Check, CheckCheck, ChevronDown, ChevronRight, Users, FileText, Film, ListMusic, Calendar, CheckSquare, Target, LogIn, BarChart3, Search, Send, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -13,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
-import { format, isToday, isYesterday, startOfDay, differenceInDays } from "date-fns";
+import { format } from "date-fns";
 
 interface Notification {
   id: string;
@@ -29,18 +28,36 @@ interface StaffNotificationsDropdownProps {
   userId: string;
 }
 
-interface GroupedNotifications {
+interface CategoryGroup {
+  category: string;
   label: string;
-  date: Date;
+  icon: React.ElementType;
   notifications: Notification[];
   unreadCount: number;
 }
+
+// Category configuration
+const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType }> = {
+  visitor: { label: "Site Visitors", icon: Users },
+  form_submission: { label: "Form Submissions", icon: FileText },
+  clip_upload: { label: "Clip Uploads", icon: Film },
+  playlist_change: { label: "Playlist Changes", icon: ListMusic },
+  calendar_event: { label: "Calendar Events", icon: Calendar },
+  task_assigned: { label: "Tasks Assigned", icon: CheckSquare },
+  task_completed: { label: "Tasks Completed", icon: CheckSquare },
+  goal_added: { label: "Goals Added", icon: Target },
+  portal_login: { label: "Portal Logins", icon: LogIn },
+  portal_performance_view: { label: "Performance Views", icon: BarChart3 },
+  portal_analysis_view: { label: "Analysis Views", icon: Search },
+  portal_transfer_submission: { label: "Transfer Submissions", icon: Send },
+  portal_club_submission: { label: "Club Suggestions", icon: Building2 },
+};
 
 export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdownProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["Today"]));
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   const fetchNotifications = async () => {
     try {
@@ -91,46 +108,35 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
     (n) => !n.read_by?.includes(userId)
   ).length;
 
-  const groupNotificationsByDay = (): GroupedNotifications[] => {
-    const groups: Map<string, GroupedNotifications> = new Map();
+  const groupNotificationsByCategory = (): CategoryGroup[] => {
+    const groups: Map<string, CategoryGroup> = new Map();
     
     notifications.forEach((notification) => {
-      const date = new Date(notification.created_at);
-      const dayStart = startOfDay(date);
-      let label: string;
+      const eventType = notification.event_type;
+      const config = CATEGORY_CONFIG[eventType] || { label: "Other", icon: Bell };
       
-      if (isToday(date)) {
-        label = "Today";
-      } else if (isYesterday(date)) {
-        label = "Yesterday";
-      } else {
-        const daysAgo = differenceInDays(new Date(), date);
-        if (daysAgo <= 7) {
-          label = format(date, "EEEE"); // Day name
-        } else {
-          label = format(date, "MMM d");
-        }
-      }
-      
-      const key = dayStart.toISOString();
-      
-      if (!groups.has(key)) {
-        groups.set(key, {
-          label,
-          date: dayStart,
+      if (!groups.has(eventType)) {
+        groups.set(eventType, {
+          category: eventType,
+          label: config.label,
+          icon: config.icon,
           notifications: [],
           unreadCount: 0,
         });
       }
       
-      const group = groups.get(key)!;
+      const group = groups.get(eventType)!;
       group.notifications.push(notification);
       if (!notification.read_by?.includes(userId)) {
         group.unreadCount++;
       }
     });
     
-    return Array.from(groups.values()).sort((a, b) => b.date.getTime() - a.date.getTime());
+    // Sort by unread count (most unread first), then by total count
+    return Array.from(groups.values()).sort((a, b) => {
+      if (b.unreadCount !== a.unreadCount) return b.unreadCount - a.unreadCount;
+      return b.notifications.length - a.notifications.length;
+    });
   };
 
   const markAsRead = async (notificationId: string) => {
@@ -153,6 +159,16 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
     }
   };
 
+  const markCategoryAsRead = async (category: string) => {
+    const categoryNotifications = notifications.filter(
+      (n) => n.event_type === category && !n.read_by?.includes(userId)
+    );
+
+    for (const notification of categoryNotifications) {
+      await markAsRead(notification.id);
+    }
+  };
+
   const markAllAsRead = async () => {
     const unreadIds = notifications
       .filter((n) => !n.read_by?.includes(userId))
@@ -165,49 +181,16 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
     }
   };
 
-  const toggleSection = (label: string) => {
-    setExpandedSections((prev) => {
+  const toggleCategory = (category: string) => {
+    setExpandedCategories((prev) => {
       const next = new Set(prev);
-      if (next.has(label)) {
-        next.delete(label);
+      if (next.has(category)) {
+        next.delete(category);
       } else {
-        next.add(label);
+        next.add(category);
       }
       return next;
     });
-  };
-
-  const getNotificationIcon = (eventType: string) => {
-    switch (eventType) {
-      case "visitor":
-        return "👁️";
-      case "form_submission":
-        return "📝";
-      case "clip_upload":
-        return "🎬";
-      case "playlist_change":
-        return "📋";
-      case "calendar_event":
-        return "📅";
-      case "task_assigned":
-        return "✅";
-      case "task_completed":
-        return "🎉";
-      case "goal_added":
-        return "🎯";
-      case "portal_login":
-        return "🚪";
-      case "portal_performance_view":
-        return "📊";
-      case "portal_analysis_view":
-        return "🔍";
-      case "portal_transfer_submission":
-        return "📤";
-      case "portal_club_submission":
-        return "🏢";
-      default:
-        return "🔔";
-    }
   };
 
   const getNotificationTitle = (notification: Notification) => {
@@ -281,7 +264,7 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
     }
   };
 
-  const groupedNotifications = groupNotificationsByDay();
+  const categoryGroups = groupNotificationsByCategory();
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -324,74 +307,103 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
             <div className="p-4 text-center text-muted-foreground text-sm">
               Loading...
             </div>
-          ) : groupedNotifications.length === 0 ? (
+          ) : categoryGroups.length === 0 ? (
             <div className="p-4 text-center text-muted-foreground text-sm">
               No notifications in the last 7 days
             </div>
           ) : (
-            <div className="p-1">
-              {groupedNotifications.map((group) => (
-                <Collapsible
-                  key={group.label}
-                  open={expandedSections.has(group.label)}
-                  onOpenChange={() => toggleSection(group.label)}
-                >
-                  <CollapsibleTrigger asChild>
-                    <div className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-muted/50 rounded-md">
-                      <div className="flex items-center gap-2">
-                        {expandedSections.has(group.label) ? (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        )}
-                        <span className="font-medium text-sm">{group.label}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          {group.notifications.length} notification{group.notifications.length !== 1 ? 's' : ''}
-                        </span>
-                        {group.unreadCount > 0 && (
-                          <Badge variant="destructive" className="h-5 px-1.5 text-xs">
-                            {group.unreadCount}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    {group.notifications.map((notification) => {
-                      const isRead = notification.read_by?.includes(userId);
-                      return (
-                        <div
-                          key={notification.id}
-                          className={`flex items-start gap-3 p-3 cursor-pointer rounded-md ml-4 ${
-                            !isRead ? "bg-primary/5" : "hover:bg-muted/50"
-                          }`}
-                          onClick={() => markAsRead(notification.id)}
-                        >
-                          <span className="text-lg flex-shrink-0">
-                            {getNotificationIcon(notification.event_type)}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-sm ${!isRead ? "font-medium" : ""}`}>
-                              {getNotificationTitle(notification)}
-                            </p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {getNotificationBody(notification)}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {format(new Date(notification.created_at), "h:mm a")}
-                            </p>
+            <div className="p-1 space-y-1">
+              {categoryGroups.map((group) => {
+                const IconComponent = group.icon;
+                const isExpanded = expandedCategories.has(group.category);
+                
+                return (
+                  <Collapsible
+                    key={group.category}
+                    open={isExpanded}
+                    onOpenChange={() => toggleCategory(group.category)}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center justify-between px-3 py-2.5 cursor-pointer hover:bg-muted/50 rounded-md border border-transparent hover:border-border/50 transition-colors">
+                        <div className="flex items-center gap-2.5">
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <div className="p-1.5 rounded bg-primary/10 border border-primary/20">
+                            <IconComponent className="h-3.5 w-3.5 text-primary" />
                           </div>
-                          {!isRead && (
-                            <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1" />
+                          <span className="font-medium text-sm">{group.label}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {group.notifications.length}
+                          </span>
+                          {group.unreadCount > 0 && (
+                            <Badge variant="destructive" className="h-5 min-w-[20px] px-1.5 text-xs">
+                              {group.unreadCount}
+                            </Badge>
                           )}
                         </div>
-                      );
-                    })}
-                  </CollapsibleContent>
-                </Collapsible>
-              ))}
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="ml-4 border-l border-border/50 pl-2 mt-1 mb-2">
+                        {/* Mark category as read button */}
+                        {group.unreadCount > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start h-7 text-xs text-muted-foreground hover:text-foreground mb-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markCategoryAsRead(group.category);
+                            }}
+                          >
+                            <Check className="h-3 w-3 mr-1.5" />
+                            Mark all {group.label.toLowerCase()} as read
+                          </Button>
+                        )}
+                        
+                        {group.notifications.slice(0, 10).map((notification) => {
+                          const isRead = notification.read_by?.includes(userId);
+                          return (
+                            <div
+                              key={notification.id}
+                              className={`flex items-start gap-3 p-2.5 cursor-pointer rounded-md transition-colors ${
+                                !isRead ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/50"
+                              }`}
+                              onClick={() => markAsRead(notification.id)}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm ${!isRead ? "font-medium" : ""}`}>
+                                  {getNotificationTitle(notification)}
+                                </p>
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {getNotificationBody(notification)}
+                                </p>
+                                <p className="text-xs text-muted-foreground/70 mt-0.5">
+                                  {format(new Date(notification.created_at), "MMM d, h:mm a")}
+                                </p>
+                              </div>
+                              {!isRead && (
+                                <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />
+                              )}
+                            </div>
+                          );
+                        })}
+                        
+                        {group.notifications.length > 10 && (
+                          <p className="text-xs text-muted-foreground text-center py-2">
+                            +{group.notifications.length - 10} more
+                          </p>
+                        )}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
             </div>
           )}
         </ScrollArea>

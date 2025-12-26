@@ -3,7 +3,17 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GripVertical, Maximize2, Minimize2 } from "lucide-react";
+import { GripVertical, Maximize2, Minimize2, Check, X } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import marbleOverlay from "@/assets/smudged-marble-overlay.png";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +61,8 @@ export const SortableWidget = ({
   const [isResizingWidth, setIsResizingWidth] = useState(false);
   const [isResizingHeight, setIsResizingHeight] = useState(false);
   const [resizePreview, setResizePreview] = useState<{ width?: number; height?: number } | null>(null);
+  const [pendingResize, setPendingResize] = useState<{ width: number; height: number } | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -100,6 +112,7 @@ export const SortableWidget = ({
     const handleMouseUp = () => {
       setIsResizingWidth(false);
       if (resizePreview?.width) {
+        // Width changes apply immediately (no confirmation needed)
         onResize(id, resizePreview.width, layout.heightPx);
       }
       setResizePreview(null);
@@ -123,21 +136,42 @@ export const SortableWidget = ({
       const deltaY = moveEvent.clientY - startY;
       // Free-form height in pixels
       const newHeight = Math.max(MIN_HEIGHT_PX, Math.min(MAX_HEIGHT_PX, startHeightPx + deltaY));
-      setResizePreview({ height: Math.round(newHeight) });
+      setResizePreview((prev) => ({ ...prev, height: Math.round(newHeight) }));
     };
 
     const handleMouseUp = () => {
       setIsResizingHeight(false);
-      if (resizePreview?.height) {
-        onResize(id, layout.widthPercent, resizePreview.height);
+      if (resizePreview?.height && resizePreview.height !== layout.heightPx) {
+        // Store pending resize and show confirmation dialog
+        setPendingResize({
+          width: resizePreview.width ?? layout.widthPercent,
+          height: resizePreview.height,
+        });
+        setShowConfirmDialog(true);
+      } else {
+        setResizePreview(null);
       }
-      setResizePreview(null);
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
 
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const confirmResize = () => {
+    if (pendingResize) {
+      onResize(id, pendingResize.width, pendingResize.height);
+    }
+    setShowConfirmDialog(false);
+    setPendingResize(null);
+    setResizePreview(null);
+  };
+
+  const cancelResize = () => {
+    setShowConfirmDialog(false);
+    setPendingResize(null);
+    setResizePreview(null);
   };
 
   if (expanded) {
@@ -192,31 +226,22 @@ export const SortableWidget = ({
   }
 
   return (
-    <div
-      ref={(node) => {
-        setNodeRef(node);
-        (containerRef as any).current = node;
-      }}
-      style={style}
-      className={cn(
-        "relative transition-all duration-200 flex-shrink-0",
-        isDragging && "opacity-50 z-50",
-        (isResizingWidth || isResizingHeight) && "z-40"
-      )}
-    >
-      <Card className="h-full flex flex-col border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:shadow-lg relative overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-20 pointer-events-none z-0"
-          style={{
-            backgroundImage: `url(${marbleOverlay})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            mixBlendMode: "overlay",
-          }}
-        />
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-border/30 px-3 py-2 relative z-10 overflow-hidden">
+    <>
+      <div
+        ref={(node) => {
+          setNodeRef(node);
+          (containerRef as any).current = node;
+        }}
+        style={style}
+        className={cn(
+          "relative transition-all duration-200 flex-shrink-0",
+          isDragging && "opacity-50 z-50",
+          (isResizingWidth || isResizingHeight) && "z-40"
+        )}
+      >
+        <Card className="h-full flex flex-col border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:shadow-lg relative overflow-hidden">
           <div
-            className="absolute inset-0 opacity-30 pointer-events-none z-0"
+            className="absolute inset-0 opacity-20 pointer-events-none z-0"
             style={{
               backgroundImage: `url(${marbleOverlay})`,
               backgroundSize: "cover",
@@ -224,77 +249,113 @@ export const SortableWidget = ({
               mixBlendMode: "overlay",
             }}
           />
-          <div className="flex items-center gap-2 relative z-10">
-            {/* Drag handle */}
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-border/30 px-3 py-2 relative z-10 overflow-hidden">
             <div
-              {...attributes}
-              {...listeners}
-              className="p-1 rounded cursor-grab hover:bg-primary/10 active:cursor-grabbing"
+              className="absolute inset-0 opacity-30 pointer-events-none z-0"
+              style={{
+                backgroundImage: `url(${marbleOverlay})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                mixBlendMode: "overlay",
+              }}
+            />
+            <div className="flex items-center gap-2 relative z-10">
+              {/* Drag handle */}
+              <div
+                {...attributes}
+                {...listeners}
+                className="p-1 rounded cursor-grab hover:bg-primary/10 active:cursor-grabbing"
+              >
+                <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
+              </div>
+              <div className="p-1.5 rounded bg-primary/10 border border-primary/20">
+                <Icon className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <CardTitle className="text-xs font-semibold tracking-tight uppercase text-muted-foreground">
+                {title}
+              </CardTitle>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpand();
+              }}
+              className="h-6 w-6 p-0 hover:bg-primary/10 relative z-20"
             >
-              <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
-            </div>
-            <div className="p-1.5 rounded bg-primary/10 border border-primary/20">
-              <Icon className="w-3.5 h-3.5 text-primary" />
-            </div>
-            <CardTitle className="text-xs font-semibold tracking-tight uppercase text-muted-foreground">
-              {title}
-            </CardTitle>
+              <Maximize2 className="h-3 w-3" />
+            </Button>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-hidden hover:overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pt-3 px-3 pb-3 relative z-10">
+            {children}
+          </CardContent>
+        </Card>
+
+        {/* Width resize handle - right edge */}
+        <div
+          className={cn(
+            "absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize transition-colors z-30",
+            isResizingWidth ? "bg-primary/40" : "hover:bg-primary/20"
+          )}
+          onMouseDown={handleWidthResizeStart}
+        />
+
+        {/* Height resize handle - bottom edge */}
+        <div
+          className={cn(
+            "absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize transition-colors z-30",
+            isResizingHeight ? "bg-primary/40" : "hover:bg-primary/20"
+          )}
+          onMouseDown={handleHeightResizeStart}
+        />
+
+        {/* Corner resize handle */}
+        <div
+          className={cn(
+            "absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize transition-colors z-30",
+            (isResizingWidth || isResizingHeight) ? "bg-primary/40" : "hover:bg-primary/20"
+          )}
+          onMouseDown={(e) => {
+            handleWidthResizeStart(e);
+            handleHeightResizeStart(e);
+          }}
+        />
+
+        {/* Resize preview indicator - shows current dimensions while resizing */}
+        {(resizePreview || pendingResize) && (
+          <div className="absolute top-2 right-10 bg-primary text-primary-foreground text-xs px-2 py-1 rounded z-50 font-mono">
+            {(resizePreview?.width ?? pendingResize?.width ?? layout.widthPercent)}% × {(resizePreview?.height ?? pendingResize?.height ?? layout.heightPx)}px
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleExpand();
-            }}
-            className="h-6 w-6 p-0 hover:bg-primary/10 relative z-20"
-          >
-            <Maximize2 className="h-3 w-3" />
-          </Button>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-hidden hover:overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pt-3 px-3 pb-3 relative z-10">
-          {children}
-        </CardContent>
-      </Card>
-
-      {/* Width resize handle - right edge */}
-      <div
-        className={cn(
-          "absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize transition-colors z-30",
-          isResizingWidth ? "bg-primary/40" : "hover:bg-primary/20"
         )}
-        onMouseDown={handleWidthResizeStart}
-      />
+      </div>
 
-      {/* Height resize handle - bottom edge */}
-      <div
-        className={cn(
-          "absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize transition-colors z-30",
-          isResizingHeight ? "bg-primary/40" : "hover:bg-primary/20"
-        )}
-        onMouseDown={handleHeightResizeStart}
-      />
-
-      {/* Corner resize handle */}
-      <div
-        className={cn(
-          "absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize transition-colors z-30",
-          (isResizingWidth || isResizingHeight) ? "bg-primary/40" : "hover:bg-primary/20"
-        )}
-        onMouseDown={(e) => {
-          handleWidthResizeStart(e);
-          handleHeightResizeStart(e);
-        }}
-      />
-
-      {/* Resize preview indicator */}
-      {resizePreview && (
-        <div className="absolute top-2 right-10 bg-primary text-primary-foreground text-xs px-2 py-1 rounded z-50">
-          {resizePreview.width && `${resizePreview.width}%`}
-          {resizePreview.width && resizePreview.height && " × "}
-          {resizePreview.height && `${resizePreview.height}px`}
-        </div>
-      )}
-    </div>
+      {/* Height resize confirmation dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Widget Resize</AlertDialogTitle>
+            <AlertDialogDescription>
+              Set <span className="font-semibold text-foreground">{title}</span> height to{" "}
+              <span className="font-mono font-semibold text-primary">{pendingResize?.height}px</span>?
+              <br />
+              <span className="text-xs text-muted-foreground mt-1 block">
+                Previous height: {layout.heightPx}px
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelResize}>
+              <X className="h-4 w-4 mr-1" />
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmResize}>
+              <Check className="h-4 w-4 mr-1" />
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
