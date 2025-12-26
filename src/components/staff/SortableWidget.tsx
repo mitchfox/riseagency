@@ -22,7 +22,7 @@ export interface WidgetLayout {
   row: number;
   order: number;
   widthPercent: number;
-  heightPx: number; // Now using pixel-based height for free-form sizing
+  heightPx: number;
 }
 
 interface SortableWidgetProps {
@@ -34,18 +34,16 @@ interface SortableWidgetProps {
   onToggleExpand: () => void;
   onResize: (id: string, widthPercent: number, heightPx: number) => void;
   children: React.ReactNode;
-  rowHeight: number; // Used as minimum height reference
+  rowHeight: number;
 }
 
-// Minimum constraints
 const MIN_WIDTH_PERCENT = 15;
 const MAX_WIDTH_PERCENT = 100;
 const MIN_HEIGHT_PX = 150;
 const MAX_HEIGHT_PX = 800;
 
-// Width snap points for grid-like layouts
 const WIDTH_SNAP_POINTS = [20, 25, 30, 33, 40, 50, 60, 66, 70, 75, 80, 100];
-const SNAP_THRESHOLD = 3; // Snap when within 3% of a snap point
+const SNAP_THRESHOLD = 3;
 
 export const SortableWidget = ({
   id,
@@ -64,6 +62,9 @@ export const SortableWidget = ({
   const [pendingResize, setPendingResize] = useState<{ width: number; height: number } | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Use refs to track current values for event handlers (avoids stale closure)
+  const resizePreviewRef = useRef<{ width?: number; height?: number } | null>(null);
 
   const {
     attributes,
@@ -79,6 +80,12 @@ export const SortableWidget = ({
     transition,
     width: `${resizePreview?.width ?? layout.widthPercent}%`,
     height: `${resizePreview?.height ?? layout.heightPx}px`,
+  };
+
+  // Update preview and ref together
+  const updateResizePreview = (newPreview: { width?: number; height?: number } | null) => {
+    resizePreviewRef.current = newPreview;
+    setResizePreview(newPreview);
   };
 
   const handleWidthResizeStart = (e: React.MouseEvent) => {
@@ -98,7 +105,6 @@ export const SortableWidget = ({
       const deltaPercent = (deltaX / containerWidth) * 100;
       let newWidth = Math.max(MIN_WIDTH_PERCENT, Math.min(MAX_WIDTH_PERCENT, startWidthPercent + deltaPercent));
       
-      // Snap to nearest snap point if within threshold
       for (const snapPoint of WIDTH_SNAP_POINTS) {
         if (Math.abs(newWidth - snapPoint) <= SNAP_THRESHOLD) {
           newWidth = snapPoint;
@@ -106,16 +112,16 @@ export const SortableWidget = ({
         }
       }
       
-      setResizePreview({ width: Math.round(newWidth) });
+      updateResizePreview({ ...resizePreviewRef.current, width: Math.round(newWidth) });
     };
 
     const handleMouseUp = () => {
       setIsResizingWidth(false);
-      if (resizePreview?.width) {
-        // Width changes apply immediately (no confirmation needed)
-        onResize(id, resizePreview.width, layout.heightPx);
+      const currentPreview = resizePreviewRef.current;
+      if (currentPreview?.width) {
+        onResize(id, currentPreview.width, layout.heightPx);
       }
-      setResizePreview(null);
+      updateResizePreview(null);
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
@@ -134,22 +140,26 @@ export const SortableWidget = ({
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaY = moveEvent.clientY - startY;
-      // Free-form height in pixels
       const newHeight = Math.max(MIN_HEIGHT_PX, Math.min(MAX_HEIGHT_PX, startHeightPx + deltaY));
-      setResizePreview((prev) => ({ ...prev, height: Math.round(newHeight) }));
+      updateResizePreview({ ...resizePreviewRef.current, height: Math.round(newHeight) });
     };
 
     const handleMouseUp = () => {
       setIsResizingHeight(false);
-      if (resizePreview?.height && resizePreview.height !== layout.heightPx) {
+      const currentPreview = resizePreviewRef.current;
+      
+      console.log("Height resize mouseUp:", { currentPreview, layoutHeight: layout.heightPx });
+      
+      if (currentPreview?.height && currentPreview.height !== layout.heightPx) {
         // Store pending resize and show confirmation dialog
         setPendingResize({
-          width: resizePreview.width ?? layout.widthPercent,
-          height: resizePreview.height,
+          width: currentPreview.width ?? layout.widthPercent,
+          height: currentPreview.height,
         });
         setShowConfirmDialog(true);
+        // Keep the preview visible until user confirms/cancels
       } else {
-        setResizePreview(null);
+        updateResizePreview(null);
       }
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
@@ -161,17 +171,19 @@ export const SortableWidget = ({
 
   const confirmResize = () => {
     if (pendingResize) {
+      console.log("Confirming resize:", pendingResize);
       onResize(id, pendingResize.width, pendingResize.height);
     }
     setShowConfirmDialog(false);
     setPendingResize(null);
-    setResizePreview(null);
+    updateResizePreview(null);
   };
 
   const cancelResize = () => {
+    console.log("Cancelling resize");
     setShowConfirmDialog(false);
     setPendingResize(null);
-    setResizePreview(null);
+    updateResizePreview(null);
   };
 
   if (expanded) {
@@ -225,6 +237,9 @@ export const SortableWidget = ({
     );
   }
 
+  // Calculate the display height - use pending resize if dialog is open, otherwise preview or layout
+  const displayHeight = pendingResize?.height ?? resizePreview?.height ?? layout.heightPx;
+
   return (
     <>
       <div
@@ -232,7 +247,10 @@ export const SortableWidget = ({
           setNodeRef(node);
           (containerRef as any).current = node;
         }}
-        style={style}
+        style={{
+          ...style,
+          height: `${displayHeight}px`,
+        }}
         className={cn(
           "relative transition-all duration-200 flex-shrink-0",
           isDragging && "opacity-50 z-50",
@@ -260,7 +278,6 @@ export const SortableWidget = ({
               }}
             />
             <div className="flex items-center gap-2 relative z-10">
-              {/* Drag handle */}
               <div
                 {...attributes}
                 {...listeners}
@@ -292,7 +309,7 @@ export const SortableWidget = ({
           </CardContent>
         </Card>
 
-        {/* Width resize handle - right edge */}
+        {/* Width resize handle */}
         <div
           className={cn(
             "absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize transition-colors z-30",
@@ -301,7 +318,7 @@ export const SortableWidget = ({
           onMouseDown={handleWidthResizeStart}
         />
 
-        {/* Height resize handle - bottom edge */}
+        {/* Height resize handle */}
         <div
           className={cn(
             "absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize transition-colors z-30",
@@ -322,16 +339,18 @@ export const SortableWidget = ({
           }}
         />
 
-        {/* Resize preview indicator - shows current dimensions while resizing */}
-        {(resizePreview || pendingResize) && (
-          <div className="absolute top-2 right-10 bg-primary text-primary-foreground text-xs px-2 py-1 rounded z-50 font-mono">
-            {(resizePreview?.width ?? pendingResize?.width ?? layout.widthPercent)}% × {(resizePreview?.height ?? pendingResize?.height ?? layout.heightPx)}px
+        {/* Resize preview indicator */}
+        {(isResizingWidth || isResizingHeight || pendingResize) && (
+          <div className="absolute top-2 right-10 bg-primary text-primary-foreground text-xs px-2 py-1 rounded z-50 font-mono shadow-lg">
+            {resizePreview?.width ?? pendingResize?.width ?? layout.widthPercent}% × {displayHeight}px
           </div>
         )}
       </div>
 
       {/* Height resize confirmation dialog */}
-      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+      <AlertDialog open={showConfirmDialog} onOpenChange={(open) => {
+        if (!open) cancelResize();
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Widget Resize</AlertDialogTitle>
