@@ -685,6 +685,13 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         if (formData.is_own_video !== undefined) dataToSubmit.is_own_video = formData.is_own_video;
         if (formData.tags) dataToSubmit.tags = formData.tags;
         if (formData.attachments) dataToSubmit.attachments = formData.attachments;
+      } else if (activeTab === 'coaching_analysis') {
+        // For analysis, only include valid fields
+        dataToSubmit.title = formData.title;
+        if (formData.description) dataToSubmit.description = formData.description;
+        if (formData.content) dataToSubmit.content = formData.content;
+        if (formData.category) dataToSubmit.category = formData.category;
+        if (formData.analysis_type) dataToSubmit.analysis_type = formData.analysis_type;
       } else if (activeTab === 'coaching_concepts') {
         // For concepts, set analysis_type to 'concept'
         dataToSubmit.title = formData.title;
