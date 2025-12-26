@@ -141,7 +141,7 @@ The translations array MUST have exactly ${texts.length} items, one for each inp
   } catch (error) {
     console.error("Batch translation error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Batch translation failed" }),
+      JSON.stringify({ error: "Batch translation failed" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

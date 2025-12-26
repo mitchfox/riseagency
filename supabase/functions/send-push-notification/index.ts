@@ -105,12 +105,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error sending push notification:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: errorMessage 
-      }),
+      JSON.stringify({ success: false, error: 'Failed to send notification' }),
       { 
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

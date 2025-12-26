@@ -98,7 +98,7 @@ Format your response clearly with sections and bullet points. Be specific about 
   } catch (error) {
     console.error('Error in contract-cross-reference:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Analysis failed' }),
+      JSON.stringify({ error: 'Analysis failed' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

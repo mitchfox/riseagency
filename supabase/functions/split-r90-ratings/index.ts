@@ -259,7 +259,7 @@ serve(async (req) => {
   } catch (error: any) {
     console.error('Error in split-r90-ratings:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'Unknown error occurred' }),
+      JSON.stringify({ error: 'Failed to split ratings' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

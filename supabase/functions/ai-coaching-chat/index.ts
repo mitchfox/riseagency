@@ -193,7 +193,7 @@ Your expertise spans: tactical periodisation, positional play, pressing triggers
   } catch (error) {
     console.error('Error in ai-coaching-chat function:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: 'An unexpected error occurred' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

@@ -158,9 +158,8 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'Failed to save playlist' }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400

@@ -83,7 +83,7 @@ Write ONLY the exercise description, nothing else.`;
   } catch (error) {
     console.error('Error in ai-write-description:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: 'Failed to generate description' }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
