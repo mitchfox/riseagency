@@ -7,12 +7,38 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Edit, Users, Save } from "lucide-react";
+import { Plus, Edit, Users, Save, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+
+// Helper to format Instagram handle and create DM link
+const formatIgHandle = (handle: string | null) => {
+  if (!handle) return null;
+  // Remove @ if present
+  const cleanHandle = handle.replace(/^@/, '').trim();
+  if (!cleanHandle) return null;
+  return cleanHandle;
+};
+
+const InstagramDMLink = ({ handle }: { handle: string | null }) => {
+  const cleanHandle = formatIgHandle(handle);
+  if (!cleanHandle) return <span className="text-muted-foreground">-</span>;
+  
+  return (
+    <a
+      href={`https://ig.me/m/${cleanHandle}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 text-primary hover:underline"
+    >
+      <MessageCircle className="h-3.5 w-3.5" />
+      @{cleanHandle}
+    </a>
+  );
+};
 
 interface YouthOutreach {
   id: string;
@@ -361,9 +387,9 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                 data.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="bg-muted/30 font-bold">{item.player_name}</TableCell>
-                    <TableCell>{item.ig_handle || "-"}</TableCell>
+                    <TableCell><InstagramDMLink handle={item.ig_handle} /></TableCell>
                     <TableCell>{item.parents_name || "-"}</TableCell>
-                    <TableCell>{item.parent_contact || "-"}</TableCell>
+                    <TableCell><InstagramDMLink handle={item.parent_contact} /></TableCell>
                     <TableCell className="text-center">
                       {canEdit ? (
                         <Checkbox
@@ -418,7 +444,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                 <div className="flex justify-between items-start">
                   <div className="bg-muted/30 px-2 py-1 rounded">
                     <h3 className="font-bold text-base">{item.player_name}</h3>
-                    {item.ig_handle && <p className="text-sm text-muted-foreground">@{item.ig_handle}</p>}
+                    {item.ig_handle && <div className="text-sm"><InstagramDMLink handle={item.ig_handle} /></div>}
                   </div>
                   {canEdit && (
                     <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}>
@@ -434,9 +460,9 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                     </div>
                   )}
                   {item.parent_contact && (
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-muted-foreground">Contact:</span>
-                      <span>{item.parent_contact}</span>
+                      <InstagramDMLink handle={item.parent_contact} />
                     </div>
                   )}
                 </div>
@@ -502,7 +528,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                 data.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="bg-muted/30 font-bold">{item.player_name}</TableCell>
-                    <TableCell>{item.ig_handle || "-"}</TableCell>
+                    <TableCell><InstagramDMLink handle={item.ig_handle} /></TableCell>
                     <TableCell className="text-center">
                       {canEdit ? (
                         <Checkbox
@@ -547,7 +573,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                 <div className="flex justify-between items-start">
                   <div className="bg-muted/30 px-2 py-1 rounded">
                     <h3 className="font-bold text-base">{item.player_name}</h3>
-                    {item.ig_handle && <p className="text-sm text-muted-foreground">@{item.ig_handle}</p>}
+                    {item.ig_handle && <div className="text-sm"><InstagramDMLink handle={item.ig_handle} /></div>}
                   </div>
                   {canEdit && (
                     <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}>
