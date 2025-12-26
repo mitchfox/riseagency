@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Eye, Link as LinkIcon, Unlink, Plus, Search } from "lucide-react";
+import { Eye, Link as LinkIcon, Unlink, Plus, Search, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -62,10 +62,13 @@ export const PlayerScoutingManagement = ({ playerId, playerName }: PlayerScoutin
   const [loading, setLoading] = useState(true);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingReportId, setEditingReportId] = useState<string | null>(null);
   const [unlinkedReports, setUnlinkedReports] = useState<ScoutingReport[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [linking, setLinking] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [updating, setUpdating] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
   const [skillEvaluations, setSkillEvaluations] = useState<SkillEvaluation[]>([]);
   const [formData, setFormData] = useState({
@@ -238,6 +241,78 @@ export const PlayerScoutingManagement = ({ playerId, playerName }: PlayerScoutin
     });
     setSkillEvaluations([]);
     setActiveTab("basic");
+    setEditingReportId(null);
+  };
+
+  const handleEditReport = async (report: ScoutingReport) => {
+    const date = new Date(report.scouting_date);
+    setFormData({
+      position: report.position || "",
+      scouting_month: format(date, "MM"),
+      scouting_year: format(date, "yyyy"),
+      current_club: report.current_club || "",
+      nationality: report.nationality || "",
+      location: "",
+      competition: "",
+      match_context: "",
+      video_url: "",
+      scout_name: report.scout_name || "",
+      auto_generated_review: report.auto_generated_review || "",
+    });
+    if (report.position) {
+      const evaluations = report.skill_evaluations || initializeSkillEvaluations(report.position);
+      setSkillEvaluations(evaluations);
+    }
+    setEditingReportId(report.id);
+    setActiveTab("basic");
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingReportId) return;
+    
+    if (!formData.scouting_month || !formData.scouting_year) {
+      toast.error("Scouting month and year are required");
+      return;
+    }
+
+    const scoutingDate = `${formData.scouting_year}-${formData.scouting_month}-01`;
+
+    setUpdating(true);
+    try {
+      const reportData = {
+        position: formData.position || null,
+        current_club: formData.current_club || null,
+        nationality: formData.nationality || null,
+        scouting_date: scoutingDate,
+        location: formData.location || null,
+        competition: formData.competition || null,
+        match_context: formData.match_context || null,
+        video_url: formData.video_url || null,
+        scout_name: formData.scout_name || null,
+        skill_evaluations: skillEvaluations as any,
+        auto_generated_review: formData.auto_generated_review || null,
+      };
+
+      const { error } = await supabase
+        .from("scouting_reports")
+        .update(reportData)
+        .eq("id", editingReportId);
+
+      if (error) throw error;
+
+      toast.success("Scouting report updated");
+      setIsEditDialogOpen(false);
+      resetForm();
+      fetchScoutingReports();
+    } catch (error) {
+      console.error("Error updating scouting report:", error);
+      toast.error("Failed to update scouting report");
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const filteredUnlinkedReports = unlinkedReports.filter(report =>
@@ -307,6 +382,14 @@ export const PlayerScoutingManagement = ({ playerId, playerName }: PlayerScoutin
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         View
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditReport(report)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
                       </Button>
                       <Button
                         size="sm"
@@ -541,6 +624,129 @@ export const PlayerScoutingManagement = ({ playerId, playerName }: PlayerScoutin
               </Button>
               <Button type="submit" disabled={creating}>
                 {creating ? "Creating..." : "Create Report"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Report Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) resetForm();
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Scouting Report</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpdateReport}>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid grid-cols-3 w-full mb-4">
+                <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                <TabsTrigger value="skills">Skill Evaluation</TabsTrigger>
+                <TabsTrigger value="notes">Notes</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="basic" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Position</Label>
+                    <Select value={formData.position} onValueChange={handlePositionChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select position" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SCOUTING_POSITIONS.map((pos) => (
+                          <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Month *</Label>
+                    <Select value={formData.scouting_month} onValueChange={(value) => setFormData({ ...formData, scouting_month: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select month" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MONTHS.map((month) => (
+                          <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Year *</Label>
+                    <Select value={formData.scouting_year} onValueChange={(value) => setFormData({ ...formData, scouting_year: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {YEARS.map((year) => (
+                          <SelectItem key={year} value={year}>{year}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Current Club</Label>
+                    <Input
+                      value={formData.current_club}
+                      onChange={(e) => setFormData({ ...formData, current_club: e.target.value })}
+                      placeholder="Enter club name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Nationality</Label>
+                    <Input
+                      value={formData.nationality}
+                      onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
+                      placeholder="Enter nationality"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Scout Name</Label>
+                    <Input
+                      value={formData.scout_name}
+                      onChange={(e) => setFormData({ ...formData, scout_name: e.target.value })}
+                      placeholder="Scout name"
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="skills" className="space-y-4">
+                {formData.position && skillEvaluations.length > 0 ? (
+                  <SkillEvaluationForm
+                    skillEvaluations={skillEvaluations}
+                    onChange={setSkillEvaluations}
+                  />
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Please select a position first to evaluate skills
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="notes" className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Review / Notes</Label>
+                  <Textarea
+                    value={formData.auto_generated_review}
+                    onChange={(e) => setFormData({ ...formData, auto_generated_review: e.target.value })}
+                    placeholder="Write your assessment of the player..."
+                    rows={8}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updating}>
+                {updating ? "Updating..." : "Update Report"}
               </Button>
             </div>
           </form>
