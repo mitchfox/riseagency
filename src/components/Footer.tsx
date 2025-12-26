@@ -137,7 +137,7 @@ export const Footer = () => {
               {t("footer.about_rise_title", "About RISE")}
             </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {t("footer.about_rise_text", "RISE Football Agency is a performance-first agency dedicated to elevating players, coaches, and clubs through expert representation, data-driven analysis, and holistic development. Founded on the belief that success in football requires more than talent alone, we combine professional guidance with cutting-edge performance insights to help our clients reach their full potential. From career management and transfer negotiations to mental conditioning and tactical development, RISE provides comprehensive support at every stage of the journey.")}
+              {t("footer.about_rise_text", "RISE Football Agency is built on a deep understanding of performance and how it shapes decisions at every level of the game. We represent and work directly with clubs through an established international network, underpinned by an unrivalled background in developing Premier League level talent. With scouting coverage across Europe and Africa informing recruitment and placement through evidence, standards and proven pathways - our stars share our ethic, mindset and attention to detail to performance.")}
             </p>
           </div>
         </div>
