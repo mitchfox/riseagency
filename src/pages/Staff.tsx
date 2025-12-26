@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink } from "lucide-react";
+import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -70,6 +70,7 @@ import { InFrameSection } from "@/components/staff/InFrameSection";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useTheme } from "next-themes";
 import marbleBackground from "@/assets/smudged-marble-overlay.png";
 import { 
   Calendar, 
@@ -109,6 +110,7 @@ import {
 
 const Staff = () => {
   const isMobile = useIsMobile();
+  const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -672,7 +674,15 @@ const Staff = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <div className="w-10" /> {/* Spacer for balance */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="h-10 w-10"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              <Lightbulb className={`h-5 w-5 transition-colors ${theme === 'dark' ? 'text-muted-foreground' : 'text-yellow-500 fill-yellow-500'}`} />
+            </Button>
             <img 
               src="/RISEWhite.png"
               alt="RISE"
