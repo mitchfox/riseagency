@@ -92,7 +92,7 @@ export const ExerciseDatabaseSelector = ({ isOpen, onClose, onSelect }: Exercise
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh]">
+      <DialogContent className="w-[95vw] max-w-6xl max-h-[85vh]">
         <DialogHeader>
           <DialogTitle>Select Exercise from Database</DialogTitle>
         </DialogHeader>

@@ -117,7 +117,7 @@ export const SessionDatabaseSelector = ({ isOpen, onClose, onImport }: SessionDa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh]">
+      <DialogContent className="w-[95vw] max-w-6xl max-h-[85vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FolderOpen className="w-5 h-5" />
