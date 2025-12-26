@@ -17,7 +17,7 @@ export const Footer = () => {
         <div className="max-w-4xl mx-auto text-center mb-16">
           <img src={logo} alt="RISE Football Agency" className="h-16 mx-auto mb-6" />
           <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-            {t("footer.description", "Performance-first football representation helping players, coaches, and clubs reach their full potential through data-driven insights and professional development.")}
+            {t("footer.description", "RISE Football Agency is built on a deep understanding of performance and how it shapes decisions at every level of the game. We represent and work directly with clubs through an established international network, underpinned by an unrivalled background in developing Premier League level talent. With scouting coverage across Europe and Africa informing recruitment and placement through evidence, standards and proven pathways - our stars share our ethic, mindset and attention to detail to performance.")}
           </p>
         </div>
 
