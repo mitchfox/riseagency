@@ -62,8 +62,17 @@ const PAGE_OPTIONS = [
   { value: "errors", label: "Error Messages", order: 20 },
 ];
 
+// Track original values to detect changes
+interface OriginalText {
+  id: string;
+  text_key: string;
+  english_text: string;
+}
+
 export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [siteTexts, setSiteTexts] = useState<SiteText[]>([]);
+  const [originalTexts, setOriginalTexts] = useState<OriginalText[]>([]);
+  const [changedIds, setChangedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPage, setSelectedPage] = useState<string>("all");
@@ -98,6 +107,14 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       console.error(error);
     } else {
       setSiteTexts(data || []);
+      // Store original values on first load
+      if (originalTexts.length === 0) {
+        setOriginalTexts((data || []).map(t => ({
+          id: t.id,
+          text_key: t.text_key,
+          english_text: t.english_text
+        })));
+      }
     }
     setLoading(false);
   };
@@ -184,6 +201,19 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       return;
     }
 
+    // Track this change
+    const original = originalTexts.find(t => t.id === id);
+    if (original && original.english_text !== inlineValue) {
+      setChangedIds(prev => new Set(prev).add(id));
+    } else if (original && original.english_text === inlineValue) {
+      // If reverted to original, remove from changed
+      setChangedIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+
     toast.success("Text saved");
     setEditingInline(null);
     fetchSiteTexts();
@@ -199,6 +229,35 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       description: "",
     });
     setEditingText(null);
+  };
+
+  // Get only the changed texts for export
+  const getChangedTexts = () => {
+    return siteTexts.filter(t => changedIds.has(t.id));
+  };
+
+  const exportChangesCode = () => {
+    const changed = getChangedTexts();
+    if (changed.length === 0) {
+      toast.info("No changes to export");
+      return;
+    }
+    const code = changed.map(t => 
+      `// ${t.page_name} - ${t.section_name || 'general'}\nt("${t.text_key}", "${t.english_text.replace(/"/g, '\\"').replace(/\n/g, '\\n')}")`
+    ).join('\n\n');
+    navigator.clipboard.writeText(code);
+    toast.success(`${changed.length} change(s) copied to clipboard!`);
+  };
+
+  const clearChanges = () => {
+    setChangedIds(new Set());
+    // Reset original texts to current state
+    setOriginalTexts(siteTexts.map(t => ({
+      id: t.id,
+      text_key: t.text_key,
+      english_text: t.english_text
+    })));
+    toast.success("Changes cleared");
   };
 
   const openEditDialog = (text: SiteText) => {
@@ -269,7 +328,26 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               <FileText className="h-6 w-6 text-primary" />
               <CardTitle>Site Text Management</CardTitle>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              {changedIds.size > 0 && (
+                <>
+                  <Button
+                    onClick={exportChangesCode}
+                    size="sm"
+                    variant="default"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export {changedIds.size} Change{changedIds.size !== 1 ? 's' : ''}
+                  </Button>
+                  <Button
+                    onClick={clearChanges}
+                    size="sm"
+                    variant="outline"
+                  >
+                    Clear Changes
+                  </Button>
+                </>
+              )}
               <Button
                 onClick={() => {
                   const code = siteTexts.map(t => 
@@ -282,7 +360,7 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 variant="outline"
               >
                 <Copy className="h-4 w-4 mr-2" />
-                Export Code
+                Export All
               </Button>
               {isAdmin && (
                 <Button
@@ -368,7 +446,11 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         {pageTexts.map((text) => (
                           <div
                             key={text.id}
-                            className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg group"
+                            className={`flex items-start gap-3 p-3 rounded-lg group ${
+                              changedIds.has(text.id) 
+                                ? 'bg-primary/10 border border-primary/30' 
+                                : 'bg-muted/30'
+                            }`}
                           >
                             <div className="text-muted-foreground pt-1">
                               <GripVertical className="h-4 w-4" />
@@ -378,6 +460,11 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
                                   {text.text_key}
                                 </code>
+                                {changedIds.has(text.id) && (
+                                  <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
+                                    Modified
+                                  </span>
+                                )}
                                 {text.section_name && (
                                   <span className="text-xs text-muted-foreground">
                                     ({text.section_name})
