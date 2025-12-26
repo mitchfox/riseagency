@@ -14,6 +14,8 @@ import { DeclareInterestPlayerDialog } from "@/components/DeclareInterestPlayerD
 import { Button } from "@/components/ui/button";
 import { useRoleSubdomain, pathToRole, RoleSubdomain } from "@/hooks/useRoleSubdomain";
 import { useIsPWA } from "@/hooks/useIsPWA";
+import { usePerformanceCheck } from "@/hooks/usePerformanceCheck";
+import { StaticLandingFallback } from "@/components/StaticLandingFallback";
 import riseLogoWhite from "@/assets/logo.png";
 
 // Inner component that uses the XRay context for full-page tracking
@@ -713,7 +715,30 @@ function RoleSlider({
     </div>;
 }
 export default function Landing() {
-  return <XRayProvider>
+  const { isLowPerformance, isChecking, reason } = usePerformanceCheck();
+
+  // Show a simple loading state while checking performance
+  if (isChecking) {
+    return (
+      <div className="bg-black h-screen w-screen flex items-center justify-center">
+        <img 
+          src={riseLogoWhite} 
+          alt="RISE" 
+          className="h-12 w-auto animate-pulse"
+        />
+      </div>
+    );
+  }
+
+  // If low performance detected, show static fallback
+  if (isLowPerformance) {
+    return <StaticLandingFallback performanceReason={reason} />;
+  }
+
+  // Full experience for capable devices
+  return (
+    <XRayProvider>
       <LandingContent />
-    </XRayProvider>;
+    </XRayProvider>
+  );
 }
