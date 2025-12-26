@@ -72,6 +72,7 @@ import type { User } from "@supabase/supabase-js";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTheme } from "next-themes";
 import marbleBackground from "@/assets/smudged-marble-overlay.png";
+import whiteMarbleBackground from "@/assets/white-marble-overlay.png";
 import { 
   Calendar, 
   Users, 
@@ -662,11 +663,11 @@ const Staff = () => {
       <div 
         className="fixed inset-0 pointer-events-none z-0"
         style={{
-          backgroundImage: `url(${marbleBackground})`,
+          backgroundImage: `url(${theme === 'light' ? whiteMarbleBackground : marbleBackground})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          opacity: 0.25,
+          opacity: theme === 'light' ? 0.5 : 0.25,
         }}
       />
 
@@ -684,7 +685,7 @@ const Staff = () => {
               <Lightbulb className={`h-5 w-5 transition-colors ${theme === 'dark' ? 'text-muted-foreground' : 'text-yellow-500 fill-yellow-500'}`} />
             </Button>
             <img 
-              src="/RISEWhite.png"
+              src={theme === 'light' ? '/RISEBlack.png' : '/RISEWhite.png'}
               alt="RISE"
               className="h-10 w-auto"
             />
