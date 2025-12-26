@@ -103,7 +103,7 @@ const DEFAULT_LAYOUTS: WidgetLayout[] = [
   { id: "quicklinks", row: 0, order: 2, widthPercent: 34, heightPx: 200 },
   { id: "financial", row: 1, order: 0, widthPercent: 100, heightPx: 200 },
   { id: "schedule", row: 2, order: 0, widthPercent: 60, heightPx: 450 },
-  { id: "represented", row: 2, order: 1, widthPercent: 40, heightPx: 450 },
+  { id: "represented", row: 2, order: 1, widthPercent: 40, heightPx: 280 },
 ];
 
 const DEFAULT_HEIGHT_PX = 200;
