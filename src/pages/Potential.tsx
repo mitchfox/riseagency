@@ -18,20 +18,6 @@ import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, Scouti
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { Globe, TrendingUp, Award, Users2 } from "lucide-react";
 
-// Map form positions to scouting positions
-const positionMapping: Record<string, ScoutingPosition> = {
-  "GK": "Goalkeeper",
-  "LB": "Full-Back",
-  "RB": "Full-Back",
-  "CB": "Centre-Back",
-  "CDM": "Central Defensive Midfielder",
-  "CM": "Central Midfielder",
-  "CAM": "Central Attacking Midfielder",
-  "LW": "Winger / Wide Forward",
-  "RW": "Winger / Wide Forward",
-  "ST": "Centre Forward / Striker"
-};
-
 interface DraftFormData {
   id?: string;
   player_name: string;
@@ -310,8 +296,7 @@ const Potential = () => {
 
   const handlePositionChange = (position: string) => {
     setDraftForm(prev => {
-      const scoutingPosition = positionMapping[position];
-      const skillEvals = scoutingPosition ? initializeSkillEvaluations(scoutingPosition) : [];
+      const skillEvals = initializeSkillEvaluations(position);
       
       return {
         ...prev,
@@ -729,16 +714,9 @@ const Potential = () => {
                                 <SelectValue placeholder="Select position" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="GK">Goalkeeper</SelectItem>
-                                <SelectItem value="CB">Centre Back</SelectItem>
-                                <SelectItem value="LB">Left Back</SelectItem>
-                                <SelectItem value="RB">Right Back</SelectItem>
-                                <SelectItem value="CDM">Defensive Midfielder</SelectItem>
-                                <SelectItem value="CM">Central Midfielder</SelectItem>
-                                <SelectItem value="CAM">Attacking Midfielder</SelectItem>
-                                <SelectItem value="LW">Left Winger</SelectItem>
-                                <SelectItem value="RW">Right Winger</SelectItem>
-                                <SelectItem value="ST">Striker</SelectItem>
+                                {SCOUTING_POSITIONS.map((pos) => (
+                                  <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </div>
