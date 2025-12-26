@@ -6,15 +6,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LateralFilter } from "@/components/LateralFilter";
-import { LayoutGrid, List, Users, MessageCircle, ArrowRight, ChevronLeft, ChevronRight, FileText, Search, BarChart3, GraduationCap, Trophy } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { LayoutGrid, List, Users, MessageCircle, ArrowRight, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { parsePlayerBio } from "@/lib/playerDataParser";
 import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { ContactDialog } from "@/components/ContactDialog";
 import { PortfolioRequestDialog } from "@/components/PortfolioRequestDialog";
 import { useNavigate } from "react-router-dom";
-import { HoverText } from "@/components/HoverText";
 
 const PLAYERS_PER_PAGE = 12;
 
@@ -157,122 +155,137 @@ const Stars = () => {
       
       <main className="pt-16">
         {/* Hero Section */}
-        <section className="py-8 px-4">
-          <div className="container mx-auto">
-            {/* Title - Condensed */}
-            <div className="text-center mb-6">
-              <h1 className="text-6xl md:text-8xl font-bebas uppercase tracking-wider text-foreground">
+        <section className="relative py-16 md:py-24 px-4 overflow-hidden">
+          {/* Background accent */}
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+          
+          <div className="container mx-auto relative z-10">
+            {/* Title Block */}
+            <div className="text-center mb-12 md:mb-16">
+              <p className="text-primary uppercase tracking-[0.3em] text-xs md:text-sm font-medium mb-4">
+                {t('stars.subtitle', 'Elite Football Representation')}
+              </p>
+              <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-bebas uppercase tracking-wider text-foreground leading-none">
                 {t('stars.title', 'Our Stars')}
               </h1>
-              <p className="text-muted-foreground mt-4 max-w-3xl mx-auto">
-                {t('stars.subtitle', 'Elite Football Representation & Performance Optimisation')}
-              </p>
               
+              <div className="w-20 h-px bg-primary mx-auto mt-8 mb-8" />
               
-              <p className="text-muted-foreground mt-6 max-w-3xl mx-auto text-sm">
+              <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
                 {t('stars.description', 'Because of our background, we have the mandate to many top players across Europe\'s major divisions not under exclusive representation. Clubs can request our full portfolio through the button below.')}
               </p>
             </div>
 
-            {/* Interest Cards */}
-            <div className="grid md:grid-cols-3 gap-4 mb-6">
-              <Card 
-                className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group btn-shine"
+            {/* Action Cards - Premium Design */}
+            <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto mb-12">
+              {/* Declare Interest Card */}
+              <button 
                 onClick={() => setDeclareInterestOpen(true)}
+                className="group relative bg-secondary/50 backdrop-blur-sm border border-border hover:border-primary/50 p-6 md:p-8 text-left transition-all duration-300 hover:-translate-y-1"
               >
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                      <div className="p-2 sm:p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors shrink-0">
-                        <Users className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                      </div>
-                       <div className="min-w-0">
-                         <h3 className="font-bebas uppercase tracking-wider text-base sm:text-lg mb-1 break-words">
-                           <HoverText text={t('stars.declare_interest', 'Declare Interest in Player(s)')} />
-                         </h3>
-                         <p className="text-xs sm:text-sm text-muted-foreground break-words">
-                           {t('stars.declare_interest_desc', 'Select players and submit your interest')}
-                         </p>
-                       </div>
-                    </div>
-                    <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:translate-x-1 transition-transform shrink-0" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 rounded-full border border-primary/30 flex items-center justify-center mb-6 group-hover:border-primary group-hover:bg-primary/10 transition-all duration-300">
+                    <Users className="w-5 h-5 text-primary" />
                   </div>
-                </CardContent>
-              </Card>
+                  <h3 className="font-bebas text-xl md:text-2xl uppercase tracking-wider text-foreground mb-2">
+                    {t('stars.declare_interest', 'Declare Interest')}
+                  </h3>
+                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
+                    {t('stars.declare_interest_desc', 'Select players and submit your interest')}
+                  </p>
+                  <div className="mt-6 flex items-center gap-2 text-primary text-sm font-medium">
+                    <span className="uppercase tracking-wider text-xs">Get Started</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              </button>
               
-              <Card 
-                className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group btn-shine"
+              {/* Contact Card */}
+              <button 
                 onClick={() => setContactOpen(true)}
+                className="group relative bg-secondary/50 backdrop-blur-sm border border-border hover:border-primary/50 p-6 md:p-8 text-left transition-all duration-300 hover:-translate-y-1"
               >
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                      <div className="p-2 sm:p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors shrink-0">
-                        <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                      </div>
-                       <div className="min-w-0">
-                         <h3 className="font-bebas uppercase tracking-wider text-base sm:text-lg mb-1 break-words">
-                           <HoverText text={t('stars.contact_btn', 'Contact')} />
-                         </h3>
-                         <p className="text-xs sm:text-sm text-muted-foreground break-words">
-                           {t('stars.contact_desc', 'Get in touch with us directly')}
-                         </p>
-                       </div>
-                    </div>
-                    <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:translate-x-1 transition-transform shrink-0" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 rounded-full border border-primary/30 flex items-center justify-center mb-6 group-hover:border-primary group-hover:bg-primary/10 transition-all duration-300">
+                    <MessageCircle className="w-5 h-5 text-primary" />
                   </div>
-                </CardContent>
-              </Card>
+                  <h3 className="font-bebas text-xl md:text-2xl uppercase tracking-wider text-foreground mb-2">
+                    {t('stars.contact_btn', 'Contact Us')}
+                  </h3>
+                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
+                    {t('stars.contact_desc', 'Get in touch with us directly')}
+                  </p>
+                  <div className="mt-6 flex items-center gap-2 text-primary text-sm font-medium">
+                    <span className="uppercase tracking-wider text-xs">Reach Out</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              </button>
 
-              <Card 
-                className="bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary transition-colors cursor-pointer group btn-shine"
+              {/* Portfolio Card */}
+              <button 
                 onClick={() => setPortfolioOpen(true)}
+                className="group relative bg-secondary/50 backdrop-blur-sm border border-border hover:border-primary/50 p-6 md:p-8 text-left transition-all duration-300 hover:-translate-y-1"
               >
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                      <div className="p-2 sm:p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors shrink-0">
-                        <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                      </div>
-                       <div className="min-w-0">
-                         <h3 className="font-bebas uppercase tracking-wider text-base sm:text-lg mb-1 break-words">
-                           <HoverText text={t('stars.request_portfolio', 'Request Full Portfolio')} />
-                         </h3>
-                         <p className="text-xs sm:text-sm text-muted-foreground break-words">
-                           {t('stars.request_portfolio_desc', 'Access our complete player portfolio')}
-                         </p>
-                       </div>
-                    </div>
-                    <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:translate-x-1 transition-transform shrink-0" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 rounded-full border border-primary/30 flex items-center justify-center mb-6 group-hover:border-primary group-hover:bg-primary/10 transition-all duration-300">
+                    <FileText className="w-5 h-5 text-primary" />
                   </div>
-                </CardContent>
-              </Card>
+                  <h3 className="font-bebas text-xl md:text-2xl uppercase tracking-wider text-foreground mb-2">
+                    {t('stars.request_portfolio', 'Full Portfolio')}
+                  </h3>
+                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
+                    {t('stars.request_portfolio_desc', 'Access our complete player portfolio')}
+                  </p>
+                  <div className="mt-6 flex items-center gap-2 text-primary text-sm font-medium">
+                    <span className="uppercase tracking-wider text-xs">Request Access</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              </button>
             </div>
+          </div>
+        </section>
 
-            {/* View Mode Toggle - Icons Only */}
-            <div className="flex justify-center gap-2 mb-6">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-3 transition-colors rounded ${
-                  viewMode === "grid"
-                    ? "bg-primary text-black"
-                    : "bg-secondary text-foreground hover:bg-secondary/80"
-                }`}
-                aria-label="Grid view"
-              >
-                <LayoutGrid className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-3 transition-colors rounded ${
-                  viewMode === "list"
-                    ? "bg-primary text-black"
-                    : "bg-secondary text-foreground hover:bg-secondary/80"
-                }`}
-                aria-label="List view"
-              >
-                <List className="w-5 h-5" />
-              </button>
+        {/* Player Grid Section */}
+        <section className="px-4 pb-16">
+          <div className="container mx-auto">
+            {/* Controls Bar */}
+            <div className="flex items-center justify-between border-y border-border py-4 mb-8">
+              {/* View Toggle */}
+              <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-2.5 transition-all duration-200 rounded ${
+                    viewMode === "grid"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  aria-label="Grid view"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`p-2.5 transition-all duration-200 rounded ${
+                    viewMode === "list"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  aria-label="List view"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Player Count */}
+              <span className="text-sm text-muted-foreground hidden sm:block">
+                {filteredPlayers.length} {t('stars.players', 'players')}
+              </span>
             </div>
 
             {/* Filters */}
