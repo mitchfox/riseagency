@@ -679,15 +679,15 @@ const Staff = () => {
               variant="ghost"
               size="icon"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="h-10 w-10"
+              className="h-10 w-10 group"
               title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              <Lightbulb className={`h-5 w-5 transition-colors ${theme === 'dark' ? 'text-muted-foreground' : 'text-yellow-500 fill-yellow-500'}`} />
+              <Lightbulb className={`h-5 w-5 transition-colors ${theme === 'dark' ? 'text-primary group-hover:text-foreground' : 'text-primary fill-primary group-hover:text-foreground group-hover:fill-foreground'}`} />
             </Button>
             <img 
               src={theme === 'light' ? '/RISEBlack.png' : '/RISEWhite.png'}
               alt="RISE"
-              className="h-10 w-auto"
+              className={theme === 'light' ? 'h-8 w-auto' : 'h-10 w-auto'}
             />
             <div className="flex items-center gap-2">
               {user && <StaffNotificationsDropdown userId={user.id} />}
