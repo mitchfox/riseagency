@@ -143,13 +143,25 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
     })
   );
 
+  // Get consistent storage key
+  const getStorageKey = () => {
+    // Always use a consistent key - prioritize userId if available
+    if (userId) return `staff_overview_settings_${userId}`;
+    return 'staff_overview_settings_global';
+  };
+
   // Load settings from localStorage
   useEffect(() => {
-    const storageKey = userId ? `staff_overview_settings_${userId}` : 'staff_overview_settings';
+    // Wait for userId to be available before loading
+    if (userId === undefined) return;
+    
+    const storageKey = getStorageKey();
+    console.log('Loading overview settings from:', storageKey);
     const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        console.log('Loaded settings:', parsed);
         if (parsed.visibleWidgets) {
           setVisibleWidgets(parsed.visibleWidgets);
           setSavedVisibleWidgets(parsed.visibleWidgets);
@@ -189,10 +201,11 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
 
   // Persist changes to localStorage
   const confirmSaveChanges = () => {
-    const storageKey = userId ? `staff_overview_settings_${userId}` : 'staff_overview_settings';
+    const storageKey = getStorageKey();
+    console.log('Saving overview settings to:', storageKey, { visibleWidgets, layouts });
     localStorage.setItem(storageKey, JSON.stringify({ visibleWidgets, layouts }));
-    setSavedLayouts(layouts);
-    setSavedVisibleWidgets(visibleWidgets);
+    setSavedLayouts([...layouts]);
+    setSavedVisibleWidgets([...visibleWidgets]);
     setHasUnsavedChanges(false);
   };
 
@@ -225,10 +238,10 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
     const defaults = WIDGET_CONFIGS.filter(w => w.defaultVisible).map(w => w.id);
     updateLayoutState(defaults, DEFAULT_LAYOUTS);
     // Also persist immediately when resetting
-    const storageKey = userId ? `staff_overview_settings_${userId}` : 'staff_overview_settings';
+    const storageKey = getStorageKey();
     localStorage.setItem(storageKey, JSON.stringify({ visibleWidgets: defaults, layouts: DEFAULT_LAYOUTS }));
-    setSavedLayouts(DEFAULT_LAYOUTS);
-    setSavedVisibleWidgets(defaults);
+    setSavedLayouts([...DEFAULT_LAYOUTS]);
+    setSavedVisibleWidgets([...defaults]);
   };
 
   const handleResize = (widgetId: string, newWidthPercent: number, newHeightPx: number) => {

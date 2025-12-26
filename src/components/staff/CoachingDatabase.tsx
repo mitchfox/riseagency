@@ -20,6 +20,7 @@ import { SchemeEditor } from "./SchemeEditor";
 import { PositionalGuides } from "./PositionalGuides";
 import { ClubRatings } from "./ClubRatings";
 import { MarkdownText } from "@/utils/markdownRenderer";
+import { openExternalUrl } from "@/utils/openExternalUrl";
 
 
 type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides' | 'club_ratings';
@@ -1383,7 +1384,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                             <Button 
                               variant="ghost" 
                               size="icon"
-                              onClick={() => window.open(item.content!, '_blank')}
+                              onClick={() => openExternalUrl(item.content!)}
                             >
                               <ExternalLink className="w-4 h-4" />
                             </Button>
@@ -1512,7 +1513,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
-                                onClick={() => window.open(item.content!, '_blank')}
+                                onClick={() => openExternalUrl(item.content!)}
                                 title="View PDF"
                               >
                                 <ExternalLink className="w-4 h-4" />
