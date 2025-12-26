@@ -99,7 +99,7 @@ const Contact = () => {
         </div>
 
         {/* Contact Sections */}
-        <main className="container mx-auto px-4 py-16">
+        <main className="container mx-auto px-4 py-8">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {contactSections.map((section) => (
               <div 

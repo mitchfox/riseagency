@@ -181,7 +181,7 @@ const Coaches = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-12 md:py-16 bg-background">
+        <section className="py-6 md:py-8 bg-background">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
               {t('coaches.cta_title')}

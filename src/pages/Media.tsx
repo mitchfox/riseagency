@@ -41,7 +41,7 @@ const Media = () => {
         </section>
 
         {/* INTERVIEW REQUESTS Section */}
-        <section className="py-16 md:py-24 bg-background">
+        <section className="py-8 md:py-12 bg-background">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="space-y-6">
@@ -106,7 +106,7 @@ const Media = () => {
         </section>
 
         {/* CONTENT ACCESS Section */}
-        <section className="py-16 md:py-24 bg-muted/30">
+        <section className="py-8 md:py-12 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="order-2 md:order-1 grid grid-cols-2 gap-4">
@@ -159,7 +159,7 @@ const Media = () => {
         </section>
 
         {/* BROADCAST & FILM Section */}
-        <section className="py-16 md:py-24 bg-background">
+        <section className="py-8 md:py-12 bg-background">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="space-y-6">
@@ -214,7 +214,7 @@ const Media = () => {
         </section>
 
         {/* PRESS RELEASES Section */}
-        <section className="py-16 md:py-24 bg-muted/30">
+        <section className="py-8 md:py-12 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="order-2 md:order-1 bg-card/50 border border-border rounded-lg p-8 space-y-6">
