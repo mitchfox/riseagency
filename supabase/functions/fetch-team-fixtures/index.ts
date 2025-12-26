@@ -203,9 +203,8 @@ CRITICAL: Use dates from ${currentYear} ONLY, specifically between ${startDate} 
     );
   } catch (error) {
     console.error("Error fetching fixtures:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: errorMessage, fixtures: [] }),
+      JSON.stringify({ error: "Failed to fetch fixtures", fixtures: [] }),
       { 
         status: 500, 
         headers: { 

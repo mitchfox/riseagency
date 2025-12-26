@@ -201,9 +201,8 @@ Extract ALL fixtures visible. Do NOT skip any matches.`
     );
   } catch (error) {
     console.error("Error processing image:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: errorMessage, fixtures: [] }),
+      JSON.stringify({ error: "Failed to process image", fixtures: [] }),
       { 
         status: 500, 
         headers: { 

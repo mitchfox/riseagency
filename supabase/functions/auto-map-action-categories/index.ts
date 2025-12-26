@@ -257,10 +257,7 @@ Return ONLY a valid JSON array with this exact structure:
   } catch (error: any) {
     console.error('Error in auto-map-action-categories:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: error.toString()
-      }),
+      JSON.stringify({ error: 'Failed to map action categories' }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500

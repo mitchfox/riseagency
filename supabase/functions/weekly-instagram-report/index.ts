@@ -210,9 +210,8 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error in weekly-instagram-report:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: 'Failed to generate report' }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 

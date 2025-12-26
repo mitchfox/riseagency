@@ -100,9 +100,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error in generate-scouting-review:', errorMessage);
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    console.error('Error in generate-scouting-review:', error);
+    return new Response(JSON.stringify({ error: 'Failed to generate review' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

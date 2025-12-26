@@ -144,7 +144,7 @@ Analyze this action and return the IDs of the most relevant R90 ratings. Conside
   } catch (error: any) {
     console.error('Error in find-r90-rating:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'Unknown error occurred' }),
+      JSON.stringify({ error: 'Failed to find rating' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

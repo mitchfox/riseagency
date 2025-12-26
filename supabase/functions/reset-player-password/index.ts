@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error in reset-player-password:', error)
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error occurred' }),
+      JSON.stringify({ error: 'Failed to reset password' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }

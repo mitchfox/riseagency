@@ -148,8 +148,7 @@ ${JSON.stringify(schemaData, null, 2)}
     });
   } catch (error: unknown) {
     console.error('OG Player error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: message }), {
+    return new Response(JSON.stringify({ error: 'Failed to generate player page' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

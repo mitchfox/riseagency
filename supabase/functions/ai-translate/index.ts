@@ -126,7 +126,7 @@ Return ONLY a valid JSON object with exactly this structure (no markdown, no cod
   } catch (error) {
     console.error("Translation error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Translation failed" }),
+      JSON.stringify({ error: "Translation failed" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
