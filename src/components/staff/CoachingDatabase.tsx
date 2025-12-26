@@ -1141,19 +1141,18 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="category">Category</Label>
-                              <Select
-                                value={formData.category || ''}
-                                onValueChange={(value) => setFormData({ ...formData, category: value })}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {analysisCategories.map((cat) => (
-                                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <Input
+                                id="category"
+                                value={formData.category}
+                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                placeholder="e.g. Match Analysis, Training, Tactical"
+                                list="analysis-categories"
+                              />
+                              <datalist id="analysis-categories">
+                                {analysisCategories.map((cat) => (
+                                  <option key={cat} value={cat} />
+                                ))}
+                              </datalist>
                             </div>
                           </div>
                           <div className="space-y-2">
