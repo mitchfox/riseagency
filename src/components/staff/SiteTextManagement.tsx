@@ -91,10 +91,10 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   });
 
   useEffect(() => {
-    fetchSiteTexts();
+    fetchSiteTexts(true);
   }, []);
 
-  const fetchSiteTexts = async () => {
+  const fetchSiteTexts = async (isInitialLoad = false) => {
     setLoading(true);
     const { data, error } = await supabase
       .from("site_text")
@@ -107,13 +107,14 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       console.error(error);
     } else {
       setSiteTexts(data || []);
-      // Store original values on first load
-      if (originalTexts.length === 0) {
+      // Store original values only on initial load
+      if (isInitialLoad) {
         setOriginalTexts((data || []).map(t => ({
           id: t.id,
           text_key: t.text_key,
           english_text: t.english_text
         })));
+        setChangedIds(new Set());
       }
     }
     setLoading(false);
@@ -201,22 +202,35 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       return;
     }
 
-    // Track this change
+    // Track this change - compare against original
     const original = originalTexts.find(t => t.id === id);
-    if (original && original.english_text !== inlineValue) {
-      setChangedIds(prev => new Set(prev).add(id));
-    } else if (original && original.english_text === inlineValue) {
-      // If reverted to original, remove from changed
-      setChangedIds(prev => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
+    console.log('Tracking change:', { id, inlineValue, original, originalTextsLength: originalTexts.length });
+    
+    if (original) {
+      if (original.english_text !== inlineValue) {
+        setChangedIds(prev => {
+          const next = new Set(prev);
+          next.add(id);
+          console.log('Added to changedIds:', id, 'Total:', next.size);
+          return next;
+        });
+      } else {
+        // If reverted to original, remove from changed
+        setChangedIds(prev => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      }
     }
+
+    // Update local state immediately
+    setSiteTexts(prev => prev.map(t => 
+      t.id === id ? { ...t, english_text: inlineValue } : t
+    ));
 
     toast.success("Text saved");
     setEditingInline(null);
-    fetchSiteTexts();
   };
 
   const resetForm = () => {
