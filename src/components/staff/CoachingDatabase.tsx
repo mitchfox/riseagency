@@ -842,7 +842,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         // Create database entry
         const { error: dbError } = await supabase.from('coaching_analysis').insert({
           title: file.name.replace('.pdf', ''),
-          description: `Uploaded PDF: ${file.name}`,
+          description: null,
           content: urlData.publicUrl,
           category: 'Uncategorized',
         });
@@ -1370,7 +1370,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium truncate">{item.title}</h4>
-                            {item.description && (
+                            {item.description && !item.description.startsWith('Uploaded PDF:') && (
                               <p className="text-sm text-muted-foreground truncate">{item.description}</p>
                             )}
                           </div>
@@ -1506,16 +1506,29 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                               </div>
                             </div>
                           </div>
-                          {isAdmin && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                              onClick={() => handleEdit(item)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                          )}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {activeTab === 'coaching_analysis' && item.content?.includes('http') && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => window.open(item.content!, '_blank')}
+                                title="View PDF"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </Button>
+                            )}
+                            {isAdmin && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => handleEdit(item)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent className="pt-0">
@@ -1542,7 +1555,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                           </>
                         ) : (
                           <>
-                            {item.description && (
+                            {item.description && !item.description.startsWith('Uploaded PDF:') && (
                               <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
                                 <MarkdownText text={item.description} />
                               </p>
