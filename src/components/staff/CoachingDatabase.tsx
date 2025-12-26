@@ -238,6 +238,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
   const [analysisSortAlpha, setAnalysisSortAlpha] = useState(false);
   const [analysisCategories, setAnalysisCategories] = useState<string[]>([]);
   const [showAddCategoryDialog, setShowAddCategoryDialog] = useState(false);
+  const [showManageCategoriesDialog, setShowManageCategoriesDialog] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
   useEffect(() => {
@@ -1108,6 +1109,57 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                             </div>
                           </div>
                         </>
+                      ) : activeTab === 'coaching_analysis' ? (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="title">Title *</Label>
+                            <Input
+                              id="title"
+                              value={formData.title}
+                              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                              placeholder="Analysis title"
+                              required
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="description">Description</Label>
+                              <Textarea
+                                id="description"
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                placeholder="Brief description"
+                                rows={3}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="category">Category</Label>
+                              <Select
+                                value={formData.category || ''}
+                                onValueChange={(value) => setFormData({ ...formData, category: value })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {analysisCategories.map((cat) => (
+                                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="content">Content / PDF URL</Label>
+                            <Textarea
+                              id="content"
+                              value={formData.content}
+                              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                              placeholder="Content or PDF URL..."
+                              rows={4}
+                            />
+                          </div>
+                        </>
                       ) : activeTab === 'coaching_concepts' ? (
                         <>
                           <div className="space-y-2">
@@ -1271,8 +1323,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                     <Button 
                       variant="outline" 
                       size="icon"
-                      onClick={() => setShowAddCategoryDialog(true)}
-                      title="Add Category"
+                      onClick={() => setShowManageCategoriesDialog(true)}
+                      title="Manage Categories"
                     >
                       <FolderPlus className="w-4 h-4" />
                     </Button>
@@ -1688,38 +1740,94 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         onOpenChange={setIsR90ManagementOpen}
       />
 
-      {/* Add Category Dialog */}
-      <Dialog open={showAddCategoryDialog} onOpenChange={setShowAddCategoryDialog}>
+      {/* Manage Categories Dialog */}
+      <Dialog open={showManageCategoriesDialog} onOpenChange={setShowManageCategoriesDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Add New Category</DialogTitle>
+            <DialogTitle>Manage Categories</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {/* Add new category */}
             <div className="space-y-2">
-              <Label htmlFor="new-category">Category Name</Label>
-              <Input
-                id="new-category"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                placeholder="Enter category name"
-              />
+              <Label htmlFor="new-category">Add New Category</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="new-category"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="Enter category name"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newCategoryName.trim()) {
+                      e.preventDefault();
+                      setAnalysisCategories(prev => [...prev, newCategoryName.trim()].sort());
+                      toast.success(`Category "${newCategoryName.trim()}" added`);
+                      setNewCategoryName('');
+                    }
+                  }}
+                />
+                <Button onClick={() => {
+                  if (newCategoryName.trim()) {
+                    setAnalysisCategories(prev => [...prev, newCategoryName.trim()].sort());
+                    toast.success(`Category "${newCategoryName.trim()}" added`);
+                    setNewCategoryName('');
+                  }
+                }}>
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
-            <div className="flex justify-end gap-2">
+            
+            {/* Existing categories */}
+            <div className="space-y-2">
+              <Label>Existing Categories</Label>
+              <ScrollArea className="h-[250px] border rounded-md p-2">
+                {analysisCategories.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">No categories yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {analysisCategories.map((category) => (
+                      <div key={category} className="flex items-center justify-between p-2 rounded-md bg-muted/50 hover:bg-muted">
+                        <span className="text-sm">{category}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={async () => {
+                            if (!confirm(`Delete category "${category}"? Items with this category will be set to Uncategorized.`)) return;
+                            
+                            try {
+                              // Update all items with this category to 'Uncategorized'
+                              const { error } = await supabase
+                                .from('coaching_analysis')
+                                .update({ category: 'Uncategorized' })
+                                .eq('category', category);
+                              
+                              if (error) throw error;
+                              
+                              setAnalysisCategories(prev => prev.filter(c => c !== category));
+                              toast.success(`Category "${category}" deleted`);
+                              fetchItems();
+                            } catch (error) {
+                              console.error('Error deleting category:', error);
+                              toast.error('Failed to delete category');
+                            }
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
+            
+            <div className="flex justify-end">
               <Button variant="outline" onClick={() => {
-                setShowAddCategoryDialog(false);
+                setShowManageCategoriesDialog(false);
                 setNewCategoryName('');
               }}>
-                Cancel
-              </Button>
-              <Button onClick={() => {
-                if (newCategoryName.trim()) {
-                  setAnalysisCategories(prev => [...prev, newCategoryName.trim()].sort());
-                  toast.success(`Category "${newCategoryName.trim()}" added`);
-                  setNewCategoryName('');
-                  setShowAddCategoryDialog(false);
-                }
-              }}>
-                Add Category
+                Close
               </Button>
             </div>
           </div>
