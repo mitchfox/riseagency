@@ -56,6 +56,43 @@ All colors MUST be HSL.
     /* Scrollbar width for layout calculations */
     --scrollbar-width: 0px;
   }
+
+  .light {
+    --background: 40 30% 96%; /* Warm cream/off-white */
+    --foreground: 0 0% 10%; /* Near black for text */
+    --card: 40 25% 98%; /* Slightly warmer white for cards */
+    --card-foreground: 0 0% 10%;
+
+    --popover: 40 25% 98%;
+    --popover-foreground: 0 0% 10%;
+
+    --primary: 43 49% 45%; /* Slightly darker gold for light mode */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 40 20% 92%;
+    --secondary-foreground: 0 0% 15%;
+
+    --muted: 40 20% 90%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 43 49% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 15% 85%;
+    --input: 40 15% 85%;
+    --ring: 43 49% 45%;
+
+    /* Custom design tokens for light mode */
+    --gold: 43 49% 45%;
+    --gold-muted: 43 35% 50%;
+    --text-primary: 0 0% 10%;
+    --text-secondary: 43 40% 35%;
+    --bg-dark: 40 30% 96%;
+    --bg-card: 40 25% 98%;
+  }
 }
 
 /* Scrollbar gutter support - prevents layout shift */
