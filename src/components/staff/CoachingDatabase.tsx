@@ -772,8 +772,28 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
-  const handleEdit = (item: CoachingItem) => {
+  const handleEdit = async (item: CoachingItem) => {
     setEditingItem(item);
+    
+    // Load analysis categories if editing an analysis item
+    if (activeTab === 'coaching_analysis' && analysisCategories.length === 0) {
+      try {
+        const { data } = await supabase
+          .from('coaching_analysis')
+          .select('category');
+        
+        if (data) {
+          const uniqueCats = new Set<string>();
+          data.forEach((d: any) => {
+            if (d.category) uniqueCats.add(d.category);
+          });
+          setAnalysisCategories(Array.from(uniqueCats).sort());
+        }
+      } catch (err) {
+        console.error('Error loading categories:', err);
+      }
+    }
+    
     // Convert old format to new format if needed
     let exercisesData: any = item.exercises;
     if (Array.isArray(exercisesData)) {
