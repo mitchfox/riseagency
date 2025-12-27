@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PageLoading } from "@/components/LoadingSpinner";
 import { useScoutAuth } from "@/hooks/useScoutAuth";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LogOut, Plus, Users, MessageSquare, Search, FileText, Trash2, Edit, Target } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { LogOut, Plus, Users, MessageSquare, Search, FileText, Trash2, Edit, Target, ChevronDown, Link, Upload, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,7 +23,9 @@ interface DraftFormData {
   id?: string;
   player_name: string;
   position: string;
-  age: string;
+  year_of_birth: string;
+  birth_month: string;
+  birth_day: string;
   current_club: string;
   nationality: string;
   competition: string;
@@ -30,8 +33,19 @@ interface DraftFormData {
   strengths: string;
   weaknesses: string;
   summary: string;
-  recommendation: string;
-  video_url: string;
+  video_urls: string[];
+  report_type: 'rise' | 'independent' | '';
+  independent_report_url: string;
+  // Additional contact info
+  player_contact_email: string;
+  player_contact_phone: string;
+  contact_name: string;
+  contact_relationship: string;
+  contact_email: string;
+  contact_phone: string;
+  existing_agent: string;
+  agent_contract_end: string;
+  additional_notes: string;
 }
 
 const Potential = () => {
@@ -40,12 +54,17 @@ const Potential = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDraft, setSelectedDraft] = useState<string | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [additionalInfoOpen, setAdditionalInfoOpen] = useState(false);
+  const formRef = useRef<DraftFormData | null>(null);
+  const hasChangesRef = useRef(false);
 
   // Form state for draft
   const [draftForm, setDraftForm] = useState<DraftFormData>({
     player_name: "",
     position: "",
-    age: "",
+    year_of_birth: "",
+    birth_month: "",
+    birth_day: "",
     current_club: "",
     nationality: "",
     competition: "",
@@ -53,9 +72,78 @@ const Potential = () => {
     strengths: "",
     weaknesses: "",
     summary: "",
-    recommendation: "",
-    video_url: "",
+    video_urls: [],
+    report_type: '',
+    independent_report_url: '',
+    player_contact_email: '',
+    player_contact_phone: '',
+    contact_name: '',
+    contact_relationship: '',
+    contact_email: '',
+    contact_phone: '',
+    existing_agent: '',
+    agent_contract_end: '',
+    additional_notes: '',
   });
+
+  // Track form changes
+  useEffect(() => {
+    formRef.current = draftForm;
+    if (isCreatingNew && draftForm.player_name) {
+      hasChangesRef.current = true;
+    }
+  }, [draftForm, isCreatingNew]);
+
+  // Auto-save when navigating away
+  const handleAutoSave = async () => {
+    if (hasChangesRef.current && formRef.current?.player_name && scout?.id) {
+      const dataToSave = {
+        player_name: formRef.current.player_name,
+        position: formRef.current.position,
+        year_of_birth: formRef.current.year_of_birth ? parseInt(formRef.current.year_of_birth) : null,
+        birth_month: formRef.current.birth_month ? parseInt(formRef.current.birth_month) : null,
+        birth_day: formRef.current.birth_day ? parseInt(formRef.current.birth_day) : null,
+        current_club: formRef.current.current_club,
+        nationality: formRef.current.nationality,
+        competition: formRef.current.competition,
+        skill_evaluations: formRef.current.skill_evaluations as any,
+        strengths: formRef.current.strengths,
+        weaknesses: formRef.current.weaknesses,
+        summary: formRef.current.summary,
+        video_urls: formRef.current.video_urls,
+        report_type: formRef.current.report_type,
+        independent_report_url: formRef.current.independent_report_url,
+        player_contact_email: formRef.current.player_contact_email,
+        player_contact_phone: formRef.current.player_contact_phone,
+        contact_name: formRef.current.contact_name,
+        contact_relationship: formRef.current.contact_relationship,
+        contact_email: formRef.current.contact_email,
+        contact_phone: formRef.current.contact_phone,
+        existing_agent: formRef.current.existing_agent,
+        agent_contract_end: formRef.current.agent_contract_end,
+        additional_notes: formRef.current.additional_notes,
+        scout_id: scout.id,
+      };
+
+      try {
+        if (formRef.current.id) {
+          await supabase
+            .from("scouting_report_drafts")
+            .update(dataToSave)
+            .eq("id", formRef.current.id);
+        } else {
+          await supabase
+            .from("scouting_report_drafts")
+            .insert(dataToSave);
+        }
+        queryClient.invalidateQueries({ queryKey: ["scout-drafts"] });
+        toast.success("Draft auto-saved");
+      } catch (error) {
+        console.error("Auto-save failed:", error);
+      }
+    }
+    hasChangesRef.current = false;
+  };
 
   // Fetch scout's submissions
   const { data: submissions = [] } = useQuery({
@@ -140,7 +228,9 @@ const Potential = () => {
       const dataToSave = {
         player_name: draftData.player_name,
         position: draftData.position,
-        age: draftData.age ? parseInt(draftData.age) : null,
+        year_of_birth: draftData.year_of_birth ? parseInt(draftData.year_of_birth) : null,
+        birth_month: draftData.birth_month ? parseInt(draftData.birth_month) : null,
+        birth_day: draftData.birth_day ? parseInt(draftData.birth_day) : null,
         current_club: draftData.current_club,
         nationality: draftData.nationality,
         competition: draftData.competition,
@@ -148,13 +238,22 @@ const Potential = () => {
         strengths: draftData.strengths,
         weaknesses: draftData.weaknesses,
         summary: draftData.summary,
-        recommendation: draftData.recommendation,
-        video_url: draftData.video_url,
+        video_urls: draftData.video_urls,
+        report_type: draftData.report_type,
+        independent_report_url: draftData.independent_report_url,
+        player_contact_email: draftData.player_contact_email,
+        player_contact_phone: draftData.player_contact_phone,
+        contact_name: draftData.contact_name,
+        contact_relationship: draftData.contact_relationship,
+        contact_email: draftData.contact_email,
+        contact_phone: draftData.contact_phone,
+        existing_agent: draftData.existing_agent,
+        agent_contract_end: draftData.agent_contract_end,
+        additional_notes: draftData.additional_notes,
         scout_id: scout?.id,
       };
 
       if (draftData.id) {
-        // Update existing draft
         const { error } = await supabase
           .from("scouting_report_drafts")
           .update(dataToSave)
@@ -162,7 +261,6 @@ const Potential = () => {
         
         if (error) throw error;
       } else {
-        // Create new draft
         const { error } = await supabase
           .from("scouting_report_drafts")
           .insert(dataToSave);
@@ -173,6 +271,7 @@ const Potential = () => {
     onSuccess: () => {
       toast.success("Draft saved successfully!");
       queryClient.invalidateQueries({ queryKey: ["scout-drafts"] });
+      hasChangesRef.current = false;
       setIsCreatingNew(false);
       setSelectedDraft(null);
     },
@@ -212,7 +311,7 @@ const Potential = () => {
         .insert({
           player_name: reportData.player_name,
           position: reportData.position,
-          age: reportData.age ? parseInt(reportData.age) : null,
+          age: reportData.year_of_birth ? new Date().getFullYear() - parseInt(reportData.year_of_birth) : null,
           current_club: reportData.current_club,
           nationality: reportData.nationality,
           competition: reportData.competition,
@@ -220,8 +319,7 @@ const Potential = () => {
           strengths: reportData.strengths,
           weaknesses: reportData.weaknesses,
           summary: reportData.summary,
-          recommendation: reportData.recommendation,
-          video_url: reportData.video_url,
+          video_url: reportData.video_urls.join(', '),
           scout_id: scout?.id,
           scout_name: scout?.name,
           scouting_date: new Date().toISOString().split('T')[0],
@@ -230,7 +328,6 @@ const Potential = () => {
       
       if (error) throw error;
 
-      // Delete the draft if submitting from a saved draft
       if (reportData.id) {
         await supabase
           .from("scouting_report_drafts")
@@ -242,6 +339,7 @@ const Potential = () => {
       toast.success("Report submitted successfully!");
       queryClient.invalidateQueries({ queryKey: ["scout-submissions"] });
       queryClient.invalidateQueries({ queryKey: ["scout-drafts"] });
+      hasChangesRef.current = false;
       setIsCreatingNew(false);
       setSelectedDraft(null);
       resetForm();
@@ -255,7 +353,9 @@ const Potential = () => {
     setDraftForm({
       player_name: "",
       position: "",
-      age: "",
+      year_of_birth: "",
+      birth_month: "",
+      birth_day: "",
       current_club: "",
       nationality: "",
       competition: "",
@@ -263,9 +363,21 @@ const Potential = () => {
       strengths: "",
       weaknesses: "",
       summary: "",
-      recommendation: "",
-      video_url: "",
+      video_urls: [],
+      report_type: '',
+      independent_report_url: '',
+      player_contact_email: '',
+      player_contact_phone: '',
+      contact_name: '',
+      contact_relationship: '',
+      contact_email: '',
+      contact_phone: '',
+      existing_agent: '',
+      agent_contract_end: '',
+      additional_notes: '',
     });
+    setAdditionalInfoOpen(false);
+    hasChangesRef.current = false;
   };
 
   const handleCreateNew = () => {
@@ -279,7 +391,9 @@ const Potential = () => {
       id: draft.id,
       player_name: draft.player_name || "",
       position: draft.position || "",
-      age: draft.age?.toString() || "",
+      year_of_birth: draft.year_of_birth?.toString() || "",
+      birth_month: draft.birth_month?.toString() || "",
+      birth_day: draft.birth_day?.toString() || "",
       current_club: draft.current_club || "",
       nationality: draft.nationality || "",
       competition: draft.competition || "",
@@ -287,8 +401,18 @@ const Potential = () => {
       strengths: draft.strengths || "",
       weaknesses: draft.weaknesses || "",
       summary: draft.summary || "",
-      recommendation: draft.recommendation || "",
-      video_url: draft.video_url || "",
+      video_urls: draft.video_urls || [],
+      report_type: draft.report_type || '',
+      independent_report_url: draft.independent_report_url || '',
+      player_contact_email: draft.player_contact_email || '',
+      player_contact_phone: draft.player_contact_phone || '',
+      contact_name: draft.contact_name || '',
+      contact_relationship: draft.contact_relationship || '',
+      contact_email: draft.contact_email || '',
+      contact_phone: draft.contact_phone || '',
+      existing_agent: draft.existing_agent || '',
+      agent_contract_end: draft.agent_contract_end || '',
+      additional_notes: draft.additional_notes || '',
     });
     setSelectedDraft(draft.id);
     setIsCreatingNew(true);
@@ -297,7 +421,6 @@ const Potential = () => {
   const handlePositionChange = (position: string) => {
     setDraftForm(prev => {
       const skillEvals = initializeSkillEvaluations(position);
-      
       return {
         ...prev,
         position,
@@ -306,9 +429,16 @@ const Potential = () => {
     });
   };
 
+  const handleBackToDrafts = async () => {
+    await handleAutoSave();
+    setIsCreatingNew(false);
+    setSelectedDraft(null);
+    resetForm();
+  };
+
   const handleSaveDraft = () => {
-    if (!draftForm.player_name || !draftForm.position) {
-      toast.error("Please fill in player name and position");
+    if (!draftForm.player_name) {
+      toast.error("Please fill in player name");
       return;
     }
     saveDraftMutation.mutate(draftForm);
@@ -319,7 +449,33 @@ const Potential = () => {
       toast.error("Please fill in player name and position");
       return;
     }
+    if (!draftForm.report_type) {
+      toast.error("Please select a report type");
+      return;
+    }
     submitReportMutation.mutate(draftForm);
+  };
+
+  const handleAddVideoUrl = () => {
+    setDraftForm(prev => ({
+      ...prev,
+      video_urls: [...prev.video_urls, '']
+    }));
+  };
+
+  const handleVideoUrlChange = (index: number, value: string) => {
+    setDraftForm(prev => {
+      const newUrls = [...prev.video_urls];
+      newUrls[index] = value;
+      return { ...prev, video_urls: newUrls };
+    });
+  };
+
+  const handleRemoveVideoUrl = (index: number) => {
+    setDraftForm(prev => ({
+      ...prev,
+      video_urls: prev.video_urls.filter((_, i) => i !== index)
+    }));
   };
 
   const filteredSubmissions = submissions.filter(sub =>
@@ -362,7 +518,15 @@ const Potential = () => {
               <Users className="h-4 w-4 mr-2" />
               My Submissions
             </TabsTrigger>
-            <TabsTrigger value="drafts" onClick={() => setIsCreatingNew(false)}>
+            <TabsTrigger 
+              value="drafts" 
+              onClick={() => {
+                if (isCreatingNew) {
+                  handleAutoSave();
+                }
+                setIsCreatingNew(false);
+              }}
+            >
               <FileText className="h-4 w-4 mr-2" />
               Drafts
             </TabsTrigger>
@@ -681,14 +845,7 @@ const Potential = () => {
                         }
                       </CardDescription>
                     </div>
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        setIsCreatingNew(false);
-                        setSelectedDraft(null);
-                        resetForm();
-                      }}
-                    >
+                    <Button variant="ghost" onClick={handleBackToDrafts}>
                       Back to Drafts
                     </Button>
                   </div>
@@ -735,14 +892,38 @@ const Potential = () => {
                               </Select>
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="age">Age</Label>
-                              <Input
-                                id="age"
-                                type="number"
-                                value={draftForm.age}
-                                onChange={(e) => setDraftForm({ ...draftForm, age: e.target.value })}
-                                placeholder="Age"
-                              />
+                              <Label htmlFor="year_of_birth">Year of Birth</Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  id="year_of_birth"
+                                  type="number"
+                                  value={draftForm.year_of_birth}
+                                  onChange={(e) => setDraftForm({ ...draftForm, year_of_birth: e.target.value })}
+                                  placeholder="YYYY"
+                                  className="flex-1"
+                                  min={1980}
+                                  max={new Date().getFullYear()}
+                                />
+                                <Input
+                                  type="number"
+                                  value={draftForm.birth_month}
+                                  onChange={(e) => setDraftForm({ ...draftForm, birth_month: e.target.value })}
+                                  placeholder="MM"
+                                  className="w-20"
+                                  min={1}
+                                  max={12}
+                                />
+                                <Input
+                                  type="number"
+                                  value={draftForm.birth_day}
+                                  onChange={(e) => setDraftForm({ ...draftForm, birth_day: e.target.value })}
+                                  placeholder="DD"
+                                  className="w-20"
+                                  min={1}
+                                  max={31}
+                                />
+                              </div>
+                              <p className="text-xs text-muted-foreground">Month and day optional</p>
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="nationality">Nationality</Label>
@@ -775,6 +956,128 @@ const Potential = () => {
                         </CardContent>
                       </Card>
 
+                      {/* Additional Information - Collapsible */}
+                      <Collapsible open={additionalInfoOpen} onOpenChange={setAdditionalInfoOpen}>
+                        <Card className="border-border/50">
+                          <CollapsibleTrigger asChild>
+                            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                              <div className="flex items-center justify-between">
+                                <CardTitle className="text-base">Additional Information (Optional)</CardTitle>
+                                <ChevronDown className={`h-5 w-5 transition-transform ${additionalInfoOpen ? 'rotate-180' : ''}`} />
+                              </div>
+                            </CardHeader>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <CardContent className="space-y-6 pt-0">
+                              {/* FIFA Rules Notice */}
+                              <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                                <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                                  <strong>Important:</strong> Due to FIFA agent licensing regulations, you cannot represent yourself as working on our behalf when reaching out to players directly. However, you are welcome to ask if you can pass their details onto agents you are working with.
+                                </p>
+                              </div>
+
+                              {/* Player Contact */}
+                              <div className="space-y-4">
+                                <h4 className="text-sm font-medium">Player Contact Details (if known)</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="space-y-2">
+                                    <Label>Player Email</Label>
+                                    <Input
+                                      type="email"
+                                      value={draftForm.player_contact_email}
+                                      onChange={(e) => setDraftForm({ ...draftForm, player_contact_email: e.target.value })}
+                                      placeholder="player@email.com"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>Player Phone</Label>
+                                    <Input
+                                      value={draftForm.player_contact_phone}
+                                      onChange={(e) => setDraftForm({ ...draftForm, player_contact_phone: e.target.value })}
+                                      placeholder="+44 ..."
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Parent/Friend/Relation Contact */}
+                              <div className="space-y-4">
+                                <h4 className="text-sm font-medium">Parent / Friend / Relation Contact (if known)</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="space-y-2">
+                                    <Label>Contact Name</Label>
+                                    <Input
+                                      value={draftForm.contact_name}
+                                      onChange={(e) => setDraftForm({ ...draftForm, contact_name: e.target.value })}
+                                      placeholder="Full name"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>Relationship to Player</Label>
+                                    <Input
+                                      value={draftForm.contact_relationship}
+                                      onChange={(e) => setDraftForm({ ...draftForm, contact_relationship: e.target.value })}
+                                      placeholder="e.g., Father, Coach, Friend"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>Contact Email</Label>
+                                    <Input
+                                      type="email"
+                                      value={draftForm.contact_email}
+                                      onChange={(e) => setDraftForm({ ...draftForm, contact_email: e.target.value })}
+                                      placeholder="contact@email.com"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>Contact Phone</Label>
+                                    <Input
+                                      value={draftForm.contact_phone}
+                                      onChange={(e) => setDraftForm({ ...draftForm, contact_phone: e.target.value })}
+                                      placeholder="+44 ..."
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Existing Agent Info */}
+                              <div className="space-y-4">
+                                <h4 className="text-sm font-medium">Existing Agent Information (if known)</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="space-y-2">
+                                    <Label>Current Agent/Agency</Label>
+                                    <Input
+                                      value={draftForm.existing_agent}
+                                      onChange={(e) => setDraftForm({ ...draftForm, existing_agent: e.target.value })}
+                                      placeholder="Agent name or agency"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>Contract End Date (if known)</Label>
+                                    <Input
+                                      type="date"
+                                      value={draftForm.agent_contract_end}
+                                      onChange={(e) => setDraftForm({ ...draftForm, agent_contract_end: e.target.value })}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Additional Notes */}
+                              <div className="space-y-2">
+                                <Label>Additional Notes</Label>
+                                <Textarea
+                                  value={draftForm.additional_notes}
+                                  onChange={(e) => setDraftForm({ ...draftForm, additional_notes: e.target.value })}
+                                  placeholder="Any other relevant details about the player or making contact with them..."
+                                  rows={4}
+                                />
+                              </div>
+                            </CardContent>
+                          </CollapsibleContent>
+                        </Card>
+                      </Collapsible>
+
                       {/* Position Required Message */}
                       {!draftForm.position && (
                         <Card className="border-dashed border-2 border-muted-foreground/30">
@@ -782,15 +1085,83 @@ const Potential = () => {
                             <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                             <h3 className="font-semibold text-lg mb-2">Select a Position</h3>
                             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                              Choose the player's position above to reveal the detailed attribute 
-                              evaluation form with position-specific skills and grades.
+                              Choose the player's position above to reveal the report type selection
+                              and detailed attribute evaluation form.
                             </p>
                           </CardContent>
                         </Card>
                       )}
 
-                      {/* Skill Evaluations - Only show when position is selected */}
-                      {draftForm.position && draftForm.skill_evaluations.length > 0 && (
+                      {/* Report Type Selection - Only show when position is selected */}
+                      {draftForm.position && (
+                        <Card className="border-border/50 animate-fade-in">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base">Report Type *</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div
+                                onClick={() => setDraftForm({ ...draftForm, report_type: 'rise' })}
+                                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                                  draftForm.report_type === 'rise'
+                                    ? 'border-primary bg-primary/10'
+                                    : 'border-border hover:border-primary/50'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Target className="h-5 w-5 text-primary" />
+                                  <span className="font-medium">RISE Report</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  Complete our detailed evaluation form with position-specific attributes and grades.
+                                </p>
+                              </div>
+                              <div
+                                onClick={() => setDraftForm({ ...draftForm, report_type: 'independent' })}
+                                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                                  draftForm.report_type === 'independent'
+                                    ? 'border-primary bg-primary/10'
+                                    : 'border-border hover:border-primary/50'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Upload className="h-5 w-5 text-primary" />
+                                  <span className="font-medium">Independent Report</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  Upload a PDF or share a link to your own scouting report format.
+                                </p>
+                              </div>
+                            </div>
+                            <p className="text-xs italic text-muted-foreground">
+                              We respond to every single RISE Report and seriously assess the player with feedback provided to the scout for their development. For Independent Reports, we only respond if we intend to scout the player more deeply.
+                            </p>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Independent Report Upload - Only show when independent is selected */}
+                      {draftForm.position && draftForm.report_type === 'independent' && (
+                        <Card className="border-border/50 animate-fade-in">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base">Independent Report</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                              <Label>Report URL (PDF or Document Link)</Label>
+                              <Input
+                                type="url"
+                                value={draftForm.independent_report_url}
+                                onChange={(e) => setDraftForm({ ...draftForm, independent_report_url: e.target.value })}
+                                placeholder="https://... (Google Drive, Dropbox, etc.)"
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Skill Evaluations - Only show when position is selected AND report type is RISE */}
+                      {draftForm.position && draftForm.report_type === 'rise' && draftForm.skill_evaluations.length > 0 && (
                         <div className="space-y-4 animate-fade-in">
                           <div className="flex items-center gap-2">
                             <Target className="h-5 w-5 text-primary" />
@@ -803,8 +1174,8 @@ const Potential = () => {
                         </div>
                       )}
 
-                      {/* Analysis Section - Only show when position is selected */}
-                      {draftForm.position && (
+                      {/* Analysis Section - Only show when position is selected AND report type is RISE */}
+                      {draftForm.position && draftForm.report_type === 'rise' && (
                         <Card className="border-border/50 animate-fade-in">
                           <CardHeader className="pb-3">
                             <CardTitle className="text-base">Analysis & Notes</CardTitle>
@@ -840,25 +1211,38 @@ const Potential = () => {
                                 rows={4}
                               />
                             </div>
+
+                            {/* Video URLs */}
                             <div className="space-y-2">
-                              <Label htmlFor="recommendation">Recommendation</Label>
-                              <Textarea
-                                id="recommendation"
-                                value={draftForm.recommendation}
-                                onChange={(e) => setDraftForm({ ...draftForm, recommendation: e.target.value })}
-                                placeholder="Your recommendation for the club..."
-                                rows={3}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="video_url">Video URL (optional)</Label>
-                              <Input
-                                id="video_url"
-                                type="url"
-                                value={draftForm.video_url}
-                                onChange={(e) => setDraftForm({ ...draftForm, video_url: e.target.value })}
-                                placeholder="https://..."
-                              />
+                              <Label>Video URLs</Label>
+                              {draftForm.video_urls.map((url, index) => (
+                                <div key={index} className="flex gap-2">
+                                  <Input
+                                    type="url"
+                                    value={url}
+                                    onChange={(e) => handleVideoUrlChange(index, e.target.value)}
+                                    placeholder="https://..."
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleRemoveVideoUrl(index)}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleAddVideoUrl}
+                                className="mt-2"
+                              >
+                                <Link className="h-4 w-4 mr-2" />
+                                Add Video URL
+                              </Button>
                             </div>
                           </CardContent>
                         </Card>
@@ -876,7 +1260,7 @@ const Potential = () => {
                         </Button>
                         <Button
                           onClick={handleSubmitReport}
-                          disabled={submitReportMutation.isPending || !draftForm.player_name || !draftForm.position}
+                          disabled={submitReportMutation.isPending || !draftForm.player_name || !draftForm.position || !draftForm.report_type}
                           className="flex-1"
                         >
                           {submitReportMutation.isPending ? "Submitting..." : "Submit Report"}
