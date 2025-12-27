@@ -135,7 +135,7 @@ const Scouts = () => {
             </h1>
             
             <p className="text-lg md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light leading-relaxed">
-              {t('scouts.hero_desc', "Join RISE's network of scouts across Europe. We provide the tools, training, and structure—you bring the expertise. When you discover talent, you earn commission for their entire career.")}
+              {t('scouts.hero_desc', "Join our extensive network of scouts; where we provide the tools, training, and structure to find the stars of tomorrow.")}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
@@ -339,45 +339,6 @@ const Scouts = () => {
               </p>
             </div>
 
-            {/* Database & Tools */}
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-4">
-                <Database className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">{t('scouts.tech_badge', 'Your Scouting Tools')}</span>
-              </div>
-              
-              <h3 className="text-3xl md:text-5xl font-bebas uppercase tracking-wider mb-3 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                {t('scouts.database_title', 'Professional Database')}
-              </h3>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-light">
-                {t('scouts.database_desc', 'Access our comprehensive platform to submit and track your discoveries')}
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {[
-                { icon: Users, title: t('scouts.player_profiles', 'Player Profiles'), desc: t('scouts.player_profiles_desc', 'Detailed profiles with comprehensive stats, video analysis, and in-depth match reports') },
-                { icon: BarChart3, title: t('scouts.advanced_analytics', 'Advanced Analytics'), desc: t('scouts.advanced_analytics_desc', 'R90 ratings, detailed skill evaluations, and comprehensive performance tracking') },
-                { icon: Award, title: t('scouts.scouting_reports', 'Scouting Reports'), desc: t('scouts.scouting_reports_desc', 'Standardized professional reports with comprehensive player assessments') }
-              ].map((item, idx) => (
-                <Card key={idx} className="group relative overflow-hidden border-2 border-transparent hover:border-primary/30 bg-gradient-to-br from-card via-card/95 to-primary/5 transition-all duration-500 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  
-                  <div className="relative p-6 text-center">
-                    <div className="h-12 w-12 mx-auto bg-primary/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                      <item.icon className="h-6 w-6 text-primary" />
-                    </div>
-                    
-                    <h4 className="text-2xl font-bebas uppercase tracking-wider mb-2 group-hover:text-primary transition-colors">
-                      {item.title}
-                    </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {item.desc}
-                    </p>
-                  </div>
-                </Card>
-              ))}
-            </div>
           </div>
         </section>
 
@@ -395,8 +356,8 @@ const Scouts = () => {
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-3 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
                 {t('scouts.what_we_look', 'What We Look For')}
               </h2>
-              <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto font-light">
-                {t('scouts.criteria_desc', 'Clear criteria for every position to guide your scouting')}
+              <p className="text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto font-light">
+                {t('scouts.criteria_desc', 'At the first stage of scouting, we adopt our own version of the 4-corner model for each position, with a view to 5-dimensional play and qualities that level up to the highest play in the professional game')}
               </p>
             </div>
 
@@ -601,7 +562,102 @@ const Scouts = () => {
           </div>
         </section>
 
-        {/* SECTION 6: Final CTA */}
+        {/* SECTION 6: R90 Stage 2 - Statistical Analysis */}
+        <section className="py-16 md:py-20 px-4 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/30 to-background" />
+          
+          <div className="container mx-auto max-w-6xl relative z-10">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-4">
+                <BarChart3 className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold">{t('scouts.stage2_badge', 'Stage 2: Deep Analysis')}</span>
+              </div>
+              
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+                {t('scouts.r90_title', 'R90 Performance Reports')}
+              </h2>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto font-light">
+                {t('scouts.r90_desc', 'For players who stand out at Stage 1, we move to our R90 analysis system—statistically breaking down the quality of decision-making action-by-action throughout a match')}
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <Card className="group relative overflow-hidden border-2 border-primary/20 bg-gradient-to-br from-primary/10 via-card to-primary/5 hover:border-primary/40 transition-all duration-500 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-700" />
+                
+                <div className="relative p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="h-12 w-12 bg-primary/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Target className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="text-3xl font-bebas text-primary">{t('scouts.action_analysis', 'Action-by-Action')}</div>
+                  </div>
+                  
+                  <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3">{t('scouts.every_decision', 'Every Decision Counts')}</h3>
+                  <p className="text-muted-foreground mb-4 leading-relaxed text-sm">
+                    {t('scouts.every_decision_desc', 'We analyse every meaningful action a player takes during a match—passes, touches, movements, and decisions—rating each one to build a comprehensive picture of their true quality.')}
+                  </p>
+                  
+                  <ul className="space-y-2">
+                    {[
+                      t('scouts.r90_passing', 'Passing accuracy & progression'),
+                      t('scouts.r90_movement', 'Off-ball movement quality'),
+                      t('scouts.r90_decisions', 'Decision-making under pressure')
+                    ].map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2 group/item">
+                        <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover/item:scale-110 transition-transform">
+                          <span className="text-primary text-xs">✓</span>
+                        </div>
+                        <span className="text-sm text-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </Card>
+
+              <Card className="group relative overflow-hidden border-2 border-primary/20 hover:border-primary/40 transition-all duration-500 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-700" />
+                
+                <div className="relative p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <BarChart3 className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="text-3xl font-bebas text-primary">{t('scouts.per90_rating', 'Per-90 Rating')}</div>
+                  </div>
+                  
+                  <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3">{t('scouts.statistical_breakdown', 'Statistical Breakdown')}</h3>
+                  <p className="text-muted-foreground mb-4 leading-relaxed text-sm">
+                    {t('scouts.statistical_breakdown_desc', 'Our R90 system normalises performance data per 90 minutes, allowing fair comparison across different playing times and providing an objective measure of player quality.')}
+                  </p>
+                  
+                  <ul className="space-y-2">
+                    {[
+                      t('scouts.r90_grade', 'Overall R90 grade (A* to F)'),
+                      t('scouts.r90_comparison', 'Comparison across positions'),
+                      t('scouts.r90_trends', 'Performance trends over time')
+                    ].map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2 group/item">
+                        <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover/item:scale-110 transition-transform">
+                          <span className="text-primary text-xs">✓</span>
+                        </div>
+                        <span className="text-sm text-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </Card>
+            </div>
+
+            <div className="text-center">
+              <p className="text-muted-foreground text-sm italic">
+                {t('scouts.r90_note', 'R90 analysis is conducted by our team on players who demonstrate exceptional potential at the initial scouting stage')}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 7: Final CTA */}
         <section className="py-16 md:py-24 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-primary/5" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(212,175,55,0.15),transparent_60%)]" />
