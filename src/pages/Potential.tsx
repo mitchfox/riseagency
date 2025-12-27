@@ -892,24 +892,47 @@ const Potential = () => {
                               </Select>
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="year_of_birth">Year of Birth</Label>
-                              <div className="flex gap-2">
-                                <Input
-                                  id="year_of_birth"
-                                  type="number"
-                                  value={draftForm.year_of_birth}
-                                  onChange={(e) => setDraftForm({ ...draftForm, year_of_birth: e.target.value })}
-                                  placeholder="YYYY"
-                                  className="flex-1"
-                                  min={1980}
-                                  max={new Date().getFullYear()}
-                                />
+                              <Label htmlFor="year_of_birth">
+                                Age
+                                {draftForm.year_of_birth && (
+                                  <span className="ml-2 text-primary font-semibold">
+                                    {(() => {
+                                      const year = parseInt(draftForm.year_of_birth);
+                                      const month = draftForm.birth_month ? parseInt(draftForm.birth_month) : null;
+                                      const day = draftForm.birth_day ? parseInt(draftForm.birth_day) : null;
+                                      const today = new Date();
+                                      let age = today.getFullYear() - year;
+                                      if (month && day) {
+                                        const birthDate = new Date(year, month - 1, day);
+                                        if (today < new Date(today.getFullYear(), month - 1, day)) {
+                                          age--;
+                                        }
+                                      } else if (month) {
+                                        if (today.getMonth() + 1 < month) {
+                                          age--;
+                                        }
+                                      }
+                                      return `${age} years old`;
+                                    })()}
+                                  </span>
+                                )}
+                              </Label>
+                              <Input
+                                id="year_of_birth"
+                                type="number"
+                                value={draftForm.year_of_birth}
+                                onChange={(e) => setDraftForm({ ...draftForm, year_of_birth: e.target.value })}
+                                placeholder="Year of birth (YYYY)"
+                                min={1980}
+                                max={new Date().getFullYear()}
+                              />
+                              <div className="flex gap-2 mt-2">
                                 <Input
                                   type="number"
                                   value={draftForm.birth_month}
                                   onChange={(e) => setDraftForm({ ...draftForm, birth_month: e.target.value })}
-                                  placeholder="MM"
-                                  className="w-20"
+                                  placeholder="Month (optional)"
+                                  className={`flex-1 ${!draftForm.birth_month ? 'opacity-50' : ''}`}
                                   min={1}
                                   max={12}
                                 />
@@ -917,13 +940,12 @@ const Potential = () => {
                                   type="number"
                                   value={draftForm.birth_day}
                                   onChange={(e) => setDraftForm({ ...draftForm, birth_day: e.target.value })}
-                                  placeholder="DD"
-                                  className="w-20"
+                                  placeholder="Day (optional)"
+                                  className={`flex-1 ${!draftForm.birth_day ? 'opacity-50' : ''}`}
                                   min={1}
                                   max={31}
                                 />
                               </div>
-                              <p className="text-xs text-muted-foreground">Month and day optional</p>
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="nationality">Nationality</Label>
@@ -1078,19 +1100,7 @@ const Potential = () => {
                         </Card>
                       </Collapsible>
 
-                      {/* Position Required Message */}
-                      {!draftForm.position && (
-                        <Card className="border-dashed border-2 border-muted-foreground/30">
-                          <CardContent className="py-12 text-center">
-                            <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                            <h3 className="font-semibold text-lg mb-2">Select a Position</h3>
-                            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                              Choose the player's position above to reveal the report type selection
-                              and detailed attribute evaluation form.
-                            </p>
-                          </CardContent>
-                        </Card>
-                      )}
+                      {/* Position Required Message - Hidden, position selection is in basic info */}
 
                       {/* Report Type Selection - Only show when position is selected */}
                       {draftForm.position && (
@@ -1133,9 +1143,6 @@ const Potential = () => {
                                 </p>
                               </div>
                             </div>
-                            <p className="text-xs italic text-muted-foreground">
-                              We respond to every single RISE Report and seriously assess the player with feedback provided to the scout for their development. For Independent Reports, we only respond if we intend to scout the player more deeply.
-                            </p>
                           </CardContent>
                         </Card>
                       )}
@@ -1147,15 +1154,46 @@ const Potential = () => {
                             <CardTitle className="text-base">Independent Report</CardTitle>
                           </CardHeader>
                           <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                              <Label>Report URL (PDF or Document Link)</Label>
-                              <Input
-                                type="url"
-                                value={draftForm.independent_report_url}
-                                onChange={(e) => setDraftForm({ ...draftForm, independent_report_url: e.target.value })}
-                                placeholder="https://... (Google Drive, Dropbox, etc.)"
-                              />
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <Label className="flex items-center gap-2">
+                                  <Upload className="h-4 w-4" />
+                                  Upload PDF
+                                </Label>
+                                <Input
+                                  type="file"
+                                  accept=".pdf"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      // For now, just show file name - actual upload would need storage integration
+                                      toast.info(`File selected: ${file.name}. Upload functionality coming soon.`);
+                                    }
+                                  }}
+                                  className="cursor-pointer"
+                                />
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <div className="flex-1 border-t border-border" />
+                                <span className="text-xs text-muted-foreground">OR</span>
+                                <div className="flex-1 border-t border-border" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="flex items-center gap-2">
+                                  <Link className="h-4 w-4" />
+                                  Share Link
+                                </Label>
+                                <Input
+                                  type="url"
+                                  value={draftForm.independent_report_url}
+                                  onChange={(e) => setDraftForm({ ...draftForm, independent_report_url: e.target.value })}
+                                  placeholder="https://... (Google Drive, Dropbox, etc.)"
+                                />
+                              </div>
                             </div>
+                            <p className="text-sm italic text-muted-foreground mt-4">
+                              We respond to every single RISE Report and seriously assess the player with feedback provided to the scout for their development. For Independent Reports, we only respond if we intend to scout the player more deeply.
+                            </p>
                           </CardContent>
                         </Card>
                       )}
