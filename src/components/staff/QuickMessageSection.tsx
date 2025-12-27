@@ -16,403 +16,278 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Send, Settings, Plus, Trash2, Edit2, Phone } from "lucide-react";
+import { MessageSquare, Plus, Trash2, Edit, Copy, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
-interface Contact {
+interface MarketingTemplate {
   id: string;
-  name: string;
-  club_name: string | null;
-  phone: string | null;
-}
-
-interface QuickMessage {
-  id: string;
+  recipient_type: string;
   message_title: string;
   message_content: string;
-  recipient_type: string;
 }
 
+const RECIPIENT_TYPES = [
+  "Technical Director",
+  "Scout",
+  "Player",
+  "Parent",
+  "Agent",
+  "Manager"
+];
+
 export const QuickMessageSection = () => {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [quickMessages, setQuickMessages] = useState<QuickMessage[]>([]);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [selectedMessageId, setSelectedMessageId] = useState<string>("");
-  const [messageContent, setMessageContent] = useState("");
-  const [isManageOpen, setIsManageOpen] = useState(false);
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editingMessage, setEditingMessage] = useState<QuickMessage | null>(null);
-  const [newMessageTitle, setNewMessageTitle] = useState("");
-  const [newMessageContent, setNewMessageContent] = useState("");
-  const [newMessageCategory, setNewMessageCategory] = useState("");
+  const [templates, setTemplates] = useState<MarketingTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<MarketingTemplate | null>(null);
+  const [templateFormData, setTemplateFormData] = useState({
+    recipient_type: "",
+    message_title: "",
+    message_content: ""
+  });
 
   useEffect(() => {
-    fetchContacts();
-    fetchQuickMessages();
+    fetchTemplates();
   }, []);
 
-  const fetchContacts = async () => {
-    const { data, error } = await supabase
-      .from("club_network_contacts")
-      .select("id, name, club_name, phone")
-      .not("phone", "is", null)
-      .neq("phone", "")
-      .order("name");
-    
-    if (error) {
-      console.error("Error fetching contacts:", error);
+  const fetchTemplates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("marketing_templates")
+        .select("*")
+        .order("recipient_type", { ascending: true })
+        .order("message_title", { ascending: true });
+
+      if (error) throw error;
+      setTemplates(data || []);
+    } catch (error: any) {
+      console.error("Error fetching templates:", error);
+      toast.error("Failed to load templates");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTemplateSubmit = async () => {
+    if (!templateFormData.recipient_type || !templateFormData.message_title || !templateFormData.message_content) {
+      toast.error("Please fill in all fields");
       return;
     }
-    setContacts(data || []);
-  };
 
-  const fetchQuickMessages = async () => {
-    const { data, error } = await supabase
-      .from("marketing_templates")
-      .select("*")
-      .order("recipient_type");
-    
-    if (error) {
-      console.error("Error fetching quick messages:", error);
-      return;
-    }
-    setQuickMessages(data || []);
-  };
+    try {
+      if (editingTemplate) {
+        const { error } = await supabase
+          .from("marketing_templates")
+          .update(templateFormData)
+          .eq("id", editingTemplate.id);
 
-  const handleContactSelect = (contactId: string) => {
-    const contact = contacts.find(c => c.id === contactId);
-    setSelectedContact(contact || null);
-    updateMessageWithVariables(messageContent, contact || null);
-  };
-
-  const handleMessageSelect = (messageId: string) => {
-    setSelectedMessageId(messageId);
-    if (messageId === "custom") {
-      setMessageContent("");
-      return;
-    }
-    const message = quickMessages.find(m => m.id === messageId);
-    if (message) {
-      updateMessageWithVariables(message.message_content, selectedContact);
-    }
-  };
-
-  const updateMessageWithVariables = (content: string, contact: Contact | null) => {
-    if (!contact) {
-      setMessageContent(content);
-      return;
-    }
-    const updated = content
-      .replace(/\{\{contact_name\}\}/g, contact.name)
-      .replace(/\{\{club_name\}\}/g, contact.club_name || "");
-    setMessageContent(updated);
-  };
-
-  const formatPhoneNumber = (phone: string): string => {
-    // Remove all non-numeric characters except +
-    let cleaned = phone.replace(/[^\d+]/g, "");
-    // Ensure it starts with country code
-    if (!cleaned.startsWith("+")) {
-      // Assume UK if no country code
-      if (cleaned.startsWith("0")) {
-        cleaned = "+44" + cleaned.substring(1);
+        if (error) throw error;
+        toast.success("Template updated successfully");
       } else {
-        cleaned = "+" + cleaned;
+        const { error } = await supabase
+          .from("marketing_templates")
+          .insert([templateFormData]);
+
+        if (error) throw error;
+        toast.success("Template created successfully");
       }
+
+      setTemplateDialogOpen(false);
+      setEditingTemplate(null);
+      setTemplateFormData({ recipient_type: "", message_title: "", message_content: "" });
+      fetchTemplates();
+    } catch (error: any) {
+      console.error("Error saving template:", error);
+      toast.error("Failed to save template");
     }
-    return cleaned.replace("+", "");
   };
 
-  const handleSendWhatsApp = () => {
-    if (!selectedContact || !selectedContact.phone) {
-      toast.error("Please select a contact with a phone number");
-      return;
-    }
-    if (!messageContent.trim()) {
-      toast.error("Please enter a message");
-      return;
-    }
-
-    const phoneNumber = formatPhoneNumber(selectedContact.phone);
-    const encodedMessage = encodeURIComponent(messageContent);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-    
-    window.open(whatsappUrl, "_blank");
-    toast.success("Opening WhatsApp...");
+  const handleTemplateEdit = (template: MarketingTemplate) => {
+    setEditingTemplate(template);
+    setTemplateFormData({
+      recipient_type: template.recipient_type,
+      message_title: template.message_title,
+      message_content: template.message_content
+    });
+    setTemplateDialogOpen(true);
   };
 
-  const handleSaveMessage = async () => {
-    if (!newMessageTitle.trim() || !newMessageContent.trim()) {
-      toast.error("Title and message content are required");
-      return;
-    }
+  const handleTemplateDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this template?")) return;
 
-    if (editingMessage) {
+    try {
       const { error } = await supabase
         .from("marketing_templates")
-        .update({
-          message_title: newMessageTitle,
-          message_content: newMessageContent,
-          recipient_type: newMessageCategory || "General",
-        })
-        .eq("id", editingMessage.id);
+        .delete()
+        .eq("id", id);
 
-      if (error) {
-        toast.error("Failed to update message");
-        return;
-      }
-      toast.success("Message updated");
-    } else {
-      const { error } = await supabase
-        .from("marketing_templates")
-        .insert({
-          message_title: newMessageTitle,
-          message_content: newMessageContent,
-          recipient_type: newMessageCategory || "General",
-        });
-
-      if (error) {
-        toast.error("Failed to save message");
-        return;
-      }
-      toast.success("Message saved");
+      if (error) throw error;
+      toast.success("Template deleted successfully");
+      fetchTemplates();
+    } catch (error: any) {
+      console.error("Error deleting template:", error);
+      toast.error("Failed to delete template");
     }
-
-    resetForm();
-    fetchQuickMessages();
-    setIsAddOpen(false);
   };
 
-  const handleDeleteMessage = async (id: string) => {
-    const { error } = await supabase
-      .from("marketing_templates")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      toast.error("Failed to delete message");
-      return;
+  const groupedTemplates = templates.reduce((acc, template) => {
+    if (!acc[template.recipient_type]) {
+      acc[template.recipient_type] = [];
     }
-    toast.success("Message deleted");
-    fetchQuickMessages();
-  };
-
-  const handleEditMessage = (message: QuickMessage) => {
-    setEditingMessage(message);
-    setNewMessageTitle(message.message_title);
-    setNewMessageContent(message.message_content);
-    setNewMessageCategory(message.recipient_type || "");
-    setIsAddOpen(true);
-  };
+    acc[template.recipient_type].push(template);
+    return acc;
+  }, {} as Record<string, MarketingTemplate[]>);
 
   const resetForm = () => {
-    setEditingMessage(null);
-    setNewMessageTitle("");
-    setNewMessageContent("");
-    setNewMessageCategory("");
+    setEditingTemplate(null);
+    setTemplateFormData({ recipient_type: "", message_title: "", message_content: "" });
   };
 
   return (
     <div className="space-y-4">
-      {/* Message Writer Card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <MessageSquare className="w-5 h-5 text-primary" />
-            Quick WhatsApp Message
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Contact Selector */}
-            <div className="space-y-2">
-              <Label>Select Contact</Label>
-              <Select onValueChange={handleContactSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a contact..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {contacts.length === 0 ? (
-                    <SelectItem value="none" disabled>
-                      No contacts with phone numbers
-                    </SelectItem>
-                  ) : (
-                    contacts.map((contact) => (
-                      <SelectItem key={contact.id} value={contact.id}>
-                        {contact.name} {contact.club_name ? `- ${contact.club_name}` : ""}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              {selectedContact && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
-                  <Phone className="w-4 h-4" />
-                  {selectedContact.phone}
-                </div>
-              )}
-            </div>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-semibold">Message Templates</h3>
+        </div>
+        <Button 
+          size="sm" 
+          onClick={() => {
+            resetForm();
+            setTemplateDialogOpen(true);
+          }}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Template
+        </Button>
+      </div>
 
-            {/* Quick Message Selector */}
-            <div className="space-y-2">
-              <Label>Quick Message Template</Label>
-              <Select value={selectedMessageId} onValueChange={handleMessageSelect}>
+      {loading ? (
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            Loading templates...
+          </CardContent>
+        </Card>
+      ) : templates.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            <p className="text-lg mb-2">No templates created yet</p>
+            <p className="text-sm">Create reusable templates for prospect outreach</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          {RECIPIENT_TYPES.map(recipientType => {
+            const templatesForType = groupedTemplates[recipientType] || [];
+            if (templatesForType.length === 0) return null;
+
+            return (
+              <Card key={recipientType}>
+                <CardHeader>
+                  <CardTitle className="text-base sm:text-lg">{recipientType}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {templatesForType.map(template => (
+                      <div key={template.id} className="flex flex-col sm:flex-row items-start justify-between gap-3 p-3 sm:p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                        <div className="flex-1 w-full">
+                          <h4 className="text-sm sm:text-base font-medium mb-1">{template.message_title}</h4>
+                          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{template.message_content}</p>
+                        </div>
+                        <div className="flex gap-1 sm:gap-2 sm:ml-4 w-full sm:w-auto justify-end shrink-0">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 sm:h-8 sm:w-8"
+                            onClick={() => {
+                              navigator.clipboard.writeText(template.message_content);
+                              toast.success("Message copied to clipboard");
+                            }}
+                            title="Copy message"
+                          >
+                            <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 sm:h-8 sm:w-8"
+                            onClick={() => handleTemplateEdit(template)}
+                          >
+                            <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 sm:h-8 sm:w-8"
+                            onClick={() => handleTemplateDelete(template.id)}
+                          >
+                            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Template Dialog */}
+      <Dialog open={templateDialogOpen} onOpenChange={(open) => {
+        setTemplateDialogOpen(open);
+        if (!open) resetForm();
+      }}>
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingTemplate ? "Edit Template" : "Create Template"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Recipient Type</Label>
+              <Select
+                value={templateFormData.recipient_type}
+                onValueChange={(value) => setTemplateFormData({ ...templateFormData, recipient_type: value })}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select template or write custom..." />
+                  <SelectValue placeholder="Select recipient type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="custom">✏️ Write custom message</SelectItem>
-                  {quickMessages.map((msg) => (
-                    <SelectItem key={msg.id} value={msg.id}>
-                      {msg.message_title}
-                    </SelectItem>
+                  {RECIPIENT_TYPES.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label>Message Title</Label>
+              <Input
+                value={templateFormData.message_title}
+                onChange={(e) => setTemplateFormData({ ...templateFormData, message_title: e.target.value })}
+                placeholder="e.g., Spanish Club Introduction Message"
+              />
+            </div>
+            <div>
+              <Label>Message Content</Label>
+              <Textarea
+                value={templateFormData.message_content}
+                onChange={(e) => setTemplateFormData({ ...templateFormData, message_content: e.target.value })}
+                placeholder="Enter your message template here..."
+                rows={10}
+              />
+            </div>
           </div>
-
-          {/* Message Preview/Editor */}
-          <div className="space-y-2">
-            <Label>Message</Label>
-            <Textarea
-              value={messageContent}
-              onChange={(e) => setMessageContent(e.target.value)}
-              placeholder="Type your message here... Use {{contact_name}} and {{club_name}} as variables."
-              className="min-h-[120px]"
-            />
-            <p className="text-xs text-muted-foreground">
-              Variables: {"{{contact_name}}"}, {"{{club_name}}"}
-            </p>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-2 justify-end">
-            <Button onClick={handleSendWhatsApp} disabled={!selectedContact || !messageContent.trim()}>
-              <Send className="w-4 h-4 mr-2" />
-              Send via WhatsApp
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setTemplateDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleTemplateSubmit}>
+              {editingTemplate ? "Update Template" : "Create Template"}
             </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Templates List */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Message Templates</CardTitle>
-            <Dialog open={isAddOpen} onOpenChange={(open) => {
-              setIsAddOpen(open);
-              if (!open) resetForm();
-            }}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline" onClick={() => resetForm()}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingMessage ? "Edit Template" : "Add New Template"}
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Title</Label>
-                    <Input
-                      value={newMessageTitle}
-                      onChange={(e) => setNewMessageTitle(e.target.value)}
-                      placeholder="e.g., Initial Outreach"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Category (optional)</Label>
-                    <Input
-                      value={newMessageCategory}
-                      onChange={(e) => setNewMessageCategory(e.target.value)}
-                      placeholder="e.g., Outreach, Follow-up"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Message Content</Label>
-                    <Textarea
-                      value={newMessageContent}
-                      onChange={(e) => setNewMessageContent(e.target.value)}
-                      placeholder="Hi {{contact_name}}, ..."
-                      className="min-h-[150px]"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Use {"{{contact_name}}"} and {"{{club_name}}"} as placeholders
-                    </p>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsAddOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleSaveMessage}>
-                      {editingMessage ? "Update" : "Save"} Template
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {quickMessages.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-4 text-center">
-              No templates yet. Add your first template!
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {quickMessages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className="border rounded-lg p-3 space-y-2 hover:bg-muted/30 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium text-sm">{msg.message_title}</h4>
-                        {msg.recipient_type && (
-                          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                            {msg.recipient_type}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                        {msg.message_content}
-                      </p>
-                    </div>
-                    <div className="flex gap-1 ml-2 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => handleEditMessage(msg)}
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => handleDeleteMessage(msg.id)}
-                      >
-                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
