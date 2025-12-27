@@ -808,6 +808,18 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
     const newY = Math.max(0, Math.min(600 - newHeight, y - newHeight / 2));
     setViewBox(`${newX} ${newY} ${newWidth} ${newHeight}`);
     setZoomLevel(1);
+    
+    // Expand the country in coverage regions
+    const countryKey = `country-${country}`;
+    setExpandedCountries(prev => new Set([...prev, countryKey]));
+    
+    // Scroll to the country in coverage regions after a short delay
+    setTimeout(() => {
+      const countryElement = document.querySelector(`[data-country-key="${countryKey}"]`);
+      if (countryElement && coverageRef.current) {
+        countryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
   const handleMapClick = () => {
@@ -1419,9 +1431,9 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
 
           {/* Coverage Regions - Country -> Clubs from footballClubs */}
           <div id="coverage-regions-container" ref={coverageRef} className="bg-card rounded-lg p-3 border mt-3 flex-1 min-h-0 overflow-hidden flex flex-col group/coverage">
-            <h4 className="font-bebas text-lg mb-1 flex-shrink-0">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
-            <p className="text-xs italic text-primary mb-2 flex-shrink-0">Players Scouted</p>
-            <div className="space-y-1 flex-1 min-h-0 max-h-[240px] overflow-y-auto transition-all relative">
+            <h4 className="font-bebas text-lg mb-1 flex-shrink-0 pl-5">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
+            <p className="text-xs italic text-primary mb-2 flex-shrink-0 pl-5">Players Scouted</p>
+            <div className="space-y-1 flex-1 min-h-0 max-h-[240px] overflow-y-auto transition-all relative pr-0.5 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-primary/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary/50">
               {(() => {
                 // Group footballClubs by country
                 const clubsByCountry: Record<string, typeof footballClubs> = {};
@@ -1479,7 +1491,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                     const countryTotal = getCountryTotal(clubs);
                     
                     return (
-                      <div key={countryKey} className="border-b border-border/30 last:border-b-0">
+                      <div key={countryKey} data-country-key={countryKey} className="border-b border-border/30 last:border-b-0">
                         <button
                           onClick={() => {
                             // Toggle expand state
@@ -1497,7 +1509,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                             }
                             setExpandedCountries(newSet);
                           }}
-                          className="w-full flex items-center gap-2 p-2 hover:bg-accent/50 rounded transition-colors text-left"
+                          className="w-full flex items-center gap-1 py-2 pr-1 hover:bg-accent/50 rounded transition-colors text-left"
                         >
                           {isCountryExpanded ? (
                             <ChevronDown className="w-4 h-4 text-primary flex-shrink-0" />
@@ -1512,7 +1524,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                         </button>
                         
                         {isCountryExpanded && (
-                          <div className="ml-6 space-y-1 pb-2">
+                          <div className="ml-5 space-y-1 pb-2">
                             {clubs
                               .sort((a, b) => a.name.localeCompare(b.name))
                               .map((club) => {
@@ -1554,7 +1566,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                                         // Zoom to club on map
                                         handleCoverageClubClick(club);
                                       }}
-                                      className={`w-full flex items-center gap-2 p-1.5 hover:bg-accent/30 rounded transition-colors text-left ${selectedClub === club.name ? 'bg-primary/10 ring-1 ring-primary' : ''}`}
+                                      className={`w-full flex items-center gap-1 py-1.5 pr-1 hover:bg-accent/30 rounded transition-colors text-left ${selectedClub === club.name ? 'bg-primary/10 ring-1 ring-primary' : ''}`}
                                     >
                                       {isClubExpanded ? (
                                         <ChevronDown className="w-3 h-3 text-primary flex-shrink-0" />
@@ -1573,7 +1585,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                                     </button>
                                     
                                     {isClubExpanded && (
-                                      <div className="ml-6 py-1 space-y-1">
+                                      <div className="ml-5 py-1 space-y-1">
                                         {ageGroups.map((ageGroup) => (
                                           <div
                                             key={ageGroup.name}
