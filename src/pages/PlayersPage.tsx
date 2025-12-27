@@ -251,17 +251,17 @@ const Index = () => {
             </div>
             <ScoutingNetworkMap hideGridToggle={true} />
             
-            {/* Report Request CTA */}
+            {/* My Report CTA - Only on Players page */}
             <div className="mt-8 p-6 bg-primary/5 border border-primary/20 rounded-xl text-center">
               <p className="text-muted-foreground mb-4">
-                If you see your club represented, we may have a detailed report on your game — feel free to request to see it and learn more:
+                If you see players scouted in your side, we may have a detailed report on your game. Reach out to request to learn more about our observations.
               </p>
-              <a 
-                href="/contact" 
+              <Link 
+                to="/contact" 
                 className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-bebas text-lg uppercase tracking-wider rounded-lg hover:bg-primary/90 transition-colors"
               >
-                Reach Out
-              </a>
+                My Report
+              </Link>
             </div>
 
             <div className="mt-12 grid md:grid-cols-3 gap-6">
