@@ -1398,33 +1398,45 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                               .map((club) => {
                                 const clubKey = `club-${country}-${club.name}`;
                                 const isClubExpanded = expandedClubs.has(clubKey);
-                                const clubPlayers = scoutingData[club.name] || [];
-                                const hasPlayers = clubPlayers.length > 0;
+                                
+                                // Generate random player counts for each age group (seeded by club name)
+                                const getSeededRandom = (seed: string, min: number, max: number) => {
+                                  let hash = 0;
+                                  for (let i = 0; i < seed.length; i++) {
+                                    hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+                                    hash = hash & hash;
+                                  }
+                                  const normalized = Math.abs(hash % 1000) / 1000;
+                                  return Math.floor(normalized * (max - min + 1)) + min;
+                                };
+                                
+                                const ageGroups = [
+                                  { name: "First Team", min: 18, max: 30, count: getSeededRandom(club.name + "first", 18, 30) },
+                                  { name: "Reserves/U23/U21", min: 4, max: 14, count: getSeededRandom(club.name + "reserves", 4, 14) },
+                                  { name: "U19", min: 14, max: 20, count: getSeededRandom(club.name + "u19", 14, 20) },
+                                  { name: "U16", min: 6, max: 17, count: getSeededRandom(club.name + "u16", 6, 17) },
+                                  { name: "U15", min: 1, max: 9, count: getSeededRandom(club.name + "u15", 1, 9) },
+                                  { name: "U14", min: 1, max: 4, count: getSeededRandom(club.name + "u14", 1, 4) },
+                                ];
                                 
                                 return (
                                   <div key={clubKey}>
                                     <button
                                       onClick={() => {
-                                        if (hasPlayers) {
-                                          const newSet = new Set(expandedClubs);
-                                          if (isClubExpanded) {
-                                            newSet.delete(clubKey);
-                                          } else {
-                                            newSet.add(clubKey);
-                                          }
-                                          setExpandedClubs(newSet);
+                                        const newSet = new Set(expandedClubs);
+                                        if (isClubExpanded) {
+                                          newSet.delete(clubKey);
+                                        } else {
+                                          newSet.add(clubKey);
                                         }
+                                        setExpandedClubs(newSet);
                                       }}
-                                      className={`w-full flex items-center gap-2 p-1.5 hover:bg-accent/30 rounded transition-colors text-left ${!hasPlayers ? 'cursor-default' : ''}`}
+                                      className="w-full flex items-center gap-2 p-1.5 hover:bg-accent/30 rounded transition-colors text-left"
                                     >
-                                      {hasPlayers ? (
-                                        isClubExpanded ? (
-                                          <ChevronDown className="w-3 h-3 text-primary flex-shrink-0" />
-                                        ) : (
-                                          <ChevronRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                                        )
+                                      {isClubExpanded ? (
+                                        <ChevronDown className="w-3 h-3 text-primary flex-shrink-0" />
                                       ) : (
-                                        <span className="w-3 h-3 flex-shrink-0" />
+                                        <ChevronRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                                       )}
                                       {club.logo && (
                                         <img 
@@ -1437,21 +1449,17 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                                       <span className="text-sm flex-1">{club.name}</span>
                                     </button>
                                     
-                                    {isClubExpanded && hasPlayers && (
-                                      <div className="ml-6 py-1 space-y-0.5">
-                                        {clubPlayers.map((player) => (
+                                    {isClubExpanded && (
+                                      <div className="ml-6 py-1 space-y-1">
+                                        {ageGroups.map((ageGroup) => (
                                           <div
-                                            key={player.id}
-                                            className="flex items-center gap-2 text-xs text-muted-foreground py-0.5 px-1 hover:bg-accent/10 rounded"
+                                            key={ageGroup.name}
+                                            className="flex items-center justify-between gap-2 text-xs py-1 px-2 bg-accent/10 rounded"
                                           >
-                                            <Users className="w-3 h-3 flex-shrink-0" />
-                                            <span>{player.name}</span>
-                                            {player.position && (
-                                              <span className="text-xs opacity-60">• {player.position}</span>
-                                            )}
-                                            {player.age && (
-                                              <span className="text-xs opacity-60">({player.age})</span>
-                                            )}
+                                            <span className="text-muted-foreground">{ageGroup.name}</span>
+                                            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-yellow-500 text-yellow-950 font-bold text-xs shadow-sm">
+                                              {ageGroup.count}
+                                            </div>
                                           </div>
                                         ))}
                                       </div>
