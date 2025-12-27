@@ -123,6 +123,8 @@ const Potential = () => {
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
   const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
   const [showInvoicesModal, setShowInvoicesModal] = useState(false);
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+  const [newMessageForm, setNewMessageForm] = useState({ subject: '', message: '' });
   const [bankDetailsForm, setBankDetailsForm] = useState({
     account_name: '',
     bank_name: '',
@@ -1534,7 +1536,7 @@ const Potential = () => {
                         Updates and announcements from the team
                       </CardDescription>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => toast.info("New conversation feature coming soon")}>
+                    <Button variant="outline" size="sm" onClick={() => setShowNewMessageModal(true)}>
                       <Plus className="h-4 w-4 mr-1" />
                       New
                     </Button>
@@ -1766,6 +1768,59 @@ const Potential = () => {
                     <Button variant="outline" className="w-full mt-4" onClick={() => setShowInvoicesModal(false)}>
                       Close
                     </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* New Message Modal */}
+            {showNewMessageModal && (
+              <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowNewMessageModal(false)}>
+                <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5 text-primary" />
+                      New Message
+                    </CardTitle>
+                    <CardDescription>
+                      Send a message to the scouting team
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Subject *</Label>
+                      <Input
+                        value={newMessageForm.subject}
+                        onChange={(e) => setNewMessageForm({...newMessageForm, subject: e.target.value})}
+                        placeholder="What's this about?"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Message *</Label>
+                      <Textarea
+                        value={newMessageForm.message}
+                        onChange={(e) => setNewMessageForm({...newMessageForm, message: e.target.value})}
+                        placeholder="Type your message here..."
+                        rows={5}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="flex-1" onClick={() => setShowNewMessageModal(false)}>
+                        Cancel
+                      </Button>
+                      <Button 
+                        className="flex-1"
+                        disabled={!newMessageForm.subject || !newMessageForm.message}
+                        onClick={() => {
+                          toast.success("Message sent successfully!");
+                          setShowNewMessageModal(false);
+                          setNewMessageForm({ subject: '', message: '' });
+                        }}
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        Send
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>

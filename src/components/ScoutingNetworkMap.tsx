@@ -1,11 +1,5 @@
-import { MapPin, ZoomOut, ChevronRight, ChevronDown, Users, Send } from "lucide-react";
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { MapPin, ZoomOut, ChevronRight, ChevronDown, Users } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -71,8 +65,8 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
   const [scoutingData, setScoutingData] = useState<Record<string, {id: string, name: string, age: number | null, position: string | null}[]>>({});
   const [expandedCountries, setExpandedCountries] = useState<Set<string>>(new Set());
   const [expandedClubs, setExpandedClubs] = useState<Set<string>>(new Set());
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [reportForm, setReportForm] = useState({ name: '', email: '', club: '', position: '', message: '' });
+  const [selectedClub, setSelectedClub] = useState<string | null>(null);
+  const coverageRef = useRef<HTMLDivElement>(null);
   // Europe outline is rendered from raster map image (europe-outline.gif)
   
   // Load club positions from database on mount
@@ -828,7 +822,55 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
       setZoomLevel(0);
       setSelectedCountry(null);
       setSelectedCluster(null);
+      setSelectedClub(null);
     }
+  };
+
+  // Handle clicking a club on the map - zoom to it and scroll to it in coverage regions
+  const handleClubClick = (club: typeof footballClubs[0], e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // Get club position
+    const pos = getClubPosition(club);
+    
+    // Zoom to the club on the map
+    const zoom = 4;
+    const newWidth = 1000 / zoom;
+    const newHeight = 600 / zoom;
+    const newX = Math.max(0, Math.min(1000 - newWidth, pos.x - newWidth / 2));
+    const newY = Math.max(0, Math.min(600 - newHeight, pos.y - newHeight / 2));
+    setViewBox(`${newX} ${newY} ${newWidth} ${newHeight}`);
+    setZoomLevel(2);
+    setSelectedCountry(club.country);
+    setSelectedClub(club.name);
+    
+    // Expand the country and club in coverage regions
+    setExpandedCountries(prev => new Set([...prev, `country-${club.country}`]));
+    setExpandedClubs(prev => new Set([...prev, `club-${club.country}-${club.name}`]));
+    
+    // Scroll to the club in coverage regions after a short delay
+    setTimeout(() => {
+      const clubElement = document.getElementById(`coverage-club-${club.name.replace(/[^a-zA-Z0-9]/g, '-')}`);
+      if (clubElement && coverageRef.current) {
+        clubElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  };
+
+  // Handle clicking a club in coverage regions - zoom to it on the map
+  const handleCoverageClubClick = (club: typeof footballClubs[0]) => {
+    const pos = getClubPosition(club);
+    
+    // Zoom to the club on the map
+    const zoom = 4;
+    const newWidth = 1000 / zoom;
+    const newHeight = 600 / zoom;
+    const newX = Math.max(0, Math.min(1000 - newWidth, pos.x - newWidth / 2));
+    const newY = Math.max(0, Math.min(600 - newHeight, pos.y - newHeight / 2));
+    setViewBox(`${newX} ${newY} ${newWidth} ${newHeight}`);
+    setZoomLevel(2);
+    setSelectedCountry(club.country);
+    setSelectedClub(club.name);
   };
   
   // Group clubs by city (only when a country is selected)
@@ -1210,11 +1252,13 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
             {/* Individual Football Club Logos (cities with only one club) */}
             {!expandedCity && singleClubs.map((club, idx) => {
               const pos = getClubPosition(club);
+              const isSelected = selectedClub === club.name;
               return (
                 <g 
                   key={`single-club-${idx}`}
+                  onClick={(e) => handleClubClick(club, e)}
                   onMouseDown={(e) => handleClubDragStart(club.name, e)}
-                  className="cursor-move"
+                  className="cursor-pointer"
                   style={{ pointerEvents: 'all' }}
                 >
                   <defs>
@@ -1235,8 +1279,8 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                     cy={pos.y}
                     r="5"
                     fill="none"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth="2"
+                    stroke={isSelected ? "white" : "hsl(var(--primary))"}
+                    strokeWidth={isSelected ? "3" : "2"}
                     className="hover:stroke-primary-foreground transition-colors"
                   >
                     <title>{club.name} - {club.city}, {club.country}</title>
@@ -1326,21 +1370,6 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
           {/* Stats & Details Section - only show when hideStats is false */}
         {!hideStats && (
         <div className="flex flex-col h-full min-h-0 overflow-hidden">
-          {/* Player Scouting Message */}
-          <div className="bg-card rounded-lg p-3 border flex-shrink-0 mb-3">
-            <p className="text-sm text-muted-foreground mb-3">
-              If you see players scouted in your side, we may have a detailed report on your game. Reach out to request to learn more about our observations.
-            </p>
-            <Button 
-              onClick={() => setShowReportModal(true)}
-              variant="outline" 
-              size="sm"
-              className="w-full"
-            >
-              My Report
-            </Button>
-          </div>
-
           <div className="bg-card rounded-lg p-3 border flex-shrink-0">
             <h4 className="font-bebas text-lg mb-2">{t("map.network_coverage", "NETWORK COVERAGE")}</h4>
             <div className="space-y-2 text-sm">
@@ -1389,13 +1418,10 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
           </div>
 
           {/* Coverage Regions - Country -> Clubs from footballClubs */}
-          <div id="coverage-regions-container" className="bg-card rounded-lg p-3 border mt-3 flex-1 min-h-0 overflow-hidden flex flex-col group/coverage">
+          <div id="coverage-regions-container" ref={coverageRef} className="bg-card rounded-lg p-3 border mt-3 flex-1 min-h-0 overflow-hidden flex flex-col group/coverage">
             <h4 className="font-bebas text-lg mb-1 flex-shrink-0">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
             <p className="text-xs italic text-primary mb-2 flex-shrink-0">Players Scouted</p>
-            <div className="space-y-1 flex-1 min-h-0 max-h-[240px] overflow-hidden hover:overflow-y-auto transition-all relative">
-              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent pointer-events-none group-hover/coverage:opacity-0 transition-opacity z-10 flex items-end justify-center pb-1">
-                <ChevronDown className="w-4 h-4 text-muted-foreground animate-bounce" />
-              </div>
+            <div className="space-y-1 flex-1 min-h-0 max-h-[240px] overflow-y-auto transition-all relative">
               {(() => {
                 // Group footballClubs by country
                 const clubsByCountry: Record<string, typeof footballClubs> = {};
@@ -1514,9 +1540,10 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                                 ];
                                 
                                 return (
-                                  <div key={clubKey}>
+                                  <div key={clubKey} id={`coverage-club-${club.name.replace(/[^a-zA-Z0-9]/g, '-')}`}>
                                     <button
                                       onClick={() => {
+                                        // Toggle expand
                                         const newSet = new Set(expandedClubs);
                                         if (isClubExpanded) {
                                           newSet.delete(clubKey);
@@ -1524,8 +1551,10 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                                           newSet.add(clubKey);
                                         }
                                         setExpandedClubs(newSet);
+                                        // Zoom to club on map
+                                        handleCoverageClubClick(club);
                                       }}
-                                      className="w-full flex items-center gap-2 p-1.5 hover:bg-accent/30 rounded transition-colors text-left"
+                                      className={`w-full flex items-center gap-2 p-1.5 hover:bg-accent/30 rounded transition-colors text-left ${selectedClub === club.name ? 'bg-primary/10 ring-1 ring-primary' : ''}`}
                                     >
                                       {isClubExpanded ? (
                                         <ChevronDown className="w-3 h-3 text-primary flex-shrink-0" />
@@ -1572,83 +1601,6 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
         </div>
         )}
       </div>
-
-      {/* My Report Modal */}
-      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-bebas text-2xl">Request My Report</DialogTitle>
-            <DialogDescription>
-              Submit your details and we'll check if we have a scouting report on your performance.
-            </DialogDescription>
-          </DialogHeader>
-          <form 
-            onSubmit={(e) => {
-              e.preventDefault();
-              toast.success("Request submitted! We'll be in touch if we have a report on you.");
-              setShowReportModal(false);
-              setReportForm({ name: '', email: '', club: '', position: '', message: '' });
-            }}
-            className="space-y-4"
-          >
-            <div className="space-y-2">
-              <Label htmlFor="report-name">Full Name *</Label>
-              <Input
-                id="report-name"
-                value={reportForm.name}
-                onChange={(e) => setReportForm(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Your full name"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="report-email">Email *</Label>
-              <Input
-                id="report-email"
-                type="email"
-                value={reportForm.email}
-                onChange={(e) => setReportForm(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="your@email.com"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="report-club">Current Club</Label>
-                <Input
-                  id="report-club"
-                  value={reportForm.club}
-                  onChange={(e) => setReportForm(prev => ({ ...prev, club: e.target.value }))}
-                  placeholder="Your club"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="report-position">Position</Label>
-                <Input
-                  id="report-position"
-                  value={reportForm.position}
-                  onChange={(e) => setReportForm(prev => ({ ...prev, position: e.target.value }))}
-                  placeholder="e.g. Striker"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="report-message">Additional Information</Label>
-              <Textarea
-                id="report-message"
-                value={reportForm.message}
-                onChange={(e) => setReportForm(prev => ({ ...prev, message: e.target.value }))}
-                placeholder="I would like to request a copy of any scouting report you may have on me..."
-                rows={3}
-              />
-            </div>
-            <Button type="submit" className="w-full">
-              <Send className="w-4 h-4 mr-2" />
-              Submit Request
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
