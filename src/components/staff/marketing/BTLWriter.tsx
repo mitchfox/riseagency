@@ -52,9 +52,55 @@ export const BTLWriter = () => {
   const [draftForm, setDraftForm] = useState({
     title: "",
     excerpt: "",
-    content: "",
+    intro: "",
+    mainPara: "",
+    secondaryPara: "",
+    conclusion: "",
     category: "",
   });
+
+  // Generate placeholder suggestions based on idea title
+  const getPlaceholder = (section: string, ideaTitle: string) => {
+    const title = ideaTitle || "your topic";
+    switch (section) {
+      case "intro":
+        return `Hook the reader with a compelling opening about ${title}. Set the scene and establish why this matters to footballers...`;
+      case "mainPara":
+        return `Dive deep into the core message of ${title}. Provide the key insights, evidence, or practical advice that forms the heart of this post...`;
+      case "secondaryPara":
+        return `Expand on ${title} with additional context, examples, or a different angle. Address potential questions or objections...`;
+      case "conclusion":
+        return `Wrap up ${title} with a strong call-to-action or memorable takeaway. Leave readers with something to think about or do...`;
+      default:
+        return "";
+    }
+  };
+
+  // Combine sections into content for storage
+  const combineContent = (intro: string, main: string, secondary: string, conclusion: string) => {
+    return `**Intro**\n${intro}\n\n**Main**\n${main}\n\n**Secondary**\n${secondary}\n\n**Conclusion**\n${conclusion}`;
+  };
+
+  // Parse stored content back into sections
+  const parseContent = (content: string) => {
+    const sections = { intro: "", mainPara: "", secondaryPara: "", conclusion: "" };
+    const introMatch = content.match(/\*\*Intro\*\*\n([\s\S]*?)(?=\n\n\*\*Main\*\*|$)/);
+    const mainMatch = content.match(/\*\*Main\*\*\n([\s\S]*?)(?=\n\n\*\*Secondary\*\*|$)/);
+    const secondaryMatch = content.match(/\*\*Secondary\*\*\n([\s\S]*?)(?=\n\n\*\*Conclusion\*\*|$)/);
+    const conclusionMatch = content.match(/\*\*Conclusion\*\*\n([\s\S]*?)$/);
+    
+    if (introMatch) sections.intro = introMatch[1].trim();
+    if (mainMatch) sections.mainPara = mainMatch[1].trim();
+    if (secondaryMatch) sections.secondaryPara = secondaryMatch[1].trim();
+    if (conclusionMatch) sections.conclusion = conclusionMatch[1].trim();
+    
+    // If no structured format found, put everything in intro
+    if (!introMatch && !mainMatch && !secondaryMatch && !conclusionMatch && content.trim()) {
+      sections.intro = content;
+    }
+    
+    return sections;
+  };
 
   // Fetch accepted ideas
   const { data: acceptedIdeas = [], isLoading: ideasLoading } = useQuery({
@@ -114,10 +160,11 @@ export const BTLWriter = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("Not authenticated");
 
+      const combinedContent = combineContent(data.intro, data.mainPara, data.secondaryPara, data.conclusion);
       const { error } = await supabase.from("blog_posts").insert({
         title: data.title,
         excerpt: data.excerpt || null,
-        content: data.content,
+        content: combinedContent,
         category: data.category || null,
         author_id: userData.user.id,
         published: false,
@@ -137,19 +184,20 @@ export const BTLWriter = () => {
       toast.success("Draft created");
       setDraftDialogOpen(false);
       setSelectedIdea(null);
-      setDraftForm({ title: "", excerpt: "", content: "", category: "" });
+      setDraftForm({ title: "", excerpt: "", intro: "", mainPara: "", secondaryPara: "", conclusion: "", category: "" });
     },
     onError: () => toast.error("Failed to create draft"),
   });
 
   const updateDraftMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof draftForm }) => {
+      const combinedContent = combineContent(data.intro, data.mainPara, data.secondaryPara, data.conclusion);
       const { error } = await supabase
         .from("blog_posts")
         .update({
           title: data.title,
           excerpt: data.excerpt || null,
-          content: data.content,
+          content: combinedContent,
           category: data.category || null,
         })
         .eq("id", id);
@@ -187,7 +235,10 @@ export const BTLWriter = () => {
     setDraftForm({
       title: idea.title,
       excerpt: "",
-      content: "",
+      intro: "",
+      mainPara: "",
+      secondaryPara: "",
+      conclusion: "",
       category: "",
     });
     setDraftDialogOpen(true);
@@ -195,10 +246,14 @@ export const BTLWriter = () => {
 
   const openEditDialog = (draft: BlogPost) => {
     setSelectedDraft(draft);
+    const parsed = parseContent(draft.content);
     setDraftForm({
       title: draft.title,
       excerpt: draft.excerpt || "",
-      content: draft.content,
+      intro: parsed.intro,
+      mainPara: parsed.mainPara,
+      secondaryPara: parsed.secondaryPara,
+      conclusion: parsed.conclusion,
       category: draft.category || "",
     });
     setEditDialogOpen(true);
@@ -209,8 +264,9 @@ export const BTLWriter = () => {
       toast.error("Please enter a title");
       return;
     }
-    if (!draftForm.content.trim()) {
-      toast.error("Please enter content");
+    const hasContent = draftForm.intro.trim() || draftForm.mainPara.trim() || draftForm.secondaryPara.trim() || draftForm.conclusion.trim();
+    if (!hasContent) {
+      toast.error("Please enter content in at least one section");
       return;
     }
     createDraftMutation.mutate(draftForm);
@@ -222,8 +278,9 @@ export const BTLWriter = () => {
       toast.error("Please enter a title");
       return;
     }
-    if (!draftForm.content.trim()) {
-      toast.error("Please enter content");
+    const hasContent = draftForm.intro.trim() || draftForm.mainPara.trim() || draftForm.secondaryPara.trim() || draftForm.conclusion.trim();
+    if (!hasContent) {
+      toast.error("Please enter content in at least one section");
       return;
     }
     updateDraftMutation.mutate({ id: selectedDraft.id, data: draftForm });
@@ -231,7 +288,8 @@ export const BTLWriter = () => {
 
   const handleSubmitDraft = () => {
     if (!selectedDraft) return;
-    if (!draftForm.title.trim() || !draftForm.content.trim()) {
+    const hasContent = draftForm.intro.trim() || draftForm.mainPara.trim() || draftForm.secondaryPara.trim() || draftForm.conclusion.trim();
+    if (!draftForm.title.trim() || !hasContent) {
       toast.error("Please complete the draft before submitting");
       return;
     }
@@ -394,14 +452,62 @@ export const BTLWriter = () => {
                 placeholder="Brief summary of the post..."
               />
             </div>
-            <div className="space-y-2">
-              <Label>Content</Label>
-              <Textarea
-                value={draftForm.content}
-                onChange={(e) => setDraftForm({ ...draftForm, content: e.target.value })}
-                rows={12}
-                placeholder="Write the full post content..."
-              />
+            
+            {/* Structured Content Sections */}
+            <div className="space-y-4 border-t pt-4">
+              <p className="text-sm font-medium text-muted-foreground">Content Sections</p>
+              
+              <div className="space-y-2">
+                <Label>Intro</Label>
+                <p className="text-xs italic text-muted-foreground mb-1">
+                  {getPlaceholder("intro", selectedIdea?.title || draftForm.title)}
+                </p>
+                <Textarea
+                  value={draftForm.intro}
+                  onChange={(e) => setDraftForm({ ...draftForm, intro: e.target.value })}
+                  rows={3}
+                  placeholder="Write your introduction..."
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Main Para</Label>
+                <p className="text-xs italic text-muted-foreground mb-1">
+                  {getPlaceholder("mainPara", selectedIdea?.title || draftForm.title)}
+                </p>
+                <Textarea
+                  value={draftForm.mainPara}
+                  onChange={(e) => setDraftForm({ ...draftForm, mainPara: e.target.value })}
+                  rows={4}
+                  placeholder="Write your main paragraph..."
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Secondary Para</Label>
+                <p className="text-xs italic text-muted-foreground mb-1">
+                  {getPlaceholder("secondaryPara", selectedIdea?.title || draftForm.title)}
+                </p>
+                <Textarea
+                  value={draftForm.secondaryPara}
+                  onChange={(e) => setDraftForm({ ...draftForm, secondaryPara: e.target.value })}
+                  rows={4}
+                  placeholder="Write your secondary paragraph..."
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Conclusion</Label>
+                <p className="text-xs italic text-muted-foreground mb-1">
+                  {getPlaceholder("conclusion", selectedIdea?.title || draftForm.title)}
+                </p>
+                <Textarea
+                  value={draftForm.conclusion}
+                  onChange={(e) => setDraftForm({ ...draftForm, conclusion: e.target.value })}
+                  rows={3}
+                  placeholder="Write your conclusion..."
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -454,14 +560,62 @@ export const BTLWriter = () => {
                 placeholder="Brief summary of the post..."
               />
             </div>
-            <div className="space-y-2">
-              <Label>Content</Label>
-              <Textarea
-                value={draftForm.content}
-                onChange={(e) => setDraftForm({ ...draftForm, content: e.target.value })}
-                rows={12}
-                placeholder="Write the full post content..."
-              />
+            
+            {/* Structured Content Sections */}
+            <div className="space-y-4 border-t pt-4">
+              <p className="text-sm font-medium text-muted-foreground">Content Sections</p>
+              
+              <div className="space-y-2">
+                <Label>Intro</Label>
+                <p className="text-xs italic text-muted-foreground mb-1">
+                  {getPlaceholder("intro", draftForm.title)}
+                </p>
+                <Textarea
+                  value={draftForm.intro}
+                  onChange={(e) => setDraftForm({ ...draftForm, intro: e.target.value })}
+                  rows={3}
+                  placeholder="Write your introduction..."
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Main Para</Label>
+                <p className="text-xs italic text-muted-foreground mb-1">
+                  {getPlaceholder("mainPara", draftForm.title)}
+                </p>
+                <Textarea
+                  value={draftForm.mainPara}
+                  onChange={(e) => setDraftForm({ ...draftForm, mainPara: e.target.value })}
+                  rows={4}
+                  placeholder="Write your main paragraph..."
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Secondary Para</Label>
+                <p className="text-xs italic text-muted-foreground mb-1">
+                  {getPlaceholder("secondaryPara", draftForm.title)}
+                </p>
+                <Textarea
+                  value={draftForm.secondaryPara}
+                  onChange={(e) => setDraftForm({ ...draftForm, secondaryPara: e.target.value })}
+                  rows={4}
+                  placeholder="Write your secondary paragraph..."
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Conclusion</Label>
+                <p className="text-xs italic text-muted-foreground mb-1">
+                  {getPlaceholder("conclusion", draftForm.title)}
+                </p>
+                <Textarea
+                  value={draftForm.conclusion}
+                  onChange={(e) => setDraftForm({ ...draftForm, conclusion: e.target.value })}
+                  rows={3}
+                  placeholder="Write your conclusion..."
+                />
+              </div>
             </div>
           </div>
           <DialogFooter className="flex gap-2">
