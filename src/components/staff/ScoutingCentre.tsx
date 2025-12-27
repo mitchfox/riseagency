@@ -790,140 +790,17 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
           </>
         ) : (
           <>
-            {/* Reports List View */}
-            <div className="flex flex-col gap-3">
-              <Button onClick={() => setViewMode("positions")} variant="outline" size="sm" className="w-full sm:w-auto self-start">
+            {/* Reports List View - Using Modern AllReportsSection */}
+            <div className="mb-4">
+              <Button onClick={() => setViewMode("positions")} variant="outline" size="sm" className="w-full sm:w-auto">
                 <Target className="h-4 w-4 mr-2" />
                 Position Analysis
               </Button>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search players..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="flex-1 sm:w-[140px]">
-                      <Filter className="h-4 w-4 mr-1" />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="recommended">Recommended</SelectItem>
-                      <SelectItem value="monitoring">Monitoring</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button onClick={() => handleAddNew()} size="sm" className="whitespace-nowrap">
-                    <Plus className="h-4 w-4 mr-1" />
-                    <span className="hidden sm:inline">New </span>Report
-                  </Button>
-                </div>
-              </div>
             </div>
-
-        {loading ? (
-          <div className="text-center py-12">Loading reports...</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredReports.map((report) => (
-              <Card key={report.id} className="bg-card hover:bg-accent/5 transition-colors">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg truncate">{report.player_name}</CardTitle>
-                      <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                        {report.age && <span>{report.age}y</span>}
-                        {report.position && <span>• {report.position}</span>}
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setViewingReport(report)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleEdit(report)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive"
-                        onClick={() => handleDelete(report.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {report.current_club && (
-                    <div className="text-sm">
-                      <span className="text-muted-foreground">Club:</span>
-                      <span className="ml-2 font-medium">{report.current_club}</span>
-                    </div>
-                  )}
-                  {report.overall_rating && (
-                    <div className="text-sm">
-                      <span className="text-muted-foreground">Rating:</span>
-                      <span className="ml-2 font-medium">{report.overall_rating}/10</span>
-                    </div>
-                  )}
-                  <div className="flex gap-2">
-                    <Badge variant="outline" className={getStatusColor(report.status)}>
-                      {report.status}
-                    </Badge>
-                    {report.priority && (
-                      <Badge variant="outline" className={getPriorityColor(report.priority)}>
-                        {report.priority}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Scouted: {format(new Date(report.scouting_date), "dd MMM yyyy")}
-                  </div>
-                  {!report.added_to_prospects && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => handleAddToProspects(report)}
-                    >
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Add to Prospects
-                    </Button>
-                  )}
-                  {report.added_to_prospects && (
-                    <Badge variant="secondary" className="w-full justify-center">
-                      Added to Prospects
-                    </Badge>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {!loading && filteredReports.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            No scouting reports found
-          </div>
-        )}
+            <AllReportsSection 
+              onViewReport={(report) => setViewingReport(report as any)}
+              onEditReport={(report) => handleEdit(report as any)}
+            />
           </>
         )}
                 </div>
