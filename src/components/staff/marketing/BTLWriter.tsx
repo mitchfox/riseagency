@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, FileText, Trash2 } from "lucide-react";
+import { Edit, FileText, Trash2, Plus, Send, Save } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
@@ -19,6 +19,16 @@ interface MarketingIdea {
   status: string;
   category: string | null;
   canva_link: string | null;
+  created_at: string;
+}
+
+interface BlogPost {
+  id: string;
+  title: string;
+  excerpt: string | null;
+  content: string;
+  category: string | null;
+  workflow_status: string;
   created_at: string;
 }
 
@@ -36,7 +46,9 @@ const BTL_CATEGORIES = [
 export const BTLWriter = () => {
   const queryClient = useQueryClient();
   const [selectedIdea, setSelectedIdea] = useState<MarketingIdea | null>(null);
+  const [selectedDraft, setSelectedDraft] = useState<BlogPost | null>(null);
   const [draftDialogOpen, setDraftDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [draftForm, setDraftForm] = useState({
     title: "",
     excerpt: "",
@@ -44,7 +56,8 @@ export const BTLWriter = () => {
     category: "",
   });
 
-  const { data: acceptedIdeas = [], isLoading } = useQuery({
+  // Fetch accepted ideas
+  const { data: acceptedIdeas = [], isLoading: ideasLoading } = useQuery({
     queryKey: ["btl-writer-ideas"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -54,6 +67,20 @@ export const BTLWriter = () => {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as MarketingIdea[];
+    },
+  });
+
+  // Fetch drafts (workflow_status = 'draft')
+  const { data: drafts = [], isLoading: draftsLoading } = useQuery({
+    queryKey: ["btl-drafts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("*")
+        .eq("workflow_status", "draft")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as BlogPost[];
     },
   });
 
@@ -70,7 +97,19 @@ export const BTLWriter = () => {
     onError: () => toast.error("Failed to remove idea"),
   });
 
-  const createPostMutation = useMutation({
+  const deleteDraftMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("blog_posts").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["btl-drafts"] });
+      toast.success("Draft deleted");
+    },
+    onError: () => toast.error("Failed to delete draft"),
+  });
+
+  const createDraftMutation = useMutation({
     mutationFn: async (data: typeof draftForm) => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("Not authenticated");
@@ -82,6 +121,7 @@ export const BTLWriter = () => {
         category: data.category || null,
         author_id: userData.user.id,
         published: false,
+        workflow_status: "draft",
       });
       if (error) throw error;
 
@@ -92,13 +132,54 @@ export const BTLWriter = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["btl-writer-ideas"] });
+      queryClient.invalidateQueries({ queryKey: ["btl-drafts"] });
       queryClient.invalidateQueries({ queryKey: ["marketing-ideas-review"] });
-      toast.success("Draft created in Between The Lines");
+      toast.success("Draft created");
       setDraftDialogOpen(false);
       setSelectedIdea(null);
       setDraftForm({ title: "", excerpt: "", content: "", category: "" });
     },
     onError: () => toast.error("Failed to create draft"),
+  });
+
+  const updateDraftMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof draftForm }) => {
+      const { error } = await supabase
+        .from("blog_posts")
+        .update({
+          title: data.title,
+          excerpt: data.excerpt || null,
+          content: data.content,
+          category: data.category || null,
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["btl-drafts"] });
+      toast.success("Draft saved");
+      setEditDialogOpen(false);
+      setSelectedDraft(null);
+    },
+    onError: () => toast.error("Failed to save draft"),
+  });
+
+  const submitDraftMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("blog_posts")
+        .update({ workflow_status: "ready_for_image" })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["btl-drafts"] });
+      queryClient.invalidateQueries({ queryKey: ["image-creator-posts"] });
+      toast.success("Draft submitted to Image Creator");
+      setEditDialogOpen(false);
+      setSelectedDraft(null);
+    },
+    onError: () => toast.error("Failed to submit draft"),
   });
 
   const openDraftDialog = (idea: MarketingIdea) => {
@@ -112,6 +193,17 @@ export const BTLWriter = () => {
     setDraftDialogOpen(true);
   };
 
+  const openEditDialog = (draft: BlogPost) => {
+    setSelectedDraft(draft);
+    setDraftForm({
+      title: draft.title,
+      excerpt: draft.excerpt || "",
+      content: draft.content,
+      category: draft.category || "",
+    });
+    setEditDialogOpen(true);
+  };
+
   const handleCreateDraft = () => {
     if (!draftForm.title.trim()) {
       toast.error("Please enter a title");
@@ -121,8 +213,40 @@ export const BTLWriter = () => {
       toast.error("Please enter content");
       return;
     }
-    createPostMutation.mutate(draftForm);
+    createDraftMutation.mutate(draftForm);
   };
+
+  const handleSaveDraft = () => {
+    if (!selectedDraft) return;
+    if (!draftForm.title.trim()) {
+      toast.error("Please enter a title");
+      return;
+    }
+    if (!draftForm.content.trim()) {
+      toast.error("Please enter content");
+      return;
+    }
+    updateDraftMutation.mutate({ id: selectedDraft.id, data: draftForm });
+  };
+
+  const handleSubmitDraft = () => {
+    if (!selectedDraft) return;
+    if (!draftForm.title.trim() || !draftForm.content.trim()) {
+      toast.error("Please complete the draft before submitting");
+      return;
+    }
+    // Save first, then submit
+    updateDraftMutation.mutate(
+      { id: selectedDraft.id, data: draftForm },
+      {
+        onSuccess: () => {
+          submitDraftMutation.mutate(selectedDraft.id);
+        },
+      }
+    );
+  };
+
+  const isLoading = ideasLoading || draftsLoading;
 
   if (isLoading) {
     return <LoadingSpinner size="md" className="py-12" />;
@@ -130,25 +254,75 @@ export const BTLWriter = () => {
 
   return (
     <div className="space-y-6">
+      {/* Drafts Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-primary" />
-            BTL Writer
+            Drafts
           </CardTitle>
           <CardDescription>
-            Accepted ideas ready to be drafted into Between The Lines posts
+            Work in progress posts. Edit and submit when ready.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {drafts.length === 0 ? (
+            <p className="text-muted-foreground text-center py-6 text-sm">
+              No drafts yet. Create one from an accepted idea below.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {drafts.map((draft) => (
+                <Card key={draft.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-sm">{draft.title}</h4>
+                        {draft.category && (
+                          <span className="text-xs text-muted-foreground">{draft.category}</span>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {draft.excerpt || draft.content.substring(0, 100)}...
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button size="sm" variant="default" onClick={() => openEditDialog(draft)} className="h-8">
+                          <Edit className="w-3 h-3 mr-1" />
+                          Edit
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => deleteDraftMutation.mutate(draft.id)} className="h-8">
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Accepted Ideas Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Plus className="w-5 h-5 text-green-500" />
+            Accepted Ideas
+          </CardTitle>
+          <CardDescription>
+            Create drafts from these accepted ideas
           </CardDescription>
         </CardHeader>
         <CardContent>
           {acceptedIdeas.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              No accepted ideas yet. Accept ideas from the Review Ideas tab to see them here.
+            <p className="text-muted-foreground text-center py-6 text-sm">
+              No accepted ideas. Accept ideas from the Review Ideas tab.
             </p>
           ) : (
             <div className="space-y-3">
               {acceptedIdeas.map((idea) => (
-                <Card key={idea.id} className="hover:shadow-md transition-shadow">
+                <Card key={idea.id} className="hover:shadow-md transition-shadow border-dashed">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
@@ -158,9 +332,9 @@ export const BTLWriter = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <Button size="sm" variant="default" onClick={() => openDraftDialog(idea)} className="h-8">
-                          <Edit className="w-3 h-3 mr-1" />
-                          Write Draft
+                        <Button size="sm" variant="outline" onClick={() => openDraftDialog(idea)} className="h-8">
+                          <Plus className="w-3 h-3 mr-1" />
+                          Create Draft
                         </Button>
                         <Button size="sm" variant="ghost" onClick={() => deleteMutation.mutate(idea.id)} className="h-8">
                           <Trash2 className="w-3 h-3 text-destructive" />
@@ -175,11 +349,11 @@ export const BTLWriter = () => {
         </CardContent>
       </Card>
 
-      {/* Draft Dialog */}
+      {/* Create Draft Dialog */}
       <Dialog open={draftDialogOpen} onOpenChange={setDraftDialogOpen}>
         <DialogContent className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Write BTL Draft</DialogTitle>
+            <DialogTitle>Create Draft</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
@@ -234,8 +408,73 @@ export const BTLWriter = () => {
             <Button variant="outline" onClick={() => setDraftDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateDraft} disabled={createPostMutation.isPending}>
+            <Button onClick={handleCreateDraft} disabled={createDraftMutation.isPending}>
               Create Draft
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Draft Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Draft</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Post Title</Label>
+              <Input
+                value={draftForm.title}
+                onChange={(e) => setDraftForm({ ...draftForm, title: e.target.value })}
+                placeholder="Enter the post title..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Select value={draftForm.category} onValueChange={(v) => setDraftForm({ ...draftForm, category: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {BTL_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Excerpt (optional)</Label>
+              <Textarea
+                value={draftForm.excerpt}
+                onChange={(e) => setDraftForm({ ...draftForm, excerpt: e.target.value })}
+                rows={2}
+                placeholder="Brief summary of the post..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Content</Label>
+              <Textarea
+                value={draftForm.content}
+                onChange={(e) => setDraftForm({ ...draftForm, content: e.target.value })}
+                rows={12}
+                placeholder="Write the full post content..."
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="secondary" onClick={handleSaveDraft} disabled={updateDraftMutation.isPending}>
+              <Save className="w-4 h-4 mr-1" />
+              Save
+            </Button>
+            <Button onClick={handleSubmitDraft} disabled={updateDraftMutation.isPending || submitDraftMutation.isPending}>
+              <Send className="w-4 h-4 mr-1" />
+              Submit
             </Button>
           </DialogFooter>
         </DialogContent>

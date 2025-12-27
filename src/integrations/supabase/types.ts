@@ -295,39 +295,54 @@ export type Database = {
       blog_posts: {
         Row: {
           author_id: string
+          canva_link: string | null
           category: string | null
           content: string
           created_at: string | null
           excerpt: string | null
           id: string
           image_url: string | null
+          image_url_internal: string | null
+          posted_at: string | null
           published: boolean | null
+          scheduled_date: string | null
           title: string
           updated_at: string | null
+          workflow_status: string
         }
         Insert: {
           author_id: string
+          canva_link?: string | null
           category?: string | null
           content: string
           created_at?: string | null
           excerpt?: string | null
           id?: string
           image_url?: string | null
+          image_url_internal?: string | null
+          posted_at?: string | null
           published?: boolean | null
+          scheduled_date?: string | null
           title: string
           updated_at?: string | null
+          workflow_status?: string
         }
         Update: {
           author_id?: string
+          canva_link?: string | null
           category?: string | null
           content?: string
           created_at?: string | null
           excerpt?: string | null
           id?: string
           image_url?: string | null
+          image_url_internal?: string | null
+          posted_at?: string | null
           published?: boolean | null
+          scheduled_date?: string | null
           title?: string
           updated_at?: string | null
+          workflow_status?: string
         }
         Relationships: [
           {
