@@ -24,9 +24,15 @@ interface ScoutingReport {
   position: string | null;
   current_club: string | null;
   nationality: string | null;
+  date_of_birth: string | null;
+  height_cm: number | null;
+  preferred_foot: string | null;
   scout_name: string | null;
   scout_id: string | null;
-  scouting_date: string;
+  scouting_date: string | null;
+  location: string | null;
+  competition: string | null;
+  match_context: string | null;
   status: string;
   priority: string | null;
   added_to_prospects: boolean;
@@ -39,10 +45,14 @@ interface ScoutingReport {
   created_at: string;
   profile_image_url: string | null;
   video_url: string | null;
-  location: string | null;
-  competition: string | null;
-  contribution_type?: string | null;
-  notes?: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  agent_name: string | null;
+  agent_contact: string | null;
+  linked_player_id: string | null;
+  full_match_url: string | null;
+  contribution_type: string | null;
+  notes: string | null;
 }
 
 interface AllReportsSectionProps {
@@ -242,7 +252,7 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
           stage: "scouted",
           priority: report.priority,
           profile_image_url: report.profile_image_url,
-          notes: `Scouted on ${format(new Date(report.scouting_date), "dd/MM/yyyy")}\n\n${report.summary || ""}`
+          notes: `Scouted on ${report.scouting_date ? format(new Date(report.scouting_date), "dd/MM/yyyy") : "Unknown"}\n\n${report.summary || ""}`
         })
         .select()
         .single();
@@ -703,7 +713,7 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
                       </div>
                       <div>
                         <span className="text-xs text-muted-foreground">Date</span>
-                        <p className="font-medium">{format(new Date(selectedReport.scouting_date), "dd MMM yyyy")}</p>
+                        <p className="font-medium">{selectedReport.scouting_date ? format(new Date(selectedReport.scouting_date), "dd MMM yyyy") : "—"}</p>
                       </div>
                       <div>
                         <span className="text-xs text-muted-foreground">Location</span>
