@@ -19,6 +19,11 @@ import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, Scouti
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { Globe, TrendingUp, Award, Users2 } from "lucide-react";
 
+interface VideoEntry {
+  url: string;
+  description: string;
+}
+
 interface DraftFormData {
   id?: string;
   player_name: string;
@@ -34,6 +39,7 @@ interface DraftFormData {
   weaknesses: string;
   summary: string;
   video_urls: string[];
+  video_entries: VideoEntry[];
   report_type: 'rise' | 'independent' | '';
   independent_report_url: string;
   // Additional contact info
@@ -47,6 +53,63 @@ interface DraftFormData {
   agent_contract_end: string;
   additional_notes: string;
 }
+
+// Helper function to get country code from nationality
+const getCountryCode = (nationality: string): string => {
+  const countryMap: Record<string, string> = {
+    'england': 'gb-eng', 'english': 'gb-eng',
+    'scotland': 'gb-sct', 'scottish': 'gb-sct',
+    'wales': 'gb-wls', 'welsh': 'gb-wls',
+    'northern ireland': 'gb-nir',
+    'united kingdom': 'gb', 'british': 'gb', 'uk': 'gb',
+    'france': 'fr', 'french': 'fr',
+    'germany': 'de', 'german': 'de',
+    'spain': 'es', 'spanish': 'es',
+    'italy': 'it', 'italian': 'it',
+    'portugal': 'pt', 'portuguese': 'pt',
+    'netherlands': 'nl', 'dutch': 'nl', 'holland': 'nl',
+    'belgium': 'be', 'belgian': 'be',
+    'brazil': 'br', 'brazilian': 'br',
+    'argentina': 'ar', 'argentinian': 'ar', 'argentine': 'ar',
+    'usa': 'us', 'united states': 'us', 'american': 'us',
+    'canada': 'ca', 'canadian': 'ca',
+    'mexico': 'mx', 'mexican': 'mx',
+    'japan': 'jp', 'japanese': 'jp',
+    'south korea': 'kr', 'korean': 'kr',
+    'australia': 'au', 'australian': 'au',
+    'nigeria': 'ng', 'nigerian': 'ng',
+    'ghana': 'gh', 'ghanaian': 'gh',
+    'senegal': 'sn', 'senegalese': 'sn',
+    'ivory coast': 'ci', 'ivorian': 'ci',
+    'cameroon': 'cm', 'cameroonian': 'cm',
+    'morocco': 'ma', 'moroccan': 'ma',
+    'egypt': 'eg', 'egyptian': 'eg',
+    'poland': 'pl', 'polish': 'pl',
+    'croatia': 'hr', 'croatian': 'hr',
+    'serbia': 'rs', 'serbian': 'rs',
+    'sweden': 'se', 'swedish': 'se',
+    'norway': 'no', 'norwegian': 'no',
+    'denmark': 'dk', 'danish': 'dk',
+    'austria': 'at', 'austrian': 'at',
+    'switzerland': 'ch', 'swiss': 'ch',
+    'turkey': 'tr', 'turkish': 'tr',
+    'greece': 'gr', 'greek': 'gr',
+    'russia': 'ru', 'russian': 'ru',
+    'ukraine': 'ua', 'ukrainian': 'ua',
+    'czech republic': 'cz', 'czech': 'cz', 'czechia': 'cz',
+    'ireland': 'ie', 'irish': 'ie',
+    'colombia': 'co', 'colombian': 'co',
+    'chile': 'cl', 'chilean': 'cl',
+    'uruguay': 'uy', 'uruguayan': 'uy',
+    'peru': 'pe', 'peruvian': 'pe',
+    'ecuador': 'ec', 'ecuadorian': 'ec',
+    'venezuela': 've', 'venezuelan': 've',
+    'jamaica': 'jm', 'jamaican': 'jm',
+  };
+  
+  const normalized = nationality.toLowerCase().trim();
+  return countryMap[normalized] || normalized.substring(0, 2);
+};
 
 const Potential = () => {
   const { scout, loading, signOut } = useScoutAuth();
@@ -73,6 +136,7 @@ const Potential = () => {
     weaknesses: "",
     summary: "",
     video_urls: [],
+    video_entries: [],
     report_type: '',
     independent_report_url: '',
     player_contact_email: '',
@@ -364,6 +428,7 @@ const Potential = () => {
       weaknesses: "",
       summary: "",
       video_urls: [],
+      video_entries: [],
       report_type: '',
       independent_report_url: '',
       player_contact_email: '',
@@ -402,6 +467,7 @@ const Potential = () => {
       weaknesses: draft.weaknesses || "",
       summary: draft.summary || "",
       video_urls: draft.video_urls || [],
+      video_entries: draft.video_entries || [],
       report_type: draft.report_type || '',
       independent_report_url: draft.independent_report_url || '',
       player_contact_email: draft.player_contact_email || '',
@@ -456,25 +522,25 @@ const Potential = () => {
     submitReportMutation.mutate(draftForm);
   };
 
-  const handleAddVideoUrl = () => {
+  const handleAddVideoEntry = () => {
     setDraftForm(prev => ({
       ...prev,
-      video_urls: [...prev.video_urls, '']
+      video_entries: [...prev.video_entries, { url: '', description: '' }]
     }));
   };
 
-  const handleVideoUrlChange = (index: number, value: string) => {
+  const handleVideoEntryChange = (index: number, field: 'url' | 'description', value: string) => {
     setDraftForm(prev => {
-      const newUrls = [...prev.video_urls];
-      newUrls[index] = value;
-      return { ...prev, video_urls: newUrls };
+      const newEntries = [...prev.video_entries];
+      newEntries[index] = { ...newEntries[index], [field]: value };
+      return { ...prev, video_entries: newEntries };
     });
   };
 
-  const handleRemoveVideoUrl = (index: number) => {
+  const handleRemoveVideoEntry = (index: number) => {
     setDraftForm(prev => ({
       ...prev,
-      video_urls: prev.video_urls.filter((_, i) => i !== index)
+      video_entries: prev.video_entries.filter((_, i) => i !== index)
     }));
   };
 
@@ -882,7 +948,7 @@ const Potential = () => {
                                 onValueChange={handlePositionChange}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select position to reveal attributes" />
+                                  <SelectValue placeholder="Select position" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {SCOUTING_POSITIONS.map((pos) => (
@@ -929,32 +995,39 @@ const Potential = () => {
                               <div className="flex gap-2 mt-2">
                                 <Input
                                   type="number"
-                                  value={draftForm.birth_month}
-                                  onChange={(e) => setDraftForm({ ...draftForm, birth_month: e.target.value })}
-                                  placeholder="Month (optional)"
-                                  className={`flex-1 ${!draftForm.birth_month ? 'opacity-50' : ''}`}
-                                  min={1}
-                                  max={12}
-                                />
-                                <Input
-                                  type="number"
                                   value={draftForm.birth_day}
                                   onChange={(e) => setDraftForm({ ...draftForm, birth_day: e.target.value })}
                                   placeholder="Day (optional)"
-                                  className={`flex-1 ${!draftForm.birth_day ? 'opacity-50' : ''}`}
+                                  className={`w-24 ${!draftForm.birth_day ? 'opacity-50' : ''}`}
                                   min={1}
                                   max={31}
                                 />
+                                <Input
+                                  type="number"
+                                  value={draftForm.birth_month}
+                                  onChange={(e) => setDraftForm({ ...draftForm, birth_month: e.target.value })}
+                                  placeholder="Month (optional)"
+                                  className={`w-24 ${!draftForm.birth_month ? 'opacity-50' : ''}`}
+                                  min={1}
+                                  max={12}
+                                />
+                                <div className="flex-1 flex items-center gap-2">
+                                  <Input
+                                    id="nationality"
+                                    value={draftForm.nationality}
+                                    onChange={(e) => setDraftForm({ ...draftForm, nationality: e.target.value })}
+                                    placeholder="Nationality"
+                                  />
+                                  {draftForm.nationality && (
+                                    <img 
+                                      src={`https://flagcdn.com/24x18/${getCountryCode(draftForm.nationality)}.png`}
+                                      alt={draftForm.nationality}
+                                      className="h-5 w-auto"
+                                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                    />
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="nationality">Nationality</Label>
-                              <Input
-                                id="nationality"
-                                value={draftForm.nationality}
-                                onChange={(e) => setDraftForm({ ...draftForm, nationality: e.target.value })}
-                                placeholder="Nationality"
-                              />
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="current_club">Current Club</Label>
@@ -1251,21 +1324,29 @@ const Potential = () => {
                             </div>
 
                             {/* Video URLs */}
-                            <div className="space-y-2">
-                              <Label>Video URLs</Label>
-                              {draftForm.video_urls.map((url, index) => (
-                                <div key={index} className="flex gap-2">
-                                  <Input
-                                    type="url"
-                                    value={url}
-                                    onChange={(e) => handleVideoUrlChange(index, e.target.value)}
-                                    placeholder="https://..."
-                                  />
+                            <div className="space-y-3">
+                              <Label>Video URLs <span className="text-muted-foreground font-normal">(matches, highlights, etc.)</span></Label>
+                              {draftForm.video_entries.map((entry, index) => (
+                                <div key={index} className="flex gap-2 items-start">
+                                  <div className="flex-1 space-y-2">
+                                    <Input
+                                      type="url"
+                                      value={entry.url}
+                                      onChange={(e) => handleVideoEntryChange(index, 'url', e.target.value)}
+                                      placeholder="https://..."
+                                    />
+                                    <Input
+                                      value={entry.description}
+                                      onChange={(e) => handleVideoEntryChange(index, 'description', e.target.value)}
+                                      placeholder="e.g., vs Manchester City, U18 highlights"
+                                    />
+                                  </div>
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() => handleRemoveVideoUrl(index)}
+                                    onClick={() => handleRemoveVideoEntry(index)}
+                                    className="mt-1"
                                   >
                                     <X className="h-4 w-4" />
                                   </Button>
@@ -1275,8 +1356,7 @@ const Potential = () => {
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={handleAddVideoUrl}
-                                className="mt-2"
+                                onClick={handleAddVideoEntry}
                               >
                                 <Link className="h-4 w-4 mr-2" />
                                 Add Video URL
