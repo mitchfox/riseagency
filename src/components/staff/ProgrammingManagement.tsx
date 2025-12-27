@@ -1378,7 +1378,7 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
         }
         onClose();
       }}>
-      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[calc(100vw-4rem)] max-h-[90vh] overflow-y-auto bg-background">
+      <DialogContent className="w-[98vw] max-w-[1800px] max-h-[90vh] overflow-y-auto bg-background">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl">Programming Management - {playerName}</DialogTitle>
         </DialogHeader>
@@ -1754,17 +1754,17 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
 
                           {(programmingData[selectedSession as keyof ProgrammingData] as SessionData).exercises.length > 0 ? (
                             <div className="border rounded-lg overflow-x-auto">
-                              <table className="w-full min-w-[800px]">
+                              <table className="w-full min-w-[1200px]">
                                 <thead className="bg-muted">
                                   <tr>
                                     <th className="p-2 text-left text-xs font-semibold w-20">Order</th>
-                                    <th className="p-2 text-left text-xs font-semibold">Exercise Name</th>
-                                    <th className="p-2 text-left text-xs font-semibold">Description</th>
-                                    <th className="p-2 text-left text-xs font-semibold w-20">Reps</th>
-                                    <th className="p-2 text-left text-xs font-semibold w-16">Sets</th>
-                                    <th className="p-2 text-left text-xs font-semibold w-20">Load</th>
-                                    <th className="p-2 text-left text-xs font-semibold w-24">Recovery</th>
-                                    <th className="p-2 text-left text-xs font-semibold w-24">Video</th>
+                                    <th className="p-2 text-left text-xs font-semibold min-w-[200px]">Exercise Name</th>
+                                    <th className="p-2 text-left text-xs font-semibold min-w-[250px]">Description</th>
+                                    <th className="p-2 text-left text-xs font-semibold w-24">Reps</th>
+                                    <th className="p-2 text-left text-xs font-semibold w-20">Sets</th>
+                                    <th className="p-2 text-left text-xs font-semibold w-24">Load</th>
+                                    <th className="p-2 text-left text-xs font-semibold w-28">Recovery</th>
+                                    <th className="p-2 text-left text-xs font-semibold w-28">Video</th>
                                     <th className="p-2 w-12"></th>
                                   </tr>
                                 </thead>
