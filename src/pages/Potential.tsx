@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { LogOut, Plus, Users, MessageSquare, Search, FileText, Trash2, Edit, Target, ChevronDown, Link, Upload, X } from "lucide-react";
+import { LogOut, Plus, Users, MessageSquare, Search, FileText, Trash2, Edit, Target, ChevronDown, Link, Upload, X, Phone, CreditCard, Receipt, Send } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -407,6 +407,9 @@ const Potential = () => {
       setIsCreatingNew(false);
       setSelectedDraft(null);
       resetForm();
+      // Auto-switch to submissions tab
+      const submissionsTab = document.querySelector('[data-state="inactive"][value="submissions"]') as HTMLElement;
+      if (submissionsTab) submissionsTab.click();
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to submit report");
@@ -596,9 +599,9 @@ const Potential = () => {
               <FileText className="h-4 w-4 mr-2" />
               Drafts
             </TabsTrigger>
-            <TabsTrigger value="messages">
+            <TabsTrigger value="admin">
               <MessageSquare className="h-4 w-4 mr-2" />
-              Messages
+              Admin
             </TabsTrigger>
           </TabsList>
 
@@ -760,70 +763,154 @@ const Potential = () => {
           </TabsContent>
 
           {/* My Submissions Tab */}
-          <TabsContent value="submissions" className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by player name, club, or nationality..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {submissions.length} total submissions
-              </div>
+          <TabsContent value="submissions" className="space-y-6">
+            {/* Stats Summary */}
+            <div className="grid grid-cols-3 gap-4">
+              <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-primary">{submissions.length}</div>
+                    <p className="text-sm text-muted-foreground mt-1">Total Reports</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-green-500">{playerRights.exclusive.length}</div>
+                    <p className="text-sm text-muted-foreground mt-1">Exclusive Rights</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-500">{playerRights.contributor.length}</div>
+                    <p className="text-sm text-muted-foreground mt-1">Contributor</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            <ScrollArea className="h-[600px]">
-              <div className="space-y-4">
-                {filteredSubmissions.length === 0 ? (
-                  <Card>
-                    <CardContent className="py-12 text-center">
-                      <p className="text-muted-foreground">
-                        {searchTerm ? "No submissions match your search" : "No submissions yet"}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  filteredSubmissions.map((report) => (
-                    <Card key={report.id}>
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <CardTitle>{report.player_name}</CardTitle>
-                            <CardDescription>
-                              {report.position} • {report.current_club} • {report.nationality}
-                            </CardDescription>
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by player name, club, or nationality..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Submissions Grid */}
+            <ScrollArea className="h-[500px]">
+              {filteredSubmissions.length === 0 ? (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                    <p className="text-muted-foreground">
+                      {searchTerm ? "No submissions match your search" : "No submissions yet. Start scouting!"}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredSubmissions.map((report) => {
+                    const isExclusive = playerRights.exclusive.some((r: any) => r.id === report.id);
+                    return (
+                      <Card 
+                        key={report.id} 
+                        className={`overflow-hidden transition-all hover:shadow-lg ${
+                          isExclusive 
+                            ? 'border-l-4 border-l-green-500' 
+                            : 'border-l-4 border-l-blue-500'
+                        }`}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <CardTitle className="text-lg truncate">{report.player_name}</CardTitle>
+                                {report.nationality && (
+                                  <img 
+                                    src={`https://flagcdn.com/20x15/${getCountryCode(report.nationality)}.png`}
+                                    alt={report.nationality}
+                                    className="h-4 w-auto flex-shrink-0"
+                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                  />
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  isExclusive 
+                                    ? 'bg-green-500/10 text-green-600' 
+                                    : 'bg-blue-500/10 text-blue-600'
+                                }`}>
+                                  {isExclusive ? (
+                                    <>
+                                      <Award className="h-3 w-3" />
+                                      Exclusive Rights
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Users2 className="h-3 w-3" />
+                                      Contributor
+                                    </>
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                            <div
+                              className={`px-2.5 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
+                                report.status === "recommended"
+                                  ? "bg-green-500/10 text-green-500"
+                                  : report.status === "monitoring"
+                                  ? "bg-blue-500/10 text-blue-500"
+                                  : report.status === "pending"
+                                  ? "bg-yellow-500/10 text-yellow-500"
+                                  : "bg-red-500/10 text-red-500"
+                              }`}
+                            >
+                              {report.status}
+                            </div>
                           </div>
-                          <div
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              report.status === "recommended"
-                                ? "bg-green-500/10 text-green-500"
-                                : report.status === "monitoring"
-                                ? "bg-blue-500/10 text-blue-500"
-                                : report.status === "pending"
-                                ? "bg-yellow-500/10 text-yellow-500"
-                                : "bg-red-500/10 text-red-500"
-                            }`}
-                          >
-                            {report.status}
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="space-y-3">
+                            <div className="flex flex-wrap gap-2 text-xs">
+                              {report.position && (
+                                <span className="px-2 py-1 bg-muted rounded-md">{report.position}</span>
+                              )}
+                              {report.current_club && (
+                                <span className="px-2 py-1 bg-muted rounded-md">{report.current_club}</span>
+                              )}
+                              {report.age && (
+                                <span className="px-2 py-1 bg-muted rounded-md">{report.age} yrs</span>
+                              )}
+                            </div>
+                            {report.summary && (
+                              <p className="text-sm text-muted-foreground line-clamp-2">{report.summary}</p>
+                            )}
+                            <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(report.created_at).toLocaleDateString('en-GB', { 
+                                  day: 'numeric', 
+                                  month: 'short', 
+                                  year: 'numeric' 
+                                })}
+                              </p>
+                              {report.competition && (
+                                <span className="text-xs text-muted-foreground">{report.competition}</span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {report.summary && (
-                          <p className="text-sm text-muted-foreground mb-2">{report.summary}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          Submitted: {new Date(report.created_at).toLocaleDateString()}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
             </ScrollArea>
           </TabsContent>
 
@@ -997,8 +1084,8 @@ const Potential = () => {
                                   type="number"
                                   value={draftForm.birth_day}
                                   onChange={(e) => setDraftForm({ ...draftForm, birth_day: e.target.value })}
-                                  placeholder="Day (optional)"
-                                  className={`w-24 ${!draftForm.birth_day ? 'opacity-50' : ''}`}
+                                  placeholder="Day"
+                                  className={`w-20 ${!draftForm.birth_day ? 'opacity-50' : ''}`}
                                   min={1}
                                   max={31}
                                 />
@@ -1006,28 +1093,32 @@ const Potential = () => {
                                   type="number"
                                   value={draftForm.birth_month}
                                   onChange={(e) => setDraftForm({ ...draftForm, birth_month: e.target.value })}
-                                  placeholder="Month (optional)"
-                                  className={`w-24 ${!draftForm.birth_month ? 'opacity-50' : ''}`}
+                                  placeholder="Month"
+                                  className={`w-20 ${!draftForm.birth_month ? 'opacity-50' : ''}`}
                                   min={1}
                                   max={12}
                                 />
-                                <div className="flex-1 flex items-center gap-2">
-                                  <Input
-                                    id="nationality"
-                                    value={draftForm.nationality}
-                                    onChange={(e) => setDraftForm({ ...draftForm, nationality: e.target.value })}
-                                    placeholder="Nationality"
-                                  />
-                                  {draftForm.nationality && (
-                                    <img 
-                                      src={`https://flagcdn.com/24x18/${getCountryCode(draftForm.nationality)}.png`}
-                                      alt={draftForm.nationality}
-                                      className="h-5 w-auto"
-                                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                    />
-                                  )}
-                                </div>
                               </div>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="nationality">Nationality</Label>
+                              <Input
+                                id="nationality"
+                                value={draftForm.nationality}
+                                onChange={(e) => setDraftForm({ ...draftForm, nationality: e.target.value })}
+                                placeholder="Nationality"
+                              />
+                              {draftForm.nationality && (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <img 
+                                    src={`https://flagcdn.com/32x24/${getCountryCode(draftForm.nationality)}.png`}
+                                    alt={draftForm.nationality}
+                                    className="h-6 w-auto rounded-sm shadow-sm"
+                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                  />
+                                  <span className="text-xs text-muted-foreground">{draftForm.nationality}</span>
+                                </div>
+                              )}
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="current_club">Current Club</Label>
@@ -1391,41 +1482,140 @@ const Potential = () => {
             )}
           </TabsContent>
 
-          {/* Messages Tab */}
-          <TabsContent value="messages">
-            <ScrollArea className="h-[600px]">
-              <div className="space-y-4">
-                {messages.length === 0 ? (
-                  <Card>
-                    <CardContent className="py-12 text-center">
-                      <p className="text-muted-foreground">No messages yet</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  messages.map((message) => (
-                    <Card key={message.id}>
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <CardTitle className="text-lg">{message.title}</CardTitle>
-                          {message.priority === "high" && (
-                            <span className="px-2 py-1 text-xs font-medium bg-red-500/10 text-red-500 rounded-full">
-                              High Priority
-                            </span>
-                          )}
+          {/* Admin Tab */}
+          <TabsContent value="admin" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Messages Section */}
+              <Card className="lg:row-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    Messages
+                  </CardTitle>
+                  <CardDescription>
+                    Updates and announcements from the team
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[400px]">
+                    <div className="space-y-4">
+                      {messages.length === 0 ? (
+                        <div className="text-center py-8">
+                          <MessageSquare className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+                          <p className="text-muted-foreground text-sm">No messages yet</p>
                         </div>
-                        <CardDescription>
-                          {new Date(message.created_at).toLocaleDateString()} at{" "}
-                          {new Date(message.created_at).toLocaleTimeString()}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="whitespace-pre-wrap">{message.content}</p>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
+                      ) : (
+                        messages.map((message) => (
+                          <div 
+                            key={message.id} 
+                            className={`p-4 rounded-lg border ${
+                              message.priority === "high" 
+                                ? 'border-red-500/30 bg-red-500/5' 
+                                : 'border-border bg-muted/30'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <h4 className="font-medium">{message.title}</h4>
+                              {message.priority === "high" && (
+                                <span className="px-2 py-0.5 text-xs font-medium bg-red-500/10 text-red-500 rounded-full flex-shrink-0">
+                                  Urgent
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap mb-2">{message.content}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(message.created_at).toLocaleDateString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+
+              {/* Contact Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Send className="h-5 w-5 text-primary" />
+                    Contact Us
+                  </CardTitle>
+                  <CardDescription>
+                    Get in touch with the scouting team
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-500 rounded-full">
+                        <Phone className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-green-700 dark:text-green-400">Urgent Messages</p>
+                        <p className="text-sm text-muted-foreground">For time-sensitive matters, contact us on WhatsApp</p>
+                      </div>
+                    </div>
+                    <Button 
+                      className="w-full mt-3 bg-green-600 hover:bg-green-700"
+                      onClick={() => window.open('https://wa.me/447000000000', '_blank')}
+                    >
+                      <Phone className="h-4 w-4 mr-2" />
+                      Message on WhatsApp
+                    </Button>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    <p className="mb-2">For general enquiries:</p>
+                    <p className="font-medium">scouts@rise.football</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-primary" />
+                    Payments & Invoices
+                  </CardTitle>
+                  <CardDescription>
+                    Manage your payment details and view invoices
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      // Navigate to bank details or open modal
+                      window.open('/bank-details', '_blank');
+                    }}
+                  >
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Bank Details
+                    <span className="ml-auto text-xs text-muted-foreground">View payment info</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      // Navigate to invoices or open modal
+                      toast.info("Invoices feature coming soon");
+                    }}
+                  >
+                    <Receipt className="h-4 w-4 mr-2" />
+                    Invoices
+                    <span className="ml-auto text-xs text-muted-foreground">View your invoices</span>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
