@@ -13,14 +13,18 @@ import {
   Megaphone,
   MessageSquare,
   Lightbulb,
-  FolderOpen,
+  PenLine,
+  ImagePlus,
+  FileText,
   Menu
 } from "lucide-react";
 import { ClubOutreachManagement } from "./ClubOutreachManagement";
 import { QuickMessageSection } from "./QuickMessageSection";
 import { PlayerOutreach } from "./PlayerOutreach";
-import { MarketingIdeas } from "./marketing/MarketingIdeas";
-import { MarketingResources } from "./marketing/MarketingResources";
+import { IdeasReview } from "./marketing/IdeasReview";
+import { BTLWriter } from "./marketing/BTLWriter";
+import { ImageCreator } from "./marketing/ImageCreator";
+import { PostContent } from "./marketing/PostContent";
 
 type TaskType = "club-networking" | "player-networking" | "content-creation";
 
@@ -34,7 +38,7 @@ export const FocusedTasksSection = () => {
   const [activeTask, setActiveTask] = useState<TaskType>("club-networking");
   const [clubSubTab, setClubSubTab] = useState("outreach");
   const [playerSubTab, setPlayerSubTab] = useState("outreach");
-  const [contentSubTab, setContentSubTab] = useState("ideas");
+  const [contentSubTab, setContentSubTab] = useState("review");
 
   const ActiveIcon = TASK_CONFIG[activeTask].icon;
 
@@ -117,21 +121,35 @@ export const FocusedTasksSection = () => {
       {/* Content Creation */}
       {activeTask === "content-creation" && (
         <Tabs value={contentSubTab} onValueChange={setContentSubTab} className="w-full">
-          <TabsList className="w-full h-10 p-1 grid grid-cols-2">
-            <TabsTrigger value="ideas" className="gap-2">
-              <Lightbulb className="h-4 w-4" />
-              Ideas
+          <TabsList className="w-full h-10 p-1 grid grid-cols-4">
+            <TabsTrigger value="review" className="gap-1 text-xs">
+              <Lightbulb className="h-3 w-3" />
+              Review
             </TabsTrigger>
-            <TabsTrigger value="resources" className="gap-2">
-              <FolderOpen className="h-4 w-4" />
-              Resources
+            <TabsTrigger value="btl" className="gap-1 text-xs">
+              <PenLine className="h-3 w-3" />
+              BTL
+            </TabsTrigger>
+            <TabsTrigger value="image" className="gap-1 text-xs">
+              <ImagePlus className="h-3 w-3" />
+              Image
+            </TabsTrigger>
+            <TabsTrigger value="posted" className="gap-1 text-xs">
+              <FileText className="h-3 w-3" />
+              Posted
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="ideas" className="mt-3">
-            <MarketingIdeas />
+          <TabsContent value="review" className="mt-3">
+            <IdeasReview />
           </TabsContent>
-          <TabsContent value="resources" className="mt-3">
-            <MarketingResources />
+          <TabsContent value="btl" className="mt-3">
+            <BTLWriter />
+          </TabsContent>
+          <TabsContent value="image" className="mt-3">
+            <ImageCreator />
+          </TabsContent>
+          <TabsContent value="posted" className="mt-3">
+            <PostContent />
           </TabsContent>
         </Tabs>
       )}
