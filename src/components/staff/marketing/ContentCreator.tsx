@@ -1,9 +1,9 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar as CalendarIcon, Palette, Lightbulb, Sparkles, Instagram, Twitter, Facebook, Linkedin, Hash, MessageSquare, ExternalLink, Inbox } from "lucide-react";
+import { Calendar as CalendarIcon, Palette, Lightbulb, Sparkles, Instagram, Twitter, Facebook, Linkedin, Hash, MessageSquare, ExternalLink, Inbox, FileText } from "lucide-react";
 import { IdeasReview } from "./IdeasReview";
+import { BTLWriter } from "./BTLWriter";
 
 export const ContentCreator = () => {
   return (
@@ -13,6 +13,10 @@ export const ContentCreator = () => {
         <TabsTrigger value="ideas">
           <Inbox className="w-4 h-4 mr-2" />
           Review Ideas
+        </TabsTrigger>
+        <TabsTrigger value="btl-writer">
+          <FileText className="w-4 h-4 mr-2" />
+          BTL Writer
         </TabsTrigger>
       </TabsList>
 
@@ -264,6 +268,10 @@ export const ContentCreator = () => {
 
       <TabsContent value="ideas">
         <IdeasReview />
+      </TabsContent>
+
+      <TabsContent value="btl-writer">
+        <BTLWriter />
       </TabsContent>
     </Tabs>
   );
