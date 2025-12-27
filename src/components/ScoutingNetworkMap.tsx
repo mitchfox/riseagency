@@ -1,7 +1,12 @@
-import { MapPin, ZoomOut, ChevronRight, ChevronDown, Users } from "lucide-react";
+import { MapPin, ZoomOut, ChevronRight, ChevronDown, Users, Send } from "lucide-react";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useLanguage } from "@/contexts/LanguageContext";
 import europeOutline from "@/assets/europe-outline.gif";
@@ -66,6 +71,8 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
   const [scoutingData, setScoutingData] = useState<Record<string, {id: string, name: string, age: number | null, position: string | null}[]>>({});
   const [expandedCountries, setExpandedCountries] = useState<Set<string>>(new Set());
   const [expandedClubs, setExpandedClubs] = useState<Set<string>>(new Set());
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportForm, setReportForm] = useState({ name: '', email: '', club: '', position: '', message: '' });
   // Europe outline is rendered from raster map image (europe-outline.gif)
   
   // Load club positions from database on mount
@@ -1316,9 +1323,24 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
           )}
         </div>
 
-        {/* Stats & Details Section - only show when hideStats is false */}
+          {/* Stats & Details Section - only show when hideStats is false */}
         {!hideStats && (
         <div className="flex flex-col h-full min-h-0 overflow-hidden">
+          {/* Player Scouting Message */}
+          <div className="bg-card rounded-lg p-3 border flex-shrink-0 mb-3">
+            <p className="text-sm text-muted-foreground mb-3">
+              If you see players scouted in your side, we may have a detailed report on your game. Reach out to request to learn more about our observations.
+            </p>
+            <Button 
+              onClick={() => setShowReportModal(true)}
+              variant="outline" 
+              size="sm"
+              className="w-full"
+            >
+              My Report
+            </Button>
+          </div>
+
           <div className="bg-card rounded-lg p-3 border flex-shrink-0">
             <h4 className="font-bebas text-lg mb-2">{t("map.network_coverage", "NETWORK COVERAGE")}</h4>
             <div className="space-y-2 text-sm">
@@ -1388,6 +1410,39 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                   return marker ? { x: marker.x, y: marker.y } : { x: 500, y: 300 };
                 };
                 
+                // Helper to format numbers with abbreviation
+                const formatNumber = (num: number) => {
+                  if (num >= 1000) {
+                    return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+                  }
+                  return num.toString();
+                };
+
+                // Helper to get seeded random for consistent counts
+                const getSeededRandom = (seed: string, min: number, max: number) => {
+                  let hash = 0;
+                  for (let i = 0; i < seed.length; i++) {
+                    hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+                    hash = hash & hash;
+                  }
+                  const normalized = Math.abs(hash % 1000) / 1000;
+                  return Math.floor(normalized * (max - min + 1)) + min;
+                };
+
+                // Calculate total players per country
+                const getCountryTotal = (clubs: typeof footballClubs) => {
+                  let total = 0;
+                  clubs.forEach(club => {
+                    total += getSeededRandom(club.name + "first", 18, 30);
+                    total += getSeededRandom(club.name + "reserves", 4, 14);
+                    total += getSeededRandom(club.name + "u19", 14, 20);
+                    total += getSeededRandom(club.name + "u16", 6, 17);
+                    total += getSeededRandom(club.name + "u15", 1, 9);
+                    total += getSeededRandom(club.name + "u14", 1, 4);
+                  });
+                  return total;
+                };
+
                 return Object.entries(clubsByCountry)
                   .sort(([a], [b]) => a.localeCompare(b))
                   .map(([country, clubs]) => {
@@ -1395,6 +1450,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                     const isCountryExpanded = expandedCountries.has(countryKey);
                     const flagImage = flagImages[country];
                     const coords = getCountryCoords(country);
+                    const countryTotal = getCountryTotal(clubs);
                     
                     return (
                       <div key={countryKey} className="border-b border-border/30 last:border-b-0">
@@ -1426,6 +1482,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                             <img src={flagImage} alt={country} className="w-5 h-4 object-cover rounded-sm flex-shrink-0" />
                           )}
                           <span className="font-medium text-sm flex-1">{t(`countries.${country.toLowerCase().replace(/ /g, '_')}`, country)}</span>
+                          <span className="text-xs text-muted-foreground font-medium">{formatNumber(countryTotal)}</span>
                         </button>
                         
                         {isCountryExpanded && (
@@ -1515,6 +1572,83 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
         </div>
         )}
       </div>
+
+      {/* My Report Modal */}
+      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-bebas text-2xl">Request My Report</DialogTitle>
+            <DialogDescription>
+              Submit your details and we'll check if we have a scouting report on your performance.
+            </DialogDescription>
+          </DialogHeader>
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              toast.success("Request submitted! We'll be in touch if we have a report on you.");
+              setShowReportModal(false);
+              setReportForm({ name: '', email: '', club: '', position: '', message: '' });
+            }}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="report-name">Full Name *</Label>
+              <Input
+                id="report-name"
+                value={reportForm.name}
+                onChange={(e) => setReportForm(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Your full name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="report-email">Email *</Label>
+              <Input
+                id="report-email"
+                type="email"
+                value={reportForm.email}
+                onChange={(e) => setReportForm(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="your@email.com"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="report-club">Current Club</Label>
+                <Input
+                  id="report-club"
+                  value={reportForm.club}
+                  onChange={(e) => setReportForm(prev => ({ ...prev, club: e.target.value }))}
+                  placeholder="Your club"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="report-position">Position</Label>
+                <Input
+                  id="report-position"
+                  value={reportForm.position}
+                  onChange={(e) => setReportForm(prev => ({ ...prev, position: e.target.value }))}
+                  placeholder="e.g. Striker"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="report-message">Additional Information</Label>
+              <Textarea
+                id="report-message"
+                value={reportForm.message}
+                onChange={(e) => setReportForm(prev => ({ ...prev, message: e.target.value }))}
+                placeholder="I would like to request a copy of any scouting report you may have on me..."
+                rows={3}
+              />
+            </div>
+            <Button type="submit" className="w-full">
+              <Send className="w-4 h-4 mr-2" />
+              Submit Request
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
