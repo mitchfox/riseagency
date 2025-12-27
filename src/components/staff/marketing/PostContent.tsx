@@ -15,12 +15,18 @@ interface BlogPost {
   content: string;
   category: string | null;
   workflow_status: string;
+  image_url: string | null;
   image_url_internal: string | null;
   canva_link: string | null;
   scheduled_date: string | null;
   posted_at: string | null;
   created_at: string;
 }
+
+// Helper to get the best available image URL
+const getImageUrl = (post: BlogPost): string | null => {
+  return post.image_url_internal || post.image_url || null;
+};
 
 export const PostContent = () => {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
@@ -33,6 +39,7 @@ export const PostContent = () => {
         .from("blog_posts")
         .select("*")
         .eq("workflow_status", "posted")
+        .neq("category", "PLAYER NEWS")
         .order("posted_at", { ascending: false });
       if (error) throw error;
       return data as BlogPost[];
@@ -96,16 +103,16 @@ export const PostContent = () => {
                   className="hover:shadow-md transition-shadow cursor-pointer"
                   onClick={() => openDetails(post)}
                 >
-                  {post.image_url_internal && (
+                  {getImageUrl(post) && (
                     <div className="h-32 overflow-hidden rounded-t-lg">
                       <img
-                        src={post.image_url_internal}
+                        src={getImageUrl(post)!}
                         alt={post.title}
                         className="w-full h-full object-cover"
                       />
                     </div>
                   )}
-                  <CardContent className={`p-4 ${!post.image_url_internal ? "pt-4" : ""}`}>
+                  <CardContent className={`p-4 ${!getImageUrl(post) ? "pt-4" : ""}`}>
                     <h4 className="font-medium text-sm line-clamp-2">{post.title}</h4>
                     {post.category && (
                       <span className="text-xs text-muted-foreground">{post.category}</span>
@@ -130,19 +137,19 @@ export const PostContent = () => {
             <DialogTitle>{selectedPost?.title}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {selectedPost?.image_url_internal && (
+            {getImageUrl(selectedPost!) && (
               <div className="space-y-2">
                 <div className="rounded-lg overflow-hidden border">
                   <img
-                    src={selectedPost.image_url_internal}
-                    alt={selectedPost.title}
+                    src={getImageUrl(selectedPost!)!}
+                    alt={selectedPost?.title}
                     className="w-full max-h-64 object-contain bg-muted"
                   />
                 </div>
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => downloadImage(selectedPost.image_url_internal!, selectedPost.title)}
+                  onClick={() => downloadImage(getImageUrl(selectedPost!)!, selectedPost?.title || 'image')}
                   className="w-full"
                 >
                   <Download className="w-4 h-4 mr-2" />
