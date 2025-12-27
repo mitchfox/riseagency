@@ -1,18 +1,20 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
   Search, Filter, Eye, Edit2, Trash2, UserPlus, Check, X, Clock,
-  AlertCircle, TrendingUp, Users, MapPin, Building, UserCheck, ChevronRight
+  AlertCircle, TrendingUp, Users, MapPin, Building, UserCheck, ChevronRight,
+  FileText, Send, Star, MessageSquare
 } from "lucide-react";
 
 interface ScoutingReport {
@@ -39,6 +41,8 @@ interface ScoutingReport {
   video_url: string | null;
   location: string | null;
   competition: string | null;
+  contribution_type?: string | null;
+  notes?: string | null;
 }
 
 interface AllReportsSectionProps {
@@ -46,26 +50,27 @@ interface AllReportsSectionProps {
   onEditReport?: (report: ScoutingReport) => void;
 }
 
+// New status config with user-specified categories
 const STATUS_CONFIG = {
+  recruiting: { 
+    label: "Recruiting", 
+    color: "bg-green-500/10 text-green-600 border-green-500/30",
+    icon: Star 
+  },
+  scouting_further: { 
+    label: "Scouting Further", 
+    color: "bg-blue-500/10 text-blue-600 border-blue-500/30",
+    icon: Eye 
+  },
+  no_interest: { 
+    label: "No Interest At This Time", 
+    color: "bg-gray-500/10 text-gray-600 border-gray-500/30",
+    icon: X 
+  },
   pending: { 
     label: "Pending Review", 
     color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30",
     icon: Clock 
-  },
-  recommended: { 
-    label: "Recommended", 
-    color: "bg-green-500/10 text-green-600 border-green-500/30",
-    icon: Check 
-  },
-  monitoring: { 
-    label: "Monitoring", 
-    color: "bg-blue-500/10 text-blue-600 border-blue-500/30",
-    icon: Eye 
-  },
-  rejected: { 
-    label: "Rejected", 
-    color: "bg-red-500/10 text-red-600 border-red-500/30",
-    icon: X 
   },
 };
 
@@ -74,6 +79,12 @@ const PRIORITY_CONFIG = {
   medium: { label: "Medium", color: "bg-blue-500/10 text-blue-600" },
   high: { label: "High", color: "bg-orange-500/10 text-orange-600" },
   critical: { label: "Critical", color: "bg-red-500/10 text-red-600" },
+};
+
+const CONTRIBUTION_CONFIG = {
+  exclusive: { label: "Exclusive", color: "bg-purple-500/10 text-purple-600 border-purple-500/30" },
+  contribution: { label: "Contribution", color: "bg-blue-500/10 text-blue-600 border-blue-500/30" },
+  neither: { label: "Neither", color: "bg-gray-500/10 text-gray-600 border-gray-500/30" },
 };
 
 export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSectionProps) => {
@@ -86,6 +97,13 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
   const [selectedReport, setSelectedReport] = useState<ScoutingReport | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
+  const [existingPlayerNames, setExistingPlayerNames] = useState<Set<string>>(new Set());
+  
+  // Confirmation dialog state
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmNote, setConfirmNote] = useState("");
+  const [confirmType, setConfirmType] = useState<"exclusive" | "contribution" | "neither" | null>(null);
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   useEffect(() => {
     fetchReports();
@@ -119,9 +137,16 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
 
       if (error) throw error;
       setPlayers(data || []);
+      // Create a set of lowercase player names for comparison
+      setExistingPlayerNames(new Set((data || []).map(p => p.name.toLowerCase().trim())));
     } catch (error) {
       console.error("Error fetching players:", error);
     }
+  };
+
+  // Check if player already exists in database
+  const playerExistsInDatabase = (playerName: string): boolean => {
+    return existingPlayerNames.has(playerName.toLowerCase().trim());
   };
 
   const handleStatusChange = async (reportId: string, newStatus: string) => {
@@ -158,7 +183,52 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
     }
   };
 
+  const handleContributionConfirm = async () => {
+    if (!selectedReport || !confirmType) return;
+    
+    setSendingMessage(true);
+    try {
+      // Update the report with contribution type
+      const { error } = await supabase
+        .from("scouting_reports")
+        .update({ 
+          contribution_type: confirmType,
+          notes: confirmNote || null
+        })
+        .eq("id", selectedReport.id);
+
+      if (error) throw error;
+      
+      // Update local state
+      setReports(prev => prev.map(r => 
+        r.id === selectedReport.id 
+          ? { ...r, contribution_type: confirmType, notes: confirmNote || null } 
+          : r
+      ));
+      
+      setSelectedReport(prev => prev ? { ...prev, contribution_type: confirmType } : null);
+      
+      toast.success(`Marked as ${CONTRIBUTION_CONFIG[confirmType].label}${confirmNote ? ' with note' : ''}`);
+      
+      // Reset dialog state
+      setConfirmDialogOpen(false);
+      setConfirmNote("");
+      setConfirmType(null);
+    } catch (error) {
+      console.error("Error updating contribution type:", error);
+      toast.error("Failed to update");
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
   const handleAddToDatabase = async (report: ScoutingReport) => {
+    // Double-check the player doesn't exist
+    if (playerExistsInDatabase(report.player_name)) {
+      toast.error("This player already exists in the database");
+      return;
+    }
+    
     try {
       const { data: prospect, error } = await supabase
         .from("prospects")
@@ -190,6 +260,10 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
       setReports(prev => prev.map(r => 
         r.id === report.id ? { ...r, added_to_prospects: true, prospect_id: prospect.id } : r
       ));
+      
+      // Update existing player names
+      setExistingPlayerNames(prev => new Set([...prev, report.player_name.toLowerCase().trim()]));
+      
       toast.success("Player added to database");
     } catch (error) {
       console.error("Error adding to database:", error);
@@ -249,9 +323,9 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
   const stats = {
     total: reports.length,
     pending: reports.filter(r => r.status === "pending").length,
-    recommended: reports.filter(r => r.status === "recommended").length,
-    monitoring: reports.filter(r => r.status === "monitoring").length,
-    rejected: reports.filter(r => r.status === "rejected").length,
+    recruiting: reports.filter(r => r.status === "recruiting").length,
+    scoutingFurther: reports.filter(r => r.status === "scouting_further").length,
+    noInterest: reports.filter(r => r.status === "no_interest").length,
     addedToDb: reports.filter(r => r.added_to_prospects).length,
   };
 
@@ -259,6 +333,17 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
     setSelectedReport(report);
     setViewDialogOpen(true);
     onViewReport?.(report);
+  };
+
+  const openConfirmDialog = (type: "exclusive" | "contribution" | "neither") => {
+    setConfirmType(type);
+    setConfirmNote("");
+    setConfirmDialogOpen(true);
+  };
+
+  // Check if player can be added to database
+  const canAddToDatabase = (report: ScoutingReport): boolean => {
+    return !report.added_to_prospects && !playerExistsInDatabase(report.player_name);
   };
 
   return (
@@ -288,10 +373,10 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
         <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
           <CardContent className="pt-4 pb-3 px-4">
             <div className="flex items-center justify-between">
-              <Check className="h-4 w-4 text-green-600" />
-              <span className="text-2xl font-bold text-green-600">{stats.recommended}</span>
+              <Star className="h-4 w-4 text-green-600" />
+              <span className="text-2xl font-bold text-green-600">{stats.recruiting}</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Recommended</p>
+            <p className="text-xs text-muted-foreground mt-1">Recruiting</p>
           </CardContent>
         </Card>
         
@@ -299,19 +384,19 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
           <CardContent className="pt-4 pb-3 px-4">
             <div className="flex items-center justify-between">
               <Eye className="h-4 w-4 text-blue-600" />
-              <span className="text-2xl font-bold text-blue-600">{stats.monitoring}</span>
+              <span className="text-2xl font-bold text-blue-600">{stats.scoutingFurther}</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Monitoring</p>
+            <p className="text-xs text-muted-foreground mt-1">Scouting Further</p>
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-red-500/10 to-red-500/5 border-red-500/20">
+        <Card className="bg-gradient-to-br from-gray-500/10 to-gray-500/5 border-gray-500/20">
           <CardContent className="pt-4 pb-3 px-4">
             <div className="flex items-center justify-between">
-              <X className="h-4 w-4 text-red-600" />
-              <span className="text-2xl font-bold text-red-600">{stats.rejected}</span>
+              <X className="h-4 w-4 text-gray-600" />
+              <span className="text-2xl font-bold text-gray-600">{stats.noInterest}</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Rejected</p>
+            <p className="text-xs text-muted-foreground mt-1">No Interest</p>
           </CardContent>
         </Card>
         
@@ -341,16 +426,16 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
             </div>
             
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[160px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="recommended">Recommended</SelectItem>
-                <SelectItem value="monitoring">Monitoring</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="recruiting">Recruiting</SelectItem>
+                <SelectItem value="scouting_further">Scouting Further</SelectItem>
+                <SelectItem value="no_interest">No Interest</SelectItem>
               </SelectContent>
             </Select>
 
@@ -401,6 +486,7 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
               const statusConfig = STATUS_CONFIG[report.status as keyof typeof STATUS_CONFIG];
               const priorityConfig = report.priority ? PRIORITY_CONFIG[report.priority as keyof typeof PRIORITY_CONFIG] : null;
               const StatusIcon = statusConfig?.icon || AlertCircle;
+              const alreadyInDb = playerExistsInDatabase(report.player_name);
               
               return (
                 <Card 
@@ -470,7 +556,7 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
 
                         {/* Status & Actions Row */}
                         <div className="flex items-center justify-between mt-3">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <Badge className={`${statusConfig?.color || ''} flex items-center gap-1`}>
                               <StatusIcon className="h-3 w-3" />
                               {statusConfig?.label || report.status}
@@ -480,10 +566,15 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
                                 {priorityConfig.label}
                               </Badge>
                             )}
-                            {report.added_to_prospects && (
+                            {(report.added_to_prospects || alreadyInDb) && (
                               <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-500/30">
                                 <UserCheck className="h-3 w-3 mr-1" />
                                 In Database
+                              </Badge>
+                            )}
+                            {report.contribution_type && (
+                              <Badge variant="outline" className={CONTRIBUTION_CONFIG[report.contribution_type as keyof typeof CONTRIBUTION_CONFIG]?.color || ''}>
+                                {CONTRIBUTION_CONFIG[report.contribution_type as keyof typeof CONTRIBUTION_CONFIG]?.label || report.contribution_type}
                               </Badge>
                             )}
                           </div>
@@ -494,18 +585,18 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
                               value={report.status}
                               onValueChange={(value) => handleStatusChange(report.id, value)}
                             >
-                              <SelectTrigger className="h-8 w-[130px] text-xs">
+                              <SelectTrigger className="h-8 w-[140px] text-xs">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="recommended">Recommended</SelectItem>
-                                <SelectItem value="monitoring">Monitoring</SelectItem>
-                                <SelectItem value="rejected">Rejected</SelectItem>
+                                <SelectItem value="recruiting">Recruiting</SelectItem>
+                                <SelectItem value="scouting_further">Scouting Further</SelectItem>
+                                <SelectItem value="no_interest">No Interest</SelectItem>
                               </SelectContent>
                             </Select>
 
-                            {!report.added_to_prospects && (
+                            {canAddToDatabase(report) && (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -668,6 +759,7 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
 
                 <TabsContent value="actions" className="space-y-4 pt-4">
                   <div className="space-y-4">
+                    {/* Status Selection */}
                     <div>
                       <label className="text-sm font-medium mb-2 block">Status</label>
                       <Select
@@ -682,26 +774,31 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="pending">Pending Review</SelectItem>
-                          <SelectItem value="recommended">Recommended</SelectItem>
-                          <SelectItem value="monitoring">Monitoring</SelectItem>
-                          <SelectItem value="rejected">Rejected</SelectItem>
+                          <SelectItem value="recruiting">Recruiting</SelectItem>
+                          <SelectItem value="scouting_further">Scouting Further</SelectItem>
+                          <SelectItem value="no_interest">No Interest At This Time</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
+                    {/* Priority Selection */}
                     <div>
                       <label className="text-sm font-medium mb-2 block">Priority</label>
                       <Select
-                        value={selectedReport.priority || ""}
+                        value={selectedReport.priority || "none"}
                         onValueChange={(value) => {
-                          handlePriorityChange(selectedReport.id, value);
-                          setSelectedReport(prev => prev ? { ...prev, priority: value } : null);
+                          const newPriority = value === "none" ? null : value;
+                          if (newPriority) {
+                            handlePriorityChange(selectedReport.id, newPriority);
+                          }
+                          setSelectedReport(prev => prev ? { ...prev, priority: newPriority } : null);
                         }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Set priority" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="none">No Priority</SelectItem>
                           <SelectItem value="low">Low</SelectItem>
                           <SelectItem value="medium">Medium</SelectItem>
                           <SelectItem value="high">High</SelectItem>
@@ -710,8 +807,47 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
                       </Select>
                     </div>
 
+                    {/* Contribution Type - Exclusive/Contribution/Neither */}
+                    <div className="pt-4 border-t">
+                      <label className="text-sm font-medium mb-3 block">Confirm Contribution Type</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button
+                          variant={selectedReport.contribution_type === "exclusive" ? "default" : "outline"}
+                          className="w-full"
+                          onClick={() => openConfirmDialog("exclusive")}
+                        >
+                          <Star className="h-4 w-4 mr-2" />
+                          Exclusive
+                        </Button>
+                        <Button
+                          variant={selectedReport.contribution_type === "contribution" ? "default" : "outline"}
+                          className="w-full"
+                          onClick={() => openConfirmDialog("contribution")}
+                        >
+                          <Check className="h-4 w-4 mr-2" />
+                          Contribution
+                        </Button>
+                        <Button
+                          variant={selectedReport.contribution_type === "neither" ? "default" : "outline"}
+                          className="w-full"
+                          onClick={() => openConfirmDialog("neither")}
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Neither
+                        </Button>
+                      </div>
+                      {selectedReport.contribution_type && (
+                        <div className="mt-2 p-2 rounded bg-muted text-sm">
+                          Current: <Badge variant="outline" className={CONTRIBUTION_CONFIG[selectedReport.contribution_type as keyof typeof CONTRIBUTION_CONFIG]?.color || ''}>
+                            {CONTRIBUTION_CONFIG[selectedReport.contribution_type as keyof typeof CONTRIBUTION_CONFIG]?.label}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Add to Database */}
                     <div className="pt-4 border-t space-y-2">
-                      {!selectedReport.added_to_prospects ? (
+                      {canAddToDatabase(selectedReport) ? (
                         <Button
                           className="w-full"
                           onClick={() => {
@@ -757,6 +893,51 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
               </Tabs>
             </ScrollArea>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Contribution Confirmation Dialog */}
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Confirm as {confirmType && CONTRIBUTION_CONFIG[confirmType]?.label}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Mark this scouting report as <strong>{confirmType && CONTRIBUTION_CONFIG[confirmType]?.label}</strong>. 
+              You can add an optional note that will be saved with the report.
+            </p>
+            
+            <div>
+              <label className="text-sm font-medium mb-2 block">Note (optional)</label>
+              <Textarea
+                placeholder="Add a note about this decision..."
+                value={confirmNote}
+                onChange={(e) => setConfirmNote(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleContributionConfirm} disabled={sendingMessage}>
+              {sendingMessage ? (
+                "Saving..."
+              ) : (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Confirm
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
