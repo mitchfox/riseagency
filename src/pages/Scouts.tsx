@@ -112,10 +112,10 @@ const Scouts = () => {
       />
       <Header />
       
-      <main className="pt-32 md:pt-24">
+      <main className="pt-32 md:pt-24 space-y-0">
 
         {/* SECTION 1: Hero Intro - Who We Are */}
-        <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden py-16 md:py-24">
+        <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden py-10 md:py-12">
           <div className="absolute inset-0 bg-gradient-to-br from-background via-primary/10 to-background" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(212,175,55,0.15),transparent_50%)]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(212,175,55,0.1),transparent_40%)]" />
@@ -175,11 +175,11 @@ const Scouts = () => {
         </section>
 
         {/* SECTION 2: How It Works */}
-        <section id="how-it-works" className="py-16 md:py-20 px-4 relative overflow-hidden">
+        <section id="how-it-works" className="py-8 md:py-10 px-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-primary/5" />
           
           <div className="container mx-auto max-w-6xl relative z-10">
-            <div className="text-center mb-12">
+            <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-4">
                 <Handshake className="h-4 w-4 text-primary" />
                 <span className="text-sm font-semibold">{t('scouts.process_badge', 'Simple Process')}</span>
@@ -218,11 +218,11 @@ const Scouts = () => {
         </section>
 
         {/* SECTION 3: Incentive Structure */}
-        <section className="py-16 md:py-20 px-4 relative overflow-hidden">
+        <section className="py-8 md:py-10 px-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/30 to-background" />
           
           <div className="container mx-auto max-w-6xl relative z-10">
-            <div className="text-center mb-12">
+            <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-4">
                 <Award className="h-4 w-4 text-primary" />
                 <span className="text-sm font-semibold">{t('scouts.benefits_badge', 'Your Benefits')}</span>
@@ -307,11 +307,11 @@ const Scouts = () => {
         </section>
 
         {/* SECTION 4: European Coverage & Database */}
-        <section className="py-16 md:py-20 px-4 relative overflow-hidden">
+        <section className="py-8 md:py-10 px-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-background via-primary/10 to-background" />
           
           <div className="container mx-auto relative z-10">
-            <div className="text-center mb-12">
+            <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-4">
                 <Globe className="h-4 w-4 text-primary" />
                 <span className="text-sm font-semibold">{t('scouts.europe_badge', 'Eyes Across All Of Europe')}</span>
@@ -330,7 +330,7 @@ const Scouts = () => {
             </div>
 
             {/* Scouting Network Map */}
-            <div className="max-w-5xl mx-auto mb-12">
+            <div className="max-w-5xl mx-auto mb-6">
               <div className="relative bg-card rounded-2xl border-2 border-border overflow-hidden">
                 <ScoutingNetworkMap />
               </div>
@@ -343,11 +343,11 @@ const Scouts = () => {
         </section>
 
         {/* SECTION 5: Scouting Criteria */}
-        <section className="relative min-h-screen flex flex-col py-16">
+        <section className="relative min-h-screen flex flex-col py-8">
           <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
           
           <div className="flex-1 flex flex-col relative z-10">
-            <div className="text-center py-8 px-4">
+            <div className="text-center py-4 px-4">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-3">
                 <Target className="h-4 w-4 text-primary" />
                 <span className="text-sm font-semibold">{t('scouts.criteria_badge', 'Position-Specific Criteria')}</span>
@@ -563,11 +563,11 @@ const Scouts = () => {
         </section>
 
         {/* SECTION 6: R90 Stage 2 - Statistical Analysis */}
-        <section className="py-16 md:py-20 px-4 relative overflow-hidden">
+        <section className="py-8 md:py-10 px-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/30 to-background" />
           
           <div className="container mx-auto max-w-6xl relative z-10">
-            <div className="text-center mb-12">
+            <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-4">
                 <BarChart3 className="h-4 w-4 text-primary" />
                 <span className="text-sm font-semibold">{t('scouts.stage2_badge', 'Stage 2: Deep Analysis')}</span>
@@ -577,32 +577,32 @@ const Scouts = () => {
                 {t('scouts.r90_title', 'R90 Performance Reports')}
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto font-light">
-                {t('scouts.r90_desc', 'For players who stand out at Stage 1, we move to our R90 analysis system—statistically breaking down the quality of decision-making action-by-action throughout a match')}
+                {t('scouts.r90_desc', 'We have built superintelligent statistical modelling to understand the expected outcome of decisions based on thousands of professional games at the highest levels of football over the past decade.')}
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
               <Card className="group relative overflow-hidden border-2 border-primary/20 bg-gradient-to-br from-primary/10 via-card to-primary/5 hover:border-primary/40 transition-all duration-500 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-700" />
                 
                 <div className="relative p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="h-12 w-12 bg-primary/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Target className="h-6 w-6 text-primary" />
+                      <Brain className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="text-3xl font-bebas text-primary">{t('scouts.action_analysis', 'Action-by-Action')}</div>
+                    <div className="text-3xl font-bebas text-primary">{t('scouts.superintelligent', 'Superintelligent Analysis')}</div>
                   </div>
                   
-                  <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3">{t('scouts.every_decision', 'Every Decision Counts')}</h3>
+                  <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3">{t('scouts.action_by_action', 'Action-by-Action Breakdown')}</h3>
                   <p className="text-muted-foreground mb-4 leading-relaxed text-sm">
-                    {t('scouts.every_decision_desc', 'We analyse every meaningful action a player takes during a match—passes, touches, movements, and decisions—rating each one to build a comprehensive picture of their true quality.')}
+                    {t('scouts.action_by_action_desc', 'We statistically break down the quality of decision-making action-by-action throughout a match. Every pass, touch, movement, and decision is measured against what elite players do in the same situations.')}
                   </p>
                   
                   <ul className="space-y-2">
                     {[
-                      t('scouts.r90_passing', 'Passing accuracy & progression'),
-                      t('scouts.r90_movement', 'Off-ball movement quality'),
-                      t('scouts.r90_decisions', 'Decision-making under pressure')
+                      t('scouts.r90_expected', 'Expected outcome vs actual outcome'),
+                      t('scouts.r90_elite', 'Comparison to elite-level decisions'),
+                      t('scouts.r90_context', 'Contextual pressure analysis')
                     ].map((item, idx) => (
                       <li key={idx} className="flex items-start gap-2 group/item">
                         <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover/item:scale-110 transition-transform">
@@ -621,21 +621,21 @@ const Scouts = () => {
                 <div className="relative p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <BarChart3 className="h-6 w-6 text-primary" />
+                      <Eye className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="text-3xl font-bebas text-primary">{t('scouts.per90_rating', 'Per-90 Rating')}</div>
+                    <div className="text-3xl font-bebas text-primary">{t('scouts.scout_development', 'Scout Development')}</div>
                   </div>
                   
-                  <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3">{t('scouts.statistical_breakdown', 'Statistical Breakdown')}</h3>
+                  <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3">{t('scouts.sharpen_eye', 'Sharpen Your Eye')}</h3>
                   <p className="text-muted-foreground mb-4 leading-relaxed text-sm">
-                    {t('scouts.statistical_breakdown_desc', 'Our R90 system normalises performance data per 90 minutes, allowing fair comparison across different playing times and providing an objective measure of player quality.')}
+                    {t('scouts.sharpen_eye_desc', 'We can fully understand how accurate our scouts\' reporting was based on these statistical models, helping to develop their eye for talent. This allows us to know who already has skills that level up and how much work would be required to improve areas of weakness.')}
                   </p>
                   
                   <ul className="space-y-2">
                     {[
-                      t('scouts.r90_grade', 'Overall R90 grade (A* to F)'),
-                      t('scouts.r90_comparison', 'Comparison across positions'),
-                      t('scouts.r90_trends', 'Performance trends over time')
+                      t('scouts.r90_accuracy', 'Measure your scouting accuracy'),
+                      t('scouts.r90_feedback', 'Detailed feedback on assessments'),
+                      t('scouts.r90_growth', 'Track your development as a scout')
                     ].map((item, idx) => (
                       <li key={idx} className="flex items-start gap-2 group/item">
                         <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover/item:scale-110 transition-transform">
@@ -648,17 +648,64 @@ const Scouts = () => {
                 </div>
               </Card>
             </div>
-
-            <div className="text-center">
-              <p className="text-muted-foreground text-sm italic">
-                {t('scouts.r90_note', 'R90 analysis is conducted by our team on players who demonstrate exceptional potential at the initial scouting stage')}
-              </p>
-            </div>
           </div>
         </section>
 
-        {/* SECTION 7: Final CTA */}
-        <section className="py-16 md:py-24 relative overflow-hidden">
+        {/* SECTION 7: Stage 3 - Making Contact */}
+        <section className="py-8 md:py-10 px-4 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
+          
+          <div className="container mx-auto max-w-6xl relative z-10">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-4">
+                <Handshake className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold">{t('scouts.stage3_badge', 'Stage 3: Making Contact')}</span>
+              </div>
+              
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+                {t('scouts.contact_title', 'From Discovery to Representation')}
+              </h2>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto font-light">
+                {t('scouts.contact_desc', 'Once a player passes our R90 analysis, we move to make contact with the talent and progress from there. At this point, you have already secured your lifetime commission.')}
+              </p>
+            </div>
+
+            <Card className="group relative overflow-hidden border-2 border-green-500/30 bg-gradient-to-br from-green-500/10 via-card to-green-500/5 hover:border-green-500/50 transition-all duration-500">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-green-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+              
+              <div className="relative p-8 text-center">
+                <div className="flex justify-center mb-6">
+                  <div className="h-20 w-20 bg-green-500/20 rounded-2xl flex items-center justify-center">
+                    <Award className="h-10 w-10 text-green-500" />
+                  </div>
+                </div>
+                
+                <h3 className="text-3xl md:text-4xl font-bebas uppercase tracking-wider mb-4 text-green-500">
+                  {t('scouts.lifetime_secured', 'Lifetime Commission Secured')}
+                </h3>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-6">
+                  {t('scouts.lifetime_secured_desc', 'Your eye for talent can earn you commission for multiple decades. When the player you discovered signs professionally, every contract, every transfer, every milestone—you earn from it all.')}
+                </p>
+                
+                <div className="flex flex-wrap justify-center gap-4">
+                  {[
+                    t('scouts.earn_signing', 'Earn on signing'),
+                    t('scouts.earn_transfers', 'Earn on transfers'),
+                    t('scouts.earn_renewals', 'Earn on renewals'),
+                    t('scouts.earn_decades', 'Earn for decades')
+                  ].map((item, idx) => (
+                    <div key={idx} className="px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-full text-sm text-green-600 dark:text-green-400 font-medium">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          </div>
+        </section>
+
+        {/* SECTION 8: Final CTA */}
+        <section className="py-10 md:py-12 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-primary/5" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(212,175,55,0.15),transparent_60%)]" />
           
