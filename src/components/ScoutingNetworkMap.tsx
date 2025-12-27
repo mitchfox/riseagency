@@ -1322,24 +1322,54 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
           <div className="bg-card rounded-lg p-3 border flex-shrink-0">
             <h4 className="font-bebas text-lg mb-2">{t("map.network_coverage", "NETWORK COVERAGE")}</h4>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">{t("map.professional_players", "Professional Players")}</span>
-                <span className="font-bold">10,000+</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">{t("map.youth_prospects", "Youth Prospects")}</span>
-                <span className="font-bold">4,000+</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">{t("map.teams", "Teams")}</span>
-                <span className="font-bold">500+</span>
-              </div>
+              {(() => {
+                // Calculate totals from all clubs
+                const getSeededRandom = (seed: string, min: number, max: number) => {
+                  let hash = 0;
+                  for (let i = 0; i < seed.length; i++) {
+                    hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+                    hash = hash & hash;
+                  }
+                  const normalized = Math.abs(hash % 1000) / 1000;
+                  return Math.floor(normalized * (max - min + 1)) + min;
+                };
+                
+                let totalProfessional = 0;
+                let totalYouth = 0;
+                
+                footballClubs.forEach(club => {
+                  totalProfessional += getSeededRandom(club.name + "first", 18, 30);
+                  totalProfessional += getSeededRandom(club.name + "reserves", 4, 14);
+                  totalYouth += getSeededRandom(club.name + "u19", 14, 20);
+                  totalYouth += getSeededRandom(club.name + "u16", 6, 17);
+                  totalYouth += getSeededRandom(club.name + "u15", 1, 9);
+                  totalYouth += getSeededRandom(club.name + "u14", 1, 4);
+                });
+                
+                return (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">{t("map.professional_players", "Professional Players")}</span>
+                      <span className="font-bold">{totalProfessional.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">{t("map.youth_prospects", "Youth Prospects")}</span>
+                      <span className="font-bold">{totalYouth.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">{t("map.teams", "Teams")}</span>
+                      <span className="font-bold">{footballClubs.length}+</span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
 
           {/* Coverage Regions - Country -> Clubs from footballClubs */}
           <div id="coverage-regions-container" className="bg-card rounded-lg p-3 border mt-3 flex-1 min-h-0 overflow-hidden flex flex-col group/coverage">
-            <h4 className="font-bebas text-lg mb-2 flex-shrink-0">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
+            <h4 className="font-bebas text-lg mb-1 flex-shrink-0">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
+            <p className="text-xs italic text-primary mb-2 flex-shrink-0">Players Scouted</p>
             <div className="space-y-1 flex-1 min-h-0 max-h-[240px] overflow-hidden hover:overflow-y-auto transition-all relative">
               <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent pointer-events-none group-hover/coverage:opacity-0 transition-opacity z-10 flex items-end justify-center pb-1">
                 <ChevronDown className="w-4 h-4 text-muted-foreground animate-bounce" />
@@ -1352,12 +1382,19 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                   clubsByCountry[club.country].push(club);
                 });
                 
+                // Find country marker coordinates
+                const getCountryCoords = (country: string) => {
+                  const marker = countryMarkers.find(c => c.country === country);
+                  return marker ? { x: marker.x, y: marker.y } : { x: 500, y: 300 };
+                };
+                
                 return Object.entries(clubsByCountry)
                   .sort(([a], [b]) => a.localeCompare(b))
                   .map(([country, clubs]) => {
                     const countryKey = `country-${country}`;
                     const isCountryExpanded = expandedCountries.has(countryKey);
                     const flagImage = flagImages[country];
+                    const coords = getCountryCoords(country);
                     
                     return (
                       <div key={countryKey} className="border-b border-border/30 last:border-b-0">
@@ -1369,12 +1406,12 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                               newSet.delete(countryKey);
                               // Reset zoom when collapsing
                               setSelectedCountry(null);
+                              setViewBox("0 0 1000 600");
                               setZoomLevel(0);
                             } else {
                               newSet.add(countryKey);
                               // Zoom to country on map
-                              setSelectedCountry(country);
-                              setZoomLevel(1);
+                              handleCountryListClick(country, coords.x, coords.y);
                             }
                             setExpandedCountries(newSet);
                           }}
@@ -1454,10 +1491,10 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                                         {ageGroups.map((ageGroup) => (
                                           <div
                                             key={ageGroup.name}
-                                            className="flex items-center justify-between gap-2 text-xs py-1 px-2 bg-accent/10 rounded"
+                                            className="flex items-center gap-3 text-xs py-1.5"
                                           >
-                                            <span className="text-muted-foreground">{ageGroup.name}</span>
-                                            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-yellow-500 text-yellow-950 font-bold text-xs shadow-sm">
+                                            <span className="text-muted-foreground flex-1">{ageGroup.name}</span>
+                                            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground font-bold text-xs shadow-sm">
                                               {ageGroup.count}
                                             </div>
                                           </div>
