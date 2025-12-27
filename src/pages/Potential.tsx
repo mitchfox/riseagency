@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LogOut, Plus, Users, MessageSquare, Search, FileText, Trash2, Edit } from "lucide-react";
+import { LogOut, Plus, Users, MessageSquare, Search, FileText, Trash2, Edit, Target } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -447,84 +447,86 @@ const Potential = () => {
               </CardContent>
             </Card>
 
-            {/* Player Rights Breakdown */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Award className="h-5 w-5 text-green-500" />
-                    Exclusive Rights Players
-                  </CardTitle>
-                  <CardDescription>
-                    First to report on these players - full commission guaranteed
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[300px]">
-                    {playerRights.exclusive.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-8">
-                        No exclusive rights players yet
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {playerRights.exclusive.map((report: any) => (
-                          <div
-                            key={report.id}
-                            className="p-3 rounded-lg border border-border bg-card hover:bg-accent/5 transition-colors"
-                          >
-                            <div className="font-medium">{report.player_name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {report.position} • {report.current_club}
+            {/* Player Rights Breakdown - Only for submitted reports */}
+            {submissions.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="border-green-500/20 bg-green-500/5">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Award className="h-5 w-5 text-green-500" />
+                      Exclusive Rights Players
+                    </CardTitle>
+                    <CardDescription>
+                      You were first to report on these players - full commission guaranteed
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-[300px]">
+                      {playerRights.exclusive.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-8">
+                          No exclusive rights players yet. Keep scouting to find new talent!
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {playerRights.exclusive.map((report: any) => (
+                            <div
+                              key={report.id}
+                              className="p-3 rounded-lg border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 transition-colors"
+                            >
+                              <div className="font-medium">{report.player_name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {report.position} • {report.current_club}
+                              </div>
+                              <div className="text-xs text-green-600 mt-1">
+                                Submitted {new Date(report.created_at).toLocaleDateString()}
+                              </div>
                             </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              Submitted {new Date(report.created_at).toLocaleDateString()}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </ScrollArea>
-                </CardContent>
-              </Card>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users2 className="h-5 w-5 text-blue-500" />
-                    Contributor Players
-                  </CardTitle>
-                  <CardDescription>
-                    Additional reports on existing players - commission may be rewarded
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[300px]">
-                    {playerRights.contributor.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-8">
-                        No contributor reports yet
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {playerRights.contributor.map((report: any) => (
-                          <div
-                            key={report.id}
-                            className="p-3 rounded-lg border border-border bg-card hover:bg-accent/5 transition-colors"
-                          >
-                            <div className="font-medium">{report.player_name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {report.position} • {report.current_club}
+                <Card className="border-blue-500/20 bg-blue-500/5">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users2 className="h-5 w-5 text-blue-500" />
+                      Contributor Reports
+                    </CardTitle>
+                    <CardDescription>
+                      Another scout reported on these players first - bonus commission may apply
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-[300px]">
+                      {playerRights.contributor.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-8">
+                          No contributor reports yet
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {playerRights.contributor.map((report: any) => (
+                            <div
+                              key={report.id}
+                              className="p-3 rounded-lg border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+                            >
+                              <div className="font-medium">{report.player_name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {report.position} • {report.current_club}
+                              </div>
+                              <div className="text-xs text-blue-600 mt-1">
+                                Submitted {new Date(report.created_at).toLocaleDateString()}
+                              </div>
                             </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              Submitted {new Date(report.created_at).toLocaleDateString()}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </TabsContent>
 
           {/* My Submissions Tab */}
@@ -673,7 +675,10 @@ const Potential = () => {
                         {selectedDraft ? "Edit Draft" : "New Scouting Report"}
                       </CardTitle>
                       <CardDescription>
-                        Fill in the details for the player you want to scout
+                        {!draftForm.position 
+                          ? "Start by filling in basic player details and selecting a position"
+                          : "Fill in the detailed evaluation for each attribute"
+                        }
                       </CardDescription>
                     </div>
                     <Button
@@ -691,79 +696,106 @@ const Potential = () => {
                 <CardContent>
                   <ScrollArea className="h-[600px] pr-4">
                     <div className="space-y-6">
-                      {/* Basic Info */}
-                      <div className="space-y-4">
-                        <h3 className="font-semibold">Basic Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="player_name">Player Name *</Label>
-                            <Input
-                              id="player_name"
-                              value={draftForm.player_name}
-                              onChange={(e) => setDraftForm({ ...draftForm, player_name: e.target.value })}
-                              placeholder="Full name"
-                            />
+                      {/* Basic Info Section - Always visible */}
+                      <Card className="border-2 border-primary/20 bg-primary/5">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <Users className="h-4 w-4 text-primary" />
+                            Basic Information
+                          </CardTitle>
+                          <p className="text-xs text-muted-foreground">
+                            Required fields marked with *
+                          </p>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="player_name">Player Name *</Label>
+                              <Input
+                                id="player_name"
+                                value={draftForm.player_name}
+                                onChange={(e) => setDraftForm({ ...draftForm, player_name: e.target.value })}
+                                placeholder="Full name"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="position">Position *</Label>
+                              <Select
+                                value={draftForm.position}
+                                onValueChange={handlePositionChange}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select position to reveal attributes" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {SCOUTING_POSITIONS.map((pos) => (
+                                    <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="age">Age</Label>
+                              <Input
+                                id="age"
+                                type="number"
+                                value={draftForm.age}
+                                onChange={(e) => setDraftForm({ ...draftForm, age: e.target.value })}
+                                placeholder="Age"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="nationality">Nationality</Label>
+                              <Input
+                                id="nationality"
+                                value={draftForm.nationality}
+                                onChange={(e) => setDraftForm({ ...draftForm, nationality: e.target.value })}
+                                placeholder="Nationality"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="current_club">Current Club</Label>
+                              <Input
+                                id="current_club"
+                                value={draftForm.current_club}
+                                onChange={(e) => setDraftForm({ ...draftForm, current_club: e.target.value })}
+                                placeholder="Club name"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="competition">Competition</Label>
+                              <Input
+                                id="competition"
+                                value={draftForm.competition}
+                                onChange={(e) => setDraftForm({ ...draftForm, competition: e.target.value })}
+                                placeholder="League/Competition"
+                              />
+                            </div>
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="position">Position *</Label>
-                            <Select
-                              value={draftForm.position}
-                              onValueChange={handlePositionChange}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select position" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {SCOUTING_POSITIONS.map((pos) => (
-                                  <SelectItem key={pos} value={pos}>{pos}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="age">Age</Label>
-                            <Input
-                              id="age"
-                              type="number"
-                              value={draftForm.age}
-                              onChange={(e) => setDraftForm({ ...draftForm, age: e.target.value })}
-                              placeholder="Age"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="nationality">Nationality</Label>
-                            <Input
-                              id="nationality"
-                              value={draftForm.nationality}
-                              onChange={(e) => setDraftForm({ ...draftForm, nationality: e.target.value })}
-                              placeholder="Nationality"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="current_club">Current Club</Label>
-                            <Input
-                              id="current_club"
-                              value={draftForm.current_club}
-                              onChange={(e) => setDraftForm({ ...draftForm, current_club: e.target.value })}
-                              placeholder="Club name"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="competition">Competition</Label>
-                            <Input
-                              id="competition"
-                              value={draftForm.competition}
-                              onChange={(e) => setDraftForm({ ...draftForm, competition: e.target.value })}
-                              placeholder="League/Competition"
-                            />
-                          </div>
-                        </div>
-                      </div>
+                        </CardContent>
+                      </Card>
 
-                      {/* Skill Evaluations - Show when position is selected */}
+                      {/* Position Required Message */}
+                      {!draftForm.position && (
+                        <Card className="border-dashed border-2 border-muted-foreground/30">
+                          <CardContent className="py-12 text-center">
+                            <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                            <h3 className="font-semibold text-lg mb-2">Select a Position</h3>
+                            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                              Choose the player's position above to reveal the detailed attribute 
+                              evaluation form with position-specific skills and grades.
+                            </p>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Skill Evaluations - Only show when position is selected */}
                       {draftForm.position && draftForm.skill_evaluations.length > 0 && (
-                        <div className="space-y-4">
-                          <h3 className="font-semibold">Skill Evaluations</h3>
+                        <div className="space-y-4 animate-fade-in">
+                          <div className="flex items-center gap-2">
+                            <Target className="h-5 w-5 text-primary" />
+                            <h3 className="font-semibold">Skill Evaluations - {draftForm.position}</h3>
+                          </div>
                           <SkillEvaluationForm
                             skillEvaluations={draftForm.skill_evaluations}
                             onChange={(evaluations) => setDraftForm({ ...draftForm, skill_evaluations: evaluations })}
@@ -771,68 +803,72 @@ const Potential = () => {
                         </div>
                       )}
 
-                      {/* Analysis */}
-                      <div className="space-y-4">
-                        <h3 className="font-semibold">Analysis</h3>
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="strengths">Strengths</Label>
-                            <Textarea
-                              id="strengths"
-                              value={draftForm.strengths}
-                              onChange={(e) => setDraftForm({ ...draftForm, strengths: e.target.value })}
-                              placeholder="Key strengths and attributes..."
-                              rows={3}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="weaknesses">Weaknesses</Label>
-                            <Textarea
-                              id="weaknesses"
-                              value={draftForm.weaknesses}
-                              onChange={(e) => setDraftForm({ ...draftForm, weaknesses: e.target.value })}
-                              placeholder="Areas for improvement..."
-                              rows={3}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="summary">Summary</Label>
-                            <Textarea
-                              id="summary"
-                              value={draftForm.summary}
-                              onChange={(e) => setDraftForm({ ...draftForm, summary: e.target.value })}
-                              placeholder="Overall assessment..."
-                              rows={4}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="recommendation">Recommendation</Label>
-                            <Textarea
-                              id="recommendation"
-                              value={draftForm.recommendation}
-                              onChange={(e) => setDraftForm({ ...draftForm, recommendation: e.target.value })}
-                              placeholder="Your recommendation for the club..."
-                              rows={3}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="video_url">Video URL (optional)</Label>
-                            <Input
-                              id="video_url"
-                              type="url"
-                              value={draftForm.video_url}
-                              onChange={(e) => setDraftForm({ ...draftForm, video_url: e.target.value })}
-                              placeholder="https://..."
-                            />
-                          </div>
-                        </div>
-                      </div>
+                      {/* Analysis Section - Only show when position is selected */}
+                      {draftForm.position && (
+                        <Card className="border-border/50 animate-fade-in">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base">Analysis & Notes</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="strengths">Strengths</Label>
+                              <Textarea
+                                id="strengths"
+                                value={draftForm.strengths}
+                                onChange={(e) => setDraftForm({ ...draftForm, strengths: e.target.value })}
+                                placeholder="Key strengths and attributes..."
+                                rows={3}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="weaknesses">Weaknesses</Label>
+                              <Textarea
+                                id="weaknesses"
+                                value={draftForm.weaknesses}
+                                onChange={(e) => setDraftForm({ ...draftForm, weaknesses: e.target.value })}
+                                placeholder="Areas for improvement..."
+                                rows={3}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="summary">Summary</Label>
+                              <Textarea
+                                id="summary"
+                                value={draftForm.summary}
+                                onChange={(e) => setDraftForm({ ...draftForm, summary: e.target.value })}
+                                placeholder="Overall assessment..."
+                                rows={4}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="recommendation">Recommendation</Label>
+                              <Textarea
+                                id="recommendation"
+                                value={draftForm.recommendation}
+                                onChange={(e) => setDraftForm({ ...draftForm, recommendation: e.target.value })}
+                                placeholder="Your recommendation for the club..."
+                                rows={3}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="video_url">Video URL (optional)</Label>
+                              <Input
+                                id="video_url"
+                                type="url"
+                                value={draftForm.video_url}
+                                onChange={(e) => setDraftForm({ ...draftForm, video_url: e.target.value })}
+                                placeholder="https://..."
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
 
                       {/* Action Buttons */}
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 sticky bottom-0 bg-background py-3 border-t border-border">
                         <Button
                           onClick={handleSaveDraft}
-                          disabled={saveDraftMutation.isPending}
+                          disabled={saveDraftMutation.isPending || !draftForm.player_name}
                           variant="outline"
                           className="flex-1"
                         >
@@ -840,7 +876,7 @@ const Potential = () => {
                         </Button>
                         <Button
                           onClick={handleSubmitReport}
-                          disabled={submitReportMutation.isPending}
+                          disabled={submitReportMutation.isPending || !draftForm.player_name || !draftForm.position}
                           className="flex-1"
                         >
                           {submitReportMutation.isPending ? "Submitting..." : "Submit Report"}
