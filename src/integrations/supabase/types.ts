@@ -2751,58 +2751,103 @@ export type Database = {
       }
       scouting_report_drafts: {
         Row: {
+          additional_notes: string | null
           age: number | null
+          agent_contract_end: string | null
+          birth_day: number | null
+          birth_month: number | null
           competition: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          contact_relationship: string | null
           created_at: string | null
           current_club: string | null
+          existing_agent: string | null
           id: string
+          independent_report_url: string | null
           nationality: string | null
+          player_contact_email: string | null
+          player_contact_phone: string | null
           player_name: string
           position: string | null
           recommendation: string | null
+          report_type: string | null
           scout_id: string | null
           skill_evaluations: Json | null
           strengths: string | null
           summary: string | null
           updated_at: string | null
           video_url: string | null
+          video_urls: string[] | null
           weaknesses: string | null
+          year_of_birth: number | null
         }
         Insert: {
+          additional_notes?: string | null
           age?: number | null
+          agent_contract_end?: string | null
+          birth_day?: number | null
+          birth_month?: number | null
           competition?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contact_relationship?: string | null
           created_at?: string | null
           current_club?: string | null
+          existing_agent?: string | null
           id?: string
+          independent_report_url?: string | null
           nationality?: string | null
+          player_contact_email?: string | null
+          player_contact_phone?: string | null
           player_name: string
           position?: string | null
           recommendation?: string | null
+          report_type?: string | null
           scout_id?: string | null
           skill_evaluations?: Json | null
           strengths?: string | null
           summary?: string | null
           updated_at?: string | null
           video_url?: string | null
+          video_urls?: string[] | null
           weaknesses?: string | null
+          year_of_birth?: number | null
         }
         Update: {
+          additional_notes?: string | null
           age?: number | null
+          agent_contract_end?: string | null
+          birth_day?: number | null
+          birth_month?: number | null
           competition?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contact_relationship?: string | null
           created_at?: string | null
           current_club?: string | null
+          existing_agent?: string | null
           id?: string
+          independent_report_url?: string | null
           nationality?: string | null
+          player_contact_email?: string | null
+          player_contact_phone?: string | null
           player_name?: string
           position?: string | null
           recommendation?: string | null
+          report_type?: string | null
           scout_id?: string | null
           skill_evaluations?: Json | null
           strengths?: string | null
           summary?: string | null
           updated_at?: string | null
           video_url?: string | null
+          video_urls?: string[] | null
           weaknesses?: string | null
+          year_of_birth?: number | null
         }
         Relationships: [
           {
