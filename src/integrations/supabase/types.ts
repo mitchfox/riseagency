@@ -2869,6 +2869,7 @@ export type Database = {
           competition: string | null
           contact_email: string | null
           contact_phone: string | null
+          contribution_type: string | null
           created_at: string
           current_club: string | null
           date_of_birth: string | null
@@ -2913,6 +2914,7 @@ export type Database = {
           competition?: string | null
           contact_email?: string | null
           contact_phone?: string | null
+          contribution_type?: string | null
           created_at?: string
           current_club?: string | null
           date_of_birth?: string | null
@@ -2957,6 +2959,7 @@ export type Database = {
           competition?: string | null
           contact_email?: string | null
           contact_phone?: string | null
+          contribution_type?: string | null
           created_at?: string
           current_club?: string | null
           date_of_birth?: string | null
