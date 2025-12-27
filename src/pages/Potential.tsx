@@ -54,6 +54,77 @@ interface DraftFormData {
   additional_notes: string;
 }
 
+// Helper function to normalize names for comparison (remove accents, lowercase, etc.)
+const normalizeNameForComparison = (name: string): string => {
+  return name
+    .toLowerCase()
+    .trim()
+    // Remove accents and diacritics
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    // Remove common suffixes/prefixes
+    .replace(/\b(jr|sr|ii|iii|iv)\b/gi, '')
+    // Remove extra spaces
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+// Helper function to check if two names are similar (lenient matching)
+const areNamesSimilar = (name1: string, name2: string): boolean => {
+  const normalized1 = normalizeNameForComparison(name1);
+  const normalized2 = normalizeNameForComparison(name2);
+  
+  // Exact match after normalization
+  if (normalized1 === normalized2) return true;
+  
+  // Check if one contains the other (for nicknames like "Ronaldinho" vs "Ronaldo de Assis Moreira")
+  if (normalized1.includes(normalized2) || normalized2.includes(normalized1)) return true;
+  
+  // Split into parts and check for significant overlap
+  const parts1 = normalized1.split(' ').filter(p => p.length > 2);
+  const parts2 = normalized2.split(' ').filter(p => p.length > 2);
+  
+  // If any significant name part matches
+  const matchingParts = parts1.filter(p1 => 
+    parts2.some(p2 => p1 === p2 || p1.includes(p2) || p2.includes(p1))
+  );
+  
+  // If at least half the parts match, consider it a match
+  if (matchingParts.length >= Math.min(parts1.length, parts2.length) / 2 && matchingParts.length > 0) {
+    return true;
+  }
+  
+  // Levenshtein distance for close matches (typos)
+  const distance = levenshteinDistance(normalized1, normalized2);
+  const maxLength = Math.max(normalized1.length, normalized2.length);
+  const similarity = 1 - (distance / maxLength);
+  
+  // If more than 80% similar, consider it a match
+  return similarity > 0.8;
+};
+
+// Levenshtein distance implementation
+const levenshteinDistance = (str1: string, str2: string): number => {
+  const m = str1.length;
+  const n = str2.length;
+  const dp: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+  
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (str1[i - 1] === str2[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1];
+      } else {
+        dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+      }
+    }
+  }
+  
+  return dp[m][n];
+};
+
 // Helper function to get country code from nationality
 const getCountryCode = (nationality: string): string => {
   const countryMap: Record<string, string> = {
@@ -298,31 +369,51 @@ const Potential = () => {
     },
   });
 
-  // Calculate exclusive rights and contributor players
+  // Calculate exclusive rights and contributor players with pending status support
   const playerRights = submissions.reduce((acc, report) => {
-    const playerName = report.player_name.toLowerCase().trim();
+    const playerName = report.player_name;
+    const isPending = report.status === 'pending';
+    const isAccepted = report.status === 'accepted' || report.status === 'approved';
     
-    // First check if player already exists in the main players database
+    // First check if player already exists in the main players database (lenient matching)
     const existsInPlayersDb = existingPlayers.some(p => 
-      p.name.toLowerCase().trim() === playerName
+      areNamesSimilar(p.name, playerName)
     );
     
-    if (existsInPlayersDb) {
-      // Player is already in the main database - contributor only
-      acc.contributor.push(report);
+    // Also check other scouting reports for similar names
+    const similarReportExists = allPlayerNames.some(r => 
+      areNamesSimilar(r.player_name, playerName) && r.scout_id !== scout?.id
+    );
+    
+    if (existsInPlayersDb || similarReportExists) {
+      // Player is already in the main database or reported by another scout - contributor
+      acc.contributor.push({
+        ...report,
+        rightsStatus: isPending ? 'likely' : (isAccepted ? 'confirmed' : 'pending')
+      });
     } else {
-      // Check if this scout was first to report
-      const earliestReport = allPlayerNames.find(r => r.player_name.toLowerCase().trim() === playerName);
+      // Check if this scout was first to report (lenient matching)
+      const earliestReport = allPlayerNames.find(r => areNamesSimilar(r.player_name, playerName));
       
       if (earliestReport?.scout_id === scout?.id) {
-        acc.exclusive.push(report);
+        acc.exclusive.push({
+          ...report,
+          rightsStatus: isPending ? 'likely' : (isAccepted ? 'confirmed' : 'pending')
+        });
       } else {
-        acc.contributor.push(report);
+        acc.contributor.push({
+          ...report,
+          rightsStatus: isPending ? 'likely' : (isAccepted ? 'confirmed' : 'pending')
+        });
       }
     }
     
     return acc;
   }, { exclusive: [] as any[], contributor: [] as any[] });
+
+  // Count only confirmed (accepted) reports for the stats
+  const confirmedExclusive = playerRights.exclusive.filter((r: any) => r.rightsStatus === 'confirmed');
+  const confirmedContributor = playerRights.contributor.filter((r: any) => r.rightsStatus === 'confirmed');
 
   // Save draft mutation
   const saveDraftMutation = useMutation({
@@ -675,10 +766,13 @@ const Potential = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-green-500">
-                    {playerRights.exclusive.length}
+                    {confirmedExclusive.length}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    New to database
+                    Confirmed new to database
+                    {playerRights.exclusive.length - confirmedExclusive.length > 0 && (
+                      <span className="text-yellow-600"> (+{playerRights.exclusive.length - confirmedExclusive.length} pending)</span>
+                    )}
                   </p>
                 </CardContent>
               </Card>
@@ -694,10 +788,13 @@ const Potential = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-blue-500">
-                    {playerRights.contributor.length}
+                    {confirmedContributor.length}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Existing players
+                    Confirmed existing players
+                    {playerRights.contributor.length - confirmedContributor.length > 0 && (
+                      <span className="text-yellow-600"> (+{playerRights.contributor.length - confirmedContributor.length} pending)</span>
+                    )}
                   </p>
                 </CardContent>
               </Card>
@@ -742,13 +839,28 @@ const Potential = () => {
                           {playerRights.exclusive.map((report: any) => (
                             <div
                               key={report.id}
-                              className="p-3 rounded-lg border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 transition-colors"
+                              className={`p-3 rounded-lg border transition-colors ${
+                                report.rightsStatus === 'confirmed' 
+                                  ? 'border-green-500/30 bg-green-500/10 hover:bg-green-500/20' 
+                                  : 'border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20'
+                              }`}
                             >
-                              <div className="font-medium">{report.player_name}</div>
+                              <div className="flex items-center justify-between">
+                                <div className="font-medium">{report.player_name}</div>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                  report.rightsStatus === 'confirmed'
+                                    ? 'bg-green-500/20 text-green-600'
+                                    : 'bg-yellow-500/20 text-yellow-600'
+                                }`}>
+                                  {report.rightsStatus === 'confirmed' ? 'Confirmed' : 'Likely'}
+                                </span>
+                              </div>
                               <div className="text-xs text-muted-foreground">
                                 {report.position} • {report.current_club}
                               </div>
-                              <div className="text-xs text-green-600 mt-1">
+                              <div className={`text-xs mt-1 ${
+                                report.rightsStatus === 'confirmed' ? 'text-green-600' : 'text-yellow-600'
+                              }`}>
                                 Submitted {new Date(report.created_at).toLocaleDateString()}
                               </div>
                             </div>
@@ -780,13 +892,28 @@ const Potential = () => {
                           {playerRights.contributor.map((report: any) => (
                             <div
                               key={report.id}
-                              className="p-3 rounded-lg border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+                              className={`p-3 rounded-lg border transition-colors ${
+                                report.rightsStatus === 'confirmed' 
+                                  ? 'border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20' 
+                                  : 'border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20'
+                              }`}
                             >
-                              <div className="font-medium">{report.player_name}</div>
+                              <div className="flex items-center justify-between">
+                                <div className="font-medium">{report.player_name}</div>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                  report.rightsStatus === 'confirmed'
+                                    ? 'bg-blue-500/20 text-blue-600'
+                                    : 'bg-yellow-500/20 text-yellow-600'
+                                }`}>
+                                  {report.rightsStatus === 'confirmed' ? 'Confirmed' : 'Likely'}
+                                </span>
+                              </div>
                               <div className="text-xs text-muted-foreground">
                                 {report.position} • {report.current_club}
                               </div>
-                              <div className="text-xs text-blue-600 mt-1">
+                              <div className={`text-xs mt-1 ${
+                                report.rightsStatus === 'confirmed' ? 'text-blue-600' : 'text-yellow-600'
+                              }`}>
                                 Submitted {new Date(report.created_at).toLocaleDateString()}
                               </div>
                             </div>
@@ -797,6 +924,17 @@ const Potential = () => {
                   </CardContent>
                 </Card>
               </div>
+            )}
+            
+            {/* Database Check Note */}
+            {submissions.length > 0 && (
+              <Card className="border-muted bg-muted/30">
+                <CardContent className="pt-4 pb-4">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    <strong>Note:</strong> The database is autochecked. It is possible that the player is named differently e.g. Ronaldinho could be down as Ronaldinho Gaúcho or Ronaldo de Assis Moreira instead and not being picked up, however anything written as <span className="text-yellow-600 font-medium">likely</span> is almost certain to be guaranteed. Sometimes incorrect data such as year of birth being wrong can also show it, so we cross-check before confirming.
+                  </p>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
 
@@ -815,16 +953,26 @@ const Potential = () => {
               <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
                 <CardContent className="pt-6">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-green-500">{playerRights.exclusive.length}</div>
-                    <p className="text-sm text-muted-foreground mt-1">Exclusive Rights</p>
+                    <div className="text-3xl font-bold text-green-500">{confirmedExclusive.length}</div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Exclusive Rights
+                      {playerRights.exclusive.length - confirmedExclusive.length > 0 && (
+                        <span className="text-yellow-600 text-xs ml-1">(+{playerRights.exclusive.length - confirmedExclusive.length} likely)</span>
+                      )}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
               <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
                 <CardContent className="pt-6">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-500">{playerRights.contributor.length}</div>
-                    <p className="text-sm text-muted-foreground mt-1">Contributor</p>
+                    <div className="text-3xl font-bold text-blue-500">{confirmedContributor.length}</div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Contributor
+                      {playerRights.contributor.length - confirmedContributor.length > 0 && (
+                        <span className="text-yellow-600 text-xs ml-1">(+{playerRights.contributor.length - confirmedContributor.length} likely)</span>
+                      )}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
