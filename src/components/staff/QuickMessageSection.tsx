@@ -31,9 +31,9 @@ interface Contact {
 
 interface QuickMessage {
   id: string;
-  title: string;
+  message_title: string;
   message_content: string;
-  category: string | null;
+  recipient_type: string;
 }
 
 export const QuickMessageSection = () => {
@@ -71,9 +71,9 @@ export const QuickMessageSection = () => {
 
   const fetchQuickMessages = async () => {
     const { data, error } = await supabase
-      .from("whatsapp_quick_messages")
+      .from("marketing_templates")
       .select("*")
-      .order("title");
+      .order("recipient_type");
     
     if (error) {
       console.error("Error fetching quick messages:", error);
@@ -152,11 +152,11 @@ export const QuickMessageSection = () => {
 
     if (editingMessage) {
       const { error } = await supabase
-        .from("whatsapp_quick_messages")
+        .from("marketing_templates")
         .update({
-          title: newMessageTitle,
+          message_title: newMessageTitle,
           message_content: newMessageContent,
-          category: newMessageCategory || null,
+          recipient_type: newMessageCategory || "General",
         })
         .eq("id", editingMessage.id);
 
@@ -167,11 +167,11 @@ export const QuickMessageSection = () => {
       toast.success("Message updated");
     } else {
       const { error } = await supabase
-        .from("whatsapp_quick_messages")
+        .from("marketing_templates")
         .insert({
-          title: newMessageTitle,
+          message_title: newMessageTitle,
           message_content: newMessageContent,
-          category: newMessageCategory || null,
+          recipient_type: newMessageCategory || "General",
         });
 
       if (error) {
@@ -188,7 +188,7 @@ export const QuickMessageSection = () => {
 
   const handleDeleteMessage = async (id: string) => {
     const { error } = await supabase
-      .from("whatsapp_quick_messages")
+      .from("marketing_templates")
       .delete()
       .eq("id", id);
 
@@ -202,9 +202,9 @@ export const QuickMessageSection = () => {
 
   const handleEditMessage = (message: QuickMessage) => {
     setEditingMessage(message);
-    setNewMessageTitle(message.title);
+    setNewMessageTitle(message.message_title);
     setNewMessageContent(message.message_content);
-    setNewMessageCategory(message.category || "");
+    setNewMessageCategory(message.recipient_type || "");
     setIsAddOpen(true);
   };
 
@@ -267,7 +267,7 @@ export const QuickMessageSection = () => {
                   <SelectItem value="custom">✏️ Write custom message</SelectItem>
                   {quickMessages.map((msg) => (
                     <SelectItem key={msg.id} value={msg.id}>
-                      {msg.title}
+                      {msg.message_title}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -377,10 +377,10 @@ export const QuickMessageSection = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-medium text-sm">{msg.title}</h4>
-                        {msg.category && (
+                        <h4 className="font-medium text-sm">{msg.message_title}</h4>
+                        {msg.recipient_type && (
                           <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                            {msg.category}
+                            {msg.recipient_type}
                           </span>
                         )}
                       </div>
