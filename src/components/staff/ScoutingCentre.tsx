@@ -50,7 +50,7 @@ interface ScoutingReport {
   preferred_foot: string | null;
   scout_name: string | null;
   scout_id: string | null;
-  scouting_date: string;
+  scouting_date: string | null;
   location: string | null;
   competition: string | null;
   match_context: string | null;
@@ -351,7 +351,7 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
       height_cm: report.height_cm?.toString() || "",
       preferred_foot: report.preferred_foot || "",
       scout_name: report.scout_name || "",
-      scouting_date: report.scouting_date,
+      scouting_date: report.scouting_date || format(new Date(), "yyyy-MM-dd"),
       location: report.location || "",
       competition: report.competition || "",
       match_context: report.match_context || "",
@@ -404,7 +404,7 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
           profile_image_url: report.profile_image_url,
           contact_email: report.contact_email,
           contact_phone: report.contact_phone,
-          notes: `Scouted on ${format(new Date(report.scouting_date), "dd/MM/yyyy")}\n\n${report.summary || ""}`
+          notes: `Scouted on ${report.scouting_date ? format(new Date(report.scouting_date), "dd/MM/yyyy") : "Unknown"}\n\n${report.summary || ""}`
         })
         .select()
         .single();
@@ -1154,13 +1154,14 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
                   <div className="space-y-2">
                     <Label htmlFor="priority">Priority</Label>
                     <Select
-                      value={formData.priority}
-                      onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                      value={formData.priority || "none"}
+                      onValueChange={(value) => setFormData({ ...formData, priority: value === "none" ? "" : value })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select..." />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
                         <SelectItem value="low">Low</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
                         <SelectItem value="high">High</SelectItem>
@@ -1350,7 +1351,7 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
                     <h3 className="font-semibold mb-2">Scouting Info</h3>
                     <div className="space-y-1 text-sm">
                       {viewingReport.scout_name && <p><span className="text-muted-foreground">Scout:</span> {viewingReport.scout_name}</p>}
-                      <p><span className="text-muted-foreground">Date:</span> {format(new Date(viewingReport.scouting_date), "dd MMM yyyy")}</p>
+                      <p><span className="text-muted-foreground">Date:</span> {viewingReport.scouting_date ? format(new Date(viewingReport.scouting_date), "dd MMM yyyy") : "—"}</p>
                       {viewingReport.location && <p><span className="text-muted-foreground">Location:</span> {viewingReport.location}</p>}
                       {viewingReport.competition && <p><span className="text-muted-foreground">Competition:</span> {viewingReport.competition}</p>}
                       <div className="flex gap-2 mt-2">

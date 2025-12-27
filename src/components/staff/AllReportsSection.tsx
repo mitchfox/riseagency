@@ -60,8 +60,8 @@ interface AllReportsSectionProps {
   onEditReport?: (report: ScoutingReport) => void;
 }
 
-// New status config with user-specified categories
-const STATUS_CONFIG = {
+// New status config with user-specified categories (supports old values too)
+const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   recruiting: { 
     label: "Recruiting", 
     color: "bg-green-500/10 text-green-600 border-green-500/30",
@@ -81,6 +81,22 @@ const STATUS_CONFIG = {
     label: "Pending Review", 
     color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30",
     icon: Clock 
+  },
+  // Legacy statuses for backward compatibility
+  recommended: { 
+    label: "Recommended", 
+    color: "bg-green-500/10 text-green-600 border-green-500/30",
+    icon: Star 
+  },
+  monitoring: { 
+    label: "Monitoring", 
+    color: "bg-blue-500/10 text-blue-600 border-blue-500/30",
+    icon: Eye 
+  },
+  rejected: { 
+    label: "Rejected", 
+    color: "bg-red-500/10 text-red-600 border-red-500/30",
+    icon: X 
   },
 };
 
