@@ -1747,34 +1747,40 @@ const Potential = () => {
                 </CardContent>
               </Card>
 
-              {/* Contact Section */}
+              {/* Contact & Commission Section */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Send className="h-5 w-5 text-primary" />
-                    Contact Us
-                  </CardTitle>
-                  <CardDescription>
-                    Get in touch with the scouting team
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-green-500 rounded-full">
-                        <Phone className="h-5 w-5 text-white" />
+                <CardContent className="p-4 space-y-4">
+                  {/* Commission Rates */}
+                  <div>
+                    <h4 className="font-medium text-sm mb-2">Commission Rates</h4>
+                    <p className="text-xs text-muted-foreground mb-2">On all earnings</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-green-600 font-medium">Exclusive Rights</span>
+                        <span className="font-bold">10%</span>
                       </div>
-                      <div>
-                        <p className="font-medium text-green-700 dark:text-green-400">Urgent Messages</p>
-                        <p className="text-sm text-muted-foreground">For time-sensitive matters, contact us on WhatsApp</p>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-blue-600 font-medium">Contributor</span>
+                        <span className="font-bold">up to 5%</span>
                       </div>
+                      <p className="text-xs text-muted-foreground italic mt-1">
+                        (level of importance and new detail will increase the %)
+                      </p>
                     </div>
+                  </div>
+                  
+                  <div className="border-t border-border pt-3">
+                    <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                      <Send className="h-4 w-4 text-primary" />
+                      Contact Us
+                    </h4>
                     <Button 
-                      className="w-full mt-3 bg-green-600 hover:bg-green-700"
+                      size="sm"
+                      className="w-full bg-green-600 hover:bg-green-700"
                       onClick={() => window.open('https://wa.me/447000000000', '_blank')}
                     >
-                      <Phone className="h-4 w-4 mr-2" />
-                      Message on WhatsApp
+                      <Phone className="h-3 w-3 mr-2" />
+                      WhatsApp
                     </Button>
                   </div>
                 </CardContent>
