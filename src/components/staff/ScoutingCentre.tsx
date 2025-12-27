@@ -20,6 +20,7 @@ import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, POSITI
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { MapCoordinatesManager } from "./MapCoordinatesManager";
 import { ScoutedPlayersSection } from "./ScoutedPlayersSection";
+import { AllReportsSection } from "./AllReportsSection";
 
 // Import pitch background
 import pitchBg from "@/assets/scouting-pitch-gold.png";
@@ -938,84 +939,10 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
             </TabsContent>
 
             <TabsContent value="all-players" className="flex-1 mt-0">
-              <ScrollArea className="h-[calc(100vh-350px)]">
-                <div className="space-y-4 pr-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">All Scouting Reports</h3>
-                    <Select value={groupBy} onValueChange={(v) => setGroupBy(v as any)}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="country">Group by Country</SelectItem>
-                        <SelectItem value="club">Group by Club</SelectItem>
-                        <SelectItem value="scout">Group by Scout</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {Object.entries(groupedReports).sort(([a], [b]) => a.localeCompare(b)).map(([group, groupReports]) => (
-                    <Collapsible 
-                      key={group}
-                      open={openGroup === group}
-                      onOpenChange={(isOpen) => setOpenGroup(isOpen ? group : null)}
-                    >
-                      <Card>
-                        <CollapsibleTrigger asChild>
-                          <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
-                            <CardTitle className="text-lg flex items-center justify-between">
-                              <span className="flex items-center gap-2">
-                                {group}
-                                <ChevronDown className={`h-4 w-4 transition-transform ${openGroup === group ? 'rotate-180' : ''}`} />
-                              </span>
-                              <Badge variant="secondary">{groupReports.length} {groupReports.length === 1 ? 'player' : 'players'}</Badge>
-                            </CardTitle>
-                          </CardHeader>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                          <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                              {groupReports.map((report) => (
-                                <Card key={report.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setViewingReport(report)}>
-                                  <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm">{report.player_name}</CardTitle>
-                                    <p className="text-xs text-muted-foreground">{report.position}</p>
-                                  </CardHeader>
-                                  <CardContent className="space-y-2">
-                                    {report.current_club && (
-                                      <p className="text-xs"><span className="text-muted-foreground">Club:</span> {report.current_club}</p>
-                                    )}
-                                    {report.nationality && (
-                                      <p className="text-xs"><span className="text-muted-foreground">Nationality:</span> {report.nationality}</p>
-                                    )}
-                                    {report.scout_name && (
-                                      <p className="text-xs"><span className="text-muted-foreground">Scout:</span> {report.scout_name}</p>
-                                    )}
-                                    <div className="flex gap-2 flex-wrap">
-                                      <Badge variant="outline" className={getStatusColor(report.status)}>
-                                        {report.status}
-                                      </Badge>
-                                      {report.overall_rating && (
-                                        <Badge variant="outline">{report.overall_rating}/10</Badge>
-                                      )}
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </CollapsibleContent>
-                      </Card>
-                    </Collapsible>
-                  ))}
-
-                  {Object.keys(groupedReports).length === 0 && (
-                    <div className="text-center py-12 text-muted-foreground">
-                      No scouting reports found
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
+              <AllReportsSection 
+                onViewReport={(report) => setViewingReport(report as any)}
+                onEditReport={(report) => handleEdit(report as any)}
+              />
             </TabsContent>
 
             <TabsContent value="scouts" className="flex-1 mt-0">
