@@ -666,7 +666,7 @@ const Scouts = () => {
                 {t('scouts.contact_title', 'From Discovery to Representation')}
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto font-light">
-                {t('scouts.contact_desc', 'Once a player passes our R90 analysis, we move to make contact with the talent and progress from there. At this point, you have already secured your lifetime commission.')}
+                {t('scouts.contact_desc', 'Once a player passes our R90 analysis, we move to make contact with the talent and progress from there. At this point, you have already secured your lifetime commission on any earnings we receive in connection to the player.')}
               </p>
             </div>
 
