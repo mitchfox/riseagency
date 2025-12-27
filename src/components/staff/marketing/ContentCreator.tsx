@@ -1,14 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar as CalendarIcon, Palette, Lightbulb, Sparkles, Instagram, Twitter, Facebook, Linkedin, Hash, MessageSquare, ExternalLink, Inbox, FileText } from "lucide-react";
+import { Calendar as CalendarIcon, Palette, Lightbulb, Sparkles, Instagram, Twitter, Facebook, Linkedin, Hash, MessageSquare, ExternalLink, Inbox, FileText, Image, Archive } from "lucide-react";
 import { IdeasReview } from "./IdeasReview";
 import { BTLWriter } from "./BTLWriter";
+import { ImageCreator } from "./ImageCreator";
+import { PostContent } from "./PostContent";
 
 export const ContentCreator = () => {
   return (
     <Tabs defaultValue="tools" className="w-full">
-      <TabsList className="mb-6">
+      <TabsList className="mb-6 flex-wrap h-auto gap-1">
         <TabsTrigger value="tools">Content Tools</TabsTrigger>
         <TabsTrigger value="ideas">
           <Inbox className="w-4 h-4 mr-2" />
@@ -17,6 +19,14 @@ export const ContentCreator = () => {
         <TabsTrigger value="btl-writer">
           <FileText className="w-4 h-4 mr-2" />
           BTL Writer
+        </TabsTrigger>
+        <TabsTrigger value="image-creator">
+          <Image className="w-4 h-4 mr-2" />
+          Image Creator
+        </TabsTrigger>
+        <TabsTrigger value="post-content">
+          <Archive className="w-4 h-4 mr-2" />
+          Post Content
         </TabsTrigger>
       </TabsList>
 
@@ -272,6 +282,14 @@ export const ContentCreator = () => {
 
       <TabsContent value="btl-writer">
         <BTLWriter />
+      </TabsContent>
+
+      <TabsContent value="image-creator">
+        <ImageCreator />
+      </TabsContent>
+
+      <TabsContent value="post-content">
+        <PostContent />
       </TabsContent>
     </Tabs>
   );
