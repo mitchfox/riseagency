@@ -120,6 +120,17 @@ const Potential = () => {
   const [additionalInfoOpen, setAdditionalInfoOpen] = useState(false);
   const formRef = useRef<DraftFormData | null>(null);
   const hasChangesRef = useRef(false);
+  const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
+  const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
+  const [showInvoicesModal, setShowInvoicesModal] = useState(false);
+  const [bankDetailsForm, setBankDetailsForm] = useState({
+    account_name: '',
+    bank_name: '',
+    account_number: '',
+    sort_code: '',
+    iban: '',
+    swift_bic: '',
+  });
 
   // Form state for draft
   const [draftForm, setDraftForm] = useState<DraftFormData>({
@@ -272,15 +283,40 @@ const Potential = () => {
     },
   });
 
+  // Fetch players from the main players database to check if already exists
+  const { data: existingPlayers = [] } = useQuery({
+    queryKey: ["existing-players"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("players")
+        .select("name");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Calculate exclusive rights and contributor players
   const playerRights = submissions.reduce((acc, report) => {
-    const playerName = report.player_name.toLowerCase();
-    const earliestReport = allPlayerNames.find(r => r.player_name.toLowerCase() === playerName);
+    const playerName = report.player_name.toLowerCase().trim();
     
-    if (earliestReport?.scout_id === scout?.id) {
-      acc.exclusive.push(report);
-    } else {
+    // First check if player already exists in the main players database
+    const existsInPlayersDb = existingPlayers.some(p => 
+      p.name.toLowerCase().trim() === playerName
+    );
+    
+    if (existsInPlayersDb) {
+      // Player is already in the main database - contributor only
       acc.contributor.push(report);
+    } else {
+      // Check if this scout was first to report
+      const earliestReport = allPlayerNames.find(r => r.player_name.toLowerCase().trim() === playerName);
+      
+      if (earliestReport?.scout_id === scout?.id) {
+        acc.exclusive.push(report);
+      } else {
+        acc.contributor.push(report);
+      }
     }
     
     return acc;
@@ -1488,52 +1524,73 @@ const Potential = () => {
               {/* Messages Section */}
               <Card className="lg:row-span-2">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-primary" />
-                    Messages
-                  </CardTitle>
-                  <CardDescription>
-                    Updates and announcements from the team
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <MessageSquare className="h-5 w-5 text-primary" />
+                        Messages
+                      </CardTitle>
+                      <CardDescription>
+                        Updates and announcements from the team
+                      </CardDescription>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => toast.info("New conversation feature coming soon")}>
+                      <Plus className="h-4 w-4 mr-1" />
+                      New
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ScrollArea className="h-[400px]">
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {messages.length === 0 ? (
                         <div className="text-center py-8">
                           <MessageSquare className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
                           <p className="text-muted-foreground text-sm">No messages yet</p>
                         </div>
                       ) : (
-                        messages.map((message) => (
-                          <div 
-                            key={message.id} 
-                            className={`p-4 rounded-lg border ${
-                              message.priority === "high" 
-                                ? 'border-red-500/30 bg-red-500/5' 
-                                : 'border-border bg-muted/30'
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <h4 className="font-medium">{message.title}</h4>
-                              {message.priority === "high" && (
-                                <span className="px-2 py-0.5 text-xs font-medium bg-red-500/10 text-red-500 rounded-full flex-shrink-0">
-                                  Urgent
-                                </span>
-                              )}
+                        messages.map((message, index) => {
+                          const isExpanded = expandedMessage === message.id || (index === 0 && !expandedMessage);
+                          return (
+                            <div 
+                              key={message.id} 
+                              className={`rounded-lg border cursor-pointer transition-all ${
+                                message.priority === "high" 
+                                  ? 'border-red-500/30 bg-red-500/5' 
+                                  : 'border-border bg-muted/30'
+                              } ${isExpanded ? 'ring-2 ring-primary/20' : 'hover:bg-accent/50'}`}
+                              onClick={() => setExpandedMessage(isExpanded && index !== 0 ? null : message.id)}
+                            >
+                              <div className="p-3">
+                                <div className="flex items-start justify-between gap-2">
+                                  <h4 className="font-medium text-sm">{message.title}</h4>
+                                  <div className="flex items-center gap-2">
+                                    {message.priority === "high" && (
+                                      <span className="px-2 py-0.5 text-xs font-medium bg-red-500/10 text-red-500 rounded-full flex-shrink-0">
+                                        Urgent
+                                      </span>
+                                    )}
+                                    <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                  </div>
+                                </div>
+                                {isExpanded && (
+                                  <div className="mt-2 pt-2 border-t border-border/50">
+                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap mb-2">{message.content}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {new Date(message.created_at).toLocaleDateString('en-GB', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <p className="text-sm text-muted-foreground whitespace-pre-wrap mb-2">{message.content}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(message.created_at).toLocaleDateString('en-GB', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </p>
-                          </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
                   </ScrollArea>
@@ -1551,7 +1608,7 @@ const Potential = () => {
                     Get in touch with the scouting team
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent>
                   <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-green-500 rounded-full">
@@ -1570,10 +1627,6 @@ const Potential = () => {
                       Message on WhatsApp
                     </Button>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    <p className="mb-2">For general enquiries:</p>
-                    <p className="font-medium">scouts@rise.football</p>
-                  </div>
                 </CardContent>
               </Card>
 
@@ -1591,31 +1644,132 @@ const Potential = () => {
                 <CardContent className="space-y-3">
                   <Button 
                     variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => {
-                      // Navigate to bank details or open modal
-                      window.open('/bank-details', '_blank');
-                    }}
+                    className="w-full justify-start group"
+                    onClick={() => setShowBankDetailsModal(true)}
                   >
                     <CreditCard className="h-4 w-4 mr-2" />
                     Bank Details
-                    <span className="ml-auto text-xs text-muted-foreground">View payment info</span>
+                    <span className="ml-auto text-xs text-muted-foreground group-hover:text-foreground transition-colors">View payment info</span>
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => {
-                      // Navigate to invoices or open modal
-                      toast.info("Invoices feature coming soon");
-                    }}
+                    className="w-full justify-start group"
+                    onClick={() => setShowInvoicesModal(true)}
                   >
                     <Receipt className="h-4 w-4 mr-2" />
                     Invoices
-                    <span className="ml-auto text-xs text-muted-foreground">View your invoices</span>
+                    <span className="ml-auto text-xs text-muted-foreground group-hover:text-foreground transition-colors">View your invoices</span>
                   </Button>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Bank Details Modal */}
+            {showBankDetailsModal && (
+              <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowBankDetailsModal(false)}>
+                <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CreditCard className="h-5 w-5 text-primary" />
+                      Your Bank Details
+                    </CardTitle>
+                    <CardDescription>
+                      Enter your payment details to receive commission payments
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Account Holder Name</Label>
+                      <Input
+                        value={bankDetailsForm.account_name}
+                        onChange={(e) => setBankDetailsForm({...bankDetailsForm, account_name: e.target.value})}
+                        placeholder="Full name on account"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Bank Name</Label>
+                      <Input
+                        value={bankDetailsForm.bank_name}
+                        onChange={(e) => setBankDetailsForm({...bankDetailsForm, bank_name: e.target.value})}
+                        placeholder="e.g., Barclays, HSBC"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Account Number</Label>
+                        <Input
+                          value={bankDetailsForm.account_number}
+                          onChange={(e) => setBankDetailsForm({...bankDetailsForm, account_number: e.target.value})}
+                          placeholder="12345678"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Sort Code</Label>
+                        <Input
+                          value={bankDetailsForm.sort_code}
+                          onChange={(e) => setBankDetailsForm({...bankDetailsForm, sort_code: e.target.value})}
+                          placeholder="12-34-56"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>IBAN (for international transfers)</Label>
+                      <Input
+                        value={bankDetailsForm.iban}
+                        onChange={(e) => setBankDetailsForm({...bankDetailsForm, iban: e.target.value})}
+                        placeholder="GB82 WEST 1234 5698 7654 32"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>SWIFT/BIC Code</Label>
+                      <Input
+                        value={bankDetailsForm.swift_bic}
+                        onChange={(e) => setBankDetailsForm({...bankDetailsForm, swift_bic: e.target.value})}
+                        placeholder="BUKBGB22"
+                      />
+                    </div>
+                    <div className="flex gap-3 pt-2">
+                      <Button variant="outline" className="flex-1" onClick={() => setShowBankDetailsModal(false)}>
+                        Cancel
+                      </Button>
+                      <Button className="flex-1" onClick={() => {
+                        toast.success("Bank details saved successfully");
+                        setShowBankDetailsModal(false);
+                      }}>
+                        Save Details
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Invoices Modal */}
+            {showInvoicesModal && (
+              <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowInvoicesModal(false)}>
+                <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Receipt className="h-5 w-5 text-primary" />
+                      Your Invoices
+                    </CardTitle>
+                    <CardDescription>
+                      View and download your commission invoices
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <Receipt className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                      <p className="text-muted-foreground">No invoices yet</p>
+                      <p className="text-sm text-muted-foreground mt-1">Invoices will appear here once commissions are processed</p>
+                    </div>
+                    <Button variant="outline" className="w-full mt-4" onClick={() => setShowInvoicesModal(false)}>
+                      Close
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>
