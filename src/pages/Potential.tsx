@@ -803,9 +803,9 @@ const Potential = () => {
             {/* Scouting Map */}
             <Card>
               <CardHeader>
-                <CardTitle>Your Scouting Network</CardTitle>
+                <CardTitle>Our Scouting Network</CardTitle>
                 <CardDescription>
-                  Geographic reach of your scouting reports
+                  Geographic reach of all scouting reports
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -925,17 +925,6 @@ const Potential = () => {
                 </Card>
               </div>
             )}
-            
-            {/* Database Check Note */}
-            {submissions.length > 0 && (
-              <Card className="border-muted bg-muted/30">
-                <CardContent className="pt-4 pb-4">
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    <strong>Note:</strong> The database is autochecked. It is possible that the player is named differently e.g. Ronaldinho could be down as Ronaldinho Gaúcho or Ronaldo de Assis Moreira instead and not being picked up, however anything written as <span className="text-yellow-600 font-medium">likely</span> is almost certain to be guaranteed. Sometimes incorrect data such as year of birth being wrong can also show it, so we cross-check before confirming.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
           </TabsContent>
 
           {/* My Submissions Tab */}
@@ -977,6 +966,15 @@ const Potential = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Database Check Note */}
+            <Card className="border-muted bg-muted/30">
+              <CardContent className="pt-4 pb-4">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  <strong>Note:</strong> The database is autochecked. It is possible that the player is named differently e.g. Ronaldinho could be down as Ronaldinho Gaúcho or Ronaldo de Assis Moreira instead and not being picked up, however anything written as <span className="text-yellow-600 font-medium">likely</span> is almost certain to be guaranteed. Sometimes incorrect data such as year of birth being wrong can also show it, so we cross-check before confirming.
+                </p>
+              </CardContent>
+            </Card>
 
             {/* Search */}
             <div className="relative">
@@ -1747,41 +1745,59 @@ const Potential = () => {
                 </CardContent>
               </Card>
 
-              {/* Contact & Commission Section */}
+              {/* Contact Us Section */}
               <Card>
-                <CardContent className="p-4 space-y-4">
-                  {/* Commission Rates */}
-                  <div>
-                    <h4 className="font-medium text-sm mb-2">Commission Rates</h4>
-                    <p className="text-xs text-muted-foreground mb-2">On all earnings</p>
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-green-600 font-medium">Exclusive Rights</span>
-                        <span className="font-bold">10%</span>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Send className="h-4 w-4 text-primary" />
+                    Contact Us
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Get in touch with the scouting team
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-500 rounded-full">
+                        <Phone className="h-4 w-4 text-white" />
                       </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-blue-600 font-medium">Contributor</span>
-                        <span className="font-bold">up to 5%</span>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm text-green-700 dark:text-green-400">Urgent Messages</p>
+                        <p className="text-xs text-muted-foreground">For time-sensitive matters</p>
                       </div>
-                      <p className="text-xs text-muted-foreground italic mt-1">
-                        (level of importance and new detail will increase the %)
-                      </p>
                     </div>
-                  </div>
-                  
-                  <div className="border-t border-border pt-3">
-                    <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                      <Send className="h-4 w-4 text-primary" />
-                      Contact Us
-                    </h4>
                     <Button 
                       size="sm"
-                      className="w-full bg-green-600 hover:bg-green-700"
+                      className="w-full mt-3 bg-green-600 hover:bg-green-700"
                       onClick={() => window.open('https://wa.me/447000000000', '_blank')}
                     >
                       <Phone className="h-3 w-3 mr-2" />
-                      WhatsApp
+                      Message on WhatsApp
                     </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Commission Rates Section */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Commission Rates</CardTitle>
+                  <CardDescription className="text-xs">On all earnings</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm p-2 rounded bg-green-500/10">
+                      <span className="text-green-600 font-medium">Exclusive Rights</span>
+                      <span className="font-bold">10%</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm p-2 rounded bg-blue-500/10">
+                      <span className="text-blue-600 font-medium">Contributor</span>
+                      <span className="font-bold">up to 5%</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground italic pt-1">
+                      (level of importance and new detail will increase the %)
+                    </p>
                   </div>
                 </CardContent>
               </Card>
