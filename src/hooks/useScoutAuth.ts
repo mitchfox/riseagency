@@ -36,7 +36,7 @@ export const useScoutAuth = () => {
         const { data, error } = await supabase
           .from("scouts")
           .select("*")
-          .eq("email", scoutEmail)
+          .ilike("email", scoutEmail.toLowerCase().trim())
           .maybeSingle();
 
         if (error || !data) {
