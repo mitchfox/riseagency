@@ -54,7 +54,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
   const { t } = useLanguage();
   const [viewBox, setViewBox] = useState("0 0 1000 600");
   const [zoomLevel, setZoomLevel] = useState(0); // 0 = out, 1 = medium, 2 = fully zoomed
-  const [showGrid, setShowGrid] = useState(true);
+  const [showGrid, setShowGrid] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(initialCountry || null);
   const [selectedCluster, setSelectedCluster] = useState<{x: number, y: number} | null>(null);
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
@@ -976,10 +976,10 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
   };
 
   return (
-    <div className="w-full h-full">
-      <div className={hideStats ? "h-full" : "grid grid-cols-1 lg:grid-cols-4 gap-4"} style={!hideStats ? { maxHeight: '650px' } : undefined}>
+    <div className="w-full h-full overflow-auto">
+      <div className={hideStats ? "h-full min-h-[400px]" : "grid grid-cols-1 lg:grid-cols-4 gap-4"} style={!hideStats ? { maxHeight: '650px' } : undefined}>
         {/* Map Section */}
-        <div className={`${hideStats ? "h-full" : "lg:col-span-3"} bg-card rounded-lg p-2 md:p-3 border relative -mx-4 md:mx-0`}>
+        <div className={`${hideStats ? "h-full min-h-[350px]" : "lg:col-span-3"} bg-card rounded-lg p-2 md:p-3 border relative`}>
           {/* Country Flag Overlay when zoomed - compact on mobile */}
           {selectedCountry && (
             <div className="absolute top-2 left-2 md:top-6 md:left-6 z-10 bg-card/95 backdrop-blur-sm border border-primary/20 rounded-lg p-2 md:p-4 shadow-xl">
@@ -1366,17 +1366,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
             })}
           </svg>
 
-          {/* Legend - only show grid toggle when not hidden */}
-          {!hideGridToggle && (
-            <div className="flex items-center justify-center gap-6 mt-2 text-sm">
-              <button
-                onClick={() => setShowGrid(!showGrid)}
-                className="flex items-center gap-2 px-3 py-1 rounded border border-border hover:bg-accent transition-colors"
-              >
-                <span>{showGrid ? t("map.hide_grid", "Hide") : t("map.show_grid", "Show")} {t("map.grid", "Grid")}</span>
-              </button>
-            </div>
-          )}
+          {/* Grid toggle removed - no longer needed */}
         </div>
 
           {/* Stats & Details Section - only show when hideStats is false */}
