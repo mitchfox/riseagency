@@ -22,7 +22,7 @@ const ScoutLogin = () => {
         const { data } = await supabase
           .from("scouts")
           .select("id")
-          .eq("email", scoutEmail)
+          .ilike("email", scoutEmail.toLowerCase().trim())
           .maybeSingle();
           
         if (data) {
