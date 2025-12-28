@@ -53,6 +53,7 @@ const PlayersDraft = lazy(() => import("./pages/PlayersDraft"));
 // ClubNetwork is accessed only through Staff page, not as a standalone route
 const PDFViewer = lazy(() => import("./pages/PDFViewer"));
 const ScoutPortal = lazy(() => import("./pages/ScoutPortal"));
+const ScoutLogin = lazy(() => import("./pages/ScoutLogin"));
 const Potential = lazy(() => import("./pages/Potential"));
 const RealisePotential = lazy(() => import("./pages/RealisePotential"));
 const YouthPlayers = lazy(() => import("./pages/YouthPlayers"));
@@ -143,6 +144,7 @@ const App = () => {
                       {/* Club Network is now only accessible via Staff page */}
                       <Route path="/staff" element={<ErrorBoundary><Staff /></ErrorBoundary>} />
                       <Route path="/scout-portal" element={<ScoutPortal />} />
+                      <Route path="/scout-login" element={<ScoutLogin />} />
                       <Route path="/potential" element={<Potential />} />
                       <Route path="/realise-potential" element={<RealisePotential />} />
                       {createLocalizedRoutes('/youth-players', <YouthPlayers />)}

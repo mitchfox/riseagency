@@ -311,7 +311,7 @@ function LandingContent() {
         </div>
       </div>
       
-      {/* Portal & Staff links - subtle top right */}
+      {/* Portal, Staff & Scouts links - subtle top right */}
       <div className="absolute top-6 md:top-8 right-2 md:right-4 z-50 flex items-center gap-3">
         <Link to="/staff" className="text-white/20 hover:text-white/50 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
           {t("header.staff", "Staff")}
@@ -319,6 +319,9 @@ function LandingContent() {
         <LocalizedLink to="/portal" className="text-white/20 hover:text-white/50 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
           {t("header.portal", "Portal")}
         </LocalizedLink>
+        <Link to="/scout-login" className="text-white/20 hover:text-white/50 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
+          {t("header.scouts", "Scouts")}
+        </Link>
       </div>
       
       {/* 3D Player Effect - Single instance with responsive CSS positioning */}
