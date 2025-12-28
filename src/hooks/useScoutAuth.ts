@@ -65,7 +65,7 @@ export const useScoutAuth = () => {
     localStorage.removeItem("scout_remember_me");
     localStorage.removeItem("scout_login_timestamp");
     setScout(null);
-    navigate("/login");
+    navigate("/staff");
   };
 
   return { scout, loading, signOut };
