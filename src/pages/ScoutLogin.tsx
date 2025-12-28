@@ -51,22 +51,29 @@ const ScoutLogin = () => {
     setLoading(true);
 
     try {
+      const trimmedEmail = email.toLowerCase().trim();
       const { data: scout, error: scoutError } = await supabase
         .from("scouts")
-        .select("id, email")
-        .eq("email", email)
+        .select("id, email, status")
+        .ilike("email", trimmedEmail)
         .maybeSingle();
 
       if (scoutError) throw scoutError;
       
       if (scout) {
+        // Check if scout is active
+        if (scout.status && scout.status !== 'active') {
+          toast.error('Your scout account is not currently active. Please contact the agency.');
+          return;
+        }
+
         try {
-          localStorage.setItem("scout_email", email);
-          sessionStorage.setItem("scout_email", email);
+          localStorage.setItem("scout_email", trimmedEmail);
+          sessionStorage.setItem("scout_email", trimmedEmail);
           localStorage.setItem("scout_login_timestamp", Date.now().toString());
           
           if (rememberMe) {
-            localStorage.setItem("scout_saved_email", email);
+            localStorage.setItem("scout_saved_email", trimmedEmail);
             localStorage.setItem("scout_remember_me", "true");
           } else {
             localStorage.removeItem("scout_saved_email");
