@@ -690,34 +690,35 @@ const Potential = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bebas tracking-wider">Potential</h1>
-              <p className="text-sm text-muted-foreground">Scout Portal - {scout?.name}</p>
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bebas tracking-wider">Potential</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Scout Portal - {scout?.name}</p>
             </div>
-            <Button onClick={signOut} variant="outline" size="sm">
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
+            <Button onClick={signOut} variant="outline" size="sm" className="flex-shrink-0">
+              <LogOut className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Sign Out</span>
             </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">
-              <Globe className="h-4 w-4 mr-2" />
-              Overview
+          <TabsList className="grid w-full grid-cols-4 h-auto p-1">
+            <TabsTrigger value="overview" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
+              <Globe className="h-4 w-4" />
+              <span className="hidden sm:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="submissions">
-              <Users className="h-4 w-4 mr-2" />
-              My Submissions
+            <TabsTrigger value="submissions" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">My Submissions</span>
             </TabsTrigger>
             <TabsTrigger 
               value="drafts" 
+              className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm"
               onClick={() => {
                 if (isCreatingNew) {
                   handleAutoSave();
@@ -725,19 +726,19 @@ const Potential = () => {
                 setIsCreatingNew(false);
               }}
             >
-              <FileText className="h-4 w-4 mr-2" />
-              Drafts
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Drafts</span>
             </TabsTrigger>
-            <TabsTrigger value="admin">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Admin
+            <TabsTrigger value="admin" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">Admin</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-4 sm:space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <Card>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -802,14 +803,14 @@ const Potential = () => {
 
             {/* Scouting Map */}
             <Card>
-              <CardHeader>
-                <CardTitle>Our Scouting Network</CardTitle>
-                <CardDescription>
+              <CardHeader className="pb-2 sm:pb-6">
+                <CardTitle className="text-base sm:text-lg">Our Scouting Network</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
                   Geographic reach of all scouting reports
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="h-[500px] rounded-lg overflow-hidden border border-border">
+              <CardContent className="px-2 sm:px-6">
+                <div className="h-[350px] sm:h-[500px] rounded-lg overflow-hidden border border-border">
                   <ScoutingNetworkMap />
                 </div>
               </CardContent>
@@ -1667,21 +1668,16 @@ const Potential = () => {
           </TabsContent>
 
           {/* Admin Tab */}
-          <TabsContent value="admin" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value="admin" className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Messages Section */}
               <Card className="lg:row-span-2">
-                <CardHeader>
+                <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <MessageSquare className="h-5 w-5 text-primary" />
-                        Messages
-                      </CardTitle>
-                      <CardDescription>
-                        Updates and announcements from the team
-                      </CardDescription>
-                    </div>
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <MessageSquare className="h-5 w-5 text-primary" />
+                      Messages
+                    </CardTitle>
                     <Button variant="outline" size="sm" onClick={() => setShowNewMessageModal(true)}>
                       <Plus className="h-4 w-4 mr-1" />
                       New
