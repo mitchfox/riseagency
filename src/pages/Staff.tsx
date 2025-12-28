@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -114,7 +112,6 @@ const Staff = () => {
   const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -187,32 +184,38 @@ const Staff = () => {
   }, []);
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          checkStaffRole(session.user.id);
+    // Check for existing staff session from localStorage/sessionStorage
+    const checkExistingSession = async () => {
+      const staffEmail = localStorage.getItem("staff_email") || sessionStorage.getItem("staff_email");
+      const staffUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
+      
+      if (staffEmail && staffUserId) {
+        // Verify the user still has staff role
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', staffUserId)
+          .in('role', ['staff', 'admin', 'marketeer']);
+
+        if (!roleError && roleData && roleData.length > 0) {
+          const hasStaffOrAdmin = roleData.some(row => row.role === 'staff' || row.role === 'admin');
+          const hasMarketeer = roleData.some(row => row.role === 'marketeer');
+          setIsStaff(hasStaffOrAdmin || hasMarketeer);
+          setIsAdmin(roleData.some(row => row.role === 'admin'));
+          setIsMarketeer(hasMarketeer);
+          setUser({ id: staffUserId, email: staffEmail } as User);
         } else {
-          setIsStaff(false);
-          setIsAdmin(false);
-          setIsMarketeer(false);
-          setLoading(false);
+          // Clear invalid session
+          localStorage.removeItem("staff_email");
+          localStorage.removeItem("staff_user_id");
+          sessionStorage.removeItem("staff_email");
+          sessionStorage.removeItem("staff_user_id");
         }
       }
-    );
+      setLoading(false);
+    };
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkStaffRole(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    checkExistingSession();
   }, []);
 
   const checkStaffRole = async (userId: string) => {
@@ -404,44 +407,81 @@ const Staff = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Check if email exists in auth.users and has staff/admin/marketeer role
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
 
-      if (error) {
-        toast.error(error.message);
+      if (userError) {
+        console.error('Error checking user:', userError);
+        toast.error('An error occurred during login');
         setLoading(false);
         return;
       }
 
-      if (data.user) {
-        // Save email and remember me preference if checked
-        if (rememberMe) {
-          localStorage.setItem("staff_saved_email", email);
-          localStorage.setItem("staff_remember_me", "true");
-        } else {
-          localStorage.removeItem("staff_saved_email");
-          localStorage.removeItem("staff_remember_me");
-        }
-        
-        await checkStaffRole(data.user.id);
-        toast.success("Login successful");
+      if (!userData) {
+        toast.error('Email not found. Please contact an administrator for access.');
+        setLoading(false);
+        return;
       }
+
+      // Check if user has staff, admin, or marketeer role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userData.id)
+        .in('role', ['staff', 'admin', 'marketeer']);
+
+      if (roleError || !roleData || roleData.length === 0) {
+        toast.error('You do not have staff permissions to access this page.');
+        setLoading(false);
+        return;
+      }
+
+      // Store login state
+      if (rememberMe) {
+        localStorage.setItem("staff_saved_email", email);
+        localStorage.setItem("staff_remember_me", "true");
+      } else {
+        localStorage.removeItem("staff_saved_email");
+        localStorage.removeItem("staff_remember_me");
+      }
+      
+      // Store staff session
+      localStorage.setItem("staff_email", email);
+      localStorage.setItem("staff_user_id", userData.id);
+      sessionStorage.setItem("staff_email", email);
+      sessionStorage.setItem("staff_user_id", userData.id);
+      
+      // Set user state with minimal info
+      const hasStaffOrAdmin = roleData.some(row => row.role === 'staff' || row.role === 'admin');
+      const hasMarketeer = roleData.some(row => row.role === 'marketeer');
+      setIsStaff(hasStaffOrAdmin || hasMarketeer);
+      setIsAdmin(roleData.some(row => row.role === 'admin'));
+      setIsMarketeer(hasMarketeer);
+      setUser({ id: userData.id, email } as User);
+      
+      toast.success("Login successful");
     } catch (err) {
+      console.error('Login error:', err);
       toast.error("An error occurred during login");
+    } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    localStorage.removeItem("staff_email");
+    localStorage.removeItem("staff_user_id");
+    sessionStorage.removeItem("staff_email");
+    sessionStorage.removeItem("staff_user_id");
     setUser(null);
     setIsStaff(false);
     setIsAdmin(false);
     setIsMarketeer(false);
     setEmail("");
-    setPassword("");
     toast.success("Logged out");
   };
 
@@ -452,63 +492,47 @@ const Staff = () => {
   // Show login form if not authenticated
   if (!user) {
     return (
-      <div className="min-h-screen bg-background overflow-x-hidden">
-        <Header />
-        <main className="py-20">
-          <div className="max-w-md mx-4 md:mx-auto">
-            <Card className="w-full">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold text-center">
-                  Staff Login
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4" autoComplete="on">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="staff@example.com"
-                      required
-                      autoFocus
-                      autoComplete="email"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      name="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      autoComplete="current-password"
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="remember-me-staff"
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    />
-                    <Label htmlFor="remember-me-staff" className="text-sm cursor-pointer">
-                      Remember me
-                    </Label>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Logging in..." : "Access Dashboard"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-        <Footer />
+      <div className="min-h-screen bg-background flex items-center justify-center overflow-x-hidden">
+        <div className="max-w-md w-full mx-4">
+          <Card className="w-full">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold text-center">
+                Staff Login
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleLogin} className="space-y-4" autoComplete="on">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="staff@example.com"
+                    required
+                    autoFocus
+                    autoComplete="email"
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember-me-staff"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  />
+                  <Label htmlFor="remember-me-staff" className="text-sm cursor-pointer">
+                    Remember me
+                  </Label>
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Logging in..." : "Access Dashboard"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -516,28 +540,24 @@ const Staff = () => {
   // Show access denied if user is authenticated but not staff
   if (!isStaff) {
     return (
-      <div className="min-h-screen bg-background overflow-x-hidden">
-        <Header />
-        <main className="py-20">
-          <div className="max-w-md mx-4 md:mx-auto">
-            <Card className="w-full">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold text-center text-destructive">
-                  Access Denied
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-center text-muted-foreground">
-                  You do not have staff permissions to access this page.
-                </p>
-                <Button onClick={handleLogout} className="w-full" variant="outline">
-                  Logout
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-        <Footer />
+      <div className="min-h-screen bg-background flex items-center justify-center overflow-x-hidden">
+        <div className="max-w-md w-full mx-4">
+          <Card className="w-full">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold text-center text-destructive">
+                Access Denied
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-center text-muted-foreground">
+                You do not have staff permissions to access this page.
+              </p>
+              <Button onClick={handleLogout} className="w-full" variant="outline">
+                Logout
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
