@@ -23,20 +23,30 @@ serve(async (req) => {
       }
     );
 
-    // Verify the request is from an admin
+    const body = await req.json();
+    const { email, password, role, full_name, reset_password, admin_user_id } = body;
+
+    // Support two auth methods:
+    // 1. Traditional Bearer token (Supabase Auth)
+    // 2. admin_user_id in body (custom staff login)
+    let adminUserId: string | null = null;
+
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+      if (!userError && user) {
+        adminUserId = user.id;
+      }
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+    // Fallback to admin_user_id from body (for custom staff login)
+    if (!adminUserId && admin_user_id) {
+      adminUserId = admin_user_id;
+    }
 
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    if (!adminUserId) {
+      return new Response(JSON.stringify({ error: "Missing authentication" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -46,7 +56,7 @@ serve(async (req) => {
     const { data: roleData, error: roleError } = await supabaseAdmin
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id)
+      .eq("user_id", adminUserId)
       .in("role", ["admin"]);
 
     if (roleError || !roleData || roleData.length === 0) {
@@ -55,8 +65,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const { email, password, role, full_name, reset_password } = await req.json();
 
     if (!email || !role) {
       return new Response(

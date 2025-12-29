@@ -21,21 +21,31 @@ Deno.serve(async (req) => {
       },
     });
 
-    // Verify the requesting user is an admin
+    const body = await req.json();
+    const { user_id, admin_user_id } = body;
+
+    // Support two auth methods:
+    // 1. Traditional Bearer token (Supabase Auth)
+    // 2. admin_user_id in body (custom staff login)
+    let requestingUserId: string | null = null;
+
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "No authorization header" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+      if (!userError && user) {
+        requestingUserId = user.id;
+      }
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user: requestingUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    // Fallback to admin_user_id from body (for custom staff login)
+    if (!requestingUserId && admin_user_id) {
+      requestingUserId = admin_user_id;
+    }
 
-    if (authError || !requestingUser) {
+    if (!requestingUserId) {
       return new Response(
-        JSON.stringify({ error: "Invalid token" }),
+        JSON.stringify({ error: "Missing authentication" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -44,7 +54,7 @@ Deno.serve(async (req) => {
     const { data: adminRole } = await supabaseAdmin
       .from("user_roles")
       .select("role")
-      .eq("user_id", requestingUser.id)
+      .eq("user_id", requestingUserId)
       .eq("role", "admin")
       .single();
 
@@ -55,8 +65,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { user_id } = await req.json();
-
     if (!user_id) {
       return new Response(
         JSON.stringify({ error: "user_id is required" }),
@@ -65,7 +73,7 @@ Deno.serve(async (req) => {
     }
 
     // Prevent self-deletion
-    if (user_id === requestingUser.id) {
+    if (user_id === requestingUserId) {
       return new Response(
         JSON.stringify({ error: "You cannot delete your own account" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
