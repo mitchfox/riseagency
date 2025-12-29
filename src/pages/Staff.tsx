@@ -112,6 +112,7 @@ const Staff = () => {
   const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -184,17 +185,16 @@ const Staff = () => {
   }, []);
 
   useEffect(() => {
-    // Check for existing staff session from localStorage/sessionStorage
+    // Check for existing Supabase Auth session
     const checkExistingSession = async () => {
-      const staffEmail = localStorage.getItem("staff_email") || sessionStorage.getItem("staff_email");
-      const staffUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (staffEmail && staffUserId) {
+      if (session?.user) {
         // Verify the user still has staff role
         const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', staffUserId)
+          .eq('user_id', session.user.id)
           .in('role', ['staff', 'admin', 'marketeer']);
 
         if (!roleError && roleData && roleData.length > 0) {
@@ -203,19 +203,38 @@ const Staff = () => {
           setIsStaff(hasStaffOrAdmin || hasMarketeer);
           setIsAdmin(roleData.some(row => row.role === 'admin'));
           setIsMarketeer(hasMarketeer);
-          setUser({ id: staffUserId, email: staffEmail } as User);
+          setUser(session.user);
+          
+          // Store for edge function auth
+          localStorage.setItem("staff_email", session.user.email || '');
+          localStorage.setItem("staff_user_id", session.user.id);
+          sessionStorage.setItem("staff_email", session.user.email || '');
+          sessionStorage.setItem("staff_user_id", session.user.id);
         } else {
-          // Clear invalid session
-          localStorage.removeItem("staff_email");
-          localStorage.removeItem("staff_user_id");
-          sessionStorage.removeItem("staff_email");
-          sessionStorage.removeItem("staff_user_id");
+          // No staff role, sign out
+          await supabase.auth.signOut();
         }
       }
       setLoading(false);
     };
 
     checkExistingSession();
+    
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setIsStaff(false);
+        setIsAdmin(false);
+        setIsMarketeer(false);
+        localStorage.removeItem("staff_email");
+        localStorage.removeItem("staff_user_id");
+        sessionStorage.removeItem("staff_email");
+        sessionStorage.removeItem("staff_user_id");
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const checkStaffRole = async (userId: string) => {
@@ -407,22 +426,21 @@ const Staff = () => {
     setLoading(true);
 
     try {
-      // Check if email exists in auth.users and has staff/admin/marketeer role
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle();
+      // Use Supabase Auth with email and password
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (userError) {
-        console.error('Error checking user:', userError);
-        toast.error('An error occurred during login');
+      if (authError) {
+        console.error('Auth error:', authError);
+        toast.error(authError.message || 'Invalid email or password');
         setLoading(false);
         return;
       }
 
-      if (!userData) {
-        toast.error('Email not found. Please contact an administrator for access.');
+      if (!authData.user) {
+        toast.error('Login failed. Please try again.');
         setLoading(false);
         return;
       }
@@ -431,10 +449,12 @@ const Staff = () => {
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', userData.id)
+        .eq('user_id', authData.user.id)
         .in('role', ['staff', 'admin', 'marketeer']);
 
       if (roleError || !roleData || roleData.length === 0) {
+        // Sign out if no staff role
+        await supabase.auth.signOut();
         toast.error('You do not have staff permissions to access this page.');
         setLoading(false);
         return;
@@ -449,19 +469,19 @@ const Staff = () => {
         localStorage.removeItem("staff_remember_me");
       }
       
-      // Store staff session
+      // Store staff session info for edge functions
       localStorage.setItem("staff_email", email);
-      localStorage.setItem("staff_user_id", userData.id);
+      localStorage.setItem("staff_user_id", authData.user.id);
       sessionStorage.setItem("staff_email", email);
-      sessionStorage.setItem("staff_user_id", userData.id);
+      sessionStorage.setItem("staff_user_id", authData.user.id);
       
-      // Set user state with minimal info
+      // Set user state
       const hasStaffOrAdmin = roleData.some(row => row.role === 'staff' || row.role === 'admin');
       const hasMarketeer = roleData.some(row => row.role === 'marketeer');
       setIsStaff(hasStaffOrAdmin || hasMarketeer);
       setIsAdmin(roleData.some(row => row.role === 'admin'));
       setIsMarketeer(hasMarketeer);
-      setUser({ id: userData.id, email } as User);
+      setUser(authData.user);
       
       toast.success("Login successful");
     } catch (err) {
@@ -473,6 +493,7 @@ const Staff = () => {
   };
 
   const handleLogout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem("staff_email");
     localStorage.removeItem("staff_user_id");
     sessionStorage.removeItem("staff_email");
@@ -482,6 +503,7 @@ const Staff = () => {
     setIsAdmin(false);
     setIsMarketeer(false);
     setEmail("");
+    setPassword("");
     toast.success("Logged out");
   };
 
@@ -514,6 +536,19 @@ const Staff = () => {
                     required
                     autoFocus
                     autoComplete="email"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                    autoComplete="current-password"
                   />
                 </div>
                 <div className="flex items-center space-x-2">
