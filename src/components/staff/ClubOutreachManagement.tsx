@@ -117,11 +117,11 @@ export const ClubOutreachManagement = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch players (exclude scouted players)
+      // Fetch only represented/mandated players (actual clients)
       const { data: playersData } = await supabase
         .from("players")
         .select("id, name, representation_status")
-        .neq("representation_status", "scouted")
+        .in("representation_status", ["mandated", "represented"])
         .order("name");
       setPlayers(playersData || []);
 
