@@ -118,16 +118,27 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
   }, [playerId]);
 
   const fetchPrograms = async () => {
-    const { data, error } = await supabase
-      .from("player_nutrition_programs")
-      .select("*")
-      .eq("player_id", playerId)
-      .order("is_current", { ascending: false });
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("player_nutrition_programs")
+        .select("*")
+        .eq("player_id", playerId)
+        .order("is_current", { ascending: false });
 
-    if (!error && data) {
-      setPrograms(data as NutritionProgram[]);
+      if (error) {
+        console.error("Error fetching nutrition programs:", error);
+        toast.error("Failed to load nutrition programs");
+        setPrograms([]);
+      } else {
+        setPrograms(data as NutritionProgram[]);
+      }
+    } catch (err) {
+      console.error("Exception fetching nutrition programs:", err);
+      setPrograms([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSave = async () => {
