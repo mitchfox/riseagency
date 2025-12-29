@@ -26,10 +26,25 @@ export const openExternalUrl = (url: string) => {
 
 /**
  * Downloads a file from a URL by fetching it and creating a blob URL.
- * This is useful when direct linking is blocked by CORS.
+ * For Supabase storage URLs, uses direct download parameter for reliability.
  */
 export const downloadFile = async (url: string, filename?: string) => {
   try {
+    // For Supabase storage URLs, use direct download parameter
+    if (url.includes('supabase.co/storage')) {
+      const downloadUrl = url.includes('?') ? `${url}&download=` : `${url}?download=`;
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename || url.split('/').pop()?.split('?')[0] || 'download';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
+    }
+
+    // For other URLs, try fetch approach
     const response = await fetch(url);
     const blob = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
