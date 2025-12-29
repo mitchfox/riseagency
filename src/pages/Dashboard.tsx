@@ -39,6 +39,7 @@ import { PaymentOptions } from "@/components/player/PaymentOptions";
 import { PlayerTransferHub } from "@/components/player/TransferHub";
 import { PlayerProgrammingNotes } from "@/components/player/PlayerProgrammingNotes";
 import { CognisanceSection } from "@/components/portal/CognisanceSection";
+import { NutritionProgramDisplay } from "@/components/portal/NutritionProgramDisplay";
 
 interface Analysis {
   id: string;
@@ -144,6 +145,7 @@ const Dashboard = () => {
   const [testHistoryOpen, setTestHistoryOpen] = useState(false);
   const [selectedHistoryMonth, setSelectedHistoryMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
   const [savingTestResult, setSavingTestResult] = useState(false);
+  const [nutritionPrograms, setNutritionPrograms] = useState<any[]>([]);
 
 
   // Initialize push notifications with player ID
@@ -812,6 +814,7 @@ const Dashboard = () => {
       await fetchInvoices(playerEmail);
       await fetchUpdates(player.id);
       await fetchTestResults(player.id);
+      await fetchNutritionPrograms(player.id);
     } catch (error) {
       console.error("Error loading data:", error);
       
@@ -1273,6 +1276,21 @@ const Dashboard = () => {
     }
   };
 
+  const fetchNutritionPrograms = async (playerId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("player_nutrition_programs")
+        .select("*")
+        .eq("player_id", playerId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setNutritionPrograms(data || []);
+    } catch (error) {
+      console.error("Error fetching nutrition programs:", error);
+    }
+  };
+
   // Track subheader visibility for sticky dropdown menu
   useEffect(() => {
     const handleScroll = () => {
@@ -1569,6 +1587,7 @@ const Dashboard = () => {
                     {activeTab === "updates" && "Updates"}
                     {activeTab === "highlights" && "Highlights"}
                     {activeTab === "transfer-hub" && "Transfer Hub"}
+                    {activeTab === "nutrition" && "Nutrition"}
                   </span>
                   <ChevronDown className="ml-2 h-5 w-5" />
                 </Button>
@@ -1616,6 +1635,14 @@ const Dashboard = () => {
                 >
                   Transfer Hub
                 </DropdownMenuItem>
+                {nutritionPrograms.length > 0 && (
+                  <DropdownMenuItem 
+                    onClick={() => setActiveTab("nutrition")}
+                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                  >
+                    Nutrition
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem 
                   onClick={() => setShowProfileModal(true)}
                   className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"

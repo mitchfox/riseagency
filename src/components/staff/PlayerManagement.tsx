@@ -10,6 +10,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
+import { NutritionProgramManagement } from "./NutritionProgramManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
 import { PlayerImages } from "./PlayerImages";
 import { PlayerScoutingManagement } from "./PlayerScoutingManagement";
@@ -2070,205 +2071,221 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </TabsContent>
 
               <TabsContent value="programming" className="mt-4 md:mt-0">
-                {/* Player Notes and Next Program Notes - Side by Side - MOVED TO TOP */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  {/* Programming Notes Card - Shows in player's Physical Programming section */}
-                  <Card>
-                    <CardHeader className="px-3 md:px-6 py-3 md:py-4">
-                      <CardTitle className="text-base">Programming Notes</CardTitle>
-                      <p className="text-xs text-muted-foreground">Health, needs, training considerations - visible in player's programming section</p>
-                    </CardHeader>
-                    <CardContent className="px-3 md:px-6 py-4">
-                      <Textarea
-                        placeholder="Add notes about the player's health, specific needs, training considerations..."
-                        value={(selectedPlayer as any)?.programming_notes || ''}
-                        onChange={async (e) => {
-                          const newValue = e.target.value;
-                          // Optimistic update
-                          setPlayers(prev => prev.map(p => 
-                            p.id === selectedPlayerId ? { ...p, programming_notes: newValue } : p
-                          ));
-                        }}
-                        onBlur={async (e) => {
-                          try {
-                            const { error } = await supabase
-                              .from('players')
-                              .update({ programming_notes: e.target.value } as any)
-                              .eq('id', selectedPlayerId);
-                            if (error) throw error;
-                          } catch (error: any) {
-                            toast.error('Failed to save notes: ' + error.message);
-                          }
-                        }}
-                        className="min-h-[200px] resize-none"
-                      />
-                    </CardContent>
-                  </Card>
+                <Tabs defaultValue="sps" className="w-full">
+                  <TabsList className="flex flex-col md:grid md:grid-cols-2 w-full gap-2 bg-muted/20 rounded-lg p-2 mb-[60px] md:mb-4">
+                    <TabsTrigger value="sps" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Strength, Power & Speed (SPS)</TabsTrigger>
+                    <TabsTrigger value="nutrition" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Nutrition</TabsTrigger>
+                  </TabsList>
 
-                  {/* Next Program Notes Card */}
-                  <Card>
-                    <CardHeader className="px-3 md:px-6 py-3 md:py-4">
-                      <CardTitle className="text-base">Next Program Notes</CardTitle>
-                      <p className="text-xs text-muted-foreground">Ideas and brainstorming for upcoming programs</p>
-                    </CardHeader>
-                    <CardContent className="px-3 md:px-6 py-4">
-                      <Textarea
-                        placeholder="Brainstorm ideas for the player's next training program, goals, focus areas..."
-                        value={selectedPlayer?.next_program_notes || ''}
-                        onChange={async (e) => {
-                          const newValue = e.target.value;
-                          // Optimistic update
-                          setPlayers(prev => prev.map(p => 
-                            p.id === selectedPlayerId ? { ...p, next_program_notes: newValue } : p
-                          ));
-                        }}
-                        onBlur={async (e) => {
-                          try {
-                            const { error } = await supabase
-                              .from('players')
-                              .update({ next_program_notes: e.target.value })
-                              .eq('id', selectedPlayerId);
-                            if (error) throw error;
-                          } catch (error: any) {
-                            toast.error('Failed to save notes: ' + error.message);
-                          }
-                        }}
-                        className="min-h-[200px] resize-none"
-                      />
-                    </CardContent>
-                  </Card>
-                </div>
+                  <TabsContent value="sps" className="mt-0">
+                    {/* Player Notes and Next Program Notes - Side by Side - MOVED TO TOP */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      {/* Programming Notes Card - Shows in player's Physical Programming section */}
+                      <Card>
+                        <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                          <CardTitle className="text-base">Programming Notes</CardTitle>
+                          <p className="text-xs text-muted-foreground">Health, needs, training considerations - visible in player's programming section</p>
+                        </CardHeader>
+                        <CardContent className="px-3 md:px-6 py-4">
+                          <Textarea
+                            placeholder="Add notes about the player's health, specific needs, training considerations..."
+                            value={(selectedPlayer as any)?.programming_notes || ''}
+                            onChange={async (e) => {
+                              const newValue = e.target.value;
+                              // Optimistic update
+                              setPlayers(prev => prev.map(p => 
+                                p.id === selectedPlayerId ? { ...p, programming_notes: newValue } : p
+                              ));
+                            }}
+                            onBlur={async (e) => {
+                              try {
+                                const { error } = await supabase
+                                  .from('players')
+                                  .update({ programming_notes: e.target.value } as any)
+                                  .eq('id', selectedPlayerId);
+                                if (error) throw error;
+                              } catch (error: any) {
+                                toast.error('Failed to save notes: ' + error.message);
+                              }
+                            }}
+                            className="min-h-[200px] resize-none"
+                          />
+                        </CardContent>
+                      </Card>
 
-                <Card>
-                  <CardHeader className="px-3 md:px-6 py-3 md:py-4">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                      <CardTitle>Training Programs</CardTitle>
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          setSelectedProgrammingPlayerId(selectedPlayerId!);
-                          setSelectedProgrammingPlayerName(selectedPlayer!.name);
-                          setIsProgrammingDialogOpen(true);
-                        }}
-                        className="w-full sm:w-auto"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Manage Programs
-                      </Button>
+                      {/* Next Program Notes Card */}
+                      <Card>
+                        <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                          <CardTitle className="text-base">Next Program Notes</CardTitle>
+                          <p className="text-xs text-muted-foreground">Ideas and brainstorming for upcoming programs</p>
+                        </CardHeader>
+                        <CardContent className="px-3 md:px-6 py-4">
+                          <Textarea
+                            placeholder="Brainstorm ideas for the player's next training program, goals, focus areas..."
+                            value={selectedPlayer?.next_program_notes || ''}
+                            onChange={async (e) => {
+                              const newValue = e.target.value;
+                              // Optimistic update
+                              setPlayers(prev => prev.map(p => 
+                                p.id === selectedPlayerId ? { ...p, next_program_notes: newValue } : p
+                              ));
+                            }}
+                            onBlur={async (e) => {
+                              try {
+                                const { error } = await supabase
+                                  .from('players')
+                                  .update({ next_program_notes: e.target.value })
+                                  .eq('id', selectedPlayerId);
+                                if (error) throw error;
+                              } catch (error: any) {
+                                toast.error('Failed to save notes: ' + error.message);
+                              }
+                            }}
+                            className="min-h-[200px] resize-none"
+                          />
+                        </CardContent>
+                      </Card>
                     </div>
-                  </CardHeader>
-                  <CardContent className="px-3 md:px-6 py-4">
-                    {playerPrograms[selectedPlayerId]?.length > 0 ? (
-                      <div className="space-y-3">
-                        {playerPrograms[selectedPlayerId].map((program) => (
-                          <div
-                            key={program.id}
-                            className="p-3 md:p-4 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer"
+
+                    <Card>
+                      <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                          <CardTitle>Training Programs</CardTitle>
+                          <Button
+                            size="sm"
                             onClick={() => {
                               setSelectedProgrammingPlayerId(selectedPlayerId!);
                               setSelectedProgrammingPlayerName(selectedPlayer!.name);
                               setIsProgrammingDialogOpen(true);
                             }}
+                            className="w-full sm:w-auto"
                           >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex flex-wrap items-center gap-2 mb-1">
-                                  <h4 className="font-medium text-sm md:text-base truncate">{program.program_name}</h4>
-                                  {program.is_current && (
-                                    <span className="text-[10px] md:text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium whitespace-nowrap">
-                                      Current
-                                    </span>
-                                  )}
-                                </div>
-                                {program.phase_name && (
-                                  <p className="text-xs md:text-sm text-muted-foreground">
-                                    Phase: {program.phase_name}
-                                  </p>
-                                )}
-                                {program.phase_dates && (
-                                  <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                                    {program.phase_dates}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-center text-muted-foreground py-8 text-sm">
-                        No programs yet. Click "Manage Programs" to create one.
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Testing Results Card */}
-                <Card className="mt-4">
-                  <CardHeader className="px-3 md:px-6 py-3 md:py-4">
-                    <CardTitle>Testing Results</CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-3 md:px-6 py-4">
-                    {playerTestResults[selectedPlayerId]?.length > 0 ? (
-                      <div className="space-y-4">
-                        {['Strength', 'Power', 'Speed', 'Conditioning'].map((category) => {
-                          const categoryResults = playerTestResults[selectedPlayerId]?.filter(
-                            r => r.test_category === category
-                          );
-                          if (!categoryResults?.length) return null;
-
-                          // Group by test name, show latest for each
-                          const latestByTest: Record<string, any> = {};
-                          categoryResults.forEach(r => {
-                            if (!latestByTest[r.test_name] || new Date(r.test_date) > new Date(latestByTest[r.test_name].test_date)) {
-                              latestByTest[r.test_name] = r;
-                            }
-                          });
-
-                          return (
-                            <div key={category} className="space-y-2">
-                              <h4 className="font-medium text-sm text-primary border-b border-primary/30 pb-1">
-                                {category}
-                              </h4>
-                              <div className="grid gap-2">
-                                {Object.values(latestByTest).map((result: any) => (
-                                  <div
-                                    key={result.id}
-                                    className="p-3 border rounded-lg bg-secondary/20"
-                                  >
-                                    <div className="flex justify-between items-start">
-                                      <div>
-                                        <span className="font-medium text-sm">{result.test_name}</span>
-                                        <div className="flex items-center gap-2 mt-1">
-                                          <span className="text-lg font-bold text-primary">{result.score}</span>
-                                          <Badge variant={result.status === 'draft' ? 'outline' : 'default'} className="text-xs">
-                                            {result.status === 'draft' ? 'Draft' : 'Submitted'}
-                                          </Badge>
-                                        </div>
-                                        {result.notes && (
-                                          <p className="text-xs text-muted-foreground mt-1">{result.notes}</p>
-                                        )}
-                                      </div>
-                                      <span className="text-xs text-muted-foreground">
-                                        {new Date(result.test_date).toLocaleDateString('en-GB', { 
-                                          day: 'numeric', month: 'short', year: 'numeric' 
-                                        })}
-                                      </span>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Manage Programs
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="px-3 md:px-6 py-4">
+                        {playerPrograms[selectedPlayerId]?.length > 0 ? (
+                          <div className="space-y-3">
+                            {playerPrograms[selectedPlayerId].map((program) => (
+                              <div
+                                key={program.id}
+                                className="p-3 md:p-4 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer"
+                                onClick={() => {
+                                  setSelectedProgrammingPlayerId(selectedPlayerId!);
+                                  setSelectedProgrammingPlayerName(selectedPlayer!.name);
+                                  setIsProgrammingDialogOpen(true);
+                                }}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                                      <h4 className="font-medium text-sm md:text-base truncate">{program.program_name}</h4>
+                                      {program.is_current && (
+                                        <span className="text-[10px] md:text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium whitespace-nowrap">
+                                          Current
+                                        </span>
+                                      )}
                                     </div>
+                                    {program.phase_name && (
+                                      <p className="text-xs md:text-sm text-muted-foreground">
+                                        Phase: {program.phase_name}
+                                      </p>
+                                    )}
+                                    {program.phase_dates && (
+                                      <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
+                                        {program.phase_dates}
+                                      </p>
+                                    )}
                                   </div>
-                                ))}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p className="text-center text-muted-foreground py-8 text-sm">
-                        No test results recorded yet.
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-center text-muted-foreground py-8 text-sm">
+                            No programs yet. Click "Manage Programs" to create one.
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Testing Results Card */}
+                    <Card className="mt-4">
+                      <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                        <CardTitle>Testing Results</CardTitle>
+                      </CardHeader>
+                      <CardContent className="px-3 md:px-6 py-4">
+                        {playerTestResults[selectedPlayerId]?.length > 0 ? (
+                          <div className="space-y-4">
+                            {['Strength', 'Power', 'Speed', 'Conditioning'].map((category) => {
+                              const categoryResults = playerTestResults[selectedPlayerId]?.filter(
+                                r => r.test_category === category
+                              );
+                              if (!categoryResults?.length) return null;
+
+                              // Group by test name, show latest for each
+                              const latestByTest: Record<string, any> = {};
+                              categoryResults.forEach(r => {
+                                if (!latestByTest[r.test_name] || new Date(r.test_date) > new Date(latestByTest[r.test_name].test_date)) {
+                                  latestByTest[r.test_name] = r;
+                                }
+                              });
+
+                              return (
+                                <div key={category} className="space-y-2">
+                                  <h4 className="font-medium text-sm text-primary border-b border-primary/30 pb-1">
+                                    {category}
+                                  </h4>
+                                  <div className="grid gap-2">
+                                    {Object.values(latestByTest).map((result: any) => (
+                                      <div
+                                        key={result.id}
+                                        className="p-3 border rounded-lg bg-secondary/20"
+                                      >
+                                        <div className="flex justify-between items-start">
+                                          <div>
+                                            <span className="font-medium text-sm">{result.test_name}</span>
+                                            <div className="flex items-center gap-2 mt-1">
+                                              <span className="text-lg font-bold text-primary">{result.score}</span>
+                                              <Badge variant={result.status === 'draft' ? 'outline' : 'default'} className="text-xs">
+                                                {result.status === 'draft' ? 'Draft' : 'Submitted'}
+                                              </Badge>
+                                            </div>
+                                            {result.notes && (
+                                              <p className="text-xs text-muted-foreground mt-1">{result.notes}</p>
+                                            )}
+                                          </div>
+                                          <span className="text-xs text-muted-foreground">
+                                            {new Date(result.test_date).toLocaleDateString('en-GB', { 
+                                              day: 'numeric', month: 'short', year: 'numeric' 
+                                            })}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-center text-muted-foreground py-8 text-sm">
+                            No test results recorded yet.
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="nutrition" className="mt-0">
+                    <NutritionProgramManagement 
+                      playerId={selectedPlayerId!} 
+                      playerName={selectedPlayer?.name || ''} 
+                    />
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
 
               <TabsContent value="highlights" className="mt-4 md:mt-0">
