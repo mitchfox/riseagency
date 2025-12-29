@@ -108,7 +108,7 @@ const DEFAULT_LAYOUTS: WidgetLayout[] = [
 
 const DEFAULT_HEIGHT_PX = 200;
 
-export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: string }) => {
+export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmin: boolean; userId?: string; isMarketeer?: boolean }) => {
   const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [players, setPlayers] = useState<any[]>([]);
@@ -123,6 +123,22 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
   const [scheduleFullscreen, setScheduleFullscreen] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const isMobile = useIsMobile();
+
+  // Filter widget configs based on role (hide financial for marketeers)
+  const filteredWidgetConfigs = useMemo(() => {
+    if (isMarketeer) {
+      return WIDGET_CONFIGS.filter(w => w.id !== 'financial');
+    }
+    return WIDGET_CONFIGS;
+  }, [isMarketeer]);
+
+  // Filter default layouts for marketeers
+  const filteredDefaultLayouts = useMemo(() => {
+    if (isMarketeer) {
+      return DEFAULT_LAYOUTS.filter(l => l.id !== 'financial');
+    }
+    return DEFAULT_LAYOUTS;
+  }, [isMarketeer]);
 
   // Widget data hooks
   const scoutingData = useScoutingWidget();
@@ -171,18 +187,18 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
           setSavedLayouts(parsed.layouts);
         }
       } catch {
-        const defaults = WIDGET_CONFIGS.filter(w => w.defaultVisible).map(w => w.id);
+        const defaults = filteredWidgetConfigs.filter(w => w.defaultVisible).map(w => w.id);
         setVisibleWidgets(defaults);
         setSavedVisibleWidgets(defaults);
-        setLayouts(DEFAULT_LAYOUTS);
-        setSavedLayouts(DEFAULT_LAYOUTS);
+        setLayouts(filteredDefaultLayouts);
+        setSavedLayouts(filteredDefaultLayouts);
       }
     } else {
-      const defaults = WIDGET_CONFIGS.filter(w => w.defaultVisible).map(w => w.id);
+      const defaults = filteredWidgetConfigs.filter(w => w.defaultVisible).map(w => w.id);
       setVisibleWidgets(defaults);
       setSavedVisibleWidgets(defaults);
-      setLayouts(DEFAULT_LAYOUTS);
-      setSavedLayouts(DEFAULT_LAYOUTS);
+      setLayouts(filteredDefaultLayouts);
+      setSavedLayouts(filteredDefaultLayouts);
     }
   }, [userId]);
 
@@ -235,12 +251,12 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
   };
 
   const resetToDefaults = () => {
-    const defaults = WIDGET_CONFIGS.filter(w => w.defaultVisible).map(w => w.id);
-    updateLayoutState(defaults, DEFAULT_LAYOUTS);
+    const defaults = filteredWidgetConfigs.filter(w => w.defaultVisible).map(w => w.id);
+    updateLayoutState(defaults, filteredDefaultLayouts);
     // Also persist immediately when resetting
     const storageKey = getStorageKey();
-    localStorage.setItem(storageKey, JSON.stringify({ visibleWidgets: defaults, layouts: DEFAULT_LAYOUTS }));
-    setSavedLayouts([...DEFAULT_LAYOUTS]);
+    localStorage.setItem(storageKey, JSON.stringify({ visibleWidgets: defaults, layouts: filteredDefaultLayouts }));
+    setSavedLayouts([...filteredDefaultLayouts]);
     setSavedVisibleWidgets([...defaults]);
   };
 
@@ -520,7 +536,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
   }, [layouts, visibleWidgets]);
 
   const renderWidgetContent = (widgetId: string, layout?: WidgetLayout) => {
-    const config = WIDGET_CONFIGS.find(c => c.id === widgetId);
+    const config = filteredWidgetConfigs.find(c => c.id === widgetId);
     if (!config) return null;
 
     switch (widgetId) {
@@ -1203,7 +1219,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
                 </p>
                 <ScrollArea className="h-[350px] pr-4">
                   <div className="space-y-3">
-                    {WIDGET_CONFIGS.map((widget) => {
+                    {filteredWidgetConfigs.map((widget) => {
                       const Icon = widget.icon;
                       const isVisible = visibleWidgets.includes(widget.id);
                       return (
@@ -1239,7 +1255,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
                   {widgetsByRow.map(([rowNum, rowWidgets]) => (
                     <div key={rowNum} className="flex gap-1 p-2 bg-background/50 rounded border border-border/50">
                       {rowWidgets.map(widget => {
-                        const config = WIDGET_CONFIGS.find(c => c.id === widget.id);
+                        const config = filteredWidgetConfigs.find(c => c.id === widget.id);
                         if (!config) return null;
                         const Icon = config.icon;
                         return (
@@ -1295,7 +1311,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
           /* Mobile: Stack widgets vertically */
           <div className="space-y-3">
             {visibleWidgets.map(widgetId => {
-              const config = WIDGET_CONFIGS.find(c => c.id === widgetId);
+              const config = filteredWidgetConfigs.find(c => c.id === widgetId);
               const layout = layouts.find(l => l.id === widgetId);
               if (!config || !layout) return null;
               return (
@@ -1338,7 +1354,7 @@ export const StaffOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: 
                       strategy={horizontalListSortingStrategy}
                     >
                       {rowWidgets.map(widget => {
-                        const config = WIDGET_CONFIGS.find(c => c.id === widget.id);
+                        const config = filteredWidgetConfigs.find(c => c.id === widget.id);
                         if (!config) return null;
                         return (
                           <SortableWidget

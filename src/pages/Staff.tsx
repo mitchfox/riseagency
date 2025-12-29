@@ -595,8 +595,8 @@ const Staff = () => {
 
   // Build categories based on role
   const buildCategories = () => {
-    // Marketeer-only sections
-    if (isMarketeer && !isAdmin && !isStaff) {
+    // Marketeer-only sections (marketeer without admin role)
+    if (isMarketeer && !isAdmin) {
       return [
         {
           id: 'overview',
@@ -1074,7 +1074,7 @@ const Staff = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} userId={user?.id} />}
+                  {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} userId={user?.id} isMarketeer={isMarketeer} />}
                   {expandedSection === 'focusedtasks' && <FocusedTasksSection />}
                   {expandedSection === 'schedule' && (
                     <div className="space-y-6">
