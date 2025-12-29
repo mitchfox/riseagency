@@ -1611,6 +1611,14 @@ const Dashboard = () => {
                 >
                   Programming
                 </DropdownMenuItem>
+                {nutritionPrograms.length > 0 && (
+                  <DropdownMenuItem 
+                    onClick={() => setActiveTab("nutrition")}
+                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
+                  >
+                    Nutrition
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem 
                   onClick={() => setActiveTab("invoices")}
                   className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
@@ -1635,14 +1643,6 @@ const Dashboard = () => {
                 >
                   Transfer Hub
                 </DropdownMenuItem>
-                {nutritionPrograms.length > 0 && (
-                  <DropdownMenuItem 
-                    onClick={() => setActiveTab("nutrition")}
-                    className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
-                  >
-                    Nutrition
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuItem 
                   onClick={() => setShowProfileModal(true)}
                   className="font-bebas uppercase text-base py-3 cursor-pointer text-gold hover:text-gold/80 hover:bg-gold/10"
@@ -4207,6 +4207,27 @@ const Dashboard = () => {
                 <CardContent className="container mx-auto px-4">
                   {playerData?.id ? (
                     <PlayerTransferHub playerId={playerData.id} />
+                  ) : (
+                    <div className="py-8 text-center text-muted-foreground">
+                      Loading player data...
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="nutrition">
+              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-0">
+                <CardHeader marble>
+                  <div className="container mx-auto px-4">
+                    <CardTitle className="font-heading tracking-tight">
+                      Nutrition
+                    </CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="container mx-auto px-4">
+                  {playerData?.id ? (
+                    <NutritionProgramDisplay playerId={playerData.id} />
                   ) : (
                     <div className="py-8 text-center text-muted-foreground">
                       Loading player data...
