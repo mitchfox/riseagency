@@ -282,10 +282,12 @@ export const PersonalScheduleCalendar = ({
     );
   }
 
+  // Don't show login message - the component only shows when user is logged in to staff portal
+  // If userId is null, show loading state instead (session may still be loading)
   if (!userId) {
     return (
       <div className="py-8 text-center text-muted-foreground">
-        Please log in to view your schedule
+        Loading schedule...
       </div>
     );
   }

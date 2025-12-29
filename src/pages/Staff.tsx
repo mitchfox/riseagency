@@ -45,11 +45,9 @@ import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
 import LegalManagement from "@/components/staff/LegalManagement";
 import { LanguagesManagement } from "@/components/staff/LanguagesManagement";
 import { SiteTextManagement } from "@/components/staff/SiteTextManagement";
-import { SiteManagement } from "@/components/staff/SiteManagement";
 import { StaffPWAInstall } from "@/components/staff/StaffPWAInstall";
 import { StaffOfflineManager } from "@/components/staff/StaffOfflineManager";
 import { StaffPushNotifications } from "@/components/staff/StaffPushNotifications";
-import { HighlightMaker } from "@/components/staff/HighlightMaker";
 import { useStaffNotifications } from "@/hooks/useStaffNotifications";
 import { TransferHub } from "@/components/staff/TransferHub";
 import { ExpensesManagement } from "@/components/staff/ExpensesManagement";
@@ -58,12 +56,10 @@ import { BudgetsManagement } from "@/components/staff/BudgetsManagement";
 import { FinancialReports } from "@/components/staff/FinancialReports";
 import { PaymentsManagement } from "@/components/staff/PaymentsManagement";
 import { AthleteCentre } from "@/components/staff/AthleteCentre";
-import { CoachingAIChat } from "@/components/staff/coaching/CoachingAIChat";
 import { OpenAccessManagement } from "@/components/staff/OpenAccessManagement";
 import { FocusedTasksSection } from "@/components/staff/FocusedTasksSection";
 import { StaffNotificationsDropdown } from "@/components/staff/StaffNotificationsDropdown";
 import { NotificationSettingsManagement } from "@/components/staff/NotificationSettingsManagement";
-import { InFrameSection } from "@/components/staff/InFrameSection";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -118,7 +114,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'inframe' | 'focusedtasks' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'openaccess' | 'coaching' | 'coachingchat' | 'analysis' | 'highlightmaker' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'sitetext' | 'languages' | 'sitemanagement' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   
@@ -597,53 +593,119 @@ const Staff = () => {
     );
   }
 
-  const categories = [
-    {
-      id: 'overview',
-      title: 'Overview',
-      icon: Calendar,
-      sections: [
-        { id: 'overview', title: 'Overview', icon: Calendar },
-        { id: 'inframe', title: 'In Frame', icon: ExternalLink },
-        { id: 'focusedtasks', title: 'Focused Tasks', icon: Target },
-        { id: 'goalstasks', title: 'Goals & Tasks', icon: Target },
-        { id: 'staffschedules', title: 'Staff Schedules', icon: Users },
-        ...(user?.email === 'jolonlevene98@gmail.com' ? [
-          { id: 'notifications', title: 'Notifications', icon: BellRing }
-        ] : []),
-      ],
-      locked: false
-    },
-    {
-      id: 'coaching',
-      title: 'Coaching',
-      icon: Dumbbell,
-      locked: isMarketeer,
-      sections: [
-        { id: 'schedule', title: 'Schedule', icon: Calendar },
-        { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
-        { id: 'coachingchat', title: 'AI Chat', icon: MessageSquare },
-        { id: 'analysis', title: 'Analysis Writer', icon: LineChart },
-        { id: 'athletecentre', title: 'Athlete Centre', icon: UserRound },
-      ]
-    },
-    {
-      id: 'management',
-      title: 'Management',
-      icon: UserCog,
-      locked: isMarketeer,
-      sections: [
-        { id: 'players', title: 'Player Management', icon: UserCog },
-        { id: 'transferhub', title: 'Transfer Hub', icon: Building2 },
-        { id: 'highlightmaker', title: 'Highlight Maker', icon: Film },
-        { id: 'updates', title: 'Player Updates', icon: BellRing },
-      ]
-    },
-    {
-      id: 'network',
-      title: 'Network & Recruitment',
-      icon: Network,
-      locked: false,
+  // Build categories based on role
+  const buildCategories = () => {
+    // Marketeer-only sections
+    if (isMarketeer && !isAdmin && !isStaff) {
+      return [
+        {
+          id: 'overview',
+          title: 'Overview',
+          icon: Calendar,
+          sections: [
+            { id: 'overview', title: 'Overview', icon: Calendar },
+            { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
+            { id: 'goalstasks', title: 'Goals & Tasks', icon: Target },
+          ],
+          locked: false
+        },
+        {
+          id: 'management',
+          title: 'Management',
+          icon: UserCog,
+          locked: false,
+          sections: [
+            { id: 'players', title: 'Player Management', icon: UserCog },
+          ]
+        },
+        {
+          id: 'network',
+          title: 'Network & Recruitment',
+          icon: Network,
+          locked: false,
+          sections: [
+            { id: 'clubnetwork', title: 'Club Network', icon: Network },
+            { id: 'playerlist', title: 'Player List', icon: Users },
+            { id: 'recruitment', title: 'Recruitment', icon: Target },
+            { id: 'playerdatabase', title: 'Player Database', icon: Users },
+            { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
+            { id: 'submissions', title: 'Form Submissions', icon: Mail },
+          ]
+        },
+        {
+          id: 'marketing',
+          title: 'Marketing & Brand',
+          icon: Megaphone,
+          locked: false,
+          sections: [
+            { id: 'marketing', title: 'Marketing', icon: Megaphone },
+            { id: 'marketingideas', title: 'Ideas', icon: Target },
+            { id: 'contentcreator', title: 'Content Creator', icon: Film },
+            { id: 'blog', title: 'News Articles', icon: Newspaper },
+            { id: 'betweenthelines', title: 'Between The Lines', icon: FileText },
+            { id: 'openaccess', title: 'Open Access', icon: FileText },
+            { id: 'visitors', title: 'Site Visitors', icon: Eye },
+          ]
+        },
+        {
+          id: 'admin',
+          title: 'Admin & Legal',
+          icon: Scale,
+          locked: false,
+          sections: [
+            { id: 'legal', title: 'Legal', icon: Scale },
+            { id: 'pwainstall', title: 'PWA Install', icon: Download },
+            { id: 'offlinemanager', title: 'Offline Content', icon: HardDrive },
+          ]
+        }
+      ];
+    }
+
+    // Full staff/admin sections
+    return [
+      {
+        id: 'overview',
+        title: 'Overview',
+        icon: Calendar,
+        sections: [
+          { id: 'overview', title: 'Overview', icon: Calendar },
+          { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
+          { id: 'goalstasks', title: 'Goals & Tasks', icon: Target },
+          { id: 'staffschedules', title: 'Staff Schedules', icon: Users },
+          ...(user?.email === 'jolonlevene98@gmail.com' ? [
+            { id: 'notifications', title: 'Notifications', icon: BellRing }
+          ] : []),
+        ],
+        locked: false
+      },
+      {
+        id: 'coaching',
+        title: 'Coaching',
+        icon: Dumbbell,
+        locked: false,
+        sections: [
+          { id: 'schedule', title: 'Schedule', icon: Calendar },
+          { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
+          { id: 'analysis', title: 'Analysis Writer', icon: LineChart },
+          { id: 'athletecentre', title: 'Athlete Centre', icon: UserRound },
+        ]
+      },
+      {
+        id: 'management',
+        title: 'Management',
+        icon: UserCog,
+        locked: false,
+        sections: [
+          { id: 'players', title: 'Player Management', icon: UserCog },
+          { id: 'transferhub', title: 'Transfer Hub', icon: Building2 },
+          { id: 'updates', title: 'Player Updates', icon: BellRing },
+        ]
+      },
+      {
+        id: 'network',
+        title: 'Network & Recruitment',
+        icon: Network,
+        locked: false,
         sections: [
           { id: 'clubnetwork', title: 'Club Network', icon: Network },
           { id: 'playerlist', title: 'Player List', icon: Users },
@@ -653,57 +715,57 @@ const Staff = () => {
           { id: 'submissions', title: 'Form Submissions', icon: Mail },
         ]
       },
-    {
-      id: 'marketing',
-      title: 'Marketing & Brand',
-      icon: Megaphone,
-      locked: false,
-      sections: [
-        { id: 'marketing', title: 'Marketing', icon: Megaphone },
-        { id: 'marketingideas', title: 'Ideas', icon: Target },
-        { id: 'contentcreator', title: 'Content Creator', icon: Film },
-        { id: 'blog', title: 'News Articles', icon: Newspaper },
-        { id: 'betweenthelines', title: 'Between The Lines', icon: FileText },
-        { id: 'openaccess', title: 'Open Access', icon: FileText },
-        { id: 'visitors', title: 'Site Visitors', icon: Eye },
-      ]
-    },
-    {
-      id: 'financial',
-      title: 'Financial',
-      icon: Wallet,
-      locked: isMarketeer,
-      sections: [
-        { id: 'invoices', title: 'Invoices', icon: FileCheck },
-        { id: 'payments', title: 'Payments In/Out', icon: Receipt },
-        { id: 'expenses', title: 'Expenses', icon: Calculator },
-        { id: 'taxrecords', title: 'Tax Records', icon: FileSpreadsheet },
-        { id: 'budgets', title: 'Budgets', icon: PiggyBank },
-        { id: 'financialreports', title: 'Reports', icon: TrendingUp },
-      ]
-    },
-    {
-      id: 'admin',
-      title: 'Admin & Legal',
-      icon: Scale,
-      locked: isMarketeer,
-      sections: [
-        { id: 'legal', title: 'Legal', icon: Scale },
-        { id: 'sitetext', title: 'Site Text', icon: FileText },
-        { id: 'languages', title: 'Languages', icon: Languages },
-        ...(isAdmin ? [
-          { id: 'sitemanagement', title: 'Site Management', icon: Settings },
-          { id: 'passwords', title: 'Player Passwords', icon: Lock },
-          { id: 'staffaccounts', title: 'Staff Accounts', icon: Shield },
-        ] : []),
-        ...(isAdmin || isStaff || isMarketeer ? [
+      {
+        id: 'marketing',
+        title: 'Marketing & Brand',
+        icon: Megaphone,
+        locked: false,
+        sections: [
+          { id: 'marketing', title: 'Marketing', icon: Megaphone },
+          { id: 'marketingideas', title: 'Ideas', icon: Target },
+          { id: 'contentcreator', title: 'Content Creator', icon: Film },
+          { id: 'blog', title: 'News Articles', icon: Newspaper },
+          { id: 'betweenthelines', title: 'Between The Lines', icon: FileText },
+          { id: 'openaccess', title: 'Open Access', icon: FileText },
+          { id: 'visitors', title: 'Site Visitors', icon: Eye },
+        ]
+      },
+      {
+        id: 'financial',
+        title: 'Financial',
+        icon: Wallet,
+        locked: false,
+        sections: [
+          { id: 'invoices', title: 'Invoices', icon: FileCheck },
+          { id: 'payments', title: 'Payments In/Out', icon: Receipt },
+          { id: 'expenses', title: 'Expenses', icon: Calculator },
+          { id: 'taxrecords', title: 'Tax Records', icon: FileSpreadsheet },
+          { id: 'budgets', title: 'Budgets', icon: PiggyBank },
+          { id: 'financialreports', title: 'Reports', icon: TrendingUp },
+        ]
+      },
+      {
+        id: 'admin',
+        title: 'Admin & Legal',
+        icon: Scale,
+        locked: false,
+        sections: [
+          { id: 'legal', title: 'Legal', icon: Scale },
+          { id: 'sitetext', title: 'Site Text', icon: FileText },
+          { id: 'languages', title: 'Languages', icon: Languages },
+          ...(isAdmin ? [
+            { id: 'passwords', title: 'Player Passwords', icon: Lock },
+            { id: 'staffaccounts', title: 'Staff Accounts', icon: Shield },
+          ] : []),
           { id: 'pwainstall', title: 'PWA Install', icon: Download },
           { id: 'offlinemanager', title: 'Offline Content', icon: HardDrive },
-          { id: 'pushnotifications', title: 'Push Notifications', icon: Bell }
-        ] : []),
-      ]
-    }
-  ];
+          { id: 'pushnotifications', title: 'Push Notifications', icon: Bell },
+        ]
+      }
+    ];
+  };
+
+  const categories = buildCategories();
 
   const filteredCategories = categories.map(category => ({
     ...category,
@@ -1013,7 +1075,6 @@ const Staff = () => {
                 </CardHeader>
                 <CardContent>
                   {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} userId={user?.id} />}
-                  {expandedSection === 'inframe' && <InFrameSection />}
                   {expandedSection === 'focusedtasks' && <FocusedTasksSection />}
                   {expandedSection === 'schedule' && (
                     <div className="space-y-6">
@@ -1034,7 +1095,6 @@ const Staff = () => {
                   {expandedSection === 'scoutingcentre' && <ScoutingCentreManagement isAdmin={isAdmin} />}
                   {expandedSection === 'coaching' && <CoachingDatabase isAdmin={isAdmin} />}
                   {expandedSection === 'analysis' && <AnalysisManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'highlightmaker' && <HighlightMaker isAdmin={isAdmin} />}
                   {expandedSection === 'marketing' && <MarketingManagement isAdmin={isAdmin} isMarketeer={isMarketeer} />}
                   {expandedSection === 'contentcreator' && <ContentCreator />}
                   {expandedSection === 'marketingideas' && <MarketingIdeas />}
@@ -1053,16 +1113,14 @@ const Staff = () => {
                   {expandedSection === 'clubnetwork' && <ClubNetworkManagement />}
                   {expandedSection === 'transferhub' && <TransferHub isAdmin={isAdmin} />}
                   {expandedSection === 'athletecentre' && <AthleteCentre />}
-                  {expandedSection === 'coachingchat' && <CoachingAIChat />}
                   {expandedSection === 'legal' && <LegalManagement isAdmin={isAdmin} />}
                   {expandedSection === 'sitetext' && <SiteTextManagement isAdmin={isAdmin} />}
                   {expandedSection === 'languages' && <LanguagesManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'sitemanagement' && isAdmin && <SiteManagement isAdmin={isAdmin} />}
                   {expandedSection === 'passwords' && isAdmin && <PlayerPasswordManagement />}
                   {expandedSection === 'staffaccounts' && isAdmin && <StaffAccountManagement />}
-                  {expandedSection === 'pwainstall' && isAdmin && <StaffPWAInstall />}
-                  {expandedSection === 'offlinemanager' && isAdmin && <StaffOfflineManager />}
-                  {expandedSection === 'pushnotifications' && isAdmin && <StaffPushNotifications />}
+                  {expandedSection === 'pwainstall' && <StaffPWAInstall />}
+                  {expandedSection === 'offlinemanager' && <StaffOfflineManager />}
+                  {expandedSection === 'pushnotifications' && <StaffPushNotifications />}
                   {expandedSection === 'notifications' && user?.email === 'jolonlevene98@gmail.com' && <NotificationSettingsManagement />}
                 </CardContent>
               </Card>

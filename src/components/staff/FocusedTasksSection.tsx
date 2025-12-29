@@ -16,7 +16,7 @@ import {
   PenLine,
   ImagePlus,
   FileText,
-  Menu
+  LayoutList
 } from "lucide-react";
 import { ClubOutreachManagement } from "./ClubOutreachManagement";
 import { QuickMessageSection } from "./QuickMessageSection";
@@ -53,7 +53,7 @@ export const FocusedTasksSection = () => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-7 w-7">
-              <Menu className="h-4 w-4" />
+              <LayoutList className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-popover">
