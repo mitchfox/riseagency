@@ -117,10 +117,11 @@ export const ClubOutreachManagement = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch players
+      // Fetch players (exclude scouted players)
       const { data: playersData } = await supabase
         .from("players")
-        .select("id, name")
+        .select("id, name, representation_status")
+        .neq("representation_status", "scouted")
         .order("name");
       setPlayers(playersData || []);
 
@@ -542,42 +543,48 @@ export const ClubOutreachManagement = () => {
             </Button>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Club Name with Network Suggestions */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Club Name *</Label>
+            {/* Club Name with integrated network suggestions */}
+            <div className="space-y-2">
+              <Label>Club Name *</Label>
+              <div className="relative">
                 <Input
                   value={newClubName}
-                  onChange={e => setNewClubName(e.target.value)}
-                  placeholder="e.g., Manchester City"
+                  onChange={e => {
+                    setNewClubName(e.target.value);
+                    setSelectedContactId("");
+                  }}
+                  placeholder="Type club name or select from suggestions..."
+                  className="pr-10"
                 />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               </div>
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Search className="h-3 w-3" />
-                  Quick Fill from Network
-                </Label>
-                <Select value={selectedContactId || "manual"} onValueChange={(val) => handleContactSelect(val === "manual" ? "" : val)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select contact..." />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    <SelectItem value="manual">-- None --</SelectItem>
-                    {networkContacts.map(contact => (
-                      <SelectItem key={contact.id} value={contact.id}>
-                        <span className="flex flex-col">
-                          <span className="font-medium">{contact.name}</span>
-                          {(contact.club_name || contact.city) && (
-                            <span className="text-xs text-muted-foreground">
-                              {[contact.club_name, contact.city, contact.country].filter(Boolean).join(", ")}
-                            </span>
-                          )}
+              {/* Network suggestions that filter as you type */}
+              {newClubName.length > 0 && networkContacts.filter(c => 
+                (c.club_name?.toLowerCase().includes(newClubName.toLowerCase()) || 
+                 c.name.toLowerCase().includes(newClubName.toLowerCase()))
+              ).length > 0 && (
+                <div className="border rounded-md p-1 max-h-[120px] overflow-y-auto bg-background">
+                  {networkContacts
+                    .filter(c => 
+                      c.club_name?.toLowerCase().includes(newClubName.toLowerCase()) || 
+                      c.name.toLowerCase().includes(newClubName.toLowerCase())
+                    )
+                    .slice(0, 5)
+                    .map(contact => (
+                      <button
+                        key={contact.id}
+                        type="button"
+                        onClick={() => handleContactSelect(contact.id)}
+                        className="w-full text-left px-2 py-1.5 hover:bg-muted rounded text-sm"
+                      >
+                        <span className="font-medium">{contact.club_name || contact.name}</span>
+                        <span className="text-muted-foreground ml-2 text-xs">
+                          {contact.name}{contact.position ? ` (${contact.position})` : ''}
                         </span>
-                      </SelectItem>
+                      </button>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
