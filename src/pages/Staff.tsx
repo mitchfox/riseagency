@@ -985,7 +985,7 @@ const Staff = () => {
             const isSingleSection = category.sections.length === 1;
             
             // Hide this category if another one is expanded
-            const shouldShow = !expandedCategory || expandedCategory === category.id || isSingleSection;
+            const shouldShow = !expandedCategory || expandedCategory === category.id;
             
             return (
               <div key={category.id} className={`w-full ${!shouldShow ? 'hidden' : ''}`}>
