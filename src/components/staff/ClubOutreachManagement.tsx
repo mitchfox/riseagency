@@ -521,9 +521,25 @@ export const ClubOutreachManagement = () => {
 
       {/* Add Dialog - Club First with Player Checkboxes */}
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
+        <DialogContent className="max-w-4xl w-full">
+          <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle>Add Club Outreach</DialogTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Navigate to templates - open in same window focused tasks
+                const event = new CustomEvent('navigate-to-section', { 
+                  detail: { category: 'focused-tasks', section: 'templates' } 
+                });
+                window.dispatchEvent(event);
+                setAddDialogOpen(false);
+              }}
+              className="ml-auto mr-6"
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Templates
+            </Button>
           </DialogHeader>
           <div className="space-y-4">
             {/* Select from Club Network */}
@@ -582,9 +598,9 @@ export const ClubOutreachManagement = () => {
             </div>
             <div className="space-y-2">
               <Label>Players to Suggest *</Label>
-              <div className="border rounded-lg p-3 max-h-[200px] overflow-y-auto space-y-2">
+              <div className="border rounded-lg p-2 max-h-[100px] overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1">
                 {players.map(player => (
-                  <div key={player.id} className="flex items-center gap-2">
+                  <div key={player.id} className="flex items-center gap-1.5">
                     <Checkbox
                       id={player.id}
                       checked={selectedPlayerIds.includes(player.id)}
@@ -592,7 +608,7 @@ export const ClubOutreachManagement = () => {
                     />
                     <label 
                       htmlFor={player.id} 
-                      className="text-sm cursor-pointer flex-1"
+                      className="text-xs cursor-pointer flex-1 truncate"
                     >
                       {player.name}
                     </label>
