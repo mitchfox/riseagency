@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Building, User, Briefcase, Clock, MessageSquare, UserCircle, Search, Loader2 } from "lucide-react";
+import { Plus, Building, User, Briefcase, Clock, MessageSquare, UserCircle, Search, Loader2, Copy, Check } from "lucide-react";
 import { format } from "date-fns";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 interface ClubOutreach {
@@ -110,9 +110,47 @@ export const ClubOutreachManagement = () => {
   const [newUpdateText, setNewUpdateText] = useState("");
   const [updatesLoading, setUpdatesLoading] = useState(false);
 
+  // Templates dialog state
+  const [templatesDialogOpen, setTemplatesDialogOpen] = useState(false);
+  const [templates, setTemplates] = useState<{ id: string; message_title: string; message_content: string; recipient_type: string }[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [copiedTemplateId, setCopiedTemplateId] = useState<string | null>(null);
+
   useEffect(() => {
     fetchData();
   }, []);
+
+  const fetchTemplates = async () => {
+    setTemplatesLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("marketing_templates")
+        .select("id, message_title, message_content, recipient_type")
+        .order("recipient_type");
+      if (error) throw error;
+      setTemplates(data || []);
+    } catch (error) {
+      console.error("Error fetching templates:", error);
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
+  const handleOpenTemplates = () => {
+    setTemplatesDialogOpen(true);
+    fetchTemplates();
+  };
+
+  const handleCopyTemplate = async (template: { id: string; message_content: string }) => {
+    try {
+      await navigator.clipboard.writeText(template.message_content);
+      setCopiedTemplateId(template.id);
+      toast.success("Template copied to clipboard");
+      setTimeout(() => setCopiedTemplateId(null), 2000);
+    } catch (error) {
+      toast.error("Failed to copy");
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -528,14 +566,7 @@ export const ClubOutreachManagement = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                // Navigate to templates - open in same window focused tasks
-                const event = new CustomEvent('navigate-to-section', { 
-                  detail: { category: 'focused-tasks', section: 'templates' } 
-                });
-                window.dispatchEvent(event);
-                setAddDialogOpen(false);
-              }}
+              onClick={handleOpenTemplates}
               className="ml-auto mr-6"
             >
               <MessageSquare className="h-4 w-4 mr-2" />
@@ -760,6 +791,56 @@ export const ClubOutreachManagement = () => {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Templates Dialog - Opens on top of Add Dialog */}
+      <Dialog open={templatesDialogOpen} onOpenChange={setTemplatesDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Message Templates
+            </DialogTitle>
+          </DialogHeader>
+          {templatesLoading ? (
+            <LoadingSpinner size="md" className="py-8" />
+          ) : templates.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No templates found.</p>
+          ) : (
+            <div className="space-y-3">
+              {templates.map(template => (
+                <div
+                  key={template.id}
+                  className="p-3 rounded-lg border border-border/50 bg-muted/20 hover:bg-muted/40 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-sm">{template.message_title}</span>
+                        <Badge variant="outline" className="text-xs">{template.recipient_type}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-3">
+                        {template.message_content}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCopyTemplate(template)}
+                      className="shrink-0"
+                    >
+                      {copiedTemplateId === template.id ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </DialogContent>
