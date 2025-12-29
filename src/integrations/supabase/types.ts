@@ -1915,6 +1915,162 @@ export type Database = {
           },
         ]
       }
+      player_nutrition_programs: {
+        Row: {
+          calories: string | null
+          calories_match_day: string | null
+          calories_recovery_day: string | null
+          calories_training_day: string | null
+          carbohydrates: string | null
+          carbs_match_day: string | null
+          carbs_recovery_day: string | null
+          carbs_training_day: string | null
+          created_at: string
+          diet_framework: string | null
+          fat: string | null
+          fat_match_day: string | null
+          fat_recovery_day: string | null
+          fat_training_day: string | null
+          id: string
+          in_match_timings: string | null
+          is_current: boolean | null
+          key_additions: string | null
+          match_day_overview: string | null
+          micro_1_amount: string | null
+          micro_1_name: string | null
+          micro_2_amount: string | null
+          micro_2_name: string | null
+          overview: string | null
+          phase_name: string
+          player_id: string
+          post_match_timings: string | null
+          pre_match_timings: string | null
+          protein: string | null
+          protein_match_day: string | null
+          protein_recovery_day: string | null
+          protein_training_day: string | null
+          recovery_day_overview: string | null
+          recovery_day_timings: string | null
+          supplement_1_amount: string | null
+          supplement_1_name: string | null
+          supplement_2_amount: string | null
+          supplement_2_name: string | null
+          supplement_3_amount: string | null
+          supplement_3_name: string | null
+          training_day_overview: string | null
+          training_day_timings: string | null
+          updated_at: string
+          weekly_structure: string | null
+        }
+        Insert: {
+          calories?: string | null
+          calories_match_day?: string | null
+          calories_recovery_day?: string | null
+          calories_training_day?: string | null
+          carbohydrates?: string | null
+          carbs_match_day?: string | null
+          carbs_recovery_day?: string | null
+          carbs_training_day?: string | null
+          created_at?: string
+          diet_framework?: string | null
+          fat?: string | null
+          fat_match_day?: string | null
+          fat_recovery_day?: string | null
+          fat_training_day?: string | null
+          id?: string
+          in_match_timings?: string | null
+          is_current?: boolean | null
+          key_additions?: string | null
+          match_day_overview?: string | null
+          micro_1_amount?: string | null
+          micro_1_name?: string | null
+          micro_2_amount?: string | null
+          micro_2_name?: string | null
+          overview?: string | null
+          phase_name: string
+          player_id: string
+          post_match_timings?: string | null
+          pre_match_timings?: string | null
+          protein?: string | null
+          protein_match_day?: string | null
+          protein_recovery_day?: string | null
+          protein_training_day?: string | null
+          recovery_day_overview?: string | null
+          recovery_day_timings?: string | null
+          supplement_1_amount?: string | null
+          supplement_1_name?: string | null
+          supplement_2_amount?: string | null
+          supplement_2_name?: string | null
+          supplement_3_amount?: string | null
+          supplement_3_name?: string | null
+          training_day_overview?: string | null
+          training_day_timings?: string | null
+          updated_at?: string
+          weekly_structure?: string | null
+        }
+        Update: {
+          calories?: string | null
+          calories_match_day?: string | null
+          calories_recovery_day?: string | null
+          calories_training_day?: string | null
+          carbohydrates?: string | null
+          carbs_match_day?: string | null
+          carbs_recovery_day?: string | null
+          carbs_training_day?: string | null
+          created_at?: string
+          diet_framework?: string | null
+          fat?: string | null
+          fat_match_day?: string | null
+          fat_recovery_day?: string | null
+          fat_training_day?: string | null
+          id?: string
+          in_match_timings?: string | null
+          is_current?: boolean | null
+          key_additions?: string | null
+          match_day_overview?: string | null
+          micro_1_amount?: string | null
+          micro_1_name?: string | null
+          micro_2_amount?: string | null
+          micro_2_name?: string | null
+          overview?: string | null
+          phase_name?: string
+          player_id?: string
+          post_match_timings?: string | null
+          pre_match_timings?: string | null
+          protein?: string | null
+          protein_match_day?: string | null
+          protein_recovery_day?: string | null
+          protein_training_day?: string | null
+          recovery_day_overview?: string | null
+          recovery_day_timings?: string | null
+          supplement_1_amount?: string | null
+          supplement_1_name?: string | null
+          supplement_2_amount?: string | null
+          supplement_2_name?: string | null
+          supplement_3_amount?: string | null
+          supplement_3_name?: string | null
+          training_day_overview?: string | null
+          training_day_timings?: string | null
+          updated_at?: string
+          weekly_structure?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_nutrition_programs_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_nutrition_programs_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_other_analysis: {
         Row: {
           analysis_id: string
