@@ -68,8 +68,10 @@ export const StaffAccountManagement = () => {
 
   const checkAdminRole = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      // Check for staff session from localStorage (custom staff login)
+      const staffUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
+      
+      if (!staffUserId) {
         setIsAdmin(false);
         setLoading(false);
         return;
@@ -78,7 +80,7 @@ export const StaffAccountManagement = () => {
       const { data } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user.id)
+        .eq("user_id", staffUserId)
         .eq("role", "admin")
         .single();
 
@@ -95,8 +97,9 @@ export const StaffAccountManagement = () => {
     setCreating(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // Get admin user ID from staff session
+      const adminUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
+      if (!adminUserId) {
         toast.error("Not authenticated");
         return;
       }
@@ -107,13 +110,13 @@ export const StaffAccountManagement = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             email: newAccount.email,
             password: newAccount.password,
             role: newAccount.role,
             full_name: newAccount.fullName,
+            admin_user_id: adminUserId,
           }),
         }
       );
@@ -158,8 +161,9 @@ export const StaffAccountManagement = () => {
     setResettingPassword(email);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // Get admin user ID from staff session
+      const adminUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
+      if (!adminUserId) {
         toast.error("Not authenticated");
         return;
       }
@@ -173,7 +177,6 @@ export const StaffAccountManagement = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             email: email,
@@ -181,6 +184,7 @@ export const StaffAccountManagement = () => {
             role: role,
             full_name: fullName,
             reset_password: true,
+            admin_user_id: adminUserId,
           }),
         }
       );
@@ -211,8 +215,9 @@ export const StaffAccountManagement = () => {
     setDeletingAccount(userId);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // Get admin user ID from staff session
+      const adminUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
+      if (!adminUserId) {
         toast.error("Not authenticated");
         return;
       }
@@ -223,9 +228,8 @@ export const StaffAccountManagement = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ user_id: userId }),
+          body: JSON.stringify({ user_id: userId, admin_user_id: adminUserId }),
         }
       );
 
@@ -249,8 +253,9 @@ export const StaffAccountManagement = () => {
     setUpdatingRole(userId);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // Get admin user ID from staff session
+      const adminUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
+      if (!adminUserId) {
         toast.error("Not authenticated");
         return;
       }
@@ -261,11 +266,11 @@ export const StaffAccountManagement = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             email: email,
             role: newRole,
+            admin_user_id: adminUserId,
           }),
         }
       );
