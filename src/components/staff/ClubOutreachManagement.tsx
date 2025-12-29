@@ -542,41 +542,42 @@ export const ClubOutreachManagement = () => {
             </Button>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Select from Club Network */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Search className="h-4 w-4" />
-                Select from Club Network (Optional)
-              </Label>
-              <Select value={selectedContactId || "manual"} onValueChange={(val) => handleContactSelect(val === "manual" ? "" : val)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a contact from your network..." />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  <SelectItem value="manual">-- Manual Entry --</SelectItem>
-                  {networkContacts.map(contact => (
-                    <SelectItem key={contact.id} value={contact.id}>
-                      <span className="flex flex-col">
-                        <span className="font-medium">{contact.name}</span>
-                        {(contact.club_name || contact.city) && (
-                          <span className="text-xs text-muted-foreground">
-                            {[contact.club_name, contact.city, contact.country].filter(Boolean).join(", ")}
-                          </span>
-                        )}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Club Name *</Label>
-              <Input
-                value={newClubName}
-                onChange={e => setNewClubName(e.target.value)}
-                placeholder="e.g., Manchester City"
-              />
+            {/* Club Name with Network Suggestions */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Club Name *</Label>
+                <Input
+                  value={newClubName}
+                  onChange={e => setNewClubName(e.target.value)}
+                  placeholder="e.g., Manchester City"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Search className="h-3 w-3" />
+                  Quick Fill from Network
+                </Label>
+                <Select value={selectedContactId || "manual"} onValueChange={(val) => handleContactSelect(val === "manual" ? "" : val)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select contact..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    <SelectItem value="manual">-- None --</SelectItem>
+                    {networkContacts.map(contact => (
+                      <SelectItem key={contact.id} value={contact.id}>
+                        <span className="flex flex-col">
+                          <span className="font-medium">{contact.name}</span>
+                          {(contact.club_name || contact.city) && (
+                            <span className="text-xs text-muted-foreground">
+                              {[contact.club_name, contact.city, contact.country].filter(Boolean).join(", ")}
+                            </span>
+                          )}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -636,11 +637,10 @@ export const ClubOutreachManagement = () => {
             </div>
             <div className="space-y-2">
               <Label>Initial Update/Notes</Label>
-              <Textarea
+              <Input
                 value={newInitialUpdate}
                 onChange={e => setNewInitialUpdate(e.target.value)}
                 placeholder="e.g., Sent initial email introducing player"
-                rows={3}
               />
             </div>
           </div>
