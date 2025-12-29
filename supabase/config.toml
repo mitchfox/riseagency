@@ -80,3 +80,9 @@ verify_jwt = false
 
 [functions.contract-cross-reference]
 verify_jwt = false
+
+[functions.create-staff-account]
+verify_jwt = false
+
+[functions.delete-staff-account]
+verify_jwt = false
