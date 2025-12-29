@@ -855,8 +855,13 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
           [file.name]: { status: 'uploading', progress: 50 }
         }));
 
+        // Sanitize file name - remove special characters that Supabase doesn't accept
+        const sanitizedName = file.name
+          .replace(/[^a-zA-Z0-9.-]/g, '_')
+          .replace(/__+/g, '_');
+        
         // Upload PDF to storage
-        const fileName = `analysis-pdfs/${Date.now()}-${file.name}`;
+        const fileName = `analysis-pdfs/${Date.now()}-${sanitizedName}`;
         const { error: uploadError } = await supabase.storage
           .from('analysis-files')
           .upload(fileName, file);
