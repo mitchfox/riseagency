@@ -4,9 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, X, ImageIcon } from "lucide-react";
+import { Download, X, ImageIcon, Video, Play } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
+import { ActionVideoPopup } from "@/components/ActionVideoPopup";
+import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -24,6 +26,7 @@ interface PerformanceAction {
   action_type: string;
   action_description: string;
   notes: string | null;
+  video_url?: string | null;
 }
 
 interface StrikerStats {
@@ -55,6 +58,9 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
   const [prefetchedId, setPrefetchedId] = useState<string | null>(null);
   const [savingImage, setSavingImage] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
+  const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>("");
+  const [showClippedActions, setShowClippedActions] = useState(false);
 
   // Pre-fetch data when analysisId changes (even before dialog opens)
   useEffect(() => {
@@ -356,24 +362,39 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
             <div className="text-center py-8 text-muted-foreground">Performance report not found</div>
           ) : (
             <div ref={contentRef} className="space-y-6 bg-background p-4 rounded-lg">
-              {/* Player Info */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Player</p>
-                  <p className="font-bold">{analysis.player_name}</p>
+              {/* Player Info with Clipped Actions Button */}
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Player</p>
+                    <p className="font-bold">{analysis.player_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Date</p>
+                    <p className="font-bold">{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Opponent</p>
+                    <p className="font-bold">{analysis.opponent || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Result</p>
+                    <p className="font-bold">{analysis.result || "N/A"}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Date</p>
-                  <p className="font-bold">{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Opponent</p>
-                  <p className="font-bold">{analysis.opponent || "N/A"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Result</p>
-                  <p className="font-bold">{analysis.result || "N/A"}</p>
-                </div>
+                
+                {/* Clipped Actions Button */}
+                {actions.filter(a => a.video_url).length > 0 && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="bg-amber-500 hover:bg-amber-600 text-black font-semibold flex items-center gap-2"
+                    onClick={() => setShowClippedActions(true)}
+                  >
+                    <Play className="h-4 w-4" />
+                    Clipped Actions ({actions.filter(a => a.video_url).length})
+                  </Button>
+                )}
               </div>
 
               {/* Key Stats */}
@@ -460,9 +481,21 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                       {actions.map((action) => (
                         <div key={action.id} className="p-3 bg-muted/30 rounded-lg">
                           <div className="flex items-start justify-between mb-2">
-                            <div className="flex gap-3">
+                            <div className="flex gap-3 items-center">
                               <span className="font-semibold">#{action.action_number}</span>
                               <span className="text-sm text-muted-foreground">{formatMinute(action.minute)}'</span>
+                              {action.video_url && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedVideoUrl(action.video_url!);
+                                    setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
+                                  }}
+                                  className="bg-amber-500 hover:bg-amber-600 text-black px-2 py-0.5 rounded text-xs font-bold flex items-center gap-1"
+                                >
+                                  <Video className="h-3 w-3" />
+                                  Clip
+                                </button>
+                              )}
                             </div>
                             <span className={`text-sm font-bold ${getActionScoreColor(action.action_score)}`}>
                               {action.action_score?.toFixed(5)}
@@ -490,6 +523,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                             <th className="text-left py-2 px-2">Description</th>
                             <th className="text-left py-2 px-2">Notes</th>
                             <th className="text-right py-2 px-2">Score</th>
+                            <th className="text-center py-2 px-2">Clip</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -503,6 +537,21 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                               <td className={`py-2 px-2 text-right ${getActionScoreColor(action.action_score)}`}>
                                 {action.action_score?.toFixed(5)}
                               </td>
+                              <td className="py-2 px-2 text-center">
+                                {action.video_url ? (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedVideoUrl(action.video_url!);
+                                      setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
+                                    }}
+                                    className="bg-amber-500 hover:bg-amber-600 text-black px-2 py-1 rounded text-xs font-bold inline-flex items-center gap-1"
+                                  >
+                                    <Video className="h-3 w-3" />
+                                  </button>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -515,6 +564,37 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
           )}
         </div>
       </DialogContent>
+
+      {/* Video Popup for single action */}
+      {selectedVideoUrl && (
+        <ActionVideoPopup
+          open={!!selectedVideoUrl}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedVideoUrl(null);
+              setSelectedVideoTitle("");
+            }
+          }}
+          videoUrl={selectedVideoUrl}
+          actionTitle={selectedVideoTitle}
+        />
+      )}
+
+      {/* Clipped Actions Player */}
+      <ClippedActionsPlayer
+        open={showClippedActions}
+        onOpenChange={setShowClippedActions}
+        clips={actions
+          .filter(a => a.video_url)
+          .map(a => ({
+            id: a.id,
+            action_number: a.action_number,
+            action_type: a.action_type,
+            action_description: a.action_description,
+            video_url: a.video_url!,
+            minute: a.minute,
+          }))}
+      />
     </Dialog>
   );
 };
