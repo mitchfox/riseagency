@@ -1626,6 +1626,7 @@ export type Database = {
           minute: number | null
           notes: string | null
           updated_at: string | null
+          video_url: string | null
           zone: number | null
         }
         Insert: {
@@ -1640,6 +1641,7 @@ export type Database = {
           minute?: number | null
           notes?: string | null
           updated_at?: string | null
+          video_url?: string | null
           zone?: number | null
         }
         Update: {
@@ -1654,6 +1656,7 @@ export type Database = {
           minute?: number | null
           notes?: string | null
           updated_at?: string | null
+          video_url?: string | null
           zone?: number | null
         }
         Relationships: [

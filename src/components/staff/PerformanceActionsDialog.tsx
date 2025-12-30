@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Plus, LineChart, Search, Loader2, Sparkles, ChevronDown, ChevronUp, List } from "lucide-react";
+import { Trash2, Plus, LineChart, Search, Loader2, Sparkles, ChevronDown, ChevronUp, List, Video } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { R90RatingsViewer } from "./R90RatingsViewer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +16,8 @@ import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
 import { calculateAdjustedScore, isDefensiveR90Category } from "@/lib/zoneMultipliers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { ActionVideoUpload } from "./ActionVideoUpload";
+import { ActionVideoPopup } from "@/components/ActionVideoPopup";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -35,6 +37,7 @@ interface PerformanceAction {
   notes: string;
   zone?: number | null;
   is_successful?: boolean;
+  video_url?: string | null;
 }
 
 interface PerformanceActionsDialogProps {
@@ -66,6 +69,8 @@ export const PerformanceActionsDialog = ({
   const [aiSearchAction, setAiSearchAction] = useState<{ type: string; context: string } | null>(null);
   const [fillingScores, setFillingScores] = useState(false);
   const [isByActionDialogOpen, setIsByActionDialogOpen] = useState(false);
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
+  const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>("");
   const [newAction, setNewAction] = useState<PerformanceAction>({
     action_number: 1,
     minute: 0,
@@ -75,6 +80,7 @@ export const PerformanceActionsDialog = ({
     notes: "",
     zone: null,
     is_successful: true,
+    video_url: null,
   });
   const [actionCategory, setActionCategory] = useState<string | null>(null);
 
@@ -749,7 +755,32 @@ export const PerformanceActionsDialog = ({
                         </span>
                         <span className="font-semibold truncate">{action.action_type}</span>
                       </div>
-                      <div className="flex gap-1 flex-shrink-0">
+                      <div className="flex gap-1 flex-shrink-0 items-center">
+                        {/* Video button - show if video exists */}
+                        {action.video_url && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedVideoUrl(action.video_url!);
+                              setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
+                            }}
+                            className="bg-amber-500/10 hover:bg-amber-500/20"
+                            title="Play Clip"
+                          >
+                            <Video className="w-4 h-4 text-amber-600" />
+                          </Button>
+                        )}
+                        
+                        {/* Video upload - admin only */}
+                        {isAdmin && action.id && (
+                          <ActionVideoUpload
+                            actionId={action.id}
+                            currentVideoUrl={action.video_url || null}
+                            onVideoUploaded={() => fetchActions()}
+                          />
+                        )}
+                        
                         <Button
                           variant="ghost"
                           size="sm"
@@ -863,6 +894,21 @@ export const PerformanceActionsDialog = ({
         onActionsUpdated={fetchActions}
         isAdmin={isAdmin}
       />
+
+      {/* Video Popup */}
+      {selectedVideoUrl && (
+        <ActionVideoPopup
+          open={!!selectedVideoUrl}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedVideoUrl(null);
+              setSelectedVideoTitle("");
+            }
+          }}
+          videoUrl={selectedVideoUrl}
+          actionTitle={selectedVideoTitle}
+        />
+      )}
     </Dialog>
   );
 };
