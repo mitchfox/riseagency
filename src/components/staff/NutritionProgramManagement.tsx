@@ -241,8 +241,34 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
     setDialogOpen(true);
   };
 
+  // Calculate calories from macros (carbs*4 + protein*4 + fat*9), rounded to nearest 10
+  const calculateCalories = (carbs: string, protein: string, fat: string): string => {
+    const carbsNum = parseFloat(carbs.replace(/[^0-9.]/g, '')) || 0;
+    const proteinNum = parseFloat(protein.replace(/[^0-9.]/g, '')) || 0;
+    const fatNum = parseFloat(fat.replace(/[^0-9.]/g, '')) || 0;
+    
+    if (carbsNum === 0 && proteinNum === 0 && fatNum === 0) return '';
+    
+    const totalCalories = (carbsNum * 4) + (proteinNum * 4) + (fatNum * 9);
+    const roundedCalories = Math.round(totalCalories / 10) * 10;
+    return roundedCalories.toString();
+  };
+
   const updateField = (field: keyof NutritionProgram, value: any) => {
-    setEditingProgram(prev => ({ ...prev, [field]: value }));
+    setEditingProgram(prev => {
+      const updated = { ...prev, [field]: value };
+      
+      // Auto-calculate base calories when carbs, protein, or fat changes
+      if (field === 'carbohydrates' || field === 'protein' || field === 'fat') {
+        updated.calories = calculateCalories(
+          field === 'carbohydrates' ? value : (prev.carbohydrates || ''),
+          field === 'protein' ? value : (prev.protein || ''),
+          field === 'fat' ? value : (prev.fat || '')
+        );
+      }
+      
+      return updated;
+    });
   };
 
   if (loading) {
