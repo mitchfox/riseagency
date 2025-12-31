@@ -35,6 +35,7 @@ interface Exercise {
 
 interface SessionData {
   exercises: Exercise[];
+  staffNotes?: string;
 }
 
 interface WeeklySchedule {
@@ -1708,8 +1709,25 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                          })}
                        </div>
 
-                      {selectedSession ? (
+                        {selectedSession ? (
                         <div className="space-y-4 pt-4">
+                          {/* Staff-only session notes */}
+                          <div className="flex items-center gap-2 border-b pb-3 mb-3">
+                            <Label className="text-sm text-muted-foreground whitespace-nowrap">Staff Notes:</Label>
+                            <Input
+                              placeholder="Notes on what to include in this session (staff only)"
+                              value={(programmingData[selectedSession as keyof ProgrammingData] as SessionData).staffNotes || ''}
+                              onChange={(e) => {
+                                const sessionKey = selectedSession as keyof ProgrammingData;
+                                const currentSession = programmingData[sessionKey] as SessionData;
+                                updateProgrammingData({
+                                  [sessionKey]: { ...currentSession, staffNotes: e.target.value }
+                                } as any);
+                              }}
+                              className="text-sm flex-1"
+                            />
+                          </div>
+                          
                           <div className="flex justify-between items-center mb-4">
                             <Label className="text-lg font-semibold">
                               {sessionLabels.find(s => s.key === selectedSession)?.label} Exercises
