@@ -528,7 +528,22 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     if (!selectedPlayerId || selectedAnalysesToAssign.length === 0) return;
 
     try {
-      const inserts = selectedAnalysesToAssign.map(analysisId => ({
+      // Check for existing assignments to avoid duplicates
+      const { data: existingAssignments } = await supabase
+        .from("player_other_analysis")
+        .select("analysis_id")
+        .eq("player_id", selectedPlayerId)
+        .in("analysis_id", selectedAnalysesToAssign);
+
+      const existingIds = new Set(existingAssignments?.map(a => a.analysis_id) || []);
+      const newAnalysesToAssign = selectedAnalysesToAssign.filter(id => !existingIds.has(id));
+
+      if (newAnalysesToAssign.length === 0) {
+        toast.error("All selected analyses are already assigned to this player");
+        return;
+      }
+
+      const inserts = newAnalysesToAssign.map(analysisId => ({
         player_id: selectedPlayerId,
         analysis_id: analysisId
       }));
@@ -539,7 +554,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
       if (error) throw error;
 
-      toast.success(`${selectedAnalysesToAssign.length} analysis/analyses assigned successfully`);
+      const skippedCount = selectedAnalysesToAssign.length - newAnalysesToAssign.length;
+      if (skippedCount > 0) {
+        toast.success(`${newAnalysesToAssign.length} assigned (${skippedCount} already assigned)`);
+      } else {
+        toast.success(`${newAnalysesToAssign.length} analysis/analyses assigned successfully`);
+      }
       setIsAssignAnalysisDialogOpen(false);
       setSelectedAnalysesToAssign([]);
       setAnalysisSearchQuery("");

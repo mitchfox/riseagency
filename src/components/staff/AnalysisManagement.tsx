@@ -373,8 +373,18 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
       toast.success("Image uploaded successfully");
     } catch (error: any) {
-      toast.error("Failed to upload image");
-      console.error(error);
+      const errorMessage = error?.message || "Unknown error";
+      const isFileTooLarge = errorMessage.includes("size") || errorMessage.includes("too large");
+      const isInvalidType = errorMessage.includes("type") || errorMessage.includes("mime");
+      
+      if (isFileTooLarge) {
+        toast.error("Image upload failed: File is too large. Maximum size is 50MB.");
+      } else if (isInvalidType) {
+        toast.error("Image upload failed: Invalid file type. Please upload a valid image file.");
+      } else {
+        toast.error(`Image upload failed: ${errorMessage}`);
+      }
+      console.error("Image upload error:", error);
     } finally {
       setUploadingImage(false);
     }
@@ -405,8 +415,18 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       setFormData({ ...formData, video_url: publicUrl });
       toast.success("Video uploaded successfully");
     } catch (error: any) {
-      toast.error("Failed to upload video");
-      console.error(error);
+      const errorMessage = error?.message || "Unknown error";
+      const isFileTooLarge = errorMessage.includes("size") || errorMessage.includes("too large") || errorMessage.includes("Payload");
+      const isInvalidType = errorMessage.includes("type") || errorMessage.includes("mime");
+      
+      if (isFileTooLarge) {
+        toast.error("Video upload failed: File is too large. Maximum size is 50MB.");
+      } else if (isInvalidType) {
+        toast.error("Video upload failed: Invalid file type. Please upload a valid video file.");
+      } else {
+        toast.error(`Video upload failed: ${errorMessage}`);
+      }
+      console.error("Video upload error:", error);
     } finally {
       setUploadingImage(false);
     }
@@ -457,8 +477,9 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       handleCloseDialog();
       fetchAnalyses();
     } catch (error: any) {
-      toast.error("Failed to save analysis");
-      console.error(error);
+      const errorMessage = error?.message || "Unknown error";
+      toast.error(`Failed to save analysis: ${errorMessage}`);
+      console.error("Save analysis error:", error);
     }
   };
 
