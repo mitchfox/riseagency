@@ -33,7 +33,10 @@ export const CoachAvailability = ({ open, onOpenChange }: CoachAvailabilityProps
     try {
       setLoading(true);
       
-      // Fetch all staff availability
+      // Get today's date in YYYY-MM-DD format for comparison
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Fetch only current and future staff availability
       const { data: availabilityData, error: availabilityError } = await supabase
         .from("staff_availability")
         .select(`
@@ -44,6 +47,7 @@ export const CoachAvailability = ({ open, onOpenChange }: CoachAvailabilityProps
           notes,
           staff_id
         `)
+        .gte("availability_date", today)
         .order("availability_date")
         .order("start_time");
 
