@@ -267,6 +267,33 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
         );
       }
       
+      // Auto-calculate training day calories
+      if (field === 'carbs_training_day' || field === 'protein_training_day' || field === 'fat_training_day') {
+        updated.calories_training_day = calculateCalories(
+          field === 'carbs_training_day' ? value : (prev.carbs_training_day || ''),
+          field === 'protein_training_day' ? value : (prev.protein_training_day || ''),
+          field === 'fat_training_day' ? value : (prev.fat_training_day || '')
+        );
+      }
+      
+      // Auto-calculate match day calories
+      if (field === 'carbs_match_day' || field === 'protein_match_day' || field === 'fat_match_day') {
+        updated.calories_match_day = calculateCalories(
+          field === 'carbs_match_day' ? value : (prev.carbs_match_day || ''),
+          field === 'protein_match_day' ? value : (prev.protein_match_day || ''),
+          field === 'fat_match_day' ? value : (prev.fat_match_day || '')
+        );
+      }
+      
+      // Auto-calculate recovery day calories
+      if (field === 'carbs_recovery_day' || field === 'protein_recovery_day' || field === 'fat_recovery_day') {
+        updated.calories_recovery_day = calculateCalories(
+          field === 'carbs_recovery_day' ? value : (prev.carbs_recovery_day || ''),
+          field === 'protein_recovery_day' ? value : (prev.protein_recovery_day || ''),
+          field === 'fat_recovery_day' ? value : (prev.fat_recovery_day || '')
+        );
+      }
+      
       return updated;
     });
   };
