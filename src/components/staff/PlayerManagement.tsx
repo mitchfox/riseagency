@@ -33,6 +33,7 @@ import { MarkdownText } from "@/utils/markdownRenderer";
 import { Progress } from "@/components/ui/progress";
 import { downloadVideo } from "@/lib/videoDownload";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
+import { AddTestResultDialog } from "./AddTestResultDialog";
 
 interface Player {
   id: string;
@@ -2213,8 +2214,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
                     {/* Testing Results Card */}
                     <Card className="mt-4">
-                      <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                      <CardHeader className="px-3 md:px-6 py-3 md:py-4 flex flex-row items-center justify-between">
                         <CardTitle>Testing Results</CardTitle>
+                        <AddTestResultDialog
+                          playerId={selectedPlayerId!}
+                          playerName={selectedPlayer?.name || ''}
+                          onSuccess={fetchAllTestResults}
+                        />
                       </CardHeader>
                       <CardContent className="px-3 md:px-6 py-4">
                         {playerTestResults[selectedPlayerId]?.length > 0 ? (
