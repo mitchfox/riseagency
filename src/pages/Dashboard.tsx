@@ -37,9 +37,9 @@ import { PlayerPositionalGuides } from "@/components/PlayerPositionalGuides";
 import { ProtectedContracts } from "@/components/player/ProtectedContracts";
 import { PaymentOptions } from "@/components/player/PaymentOptions";
 import { PlayerTransferHub } from "@/components/player/TransferHub";
-import { PlayerProgrammingNotes } from "@/components/player/PlayerProgrammingNotes";
 import { CognisanceSection } from "@/components/portal/CognisanceSection";
 import { NutritionProgramDisplay } from "@/components/portal/NutritionProgramDisplay";
+import { MarkdownContent } from "@/utils/markdownRenderer";
 
 interface Analysis {
   id: string;
@@ -1872,47 +1872,63 @@ const Dashboard = () => {
                           <p className="text-center text-muted-foreground">No concepts available yet.</p>
                         </div>
                       ) : (
-                        <div className="space-y-8">
+                        <Accordion type="single" collapsible className="space-y-4">
                           {concepts.map((concept) => (
-                            <div key={concept.id} className="border rounded-lg p-6 space-y-4">
-                              <h3 className="text-2xl font-bebas uppercase tracking-wider">
-                                {concept.title || "Untitled Concept"}
-                              </h3>
-                              {concept.concept && (
-                                <div className="space-y-2">
-                                  <h4 className="font-semibold text-lg">Concept</h4>
-                                  <p className="text-muted-foreground whitespace-pre-wrap">{concept.concept}</p>
-                                </div>
-                              )}
-                              {concept.points && Array.isArray(concept.points) && concept.points.length > 0 && (
-                                <div className="grid gap-4">
-                                  {concept.points.map((point: any, index: number) => (
-                                    <div key={index} className="space-y-2">
-                                      {point.images && Array.isArray(point.images) && point.images.length > 0 && (
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                          {point.images.map((img: string, imgIndex: number) => (
-                                            <img
-                                              key={imgIndex}
-                                              src={img}
-                                              alt={`Concept image ${imgIndex + 1}`}
-                                              className="w-full h-48 object-cover rounded-lg"
-                                            />
-                                          ))}
-                                        </div>
-                                      )}
+                            <AccordionItem key={concept.id} value={concept.id} className="border rounded-lg px-6">
+                              <AccordionTrigger className="hover:no-underline py-4">
+                                <h3 className="text-2xl font-bebas uppercase tracking-wider text-left">
+                                  {concept.title || "Untitled Concept"}
+                                </h3>
+                              </AccordionTrigger>
+                              <AccordionContent className="pb-6 space-y-4">
+                                {concept.concept && (
+                                  <div className="space-y-2">
+                                    <h4 className="font-semibold text-lg">Concept</h4>
+                                    <div className="text-muted-foreground">
+                                      <MarkdownContent content={concept.concept} />
                                     </div>
-                                  ))}
-                                </div>
-                              )}
-                              {concept.explanation && (
-                                <div className="space-y-2">
-                                  <h4 className="font-semibold text-lg">Explanation</h4>
-                                  <p className="text-muted-foreground whitespace-pre-wrap">{concept.explanation}</p>
-                                </div>
-                              )}
-                            </div>
+                                  </div>
+                                )}
+                                {concept.points && Array.isArray(concept.points) && concept.points.length > 0 && (
+                                  <div className="grid gap-4">
+                                    {concept.points.map((point: any, index: number) => (
+                                      <div key={index} className="space-y-2">
+                                        {point.title && (
+                                          <h5 className="font-semibold">{point.title}</h5>
+                                        )}
+                                        {point.description && (
+                                          <div className="text-muted-foreground">
+                                            <MarkdownContent content={point.description} />
+                                          </div>
+                                        )}
+                                        {point.images && Array.isArray(point.images) && point.images.length > 0 && (
+                                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                            {point.images.map((img: string, imgIndex: number) => (
+                                              <img
+                                                key={imgIndex}
+                                                src={img}
+                                                alt={`Concept image ${imgIndex + 1}`}
+                                                className="w-full h-48 object-cover rounded-lg"
+                                              />
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {concept.explanation && (
+                                  <div className="space-y-2">
+                                    <h4 className="font-semibold text-lg">Explanation</h4>
+                                    <div className="text-muted-foreground">
+                                      <MarkdownContent content={concept.explanation} />
+                                    </div>
+                                  </div>
+                                )}
+                              </AccordionContent>
+                            </AccordionItem>
                           ))}
-                        </div>
+                        </Accordion>
                       )}
                     </CardContent>
                   </Card>
@@ -2774,8 +2790,6 @@ const Dashboard = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="container mx-auto px-4">
-                  {/* Programming Notes from Coach */}
-                  {playerData?.id && <PlayerProgrammingNotes playerId={playerData.id} />}
                   
                   {programs.filter(p => p.program_name !== 'Testing Protocol').length === 0 ? (
                     <div className="py-8"></div>
