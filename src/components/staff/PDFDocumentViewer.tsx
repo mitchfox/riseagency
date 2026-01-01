@@ -178,11 +178,22 @@ export const PDFDocumentViewer = ({
   };
 
   // Filter fields based on page and signer party
+  // In owner-sign mode, show ALL fields but only owner fields are editable
   const currentPageFields = fields.filter(f => {
     if (f.page_number !== currentPage) return false;
+    // In owner-sign mode, show all fields (owner editable, counterparty read-only)
+    if (mode === 'owner-sign') return true;
     if (signerPartyFilter === 'all') return true;
     return f.signer_party === signerPartyFilter;
   });
+
+  // Check if a field should be interactive based on mode and party
+  const isFieldEditable = (field: FieldPosition) => {
+    if (mode === 'edit') return true;
+    if (mode === 'owner-sign') return field.signer_party === 'owner';
+    if (mode === 'sign') return field.signer_party === 'counterparty';
+    return false;
+  };
 
   const getFieldIcon = (type: string) => {
     switch (type) {
@@ -349,7 +360,9 @@ export const PDFDocumentViewer = ({
               </Document>
 
               {/* Overlay fields */}
-              {!loading && currentPageFields.map((field) => (
+              {!loading && currentPageFields.map((field) => {
+                const editable = isFieldEditable(field);
+                return (
                 <div
                   key={field.id}
                   data-field-id={field.id}
@@ -358,7 +371,7 @@ export const PDFDocumentViewer = ({
                     mode === 'edit' 
                       ? cn("cursor-grab hover:opacity-90", getPartyColor(field.signer_party))
                       : (mode === 'sign' || mode === 'owner-sign')
-                      ? getPartyColor(field.signer_party)
+                      ? cn(getPartyColor(field.signer_party), !editable && "opacity-60")
                       : "border-muted bg-muted/20",
                     draggingField === field.id && "ring-2 ring-blue-500 opacity-70 cursor-grabbing z-50"
                   )}
@@ -415,21 +428,33 @@ export const PDFDocumentViewer = ({
                   ) : (mode === 'sign' || mode === 'owner-sign') ? (
                     <div className="absolute inset-0 flex items-center p-1">
                       {field.field_type === 'text' && (
-                        <input
-                          type="text"
-                          value={fieldValues[field.id] || ''}
-                          onChange={(e) => onFieldValueChange?.(field.id, e.target.value)}
-                          className="w-full h-full bg-white/80 text-sm border rounded px-2"
-                          placeholder={field.label}
-                        />
+                        editable ? (
+                          <input
+                            type="text"
+                            value={fieldValues[field.id] || ''}
+                            onChange={(e) => onFieldValueChange?.(field.id, e.target.value)}
+                            className="w-full h-full bg-white text-sm border rounded px-2 focus:ring-2 focus:ring-primary"
+                            placeholder={field.label}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 text-sm border rounded px-2 flex items-center text-muted-foreground">
+                            {fieldValues[field.id] || field.label}
+                          </div>
+                        )
                       )}
                       {field.field_type === 'date' && (
-                        <input
-                          type="date"
-                          value={fieldValues[field.id] || ''}
-                          onChange={(e) => onFieldValueChange?.(field.id, e.target.value)}
-                          className="w-full h-full bg-white/80 text-sm border rounded px-2"
-                        />
+                        editable ? (
+                          <input
+                            type="date"
+                            value={fieldValues[field.id] || ''}
+                            onChange={(e) => onFieldValueChange?.(field.id, e.target.value)}
+                            className="w-full h-full bg-white text-sm border rounded px-2 focus:ring-2 focus:ring-primary"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 text-sm border rounded px-2 flex items-center text-muted-foreground">
+                            {fieldValues[field.id] || field.label}
+                          </div>
+                        )
                       )}
                       {field.field_type === 'signature' && (
                         fieldValues[field.id] ? (
@@ -438,19 +463,28 @@ export const PDFDocumentViewer = ({
                             alt="Signature" 
                             className="w-full h-full object-contain bg-white rounded"
                           />
-                        ) : (
+                        ) : editable ? (
                           <button
-                            onClick={() => onSignatureStart?.(field.id)}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSignatureStart?.(field.id);
+                            }}
                             className={cn(
-                              "w-full h-full border-2 border-dashed rounded flex items-center justify-center text-xs hover:opacity-80",
+                              "w-full h-full border-2 border-dashed rounded flex items-center justify-center text-xs hover:opacity-80 cursor-pointer",
                               field.signer_party === 'owner' 
-                                ? "border-green-400 text-green-600 bg-green-50" 
-                                : "border-orange-400 text-orange-600 bg-orange-50"
+                                ? "border-green-400 text-green-600 bg-green-50 hover:bg-green-100" 
+                                : "border-orange-400 text-orange-600 bg-orange-50 hover:bg-orange-100"
                             )}
                           >
                             <PenTool className="w-4 h-4 mr-1" />
                             Click to Sign
                           </button>
+                        ) : (
+                          <div className="w-full h-full border-2 border-dashed border-gray-300 rounded flex items-center justify-center text-xs text-muted-foreground bg-gray-50">
+                            <PenTool className="w-4 h-4 mr-1" />
+                            {field.label}
+                          </div>
                         )
                       )}
                     </div>
@@ -461,7 +495,7 @@ export const PDFDocumentViewer = ({
                     </div>
                   )}
                 </div>
-              ))}
+              );})}
             </div>
           </div>
         )}
