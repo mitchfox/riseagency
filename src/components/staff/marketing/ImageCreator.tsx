@@ -79,10 +79,8 @@ export const ImageCreator = () => {
   const [form, setForm] = useState({
     canva_link: "",
     image_url: "",
-    scheduled_date: "",
-    assigned_to: "",
-    image_due_date: "",
   });
+  const [uploading, setUploading] = useState(false);
 
   // Get current user
   useEffect(() => {
@@ -208,9 +206,6 @@ export const ImageCreator = () => {
     setForm({
       canva_link: post.canva_link || "",
       image_url: post.image_url_internal || "",
-      scheduled_date: post.scheduled_date || "",
-      assigned_to: post.assigned_to || currentUserId || "",
-      image_due_date: post.image_due_date || "",
     });
     setDialogOpen(true);
   };
@@ -222,11 +217,50 @@ export const ImageCreator = () => {
       data: {
         canva_link: form.canva_link || null,
         image_url_internal: form.image_url || null,
-        scheduled_date: form.scheduled_date || null,
-        assigned_to: form.assigned_to || null,
-        image_due_date: form.image_due_date || null,
       },
     });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image must be less than 10MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `blog-images/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('blog-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('blog-images')
+        .getPublicUrl(filePath);
+
+      setForm({ ...form, image_url: publicUrl });
+      toast.success("Image uploaded");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const assignToSelf = (postId: string, dueDate: string) => {
@@ -495,96 +529,75 @@ export const ImageCreator = () => {
 
       {/* Add Image Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="w-full max-w-lg">
+        <DialogContent className="w-full max-w-2xl">
           <DialogHeader>
             <DialogTitle>Add Image & Canva Link</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-5 py-4">
             <div>
               <h4 className="font-medium text-sm mb-2">{selectedPost?.title}</h4>
-              <p className="text-xs text-muted-foreground line-clamp-2">
-                {selectedPost?.excerpt || selectedPost?.content.substring(0, 150)}...
+              <p className="text-sm text-muted-foreground line-clamp-4">
+                {selectedPost?.content ? getCleanContent(selectedPost.content).substring(0, 300) : ""}...
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Canva Link</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={form.canva_link}
-                  onChange={(e) => setForm({ ...form, canva_link: e.target.value })}
-                  placeholder="https://www.canva.com/design/..."
-                />
-                {form.canva_link && (
-                  <Button size="icon" variant="outline" asChild>
-                    <a href={form.canva_link} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Image URL</Label>
-              <Input
-                value={form.image_url}
-                onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                placeholder="https://... or paste image URL"
-              />
-              {form.image_url && (
-                <div className="mt-2 rounded-md overflow-hidden border">
-                  <img src={form.image_url} alt="Preview" className="w-full h-32 object-cover" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Canva Link */}
+              <div className="space-y-2">
+                <Label>Canva Link</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={form.canva_link}
+                    onChange={(e) => setForm({ ...form, canva_link: e.target.value })}
+                    placeholder="https://www.canva.com/design/..."
+                    className="flex-1"
+                  />
+                  {form.canva_link && (
+                    <Button size="icon" variant="outline" asChild>
+                      <a href={form.canva_link} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </Button>
+                  )}
                 </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Assigned To</Label>
-                <Select
-                  value={form.assigned_to || "unassigned"}
-                  onValueChange={(value) => setForm({ ...form, assigned_to: value === "unassigned" ? "" : value })}
-                >
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Not assigned" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border z-50">
-                    <SelectItem value="unassigned">Not assigned</SelectItem>
-                    {staffMembers.map((staff) => (
-                      <SelectItem key={staff.id} value={staff.id}>
-                        {getStaffDisplayName(staff.id)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
+
+              {/* Image Upload */}
               <div className="space-y-2">
-                <Label>Image Due Date</Label>
-                <Input
-                  type="date"
-                  className="h-10 px-3"
-                  value={form.image_due_date}
-                  onChange={(e) => setForm({ ...form, image_due_date: e.target.value })}
-                />
+                <Label>Upload Image</Label>
+                <div className="flex flex-col gap-2">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                    className="cursor-pointer"
+                  />
+                  {uploading && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <LoadingSpinner size="sm" />
+                      Uploading...
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Scheduled Post Date</Label>
-              <Input
-                type="date"
-                className="h-10 px-3"
-                value={form.scheduled_date}
-                onChange={(e) => setForm({ ...form, scheduled_date: e.target.value })}
-              />
-            </div>
+            {/* Image Preview */}
+            {form.image_url && (
+              <div className="rounded-lg overflow-hidden border">
+                <img src={form.image_url} alt="Preview" className="w-full h-48 object-cover" />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={updateMutation.isPending}>
+            <Button 
+              onClick={handleSave} 
+              disabled={updateMutation.isPending || !form.canva_link || !form.image_url}
+            >
               Save
             </Button>
           </DialogFooter>
