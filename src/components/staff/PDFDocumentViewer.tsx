@@ -514,12 +514,18 @@ export const PDFDocumentViewer = ({
                             onClick={(e) => e.stopPropagation()}
                             onMouseDown={(e) => e.stopPropagation()}
                             onFocus={(e) => e.stopPropagation()}
-                            className="h-full bg-white text-sm text-black border rounded px-2 focus:ring-2 focus:ring-primary"
-                            style={{ minWidth: '100%', width: 'auto' }}
+                            className="h-full bg-white text-sm text-black border rounded px-2 focus:ring-2 focus:ring-primary whitespace-nowrap"
+                            style={{ 
+                              minWidth: '120px',
+                              width: `${Math.max(120, (fieldValues[field.id]?.length || 0) * 9 + 20)}px`
+                            }}
                             placeholder={field.label}
                           />
                         ) : (
-                          <div className="h-full bg-gray-100 text-sm text-black border rounded px-2 flex items-center whitespace-nowrap">
+                          <div 
+                            className="h-full bg-gray-100 text-sm text-black border rounded px-2 flex items-center whitespace-nowrap"
+                            style={{ minWidth: '120px' }}
+                          >
                             {fieldValues[field.id] || field.label}
                           </div>
                         )
