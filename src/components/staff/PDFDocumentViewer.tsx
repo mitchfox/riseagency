@@ -452,9 +452,9 @@ export const PDFDocumentViewer = ({
                     left: `${field.x_position}%`,
                     top: `${field.y_position}%`,
                     width: field.field_type === 'text' 
-                      ? `${Math.max(field.width, Math.max(12, (fieldValues[field.id]?.length || 0) * 0.8 + 2))}%`
+                      ? `${Math.max(field.width, (fieldValues[field.id]?.length || 0) * 1.2 + 5)}%`
                       : `${field.width}%`,
-                    minWidth: '80px',
+                    minWidth: '120px',
                     height: `${field.height}%`,
                     minHeight: '30px',
                   }}
