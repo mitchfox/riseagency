@@ -438,6 +438,13 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     }
   };
 
+  // Check if all owner fields are filled
+  const areAllOwnerFieldsFilled = () => {
+    const ownerFields = fields.filter(f => f.signer_party === 'owner');
+    if (ownerFields.length === 0) return true;
+    return ownerFields.every(field => !!ownerFieldValues[field.id]);
+  };
+
   const hasOwnerFields = (contract: SignatureContract) => {
     // We need to check if there are owner fields - for now check if owner_signed_at is null
     return !contract.owner_signed_at;
@@ -742,10 +749,23 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
           </div>
 
           <DialogFooter className="px-6 py-4 border-t">
+            <div className="flex-1 text-sm text-muted-foreground">
+              {fields.filter(f => f.signer_party === 'owner').length > 0 ? (
+                <>
+                  {Object.keys(ownerFieldValues).filter(k => ownerFieldValues[k]).length} / {fields.filter(f => f.signer_party === 'owner').length} fields completed
+                </>
+              ) : (
+                <span className="text-amber-600">No fields assigned to you. Add fields in Edit mode first.</span>
+              )}
+            </div>
             <Button variant="outline" onClick={() => setShowOwnerSignDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={saveOwnerSignature} disabled={saving} className="bg-green-600 hover:bg-green-700">
+            <Button 
+              onClick={saveOwnerSignature} 
+              disabled={saving || !areAllOwnerFieldsFilled()} 
+              className="bg-green-600 hover:bg-green-700"
+            >
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -754,7 +774,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Save My Signature & Activate
+                  {areAllOwnerFieldsFilled() ? 'Save & Activate' : 'Fill All Fields First'}
                 </>
               )}
             </Button>
