@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
@@ -67,7 +67,12 @@ export const PDFDocumentViewer = ({
   };
 
   const handlePageClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    // Don't add field if we're dragging or if target is inside a field
     if (mode !== 'edit' || !addingFieldType || !pageRef.current || draggingField) return;
+    
+    // Check if click is on the page itself, not on a field
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-field-id]')) return;
 
     const rect = pageRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -101,7 +106,6 @@ export const PDFDocumentViewer = ({
     const clickX = ((e.clientX - rect.left) / rect.width) * 100;
     const clickY = ((e.clientY - rect.top) / rect.height) * 100;
     
-    // Calculate offset from field position to click position
     setDragOffset({
       x: clickX - field.x_position,
       y: clickY - field.y_position,
@@ -109,36 +113,49 @@ export const PDFDocumentViewer = ({
     setDraggingField(fieldId);
   };
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!draggingField || !pageRef.current) return;
+  // Use document-level mouse events for smooth dragging
+  useEffect(() => {
+    if (!draggingField) return;
 
-    const rect = pageRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!draggingField || !pageRef.current) return;
 
-    const field = fields.find(f => f.id === draggingField);
-    if (!field) return;
+      const rect = pageRef.current.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-    const newX = x - dragOffset.x;
-    const newY = y - dragOffset.y;
+      const field = fields.find(f => f.id === draggingField);
+      if (!field) return;
 
-    const updatedFields = fields.map(f => {
-      if (f.id === draggingField) {
-        return {
-          ...f,
-          x_position: Math.max(0, Math.min(newX, 100 - f.width)),
-          y_position: Math.max(0, Math.min(newY, 100 - f.height)),
-        };
-      }
-      return f;
-    });
+      const newX = x - dragOffset.x;
+      const newY = y - dragOffset.y;
 
-    onFieldsChange?.(updatedFields);
+      const updatedFields = fields.map(f => {
+        if (f.id === draggingField) {
+          return {
+            ...f,
+            x_position: Math.max(0, Math.min(newX, 100 - f.width)),
+            y_position: Math.max(0, Math.min(newY, 100 - f.height)),
+          };
+        }
+        return f;
+      });
+
+      onFieldsChange?.(updatedFields);
+    };
+
+    const handleGlobalMouseUp = () => {
+      setDraggingField(null);
+    };
+
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
   }, [draggingField, dragOffset, fields, onFieldsChange]);
-
-  const handleMouseUp = () => {
-    setDraggingField(null);
-  };
 
   const deleteField = (fieldId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -291,10 +308,7 @@ export const PDFDocumentViewer = ({
       {/* Document viewer */}
       <div 
         ref={containerRef}
-        className="flex-1 overflow-auto p-4"
-        onMouseMove={draggingField ? handleMouseMove : undefined}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        className={cn("flex-1 overflow-auto p-4", draggingField && "cursor-grabbing")}
       >
         {error ? (
           <div className="flex items-center justify-center h-full">
@@ -338,14 +352,15 @@ export const PDFDocumentViewer = ({
               {!loading && currentPageFields.map((field) => (
                 <div
                   key={field.id}
+                  data-field-id={field.id}
                   className={cn(
                     "absolute border-2 rounded transition-colors select-none",
                     mode === 'edit' 
-                      ? cn("cursor-move hover:opacity-80", getPartyColor(field.signer_party))
+                      ? cn("cursor-grab hover:opacity-90", getPartyColor(field.signer_party))
                       : (mode === 'sign' || mode === 'owner-sign')
                       ? getPartyColor(field.signer_party)
                       : "border-muted bg-muted/20",
-                    draggingField === field.id && "ring-2 ring-blue-500 opacity-70"
+                    draggingField === field.id && "ring-2 ring-blue-500 opacity-70 cursor-grabbing z-50"
                   )}
                   style={{
                     left: `${field.x_position}%`,
@@ -361,7 +376,7 @@ export const PDFDocumentViewer = ({
                   {mode === 'edit' ? (
                     <div className="absolute inset-0 flex items-center justify-between px-1 gap-1">
                       <div className="flex items-center gap-1 flex-1 min-w-0">
-                        <GripVertical className="w-3 h-3 text-muted-foreground flex-shrink-0 cursor-grab" />
+                        <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0 cursor-grab" />
                         {getFieldIcon(field.field_type)}
                         <input
                           type="text"
@@ -373,29 +388,28 @@ export const PDFDocumentViewer = ({
                           placeholder="Label"
                         />
                       </div>
-                      <div className="flex items-center gap-0.5">
-                        <Button
-                          variant="ghost"
-                          size="icon"
+                      <div className="flex items-center gap-0.5 flex-shrink-0">
+                        <button
+                          type="button"
                           className={cn(
-                            "h-5 w-5 flex-shrink-0",
+                            "h-6 w-6 rounded flex items-center justify-center hover:bg-white/50",
                             field.signer_party === 'owner' ? "text-green-600" : "text-orange-600"
                           )}
                           onClick={(e) => toggleFieldParty(field.id, e)}
                           onMouseDown={(e) => e.stopPropagation()}
                           title={`Switch to ${field.signer_party === 'owner' ? 'other party' : 'me'}`}
                         >
-                          {field.signer_party === 'owner' ? <User className="w-3 h-3" /> : <Users className="w-3 h-3" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5 flex-shrink-0"
+                          {field.signer_party === 'owner' ? <User className="w-4 h-4" /> : <Users className="w-4 h-4" />}
+                        </button>
+                        <button
+                          type="button"
+                          className="h-6 w-6 rounded flex items-center justify-center hover:bg-white/50 text-destructive"
                           onClick={(e) => deleteField(field.id, e)}
                           onMouseDown={(e) => e.stopPropagation()}
+                          title="Delete field"
                         >
-                          <Trash2 className="w-3 h-3 text-destructive" />
-                        </Button>
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   ) : (mode === 'sign' || mode === 'owner-sign') ? (
