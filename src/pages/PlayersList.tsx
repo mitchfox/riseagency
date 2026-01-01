@@ -335,7 +335,6 @@ const PlayersList = () => {
                   key={player.id}
                   player={player}
                   viewMode={viewMode}
-                  disableProfileLink
                 />
               ))}
             </div>

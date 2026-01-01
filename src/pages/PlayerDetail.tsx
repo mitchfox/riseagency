@@ -496,15 +496,17 @@ const PlayerDetail = () => {
           {/* Back Button */}
           {!isModal && (
             <div className="mb-2 flex flex-wrap gap-2">
-              <Button
-                onClick={() => navigate("/stars")}
-                variant="outline"
-                size="sm"
-                className="group font-bebas uppercase tracking-wider border-primary/30 bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground btn-shine"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-                <HoverText text={backToStarsLabel} />
-              </Button>
+              {player.visible_on_stars_page && (
+                <Button
+                  onClick={() => navigate("/stars")}
+                  variant="outline"
+                  size="sm"
+                  className="group font-bebas uppercase tracking-wider border-primary/30 bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-primary-foreground btn-shine"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                  <HoverText text={backToStarsLabel} />
+                </Button>
+              )}
               <Button 
                 asChild
                 size="sm"
