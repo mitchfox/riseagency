@@ -3249,6 +3249,142 @@ export type Database = {
         }
         Relationships: []
       }
+      signature_contracts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          file_name: string
+          file_url: string
+          id: string
+          share_token: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          file_name: string
+          file_url: string
+          id?: string
+          share_token?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          file_name?: string
+          file_url?: string
+          id?: string
+          share_token?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      signature_fields: {
+        Row: {
+          contract_id: string
+          created_at: string
+          display_order: number
+          field_type: string
+          height: number
+          id: string
+          label: string
+          page_number: number
+          required: boolean
+          width: number
+          x_position: number
+          y_position: number
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          display_order?: number
+          field_type: string
+          height?: number
+          id?: string
+          label: string
+          page_number?: number
+          required?: boolean
+          width?: number
+          x_position: number
+          y_position: number
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          display_order?: number
+          field_type?: string
+          height?: number
+          id?: string
+          label?: string
+          page_number?: number
+          required?: boolean
+          width?: number
+          x_position?: number
+          y_position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signature_fields_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "signature_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signature_submissions: {
+        Row: {
+          contract_id: string
+          created_at: string
+          field_values: Json
+          id: string
+          ip_address: string | null
+          signed_at: string
+          signer_email: string
+          signer_name: string
+          user_agent: string | null
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          field_values?: Json
+          id?: string
+          ip_address?: string | null
+          signed_at?: string
+          signer_email: string
+          signer_name: string
+          user_agent?: string | null
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          field_values?: Json
+          id?: string
+          ip_address?: string | null
+          signed_at?: string
+          signer_email?: string
+          signer_name?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signature_submissions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "signature_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_text: {
         Row: {
           created_at: string

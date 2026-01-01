@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, FileText, Scale, Download, Wallet, GitCompare, GraduationCap } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Scale, Download, Wallet, GitCompare, GraduationCap, PenTool } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PaymentsManagement from "./PaymentsManagement";
 import ContractCrossReference from "./ContractCrossReference";
 import AgentTrainingMaterials from "./AgentTrainingMaterials";
+import ContractSignature from "./ContractSignature";
 interface LegalDocument {
   id: string;
   title: string;
@@ -39,7 +40,7 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
     file_url: '',
     effective_date: '',
   });
-  const [activeTab, setActiveTab] = useState<'contract' | 'regulation' | 'payments' | 'training'>('contract');
+  const [activeTab, setActiveTab] = useState<'contract' | 'regulation' | 'payments' | 'training' | 'signature'>('contract');
   const [showCrossReference, setShowCrossReference] = useState(false);
 
   useEffect(() => {
@@ -172,7 +173,7 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="contract" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
             <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Contracts</span>
@@ -182,6 +183,11 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
             <Scale className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Rules</span>
             <span className="sm:hidden">Rules</span>
+          </TabsTrigger>
+          <TabsTrigger value="signature" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <PenTool className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Signature</span>
+            <span className="sm:hidden">Sign</span>
           </TabsTrigger>
           <TabsTrigger value="training" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
             <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -354,6 +360,10 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
 
         <TabsContent value="training" className="space-y-4">
           <AgentTrainingMaterials isAdmin={isAdmin} />
+        </TabsContent>
+
+        <TabsContent value="signature" className="space-y-4">
+          <ContractSignature isAdmin={isAdmin} />
         </TabsContent>
 
         <TabsContent value="payments" className="space-y-4">
