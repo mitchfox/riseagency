@@ -470,9 +470,16 @@ export const ImageCreator = () => {
                             </span>
                           )}
                           {post.canva_link && (
-                            <span className="flex items-center gap-1 text-purple-500">
+                            <a 
+                              href={post.canva_link} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-purple-500 hover:text-purple-700 hover:underline cursor-pointer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <Link2 className="w-3 h-3" /> Canva
-                            </span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
                           )}
                           {post.image_url_internal ? (
                             <span className="flex items-center gap-1 text-green-500">
@@ -481,9 +488,15 @@ export const ImageCreator = () => {
                           ) : null}
                         </div>
                         {post.image_url_internal && (
-                          <div className="mt-2 w-16 h-10 rounded overflow-hidden border">
+                          <a 
+                            href={post.image_url_internal} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="mt-2 w-16 h-10 rounded overflow-hidden border hover:ring-2 hover:ring-primary cursor-pointer block"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <img src={post.image_url_internal} alt="Preview" className="w-full h-full object-cover" />
-                          </div>
+                          </a>
                         )}
                       </div>
                       <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-shrink-0">
@@ -553,9 +566,9 @@ export const ImageCreator = () => {
                             size="sm"
                             variant="default"
                             onClick={() => moveToReadyMutation.mutate(post.id)}
-                            disabled={moveToReadyMutation.isPending || !post.image_url_internal || !post.canva_link}
+                            disabled={moveToReadyMutation.isPending || (!post.image_url_internal && !post.canva_link)}
                             className="h-8 w-full sm:w-auto text-xs"
-                            title={!post.image_url_internal || !post.canva_link ? "Add image and Canva link first" : ""}
+                            title={!post.image_url_internal && !post.canva_link ? "Add image or Canva link first" : ""}
                           >
                             <ArrowRight className="w-3 h-3 mr-1" />
                             Move to Ready
