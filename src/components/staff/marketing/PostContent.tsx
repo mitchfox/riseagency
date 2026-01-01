@@ -325,7 +325,7 @@ export const PostContent = () => {
                               type="date"
                               value={post.scheduled_date || ""}
                               onChange={(e) => updateScheduleMutation.mutate({ id: post.id, date: e.target.value })}
-                              className="h-8 w-full sm:w-36 text-xs"
+                              className="h-9 w-full sm:w-40 text-xs px-3"
                             />
                             <div className="flex items-center gap-2">
                               <Button

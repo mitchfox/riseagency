@@ -91,13 +91,25 @@ export const ImageCreator = () => {
     });
   }, []);
 
-  // Fetch staff members
+  // Fetch staff members (only users with staff/admin/marketeer roles)
   const { data: staffMembers = [] } = useQuery({
-    queryKey: ["staff-members"],
+    queryKey: ["staff-members-with-roles"],
     queryFn: async () => {
+      // Get user IDs with staff roles
+      const { data: roleData, error: roleError } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["staff", "admin", "marketeer"]);
+      if (roleError) throw roleError;
+      
+      const staffUserIds = [...new Set(roleData?.map(r => r.user_id) || [])];
+      if (staffUserIds.length === 0) return [];
+
+      // Get profiles for those users
       const { data, error } = await supabase
         .from("profiles")
         .select("id, full_name, email")
+        .in("id", staffUserIds)
         .order("full_name");
       if (error) throw error;
       return data as StaffMember[];
@@ -227,10 +239,38 @@ export const ImageCreator = () => {
     });
   };
 
-  const getStaffName = (id: string | null) => {
-    if (!id) return null;
+  // Get display name for staff (first name only, with initial if duplicates)
+  const getStaffDisplayName = (id: string | null) => {
+    if (!id) return "Not assigned";
     const staff = staffMembers.find(s => s.id === id);
-    return staff?.full_name || staff?.email?.split('@')[0] || 'Unknown';
+    if (!staff) return "Unknown";
+    
+    const fullName = staff.full_name || staff.email?.split('@')[0] || "Unknown";
+    const firstName = fullName.split(' ')[0];
+    const lastName = fullName.split(' ').slice(1).join(' ');
+    
+    // Check if there are duplicates with same first name
+    const duplicates = staffMembers.filter(s => {
+      const name = s.full_name || s.email?.split('@')[0] || "";
+      return name.split(' ')[0] === firstName;
+    });
+    
+    if (duplicates.length > 1 && lastName) {
+      return `${firstName} ${lastName[0]}.`;
+    }
+    return firstName;
+  };
+
+  // Helper to clean content from draft markers
+  const getCleanContent = (content: string) => {
+    // Remove **Intro**, **Main**, **Secondary**, **Conclusion** markers
+    return content
+      .replace(/\*\*Intro\*\*\n?/g, '')
+      .replace(/\*\*Main\*\*\n?/g, '')
+      .replace(/\*\*Secondary\*\*\n?/g, '')
+      .replace(/\*\*Conclusion\*\*\n?/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
   };
 
   const downloadImage = async (url: string, title: string) => {
@@ -359,13 +399,13 @@ export const ImageCreator = () => {
                         {post.category && (
                           <span className="text-xs text-muted-foreground">{post.category}</span>
                         )}
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                          {post.excerpt || post.content.substring(0, 100)}...
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-3">
+                          {post.excerpt || getCleanContent(post.content).substring(0, 150)}...
                         </p>
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 text-xs">
                           {post.assigned_to && (
                             <span className="flex items-center gap-1 text-blue-500">
-                              <User className="w-3 h-3" /> {getStaffName(post.assigned_to)}
+                              <User className="w-3 h-3" /> {getStaffDisplayName(post.assigned_to)}
                             </span>
                           )}
                           {post.image_due_date && (
@@ -394,28 +434,29 @@ export const ImageCreator = () => {
                         {/* Quick assign staff and due date - stacked on mobile */}
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                           <Select
-                            value={post.assigned_to || ""}
+                            value={post.assigned_to || "unassigned"}
                             onValueChange={(value) => {
                               updateMutation.mutate({
                                 id: post.id,
-                                data: { assigned_to: value || null },
+                                data: { assigned_to: value === "unassigned" ? null : value },
                               });
                             }}
                           >
-                            <SelectTrigger className="h-8 w-full sm:w-28 text-xs">
-                              <SelectValue placeholder="Assign..." />
+                            <SelectTrigger className="h-9 w-full sm:w-32 text-xs">
+                              <SelectValue placeholder="Not assigned" />
                             </SelectTrigger>
                             <SelectContent className="bg-background border z-50">
+                              <SelectItem value="unassigned">Not assigned</SelectItem>
                               {staffMembers.map((staff) => (
                                 <SelectItem key={staff.id} value={staff.id}>
-                                  {staff.full_name || staff.email?.split('@')[0]}
+                                  {getStaffDisplayName(staff.id)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                           <Input
                             type="date"
-                            className="h-8 w-full sm:w-32 text-xs"
+                            className="h-9 w-full sm:w-36 text-xs px-2"
                             value={post.image_due_date || ""}
                             onChange={(e) => {
                               updateMutation.mutate({
@@ -498,20 +539,21 @@ export const ImageCreator = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Assigned To</Label>
                 <Select
-                  value={form.assigned_to}
-                  onValueChange={(value) => setForm({ ...form, assigned_to: value })}
+                  value={form.assigned_to || "unassigned"}
+                  onValueChange={(value) => setForm({ ...form, assigned_to: value === "unassigned" ? "" : value })}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select staff member" />
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Not assigned" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background border z-50">
+                    <SelectItem value="unassigned">Not assigned</SelectItem>
                     {staffMembers.map((staff) => (
                       <SelectItem key={staff.id} value={staff.id}>
-                        {staff.full_name || staff.email?.split('@')[0]}
+                        {getStaffDisplayName(staff.id)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -521,6 +563,7 @@ export const ImageCreator = () => {
                 <Label>Image Due Date</Label>
                 <Input
                   type="date"
+                  className="h-10 px-3"
                   value={form.image_due_date}
                   onChange={(e) => setForm({ ...form, image_due_date: e.target.value })}
                 />
@@ -531,6 +574,7 @@ export const ImageCreator = () => {
               <Label>Scheduled Post Date</Label>
               <Input
                 type="date"
+                className="h-10 px-3"
                 value={form.scheduled_date}
                 onChange={(e) => setForm({ ...form, scheduled_date: e.target.value })}
               />
