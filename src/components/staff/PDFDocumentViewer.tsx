@@ -451,10 +451,10 @@ export const PDFDocumentViewer = ({
                   style={{
                     left: `${field.x_position}%`,
                     top: `${field.y_position}%`,
-                    width: `${field.width}%`,
+                    width: field.field_type === 'text' ? 'auto' : `${field.width}%`,
+                    minWidth: field.field_type === 'text' ? `${field.width}%` : '80px',
                     height: `${field.height}%`,
                     minHeight: '30px',
-                    minWidth: '80px',
                   }}
                   onMouseDown={(e) => {
                     // Only handle drag in edit mode
@@ -514,11 +514,12 @@ export const PDFDocumentViewer = ({
                             onClick={(e) => e.stopPropagation()}
                             onMouseDown={(e) => e.stopPropagation()}
                             onFocus={(e) => e.stopPropagation()}
-                            className="w-full h-full bg-white text-sm border rounded px-2 focus:ring-2 focus:ring-primary"
+                            className="h-full bg-white text-sm text-black border rounded px-2 focus:ring-2 focus:ring-primary"
+                            style={{ minWidth: '100%', width: 'auto' }}
                             placeholder={field.label}
                           />
                         ) : (
-                          <div className="w-full h-full bg-gray-100 text-sm border rounded px-2 flex items-center text-muted-foreground">
+                          <div className="h-full bg-gray-100 text-sm text-black border rounded px-2 flex items-center whitespace-nowrap">
                             {fieldValues[field.id] || field.label}
                           </div>
                         )
@@ -533,11 +534,11 @@ export const PDFDocumentViewer = ({
                               onClick={(e) => e.stopPropagation()}
                               onMouseDown={(e) => e.stopPropagation()}
                               onFocus={(e) => e.stopPropagation()}
-                              className="flex-1 h-full bg-white text-sm border rounded px-2 focus:ring-2 focus:ring-primary"
+                              className="flex-1 h-full bg-white text-sm text-black border rounded px-2 focus:ring-2 focus:ring-primary"
                             />
                           </div>
                         ) : (
-                          <div className="w-full h-full bg-gray-100 text-sm border rounded px-2 flex items-center text-muted-foreground">
+                          <div className="w-full h-full bg-gray-100 text-sm text-black border rounded px-2 flex items-center">
                             {fieldValues[field.id] || field.label}
                           </div>
                         )
@@ -567,7 +568,7 @@ export const PDFDocumentViewer = ({
                             Click to Sign
                           </button>
                         ) : (
-                          <div className="w-full h-full border-2 border-dashed border-gray-300 rounded flex items-center justify-center text-xs text-muted-foreground bg-gray-50">
+                          <div className="w-full h-full border-2 border-dashed border-gray-300 rounded flex items-center justify-center text-xs text-black bg-gray-50">
                             <PenTool className="w-4 h-4 mr-1" />
                             {field.label}
                           </div>
