@@ -243,13 +243,16 @@ export const BTLWriter = () => {
 
   const updateDraftMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof draftForm }) => {
-      const combinedContent = combineContent(data.intro, data.mainPara, data.secondaryPara, data.conclusion);
+      // Use finalArticle if provided, otherwise use combined draft sections
+      const contentToSave = data.finalArticle.trim() 
+        ? data.finalArticle.trim() 
+        : combineContent(data.intro, data.mainPara, data.secondaryPara, data.conclusion);
       const { error } = await supabase
         .from("blog_posts")
         .update({
           title: data.title,
           excerpt: data.excerpt || null,
-          content: combinedContent,
+          content: contentToSave,
           category: data.category || null,
         })
         .eq("id", id);
