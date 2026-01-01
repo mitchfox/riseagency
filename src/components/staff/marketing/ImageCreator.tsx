@@ -135,18 +135,28 @@ export const ImageCreator = () => {
 
   const moveToReadyMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      console.log("Moving post to ready:", id);
+      const { data, error } = await supabase
         .from("blog_posts")
         .update({ workflow_status: "ready_to_post" })
-        .eq("id", id);
-      if (error) throw error;
+        .eq("id", id)
+        .select();
+      if (error) {
+        console.error("Move to ready error:", error);
+        throw error;
+      }
+      console.log("Move to ready result:", data);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["image-creator-posts"] });
       queryClient.invalidateQueries({ queryKey: ["ready-to-post-posts"] });
       toast.success("Moved to Post Schedule");
     },
-    onError: () => toast.error("Failed to move"),
+    onError: (error) => {
+      console.error("Move mutation error:", error);
+      toast.error("Failed to move");
+    },
   });
 
   const openDialog = (post: BlogPost) => {
