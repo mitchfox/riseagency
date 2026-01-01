@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import { FileText, CheckCircle, Loader2, Download } from "lucide-react";
 import { PDFDocumentViewer, FieldPosition } from "@/components/staff/PDFDocumentViewer";
+import { downloadSignedContractPDF } from "@/lib/pdfExport";
 
 interface SignatureContract {
   id: string;
@@ -24,6 +25,7 @@ const SignContract = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [contract, setContract] = useState<SignatureContract | null>(null);
   const [fields, setFields] = useState<FieldPosition[]>([]);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
@@ -255,6 +257,28 @@ const SignContract = () => {
     );
   }
 
+  const handleExportPDF = async () => {
+    if (!contract) return;
+    
+    setExporting(true);
+    try {
+      const fieldData = fields.map(f => ({
+        ...f,
+        value: fieldValues[f.id] || undefined,
+      }));
+
+      const filename = `${contract.title.replace(/[^a-z0-9]/gi, '_')}_signed.pdf`;
+      await downloadSignedContractPDF(contract.file_url, fieldData, filename);
+      
+      toast.success('PDF exported successfully');
+    } catch (error: any) {
+      console.error('Export error:', error);
+      toast.error('Failed to export PDF');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (submitted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -264,6 +288,19 @@ const SignContract = () => {
           <p className="text-muted-foreground mb-4">
             Thank you for signing. Your submission has been recorded.
           </p>
+          <Button onClick={handleExportPDF} disabled={exporting} size="lg">
+            {exporting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Exporting...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-2" />
+                Download Signed PDF
+              </>
+            )}
+          </Button>
         </div>
       </div>
     );
