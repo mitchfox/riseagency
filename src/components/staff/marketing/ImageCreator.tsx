@@ -255,24 +255,31 @@ export const ImageCreator = () => {
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `blog-images/${fileName}`;
+      // Sanitize filename - replace special characters with underscores
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileName = `${Date.now()}-${sanitizedName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('blog-images')
-        .upload(filePath, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Storage upload error:", uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('blog-images')
-        .getPublicUrl(filePath);
+        .getPublicUrl(fileName);
 
       setForm({ ...form, image_url: publicUrl });
       toast.success("Image uploaded");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upload error:", error);
-      toast.error("Failed to upload image");
+      toast.error(error?.message || "Failed to upload image");
     } finally {
       setUploading(false);
     }
