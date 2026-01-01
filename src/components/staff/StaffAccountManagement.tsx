@@ -161,48 +161,16 @@ export const StaffAccountManagement = () => {
     setResettingPassword(email);
 
     try {
-      // Get admin user ID from staff session
-      const adminUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
-      if (!adminUserId) {
-        toast.error("Not authenticated");
-        return;
-      }
-
-      // Generate a new random password
-      const newPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12).toUpperCase() + "!@#";
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-staff-account`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email,
-            password: newPassword,
-            role: role,
-            full_name: fullName,
-            reset_password: true,
-            admin_user_id: adminUserId,
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to reset password");
-      }
-
-      toast.success("Password reset successfully");
-      // Display the new credentials
-      setCreatedAccount({
-        email: email,
-        password: newPassword,
-        role: role as "admin" | "staff" | "marketeer",
-        fullName: fullName,
+      // Send password reset email via Supabase Auth
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/staff`,
       });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      toast.success(`Password reset email sent to ${email}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "An error occurred";
       toast.error(errorMessage);

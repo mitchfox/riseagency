@@ -20,6 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { R90RatingsViewer } from "./R90RatingsViewer";
 import { formatScoreWithFrequency } from "@/lib/utils";
 import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
+import { ActionVideoUpload } from "./ActionVideoUpload";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -56,6 +57,7 @@ interface PerformanceAction {
   action_type: string;
   action_description: string;
   notes: string;
+  video_url?: string | null;
 }
 
 interface SortableStatItemProps {
@@ -637,6 +639,7 @@ export const CreatePerformanceReportDialog = ({
             action_type: action.action_type || "",
             action_description: action.action_description || "",
             notes: action.notes || "",
+            video_url: action.video_url || null,
           }))
         );
         
@@ -797,7 +800,7 @@ export const CreatePerformanceReportDialog = ({
     setActions(newActions);
   };
 
-  const updateAction = async (index: number, field: keyof PerformanceAction, value: string) => {
+  const updateAction = async (index: number, field: keyof PerformanceAction, value: string | null) => {
     const newActions = [...actions];
     newActions[index] = { ...newActions[index], [field]: value };
     setActions(newActions);
@@ -1710,6 +1713,15 @@ export const CreatePerformanceReportDialog = ({
                           <Sparkles className="h-4 w-4 text-blue-600" />
                         )}
                       </Button>
+                      {action.id && (
+                        <ActionVideoUpload
+                          actionId={action.id}
+                          currentVideoUrl={action.video_url || null}
+                          onVideoUploaded={(videoUrl) => {
+                            updateAction(index, 'video_url', videoUrl);
+                          }}
+                        />
+                      )}
                       <Button
                         onClick={() => removeAction(index)}
                         size="icon"
@@ -1952,6 +1964,15 @@ export const CreatePerformanceReportDialog = ({
                               <Sparkles className="h-4 w-4 text-blue-600" />
                             )}
                           </Button>
+                          {action.id && (
+                            <ActionVideoUpload
+                              actionId={action.id}
+                              currentVideoUrl={action.video_url || null}
+                              onVideoUploaded={(videoUrl) => {
+                                updateAction(index, 'video_url', videoUrl);
+                              }}
+                            />
+                          )}
                           <Button
                             onClick={() => removeAction(index)}
                             size="icon"
