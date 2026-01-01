@@ -341,6 +341,7 @@ export const PDFDocumentViewer = ({
               onClick={handlePageClick}
               style={{ userSelect: 'none' }}
             >
+              {/* PDF Document - text/annotation layers disabled to allow field interaction */}
               <Document
                 file={fileUrl}
                 onLoadSuccess={onDocumentLoadSuccess}
@@ -354,12 +355,12 @@ export const PDFDocumentViewer = ({
                 <Page
                   pageNumber={currentPage}
                   scale={scale}
-                  renderTextLayer={true}
-                  renderAnnotationLayer={true}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
                 />
               </Document>
 
-              {/* Overlay fields */}
+              {/* Field overlay container - positioned above PDF */}
               {!loading && currentPageFields.map((field) => {
                 const editable = isFieldEditable(field);
                 return (
@@ -367,7 +368,7 @@ export const PDFDocumentViewer = ({
                   key={field.id}
                   data-field-id={field.id}
                   className={cn(
-                    "absolute border-2 rounded transition-colors select-none",
+                    "absolute border-2 rounded transition-colors select-none z-10",
                     mode === 'edit' 
                       ? cn("cursor-grab hover:opacity-90", getPartyColor(field.signer_party))
                       : (mode === 'sign' || mode === 'owner-sign')
@@ -382,9 +383,12 @@ export const PDFDocumentViewer = ({
                     height: `${field.height}%`,
                     minHeight: '30px',
                     minWidth: '80px',
-                    pointerEvents: 'auto',
                   }}
-                  onMouseDown={(e) => handleFieldMouseDown(field.id, e)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleFieldMouseDown(field.id, e);
+                  }}
                 >
                   {mode === 'edit' ? (
                     <div className="absolute inset-0 flex items-center justify-between px-1 gap-1">
