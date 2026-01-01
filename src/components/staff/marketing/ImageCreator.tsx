@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Image, ExternalLink, Calendar, Link2, Upload, ArrowRight, Folder, HardDrive, Table, CheckCircle, Download, ImageIcon } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Image, ExternalLink, Calendar, Link2, Upload, ArrowRight, Folder, HardDrive, Table, CheckCircle, Download, ImageIcon, User } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
@@ -21,6 +22,12 @@ interface GalleryItem {
   created_at: string;
 }
 
+interface StaffMember {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+}
+
 interface BlogPost {
   id: string;
   title: string;
@@ -33,6 +40,8 @@ interface BlogPost {
   scheduled_date: string | null;
   posted_at: string | null;
   created_at: string;
+  assigned_to: string | null;
+  image_due_date: string | null;
 }
 
 const RESOURCE_LINKS = [
@@ -66,10 +75,33 @@ export const ImageCreator = () => {
   const queryClient = useQueryClient();
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [form, setForm] = useState({
     canva_link: "",
     image_url: "",
     scheduled_date: "",
+    assigned_to: "",
+    image_due_date: "",
+  });
+
+  // Get current user
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setCurrentUserId(data.user.id);
+    });
+  }, []);
+
+  // Fetch staff members
+  const { data: staffMembers = [] } = useQuery({
+    queryKey: ["staff-members"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .order("full_name");
+      if (error) throw error;
+      return data as StaffMember[];
+    },
   });
 
   // Posts ready for image
@@ -80,7 +112,7 @@ export const ImageCreator = () => {
         .from("blog_posts")
         .select("*")
         .eq("workflow_status", "ready_for_image")
-        .order("created_at", { ascending: false });
+        .order("image_due_date", { ascending: true, nullsFirst: false });
       if (error) throw error;
       return data as BlogPost[];
     },
@@ -165,6 +197,8 @@ export const ImageCreator = () => {
       canva_link: post.canva_link || "",
       image_url: post.image_url_internal || "",
       scheduled_date: post.scheduled_date || "",
+      assigned_to: post.assigned_to || currentUserId || "",
+      image_due_date: post.image_due_date || "",
     });
     setDialogOpen(true);
   };
@@ -177,8 +211,26 @@ export const ImageCreator = () => {
         canva_link: form.canva_link || null,
         image_url_internal: form.image_url || null,
         scheduled_date: form.scheduled_date || null,
+        assigned_to: form.assigned_to || null,
+        image_due_date: form.image_due_date || null,
       },
     });
+  };
+
+  const assignToSelf = (postId: string, dueDate: string) => {
+    updateMutation.mutate({
+      id: postId,
+      data: {
+        assigned_to: currentUserId,
+        image_due_date: dueDate || null,
+      },
+    });
+  };
+
+  const getStaffName = (id: string | null) => {
+    if (!id) return null;
+    const staff = staffMembers.find(s => s.id === id);
+    return staff?.full_name || staff?.email?.split('@')[0] || 'Unknown';
   };
 
   const downloadImage = async (url: string, title: string) => {
@@ -310,7 +362,17 @@ export const ImageCreator = () => {
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {post.excerpt || post.content.substring(0, 100)}...
                         </p>
-                        <div className="flex items-center gap-3 mt-2 text-xs">
+                        <div className="flex flex-wrap items-center gap-3 mt-2 text-xs">
+                          {post.assigned_to && (
+                            <span className="flex items-center gap-1 text-blue-500">
+                              <User className="w-3 h-3" /> {getStaffName(post.assigned_to)}
+                            </span>
+                          )}
+                          {post.image_due_date && (
+                            <span className="flex items-center gap-1 text-orange-500">
+                              <Calendar className="w-3 h-3" /> Due: {new Date(post.image_due_date).toLocaleDateString()}
+                            </span>
+                          )}
                           {post.canva_link && (
                             <span className="flex items-center gap-1 text-purple-500">
                               <Link2 className="w-3 h-3" /> Canva
@@ -321,11 +383,6 @@ export const ImageCreator = () => {
                               <CheckCircle className="w-3 h-3" /> Added
                             </span>
                           ) : null}
-                          {post.scheduled_date && (
-                            <span className="flex items-center gap-1 text-blue-500">
-                              <Calendar className="w-3 h-3" /> {new Date(post.scheduled_date).toLocaleDateString()}
-                            </span>
-                          )}
                         </div>
                         {/* Small image preview if exists */}
                         {post.image_url_internal && (
@@ -334,22 +391,44 @@ export const ImageCreator = () => {
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Button size="sm" variant="outline" onClick={() => openDialog(post)} className="h-8">
-                          <Upload className="w-3 h-3 mr-1" />
-                          Add Image & Canva
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="default"
-                          onClick={() => moveToReadyMutation.mutate(post.id)}
-                          disabled={moveToReadyMutation.isPending || !post.image_url_internal || !post.canva_link}
-                          className="h-8"
-                          title={!post.image_url_internal || !post.canva_link ? "Add image and Canva link first" : ""}
-                        >
-                          <ArrowRight className="w-3 h-3 mr-1" />
-                          Move to Ready
-                        </Button>
+                      <div className="flex flex-col gap-2 flex-shrink-0">
+                        {/* Quick assign to self */}
+                        {!post.assigned_to && (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="date"
+                              className="h-7 w-28 text-xs"
+                              onChange={(e) => assignToSelf(post.id, e.target.value)}
+                              placeholder="Due date"
+                            />
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-7 text-xs"
+                              onClick={() => assignToSelf(post.id, "")}
+                            >
+                              <User className="w-3 h-3 mr-1" />
+                              Take
+                            </Button>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="outline" onClick={() => openDialog(post)} className="h-8">
+                            <Upload className="w-3 h-3 mr-1" />
+                            Add Image & Canva
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => moveToReadyMutation.mutate(post.id)}
+                            disabled={moveToReadyMutation.isPending || !post.image_url_internal || !post.canva_link}
+                            className="h-8"
+                            title={!post.image_url_internal || !post.canva_link ? "Add image and Canva link first" : ""}
+                          >
+                            <ArrowRight className="w-3 h-3 mr-1" />
+                            Move to Ready
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -404,6 +483,35 @@ export const ImageCreator = () => {
                   <img src={form.image_url} alt="Preview" className="w-full h-32 object-cover" />
                 </div>
               )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Assigned To</Label>
+                <Select
+                  value={form.assigned_to}
+                  onValueChange={(value) => setForm({ ...form, assigned_to: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select staff member" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {staffMembers.map((staff) => (
+                      <SelectItem key={staff.id} value={staff.id}>
+                        {staff.full_name || staff.email?.split('@')[0]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Image Due Date</Label>
+                <Input
+                  type="date"
+                  value={form.image_due_date}
+                  onChange={(e) => setForm({ ...form, image_due_date: e.target.value })}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">

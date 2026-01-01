@@ -294,6 +294,7 @@ export type Database = {
       }
       blog_posts: {
         Row: {
+          assigned_to: string | null
           author_id: string
           canva_link: string | null
           category: string | null
@@ -301,6 +302,7 @@ export type Database = {
           created_at: string | null
           excerpt: string | null
           id: string
+          image_due_date: string | null
           image_url: string | null
           image_url_internal: string | null
           posted_at: string | null
@@ -311,6 +313,7 @@ export type Database = {
           workflow_status: string
         }
         Insert: {
+          assigned_to?: string | null
           author_id: string
           canva_link?: string | null
           category?: string | null
@@ -318,6 +321,7 @@ export type Database = {
           created_at?: string | null
           excerpt?: string | null
           id?: string
+          image_due_date?: string | null
           image_url?: string | null
           image_url_internal?: string | null
           posted_at?: string | null
@@ -328,6 +332,7 @@ export type Database = {
           workflow_status?: string
         }
         Update: {
+          assigned_to?: string | null
           author_id?: string
           canva_link?: string | null
           category?: string | null
@@ -335,6 +340,7 @@ export type Database = {
           created_at?: string | null
           excerpt?: string | null
           id?: string
+          image_due_date?: string | null
           image_url?: string | null
           image_url_internal?: string | null
           posted_at?: string | null
@@ -345,6 +351,13 @@ export type Database = {
           workflow_status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "blog_posts_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "blog_posts_author_id_fkey"
             columns: ["author_id"]
