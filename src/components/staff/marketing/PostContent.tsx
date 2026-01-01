@@ -27,6 +27,13 @@ interface BlogPost {
   created_at: string;
 }
 
+// Canva icon component
+const CanvaIcon = () => (
+  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+    <circle cx="12" cy="12" r="10" />
+  </svg>
+);
+
 // Helper to get the best available image URL
 const getImageUrl = (post: BlogPost | null): string | null => {
   if (!post) return null;
@@ -298,7 +305,20 @@ export const PostContent = () => {
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            {post.canva_link && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8"
+                                asChild
+                              >
+                                <a href={post.canva_link} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="w-3 h-3 mr-1 text-purple-500" />
+                                  Canva
+                                </a>
+                              </Button>
+                            )}
                             <Input
                               type="date"
                               value={post.scheduled_date || ""}
