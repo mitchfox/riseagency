@@ -352,8 +352,8 @@ export const ImageCreator = () => {
             <div className="space-y-4">
               {imageCreatorPosts.map((post) => (
                 <Card key={post.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-4">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm">{post.title}</h4>
                         {post.category && (
@@ -362,7 +362,7 @@ export const ImageCreator = () => {
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {post.excerpt || post.content.substring(0, 100)}...
                         </p>
-                        <div className="flex flex-wrap items-center gap-3 mt-2 text-xs">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 text-xs">
                           {post.assigned_to && (
                             <span className="flex items-center gap-1 text-blue-500">
                               <User className="w-3 h-3" /> {getStaffName(post.assigned_to)}
@@ -370,7 +370,7 @@ export const ImageCreator = () => {
                           )}
                           {post.image_due_date && (
                             <span className="flex items-center gap-1 text-orange-500">
-                              <Calendar className="w-3 h-3" /> Due: {new Date(post.image_due_date).toLocaleDateString()}
+                              <Calendar className="w-3 h-3" /> {new Date(post.image_due_date).toLocaleDateString()}
                             </span>
                           )}
                           {post.canva_link && (
@@ -384,16 +384,15 @@ export const ImageCreator = () => {
                             </span>
                           ) : null}
                         </div>
-                        {/* Small image preview if exists */}
                         {post.image_url_internal && (
                           <div className="mt-2 w-16 h-10 rounded overflow-hidden border">
                             <img src={post.image_url_internal} alt="Preview" className="w-full h-full object-cover" />
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-col gap-2 flex-shrink-0">
-                        {/* Quick assign staff and due date - separate controls */}
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-shrink-0">
+                        {/* Quick assign staff and due date - stacked on mobile */}
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                           <Select
                             value={post.assigned_to || ""}
                             onValueChange={(value) => {
@@ -403,8 +402,8 @@ export const ImageCreator = () => {
                               });
                             }}
                           >
-                            <SelectTrigger className="h-7 w-32 text-xs">
-                              <SelectValue placeholder="Assign to..." />
+                            <SelectTrigger className="h-8 w-full sm:w-28 text-xs">
+                              <SelectValue placeholder="Assign..." />
                             </SelectTrigger>
                             <SelectContent className="bg-background border z-50">
                               {staffMembers.map((staff) => (
@@ -416,7 +415,7 @@ export const ImageCreator = () => {
                           </Select>
                           <Input
                             type="date"
-                            className="h-7 w-32 text-xs"
+                            className="h-8 w-full sm:w-32 text-xs"
                             value={post.image_due_date || ""}
                             onChange={(e) => {
                               updateMutation.mutate({
@@ -426,8 +425,8 @@ export const ImageCreator = () => {
                             }}
                           />
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button size="sm" variant="outline" onClick={() => openDialog(post)} className="h-8">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                          <Button size="sm" variant="outline" onClick={() => openDialog(post)} className="h-8 w-full sm:w-auto text-xs">
                             <Upload className="w-3 h-3 mr-1" />
                             Add Image & Canva
                           </Button>
@@ -436,7 +435,7 @@ export const ImageCreator = () => {
                             variant="default"
                             onClick={() => moveToReadyMutation.mutate(post.id)}
                             disabled={moveToReadyMutation.isPending || !post.image_url_internal || !post.canva_link}
-                            className="h-8"
+                            className="h-8 w-full sm:w-auto text-xs"
                             title={!post.image_url_internal || !post.canva_link ? "Add image and Canva link first" : ""}
                           >
                             <ArrowRight className="w-3 h-3 mr-1" />
