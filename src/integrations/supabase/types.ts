@@ -3251,36 +3251,45 @@ export type Database = {
       }
       signature_contracts: {
         Row: {
+          completed_pdf_url: string | null
           created_at: string
           created_by: string | null
           description: string | null
           file_name: string
           file_url: string
           id: string
+          owner_field_values: Json | null
+          owner_signed_at: string | null
           share_token: string
           status: string
           title: string
           updated_at: string
         }
         Insert: {
+          completed_pdf_url?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           file_name: string
           file_url: string
           id?: string
+          owner_field_values?: Json | null
+          owner_signed_at?: string | null
           share_token?: string
           status?: string
           title: string
           updated_at?: string
         }
         Update: {
+          completed_pdf_url?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           file_name?: string
           file_url?: string
           id?: string
+          owner_field_values?: Json | null
+          owner_signed_at?: string | null
           share_token?: string
           status?: string
           title?: string
@@ -3299,6 +3308,7 @@ export type Database = {
           label: string
           page_number: number
           required: boolean
+          signer_party: string
           width: number
           x_position: number
           y_position: number
@@ -3313,6 +3323,7 @@ export type Database = {
           label: string
           page_number?: number
           required?: boolean
+          signer_party?: string
           width?: number
           x_position: number
           y_position: number
@@ -3327,6 +3338,7 @@ export type Database = {
           label?: string
           page_number?: number
           required?: boolean
+          signer_party?: string
           width?: number
           x_position?: number
           y_position?: number

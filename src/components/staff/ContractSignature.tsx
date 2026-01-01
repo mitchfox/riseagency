@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, FileText, Trash2, Copy, Eye, CheckCircle, Save, Loader2 } from "lucide-react";
+import { Plus, FileText, Trash2, Copy, Eye, CheckCircle, Save, Loader2, PenTool, Download, Link } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PDFDocumentViewer, FieldPosition } from "./PDFDocumentViewer";
@@ -19,6 +19,9 @@ interface SignatureContract {
   file_name: string;
   share_token: string;
   status: 'draft' | 'active' | 'completed' | 'expired';
+  owner_signed_at: string | null;
+  owner_field_values: Record<string, string> | null;
+  completed_pdf_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -35,6 +38,7 @@ interface SignatureField {
   height: number;
   required: boolean;
   display_order: number;
+  signer_party: 'owner' | 'counterparty';
 }
 
 interface SignatureSubmission {
@@ -54,6 +58,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   const [contracts, setContracts] = useState<SignatureContract[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditorDialog, setShowEditorDialog] = useState(false);
+  const [showOwnerSignDialog, setShowOwnerSignDialog] = useState(false);
   const [showSubmissionsDialog, setShowSubmissionsDialog] = useState(false);
   const [selectedContract, setSelectedContract] = useState<SignatureContract | null>(null);
   const [fields, setFields] = useState<FieldPosition[]>([]);
@@ -67,6 +72,13 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // Owner signing state
+  const [ownerFieldValues, setOwnerFieldValues] = useState<Record<string, string>>({});
+  const [showSignatureDialog, setShowSignatureDialog] = useState(false);
+  const [currentSignatureField, setCurrentSignatureField] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
 
   useEffect(() => {
     fetchContracts();
@@ -108,6 +120,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
       y_position: f.y_position,
       width: f.width,
       height: f.height,
+      signer_party: f.signer_party || 'counterparty',
     }));
 
     setFields(fieldPositions);
@@ -131,7 +144,6 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Only accept PDF for proper viewing
       if (file.type !== 'application/pdf') {
         toast.error('Please upload a PDF file for proper document viewing');
         return;
@@ -218,6 +230,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
           height: f.height,
           required: true,
           display_order: index,
+          signer_party: f.signer_party,
         }));
 
         const { error } = await supabase
@@ -228,6 +241,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
       }
 
       toast.success('Fields saved successfully');
+      setShowEditorDialog(false);
     } catch (error: any) {
       console.error('Error saving fields:', error);
       toast.error('Failed to save fields');
@@ -280,10 +294,136 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     setShowEditorDialog(true);
   };
 
+  const openOwnerSignDialog = async (contract: SignatureContract) => {
+    setSelectedContract(contract);
+    await fetchFields(contract.id);
+    // Load existing owner values if any
+    setOwnerFieldValues(contract.owner_field_values || {});
+    setShowOwnerSignDialog(true);
+  };
+
   const openSubmissionsDialog = (contract: SignatureContract) => {
     setSelectedContract(contract);
     fetchSubmissions(contract.id);
     setShowSubmissionsDialog(true);
+  };
+
+  // Signature canvas handling
+  useEffect(() => {
+    if (showSignatureDialog && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+  }, [showSignatureDialog]);
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    setIsDrawing(true);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+    const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+    const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
+
+  const clearSignature = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const saveSignature = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !currentSignatureField) return;
+
+    const dataUrl = canvas.toDataURL('image/png');
+    setOwnerFieldValues(prev => ({ ...prev, [currentSignatureField]: dataUrl }));
+    setShowSignatureDialog(false);
+    setCurrentSignatureField(null);
+    toast.success('Signature saved');
+  };
+
+  const handleOwnerFieldValueChange = (fieldId: string, value: string) => {
+    setOwnerFieldValues(prev => ({ ...prev, [fieldId]: value }));
+  };
+
+  const handleSignatureStart = (fieldId: string) => {
+    setCurrentSignatureField(fieldId);
+    setShowSignatureDialog(true);
+  };
+
+  const saveOwnerSignature = async () => {
+    if (!selectedContract) return;
+
+    // Check if all owner fields are filled
+    const ownerFields = fields.filter(f => f.signer_party === 'owner');
+    for (const field of ownerFields) {
+      if (!ownerFieldValues[field.id]) {
+        toast.error(`Please fill in: ${field.label}`);
+        return;
+      }
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('signature_contracts')
+        .update({
+          owner_field_values: ownerFieldValues,
+          owner_signed_at: new Date().toISOString(),
+          status: 'active', // Make it active so counterparty can sign
+        })
+        .eq('id', selectedContract.id);
+
+      if (error) throw error;
+
+      toast.success('Your signature saved! Contract is now ready for the other party.');
+      setShowOwnerSignDialog(false);
+      fetchContracts();
+    } catch (error: any) {
+      console.error('Error saving owner signature:', error);
+      toast.error('Failed to save signature');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -294,6 +434,11 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
       case 'expired': return 'destructive';
       default: return 'secondary';
     }
+  };
+
+  const hasOwnerFields = (contract: SignatureContract) => {
+    // We need to check if there are owner fields - for now check if owner_signed_at is null
+    return !contract.owner_signed_at;
   };
 
   return (
@@ -318,12 +463,18 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
             <div key={contract.id} className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <FileText className="h-5 w-5 text-muted-foreground" />
                     <h4 className="font-semibold">{contract.title}</h4>
                     <Badge variant={getStatusColor(contract.status)}>
                       {contract.status}
                     </Badge>
+                    {contract.owner_signed_at && (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        You signed
+                      </Badge>
+                    )}
                   </div>
                   {contract.description && (
                     <p className="text-sm text-muted-foreground mt-1">{contract.description}</p>
@@ -340,20 +491,35 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => copyShareLink(contract.share_token)}
-                    disabled={contract.status !== 'active'}
-                  >
-                    <Copy className="h-4 w-4 mr-1" />
-                    Copy Link
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
                     onClick={() => openEditorDialog(contract)}
                   >
                     <FileText className="h-4 w-4 mr-1" />
                     Edit Fields
                   </Button>
+                  
+                  {!contract.owner_signed_at && (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => openOwnerSignDialog(contract)}
+                    >
+                      <PenTool className="h-4 w-4 mr-1" />
+                      Sign My Parts
+                    </Button>
+                  )}
+                  
+                  {contract.owner_signed_at && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => copyShareLink(contract.share_token)}
+                    >
+                      <Link className="h-4 w-4 mr-1" />
+                      Copy Link for Other Party
+                    </Button>
+                  )}
+                  
                   <Button
                     size="sm"
                     variant="outline"
@@ -362,6 +528,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
                     <Eye className="h-4 w-4 mr-1" />
                     Submissions
                   </Button>
+                  
                   {isAdmin && (
                     <>
                       <Select
@@ -459,6 +626,9 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
         <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col p-0">
           <DialogHeader className="px-6 py-4 border-b">
             <DialogTitle>Edit Fields - {selectedContract?.title}</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Use green "Me" for fields you'll sign, orange "Other Party" for fields the counterparty will sign
+            </p>
           </DialogHeader>
           
           <div className="flex-1 overflow-hidden p-4">
@@ -493,6 +663,90 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
         </DialogContent>
       </Dialog>
 
+      {/* Owner Sign Dialog */}
+      <Dialog open={showOwnerSignDialog} onOpenChange={(open) => {
+        if (!open) {
+          setShowOwnerSignDialog(false);
+          setSelectedContract(null);
+          setFields([]);
+          setOwnerFieldValues({});
+        }
+      }}>
+        <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle>Sign Your Parts - {selectedContract?.title}</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Fill in the green fields assigned to you. After saving, you can share the link with the other party.
+            </p>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-hidden p-4">
+            {selectedContract && (
+              <PDFDocumentViewer
+                fileUrl={selectedContract.file_url}
+                fields={fields}
+                mode="owner-sign"
+                fieldValues={ownerFieldValues}
+                onFieldValueChange={handleOwnerFieldValueChange}
+                onSignatureStart={handleSignatureStart}
+                signerPartyFilter="owner"
+              />
+            )}
+          </div>
+
+          <DialogFooter className="px-6 py-4 border-t">
+            <Button variant="outline" onClick={() => setShowOwnerSignDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={saveOwnerSignature} disabled={saving} className="bg-green-600 hover:bg-green-700">
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Save My Signature & Activate
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Signature Drawing Dialog */}
+      <Dialog open={showSignatureDialog} onOpenChange={setShowSignatureDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Draw Your Signature</DialogTitle>
+          </DialogHeader>
+          <div className="border rounded-lg p-4 bg-white">
+            <canvas
+              ref={canvasRef}
+              width={450}
+              height={200}
+              className="border rounded w-full touch-none cursor-crosshair bg-white"
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+              onTouchStart={startDrawing}
+              onTouchMove={draw}
+              onTouchEnd={stopDrawing}
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={clearSignature}>
+              Clear
+            </Button>
+            <Button onClick={saveSignature}>
+              Save Signature
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Submissions Dialog */}
       <Dialog open={showSubmissionsDialog} onOpenChange={setShowSubmissionsDialog}>
         <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -500,9 +754,37 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
             <DialogTitle>Submissions - {selectedContract?.title}</DialogTitle>
           </DialogHeader>
           
+          {/* Owner's signature section */}
+          {selectedContract?.owner_signed_at && selectedContract?.owner_field_values && (
+            <div className="border rounded-lg p-4 bg-green-50 border-green-200 mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span className="font-medium">Your Signature</span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                Signed: {new Date(selectedContract.owner_signed_at).toLocaleString()}
+              </p>
+              <div className="space-y-2">
+                {Object.entries(selectedContract.owner_field_values).map(([key, value]) => {
+                  const field = fields.find(f => f.id === key);
+                  return (
+                    <div key={key} className="text-sm">
+                      <span className="font-medium">{field?.label || key}:</span>{' '}
+                      {typeof value === 'string' && value.startsWith('data:image') ? (
+                        <img src={value} alt="Signature" className="h-12 mt-1 border rounded bg-white" />
+                      ) : (
+                        <span>{value}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          
           {submissions.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              No submissions yet
+              No counterparty submissions yet
             </p>
           ) : (
             <div className="space-y-4">
@@ -520,7 +802,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
                     {Object.entries(sub.field_values).map(([key, value]) => (
                       <div key={key} className="text-sm">
                         <span className="font-medium">{key}:</span>{' '}
-                        {value.startsWith('data:image') ? (
+                        {typeof value === 'string' && value.startsWith('data:image') ? (
                           <img src={value} alt="Signature" className="h-12 mt-1 border rounded" />
                         ) : (
                           <span>{value}</span>

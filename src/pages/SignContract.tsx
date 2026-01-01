@@ -3,10 +3,9 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { FileText, CheckCircle, Loader2 } from "lucide-react";
+import { FileText, CheckCircle, Loader2, Download } from "lucide-react";
 import { PDFDocumentViewer, FieldPosition } from "@/components/staff/PDFDocumentViewer";
 
 interface SignatureContract {
@@ -16,6 +15,7 @@ interface SignatureContract {
   file_url: string;
   file_name: string;
   status: string;
+  owner_field_values: Record<string, string> | null;
 }
 
 const SignContract = () => {
@@ -75,8 +75,14 @@ const SignContract = () => {
           y_position: f.y_position,
           width: f.width,
           height: f.height,
+          signer_party: f.signer_party || 'counterparty',
         }));
         setFields(typedFields);
+        
+        // Pre-fill owner field values (shown as read-only)
+        if (contractData.owner_field_values && typeof contractData.owner_field_values === 'object') {
+          setFieldValues(contractData.owner_field_values as Record<string, string>);
+        }
       }
     } catch (error) {
       console.error('Error:', error);
@@ -87,10 +93,21 @@ const SignContract = () => {
   };
 
   const handleFieldValueChange = (fieldId: string, value: string) => {
+    // Only allow editing counterparty fields
+    const field = fields.find(f => f.id === fieldId);
+    if (field?.signer_party === 'owner') return;
+    
     setFieldValues((prev) => ({ ...prev, [fieldId]: value }));
   };
 
   const handleSignatureStart = (fieldId: string) => {
+    // Only allow signing counterparty fields
+    const field = fields.find(f => f.id === fieldId);
+    if (field?.signer_party === 'owner') {
+      toast.error('This field has already been signed');
+      return;
+    }
+    
     setCurrentSignatureField(fieldId);
     setShowSignatureDialog(true);
   };
@@ -176,8 +193,9 @@ const SignContract = () => {
       return;
     }
 
-    // Check all fields are filled
-    for (const field of fields) {
+    // Check all counterparty fields are filled
+    const counterpartyFields = fields.filter(f => f.signer_party === 'counterparty');
+    for (const field of counterpartyFields) {
       if (!fieldValues[field.id]) {
         toast.error(`Please fill in: ${field.label}`);
         return;
@@ -187,10 +205,10 @@ const SignContract = () => {
     setSubmitting(true);
 
     try {
-      // Convert field IDs to labels for storage
-      const labeledValues: Record<string, string> = {};
-      fields.forEach(f => {
-        labeledValues[f.label] = fieldValues[f.id] || '';
+      // Only store counterparty field values
+      const counterpartyValues: Record<string, string> = {};
+      counterpartyFields.forEach(f => {
+        counterpartyValues[f.label] = fieldValues[f.id] || '';
       });
 
       const { error } = await supabase
@@ -199,7 +217,7 @@ const SignContract = () => {
           contract_id: contract.id,
           signer_name: signerInfo.name,
           signer_email: signerInfo.email,
-          field_values: labeledValues,
+          field_values: counterpartyValues,
           user_agent: navigator.userAgent,
         }]);
 
@@ -251,6 +269,8 @@ const SignContract = () => {
     );
   }
 
+  const counterpartyFields = fields.filter(f => f.signer_party === 'counterparty');
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
@@ -265,6 +285,9 @@ const SignContract = () => {
               {contract.description && (
                 <p className="text-sm text-muted-foreground mt-1">{contract.description}</p>
               )}
+              <p className="text-xs text-orange-600 mt-1">
+                Please fill in the orange fields below to complete your signature
+              </p>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex gap-2">
@@ -310,6 +333,7 @@ const SignContract = () => {
             fieldValues={fieldValues}
             onFieldValueChange={handleFieldValueChange}
             onSignatureStart={handleSignatureStart}
+            signerPartyFilter="all"
           />
         </div>
       </div>

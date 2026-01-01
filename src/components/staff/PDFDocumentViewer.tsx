@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Plus, Trash2, GripVertical, Type, Calendar, PenTool } from "lucide-react";
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Trash2, GripVertical, Type, Calendar, PenTool, User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Configure PDF.js worker
@@ -18,16 +18,18 @@ export interface FieldPosition {
   y_position: number; // percentage from top
   width: number; // percentage
   height: number; // percentage
+  signer_party: 'owner' | 'counterparty'; // who signs this field
 }
 
 interface PDFDocumentViewerProps {
   fileUrl: string;
   fields?: FieldPosition[];
   onFieldsChange?: (fields: FieldPosition[]) => void;
-  mode: 'edit' | 'view' | 'sign';
+  mode: 'edit' | 'view' | 'sign' | 'owner-sign';
   fieldValues?: Record<string, string>;
   onFieldValueChange?: (fieldId: string, value: string) => void;
   onSignatureStart?: (fieldId: string) => void;
+  signerPartyFilter?: 'owner' | 'counterparty' | 'all';
 }
 
 export const PDFDocumentViewer = ({
@@ -38,6 +40,7 @@ export const PDFDocumentViewer = ({
   fieldValues = {},
   onFieldValueChange,
   onSignatureStart,
+  signerPartyFilter = 'all',
 }: PDFDocumentViewerProps) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -45,7 +48,9 @@ export const PDFDocumentViewer = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [draggingField, setDraggingField] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [addingFieldType, setAddingFieldType] = useState<'text' | 'date' | 'signature' | null>(null);
+  const [addingFieldParty, setAddingFieldParty] = useState<'owner' | 'counterparty'>('owner');
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
 
@@ -62,7 +67,7 @@ export const PDFDocumentViewer = ({
   };
 
   const handlePageClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (mode !== 'edit' || !addingFieldType || !pageRef.current) return;
+    if (mode !== 'edit' || !addingFieldType || !pageRef.current || draggingField) return;
 
     const rect = pageRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -73,48 +78,71 @@ export const PDFDocumentViewer = ({
       field_type: addingFieldType,
       label: `${addingFieldType.charAt(0).toUpperCase() + addingFieldType.slice(1)} Field`,
       page_number: currentPage,
-      x_position: Math.max(0, Math.min(x - 10, 80)), // Center field on click, keep within bounds
+      x_position: Math.max(0, Math.min(x - 10, 80)),
       y_position: Math.max(0, Math.min(y - 2, 90)),
       width: addingFieldType === 'signature' ? 25 : 20,
       height: addingFieldType === 'signature' ? 8 : 4,
+      signer_party: addingFieldParty,
     };
 
     onFieldsChange?.([...fields, newField]);
     setAddingFieldType(null);
-  }, [mode, addingFieldType, currentPage, fields, onFieldsChange]);
+  }, [mode, addingFieldType, addingFieldParty, currentPage, fields, onFieldsChange, draggingField]);
 
-  const handleFieldDragStart = (fieldId: string, e: React.MouseEvent) => {
+  const handleFieldMouseDown = (fieldId: string, e: React.MouseEvent) => {
     if (mode !== 'edit') return;
+    e.preventDefault();
     e.stopPropagation();
+    
+    const field = fields.find(f => f.id === fieldId);
+    if (!field || !pageRef.current) return;
+
+    const rect = pageRef.current.getBoundingClientRect();
+    const clickX = ((e.clientX - rect.left) / rect.width) * 100;
+    const clickY = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    // Calculate offset from field position to click position
+    setDragOffset({
+      x: clickX - field.x_position,
+      y: clickY - field.y_position,
+    });
     setDraggingField(fieldId);
   };
 
-  const handleFieldDrag = useCallback((e: React.MouseEvent) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!draggingField || !pageRef.current) return;
 
     const rect = pageRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
+    const field = fields.find(f => f.id === draggingField);
+    if (!field) return;
+
+    const newX = x - dragOffset.x;
+    const newY = y - dragOffset.y;
+
     const updatedFields = fields.map(f => {
       if (f.id === draggingField) {
         return {
           ...f,
-          x_position: Math.max(0, Math.min(x - f.width / 2, 100 - f.width)),
-          y_position: Math.max(0, Math.min(y - f.height / 2, 100 - f.height)),
+          x_position: Math.max(0, Math.min(newX, 100 - f.width)),
+          y_position: Math.max(0, Math.min(newY, 100 - f.height)),
         };
       }
       return f;
     });
 
     onFieldsChange?.(updatedFields);
-  }, [draggingField, fields, onFieldsChange]);
+  }, [draggingField, dragOffset, fields, onFieldsChange]);
 
-  const handleFieldDragEnd = () => {
+  const handleMouseUp = () => {
     setDraggingField(null);
   };
 
-  const deleteField = (fieldId: string) => {
+  const deleteField = (fieldId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     onFieldsChange?.(fields.filter(f => f.id !== fieldId));
   };
 
@@ -122,7 +150,22 @@ export const PDFDocumentViewer = ({
     onFieldsChange?.(fields.map(f => f.id === fieldId ? { ...f, label } : f));
   };
 
-  const currentPageFields = fields.filter(f => f.page_number === currentPage);
+  const toggleFieldParty = (fieldId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onFieldsChange?.(fields.map(f => 
+      f.id === fieldId 
+        ? { ...f, signer_party: f.signer_party === 'owner' ? 'counterparty' : 'owner' } 
+        : f
+    ));
+  };
+
+  // Filter fields based on page and signer party
+  const currentPageFields = fields.filter(f => {
+    if (f.page_number !== currentPage) return false;
+    if (signerPartyFilter === 'all') return true;
+    return f.signer_party === signerPartyFilter;
+  });
 
   const getFieldIcon = (type: string) => {
     switch (type) {
@@ -131,6 +174,10 @@ export const PDFDocumentViewer = ({
       case 'signature': return <PenTool className="w-3 h-3" />;
       default: return null;
     }
+  };
+
+  const getPartyColor = (party: string) => {
+    return party === 'owner' ? 'border-green-500 bg-green-50' : 'border-orange-500 bg-orange-50';
   };
 
   return (
@@ -178,38 +225,66 @@ export const PDFDocumentViewer = ({
         </div>
 
         {mode === 'edit' && (
-          <div className="flex items-center gap-1">
-            <Button
-              variant={addingFieldType === 'text' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setAddingFieldType(addingFieldType === 'text' ? null : 'text')}
-            >
-              <Type className="w-4 h-4 mr-1" />
-              Text
-            </Button>
-            <Button
-              variant={addingFieldType === 'date' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setAddingFieldType(addingFieldType === 'date' ? null : 'date')}
-            >
-              <Calendar className="w-4 h-4 mr-1" />
-              Date
-            </Button>
-            <Button
-              variant={addingFieldType === 'signature' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setAddingFieldType(addingFieldType === 'signature' ? null : 'signature')}
-            >
-              <PenTool className="w-4 h-4 mr-1" />
-              Signature
-            </Button>
+          <div className="flex items-center gap-2">
+            {/* Party toggle */}
+            <div className="flex items-center border rounded-md overflow-hidden">
+              <Button
+                variant={addingFieldParty === 'owner' ? 'default' : 'ghost'}
+                size="sm"
+                className={cn("rounded-none h-8", addingFieldParty === 'owner' && "bg-green-600 hover:bg-green-700")}
+                onClick={() => setAddingFieldParty('owner')}
+              >
+                <User className="w-4 h-4 mr-1" />
+                Me
+              </Button>
+              <Button
+                variant={addingFieldParty === 'counterparty' ? 'default' : 'ghost'}
+                size="sm"
+                className={cn("rounded-none h-8", addingFieldParty === 'counterparty' && "bg-orange-600 hover:bg-orange-700")}
+                onClick={() => setAddingFieldParty('counterparty')}
+              >
+                <Users className="w-4 h-4 mr-1" />
+                Other Party
+              </Button>
+            </div>
+            
+            {/* Field type buttons */}
+            <div className="flex items-center gap-1">
+              <Button
+                variant={addingFieldType === 'text' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setAddingFieldType(addingFieldType === 'text' ? null : 'text')}
+              >
+                <Type className="w-4 h-4 mr-1" />
+                Text
+              </Button>
+              <Button
+                variant={addingFieldType === 'date' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setAddingFieldType(addingFieldType === 'date' ? null : 'date')}
+              >
+                <Calendar className="w-4 h-4 mr-1" />
+                Date
+              </Button>
+              <Button
+                variant={addingFieldType === 'signature' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setAddingFieldType(addingFieldType === 'signature' ? null : 'signature')}
+              >
+                <PenTool className="w-4 h-4 mr-1" />
+                Signature
+              </Button>
+            </div>
           </div>
         )}
       </div>
 
       {addingFieldType && mode === 'edit' && (
-        <div className="bg-primary/10 text-primary text-sm px-3 py-1.5 text-center">
-          Click on the document to place a {addingFieldType} field
+        <div className={cn(
+          "text-sm px-3 py-1.5 text-center",
+          addingFieldParty === 'owner' ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"
+        )}>
+          Click anywhere on the document to place a {addingFieldType} field for {addingFieldParty === 'owner' ? 'yourself' : 'other party'}
         </div>
       )}
 
@@ -217,9 +292,9 @@ export const PDFDocumentViewer = ({
       <div 
         ref={containerRef}
         className="flex-1 overflow-auto p-4"
-        onMouseMove={draggingField ? handleFieldDrag : undefined}
-        onMouseUp={handleFieldDragEnd}
-        onMouseLeave={handleFieldDragEnd}
+        onMouseMove={draggingField ? handleMouseMove : undefined}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
       >
         {error ? (
           <div className="flex items-center justify-center h-full">
@@ -239,6 +314,7 @@ export const PDFDocumentViewer = ({
                 addingFieldType && "cursor-crosshair"
               )}
               onClick={handlePageClick}
+              style={{ userSelect: 'none' }}
             >
               <Document
                 file={fileUrl}
@@ -263,13 +339,13 @@ export const PDFDocumentViewer = ({
                 <div
                   key={field.id}
                   className={cn(
-                    "absolute border-2 rounded transition-colors",
+                    "absolute border-2 rounded transition-colors select-none",
                     mode === 'edit' 
-                      ? "border-primary bg-primary/10 cursor-move hover:bg-primary/20" 
-                      : mode === 'sign'
-                      ? "border-blue-500 bg-blue-50"
+                      ? cn("cursor-move hover:opacity-80", getPartyColor(field.signer_party))
+                      : (mode === 'sign' || mode === 'owner-sign')
+                      ? getPartyColor(field.signer_party)
                       : "border-muted bg-muted/20",
-                    draggingField === field.id && "ring-2 ring-primary"
+                    draggingField === field.id && "ring-2 ring-blue-500 opacity-70"
                   )}
                   style={{
                     left: `${field.x_position}%`,
@@ -278,36 +354,51 @@ export const PDFDocumentViewer = ({
                     height: `${field.height}%`,
                     minHeight: '30px',
                     minWidth: '80px',
+                    pointerEvents: 'auto',
                   }}
-                  onMouseDown={(e) => handleFieldDragStart(field.id, e)}
+                  onMouseDown={(e) => handleFieldMouseDown(field.id, e)}
                 >
                   {mode === 'edit' ? (
                     <div className="absolute inset-0 flex items-center justify-between px-1 gap-1">
                       <div className="flex items-center gap-1 flex-1 min-w-0">
-                        <GripVertical className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                        <GripVertical className="w-3 h-3 text-muted-foreground flex-shrink-0 cursor-grab" />
                         {getFieldIcon(field.field_type)}
                         <input
                           type="text"
                           value={field.label}
                           onChange={(e) => updateFieldLabel(field.id, e.target.value)}
                           onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
                           className="flex-1 min-w-0 bg-transparent text-xs border-none outline-none"
                           placeholder="Label"
                         />
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5 flex-shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteField(field.id);
-                        }}
-                      >
-                        <Trash2 className="w-3 h-3 text-destructive" />
-                      </Button>
+                      <div className="flex items-center gap-0.5">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            "h-5 w-5 flex-shrink-0",
+                            field.signer_party === 'owner' ? "text-green-600" : "text-orange-600"
+                          )}
+                          onClick={(e) => toggleFieldParty(field.id, e)}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          title={`Switch to ${field.signer_party === 'owner' ? 'other party' : 'me'}`}
+                        >
+                          {field.signer_party === 'owner' ? <User className="w-3 h-3" /> : <Users className="w-3 h-3" />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 flex-shrink-0"
+                          onClick={(e) => deleteField(field.id, e)}
+                          onMouseDown={(e) => e.stopPropagation()}
+                        >
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
-                  ) : mode === 'sign' ? (
+                  ) : (mode === 'sign' || mode === 'owner-sign') ? (
                     <div className="absolute inset-0 flex items-center p-1">
                       {field.field_type === 'text' && (
                         <input
@@ -336,7 +427,12 @@ export const PDFDocumentViewer = ({
                         ) : (
                           <button
                             onClick={() => onSignatureStart?.(field.id)}
-                            className="w-full h-full bg-white/80 border-2 border-dashed border-blue-400 rounded flex items-center justify-center text-xs text-blue-600 hover:bg-blue-50"
+                            className={cn(
+                              "w-full h-full border-2 border-dashed rounded flex items-center justify-center text-xs hover:opacity-80",
+                              field.signer_party === 'owner' 
+                                ? "border-green-400 text-green-600 bg-green-50" 
+                                : "border-orange-400 text-orange-600 bg-orange-50"
+                            )}
                           >
                             <PenTool className="w-4 h-4 mr-1" />
                             Click to Sign
@@ -360,18 +456,32 @@ export const PDFDocumentViewer = ({
       {/* Field list for edit mode */}
       {mode === 'edit' && fields.length > 0 && (
         <div className="border-t bg-background p-2 max-h-32 overflow-y-auto">
-          <p className="text-xs text-muted-foreground mb-2">
-            {fields.length} field(s) placed. Drag to reposition.
-          </p>
+          <div className="flex items-center gap-4 mb-2">
+            <p className="text-xs text-muted-foreground">
+              {fields.length} field(s) placed. Drag to reposition.
+            </p>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-green-100 border border-green-500 rounded"></div>
+                Me ({fields.filter(f => f.signer_party === 'owner').length})
+              </span>
+              <span className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-orange-100 border border-orange-500 rounded"></div>
+                Other ({fields.filter(f => f.signer_party === 'counterparty').length})
+              </span>
+            </div>
+          </div>
           <div className="flex flex-wrap gap-1">
             {fields.map((f) => (
               <span 
                 key={f.id} 
                 className={cn(
-                  "text-xs px-2 py-1 rounded flex items-center gap-1",
-                  f.page_number === currentPage ? "bg-primary/20" : "bg-muted"
+                  "text-xs px-2 py-1 rounded flex items-center gap-1 border",
+                  f.signer_party === 'owner' ? "bg-green-50 border-green-300" : "bg-orange-50 border-orange-300",
+                  f.page_number !== currentPage && "opacity-50"
                 )}
               >
+                {f.signer_party === 'owner' ? <User className="w-3 h-3" /> : <Users className="w-3 h-3" />}
                 {getFieldIcon(f.field_type)}
                 {f.label}
                 <span className="text-muted-foreground">(p{f.page_number})</span>
