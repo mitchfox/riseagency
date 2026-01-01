@@ -617,6 +617,24 @@ export const ImageCreator = () => {
                     </div>
                   )}
                   <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WebP (max 10MB)</p>
+                  
+                  {/* Image Preview Thumbnail */}
+                  {form.image_url && !uploading && (
+                    <div className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg border">
+                      <img 
+                        src={form.image_url} 
+                        alt="Uploaded preview" 
+                        className="w-16 h-16 object-cover rounded-md border"
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-green-600 dark:text-green-400 flex items-center gap-1">
+                          <CheckCircle className="w-4 h-4" />
+                          Image uploaded
+                        </span>
+                        <span className="text-xs text-muted-foreground">Ready to save</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
