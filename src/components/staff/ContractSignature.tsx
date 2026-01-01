@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, FileText, Trash2, Copy, Eye, CheckCircle, Save, Loader2, PenTool, Download, Link } from "lucide-react";
+import { Plus, FileText, Trash2, Eye, CheckCircle, Save, Loader2, PenTool, Download, Link, Upload, BookMarked } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PDFDocumentViewer, FieldPosition } from "./PDFDocumentViewer";
 import { downloadSignedContractPDF } from "@/lib/pdfExport";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface SignatureContract {
   id: string;
@@ -51,6 +52,13 @@ interface SignatureSubmission {
   signed_at: string;
 }
 
+interface SavedSignature {
+  id: string;
+  name: string;
+  signature_data: string;
+  is_default: boolean;
+}
+
 interface ContractSignatureProps {
   isAdmin: boolean;
 }
@@ -81,10 +89,32 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   const [currentSignatureField, setCurrentSignatureField] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  
+  // Signature options state
+  const [signatureTab, setSignatureTab] = useState<'draw' | 'upload' | 'saved'>('draw');
+  const [savedSignatures, setSavedSignatures] = useState<SavedSignature[]>([]);
+  const [newSignatureName, setNewSignatureName] = useState('My Signature');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchContracts();
+    fetchSavedSignatures();
   }, []);
+
+  const fetchSavedSignatures = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('saved_signatures')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setSavedSignatures(data as SavedSignature[]);
+    }
+  };
 
   const fetchContracts = async () => {
     const { data, error } = await supabase
@@ -372,15 +402,70 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   };
 
-  const saveSignature = () => {
+  const saveSignature = async (saveToDb: boolean = false) => {
     const canvas = canvasRef.current;
     if (!canvas || !currentSignatureField) return;
 
     const dataUrl = canvas.toDataURL('image/png');
     setOwnerFieldValues(prev => ({ ...prev, [currentSignatureField]: dataUrl }));
+    
+    // Optionally save to database
+    if (saveToDb) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error } = await supabase
+          .from('saved_signatures')
+          .insert({
+            user_id: user.id,
+            name: newSignatureName || 'My Signature',
+            signature_data: dataUrl,
+          });
+        
+        if (!error) {
+          toast.success('Signature saved to your collection');
+          fetchSavedSignatures();
+        }
+      }
+    }
+    
     setShowSignatureDialog(false);
     setCurrentSignatureField(null);
-    toast.success('Signature saved');
+    toast.success('Signature applied');
+  };
+
+  const handleUploadSignature = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentSignatureField) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setOwnerFieldValues(prev => ({ ...prev, [currentSignatureField]: dataUrl }));
+      setShowSignatureDialog(false);
+      setCurrentSignatureField(null);
+      toast.success('Signature uploaded');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const useSavedSignature = (signature: SavedSignature) => {
+    if (!currentSignatureField) return;
+    setOwnerFieldValues(prev => ({ ...prev, [currentSignatureField]: signature.signature_data }));
+    setShowSignatureDialog(false);
+    setCurrentSignatureField(null);
+    toast.success('Signature applied');
+  };
+
+  const deleteSavedSignature = async (id: string) => {
+    const { error } = await supabase
+      .from('saved_signatures')
+      .delete()
+      .eq('id', id);
+    
+    if (!error) {
+      toast.success('Signature deleted');
+      fetchSavedSignatures();
+    }
   };
 
   const handleOwnerFieldValueChange = (fieldId: string, value: string) => {
@@ -389,6 +474,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
 
   const handleSignatureStart = (fieldId: string) => {
     setCurrentSignatureField(fieldId);
+    setSignatureTab('draw');
     setShowSignatureDialog(true);
   };
 
@@ -782,35 +868,124 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* Signature Drawing Dialog */}
+      {/* Signature Dialog with Options */}
       <Dialog open={showSignatureDialog} onOpenChange={setShowSignatureDialog}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Draw Your Signature</DialogTitle>
+            <DialogTitle>Add Your Signature</DialogTitle>
           </DialogHeader>
-          <div className="border rounded-lg p-4 bg-white">
-            <canvas
-              ref={canvasRef}
-              width={450}
-              height={200}
-              className="border rounded w-full touch-none cursor-crosshair bg-white"
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseLeave={stopDrawing}
-              onTouchStart={startDrawing}
-              onTouchMove={draw}
-              onTouchEnd={stopDrawing}
-            />
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={clearSignature}>
-              Clear
-            </Button>
-            <Button onClick={saveSignature}>
-              Save Signature
-            </Button>
-          </DialogFooter>
+          
+          <Tabs value={signatureTab} onValueChange={(v) => setSignatureTab(v as any)}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="draw" className="gap-1">
+                <PenTool className="w-4 h-4" />
+                Draw
+              </TabsTrigger>
+              <TabsTrigger value="upload" className="gap-1">
+                <Upload className="w-4 h-4" />
+                Upload
+              </TabsTrigger>
+              <TabsTrigger value="saved" className="gap-1">
+                <BookMarked className="w-4 h-4" />
+                Saved
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="draw" className="space-y-4">
+              <div className="border rounded-lg p-4 bg-white">
+                <canvas
+                  ref={canvasRef}
+                  width={450}
+                  height={200}
+                  className="border rounded w-full touch-none cursor-crosshair bg-white"
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Signature name (for saving)"
+                  value={newSignatureName}
+                  onChange={(e) => setNewSignatureName(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={clearSignature}>
+                  Clear
+                </Button>
+                <Button variant="outline" onClick={() => saveSignature(true)}>
+                  <Save className="w-4 h-4 mr-1" />
+                  Use & Save
+                </Button>
+                <Button onClick={() => saveSignature(false)}>
+                  Use Signature
+                </Button>
+              </DialogFooter>
+            </TabsContent>
+            
+            <TabsContent value="upload" className="space-y-4">
+              <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-sm text-muted-foreground mb-4">
+                  Upload an image of your signature (PNG, JPG)
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUploadSignature}
+                  className="hidden"
+                />
+                <Button onClick={() => fileInputRef.current?.click()}>
+                  Choose File
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="saved" className="space-y-4">
+              {savedSignatures.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <BookMarked className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No saved signatures yet.</p>
+                  <p className="text-sm">Draw a signature and click "Use & Save" to save it.</p>
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  {savedSignatures.map((sig) => (
+                    <div key={sig.id} className="border rounded-lg p-3 flex items-center gap-3">
+                      <img 
+                        src={sig.signature_data} 
+                        alt={sig.name} 
+                        className="h-12 flex-1 object-contain bg-white border rounded"
+                      />
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm font-medium">{sig.name}</span>
+                        <div className="flex gap-1">
+                          <Button size="sm" onClick={() => useSavedSignature(sig)}>
+                            Use
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="text-destructive"
+                            onClick={() => deleteSavedSignature(sig.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
