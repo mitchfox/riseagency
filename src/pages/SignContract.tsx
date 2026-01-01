@@ -260,6 +260,23 @@ const SignContract = () => {
 
       if (error) throw error;
 
+      // Send notification about contract being signed
+      try {
+        await supabase.from('staff_notification_events').insert({
+          event_type: 'contract_signed',
+          title: 'Contract Signed',
+          body: `${signerInfo.name} signed "${contract.title}"`,
+          event_data: {
+            contract_id: contract.id,
+            contract_title: contract.title,
+            signer_name: signerInfo.name,
+            signer_email: signerInfo.email,
+          },
+        });
+      } catch (notifError) {
+        console.error('Failed to send notification:', notifError);
+      }
+
       setSubmitted(true);
       toast.success('Contract signed successfully!');
     } catch (error: any) {

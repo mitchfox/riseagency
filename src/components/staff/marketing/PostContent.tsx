@@ -190,11 +190,14 @@ export const PostContent = () => {
 
       // Use clean content (without draft markers) for the BTL article
       const cleanContent = getCleanContent(post.content);
+      
+      // Generate excerpt from content if not provided (first ~150 chars)
+      const generatedExcerpt = post.excerpt || cleanContent.substring(0, 150).trim() + (cleanContent.length > 150 ? "..." : "");
 
       const { error } = await supabase.from("blog_posts").insert({
         title: post.title,
         content: cleanContent,
-        excerpt: post.excerpt,
+        excerpt: generatedExcerpt,
         category: btlCategory,
         author_id: userData.user.id,
         published: true,
