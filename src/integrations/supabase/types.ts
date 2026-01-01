@@ -298,6 +298,7 @@ export type Database = {
           author_id: string
           canva_link: string | null
           category: string | null
+          completed_by: string | null
           content: string
           created_at: string | null
           excerpt: string | null
@@ -317,6 +318,7 @@ export type Database = {
           author_id: string
           canva_link?: string | null
           category?: string | null
+          completed_by?: string | null
           content: string
           created_at?: string | null
           excerpt?: string | null
@@ -336,6 +338,7 @@ export type Database = {
           author_id?: string
           canva_link?: string | null
           category?: string | null
+          completed_by?: string | null
           content?: string
           created_at?: string | null
           excerpt?: string | null
@@ -361,6 +364,13 @@ export type Database = {
           {
             foreignKeyName: "blog_posts_author_id_fkey"
             columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_posts_completed_by_fkey"
+            columns: ["completed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Image, ExternalLink, Calendar, Link2, Upload, ArrowRight, Folder, HardDrive, Table, CheckCircle, Download, ImageIcon, User, FileText } from "lucide-react";
+import { Image, ExternalLink, Calendar, Link2, Upload, ArrowRight, Folder, HardDrive, Table, CheckCircle, Download, ImageIcon, User, FileText, Copy } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -43,6 +43,7 @@ interface BlogPost {
   created_at: string;
   assigned_to: string | null;
   image_due_date: string | null;
+  completed_by: string | null;
 }
 
 const RESOURCE_LINKS = [
@@ -195,7 +196,10 @@ export const ImageCreator = () => {
       console.log("Moving post to ready:", id);
       const { data, error } = await supabase
         .from("blog_posts")
-        .update({ workflow_status: "ready_to_post" })
+        .update({ 
+          workflow_status: "ready_to_post",
+          completed_by: currentUserId,
+        })
         .eq("id", id)
         .select();
       if (error) {

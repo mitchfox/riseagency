@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Archive, Copy, Image, ExternalLink, Calendar, Download, ChevronDown, Send, Check, CheckCircle, FileText, Instagram } from "lucide-react";
+import { Archive, Copy, Image, ExternalLink, Calendar, Download, ChevronDown, Send, Check, CheckCircle, FileText, Instagram, User } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { format } from "date-fns";
@@ -25,6 +25,14 @@ interface BlogPost {
   scheduled_date: string | null;
   posted_at: string | null;
   created_at: string;
+  completed_by: string | null;
+  image_due_date: string | null;
+}
+
+interface StaffMember {
+  id: string;
+  full_name: string | null;
+  email: string | null;
 }
 
 // Canva icon component
@@ -47,6 +55,58 @@ export const PostContent = () => {
   const [readyToPostOpen, setReadyToPostOpen] = useState(true);
   const [postedOpen, setPostedOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+
+  // Fetch staff members for displaying completed_by names
+  const { data: staffMembers = [] } = useQuery({
+    queryKey: ["staff-members-profiles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email");
+      if (error) throw error;
+      return data as StaffMember[];
+    },
+  });
+
+  // Get display name for staff (first name only)
+  const getStaffDisplayName = (id: string | null) => {
+    if (!id) return null;
+    const staff = staffMembers.find(s => s.id === id);
+    if (!staff) return null;
+    
+    const fullName = staff.full_name || staff.email?.split('@')[0] || "Unknown";
+    const firstName = fullName.split(' ')[0];
+    const lastName = fullName.split(' ').slice(1).join(' ');
+    
+    // Check if there are duplicates with same first name
+    const duplicates = staffMembers.filter(s => {
+      const name = s.full_name || s.email?.split('@')[0] || "";
+      return name.split(' ')[0] === firstName;
+    });
+    
+    if (duplicates.length > 1 && lastName) {
+      return `${firstName} ${lastName[0]}.`;
+    }
+    return firstName;
+  };
+
+  // Helper to clean content from draft markers
+  const getCleanContent = (content: string) => {
+    return content
+      .replace(/\*\*Intro\*\*\n?/g, '')
+      .replace(/\*\*Main\*\*\n?/g, '')
+      .replace(/\*\*Secondary\*\*\n?/g, '')
+      .replace(/\*\*Conclusion\*\*\n?/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  };
+
+  // Copy article text to clipboard
+  const copyArticleText = (post: BlogPost) => {
+    const cleanContent = getCleanContent(post.content);
+    navigator.clipboard.writeText(cleanContent);
+    toast.success("Article text copied");
+  };
 
   // Posts ready to post
   const { data: readyToPostPosts = [], isLoading: isLoadingReady } = useQuery({
@@ -117,14 +177,23 @@ export const PostContent = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) throw new Error("Not authenticated");
 
+      // Valid BTL categories - use original category if valid, otherwise default to TECHNICAL
+      const validBTLCategories = [
+        "TECHNICAL", "NUTRITION", "PSYCHOLOGY", "TACTICAL",
+        "STRENGTH, POWER & SPEED", "RECOVERY", "COACHING", "AGENTS"
+      ];
+      const btlCategory = post.category && validBTLCategories.includes(post.category) 
+        ? post.category 
+        : "TECHNICAL";
+
       const { error } = await supabase.from("blog_posts").insert({
-        title: `BTL: ${post.title}`,
+        title: post.title,
         content: post.content,
         excerpt: post.excerpt,
-        category: "Between the Lines",
+        category: btlCategory,
         author_id: userData.user.id,
         published: true,
-        workflow_status: "btl_article",
+        workflow_status: "published",
       });
       if (error) throw error;
     },
@@ -284,24 +353,52 @@ export const PostContent = () => {
                       <CardContent className="p-3 sm:p-4">
                         <div className="flex flex-col gap-3">
                           {/* Post info row */}
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-start gap-3">
+                            {/* Larger image preview with download */}
                             {post.image_url_internal && (
-                              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden border flex-shrink-0">
-                                <img src={post.image_url_internal} alt="" className="w-full h-full object-cover" />
+                              <div className="relative group flex-shrink-0">
+                                <a 
+                                  href={post.image_url_internal} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="block w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border hover:ring-2 hover:ring-primary"
+                                >
+                                  <img src={post.image_url_internal} alt="" className="w-full h-full object-cover" />
+                                </a>
+                                <Button
+                                  size="icon"
+                                  variant="secondary"
+                                  className="absolute bottom-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    downloadImage(post.image_url_internal!, post.title);
+                                  }}
+                                >
+                                  <Download className="w-3 h-3" />
+                                </Button>
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
-                              <h4 className="font-medium text-sm truncate">{post.title}</h4>
+                              <h4 className="font-medium text-sm">{post.title}</h4>
                               {post.category && (
                                 <span className="text-xs text-muted-foreground">{post.category}</span>
                               )}
-                              <div className="flex items-center gap-2 mt-1">
+                              <div className="flex flex-wrap items-center gap-2 mt-1">
                                 {post.scheduled_date ? (
                                   <span className="flex items-center gap-1 text-xs text-pink-500">
                                     <Calendar className="w-3 h-3" /> {format(new Date(post.scheduled_date), "MMM d")}
                                   </span>
+                                ) : post.image_due_date ? (
+                                  <span className="flex items-center gap-1 text-xs text-orange-500">
+                                    <Calendar className="w-3 h-3" /> Due: {format(new Date(post.image_due_date), "MMM d")}
+                                  </span>
                                 ) : (
                                   <span className="text-xs text-muted-foreground">Not scheduled</span>
+                                )}
+                                {post.completed_by && getStaffDisplayName(post.completed_by) && (
+                                  <span className="flex items-center gap-1 text-xs text-green-600">
+                                    <User className="w-3 h-3" /> {getStaffDisplayName(post.completed_by)}
+                                  </span>
                                 )}
                               </div>
                             </div>
@@ -321,6 +418,16 @@ export const PostContent = () => {
                                 </a>
                               </Button>
                             )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => copyArticleText(post)}
+                              className="h-8 w-full sm:w-auto"
+                              title="Copy article text"
+                            >
+                              <Copy className="w-3 h-3 mr-1" />
+                              Copy Text
+                            </Button>
                             <Input
                               type="date"
                               value={post.scheduled_date || ""}
