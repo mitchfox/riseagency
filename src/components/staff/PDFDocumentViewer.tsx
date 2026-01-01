@@ -3,7 +3,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Trash2, GripVertical, Type, Calendar, PenTool, User, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Trash2, GripVertical, Type, Calendar, PenTool, User, Users, ArrowRight, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Configure PDF.js worker
@@ -30,6 +30,7 @@ interface PDFDocumentViewerProps {
   onFieldValueChange?: (fieldId: string, value: string) => void;
   onSignatureStart?: (fieldId: string) => void;
   signerPartyFilter?: 'owner' | 'counterparty' | 'all';
+  onNavigateToField?: (fieldId: string, pageNumber: number) => void;
 }
 
 export const PDFDocumentViewer = ({
@@ -53,6 +54,29 @@ export const PDFDocumentViewer = ({
   const [addingFieldParty, setAddingFieldParty] = useState<'owner' | 'counterparty'>('owner');
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
+
+  // Get editable fields for navigation in sign modes
+  const editableFields = fields.filter(f => {
+    if (mode === 'owner-sign') return f.signer_party === 'owner';
+    if (mode === 'sign') return f.signer_party === 'counterparty';
+    return false;
+  });
+  
+  const unfilledFields = editableFields.filter(f => !fieldValues[f.id]);
+  const currentFieldIndex = editableFields.findIndex(f => !fieldValues[f.id]);
+
+  const navigateToNextField = () => {
+    if (unfilledFields.length === 0) return;
+    const nextField = unfilledFields[0];
+    if (nextField.page_number !== currentPage) {
+      setCurrentPage(nextField.page_number);
+    }
+    // Scroll to field after page change
+    setTimeout(() => {
+      const fieldEl = document.querySelector(`[data-field-id="${nextField.id}"]`);
+      fieldEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -316,6 +340,37 @@ export const PDFDocumentViewer = ({
         </div>
       )}
 
+      {/* Next field navigation for sign modes */}
+      {(mode === 'sign' || mode === 'owner-sign') && editableFields.length > 0 && (
+        <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b">
+          <div className="flex items-center gap-2 text-sm">
+            {unfilledFields.length > 0 ? (
+              <>
+                <span className="text-muted-foreground">
+                  {editableFields.length - unfilledFields.length} of {editableFields.length} fields completed
+                </span>
+              </>
+            ) : (
+              <span className="text-green-600 flex items-center gap-1">
+                <CheckCircle2 className="w-4 h-4" />
+                All fields completed!
+              </span>
+            )}
+          </div>
+          {unfilledFields.length > 0 && (
+            <Button
+              size="sm"
+              variant="default"
+              onClick={navigateToNextField}
+              className="gap-1"
+            >
+              Next Field
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Document viewer */}
       <div 
         ref={containerRef}
@@ -448,12 +503,14 @@ export const PDFDocumentViewer = ({
                       )}
                       {field.field_type === 'date' && (
                         editable ? (
-                          <input
-                            type="date"
-                            value={fieldValues[field.id] || ''}
-                            onChange={(e) => onFieldValueChange?.(field.id, e.target.value)}
-                            className="w-full h-full bg-white text-sm border rounded px-2 focus:ring-2 focus:ring-primary"
-                          />
+                          <div className="w-full h-full flex items-center gap-1">
+                            <input
+                              type="date"
+                              value={fieldValues[field.id] || new Date().toISOString().split('T')[0]}
+                              onChange={(e) => onFieldValueChange?.(field.id, e.target.value)}
+                              className="flex-1 h-full bg-white text-sm border rounded px-2 focus:ring-2 focus:ring-primary"
+                            />
+                          </div>
                         ) : (
                           <div className="w-full h-full bg-gray-100 text-sm border rounded px-2 flex items-center text-muted-foreground">
                             {fieldValues[field.id] || field.label}

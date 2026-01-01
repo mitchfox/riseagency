@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { FileText, CheckCircle, Loader2, Download } from "lucide-react";
+import { FileText, CheckCircle, Loader2, Download, PenTool, Upload } from "lucide-react";
 import { PDFDocumentViewer, FieldPosition } from "@/components/staff/PDFDocumentViewer";
 import { downloadSignedContractPDF } from "@/lib/pdfExport";
 
@@ -33,7 +34,9 @@ const SignContract = () => {
   
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
   const [currentSignatureField, setCurrentSignatureField] = useState<string | null>(null);
+  const [signatureTab, setSignatureTab] = useState<'draw' | 'upload'>('draw');
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
 
   useEffect(() => {
@@ -185,6 +188,21 @@ const SignContract = () => {
     setShowSignatureDialog(false);
     setCurrentSignatureField(null);
     toast.success('Signature saved');
+  };
+
+  const handleUploadSignature = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentSignatureField) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setFieldValues((prev) => ({ ...prev, [currentSignatureField]: dataUrl }));
+      setShowSignatureDialog(false);
+      setCurrentSignatureField(null);
+      toast.success('Signature uploaded');
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async () => {
@@ -375,35 +393,70 @@ const SignContract = () => {
         </div>
       </div>
 
-      {/* Signature Dialog */}
+      {/* Signature Dialog with Options */}
       <Dialog open={showSignatureDialog} onOpenChange={setShowSignatureDialog}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Draw Your Signature</DialogTitle>
+            <DialogTitle>Add Your Signature</DialogTitle>
           </DialogHeader>
-          <div className="border rounded-lg p-4 bg-white">
-            <canvas
-              ref={canvasRef}
-              width={450}
-              height={200}
-              className="border rounded w-full touch-none cursor-crosshair bg-white"
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseLeave={stopDrawing}
-              onTouchStart={startDrawing}
-              onTouchMove={draw}
-              onTouchEnd={stopDrawing}
-            />
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={clearSignature}>
-              Clear
-            </Button>
-            <Button onClick={saveSignature}>
-              Save Signature
-            </Button>
-          </DialogFooter>
+          
+          <Tabs value={signatureTab} onValueChange={(v) => setSignatureTab(v as any)}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="draw" className="gap-1">
+                <PenTool className="w-4 h-4" />
+                Draw
+              </TabsTrigger>
+              <TabsTrigger value="upload" className="gap-1">
+                <Upload className="w-4 h-4" />
+                Upload
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="draw" className="space-y-4">
+              <div className="border rounded-lg p-4 bg-white">
+                <canvas
+                  ref={canvasRef}
+                  width={450}
+                  height={200}
+                  className="border rounded w-full touch-none cursor-crosshair bg-white"
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                />
+              </div>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={clearSignature}>
+                  Clear
+                </Button>
+                <Button onClick={saveSignature}>
+                  Use Signature
+                </Button>
+              </DialogFooter>
+            </TabsContent>
+            
+            <TabsContent value="upload" className="space-y-4">
+              <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-sm text-muted-foreground mb-4">
+                  Upload an image of your signature (PNG, JPG)
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUploadSignature}
+                  className="hidden"
+                />
+                <Button onClick={() => fileInputRef.current?.click()}>
+                  Choose File
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
