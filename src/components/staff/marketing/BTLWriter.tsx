@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, FileText, Trash2, Plus, Send, Save, Copy, ChevronDown } from "lucide-react";
+import { Edit, FileText, Trash2, Plus, Send, Save, Copy, ChevronDown, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
@@ -78,6 +78,8 @@ export const BTLWriter = () => {
   const [selectedDraft, setSelectedDraft] = useState<BlogPost | null>(null);
   const [draftDialogOpen, setDraftDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameTitle, setRenameTitle] = useState("");
   const [draftForm, setDraftForm] = useState({
     title: "",
     excerpt: "",
@@ -185,6 +187,24 @@ export const BTLWriter = () => {
       toast.success("Draft deleted");
     },
     onError: () => toast.error("Failed to delete draft"),
+  });
+
+  const renameDraftMutation = useMutation({
+    mutationFn: async ({ id, title }: { id: string; title: string }) => {
+      const { error } = await supabase
+        .from("blog_posts")
+        .update({ title })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["btl-drafts"] });
+      toast.success("Title updated");
+      setRenameDialogOpen(false);
+      setSelectedDraft(null);
+      setRenameTitle("");
+    },
+    onError: () => toast.error("Failed to rename"),
   });
 
   const createDraftMutation = useMutation({
@@ -413,6 +433,19 @@ ${WRITING_STYLE_GUIDE}`;
                         <Button size="sm" variant="default" onClick={() => openEditDialog(draft)} className="h-8 flex-1 sm:flex-initial">
                           <Edit className="w-3 h-3 mr-1" />
                           Edit
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => {
+                            setSelectedDraft(draft);
+                            setRenameTitle(draft.title);
+                            setRenameDialogOpen(true);
+                          }} 
+                          className="h-8"
+                          title="Rename"
+                        >
+                          <Pencil className="w-3 h-3" />
                         </Button>
                         <Button size="sm" variant="ghost" onClick={() => deleteDraftMutation.mutate(draft.id)} className="h-8">
                           <Trash2 className="w-3 h-3 text-destructive" />
@@ -729,6 +762,41 @@ ${WRITING_STYLE_GUIDE}`;
             <Button onClick={handleSubmitDraft} disabled={updateDraftMutation.isPending || submitDraftMutation.isPending}>
               <Send className="w-4 h-4 mr-1" />
               Submit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rename Dialog */}
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="w-full max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rename Post</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="rename-title">Title</Label>
+              <Input
+                id="rename-title"
+                value={renameTitle}
+                onChange={(e) => setRenameTitle(e.target.value)}
+                placeholder="Enter new title"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                if (selectedDraft && renameTitle.trim()) {
+                  renameDraftMutation.mutate({ id: selectedDraft.id, title: renameTitle.trim() });
+                }
+              }} 
+              disabled={renameDraftMutation.isPending || !renameTitle.trim()}
+            >
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>
