@@ -60,6 +60,7 @@ const YouthPlayers = lazy(() => import("./pages/YouthPlayers"));
 const PlayerJourney = lazy(() => import("./pages/PlayerJourney"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
+const SignContract = lazy(() => import("./pages/SignContract"));
 const FluidCursor = lazy(() => import("./components/FluidCursor"));
 
 // Loading fallback component
@@ -160,6 +161,7 @@ const App = () => {
                       <Route path="/pdf-viewer" element={<PDFViewer />} />
                       <Route path="/auth/callback" element={<AuthCallback />} />
                       <Route path="/staff/update-password" element={<UpdatePassword />} />
+                      <Route path="/sign/:token" element={<SignContract />} />
                       <Route path="/error" element={<NotFound />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
