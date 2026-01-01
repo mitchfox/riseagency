@@ -29,6 +29,16 @@ const createSlug = (title: string): string => {
     .trim();
 };
 
+// Check if article is a BTL category
+const BTL_CATEGORIES = [
+  "TECHNICAL", "NUTRITION", "PSYCHOLOGY", "TACTICAL",
+  "STRENGTH, POWER & SPEED", "RECOVERY", "COACHING", "AGENTS"
+];
+
+const isBTLArticle = (category: string | undefined) => {
+  return category && BTL_CATEGORIES.includes(category.toUpperCase());
+};
+
 // Separate component for article view to use hooks properly
 const ArticleView = ({ article }: { article: NewsArticle }) => {
   const { t, language } = useLanguage();
@@ -39,6 +49,11 @@ const ArticleView = ({ article }: { article: NewsArticle }) => {
     content: article.content,
     enabled: language !== 'en'
   });
+
+  // Determine if this is a BTL article
+  const isBTL = isBTLArticle(article.category);
+  const backLink = isBTL ? "/between-the-lines" : "/news";
+  const backText = isBTL ? t("btl.back_to_all", "Back to All") : t("news.back_to_news", "Back to News");
 
   // Format paragraph with bold text and player links
   const formatParagraph = (paragraph: string) => {
@@ -90,7 +105,7 @@ const ArticleView = ({ article }: { article: NewsArticle }) => {
         title={`${article.title} | RISE Football Agency News`}
         description={article.excerpt || article.title}
         image={article.image_url || "/og-preview-news.png"}
-        url={`/news/${createSlug(article.title)}`}
+        url={isBTL ? `/between-the-lines/${createSlug(article.title)}` : `/news/${createSlug(article.title)}`}
         type="article"
         article={{
           publishedTime: article.created_at,
@@ -99,10 +114,10 @@ const ArticleView = ({ article }: { article: NewsArticle }) => {
         }}
         structuredData={articleSchema}
       />
-      <Link to="/news">
+      <Link to={backLink}>
         <Button variant="ghost" className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          {t("news.back_to_news", "Back to News")}
+          {backText}
         </Button>
       </Link>
       
