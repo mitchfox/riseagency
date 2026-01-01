@@ -10,6 +10,7 @@ import { Plus, FileText, Trash2, Copy, Eye, CheckCircle, Save, Loader2, PenTool,
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PDFDocumentViewer, FieldPosition } from "./PDFDocumentViewer";
+import { downloadSignedContractPDF } from "@/lib/pdfExport";
 
 interface SignatureContract {
   id: string;
@@ -65,6 +66,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   const [submissions, setSubmissions] = useState<SignatureSubmission[]>([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -441,6 +443,51 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     return !contract.owner_signed_at;
   };
 
+  const handleExportPDF = async (submission?: SignatureSubmission) => {
+    if (!selectedContract) return;
+    
+    setExporting(true);
+    try {
+      // Combine owner values and submission values
+      const allFieldValues: Record<string, string> = {};
+      
+      // Add owner field values
+      if (selectedContract.owner_field_values) {
+        Object.entries(selectedContract.owner_field_values).forEach(([fieldId, value]) => {
+          if (typeof value === 'string') {
+            allFieldValues[fieldId] = value;
+          }
+        });
+      }
+      
+      // Add submission field values (find field IDs from labels)
+      if (submission) {
+        Object.entries(submission.field_values).forEach(([label, value]) => {
+          const field = fields.find(f => f.label === label);
+          if (field && typeof value === 'string') {
+            allFieldValues[field.id] = value;
+          }
+        });
+      }
+
+      // Prepare field data for export
+      const fieldData = fields.map(f => ({
+        ...f,
+        value: allFieldValues[f.id] || undefined,
+      }));
+
+      const filename = `${selectedContract.title.replace(/[^a-z0-9]/gi, '_')}_signed.pdf`;
+      await downloadSignedContractPDF(selectedContract.file_url, fieldData, filename);
+      
+      toast.success('PDF exported successfully');
+    } catch (error: any) {
+      console.error('Export error:', error);
+      toast.error('Failed to export PDF: ' + (error.message || 'Unknown error'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -790,10 +837,27 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
             <div className="space-y-4">
               {submissions.map((sub) => (
                 <div key={sub.id} className="border rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span className="font-medium">{sub.signer_name}</span>
-                    <span className="text-sm text-muted-foreground">({sub.signer_email})</span>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      <span className="font-medium">{sub.signer_name}</span>
+                      <span className="text-sm text-muted-foreground">({sub.signer_email})</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleExportPDF(sub)}
+                      disabled={exporting}
+                    >
+                      {exporting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4 mr-1" />
+                          Export PDF
+                        </>
+                      )}
+                    </Button>
                   </div>
                   <p className="text-xs text-muted-foreground mb-3">
                     Signed: {new Date(sub.signed_at).toLocaleString()}
