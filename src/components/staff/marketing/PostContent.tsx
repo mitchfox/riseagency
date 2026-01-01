@@ -186,10 +186,10 @@ export const PostContent = () => {
             Plan and schedule your Instagram posts
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CardContent className="px-3 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Calendar */}
-            <div className="flex justify-center">
+            <div className="flex justify-center overflow-x-auto">
               <CalendarComponent
                 mode="single"
                 selected={selectedDate}
@@ -205,7 +205,7 @@ export const PostContent = () => {
                     fontWeight: "bold"
                   },
                 }}
-                className="rounded-md border p-3"
+                className="rounded-md border p-2 sm:p-3"
               />
             </div>
             
@@ -281,15 +281,16 @@ export const PostContent = () => {
                 <div className="space-y-3">
                   {readyToPostPosts.map((post) => (
                     <Card key={post.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <CardContent className="p-3 sm:p-4">
+                        <div className="flex flex-col gap-3">
+                          {/* Post info row */}
+                          <div className="flex items-center gap-3">
                             {post.image_url_internal && (
-                              <div className="w-12 h-12 rounded-lg overflow-hidden border flex-shrink-0">
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden border flex-shrink-0">
                                 <img src={post.image_url_internal} alt="" className="w-full h-full object-cover" />
                               </div>
                             )}
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                               <h4 className="font-medium text-sm truncate">{post.title}</h4>
                               {post.category && (
                                 <span className="text-xs text-muted-foreground">{post.category}</span>
@@ -305,12 +306,13 @@ export const PostContent = () => {
                               </div>
                             </div>
                           </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {/* Actions row - stacked on mobile */}
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                             {post.canva_link && (
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8"
+                                className="h-8 w-full sm:w-auto"
                                 asChild
                               >
                                 <a href={post.canva_link} target="_blank" rel="noopener noreferrer">
@@ -323,27 +325,29 @@ export const PostContent = () => {
                               type="date"
                               value={post.scheduled_date || ""}
                               onChange={(e) => updateScheduleMutation.mutate({ id: post.id, date: e.target.value })}
-                              className="h-8 w-36 text-xs"
+                              className="h-8 w-full sm:w-36 text-xs"
                             />
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => createBTLArticleMutation.mutate(post)}
-                              disabled={createBTLArticleMutation.isPending}
-                              className="h-8"
-                              title="Add to Between the Lines"
-                            >
-                              <FileText className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="h-8 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
-                              onClick={() => markPostedMutation.mutate(post.id)}
-                              disabled={markPostedMutation.isPending}
-                            >
-                              <Check className="w-3 h-3 mr-1" />
-                              Posted
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => createBTLArticleMutation.mutate(post)}
+                                disabled={createBTLArticleMutation.isPending}
+                                className="h-8 flex-1 sm:flex-initial"
+                                title="Add to Between the Lines"
+                              >
+                                <FileText className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="h-8 flex-1 sm:flex-initial bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+                                onClick={() => markPostedMutation.mutate(post.id)}
+                                disabled={markPostedMutation.isPending}
+                              >
+                                <Check className="w-3 h-3 mr-1" />
+                                Posted
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </CardContent>

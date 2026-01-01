@@ -398,8 +398,8 @@ ${WRITING_STYLE_GUIDE}`;
             <div className="space-y-3">
               {drafts.map((draft) => (
                 <Card key={draft.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-4">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm">{draft.title}</h4>
                         {draft.category && (
@@ -409,8 +409,8 @@ ${WRITING_STYLE_GUIDE}`;
                           {draft.excerpt || draft.content.substring(0, 100)}...
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Button size="sm" variant="default" onClick={() => openEditDialog(draft)} className="h-8">
+                      <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-shrink-0">
+                        <Button size="sm" variant="default" onClick={() => openEditDialog(draft)} className="h-8 flex-1 sm:flex-initial">
                           <Edit className="w-3 h-3 mr-1" />
                           Edit
                         </Button>
