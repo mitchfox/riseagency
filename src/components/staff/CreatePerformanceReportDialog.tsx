@@ -2056,12 +2056,6 @@ export const CreatePerformanceReportDialog = ({
               </table>
             </div>
             
-            <div className="mt-4">
-              <Button onClick={addAction} size="sm" variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Action
-              </Button>
-            </div>
           </div>
 
           {/* Datalist for action types */}
@@ -2071,8 +2065,45 @@ export const CreatePerformanceReportDialog = ({
             ))}
           </datalist>
 
-          {/* Save and Delete Buttons */}
-          <div className="flex flex-col sm:flex-row justify-between gap-2">
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-3">
+            {/* Top row: Add Action + Update Report */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button onClick={addAction} size="sm" variant="outline" className="w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Action
+              </Button>
+              <Button onClick={handleSave} disabled={loading || deleting || isFillingScores} className="w-full sm:w-auto">
+                {loading ? (analysisId ? "Updating..." : "Creating...") : (analysisId ? "Update Report" : "Create Report")}
+              </Button>
+              <Button 
+                variant="secondary" 
+                onClick={handleFillEmptyScores} 
+                disabled={loading || deleting || isFillingScores || actions.length === 0}
+                className="w-full sm:w-auto"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                {isFillingScores ? "Filling Scores..." : "Fill Empty Scores"}
+              </Button>
+              {analysisId && (
+                <Button
+                  variant="outline"
+                  onClick={() => setIsByActionDialogOpen(true)}
+                  disabled={loading || deleting || isFillingScores}
+                  className="w-full sm:w-auto"
+                >
+                  <List className="h-4 w-4 mr-2" />
+                  By Action
+                </Button>
+              )}
+            </div>
+            
+            {/* Cancel button */}
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading || deleting || isFillingScores} className="w-full sm:w-auto">
+              Cancel
+            </Button>
+            
+            {/* Delete Report at bottom */}
             {analysisId && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -2100,34 +2131,6 @@ export const CreatePerformanceReportDialog = ({
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto">
-              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading || deleting || isFillingScores} className="w-full sm:w-auto">
-                Cancel
-              </Button>
-              <Button 
-                variant="secondary" 
-                onClick={handleFillEmptyScores} 
-                disabled={loading || deleting || isFillingScores || actions.length === 0}
-                className="w-full sm:w-auto"
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                {isFillingScores ? "Filling Scores..." : "Fill Empty Scores"}
-              </Button>
-              {analysisId && (
-                <Button
-                  variant="outline"
-                  onClick={() => setIsByActionDialogOpen(true)}
-                  disabled={loading || deleting || isFillingScores}
-                  className="w-full sm:w-auto"
-                >
-                  <List className="h-4 w-4 mr-2" />
-                  By Action
-                </Button>
-              )}
-              <Button onClick={handleSave} disabled={loading || deleting || isFillingScores} className="w-full sm:w-auto">
-                {loading ? (analysisId ? "Updating..." : "Creating...") : (analysisId ? "Update Report" : "Create Report")}
-              </Button>
-            </div>
           </div>
         </div>
         )}
