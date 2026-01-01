@@ -337,14 +337,15 @@ export const ImageCreator = () => {
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <Button size="sm" variant="outline" onClick={() => openDialog(post)} className="h-8">
                           <Upload className="w-3 h-3 mr-1" />
-                          Add Post Image
+                          Add Image & Canva
                         </Button>
                         <Button
                           size="sm"
                           variant="default"
                           onClick={() => moveToReadyMutation.mutate(post.id)}
-                          disabled={moveToReadyMutation.isPending}
+                          disabled={moveToReadyMutation.isPending || !post.image_url_internal || !post.canva_link}
                           className="h-8"
+                          title={!post.image_url_internal || !post.canva_link ? "Add image and Canva link first" : ""}
                         >
                           <ArrowRight className="w-3 h-3 mr-1" />
                           Move to Ready
@@ -363,7 +364,7 @@ export const ImageCreator = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="w-full max-w-lg">
           <DialogHeader>
-            <DialogTitle>Add Post Image & Details</DialogTitle>
+            <DialogTitle>Add Image & Canva Link</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
