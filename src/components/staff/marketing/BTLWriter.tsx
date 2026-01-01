@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, FileText, Trash2, Plus, Send, Save, Copy } from "lucide-react";
+import { Edit, FileText, Trash2, Plus, Send, Save, Copy, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
@@ -85,7 +86,10 @@ export const BTLWriter = () => {
     secondaryPara: "",
     conclusion: "",
     category: "",
+    finalArticle: "",
   });
+  const [draftSectionOpen, setDraftSectionOpen] = useState(true);
+  const [finalArticleSectionOpen, setFinalArticleSectionOpen] = useState(false);
 
   // Generate placeholder suggestions based on idea title
   const getPlaceholder = (section: string, ideaTitle: string) => {
@@ -212,7 +216,7 @@ export const BTLWriter = () => {
       toast.success("Draft created");
       setDraftDialogOpen(false);
       setSelectedIdea(null);
-      setDraftForm({ title: "", excerpt: "", intro: "", mainPara: "", secondaryPara: "", conclusion: "", category: "" });
+      setDraftForm({ title: "", excerpt: "", intro: "", mainPara: "", secondaryPara: "", conclusion: "", category: "", finalArticle: "" });
     },
     onError: () => toast.error("Failed to create draft"),
   });
@@ -268,6 +272,7 @@ export const BTLWriter = () => {
       secondaryPara: "",
       conclusion: "",
       category: "",
+      finalArticle: "",
     });
     setDraftDialogOpen(true);
   };
@@ -283,7 +288,10 @@ export const BTLWriter = () => {
       secondaryPara: parsed.secondaryPara,
       conclusion: parsed.conclusion,
       category: draft.category || "",
+      finalArticle: "",
     });
+    setDraftSectionOpen(true);
+    setFinalArticleSectionOpen(false);
     setEditDialogOpen(true);
   };
 
@@ -625,68 +633,91 @@ ${WRITING_STYLE_GUIDE}`;
               />
             </div>
             
-            {/* Structured Content Sections */}
-            <div className="space-y-4 border-t pt-4">
-              <p className="text-sm font-medium text-muted-foreground">Content Sections</p>
-              
-              <div className="space-y-2">
-                <Label>Intro</Label>
-                <p className="text-xs italic text-muted-foreground mb-1">
-                  {getPlaceholder("intro", draftForm.title)}
-                </p>
-                <Textarea
-                  value={draftForm.intro}
-                  onChange={(e) => setDraftForm({ ...draftForm, intro: e.target.value })}
-                  rows={3}
-                  placeholder="Write your introduction..."
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Main Para</Label>
-                <p className="text-xs italic text-muted-foreground mb-1">
-                  {getPlaceholder("mainPara", draftForm.title)}
-                </p>
-                <Textarea
-                  value={draftForm.mainPara}
-                  onChange={(e) => setDraftForm({ ...draftForm, mainPara: e.target.value })}
-                  rows={4}
-                  placeholder="Write your main paragraph..."
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Secondary Para</Label>
-                <p className="text-xs italic text-muted-foreground mb-1">
-                  {getPlaceholder("secondaryPara", draftForm.title)}
-                </p>
-                <Textarea
-                  value={draftForm.secondaryPara}
-                  onChange={(e) => setDraftForm({ ...draftForm, secondaryPara: e.target.value })}
-                  rows={4}
-                  placeholder="Write your secondary paragraph..."
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Conclusion</Label>
-                <p className="text-xs italic text-muted-foreground mb-1">
-                  {getPlaceholder("conclusion", draftForm.title)}
-                </p>
-                <Textarea
-                  value={draftForm.conclusion}
-                  onChange={(e) => setDraftForm({ ...draftForm, conclusion: e.target.value })}
-                  rows={3}
-                  placeholder="Write your conclusion..."
-                />
-              </div>
-            </div>
-          </div>
-          <div className="border-t pt-4">
-            <Button variant="secondary" onClick={generateAndCopyPrompt} className="w-full">
-              <Copy className="w-4 h-4 mr-2" />
-              Copy AI Prompt
-            </Button>
+            {/* Draft Section - Collapsible */}
+            <Collapsible open={draftSectionOpen} onOpenChange={setDraftSectionOpen}>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+                <span className="text-sm font-medium">Draft Notes</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${draftSectionOpen ? 'rotate-180' : ''}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-4 space-y-4">
+                <div className="space-y-2">
+                  <Label>Intro</Label>
+                  <p className="text-xs italic text-muted-foreground mb-1">
+                    {getPlaceholder("intro", draftForm.title)}
+                  </p>
+                  <Textarea
+                    value={draftForm.intro}
+                    onChange={(e) => setDraftForm({ ...draftForm, intro: e.target.value })}
+                    rows={3}
+                    placeholder="Write your introduction..."
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Main Para</Label>
+                  <p className="text-xs italic text-muted-foreground mb-1">
+                    {getPlaceholder("mainPara", draftForm.title)}
+                  </p>
+                  <Textarea
+                    value={draftForm.mainPara}
+                    onChange={(e) => setDraftForm({ ...draftForm, mainPara: e.target.value })}
+                    rows={4}
+                    placeholder="Write your main paragraph..."
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Secondary Para</Label>
+                  <p className="text-xs italic text-muted-foreground mb-1">
+                    {getPlaceholder("secondaryPara", draftForm.title)}
+                  </p>
+                  <Textarea
+                    value={draftForm.secondaryPara}
+                    onChange={(e) => setDraftForm({ ...draftForm, secondaryPara: e.target.value })}
+                    rows={4}
+                    placeholder="Write your secondary paragraph..."
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Conclusion</Label>
+                  <p className="text-xs italic text-muted-foreground mb-1">
+                    {getPlaceholder("conclusion", draftForm.title)}
+                  </p>
+                  <Textarea
+                    value={draftForm.conclusion}
+                    onChange={(e) => setDraftForm({ ...draftForm, conclusion: e.target.value })}
+                    rows={3}
+                    placeholder="Write your conclusion..."
+                  />
+                </div>
+
+                <Button variant="secondary" onClick={generateAndCopyPrompt} className="w-full">
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy AI Prompt
+                </Button>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Final Article Section - Collapsible */}
+            <Collapsible open={finalArticleSectionOpen} onOpenChange={setFinalArticleSectionOpen}>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+                <span className="text-sm font-medium">Final Article</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${finalArticleSectionOpen ? 'rotate-180' : ''}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-4">
+                <div className="space-y-2">
+                  <Label>Paste Final Written Article</Label>
+                  <Textarea
+                    value={draftForm.finalArticle}
+                    onChange={(e) => setDraftForm({ ...draftForm, finalArticle: e.target.value })}
+                    rows={12}
+                    placeholder="Paste the final AI-generated or written article here..."
+                    className="font-mono text-sm"
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </div>
           <DialogFooter className="flex gap-2">
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
