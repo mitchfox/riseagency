@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Image, ExternalLink, Calendar, Link2, Upload, ArrowRight, Folder, HardDrive, Table, CheckCircle, Download, ImageIcon, User } from "lucide-react";
+import { Image, ExternalLink, Calendar, Link2, Upload, ArrowRight, Folder, HardDrive, Table, CheckCircle, Download, ImageIcon, User, FileText } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
@@ -75,6 +76,8 @@ export const ImageCreator = () => {
   const queryClient = useQueryClient();
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [viewArticleDialogOpen, setViewArticleDialogOpen] = useState(false);
+  const [viewArticlePost, setViewArticlePost] = useState<BlogPost | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [form, setForm] = useState({
     canva_link: "",
@@ -501,6 +504,18 @@ export const ImageCreator = () => {
                           />
                         </div>
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => {
+                              setViewArticlePost(post);
+                              setViewArticleDialogOpen(true);
+                            }} 
+                            className="h-8 w-full sm:w-auto text-xs"
+                          >
+                            <FileText className="w-3 h-3 mr-1" />
+                            View Article
+                          </Button>
                           <Button size="sm" variant="outline" onClick={() => openDialog(post)} className="h-8 w-full sm:w-auto text-xs">
                             <Upload className="w-3 h-3 mr-1" />
                             Add Image & Canva
@@ -599,6 +614,25 @@ export const ImageCreator = () => {
               disabled={updateMutation.isPending || !form.canva_link || !form.image_url}
             >
               Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Article Dialog */}
+      <Dialog open={viewArticleDialogOpen} onOpenChange={setViewArticleDialogOpen}>
+        <DialogContent className="w-full max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>{viewArticlePost?.title}</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh] pr-4">
+            <div className="whitespace-pre-wrap text-sm leading-relaxed">
+              {viewArticlePost ? getCleanContent(viewArticlePost.content) : ""}
+            </div>
+          </ScrollArea>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewArticleDialogOpen(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
