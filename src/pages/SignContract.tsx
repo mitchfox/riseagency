@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { FileText, Download, CheckCircle, Loader2 } from "lucide-react";
+import { FileText, CheckCircle, Loader2 } from "lucide-react";
+import { PDFDocumentViewer, FieldPosition } from "@/components/staff/PDFDocumentViewer";
 
 interface SignatureContract {
   id: string;
@@ -16,30 +18,21 @@ interface SignatureContract {
   status: string;
 }
 
-interface SignatureField {
-  id: string;
-  contract_id: string;
-  field_type: 'text' | 'date' | 'signature';
-  label: string;
-  required: boolean;
-  display_order: number;
-}
-
 const SignContract = () => {
   const { token } = useParams<{ token: string }>();
-  const navigate = useNavigate();
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [contract, setContract] = useState<SignatureContract | null>(null);
-  const [fields, setFields] = useState<SignatureField[]>([]);
+  const [fields, setFields] = useState<FieldPosition[]>([]);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [signerInfo, setSignerInfo] = useState({ name: '', email: '' });
   
+  const [showSignatureDialog, setShowSignatureDialog] = useState(false);
+  const [currentSignatureField, setCurrentSignatureField] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [currentSignatureField, setCurrentSignatureField] = useState<string | null>(null);
 
   useEffect(() => {
     if (token) {
@@ -73,15 +66,17 @@ const SignContract = () => {
       if (fieldsError) {
         console.error('Error fetching fields:', fieldsError);
       } else {
-        const typedFields = fieldsData as SignatureField[];
+        const typedFields: FieldPosition[] = (fieldsData || []).map((f: any) => ({
+          id: f.id,
+          field_type: f.field_type,
+          label: f.label,
+          page_number: f.page_number,
+          x_position: f.x_position,
+          y_position: f.y_position,
+          width: f.width,
+          height: f.height,
+        }));
         setFields(typedFields);
-        
-        // Initialize field values
-        const initialValues: Record<string, string> = {};
-        typedFields?.forEach((field) => {
-          initialValues[field.label] = '';
-        });
-        setFieldValues(initialValues);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -91,9 +86,29 @@ const SignContract = () => {
     }
   };
 
-  const handleFieldChange = (label: string, value: string) => {
-    setFieldValues((prev) => ({ ...prev, [label]: value }));
+  const handleFieldValueChange = (fieldId: string, value: string) => {
+    setFieldValues((prev) => ({ ...prev, [fieldId]: value }));
   };
+
+  const handleSignatureStart = (fieldId: string) => {
+    setCurrentSignatureField(fieldId);
+    setShowSignatureDialog(true);
+  };
+
+  // Canvas signature handling
+  useEffect(() => {
+    if (showSignatureDialog && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+  }, [showSignatureDialog]);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -140,10 +155,6 @@ const SignContract = () => {
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    if (currentSignatureField) {
-      setFieldValues((prev) => ({ ...prev, [currentSignatureField]: '' }));
-    }
   };
 
   const saveSignature = () => {
@@ -152,24 +163,22 @@ const SignContract = () => {
 
     const dataUrl = canvas.toDataURL('image/png');
     setFieldValues((prev) => ({ ...prev, [currentSignatureField]: dataUrl }));
+    setShowSignatureDialog(false);
     setCurrentSignatureField(null);
     toast.success('Signature saved');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!contract) return;
 
-    // Validate signer info
     if (!signerInfo.name || !signerInfo.email) {
       toast.error('Please enter your name and email');
       return;
     }
 
-    // Validate required fields
+    // Check all fields are filled
     for (const field of fields) {
-      if (field.required && !fieldValues[field.label]) {
+      if (!fieldValues[field.id]) {
         toast.error(`Please fill in: ${field.label}`);
         return;
       }
@@ -178,13 +187,19 @@ const SignContract = () => {
     setSubmitting(true);
 
     try {
+      // Convert field IDs to labels for storage
+      const labeledValues: Record<string, string> = {};
+      fields.forEach(f => {
+        labeledValues[f.label] = fieldValues[f.id] || '';
+      });
+
       const { error } = await supabase
         .from('signature_submissions')
         .insert([{
           contract_id: contract.id,
           signer_name: signerInfo.name,
           signer_email: signerInfo.email,
-          field_values: fieldValues,
+          field_values: labeledValues,
           user_agent: navigator.userAgent,
         }]);
 
@@ -199,19 +214,6 @@ const SignContract = () => {
       setSubmitting(false);
     }
   };
-
-  useEffect(() => {
-    if (currentSignatureField && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-      }
-    }
-  }, [currentSignatureField]);
 
   if (loading) {
     return (
@@ -250,177 +252,99 @@ const SignContract = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <FileText className="h-12 w-12 mx-auto text-primary mb-4" />
-          <h1 className="text-2xl font-bold">{contract.title}</h1>
-          {contract.description && (
-            <p className="text-muted-foreground mt-2">{contract.description}</p>
-          )}
-        </div>
-
-        {/* Document Preview/Download */}
-        <div className="border rounded-lg p-4 mb-6 bg-muted/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <FileText className="h-8 w-8 text-muted-foreground" />
-              <div>
-                <p className="font-medium">{contract.file_name}</p>
-                <p className="text-sm text-muted-foreground">Contract Document</p>
-              </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <div className="border-b bg-background p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-bold flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                {contract.title}
+              </h1>
+              {contract.description && (
+                <p className="text-sm text-muted-foreground mt-1">{contract.description}</p>
+              )}
             </div>
-            <Button variant="outline" onClick={() => window.open(contract.file_url, '_blank')}>
-              <Download className="h-4 w-4 mr-2" />
-              Download
-            </Button>
-          </div>
-        </div>
-
-        {/* Signing Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Signer Info */}
-          <div className="border rounded-lg p-4 space-y-4">
-            <h2 className="font-semibold">Your Information</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <Label htmlFor="signer-name">Full Name *</Label>
+            <div className="flex items-center gap-4">
+              <div className="flex gap-2">
                 <Input
-                  id="signer-name"
+                  placeholder="Your Name"
                   value={signerInfo.name}
                   onChange={(e) => setSignerInfo({ ...signerInfo, name: e.target.value })}
-                  required
+                  className="w-40"
                 />
-              </div>
-              <div>
-                <Label htmlFor="signer-email">Email *</Label>
                 <Input
-                  id="signer-email"
+                  placeholder="Your Email"
                   type="email"
                   value={signerInfo.email}
                   onChange={(e) => setSignerInfo({ ...signerInfo, email: e.target.value })}
-                  required
+                  className="w-48"
                 />
               </div>
+              <Button onClick={handleSubmit} disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Submit
+                  </>
+                )}
+              </Button>
             </div>
           </div>
-
-          {/* Dynamic Fields */}
-          {fields.length > 0 && (
-            <div className="border rounded-lg p-4 space-y-4">
-              <h2 className="font-semibold">Required Fields</h2>
-              {fields.map((field) => (
-                <div key={field.id}>
-                  <Label htmlFor={field.id}>
-                    {field.label} {field.required && '*'}
-                  </Label>
-                  
-                  {field.field_type === 'text' && (
-                    <Input
-                      id={field.id}
-                      value={fieldValues[field.label] || ''}
-                      onChange={(e) => handleFieldChange(field.label, e.target.value)}
-                      required={field.required}
-                    />
-                  )}
-                  
-                  {field.field_type === 'date' && (
-                    <Input
-                      id={field.id}
-                      type="date"
-                      value={fieldValues[field.label] || ''}
-                      onChange={(e) => handleFieldChange(field.label, e.target.value)}
-                      required={field.required}
-                    />
-                  )}
-                  
-                  {field.field_type === 'signature' && (
-                    <div className="mt-2">
-                      {fieldValues[field.label] ? (
-                        <div className="border rounded-lg p-2 bg-white">
-                          <img 
-                            src={fieldValues[field.label]} 
-                            alt="Signature" 
-                            className="h-20 mx-auto"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="mt-2 w-full"
-                            onClick={() => {
-                              setCurrentSignatureField(field.label);
-                              setFieldValues((prev) => ({ ...prev, [field.label]: '' }));
-                            }}
-                          >
-                            Re-sign
-                          </Button>
-                        </div>
-                      ) : currentSignatureField === field.label ? (
-                        <div className="border rounded-lg p-4 bg-white">
-                          <canvas
-                            ref={canvasRef}
-                            width={400}
-                            height={150}
-                            className="border rounded w-full touch-none cursor-crosshair"
-                            onMouseDown={startDrawing}
-                            onMouseMove={draw}
-                            onMouseUp={stopDrawing}
-                            onMouseLeave={stopDrawing}
-                            onTouchStart={startDrawing}
-                            onTouchMove={draw}
-                            onTouchEnd={stopDrawing}
-                          />
-                          <div className="flex gap-2 mt-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={clearSignature}
-                            >
-                              Clear
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              onClick={saveSignature}
-                            >
-                              Save Signature
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full h-20"
-                          onClick={() => setCurrentSignatureField(field.label)}
-                        >
-                          Click to Sign
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-            {submitting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Submitting...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Submit Signed Contract
-              </>
-            )}
-          </Button>
-        </form>
+        </div>
       </div>
+
+      {/* Document viewer with signing */}
+      <div className="flex-1 p-4">
+        <div className="max-w-6xl mx-auto h-[calc(100vh-140px)]">
+          <PDFDocumentViewer
+            fileUrl={contract.file_url}
+            fields={fields}
+            mode="sign"
+            fieldValues={fieldValues}
+            onFieldValueChange={handleFieldValueChange}
+            onSignatureStart={handleSignatureStart}
+          />
+        </div>
+      </div>
+
+      {/* Signature Dialog */}
+      <Dialog open={showSignatureDialog} onOpenChange={setShowSignatureDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Draw Your Signature</DialogTitle>
+          </DialogHeader>
+          <div className="border rounded-lg p-4 bg-white">
+            <canvas
+              ref={canvasRef}
+              width={450}
+              height={200}
+              className="border rounded w-full touch-none cursor-crosshair bg-white"
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+              onTouchStart={startDrawing}
+              onTouchMove={draw}
+              onTouchEnd={stopDrawing}
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={clearSignature}>
+              Clear
+            </Button>
+            <Button onClick={saveSignature}>
+              Save Signature
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
