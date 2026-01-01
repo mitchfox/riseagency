@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Target, CheckSquare, Users, Calendar, Link2, TrendingUp, Settings, RotateCcw, Layers, Plus, Search, Megaphone, ClipboardList, BarChart3, FileText, Mail, Dumbbell, Bell, Clock, FolderOpen, MessageSquare, Briefcase, Globe, Receipt, UserPlus, Activity, Timer, Zap, Focus, Brain, ListTodo, Gauge, Workflow, Kanban, GitBranch, Repeat, Flag, Milestone, Trophy, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -468,12 +468,15 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
     setExpandedWidget(expandedWidget === id ? null : id);
   };
 
-  const navigateToPlayer = (playerSlug: string, tab: string) => {
-    setSearchParams({ section: 'players', player: playerSlug, tab });
+  const navigate = useNavigate();
+
+  const navigateToPlayer = (playerId: string, tab: string) => {
+    // Use navigate for reliable cross-component navigation
+    navigate(`/staff?section=players&player=${playerId}&tab=${tab}`);
   };
 
   const navigateToGoalsTasks = () => {
-    setSearchParams({ section: 'goalstasks' });
+    navigate('/staff?section=goalstasks');
   };
 
   const handleQuickAddTask = async () => {

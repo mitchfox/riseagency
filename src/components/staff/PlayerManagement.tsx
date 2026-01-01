@@ -199,18 +199,32 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     fetchAvailableAnalyses();
   }, []);
 
-  // Read player and tab from URL params
+  // Store pending player/tab from URL to apply once players load
+  const [pendingPlayerId, setPendingPlayerId] = useState<string | null>(null);
+  const [pendingTab, setPendingTab] = useState<string | null>(null);
+
+  // Read player and tab from URL params immediately
   useEffect(() => {
-    if (players.length === 0) return;
-    
     const playerSlug = searchParams.get('player');
     const tabParam = searchParams.get('tab');
     
-    // Only update player selection if the player param actually changed
-    if (playerSlug && playerSlug !== previousPlayerIdFromUrl.current) {
+    if (playerSlug) {
+      setPendingPlayerId(playerSlug);
+    }
+    if (tabParam) {
+      setPendingTab(tabParam);
+    }
+  }, [searchParams]);
+
+  // Apply pending player selection when players are loaded
+  useEffect(() => {
+    if (players.length === 0 || !pendingPlayerId) return;
+    
+    // Only update if the player param actually changed
+    if (pendingPlayerId !== previousPlayerIdFromUrl.current) {
       // First try to find by ID (UUID format), then by slug (name-based)
-      const player = players.find(p => p.id === playerSlug) || 
-                     players.find(p => p.name?.toLowerCase().replace(/\s+/g, '-') === playerSlug);
+      const player = players.find(p => p.id === pendingPlayerId) || 
+                     players.find(p => p.name?.toLowerCase().replace(/\s+/g, '-') === pendingPlayerId);
       
       if (player) {
         setSelectedPlayerId(player.id);
@@ -218,17 +232,27 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         // Reset pagination when player changes
         setBestClipsPage(1);
       }
-      previousPlayerIdFromUrl.current = playerSlug;
-    } else if (!playerSlug && previousPlayerIdFromUrl.current) {
-      // Player was removed from URL
+      previousPlayerIdFromUrl.current = pendingPlayerId;
+    }
+    
+    // Apply pending tab
+    if (pendingTab) {
+      setActiveTab(pendingTab);
+      setPendingTab(null);
+    }
+    
+    // Clear pending player after applying
+    setPendingPlayerId(null);
+  }, [players, pendingPlayerId, pendingTab]);
+
+  // Handle player removal from URL
+  useEffect(() => {
+    const playerSlug = searchParams.get('player');
+    if (!playerSlug && previousPlayerIdFromUrl.current) {
       setSelectedPlayerId(null);
       previousPlayerIdFromUrl.current = null;
     }
-    
-    if (tabParam) {
-      setActiveTab(tabParam);
-    }
-  }, [searchParams, players]);
+  }, [searchParams]);
 
   // Auto-scroll to selected player when they're selected from URL
   useEffect(() => {
