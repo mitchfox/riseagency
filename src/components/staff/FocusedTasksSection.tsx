@@ -136,7 +136,7 @@ export const FocusedTasksSection = () => {
             </TabsTrigger>
             <TabsTrigger value="posted" className="gap-1 text-xs">
               <FileText className="h-3 w-3" />
-              Posted
+              Schedule
             </TabsTrigger>
           </TabsList>
           <TabsContent value="review" className="mt-3">

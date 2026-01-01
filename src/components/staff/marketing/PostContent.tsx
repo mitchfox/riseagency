@@ -24,7 +24,8 @@ interface BlogPost {
 }
 
 // Helper to get the best available image URL
-const getImageUrl = (post: BlogPost): string | null => {
+const getImageUrl = (post: BlogPost | null): string | null => {
+  if (!post) return null;
   return post.image_url_internal || post.image_url || null;
 };
 
