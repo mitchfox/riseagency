@@ -85,10 +85,22 @@ export const ImageCreator = () => {
   });
   const [uploading, setUploading] = useState(false);
 
-  // Get current user
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Get current user and check if admin
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setCurrentUserId(data.user.id);
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (data.user) {
+        setCurrentUserId(data.user.id);
+        // Check if user is admin
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.user.id)
+          .eq("role", "admin")
+          .maybeSingle();
+        setIsAdmin(!!roleData);
+      }
     });
   }, []);
 
@@ -484,11 +496,21 @@ export const ImageCreator = () => {
                             </SelectTrigger>
                             <SelectContent className="bg-background border z-50">
                               <SelectItem value="unassigned">Not assigned</SelectItem>
-                              {staffMembers.map((staff) => (
-                                <SelectItem key={staff.id} value={staff.id}>
-                                  {getStaffDisplayName(staff.id)}
-                                </SelectItem>
-                              ))}
+                              {isAdmin ? (
+                                // Admins can assign to anyone
+                                staffMembers.map((staff) => (
+                                  <SelectItem key={staff.id} value={staff.id}>
+                                    {getStaffDisplayName(staff.id)}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                // Non-admins can only assign to themselves
+                                currentUserId && (
+                                  <SelectItem value={currentUserId}>
+                                    {getStaffDisplayName(currentUserId)}
+                                  </SelectItem>
+                                )
+                              )}
                             </SelectContent>
                           </Select>
                           <Input
