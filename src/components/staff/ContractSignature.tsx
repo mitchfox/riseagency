@@ -314,8 +314,18 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     fetchContracts();
   };
 
-  const copyShareLink = (shareToken: string) => {
-    const link = `${window.location.origin}/sign/${shareToken}`;
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single
+      .trim();
+  };
+
+  const copyShareLink = (contract: SignatureContract) => {
+    const slug = generateSlug(contract.title);
+    const link = `https://risefootballagency.com/sign/${slug}`;
     navigator.clipboard.writeText(link);
     toast.success('Link copied to clipboard');
   };
@@ -653,7 +663,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => copyShareLink(contract.share_token)}
+                      onClick={() => copyShareLink(contract)}
                     >
                       <Link className="h-4 w-4 mr-1" />
                       Copy Link for Other Party

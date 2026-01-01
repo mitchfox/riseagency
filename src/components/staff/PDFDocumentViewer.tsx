@@ -63,19 +63,24 @@ export const PDFDocumentViewer = ({
   });
   
   const unfilledFields = editableFields.filter(f => !fieldValues[f.id]);
-  const currentFieldIndex = editableFields.findIndex(f => !fieldValues[f.id]);
 
-  // Auto-fill date fields when entering sign mode
+  // Auto-fill date fields when entering sign mode (run once when fields load)
   useEffect(() => {
     if (mode !== 'sign' && mode !== 'owner-sign') return;
+    if (fields.length === 0) return;
     
     const today = new Date().toISOString().split('T')[0];
-    editableFields.forEach(field => {
-      if (field.field_type === 'date' && !fieldValues[field.id]) {
-        onFieldValueChange?.(field.id, today);
-      }
+    const dateFieldsToFill = fields.filter(f => {
+      const isEditable = mode === 'owner-sign' ? f.signer_party === 'owner' : f.signer_party === 'counterparty';
+      return f.field_type === 'date' && isEditable && !fieldValues[f.id];
     });
-  }, [mode, fields, editableFields, fieldValues, onFieldValueChange]);
+    
+    dateFieldsToFill.forEach(field => {
+      onFieldValueChange?.(field.id, today);
+    });
+    // Only run when mode or fields change, not on every fieldValues update
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, fields.length]);
 
   const navigateToNextField = () => {
     if (unfilledFields.length === 0) return;

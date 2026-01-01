@@ -21,7 +21,7 @@ interface SignatureContract {
 }
 
 const SignContract = () => {
-  const { token } = useParams<{ token: string }>();
+  const { token } = useParams<{ token: string }>(); // This is now the slug (document title)
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -47,14 +47,31 @@ const SignContract = () => {
 
   const fetchContract = async () => {
     try {
-      const { data: contractData, error: contractError } = await supabase
+      // First get all active contracts to find by slug match
+      const { data: contractsData, error: contractsError } = await supabase
         .from('signature_contracts')
         .select('*')
-        .eq('share_token', token)
-        .eq('status', 'active')
-        .single();
+        .eq('status', 'active');
 
-      if (contractError || !contractData) {
+      if (contractsError) {
+        toast.error('Failed to load contract');
+        setLoading(false);
+        return;
+      }
+
+      // Find contract by matching slug from title
+      const generateSlug = (title: string) => {
+        return title
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .trim();
+      };
+
+      const contractData = contractsData?.find(c => generateSlug(c.title) === token);
+
+      if (!contractData) {
         toast.error('Contract not found or is no longer active');
         setLoading(false);
         return;
