@@ -9,9 +9,8 @@ import { PostContent } from "./PostContent";
 
 export const ContentCreator = () => {
   return (
-    <Tabs defaultValue="tools" className="w-full">
+    <Tabs defaultValue="ideas" className="w-full">
       <TabsList className="mb-6 flex-wrap h-auto gap-1">
-        <TabsTrigger value="tools">Content Tools</TabsTrigger>
         <TabsTrigger value="ideas">
           <Inbox className="w-4 h-4 mr-2" />
           Review Ideas
@@ -24,10 +23,11 @@ export const ContentCreator = () => {
           <Image className="w-4 h-4 mr-2" />
           Image Creator
         </TabsTrigger>
-        <TabsTrigger value="post-content">
+        <TabsTrigger value="post-schedule">
           <Archive className="w-4 h-4 mr-2" />
-          Post Content
+          Post Schedule
         </TabsTrigger>
+        <TabsTrigger value="tools">Content Tools</TabsTrigger>
       </TabsList>
 
       <TabsContent value="tools">
@@ -288,8 +288,254 @@ export const ContentCreator = () => {
         <ImageCreator />
       </TabsContent>
 
-      <TabsContent value="post-content">
+      <TabsContent value="post-schedule">
         <PostContent />
+      </TabsContent>
+
+      <TabsContent value="tools">
+        <div className="space-y-6">
+          {/* Quick Design Link */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="w-5 h-5 text-purple-500" />
+                Design Tools
+              </CardTitle>
+              <CardDescription>Create stunning visuals for social media</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <a
+                href="https://www.canva.com/design/DAG0N9vOwtg/6ZmTuSDkJzR9_b0nl7czJA/edit?utm_content=DAG0N9vOwtg&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <Card className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:border-purple-500/50 transition-all hover:shadow-lg cursor-pointer">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-lg bg-purple-500/20">
+                          <Sparkles className="w-8 h-8 text-purple-500" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg">Open Canva Design Studio</h3>
+                          <p className="text-sm text-muted-foreground">Access all templates, brand assets, and create new designs</p>
+                        </div>
+                      </div>
+                      <ExternalLink className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </a>
+            </CardContent>
+          </Card>
+
+          {/* Post Ideas */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-yellow-500" />
+                Post Ideas
+              </CardTitle>
+              <CardDescription>Content inspiration for different platforms and occasions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="player-content">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <Hash className="w-4 h-4 text-blue-500" />
+                      Player Content Ideas
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="space-y-2 text-sm text-muted-foreground pl-6">
+                      <li>• Match day countdown with player focus</li>
+                      <li>• Training session highlights & behind the scenes</li>
+                      <li>• Player stats infographic after key performances</li>
+                      <li>• "Day in the life" stories</li>
+                      <li>• Goal/assist compilation reels</li>
+                      <li>• Player birthday celebrations</li>
+                      <li>• Transfer announcement graphics</li>
+                      <li>• Contract extension celebrations</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="brand-content">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-purple-500" />
+                      Brand Building Ideas
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="space-y-2 text-sm text-muted-foreground pl-6">
+                      <li>• Success story testimonials</li>
+                      <li>• Industry news & insights commentary</li>
+                      <li>• Team culture & values posts</li>
+                      <li>• Partnership announcements</li>
+                      <li>• Milestone celebrations (followers, achievements)</li>
+                      <li>• "Meet the team" features</li>
+                      <li>• Client spotlight series</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="engagement">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-green-500" />
+                      Engagement Drivers
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="space-y-2 text-sm text-muted-foreground pl-6">
+                      <li>• Polls & quizzes about football</li>
+                      <li>• "Caption this" photo posts</li>
+                      <li>• Throwback Thursday / Flashback Friday</li>
+                      <li>• Fan Q&A sessions</li>
+                      <li>• Prediction competitions for match outcomes</li>
+                      <li>• User-generated content reposts</li>
+                      <li>• Weekly trivia questions</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="seasonal">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <CalendarIcon className="w-4 h-4 text-orange-500" />
+                      Seasonal & Timely
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="space-y-2 text-sm text-muted-foreground pl-6">
+                      <li>• Transfer window updates & rumours</li>
+                      <li>• Season kickoff / end of season reviews</li>
+                      <li>• Major tournament content (World Cup, Euros, etc.)</li>
+                      <li>• Holiday greetings (Christmas, New Year, etc.)</li>
+                      <li>• International break content</li>
+                      <li>• Award season predictions & reactions</li>
+                      <li>• Summer tour / pre-season coverage</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          {/* Platform-Specific Tips */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Hash className="w-5 h-5 text-blue-500" />
+                Platform Best Practices
+              </CardTitle>
+              <CardDescription>Optimize your content for each platform</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="border-pink-500/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Instagram className="w-5 h-5 text-pink-500" />
+                      <h4 className="font-semibold">Instagram</h4>
+                    </div>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      <li>• Best times: 11am-1pm, 7-9pm</li>
+                      <li>• Use 3-5 relevant hashtags</li>
+                      <li>• Stories for behind-the-scenes</li>
+                      <li>• Reels for maximum reach</li>
+                      <li>• Carousel for detailed content</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-blue-400/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Twitter className="w-5 h-5 text-blue-400" />
+                      <h4 className="font-semibold">X (Twitter)</h4>
+                    </div>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      <li>• Best times: 8-10am, 12-1pm</li>
+                      <li>• Keep tweets under 280 chars</li>
+                      <li>• Use 1-2 hashtags max</li>
+                      <li>• Engage with trending topics</li>
+                      <li>• Quick reactions to news</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-blue-600/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Facebook className="w-5 h-5 text-blue-600" />
+                      <h4 className="font-semibold">Facebook</h4>
+                    </div>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      <li>• Best times: 1-4pm weekdays</li>
+                      <li>• Longer form content works</li>
+                      <li>• Video gets priority in feed</li>
+                      <li>• Create events for matches</li>
+                      <li>• Use Facebook Live for Q&As</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-blue-700/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Linkedin className="w-5 h-5 text-blue-700" />
+                      <h4 className="font-semibold">LinkedIn</h4>
+                    </div>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      <li>• Best times: Tue-Thu mornings</li>
+                      <li>• Professional tone</li>
+                      <li>• Industry insights & analysis</li>
+                      <li>• Business achievements</li>
+                      <li>• Team & company culture</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Content Calendar Template */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5 text-green-500" />
+                Weekly Content Template
+              </CardTitle>
+              <CardDescription>Suggested posting schedule for consistent engagement</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
+                {[
+                  { day: 'Mon', theme: 'Motivation Monday', icon: '💪', desc: 'Player quotes, training clips' },
+                  { day: 'Tue', theme: 'Tactical Tuesday', icon: '📊', desc: 'Stats, analysis, insights' },
+                  { day: 'Wed', theme: 'Wellness Wed', icon: '🏃', desc: 'Training, fitness, health' },
+                  { day: 'Thu', theme: 'Throwback', icon: '📸', desc: 'Historic moments, memories' },
+                  { day: 'Fri', theme: 'Match Preview', icon: '⚽', desc: 'Weekend fixture build-up' },
+                  { day: 'Sat', theme: 'Matchday', icon: '🔥', desc: 'Live updates, reactions' },
+                  { day: 'Sun', theme: 'Review', icon: '📝', desc: 'Results, highlights, recap' },
+                ].map((item) => (
+                  <Card key={item.day} className="bg-muted/50">
+                    <CardContent className="p-3 text-center">
+                      <div className="text-2xl mb-1">{item.icon}</div>
+                      <div className="font-semibold text-xs">{item.day}</div>
+                      <div className="text-[10px] text-primary font-medium">{item.theme}</div>
+                      <div className="text-[9px] text-muted-foreground mt-1">{item.desc}</div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </TabsContent>
     </Tabs>
   );

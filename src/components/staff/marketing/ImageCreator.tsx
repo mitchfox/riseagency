@@ -8,10 +8,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Image, ExternalLink, Calendar, Check, Link2, Upload, ChevronDown, ArrowRight, FileText, Folder, HardDrive, Table, Send, CheckCircle } from "lucide-react";
+import { Image, ExternalLink, Calendar, Check, Link2, Upload, ChevronDown, ArrowRight, FileText, Folder, HardDrive, Table, Send, CheckCircle, Download, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { format } from "date-fns";
+
+interface GalleryItem {
+  id: string;
+  title: string;
+  file_url: string;
+  thumbnail_url: string | null;
+  category: string;
+  file_type: string;
+  created_at: string;
+}
 
 interface BlogPost {
   id: string;
@@ -107,6 +117,21 @@ export const ImageCreator = () => {
         .limit(20);
       if (error) throw error;
       return data as BlogPost[];
+    },
+  });
+
+  // Marketing Gallery images
+  const { data: galleryItems = [], isLoading: isLoadingGallery } = useQuery({
+    queryKey: ["marketing-gallery-images"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("marketing_gallery")
+        .select("*")
+        .eq("file_type", "image")
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return data as GalleryItem[];
     },
   });
 
@@ -221,12 +246,30 @@ export const ImageCreator = () => {
     });
   };
 
+  const downloadImage = async (url: string, title: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `${title.replace(/[^a-zA-Z0-9]/g, "_")}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+      toast.success("Image downloaded");
+    } catch {
+      toast.error("Failed to download image");
+    }
+  };
+
   // Get dates that have scheduled posts for calendar highlighting
   const scheduledDates = readyToPostPosts
     .filter(p => p.scheduled_date)
     .map(p => new Date(p.scheduled_date!));
 
-  const isLoading = isLoadingImageCreator || isLoadingReadyToPost || isLoadingPosted;
+  const isLoading = isLoadingImageCreator || isLoadingReadyToPost || isLoadingPosted || isLoadingGallery;
 
   if (isLoading) {
     return <LoadingSpinner size="md" className="py-12" />;
@@ -265,7 +308,48 @@ export const ImageCreator = () => {
         </CardContent>
       </Card>
 
-      {/* Image Creator Section */}
+      {/* Marketing Gallery */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-green-500" />
+            Marketing Gallery
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Quick download images for posts
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {galleryItems.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4 text-xs">
+              No images in gallery
+            </p>
+          ) : (
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+              {galleryItems.slice(0, 16).map((item) => (
+                <div key={item.id} className="relative group">
+                  <div className="aspect-square rounded overflow-hidden border">
+                    <img 
+                      src={item.thumbnail_url || item.file_url} 
+                      alt={item.title} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="absolute bottom-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => downloadImage(item.file_url, item.title)}
+                  >
+                    <Download className="w-3 h-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
