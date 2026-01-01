@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, FileText, Trash2, Plus, Send, Save } from "lucide-react";
+import { Edit, FileText, Trash2, Plus, Send, Save, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
@@ -42,6 +42,34 @@ const BTL_CATEGORIES = [
   "Technical Skills",
   "Mindset",
 ];
+
+const WRITING_STYLE_GUIDE = `Use this voice:
+
+Reflective and exploratory – to provoke thought and deeper understanding.
+
+Expert-driven and specialised – to communicate with authority to an informed audience.
+
+Personalised and direct – to create a human, relational connection with the reader.
+
+Use this tone:
+
+Calm and measured – to convey clarity without exaggeration or emotional sway.
+
+Constructive and purposeful – to drive improvement, action, or awareness.
+
+Sincere and grounded – to maintain honesty without pretension.
+
+Use this style:
+
+Theme-driven segmentation – to organise content around clear, focused ideas.
+
+Implicit or explicit progression – to build understanding through logical flow.
+
+Use of examples or reference points – to anchor abstract points in real situations.
+
+Additionally: Respond formally with U.K. English. Tell it like it is; don't sugar-coat responses. Do not add pre-ambles to your responses, simply respond by completing the task requested. Do not use em dashes in any context. Use commas or full stops to separate or extend ideas.
+
+Never use a comma before the word 'and' in any context. Never use mirrored constructions like "It is not this, it is that." Replace them with direct, assertive statements. Use sequencing or standalone sentences to establish contrast or progression. Make every assertion stand on its own. Do not pivot from a negative to a positive form within the same sentence. Avoid rhetorical contrasts that delay clarity. I prefer clear, direct, UK English with no contractions. I work in football as a performance consultant and agent, so I value honesty, expertise, and efficiency. I want responses to reflect my tone: professional, cutting when needed and never over-friendly. Style, structure, and phrasing matter to me.`;
 
 export const BTLWriter = () => {
   const queryClient = useQueryClient();
@@ -304,6 +332,36 @@ export const BTLWriter = () => {
     );
   };
 
+  const generateAndCopyPrompt = () => {
+    const hasContent = draftForm.intro.trim() || draftForm.mainPara.trim() || draftForm.secondaryPara.trim() || draftForm.conclusion.trim();
+    if (!hasContent) {
+      toast.error("Please enter content in at least one section first");
+      return;
+    }
+
+    const contentSections = [];
+    if (draftForm.intro.trim()) contentSections.push(`**Intro:** ${draftForm.intro.trim()}`);
+    if (draftForm.mainPara.trim()) contentSections.push(`**Main Paragraph:** ${draftForm.mainPara.trim()}`);
+    if (draftForm.secondaryPara.trim()) contentSections.push(`**Secondary Paragraph:** ${draftForm.secondaryPara.trim()}`);
+    if (draftForm.conclusion.trim()) contentSections.push(`**Conclusion:** ${draftForm.conclusion.trim()}`);
+
+    const prompt = `Write a blog article titled "${draftForm.title}" for a football performance and development audience.
+
+Use the following section notes as guidance for the article structure:
+
+${contentSections.join("\n\n")}
+
+---
+
+${WRITING_STYLE_GUIDE}`;
+
+    navigator.clipboard.writeText(prompt).then(() => {
+      toast.success("Prompt copied to clipboard");
+    }).catch(() => {
+      toast.error("Failed to copy prompt");
+    });
+  };
+
   const isLoading = ideasLoading || draftsLoading;
 
   if (isLoading) {
@@ -510,6 +568,12 @@ export const BTLWriter = () => {
               </div>
             </div>
           </div>
+          <div className="border-t pt-4">
+            <Button variant="secondary" onClick={generateAndCopyPrompt} className="w-full">
+              <Copy className="w-4 h-4 mr-2" />
+              Copy AI Prompt
+            </Button>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDraftDialogOpen(false)}>
               Cancel
@@ -617,6 +681,12 @@ export const BTLWriter = () => {
                 />
               </div>
             </div>
+          </div>
+          <div className="border-t pt-4">
+            <Button variant="secondary" onClick={generateAndCopyPrompt} className="w-full">
+              <Copy className="w-4 h-4 mr-2" />
+              Copy AI Prompt
+            </Button>
           </div>
           <DialogFooter className="flex gap-2">
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
