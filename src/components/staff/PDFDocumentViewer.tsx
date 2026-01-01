@@ -451,8 +451,10 @@ export const PDFDocumentViewer = ({
                   style={{
                     left: `${field.x_position}%`,
                     top: `${field.y_position}%`,
-                    width: field.field_type === 'text' ? 'auto' : `${field.width}%`,
-                    minWidth: field.field_type === 'text' ? `${field.width}%` : '80px',
+                    width: field.field_type === 'text' 
+                      ? `${Math.max(field.width, Math.max(12, (fieldValues[field.id]?.length || 0) * 0.8 + 2))}%`
+                      : `${field.width}%`,
+                    minWidth: '80px',
                     height: `${field.height}%`,
                     minHeight: '30px',
                   }}
@@ -514,18 +516,11 @@ export const PDFDocumentViewer = ({
                             onClick={(e) => e.stopPropagation()}
                             onMouseDown={(e) => e.stopPropagation()}
                             onFocus={(e) => e.stopPropagation()}
-                            className="h-full bg-white text-sm text-black border rounded px-2 focus:ring-2 focus:ring-primary whitespace-nowrap"
-                            style={{ 
-                              minWidth: '120px',
-                              width: `${Math.max(120, (fieldValues[field.id]?.length || 0) * 9 + 20)}px`
-                            }}
+                            className="w-full h-full bg-white text-sm text-black border rounded px-2 focus:ring-2 focus:ring-primary"
                             placeholder={field.label}
                           />
                         ) : (
-                          <div 
-                            className="h-full bg-gray-100 text-sm text-black border rounded px-2 flex items-center whitespace-nowrap"
-                            style={{ minWidth: '120px' }}
-                          >
+                          <div className="w-full h-full bg-gray-100 text-sm text-black border rounded px-2 flex items-center">
                             {fieldValues[field.id] || field.label}
                           </div>
                         )
