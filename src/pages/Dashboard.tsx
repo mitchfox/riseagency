@@ -4506,9 +4506,13 @@ const Dashboard = () => {
             Log Out
           </Button>
           <Button 
+            type="button"
             variant="outline"
             size="icon"
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              // Force a hard refresh, clearing cache
+              window.location.href = window.location.href;
+            }}
             className="text-gold hover:text-gold/80"
             title="Refresh app"
           >
