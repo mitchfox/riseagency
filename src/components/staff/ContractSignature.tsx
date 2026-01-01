@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, FileText, Trash2, Eye, CheckCircle, Save, Loader2, PenTool, Download, Link, Upload, BookMarked, ChevronDown, Users } from "lucide-react";
+import { Plus, FileText, Trash2, Eye, CheckCircle, Save, Loader2, PenTool, Download, Link, Upload, BookMarked, ChevronDown, Users, Copy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PDFDocumentViewer, FieldPosition } from "./PDFDocumentViewer";
@@ -332,6 +332,68 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
 
     toast.success('Contract deleted');
     fetchContracts();
+  };
+
+  const duplicateContract = async (contract: SignatureContract) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Create a copy of the contract with new title
+      const newTitle = `${contract.title} (Copy)`;
+      
+      const { data: newContract, error: contractError } = await supabase
+        .from('signature_contracts')
+        .insert([{
+          title: newTitle,
+          description: contract.description,
+          file_url: contract.file_url,
+          file_name: contract.file_name,
+          created_by: user?.id,
+          status: 'draft', // Always start as draft
+        }])
+        .select()
+        .single();
+
+      if (contractError) throw contractError;
+
+      // Fetch fields from original contract
+      const { data: originalFields, error: fieldsError } = await supabase
+        .from('signature_fields')
+        .select('*')
+        .eq('contract_id', contract.id)
+        .order('display_order', { ascending: true });
+
+      if (fieldsError) throw fieldsError;
+
+      // Copy fields to new contract
+      if (originalFields && originalFields.length > 0) {
+        const newFields = originalFields.map((f: any) => ({
+          contract_id: newContract.id,
+          field_type: f.field_type,
+          label: f.label,
+          page_number: f.page_number,
+          x_position: f.x_position,
+          y_position: f.y_position,
+          width: f.width,
+          height: f.height,
+          required: f.required,
+          display_order: f.display_order,
+          signer_party: f.signer_party,
+        }));
+
+        const { error: insertFieldsError } = await supabase
+          .from('signature_fields')
+          .insert(newFields);
+
+        if (insertFieldsError) throw insertFieldsError;
+      }
+
+      toast.success('Contract duplicated as template! You can now rename it and send to a new party.');
+      fetchContracts();
+    } catch (error: any) {
+      console.error('Error duplicating contract:', error);
+      toast.error('Failed to duplicate contract');
+    }
   };
 
   const generateSlug = (title: string) => {
@@ -721,6 +783,17 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
             >
               <Eye className="h-4 w-4 mr-1" />
               Submissions
+            </Button>
+            
+            {/* Duplicate as Template button */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => duplicateContract(contract)}
+              title="Duplicate as template"
+            >
+              <Copy className="h-4 w-4 mr-1" />
+              Use as Template
             </Button>
             
             {isAdmin && (
