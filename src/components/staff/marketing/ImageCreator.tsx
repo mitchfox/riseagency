@@ -192,15 +192,17 @@ export const ImageCreator = () => {
   });
 
   const moveToReadyMutation = useMutation({
-    mutationFn: async (id: string) => {
-      console.log("Moving post to ready:", id);
+    mutationFn: async (post: BlogPost) => {
+      console.log("Moving post to ready:", post.id);
       const { data, error } = await supabase
         .from("blog_posts")
         .update({ 
           workflow_status: "ready_to_post",
           completed_by: currentUserId,
+          // Auto-schedule with the image_due_date if available
+          scheduled_date: post.image_due_date || null,
         })
-        .eq("id", id)
+        .eq("id", post.id)
         .select();
       if (error) {
         console.error("Move to ready error:", error);
@@ -569,7 +571,7 @@ export const ImageCreator = () => {
                           <Button
                             size="sm"
                             variant="default"
-                            onClick={() => moveToReadyMutation.mutate(post.id)}
+                            onClick={() => moveToReadyMutation.mutate(post)}
                             disabled={moveToReadyMutation.isPending || (!post.image_url_internal && !post.canva_link)}
                             className="h-8 w-full sm:w-auto text-xs"
                             title={!post.image_url_internal && !post.canva_link ? "Add image or Canva link first" : ""}

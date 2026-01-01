@@ -55,6 +55,8 @@ export const PostContent = () => {
   const [readyToPostOpen, setReadyToPostOpen] = useState(true);
   const [postedOpen, setPostedOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [confirmingPostId, setConfirmingPostId] = useState<string | null>(null);
+  const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
 
   // Fetch staff members for displaying completed_by names
   const { data: staffMembers = [] } = useQuery({
@@ -186,14 +188,19 @@ export const PostContent = () => {
         ? post.category 
         : "TECHNICAL";
 
+      // Use clean content (without draft markers) for the BTL article
+      const cleanContent = getCleanContent(post.content);
+
       const { error } = await supabase.from("blog_posts").insert({
         title: post.title,
-        content: post.content,
+        content: cleanContent,
         excerpt: post.excerpt,
         category: btlCategory,
         author_id: userData.user.id,
         published: true,
         workflow_status: "published",
+        image_url: post.image_url_internal || null,
+        image_url_internal: post.image_url_internal || null,
       });
       if (error) throw error;
     },
@@ -445,17 +452,46 @@ export const PostContent = () => {
                               >
                                 <FileText className="w-3 h-3" />
                               </Button>
-                              <Button
-                                size="sm"
-                                className="h-8 flex-1 sm:flex-initial bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
-                                onClick={() => markPostedMutation.mutate(post.id)}
-                                disabled={markPostedMutation.isPending}
-                              >
-                                <Check className="w-3 h-3 mr-1" />
-                                Posted
-                              </Button>
+                              {confirmingPostId === post.id ? (
+                                <Button
+                                  size="sm"
+                                  className="h-8 flex-1 sm:flex-initial bg-green-600 hover:bg-green-700"
+                                  onClick={() => {
+                                    markPostedMutation.mutate(post.id);
+                                    setConfirmingPostId(null);
+                                  }}
+                                  disabled={markPostedMutation.isPending}
+                                >
+                                  <Check className="w-3 h-3 mr-1" />
+                                  Yes
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 flex-1 sm:flex-initial border-pink-500/50 hover:bg-pink-500/10"
+                                  onClick={() => setConfirmingPostId(post.id)}
+                                >
+                                  Posted?
+                                </Button>
+                              )}
                             </div>
                           </div>
+                          {/* Article Preview Toggle */}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setExpandedArticleId(expandedArticleId === post.id ? null : post.id)}
+                            className="h-7 text-xs w-full sm:w-auto"
+                          >
+                            <FileText className="w-3 h-3 mr-1" />
+                            {expandedArticleId === post.id ? "Hide Article" : "View Article"}
+                          </Button>
+                          {expandedArticleId === post.id && (
+                            <div className="bg-muted/50 p-3 rounded-lg text-sm whitespace-pre-wrap max-h-48 overflow-y-auto border">
+                              {getCleanContent(post.content)}
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
