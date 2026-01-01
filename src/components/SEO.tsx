@@ -18,7 +18,7 @@ interface SEOProps {
 export const SEO = ({ 
   title = "RISE Football Agency - Elite Player Representation", 
   description = "Elite football representation. We scout across Europe and guide Premier League players to success through their development.",
-  image = "/og-thumbnail.png",
+  image = "https://risefootballagency.com/og-thumbnail.png",
   url,
   type = "website",
   noindex = false,
@@ -27,7 +27,8 @@ export const SEO = ({
 }: SEOProps) => {
   const siteUrl = "https://risefootballagency.com";
   const fullUrl = url ? `${siteUrl}${url}` : (typeof window !== 'undefined' ? window.location.href : siteUrl);
-  const fullImage = image.startsWith('http') ? image : `${siteUrl}${image}`;
+  // Ensure image is always an absolute URL
+  const fullImage = image.startsWith('http') ? image : `${siteUrl}${image.startsWith('/') ? '' : '/'}${image}`;
 
   return (
     <Helmet>

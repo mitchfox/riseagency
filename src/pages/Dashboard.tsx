@@ -4509,9 +4509,23 @@ const Dashboard = () => {
             type="button"
             variant="outline"
             size="icon"
-            onClick={() => {
-              // Force a hard refresh, clearing cache
-              window.location.href = window.location.href;
+            onClick={async () => {
+              try {
+                // Clear all offline caches first
+                await CacheManager.clearAllCaches();
+                
+                // Clear browser cache by adding timestamp to URL
+                const timestamp = Date.now();
+                const url = new URL(window.location.href);
+                url.searchParams.set('_refresh', timestamp.toString());
+                
+                // Force reload bypassing cache
+                window.location.replace(url.toString());
+              } catch (error) {
+                console.error('Error refreshing:', error);
+                // Fallback to simple reload with cache bust
+                window.location.reload();
+              }
             }}
             className="text-gold hover:text-gold/80"
             title="Refresh app"
