@@ -457,6 +457,8 @@ export const PDFDocumentViewer = ({
                     minWidth: '80px',
                   }}
                   onMouseDown={(e) => {
+                    // Only handle drag in edit mode
+                    if (mode !== 'edit') return;
                     e.preventDefault();
                     e.stopPropagation();
                     handleFieldMouseDown(field.id, e);
@@ -509,6 +511,9 @@ export const PDFDocumentViewer = ({
                             type="text"
                             value={fieldValues[field.id] || ''}
                             onChange={(e) => onFieldValueChange?.(field.id, e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onFocus={(e) => e.stopPropagation()}
                             className="w-full h-full bg-white text-sm border rounded px-2 focus:ring-2 focus:ring-primary"
                             placeholder={field.label}
                           />
@@ -525,6 +530,9 @@ export const PDFDocumentViewer = ({
                               type="date"
                               value={fieldValues[field.id] || new Date().toISOString().split('T')[0]}
                               onChange={(e) => onFieldValueChange?.(field.id, e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onFocus={(e) => e.stopPropagation()}
                               className="flex-1 h-full bg-white text-sm border rounded px-2 focus:ring-2 focus:ring-primary"
                             />
                           </div>
