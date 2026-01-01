@@ -713,7 +713,6 @@ ${WRITING_STYLE_GUIDE}`;
                     onChange={(e) => setDraftForm({ ...draftForm, finalArticle: e.target.value })}
                     rows={12}
                     placeholder="Paste the final AI-generated or written article here..."
-                    className="font-mono text-sm"
                   />
                 </div>
               </CollapsibleContent>
