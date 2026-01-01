@@ -32,10 +32,15 @@ const EVENT_TYPES = [
   { id: "portal_analysis_view", label: "Analysis Views", icon: FileSearch, description: "When a player views analysis content", category: "Portal Activity" },
   { id: "portal_transfer_submission", label: "Transfer Hub Submissions", icon: Send, description: "When a player submits in their transfer hub", category: "Portal Activity" },
   { id: "portal_club_submission", label: "Club Submissions", icon: Building2, description: "When a player submits a club suggestion", category: "Portal Activity" },
-  // Marketing Post Ideas
+  // Marketing
   { id: "post_idea_new", label: "New Post Ideas", icon: Lightbulb, description: "When a new post idea is created", category: "Marketing" },
   { id: "post_idea_status", label: "Post Idea Status Changes", icon: RefreshCw, description: "When a post idea status changes", category: "Marketing" },
   { id: "post_idea_canva", label: "Canva Link Added", icon: Link, description: "When a Canva link is added to a post idea", category: "Marketing" },
+  { id: "post_moved_to_schedule", label: "Post Moved to Schedule", icon: Calendar, description: "When a post is moved to schedule/ready to post", category: "Marketing" },
+  { id: "post_posted", label: "Post Marked as Posted", icon: CheckSquare, description: "When a post is marked as posted", category: "Marketing" },
+  { id: "post_image_added", label: "Image/Link Added to Post", icon: Film, description: "When an image or link is added to a post", category: "Marketing" },
+  // Contracts
+  { id: "contract_signed", label: "Contract Signed", icon: FileText, description: "When a contract is signed by the other party", category: "Contracts" },
 ];
 
 const ROLES = [

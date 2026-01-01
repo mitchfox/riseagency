@@ -6,12 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, FileText, Trash2, Eye, CheckCircle, Save, Loader2, PenTool, Download, Link, Upload, BookMarked } from "lucide-react";
+import { Plus, FileText, Trash2, Eye, CheckCircle, Save, Loader2, PenTool, Download, Link, Upload, BookMarked, ChevronDown, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PDFDocumentViewer, FieldPosition } from "./PDFDocumentViewer";
 import { downloadSignedContractPDF } from "@/lib/pdfExport";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface SignatureContract {
   id: string;
@@ -72,9 +73,16 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   const [selectedContract, setSelectedContract] = useState<SignatureContract | null>(null);
   const [fields, setFields] = useState<FieldPosition[]>([]);
   const [submissions, setSubmissions] = useState<SignatureSubmission[]>([]);
+  const [allSubmissions, setAllSubmissions] = useState<SignatureSubmission[]>([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  
+  // Collapsible sections state
+  const [activeOpen, setActiveOpen] = useState(true);
+  const [draftOpen, setDraftOpen] = useState(false);
+  const [completedOpen, setCompletedOpen] = useState(false);
+  const [expiredOpen, setExpiredOpen] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -99,6 +107,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   useEffect(() => {
     fetchContracts();
     fetchSavedSignatures();
+    fetchAllSubmissions();
   }, []);
 
   const fetchSavedSignatures = async () => {
@@ -128,6 +137,17 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     }
 
     setContracts(data as SignatureContract[]);
+  };
+
+  const fetchAllSubmissions = async () => {
+    const { data, error } = await supabase
+      .from('signature_submissions')
+      .select('*')
+      .order('signed_at', { ascending: false });
+
+    if (!error && data) {
+      setAllSubmissions(data as SignatureSubmission[]);
+    }
   };
 
   const fetchFields = async (contractId: string) => {
@@ -591,6 +611,191 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     }
   };
 
+  // Check if contract is signed by both parties
+  const isSignedByBoth = (contract: SignatureContract) => {
+    return contract.owner_signed_at && submissions.some(s => s.contract_id === contract.id);
+  };
+
+  // Group contracts by status
+  const draftContracts = contracts.filter(c => c.status === 'draft');
+  const activeContracts = contracts.filter(c => c.status === 'active');
+  const completedContracts = contracts.filter(c => c.status === 'completed');
+  const expiredContracts = contracts.filter(c => c.status === 'expired');
+
+  // Contract card component
+  const ContractCard = ({ contract, contractSubmissions }: { contract: SignatureContract; contractSubmissions?: SignatureSubmission[] }) => {
+    const signedByBoth = contract.owner_signed_at && contractSubmissions && contractSubmissions.length > 0;
+    
+    return (
+      <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <h4 className="font-semibold">{contract.title}</h4>
+              <Badge variant={getStatusColor(contract.status)}>
+                {contract.status}
+              </Badge>
+              {contract.owner_signed_at && (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  You signed
+                </Badge>
+              )}
+              {signedByBoth && (
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                  <Users className="h-3 w-3 mr-1" />
+                  Signed by both parties
+                </Badge>
+              )}
+            </div>
+            {contract.description && (
+              <p className="text-sm text-muted-foreground mt-1">{contract.description}</p>
+            )}
+            <p className="text-xs text-muted-foreground mt-2">
+              File: {contract.file_name}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Created: {new Date(contract.created_at).toLocaleDateString()}
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            {signedByBoth && (
+              <Button
+                size="sm"
+                variant="default"
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  setSelectedContract(contract);
+                  fetchFields(contract.id);
+                  // Export with the first submission
+                  if (contractSubmissions && contractSubmissions[0]) {
+                    setSubmissions(contractSubmissions);
+                    // Trigger export after state updates
+                    setTimeout(() => handleExportPDF(contractSubmissions[0]), 100);
+                  }
+                }}
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Download Signed PDF
+              </Button>
+            )}
+            
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => openEditorDialog(contract)}
+            >
+              <FileText className="h-4 w-4 mr-1" />
+              Edit Fields
+            </Button>
+            
+            {!contract.owner_signed_at && (
+              <Button
+                size="sm"
+                variant="default"
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => openOwnerSignDialog(contract)}
+              >
+                <PenTool className="h-4 w-4 mr-1" />
+                Sign My Parts
+              </Button>
+            )}
+            
+            {contract.owner_signed_at && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => copyShareLink(contract)}
+              >
+                <Link className="h-4 w-4 mr-1" />
+                Copy Link for Other Party
+              </Button>
+            )}
+            
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => openSubmissionsDialog(contract)}
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              Submissions
+            </Button>
+            
+            {isAdmin && (
+              <>
+                <Select
+                  value={contract.status}
+                  onValueChange={(value) => handleStatusChange(contract.id, value)}
+                >
+                  <SelectTrigger className="w-[120px] h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => handleDeleteContract(contract.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Collapsible section component
+  const ContractSection = ({ 
+    title, 
+    contracts: sectionContracts, 
+    open, 
+    onOpenChange,
+    badgeColor,
+  }: { 
+    title: string; 
+    contracts: SignatureContract[]; 
+    open: boolean; 
+    onOpenChange: (open: boolean) => void;
+    badgeColor: string;
+  }) => {
+    if (sectionContracts.length === 0) return null;
+    
+    return (
+      <Collapsible open={open} onOpenChange={onOpenChange}>
+        <CollapsibleTrigger className="w-full">
+          <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{title}</span>
+              <Badge variant="secondary" className={badgeColor}>
+                {sectionContracts.length}
+              </Badge>
+            </div>
+            <ChevronDown className={`h-5 w-5 transition-transform ${open ? "rotate-180" : ""}`} />
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-3 space-y-3">
+          {sectionContracts.map((contract) => (
+            <ContractCard 
+              key={contract.id} 
+              contract={contract} 
+              contractSubmissions={allSubmissions.filter(s => s.contract_id === contract.id)}
+            />
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -608,106 +813,35 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
           No signature contracts created yet
         </div>
       ) : (
-        <div className="grid gap-4">
-          {contracts.map((contract) => (
-            <div key={contract.id} className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <FileText className="h-5 w-5 text-muted-foreground" />
-                    <h4 className="font-semibold">{contract.title}</h4>
-                    <Badge variant={getStatusColor(contract.status)}>
-                      {contract.status}
-                    </Badge>
-                    {contract.owner_signed_at && (
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        You signed
-                      </Badge>
-                    )}
-                  </div>
-                  {contract.description && (
-                    <p className="text-sm text-muted-foreground mt-1">{contract.description}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-2">
-                    File: {contract.file_name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Created: {new Date(contract.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openEditorDialog(contract)}
-                  >
-                    <FileText className="h-4 w-4 mr-1" />
-                    Edit Fields
-                  </Button>
-                  
-                  {!contract.owner_signed_at && (
-                    <Button
-                      size="sm"
-                      variant="default"
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={() => openOwnerSignDialog(contract)}
-                    >
-                      <PenTool className="h-4 w-4 mr-1" />
-                      Sign My Parts
-                    </Button>
-                  )}
-                  
-                  {contract.owner_signed_at && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => copyShareLink(contract)}
-                    >
-                      <Link className="h-4 w-4 mr-1" />
-                      Copy Link for Other Party
-                    </Button>
-                  )}
-                  
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openSubmissionsDialog(contract)}
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Submissions
-                  </Button>
-                  
-                  {isAdmin && (
-                    <>
-                      <Select
-                        value={contract.status}
-                        onValueChange={(value) => handleStatusChange(contract.id, value)}
-                      >
-                        <SelectTrigger className="w-[120px] h-9">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="draft">Draft</SelectItem>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="expired">Expired</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDeleteContract(contract.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="space-y-4">
+          <ContractSection 
+            title="Active" 
+            contracts={activeContracts} 
+            open={activeOpen} 
+            onOpenChange={setActiveOpen}
+            badgeColor="bg-blue-500 text-white"
+          />
+          <ContractSection 
+            title="Draft" 
+            contracts={draftContracts} 
+            open={draftOpen} 
+            onOpenChange={setDraftOpen}
+            badgeColor="bg-gray-500 text-white"
+          />
+          <ContractSection 
+            title="Completed" 
+            contracts={completedContracts} 
+            open={completedOpen} 
+            onOpenChange={setCompletedOpen}
+            badgeColor="bg-green-500 text-white"
+          />
+          <ContractSection 
+            title="Expired" 
+            contracts={expiredContracts} 
+            open={expiredOpen} 
+            onOpenChange={setExpiredOpen}
+            badgeColor="bg-red-500 text-white"
+          />
         </div>
       )}
 
