@@ -65,6 +65,18 @@ export const PDFDocumentViewer = ({
   const unfilledFields = editableFields.filter(f => !fieldValues[f.id]);
   const currentFieldIndex = editableFields.findIndex(f => !fieldValues[f.id]);
 
+  // Auto-fill date fields when entering sign mode
+  useEffect(() => {
+    if (mode !== 'sign' && mode !== 'owner-sign') return;
+    
+    const today = new Date().toISOString().split('T')[0];
+    editableFields.forEach(field => {
+      if (field.field_type === 'date' && !fieldValues[field.id]) {
+        onFieldValueChange?.(field.id, today);
+      }
+    });
+  }, [mode, fields, editableFields, fieldValues, onFieldValueChange]);
+
   const navigateToNextField = () => {
     if (unfilledFields.length === 0) return;
     const nextField = unfilledFields[0];
