@@ -10,24 +10,24 @@ import { PostContent } from "./PostContent";
 export const ContentCreator = () => {
   return (
     <Tabs defaultValue="ideas" className="w-full">
-      <TabsList className="mb-6 flex-wrap h-auto gap-1">
-        <TabsTrigger value="ideas">
-          <Inbox className="w-4 h-4 mr-2" />
-          Review Ideas
+      <TabsList className="mb-6 flex-wrap h-auto gap-1 w-full justify-start md:justify-start">
+        <TabsTrigger value="ideas" className="text-xs sm:text-sm px-2 sm:px-3">
+          <Inbox className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+          <span className="hidden sm:inline">Review</span> Ideas
         </TabsTrigger>
-        <TabsTrigger value="btl-writer">
-          <FileText className="w-4 h-4 mr-2" />
-          BTL Writer
+        <TabsTrigger value="btl-writer" className="text-xs sm:text-sm px-2 sm:px-3">
+          <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+          BTL
         </TabsTrigger>
-        <TabsTrigger value="image-creator">
-          <Image className="w-4 h-4 mr-2" />
-          Image Creator
+        <TabsTrigger value="image-creator" className="text-xs sm:text-sm px-2 sm:px-3">
+          <Image className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+          Image
         </TabsTrigger>
-        <TabsTrigger value="post-schedule">
-          <Archive className="w-4 h-4 mr-2" />
-          Post Schedule
+        <TabsTrigger value="post-schedule" className="text-xs sm:text-sm px-2 sm:px-3">
+          <Archive className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+          Schedule
         </TabsTrigger>
-        <TabsTrigger value="tools">Content Tools</TabsTrigger>
+        <TabsTrigger value="tools" className="text-xs sm:text-sm px-2 sm:px-3">Tools</TabsTrigger>
       </TabsList>
 
       <TabsContent value="tools">
