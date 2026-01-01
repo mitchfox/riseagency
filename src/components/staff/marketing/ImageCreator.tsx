@@ -384,7 +384,7 @@ export const ImageCreator = () => {
               No images from represented players
             </p>
           ) : (
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
               {galleryItems.slice(0, 16).map((item) => (
                 <div key={item.id} className="relative group">
                   <div className="aspect-square rounded overflow-hidden border">
@@ -621,16 +621,23 @@ export const ImageCreator = () => {
 
       {/* View Article Dialog */}
       <Dialog open={viewArticleDialogOpen} onOpenChange={setViewArticleDialogOpen}>
-        <DialogContent className="w-full max-w-3xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>{viewArticlePost?.title}</DialogTitle>
+        <DialogContent className="w-full max-w-3xl max-h-[85vh]">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="text-xl font-semibold leading-tight">{viewArticlePost?.title}</DialogTitle>
+            {viewArticlePost?.category && (
+              <p className="text-sm text-muted-foreground mt-1">{viewArticlePost.category}</p>
+            )}
           </DialogHeader>
-          <ScrollArea className="max-h-[60vh] pr-4">
-            <div className="whitespace-pre-wrap text-sm leading-relaxed">
-              {viewArticlePost ? getCleanContent(viewArticlePost.content) : ""}
-            </div>
+          <ScrollArea className="max-h-[65vh] pr-6">
+            <article className="prose prose-sm dark:prose-invert max-w-none">
+              <div className="text-base leading-[1.8] tracking-wide text-foreground/90 whitespace-pre-wrap font-[system-ui] space-y-4">
+                {viewArticlePost ? getCleanContent(viewArticlePost.content).split('\n\n').map((paragraph, idx) => (
+                  <p key={idx} className="first-letter:text-lg first-letter:font-medium">{paragraph}</p>
+                )) : null}
+              </div>
+            </article>
           </ScrollArea>
-          <DialogFooter>
+          <DialogFooter className="pt-4 border-t">
             <Button variant="outline" onClick={() => setViewArticleDialogOpen(false)}>
               Close
             </Button>

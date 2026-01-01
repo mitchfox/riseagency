@@ -480,20 +480,20 @@ ${WRITING_STYLE_GUIDE}`;
             <div className="space-y-3">
               {acceptedIdeas.map((idea) => (
                 <Card key={idea.id} className="hover:shadow-md transition-shadow border-dashed">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-4">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm">{idea.title}</h4>
                         <p className="text-xs text-muted-foreground mt-1">
                           Accepted {new Date(idea.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Button size="sm" variant="outline" onClick={() => openDraftDialog(idea)} className="h-8">
+                      <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
+                        <Button size="sm" variant="outline" onClick={() => openDraftDialog(idea)} className="h-9 sm:h-8 flex-1 sm:flex-initial">
                           <Plus className="w-3 h-3 mr-1" />
                           Create Draft
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => deleteMutation.mutate(idea.id)} className="h-8">
+                        <Button size="sm" variant="ghost" onClick={() => deleteMutation.mutate(idea.id)} className="h-9 sm:h-8">
                           <Trash2 className="w-3 h-3 text-destructive" />
                         </Button>
                       </div>

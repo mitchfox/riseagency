@@ -187,7 +187,7 @@ export const PostContent = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="px-3 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Calendar */}
             <div className="flex justify-center overflow-x-auto">
               <CalendarComponent
@@ -211,11 +211,11 @@ export const PostContent = () => {
             
             {/* Selected Date Details */}
             <div className="space-y-4">
-              <div className="p-4 rounded-lg bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20">
+              <div className="p-3 sm:p-4 rounded-lg bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20">
                 <div className="flex items-center gap-2 mb-3">
                   <Calendar className="w-4 h-4 text-pink-500" />
-                  <h4 className="font-medium text-sm">
-                    {selectedDate ? format(selectedDate, "EEEE, MMMM d, yyyy") : "Select a date"}
+                  <h4 className="font-medium text-xs sm:text-sm">
+                    {selectedDate ? format(selectedDate, "EEE, MMM d, yyyy") : "Select a date"}
                   </h4>
                 </div>
                 {selectedDate ? (
@@ -229,27 +229,27 @@ export const PostContent = () => {
                               <img src={p.image_url_internal} alt="" className="w-full h-full object-cover" />
                             </div>
                           )}
-                          <span className="text-sm truncate flex-1">{p.title}</span>
+                          <span className="text-xs sm:text-sm truncate flex-1">{p.title}</span>
                         </div>
                       ))}
                     {readyToPostPosts.filter(p => p.scheduled_date && new Date(p.scheduled_date).toDateString() === selectedDate.toDateString()).length === 0 && (
-                      <p className="text-sm text-muted-foreground">No posts scheduled for this date</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">No posts scheduled for this date</p>
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Click a date to see scheduled posts</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Click a date to see scheduled posts</p>
                 )}
               </div>
 
               {/* Quick Stats */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-center">
-                  <p className="text-2xl font-bold text-orange-500">{readyToPostPosts.length}</p>
-                  <p className="text-xs text-muted-foreground">Ready to Post</p>
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                <div className="p-2 sm:p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-center">
+                  <p className="text-xl sm:text-2xl font-bold text-orange-500">{readyToPostPosts.length}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Ready to Post</p>
                 </div>
-                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-center">
-                  <p className="text-2xl font-bold text-green-500">{postedPosts.length}</p>
-                  <p className="text-xs text-muted-foreground">Posted</p>
+                <div className="p-2 sm:p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-center">
+                  <p className="text-xl sm:text-2xl font-bold text-green-500">{postedPosts.length}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Posted</p>
                 </div>
               </div>
             </div>
@@ -381,7 +381,7 @@ export const PostContent = () => {
                   No posted content yet.
                 </p>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                   {postedPosts.map((post) => (
                     <Card
                       key={post.id}

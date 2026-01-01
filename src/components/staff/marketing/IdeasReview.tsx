@@ -60,22 +60,24 @@ export const IdeasReview = () => {
 
   const IdeaCard = ({ idea, showActions = false }: { idea: MarketingIdea; showActions?: boolean }) => (
     <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-4">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
           <div className="flex-1 min-w-0">
             <h4 className="font-medium text-sm mb-1">{idea.title}</h4>
             <p className="text-xs text-muted-foreground mt-2">
               {new Date(idea.created_at).toLocaleDateString()}
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
             {showActions && (
               <>
-                <Button size="sm" variant="default" onClick={() => handleAccept(idea)} className="h-8 bg-green-600 hover:bg-green-700">
-                  <Check className="w-3 h-3" />
+                <Button size="sm" variant="default" onClick={() => handleAccept(idea)} className="h-9 sm:h-8 flex-1 sm:flex-initial bg-green-600 hover:bg-green-700">
+                  <Check className="w-3.5 h-3.5 sm:w-3 sm:h-3 mr-1 sm:mr-0" />
+                  <span className="sm:hidden">Accept</span>
                 </Button>
-                <Button size="sm" variant="destructive" onClick={() => handleReject(idea)} className="h-8">
-                  <X className="w-3 h-3" />
+                <Button size="sm" variant="destructive" onClick={() => handleReject(idea)} className="h-9 sm:h-8 flex-1 sm:flex-initial">
+                  <X className="w-3.5 h-3.5 sm:w-3 sm:h-3 mr-1 sm:mr-0" />
+                  <span className="sm:hidden">Reject</span>
                 </Button>
               </>
             )}
@@ -92,16 +94,16 @@ export const IdeasReview = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="pending" className="w-full">
-        <TabsList>
-          <TabsTrigger value="pending" className="gap-2">
-            <Clock className="w-4 h-4" />
+        <TabsList className="w-full sm:w-auto justify-start">
+          <TabsTrigger value="pending" className="gap-1.5 sm:gap-2 text-xs sm:text-sm flex-1 sm:flex-initial">
+            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Pending
             {pendingIdeas.length > 0 && (
               <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-secondary">{pendingIdeas.length}</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="rejected" className="gap-2">
-            <XCircle className="w-4 h-4" />
+          <TabsTrigger value="rejected" className="gap-1.5 sm:gap-2 text-xs sm:text-sm flex-1 sm:flex-initial">
+            <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Rejected
           </TabsTrigger>
         </TabsList>
