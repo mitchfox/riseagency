@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => ({
   build: {
     sourcemap: true,
   },
+  optimizeDeps: {
+    include: ['react-pdf', 'pdfjs-dist'],
+  },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {

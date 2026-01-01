@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, FileText, Trash2, Copy, Link, Eye, Settings, CheckCircle } from "lucide-react";
+import { Plus, FileText, Trash2, Copy, Eye, CheckCircle, Save, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PDFDocumentViewer, FieldPosition } from "./PDFDocumentViewer";
 
 interface SignatureContract {
   id: string;
@@ -52,23 +53,20 @@ interface ContractSignatureProps {
 const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   const [contracts, setContracts] = useState<SignatureContract[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showFieldsDialog, setShowFieldsDialog] = useState(false);
+  const [showEditorDialog, setShowEditorDialog] = useState(false);
   const [showSubmissionsDialog, setShowSubmissionsDialog] = useState(false);
   const [selectedContract, setSelectedContract] = useState<SignatureContract | null>(null);
-  const [fields, setFields] = useState<SignatureField[]>([]);
+  const [fields, setFields] = useState<FieldPosition[]>([]);
   const [submissions, setSubmissions] = useState<SignatureSubmission[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
     description: '',
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-  const [newField, setNewField] = useState({
-    field_type: 'text' as 'text' | 'date' | 'signature',
-    label: '',
-  });
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     fetchContracts();
@@ -100,7 +98,19 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
       return;
     }
 
-    setFields(data as SignatureField[]);
+    // Convert DB fields to FieldPosition format
+    const fieldPositions: FieldPosition[] = (data as SignatureField[]).map(f => ({
+      id: f.id,
+      field_type: f.field_type,
+      label: f.label,
+      page_number: f.page_number,
+      x_position: f.x_position,
+      y_position: f.y_position,
+      width: f.width,
+      height: f.height,
+    }));
+
+    setFields(fieldPositions);
   };
 
   const fetchSubmissions = async (contractId: string) => {
@@ -121,12 +131,13 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-      if (!validTypes.includes(file.type)) {
-        toast.error('Please upload a PDF or DOC/DOCX file');
+      // Only accept PDF for proper viewing
+      if (file.type !== 'application/pdf') {
+        toast.error('Please upload a PDF file for proper document viewing');
         return;
       }
       setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
@@ -141,7 +152,6 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     setUploading(true);
 
     try {
-      // Upload file to storage
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `contracts/${fileName}`;
@@ -152,12 +162,10 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('signature-contracts')
         .getPublicUrl(filePath);
 
-      // Create contract record
       const { data: { user } } = await supabase.auth.getUser();
       
       const { error: insertError } = await supabase
@@ -176,6 +184,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
       setShowCreateDialog(false);
       setFormData({ title: '', description: '' });
       setSelectedFile(null);
+      setPreviewUrl(null);
       fetchContracts();
     } catch (error: any) {
       console.error('Error creating contract:', error);
@@ -185,51 +194,45 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     }
   };
 
-  const handleAddField = async () => {
-    if (!selectedContract || !newField.label) {
-      toast.error('Please enter a field label');
-      return;
-    }
+  const saveFields = async () => {
+    if (!selectedContract) return;
+    
+    setSaving(true);
+    try {
+      // Delete existing fields
+      await supabase
+        .from('signature_fields')
+        .delete()
+        .eq('contract_id', selectedContract.id);
 
-    const { error } = await supabase
-      .from('signature_fields')
-      .insert([{
-        contract_id: selectedContract.id,
-        field_type: newField.field_type,
-        label: newField.label,
-        page_number: 1,
-        x_position: 0,
-        y_position: 0,
-        width: 200,
-        height: newField.field_type === 'signature' ? 80 : 40,
-        display_order: fields.length,
-      }]);
+      // Insert new fields
+      if (fields.length > 0) {
+        const fieldsToInsert = fields.map((f, index) => ({
+          contract_id: selectedContract.id,
+          field_type: f.field_type,
+          label: f.label,
+          page_number: f.page_number,
+          x_position: f.x_position,
+          y_position: f.y_position,
+          width: f.width,
+          height: f.height,
+          required: true,
+          display_order: index,
+        }));
 
-    if (error) {
-      toast.error('Failed to add field');
-      console.error(error);
-      return;
-    }
+        const { error } = await supabase
+          .from('signature_fields')
+          .insert(fieldsToInsert);
 
-    toast.success('Field added');
-    setNewField({ field_type: 'text', label: '' });
-    fetchFields(selectedContract.id);
-  };
+        if (error) throw error;
+      }
 
-  const handleDeleteField = async (fieldId: string) => {
-    const { error } = await supabase
-      .from('signature_fields')
-      .delete()
-      .eq('id', fieldId);
-
-    if (error) {
-      toast.error('Failed to delete field');
-      return;
-    }
-
-    toast.success('Field deleted');
-    if (selectedContract) {
-      fetchFields(selectedContract.id);
+      toast.success('Fields saved successfully');
+    } catch (error: any) {
+      console.error('Error saving fields:', error);
+      toast.error('Failed to save fields');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -271,10 +274,10 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     toast.success('Link copied to clipboard');
   };
 
-  const openFieldsDialog = (contract: SignatureContract) => {
+  const openEditorDialog = (contract: SignatureContract) => {
     setSelectedContract(contract);
     fetchFields(contract.id);
-    setShowFieldsDialog(true);
+    setShowEditorDialog(true);
   };
 
   const openSubmissionsDialog = (contract: SignatureContract) => {
@@ -346,10 +349,10 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => openFieldsDialog(contract)}
+                    onClick={() => openEditorDialog(contract)}
                   >
-                    <Settings className="h-4 w-4 mr-1" />
-                    Fields
+                    <FileText className="h-4 w-4 mr-1" />
+                    Edit Fields
                   </Button>
                   <Button
                     size="sm"
@@ -417,11 +420,11 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
               />
             </div>
             <div>
-              <Label htmlFor="file">Document (PDF or DOC) *</Label>
+              <Label htmlFor="file">Document (PDF only) *</Label>
               <Input
                 id="file"
                 type="file"
-                accept=".pdf,.doc,.docx"
+                accept=".pdf"
                 onChange={handleFileChange}
                 required
               />
@@ -430,7 +433,11 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
               )}
             </div>
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
+              <Button type="button" variant="outline" onClick={() => {
+                setShowCreateDialog(false);
+                setSelectedFile(null);
+                setPreviewUrl(null);
+              }}>
                 Cancel
               </Button>
               <Button type="submit" disabled={uploading}>
@@ -441,98 +448,48 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* Fields Setup Dialog */}
-      <Dialog open={showFieldsDialog} onOpenChange={setShowFieldsDialog}>
-        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Setup Fields - {selectedContract?.title}</DialogTitle>
+      {/* Document Editor Dialog */}
+      <Dialog open={showEditorDialog} onOpenChange={(open) => {
+        if (!open) {
+          setShowEditorDialog(false);
+          setSelectedContract(null);
+          setFields([]);
+        }
+      }}>
+        <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle>Edit Fields - {selectedContract?.title}</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground mb-3">
-                Add fields that recipients need to fill in when signing this contract.
-              </p>
-              
-              <div className="flex gap-2">
-                <Select
-                  value={newField.field_type}
-                  onValueChange={(value: 'text' | 'date' | 'signature') => 
-                    setNewField({ ...newField, field_type: value })
-                  }
-                >
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="text">Text</SelectItem>
-                    <SelectItem value="date">Date</SelectItem>
-                    <SelectItem value="signature">Signature</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Field label (e.g., Full Name)"
-                  value={newField.label}
-                  onChange={(e) => setNewField({ ...newField, label: e.target.value })}
-                  className="flex-1"
-                />
-                <Button onClick={handleAddField} size="sm">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            {fields.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">
-                No fields added yet
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-muted-foreground">{index + 1}.</span>
-                      <Badge variant="outline">{field.field_type}</Badge>
-                      <span className="font-medium">{field.label}</span>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDeleteField(field.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {fields.length > 0 && selectedContract?.status === 'draft' && (
-              <Button 
-                className="w-full" 
-                onClick={() => handleStatusChange(selectedContract.id, 'active')}
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Activate Contract
-              </Button>
-            )}
-
-            {selectedContract?.status === 'active' && (
-              <div className="p-4 bg-primary/10 rounded-lg">
-                <p className="text-sm font-medium mb-2">Share Link:</p>
-                <div className="flex gap-2">
-                  <Input
-                    value={`${window.location.origin}/sign/${selectedContract.share_token}`}
-                    readOnly
-                    className="text-xs"
-                  />
-                  <Button size="sm" onClick={() => copyShareLink(selectedContract.share_token)}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+          <div className="flex-1 overflow-hidden p-4">
+            {selectedContract && (
+              <PDFDocumentViewer
+                fileUrl={selectedContract.file_url}
+                fields={fields}
+                onFieldsChange={setFields}
+                mode="edit"
+              />
             )}
           </div>
+
+          <DialogFooter className="px-6 py-4 border-t">
+            <Button variant="outline" onClick={() => setShowEditorDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={saveFields} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Fields
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -549,23 +506,22 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
             </p>
           ) : (
             <div className="space-y-4">
-              {submissions.map((submission) => (
-                <div key={submission.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <p className="font-medium">{submission.signer_name}</p>
-                      <p className="text-sm text-muted-foreground">{submission.signer_email}</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(submission.signed_at).toLocaleString()}
-                    </p>
+              {submissions.map((sub) => (
+                <div key={sub.id} className="border rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <span className="font-medium">{sub.signer_name}</span>
+                    <span className="text-sm text-muted-foreground">({sub.signer_email})</span>
                   </div>
-                  <div className="grid gap-2">
-                    {Object.entries(submission.field_values).map(([key, value]) => (
-                      <div key={key} className="flex gap-2 text-sm">
-                        <span className="text-muted-foreground">{key}:</span>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Signed: {new Date(sub.signed_at).toLocaleString()}
+                  </p>
+                  <div className="space-y-2">
+                    {Object.entries(sub.field_values).map(([key, value]) => (
+                      <div key={key} className="text-sm">
+                        <span className="font-medium">{key}:</span>{' '}
                         {value.startsWith('data:image') ? (
-                          <img src={value} alt="Signature" className="h-12 border rounded" />
+                          <img src={value} alt="Signature" className="h-12 mt-1 border rounded" />
                         ) : (
                           <span>{value}</span>
                         )}
