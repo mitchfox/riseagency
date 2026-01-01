@@ -392,26 +392,40 @@ export const ImageCreator = () => {
                         )}
                       </div>
                       <div className="flex flex-col gap-2 flex-shrink-0">
-                        {/* Quick assign to self */}
-                        {!post.assigned_to && (
-                          <div className="flex items-center gap-1">
-                            <Input
-                              type="date"
-                              className="h-7 w-28 text-xs"
-                              onChange={(e) => assignToSelf(post.id, e.target.value)}
-                              placeholder="Due date"
-                            />
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="h-7 text-xs"
-                              onClick={() => assignToSelf(post.id, "")}
-                            >
-                              <User className="w-3 h-3 mr-1" />
-                              Take
-                            </Button>
-                          </div>
-                        )}
+                        {/* Quick assign staff and due date - separate controls */}
+                        <div className="flex items-center gap-2">
+                          <Select
+                            value={post.assigned_to || ""}
+                            onValueChange={(value) => {
+                              updateMutation.mutate({
+                                id: post.id,
+                                data: { assigned_to: value || null },
+                              });
+                            }}
+                          >
+                            <SelectTrigger className="h-7 w-32 text-xs">
+                              <SelectValue placeholder="Assign to..." />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background border z-50">
+                              {staffMembers.map((staff) => (
+                                <SelectItem key={staff.id} value={staff.id}>
+                                  {staff.full_name || staff.email?.split('@')[0]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            type="date"
+                            className="h-7 w-32 text-xs"
+                            value={post.image_due_date || ""}
+                            onChange={(e) => {
+                              updateMutation.mutate({
+                                id: post.id,
+                                data: { image_due_date: e.target.value || null },
+                              });
+                            }}
+                          />
+                        </div>
                         <div className="flex items-center gap-2">
                           <Button size="sm" variant="outline" onClick={() => openDialog(post)} className="h-8">
                             <Upload className="w-3 h-3 mr-1" />
