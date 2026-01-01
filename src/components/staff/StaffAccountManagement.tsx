@@ -162,8 +162,9 @@ export const StaffAccountManagement = () => {
 
     try {
       // Send password reset email via Supabase Auth
+      // Use the auth callback page which handles the token exchange
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/staff`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/staff/update-password`,
       });
 
       if (error) {

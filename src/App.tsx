@@ -58,6 +58,8 @@ const Potential = lazy(() => import("./pages/Potential"));
 const RealisePotential = lazy(() => import("./pages/RealisePotential"));
 const YouthPlayers = lazy(() => import("./pages/YouthPlayers"));
 const PlayerJourney = lazy(() => import("./pages/PlayerJourney"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
 const FluidCursor = lazy(() => import("./components/FluidCursor"));
 
 // Loading fallback component
@@ -156,6 +158,8 @@ const App = () => {
                       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                       <Route path="/terms-of-service" element={<TermsOfService />} />
                       <Route path="/pdf-viewer" element={<PDFViewer />} />
+                      <Route path="/auth/callback" element={<AuthCallback />} />
+                      <Route path="/staff/update-password" element={<UpdatePassword />} />
                       <Route path="/error" element={<NotFound />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
