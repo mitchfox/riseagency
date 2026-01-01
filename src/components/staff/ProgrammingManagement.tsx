@@ -254,17 +254,26 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
 
   // Recovery function
   const recoverUnsavedChanges = () => {
-    const backup = localStorage.getItem(getBackupKey());
+    const backupKey = getBackupKey();
+    console.log('Recovery attempt - backup key:', backupKey);
+    const backup = localStorage.getItem(backupKey);
+    console.log('Recovery attempt - backup data exists:', !!backup);
+    
     if (backup) {
       try {
         const backupData = JSON.parse(backup);
+        console.log('Recovery attempt - parsed backup:', backupData);
         setProgrammingData(backupData.data);
         setHasUnsavedChanges(true);
         toast.success('Recovered unsaved changes!');
         setShowRecoveryBanner(false);
       } catch (e) {
+        console.error('Recovery failed:', e);
         toast.error('Failed to recover data');
       }
+    } else {
+      console.log('No backup found at key:', backupKey);
+      toast.error('No backup data found');
     }
   };
 
