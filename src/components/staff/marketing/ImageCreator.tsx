@@ -605,7 +605,7 @@ export const ImageCreator = () => {
                 <div className="flex flex-col gap-2">
                   <Input
                     type="file"
-                    accept="image/*"
+                    accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp"
                     onChange={handleImageUpload}
                     disabled={uploading}
                     className="cursor-pointer"
@@ -616,6 +616,7 @@ export const ImageCreator = () => {
                       Uploading...
                     </div>
                   )}
+                  <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WebP (max 10MB)</p>
                 </div>
               </div>
             </div>
@@ -633,7 +634,7 @@ export const ImageCreator = () => {
             </Button>
             <Button 
               onClick={handleSave} 
-              disabled={updateMutation.isPending || !form.canva_link || !form.image_url}
+              disabled={updateMutation.isPending || (!form.canva_link && !form.image_url)}
             >
               Save
             </Button>
