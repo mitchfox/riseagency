@@ -27,6 +27,7 @@ import { PlayerScoutingReports } from "@/components/PlayerScoutingReports";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineContentManager } from "@/components/OfflineContentManager";
 import { CacheManager } from "@/lib/cacheManager";
+import { VersionManager } from "@/lib/versionManager";
 import { Hub } from "@/components/dashboard/Hub";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from "recharts";
 import { Link } from "react-router-dom";
@@ -697,6 +698,13 @@ const Dashboard = () => {
       toast.error(error.message || "Failed to reorder clip");
     }
   };
+
+  // Check for app updates first
+  useEffect(() => {
+    if (navigator.onLine) {
+      VersionManager.initialize();
+    }
+  }, []);
 
   useEffect(() => {
     checkAuth();

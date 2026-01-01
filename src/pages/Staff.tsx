@@ -62,6 +62,7 @@ import { StaffNotificationsDropdown } from "@/components/staff/StaffNotification
 import { NotificationSettingsManagement } from "@/components/staff/NotificationSettingsManagement";
 
 import { supabase } from "@/integrations/supabase/client";
+import { VersionManager } from "@/lib/versionManager";
 import type { User } from "@supabase/supabase-js";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTheme } from "next-themes";
@@ -117,6 +118,13 @@ const Staff = () => {
   const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  
+  // Check for app updates on load (before anything else)
+  useEffect(() => {
+    if (navigator.onLine) {
+      VersionManager.initialize();
+    }
+  }, []);
   
   // Hydration guard for PWA cold start
   useEffect(() => {

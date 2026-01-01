@@ -56,7 +56,8 @@ const PlayersList = () => {
       const { data, error } = await supabase
         .from('players')
         .select('*')
-        .neq('category', 'Scouted')
+        .not('category', 'in', '("Scouted","Fuel For Football")')
+        .neq('representation_status', 'scouted')
         .order('name');
       
       if (!error && data) {

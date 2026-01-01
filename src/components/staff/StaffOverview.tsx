@@ -218,10 +218,13 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
   // Persist changes to localStorage
   const confirmSaveChanges = () => {
     const storageKey = getStorageKey();
-    console.log('Saving overview settings to:', storageKey, { visibleWidgets, layouts });
-    localStorage.setItem(storageKey, JSON.stringify({ visibleWidgets, layouts }));
-    setSavedLayouts([...layouts]);
-    setSavedVisibleWidgets([...visibleWidgets]);
+    // Deep clone the layouts to avoid reference issues
+    const layoutsCopy = layouts.map(l => ({ ...l }));
+    const widgetsCopy = [...visibleWidgets];
+    console.log('Saving overview settings to:', storageKey, { visibleWidgets: widgetsCopy, layouts: layoutsCopy });
+    localStorage.setItem(storageKey, JSON.stringify({ visibleWidgets: widgetsCopy, layouts: layoutsCopy }));
+    setSavedLayouts(layoutsCopy);
+    setSavedVisibleWidgets(widgetsCopy);
     setHasUnsavedChanges(false);
   };
 
