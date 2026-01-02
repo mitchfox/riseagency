@@ -228,24 +228,14 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
           .from("player_outreach_youth")
           .insert([youthFormData]);
         if (outreachError) throw outreachError;
-        
-        const { error: scoutingError } = await supabase
-          .from("scouting_reports")
-          .insert([{
-            player_name: youthFormData.player_name,
-            summary: `Youth outreach contact${youthFormData.notes ? ': ' + youthFormData.notes : ''}`,
-            status: 'pending'
-          }]);
-        if (scoutingError) throw scoutingError;
-        
-        toast.success("Youth outreach added to database");
+        toast.success("Youth outreach added");
       }
       setDialogOpen(false);
       resetForms();
       fetchData();
     } catch (error: any) {
       console.error("Error saving youth outreach:", error);
-      toast.error("Failed to save");
+      toast.error(error.message || "Failed to save youth outreach");
     }
   };
 
@@ -264,24 +254,14 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
           .from("player_outreach_pro")
           .insert([proFormData]);
         if (outreachError) throw outreachError;
-        
-        const { error: scoutingError } = await supabase
-          .from("scouting_reports")
-          .insert([{
-            player_name: proFormData.player_name,
-            summary: `Pro outreach contact${proFormData.notes ? ': ' + proFormData.notes : ''}`,
-            status: 'pending'
-          }]);
-        if (scoutingError) throw scoutingError;
-        
-        toast.success("Pro outreach added to database");
+        toast.success("Pro outreach added");
       }
       setDialogOpen(false);
       resetForms();
       fetchData();
     } catch (error: any) {
       console.error("Error saving pro outreach:", error);
-      toast.error("Failed to save");
+      toast.error(error.message || "Failed to save pro outreach");
     }
   };
 
