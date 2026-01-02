@@ -47,6 +47,9 @@ const SignContract = () => {
 
   const fetchContract = async () => {
     try {
+      // Decode the token in case it contains URL-encoded characters
+      const decodedToken = decodeURIComponent(token || '');
+      
       // First get all active contracts to find by slug match
       const { data: contractsData, error: contractsError } = await supabase
         .from('signature_contracts')
@@ -54,12 +57,13 @@ const SignContract = () => {
         .eq('status', 'active');
 
       if (contractsError) {
+        console.error('Error fetching contracts:', contractsError);
         toast.error('Failed to load contract');
         setLoading(false);
         return;
       }
 
-      // Find contract by matching slug from title
+      // Find contract by matching slug from title (case-insensitive)
       const generateSlug = (title: string) => {
         return title
           .toLowerCase()
@@ -69,9 +73,11 @@ const SignContract = () => {
           .trim();
       };
 
-      const contractData = contractsData?.find(c => generateSlug(c.title) === token);
+      const normalizedToken = decodedToken.toLowerCase().replace(/-+/g, '-').trim();
+      const contractData = contractsData?.find(c => generateSlug(c.title) === normalizedToken);
 
       if (!contractData) {
+        console.log('No contract found for token:', normalizedToken);
         toast.error('Contract not found or is no longer active');
         setLoading(false);
         return;
@@ -362,39 +368,42 @@ const SignContract = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="border-b bg-background p-4">
+      {/* Header - Mobile Optimized */}
+      <div className="border-b bg-background p-3 sm:p-4">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            {/* Title section */}
             <div>
-              <h1 className="text-xl font-bold flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                {contract.title}
+              <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary shrink-0" />
+                <span className="line-clamp-1">{contract.title}</span>
               </h1>
               {contract.description && (
-                <p className="text-sm text-muted-foreground mt-1">{contract.description}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">{contract.description}</p>
               )}
               <p className="text-xs text-orange-600 mt-1">
                 Please fill in the orange fields below to complete your signature
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex gap-2">
+            
+            {/* Signer info and submit - stacks on mobile */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <div className="grid grid-cols-2 sm:flex gap-2 flex-1 sm:flex-none">
                 <Input
                   placeholder="Your Name"
                   value={signerInfo.name}
                   onChange={(e) => setSignerInfo({ ...signerInfo, name: e.target.value })}
-                  className="w-40"
+                  className="text-sm sm:w-40"
                 />
                 <Input
                   placeholder="Your Email"
                   type="email"
                   value={signerInfo.email}
                   onChange={(e) => setSignerInfo({ ...signerInfo, email: e.target.value })}
-                  className="w-48"
+                  className="text-sm sm:w-48"
                 />
               </div>
-              <Button onClick={handleSubmit} disabled={submitting}>
+              <Button onClick={handleSubmit} disabled={submitting} className="w-full sm:w-auto">
                 {submitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -412,9 +421,9 @@ const SignContract = () => {
         </div>
       </div>
 
-      {/* Document viewer with signing */}
-      <div className="flex-1 p-4">
-        <div className="max-w-6xl mx-auto h-[calc(100vh-140px)]">
+      {/* Document viewer with signing - mobile optimized height */}
+      <div className="flex-1 p-2 sm:p-4">
+        <div className="max-w-6xl mx-auto h-[calc(100vh-200px)] sm:h-[calc(100vh-140px)]">
           <PDFDocumentViewer
             fileUrl={contract.file_url}
             fields={fields}
