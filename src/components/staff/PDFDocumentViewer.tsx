@@ -31,6 +31,8 @@ interface PDFDocumentViewerProps {
   onSignatureStart?: (fieldId: string) => void;
   signerPartyFilter?: 'owner' | 'counterparty' | 'all';
   onNavigateToField?: (fieldId: string, pageNumber: number) => void;
+  onPdfError?: () => void;
+  mobileOptimized?: boolean;
 }
 
 export const PDFDocumentViewer = ({
@@ -42,10 +44,12 @@ export const PDFDocumentViewer = ({
   onFieldValueChange,
   onSignatureStart,
   signerPartyFilter = 'all',
+  onPdfError,
+  mobileOptimized = false,
 }: PDFDocumentViewerProps) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1);
+  const [scale, setScale] = useState<number>(mobileOptimized ? 0.6 : 1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [draggingField, setDraggingField] = useState<string | null>(null);
@@ -105,6 +109,7 @@ export const PDFDocumentViewer = ({
     console.error('PDF load error:', error);
     setError('Failed to load PDF. Please ensure the file is a valid PDF.');
     setLoading(false);
+    onPdfError?.();
   };
 
   const handlePageClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -251,23 +256,25 @@ export const PDFDocumentViewer = ({
 
   return (
     <div className="flex flex-col h-full bg-muted/30 rounded-lg overflow-hidden">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between p-2 bg-background border-b gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
+      {/* Toolbar - Mobile optimized */}
+      <div className="flex items-center justify-between p-2 bg-background border-b gap-1 sm:gap-2 flex-wrap">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button
             variant="outline"
             size="sm"
+            className="h-8 w-8 p-0 sm:h-9 sm:w-9"
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage <= 1}
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-sm min-w-[80px] text-center">
+          <span className="text-xs sm:text-sm min-w-[60px] sm:min-w-[80px] text-center">
             {currentPage} / {numPages || '?'}
           </span>
           <Button
             variant="outline"
             size="sm"
+            className="h-8 w-8 p-0 sm:h-9 sm:w-9"
             onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))}
             disabled={currentPage >= numPages}
           >
@@ -275,19 +282,21 @@ export const PDFDocumentViewer = ({
           </Button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setScale(s => Math.max(0.5, s - 0.25))}
+            className="h-8 w-8 p-0 sm:h-9 sm:w-9"
+            onClick={() => setScale(s => Math.max(0.4, s - 0.2))}
           >
             <ZoomOut className="w-4 h-4" />
           </Button>
-          <span className="text-sm min-w-[50px] text-center">{Math.round(scale * 100)}%</span>
+          <span className="text-xs sm:text-sm min-w-[40px] sm:min-w-[50px] text-center">{Math.round(scale * 100)}%</span>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setScale(s => Math.min(2, s + 0.25))}
+            className="h-8 w-8 p-0 sm:h-9 sm:w-9"
+            onClick={() => setScale(s => Math.min(2, s + 0.2))}
           >
             <ZoomIn className="w-4 h-4" />
           </Button>

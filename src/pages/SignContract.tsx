@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { FileText, CheckCircle, Loader2, Download, PenTool, Upload } from "lucide-react";
+import { FileText, CheckCircle, Loader2, Download, PenTool, Upload, AlertCircle, ExternalLink } from "lucide-react";
 import { PDFDocumentViewer, FieldPosition } from "@/components/staff/PDFDocumentViewer";
 import { downloadSignedContractPDF } from "@/lib/pdfExport";
 
@@ -21,7 +21,7 @@ interface SignatureContract {
 }
 
 const SignContract = () => {
-  const { token } = useParams<{ token: string }>(); // This is now the slug (document title)
+  const { token } = useParams<{ token: string }>();
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -31,6 +31,7 @@ const SignContract = () => {
   const [fields, setFields] = useState<FieldPosition[]>([]);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [signerInfo, setSignerInfo] = useState({ name: '', email: '' });
+  const [pdfError, setPdfError] = useState(false);
   
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
   const [currentSignatureField, setCurrentSignatureField] = useState<string | null>(null);
@@ -38,6 +39,9 @@ const SignContract = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+
+  // Detect mobile for optimized rendering
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   useEffect(() => {
     if (token) {
@@ -164,8 +168,14 @@ const SignContract = () => {
     if (!ctx) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    // Scale coordinates to account for CSS sizing vs actual canvas dimensions
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
     
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -181,8 +191,14 @@ const SignContract = () => {
     if (!ctx) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    // Scale coordinates to account for CSS sizing vs actual canvas dimensions
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
     
     ctx.lineTo(x, y);
     ctx.stroke();
@@ -295,19 +311,22 @@ const SignContract = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen min-h-[100dvh] flex items-center justify-center bg-background p-4">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">Loading contract...</p>
+        </div>
       </div>
     );
   }
 
   if (!contract) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="min-h-screen min-h-[100dvh] flex items-center justify-center bg-background p-4">
         <div className="text-center max-w-md">
-          <FileText className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Contract Not Found</h1>
-          <p className="text-muted-foreground">
+          <FileText className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-muted-foreground mb-4" />
+          <h1 className="text-xl sm:text-2xl font-bold mb-2">Contract Not Found</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             This contract link is invalid or the contract is no longer active.
           </p>
         </div>
@@ -339,14 +358,14 @@ const SignContract = () => {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="text-center max-w-md">
-          <CheckCircle className="h-16 w-16 mx-auto text-green-500 mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Contract Signed!</h1>
-          <p className="text-muted-foreground mb-4">
+      <div className="min-h-screen min-h-[100dvh] flex items-center justify-center bg-background p-4">
+        <div className="text-center max-w-md w-full">
+          <CheckCircle className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-green-500 mb-4" />
+          <h1 className="text-xl sm:text-2xl font-bold mb-2">Contract Signed!</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mb-6">
             Thank you for signing. Your submission has been recorded.
           </p>
-          <Button onClick={handleExportPDF} disabled={exporting} size="lg">
+          <Button onClick={handleExportPDF} disabled={exporting} size="lg" className="w-full sm:w-auto">
             {exporting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -366,44 +385,49 @@ const SignContract = () => {
 
   const counterpartyFields = fields.filter(f => f.signer_party === 'counterparty');
 
+  // Handle PDF load error - show fallback for mobile
+  const handlePdfError = () => {
+    setPdfError(true);
+  };
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen min-h-[100dvh] bg-background flex flex-col overflow-hidden">
       {/* Header - Mobile Optimized */}
-      <div className="border-b bg-background p-3 sm:p-4">
+      <header className="border-b bg-background p-3 sm:p-4 flex-shrink-0">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="flex flex-col gap-2 sm:gap-4">
             {/* Title section */}
             <div>
-              <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary shrink-0" />
-                <span className="line-clamp-1">{contract.title}</span>
+              <h1 className="text-base sm:text-xl font-bold flex items-center gap-2">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+                <span className="line-clamp-1 break-all">{contract.title}</span>
               </h1>
               {contract.description && (
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">{contract.description}</p>
               )}
               <p className="text-xs text-orange-600 mt-1">
-                Please fill in the orange fields below to complete your signature
+                Fill in orange fields to complete your signature
               </p>
             </div>
             
             {/* Signer info and submit - stacks on mobile */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-              <div className="grid grid-cols-2 sm:flex gap-2 flex-1 sm:flex-none">
+            <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <Input
                   placeholder="Your Name"
                   value={signerInfo.name}
                   onChange={(e) => setSignerInfo({ ...signerInfo, name: e.target.value })}
-                  className="text-sm sm:w-40"
+                  className="text-sm h-9"
                 />
                 <Input
                   placeholder="Your Email"
                   type="email"
                   value={signerInfo.email}
                   onChange={(e) => setSignerInfo({ ...signerInfo, email: e.target.value })}
-                  className="text-sm sm:w-48"
+                  className="text-sm h-9"
                 />
               </div>
-              <Button onClick={handleSubmit} disabled={submitting} className="w-full sm:w-auto">
+              <Button onClick={handleSubmit} disabled={submitting} className="w-full h-10">
                 {submitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -412,70 +436,96 @@ const SignContract = () => {
                 ) : (
                   <>
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Submit
+                    Submit Signature
                   </>
                 )}
               </Button>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Document viewer with signing - mobile optimized height */}
-      <div className="flex-1 p-2 sm:p-4">
-        <div className="max-w-6xl mx-auto h-[calc(100vh-200px)] sm:h-[calc(100vh-140px)]">
-          <PDFDocumentViewer
-            fileUrl={contract.file_url}
-            fields={fields}
-            mode="sign"
-            fieldValues={fieldValues}
-            onFieldValueChange={handleFieldValueChange}
-            onSignatureStart={handleSignatureStart}
-            signerPartyFilter="all"
-          />
+      {/* Document viewer with signing - mobile optimized height using dvh */}
+      <main className="flex-1 overflow-hidden p-2 sm:p-4">
+        <div className="max-w-6xl mx-auto h-full">
+          {pdfError ? (
+            <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+              <h2 className="text-lg font-semibold mb-2">Unable to display PDF</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Your device may not support inline PDF viewing.
+              </p>
+              <Button onClick={() => window.open(contract.file_url, '_blank')} className="gap-2">
+                <ExternalLink className="h-4 w-4" />
+                Open PDF in New Tab
+              </Button>
+            </div>
+          ) : (
+            <PDFDocumentViewer
+              fileUrl={contract.file_url}
+              fields={fields}
+              mode="sign"
+              fieldValues={fieldValues}
+              onFieldValueChange={handleFieldValueChange}
+              onSignatureStart={handleSignatureStart}
+              signerPartyFilter="all"
+              onPdfError={handlePdfError}
+              mobileOptimized={isMobile}
+            />
+          )}
         </div>
-      </div>
+      </main>
 
-      {/* Signature Dialog with Options */}
+      {/* Signature Dialog with Options - Mobile Optimized */}
       <Dialog open={showSignatureDialog} onOpenChange={setShowSignatureDialog}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-w-[95vw] sm:max-w-lg mx-auto">
           <DialogHeader>
-            <DialogTitle>Add Your Signature</DialogTitle>
+            <DialogTitle className="text-lg">Add Your Signature</DialogTitle>
           </DialogHeader>
           
           <Tabs value={signatureTab} onValueChange={(v) => setSignatureTab(v as any)}>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="draw" className="gap-1">
+              <TabsTrigger value="draw" className="gap-1 text-sm">
                 <PenTool className="w-4 h-4" />
                 Draw
               </TabsTrigger>
-              <TabsTrigger value="upload" className="gap-1">
+              <TabsTrigger value="upload" className="gap-1 text-sm">
                 <Upload className="w-4 h-4" />
                 Upload
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="draw" className="space-y-4">
-              <div className="border rounded-lg p-4 bg-white">
+            <TabsContent value="draw" className="space-y-3">
+              <div className="border rounded-lg p-2 sm:p-4 bg-white">
                 <canvas
                   ref={canvasRef}
-                  width={450}
-                  height={200}
-                  className="border rounded w-full touch-none cursor-crosshair bg-white"
+                  width={isMobile ? 280 : 450}
+                  height={isMobile ? 150 : 200}
+                  className="border rounded w-full cursor-crosshair bg-white"
+                  style={{ touchAction: 'none' }}
                   onMouseDown={startDrawing}
                   onMouseMove={draw}
                   onMouseUp={stopDrawing}
                   onMouseLeave={stopDrawing}
-                  onTouchStart={startDrawing}
-                  onTouchMove={draw}
-                  onTouchEnd={stopDrawing}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    startDrawing(e);
+                  }}
+                  onTouchMove={(e) => {
+                    e.preventDefault();
+                    draw(e);
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    stopDrawing();
+                  }}
                 />
               </div>
-              <DialogFooter className="gap-2">
-                <Button variant="outline" onClick={clearSignature}>
+              <DialogFooter className="flex-row gap-2 sm:justify-end">
+                <Button variant="outline" onClick={clearSignature} className="flex-1 sm:flex-none">
                   Clear
                 </Button>
-                <Button onClick={saveSignature}>
+                <Button onClick={saveSignature} className="flex-1 sm:flex-none">
                   Use Signature
                 </Button>
               </DialogFooter>
