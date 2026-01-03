@@ -867,15 +867,43 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
               <h3 className="text-lg font-semibold text-center mb-4 text-gold">
                 {currentCard?.title}
               </h3>
-              <div className="flex-1 flex items-center justify-center">
-                <p className="text-base leading-relaxed text-center max-w-2xl">
-                  {currentCard?.content}
-                </p>
+              
+              <div className="flex-1 flex flex-col items-center justify-center space-y-4">
+                {/* Answer context header based on game type */}
+                <div className="text-sm font-medium text-primary uppercase tracking-wider">
+                  {selectedGame === "schemes" && "Your Role & Responsibility:"}
+                  {selectedGame === "positional-guides" && "Key Principle:"}
+                  {selectedGame === "concepts" && "Tactical Application:"}
+                  {selectedGame === "pre-match" && "Analysis Point:"}
+                </div>
+                
+                {/* Main content */}
+                <div className="bg-muted/30 rounded-lg p-6 max-w-2xl w-full">
+                  <p className="text-base leading-relaxed text-center">
+                    {currentCard?.content}
+                  </p>
+                </div>
+                
+                {/* Contextual application tips */}
+                <div className="text-sm text-muted-foreground text-center max-w-lg mt-4">
+                  {selectedGame === "schemes" && (
+                    <p><span className="font-medium text-foreground">Remember:</span> Execute this during the {currentCard?.category} phase. Communicate with teammates and stay aware of your positioning.</p>
+                  )}
+                  {selectedGame === "positional-guides" && (
+                    <p><span className="font-medium text-foreground">In practice:</span> Focus on timing and body position. This principle applies in {currentCard?.category}.</p>
+                  )}
+                  {selectedGame === "concepts" && (
+                    <p><span className="font-medium text-foreground">Application:</span> Look for opportunities to apply this in training and matches. Recognition is key.</p>
+                  )}
+                  {selectedGame === "pre-match" && (
+                    <p><span className="font-medium text-foreground">Game plan:</span> Use this information to adjust your positioning and decision-making during the match.</p>
+                  )}
+                </div>
               </div>
               
               {/* Progress indicator */}
               {currentProgress && (
-                <p className="text-xs text-muted-foreground text-center mb-4">
+                <p className="text-xs text-muted-foreground text-center mb-4 mt-4">
                   Reviewed {currentProgress.repetitions} times • Next review in {currentProgress.interval_days} days
                 </p>
               )}
