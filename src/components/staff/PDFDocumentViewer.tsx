@@ -251,8 +251,8 @@ export const PDFDocumentViewer = ({
   };
 
   const getPartyColor = (party: string) => {
-    // Transparent backgrounds to not obscure document content
-    return party === 'owner' ? 'border-green-500 bg-green-100/30' : 'border-orange-500 bg-orange-100/30';
+    // Fully transparent backgrounds - fields must not obscure document content
+    return party === 'owner' ? 'border-green-500 bg-transparent' : 'border-orange-500 bg-transparent';
   };
 
   return (

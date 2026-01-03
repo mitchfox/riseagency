@@ -23,6 +23,7 @@ interface Player {
   bio: string | null;
   email: string | null;
   image_url: string | null;
+  hover_image_url: string | null;
   category: string | null;
   representation_status: string | null;
   visible_on_stars_page: boolean;
@@ -30,7 +31,7 @@ interface Player {
   player_list_order: number | null;
 }
 
-type EditableField = 'position' | 'age' | 'club' | 'league' | 'email' | 'category' | 'representation_status' | 'bio' | 'image_url' | 'star_order' | 'player_list_order';
+type EditableField = 'position' | 'age' | 'club' | 'league' | 'email' | 'representation_status' | 'bio' | 'star_order' | 'player_list_order';
 
 interface FieldEdit {
   [playerId: string]: string | number;
@@ -54,12 +55,13 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
     bio: "",
     email: "",
     image_url: "",
-    category: "",
+    hover_image_url: "",
     representation_status: "",
     visible_on_stars_page: false,
     star_order: null as number | null,
     player_list_order: null as number | null,
   });
+  const [uploadingImage, setUploadingImage] = useState<'main' | 'hover' | null>(null);
 
   useEffect(() => {
     fetchPlayers();
@@ -69,8 +71,11 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
     try {
       const { data, error } = await supabase
         .from("players")
-        .select("id, name, club, club_logo, league, position, age, nationality, bio, email, image_url, category, representation_status, visible_on_stars_page, star_order, player_list_order")
+        .select("id, name, club, club_logo, league, position, age, nationality, bio, email, image_url, hover_image_url, category, representation_status, visible_on_stars_page, star_order, player_list_order")
         .neq("category", "Scouted")
+        .neq("category", "Fuel For Football")
+        .not("representation_status", "in", '("scouted","other")')
+        .order("player_list_order", { ascending: true, nullsFirst: false })
         .order("name");
 
       if (error) throw error;
@@ -122,10 +127,27 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
     const editedValue = fieldEdits[player.id];
     if (editedValue !== undefined) return editedValue;
     
+    // For bio, extract plain text if stored as JSON
+    if (selectedField === 'bio' && player.bio) {
+      try {
+        const parsed = JSON.parse(player.bio);
+        if (typeof parsed === 'object' && parsed !== null) {
+          return parsed.bio || parsed.overview || parsed.description || "";
+        }
+      } catch {
+        return player.bio;
+      }
+    }
+    
     const value = player[selectedField as keyof Player];
     if (typeof value === 'boolean') return '';
     return value ?? "";
   };
+
+  // Filter players for star_order - only show star players
+  const displayPlayers = selectedField === 'star_order' 
+    ? players.filter(p => p.visible_on_stars_page === true)
+    : players;
 
   const getFieldLabel = (field: EditableField): string => {
     const labels: Record<EditableField, string> = {
@@ -134,11 +156,9 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
       club: 'Club',
       league: 'League',
       email: 'Email',
-      category: 'Category',
       representation_status: 'Rep Status',
       bio: 'Biography',
-      image_url: 'Image URL',
-      star_order: 'Star Order',
+      star_order: 'Star Order (Stars Only)',
       player_list_order: 'List Order'
     };
     return labels[field];
@@ -146,6 +166,16 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const handleEdit = (player: Player) => {
     setEditingPlayer(player);
+    // Extract plain text bio if stored as JSON
+    let bioText = player.bio || "";
+    try {
+      const parsed = JSON.parse(player.bio || "");
+      if (typeof parsed === 'object' && parsed !== null) {
+        bioText = parsed.bio || parsed.overview || parsed.description || "";
+      }
+    } catch {
+      // Keep as-is
+    }
     setFormData({
       name: player.name,
       club: player.club || "",
@@ -153,10 +183,10 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
       position: player.position,
       age: player.age,
       nationality: player.nationality,
-      bio: player.bio || "",
+      bio: bioText,
       email: player.email || "",
       image_url: player.image_url || "",
-      category: player.category || "",
+      hover_image_url: player.hover_image_url || "",
       representation_status: player.representation_status || "",
       visible_on_stars_page: player.visible_on_stars_page || false,
       star_order: player.star_order,
@@ -180,7 +210,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
           bio: formData.bio || null,
           email: formData.email || null,
           image_url: formData.image_url || null,
-          category: formData.category || null,
+          hover_image_url: formData.hover_image_url || null,
           representation_status: formData.representation_status || null,
           visible_on_stars_page: formData.visible_on_stars_page,
           star_order: formData.star_order,
@@ -250,11 +280,9 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 <SelectItem value="club">Club</SelectItem>
                 <SelectItem value="league">League</SelectItem>
                 <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="category">Category</SelectItem>
                 <SelectItem value="representation_status">Rep Status</SelectItem>
                 <SelectItem value="bio">Biography</SelectItem>
-                <SelectItem value="image_url">Image URL</SelectItem>
-                <SelectItem value="star_order">Star Order</SelectItem>
+                <SelectItem value="star_order">Star Order (Stars Only)</SelectItem>
                 <SelectItem value="player_list_order">List Order</SelectItem>
               </SelectContent>
             </Select>
@@ -275,7 +303,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
       {isMobile ? (
         // Mobile Card View
         <div className="space-y-3">
-          {players.map((player) => {
+          {displayPlayers.map((player) => {
             const { club, clubLogo } = getClubInfo(player);
             return (
               <div 
@@ -359,7 +387,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {players.map((player, index) => {
+              {displayPlayers.map((player, index) => {
               return (
                 <TableRow 
                   key={player.id} 
@@ -558,14 +586,14 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="hover_image_url">Hover Image URL</Label>
               <Input
-                id="category"
-                value={formData.category}
+                id="hover_image_url"
+                value={formData.hover_image_url}
                 onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
+                  setFormData({ ...formData, hover_image_url: e.target.value })
                 }
-                placeholder="e.g., Professional, Youth"
+                placeholder="https://example.com/hover.png"
               />
               </div>
               <div>
@@ -576,20 +604,21 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 onChange={(e) =>
                   setFormData({ ...formData, representation_status: e.target.value })
                 }
-                placeholder="e.g., represented, other"
+                placeholder="e.g., represented, mandated"
               />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="bio">Bio (JSON or text)</Label>
-              <Input
+              <Label htmlFor="bio">Biography</Label>
+              <textarea
                 id="bio"
                 value={formData.bio}
                 onChange={(e) =>
                   setFormData({ ...formData, bio: e.target.value })
                 }
-                placeholder="Bio text or JSON"
+                placeholder="Enter player biography..."
+                className="w-full min-h-[100px] p-2 text-sm border rounded resize-y"
               />
             </div>
 

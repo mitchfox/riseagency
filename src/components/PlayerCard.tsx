@@ -159,9 +159,9 @@ export const PlayerCard = ({ player, viewMode = "grid", disableProfileLink = fal
     );
   }
 
-  // WhatsApp link for Declare Interest
+  // WhatsApp link for Declare Interest - always send to Rise Football Agency
   const whatsappMessage = encodeURIComponent(`Hey, I'm interested in ${player.name}`);
-  const whatsappLink = `https://wa.me/?text=${whatsappMessage}`;
+  const whatsappLink = `https://wa.me/447508342901?text=${whatsappMessage}`;
 
   const gridClassName = "group relative block overflow-hidden transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 

@@ -1889,14 +1889,6 @@ const Dashboard = () => {
                                 </h3>
                               </AccordionTrigger>
                               <AccordionContent className="pb-6 space-y-4">
-                                {concept.concept && (
-                                  <div className="space-y-2">
-                                    <h4 className="font-semibold text-lg">Concept</h4>
-                                    <div className="text-muted-foreground">
-                                      <MarkdownContent content={concept.concept} />
-                                    </div>
-                                  </div>
-                                )}
                                 {concept.points && Array.isArray(concept.points) && concept.points.length > 0 && (
                                   <div className="grid gap-4">
                                     {concept.points.map((point: any, index: number) => (
