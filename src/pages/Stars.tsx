@@ -59,7 +59,8 @@ const Stars = () => {
         .from('players')
         .select('*')
         .eq('visible_on_stars_page', true)
-        .neq('category', 'Scouted')
+        .in('representation_status', ['mandated', 'represented', 'previously_mandated'])
+        .order('star_order', { ascending: true, nullsFirst: false })
         .order('name');
       
       if (!error && data) {

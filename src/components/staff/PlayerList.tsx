@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Edit, X, Save } from "lucide-react";
+import { Edit, X, Save, ChevronUp, ChevronDown } from "lucide-react";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -62,6 +62,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
     player_list_order: null as number | null,
   });
   const [uploadingImage, setUploadingImage] = useState<'main' | 'hover' | null>(null);
+  const [isMoving, setIsMoving] = useState(false);
 
   useEffect(() => {
     fetchPlayers();
@@ -230,6 +231,54 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
+  // Move player up in list order
+  const movePlayerUp = async (player: Player, index: number) => {
+    if (index === 0 || isMoving) return;
+    
+    setIsMoving(true);
+    const prevPlayer = displayPlayers[index - 1];
+    const currentOrder = player.player_list_order || index + 1;
+    const prevOrder = prevPlayer.player_list_order || index;
+    
+    try {
+      await Promise.all([
+        supabase.from("players").update({ player_list_order: prevOrder }).eq("id", player.id),
+        supabase.from("players").update({ player_list_order: currentOrder }).eq("id", prevPlayer.id)
+      ]);
+      await fetchPlayers();
+      toast.success(`Moved ${player.name} up`);
+    } catch (error) {
+      console.error("Error moving player:", error);
+      toast.error("Failed to move player");
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
+  // Move player down in list order
+  const movePlayerDown = async (player: Player, index: number) => {
+    if (index === displayPlayers.length - 1 || isMoving) return;
+    
+    setIsMoving(true);
+    const nextPlayer = displayPlayers[index + 1];
+    const currentOrder = player.player_list_order || index + 1;
+    const nextOrder = nextPlayer.player_list_order || index + 2;
+    
+    try {
+      await Promise.all([
+        supabase.from("players").update({ player_list_order: nextOrder }).eq("id", player.id),
+        supabase.from("players").update({ player_list_order: currentOrder }).eq("id", nextPlayer.id)
+      ]);
+      await fetchPlayers();
+      toast.success(`Moved ${player.name} down`);
+    } catch (error) {
+      console.error("Error moving player:", error);
+      toast.error("Failed to move player");
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
   // Helper function to get club info from either column or bio JSON
   const getClubInfo = (player: Player) => {
     // First try the direct columns
@@ -384,9 +433,10 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-b">
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-12">#</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Player</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{getFieldLabel(selectedField)}</TableHead>
-                {isAdmin && <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-20">Actions</TableHead>}
+                {isAdmin && <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-32">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -396,6 +446,9 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                   key={player.id} 
                   className={`border-0 hover:bg-transparent ${index % 2 === 0 ? 'bg-muted/30' : 'bg-background'}`}
                 >
+                  <TableCell className="py-2.5 text-center text-sm text-muted-foreground font-medium">
+                    {index + 1}
+                  </TableCell>
                   <TableCell className="py-2.5">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-muted overflow-hidden flex-shrink-0">
@@ -455,14 +508,37 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                   </TableCell>
                   {isAdmin && (
                     <TableCell className="py-2.5">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(player)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => movePlayerUp(player, index)}
+                          disabled={index === 0 || isMoving}
+                          className="h-8 w-8 p-0"
+                          title="Move up"
+                        >
+                          <ChevronUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => movePlayerDown(player, index)}
+                          disabled={index === displayPlayers.length - 1 || isMoving}
+                          className="h-8 w-8 p-0"
+                          title="Move down"
+                        >
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(player)}
+                          className="h-8 w-8 p-0"
+                          title="Edit"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   )}
                 </TableRow>
