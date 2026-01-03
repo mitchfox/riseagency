@@ -31,7 +31,7 @@ interface Player {
   player_list_order: number | null;
 }
 
-type EditableField = 'position' | 'age' | 'club' | 'league' | 'email' | 'representation_status' | 'bio' | 'star_order' | 'player_list_order';
+type EditableField = 'position' | 'age' | 'club' | 'league' | 'email' | 'representation_status' | 'bio' | 'star_order' | 'player_list_order' | 'image_url' | 'hover_image_url';
 
 interface FieldEdit {
   [playerId: string]: string | number;
@@ -69,12 +69,11 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const fetchPlayers = async () => {
     try {
+      // Only show players with valid representation statuses
       const { data, error } = await supabase
         .from("players")
         .select("id, name, club, club_logo, league, position, age, nationality, bio, email, image_url, hover_image_url, category, representation_status, visible_on_stars_page, star_order, player_list_order")
-        .neq("category", "Scouted")
-        .neq("category", "Fuel For Football")
-        .not("representation_status", "in", '("scouted","other")')
+        .in("representation_status", ["mandated", "represented", "previously_mandated"])
         .order("player_list_order", { ascending: true, nullsFirst: false })
         .order("name");
 
@@ -159,7 +158,9 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
       representation_status: 'Rep Status',
       bio: 'Biography',
       star_order: 'Star Order (Stars Only)',
-      player_list_order: 'List Order'
+      player_list_order: 'List Order',
+      image_url: 'Main Image',
+      hover_image_url: 'Hover Image'
     };
     return labels[field];
   };
@@ -284,6 +285,8 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 <SelectItem value="bio">Biography</SelectItem>
                 <SelectItem value="star_order">Star Order (Stars Only)</SelectItem>
                 <SelectItem value="player_list_order">List Order</SelectItem>
+                <SelectItem value="image_url">Main Image</SelectItem>
+                <SelectItem value="hover_image_url">Hover Image</SelectItem>
               </SelectContent>
             </Select>
           </div>

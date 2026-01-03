@@ -335,6 +335,7 @@ const Stars = () => {
                   key={player.id}
                   player={player}
                   viewMode={viewMode}
+                  isStarsPage={true}
                 />
               ))}
             </div>

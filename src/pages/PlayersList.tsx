@@ -53,10 +53,11 @@ const PlayersList = () => {
 
   useEffect(() => {
     const fetchPlayers = async () => {
+      // Only show players with representation_status: mandated, represented, previously_mandated
       const { data, error } = await supabase
         .from('players')
         .select('*')
-        .not('category', 'in', '("Scouted","Fuel For Football")')
+        .in('representation_status', ['mandated', 'represented', 'previously_mandated'])
         .order('player_list_order', { ascending: true, nullsFirst: false });
       
       if (!error && data) {
