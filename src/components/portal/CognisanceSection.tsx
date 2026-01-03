@@ -806,7 +806,7 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
             )}
           </div>
           
-          {/* Question prompt - structured question format */}
+          {/* Question prompt - scenario-based question format */}
           {!isRevealed && (
             <div className="flex-1 flex flex-col items-center justify-center">
               <div className="text-sm text-muted-foreground mb-4 text-center">
@@ -815,12 +815,42 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
               <h3 className="text-xl font-semibold text-center mb-6 text-gold">
                 {currentCard?.title}
               </h3>
-              <p className="text-muted-foreground mb-2 text-center max-w-lg text-lg">
-                Can you explain this concept and its application in a match situation?
-              </p>
-              <p className="text-sm text-muted-foreground mb-6 text-center max-w-lg italic">
-                Think about: What does this mean? When would you apply it? What would be the outcome?
-              </p>
+              
+              {/* Generate scenario-based question based on the card type */}
+              <div className="text-muted-foreground mb-6 text-center max-w-lg space-y-4">
+                {selectedGame === "schemes" && (
+                  <>
+                    <p className="text-lg font-medium text-foreground">Match Scenario:</p>
+                    <p>Your team is playing in a {currentCard?.title} system. During the {currentCard?.category} phase, what is your primary responsibility and positioning?</p>
+                    <p className="text-sm italic">Consider: Where should you be? What are your key movements? How do you interact with teammates?</p>
+                  </>
+                )}
+                
+                {selectedGame === "positional-guides" && (
+                  <>
+                    <p className="text-lg font-medium text-foreground">Application Question:</p>
+                    <p>In the context of "{currentCard?.title}", how would you apply this principle during a match situation?</p>
+                    <p className="text-sm italic">Think about: When does this apply? What triggers this action? What's the expected outcome?</p>
+                  </>
+                )}
+                
+                {selectedGame === "concepts" && (
+                  <>
+                    <p className="text-lg font-medium text-foreground">Tactical Scenario:</p>
+                    <p>Explain "{currentCard?.title}" and describe a specific match situation where you would apply this concept.</p>
+                    <p className="text-sm italic">Consider: What problem does this solve? How does it help the team? What must you do technically?</p>
+                  </>
+                )}
+                
+                {selectedGame === "pre-match" && (
+                  <>
+                    <p className="text-lg font-medium text-foreground">Opponent Analysis:</p>
+                    <p>Based on the {currentCard?.category} for this match, what specific adjustments should you make to your game?</p>
+                    <p className="text-sm italic">Think about: How will this affect your positioning? What opportunities does it create? What risks should you avoid?</p>
+                  </>
+                )}
+              </div>
+              
               <Button 
                 onClick={() => setIsRevealed(true)}
                 className="bg-gold text-gold-foreground hover:bg-gold/90"

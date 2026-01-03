@@ -11,6 +11,7 @@ interface PlayerCardProps {
   player: any; // Changed from Player to any since we're using database structure
   viewMode?: "grid" | "list";
   disableProfileLink?: boolean;
+  isStarsPage?: boolean; // Stars page shows "View Profile" on hover instead of "Declare Interest"
 }
 
 // Convert player name to URL slug
@@ -22,7 +23,7 @@ const createPlayerSlug = (name: string): string => {
     .replace(/\s+/g, '-'); // Replace spaces with hyphens
 };
 
-export const PlayerCard = ({ player, viewMode = "grid", disableProfileLink = false }: PlayerCardProps) => {
+export const PlayerCard = ({ player, viewMode = "grid", disableProfileLink = false, isStarsPage = false }: PlayerCardProps) => {
   const cardRef = useRef<HTMLAnchorElement>(null);
   const [isInView, setIsInView] = useState(false);
   const [isTouched, setIsTouched] = useState(false);
@@ -267,17 +268,28 @@ export const PlayerCard = ({ player, viewMode = "grid", disableProfileLink = fal
               </div>
             </div>
 
-            {/* Declare Interest Button - replaces profile link */}
-            <a 
-              href={whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="bg-primary rounded-md py-3 px-4 flex items-center justify-center gap-2 transition-all hover:brightness-110"
-            >
-              <span className="font-bebas uppercase tracking-wider text-black">{t('player_card.declare_interest', 'Declare Interest')}</span>
-              <ArrowRight className="w-5 h-5 text-black" />
-            </a>
+            {/* Stars page: View Profile link | Players list: Declare Interest */}
+            {isStarsPage ? (
+              <Link 
+                to={`/stars/${playerSlug}`}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-primary rounded-md py-3 px-4 flex items-center justify-center gap-2 transition-all hover:brightness-110"
+              >
+                <span className="font-bebas uppercase tracking-wider text-black">{t('player_card.view_profile', 'View Profile')}</span>
+                <ArrowRight className="w-5 h-5 text-black" />
+              </Link>
+            ) : (
+              <a 
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="bg-primary rounded-md py-3 px-4 flex items-center justify-center gap-2 transition-all hover:brightness-110"
+              >
+                <span className="font-bebas uppercase tracking-wider text-black">{t('player_card.declare_interest', 'Declare Interest')}</span>
+                <ArrowRight className="w-5 h-5 text-black" />
+              </a>
+            )}
           </div>
         </div>
       </div>

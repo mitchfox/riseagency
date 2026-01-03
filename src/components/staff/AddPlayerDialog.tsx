@@ -233,26 +233,7 @@ export const AddPlayerDialog = ({
 
                 <div className="grid grid-cols-1 gap-3 sm:gap-4">
                   <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="category" className="text-sm">Category</Label>
-                    <Select
-                      value={formData.category}
-                      onValueChange={(value) => setFormData({ ...formData, category: value })}
-                    >
-                      <SelectTrigger className="h-10 sm:h-11">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Signed">Signed</SelectItem>
-                        <SelectItem value="Mandate">Mandate</SelectItem>
-                        <SelectItem value="Fuel For Football">Fuel For Football</SelectItem>
-                        <SelectItem value="Previously Mandated">Previously Mandated</SelectItem>
-                        <SelectItem value="Scouted">Scouted</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="representation_status" className="text-sm">Representation Status</Label>
+                    <Label htmlFor="representation_status" className="text-sm">Representation Status *</Label>
                     <Select
                       value={formData.representation_status}
                       onValueChange={(value) => setFormData({ ...formData, representation_status: value })}
@@ -263,6 +244,7 @@ export const AddPlayerDialog = ({
                       <SelectContent>
                         <SelectItem value="represented">Represented</SelectItem>
                         <SelectItem value="mandated">Mandated</SelectItem>
+                        <SelectItem value="previously_mandated">Previously Mandated</SelectItem>
                         <SelectItem value="scouted">Scouted</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
