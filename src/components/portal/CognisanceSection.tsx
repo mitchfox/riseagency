@@ -809,16 +809,23 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
           {/* Question prompt - structured question format */}
           {!isRevealed && (
             <div className="flex-1 flex flex-col items-center justify-center">
-              <h3 className="text-xl font-semibold text-center mb-4 text-gold">
+              <div className="text-sm text-muted-foreground mb-4 text-center">
+                {currentCard?.category}
+              </div>
+              <h3 className="text-xl font-semibold text-center mb-6 text-gold">
                 {currentCard?.title}
               </h3>
-              <p className="text-muted-foreground mb-6 text-center max-w-lg">
-                What is the key point for this topic?
+              <p className="text-muted-foreground mb-2 text-center max-w-lg text-lg">
+                Can you explain this concept and its application in a match situation?
+              </p>
+              <p className="text-sm text-muted-foreground mb-6 text-center max-w-lg italic">
+                Think about: What does this mean? When would you apply it? What would be the outcome?
               </p>
               <Button 
                 onClick={() => setIsRevealed(true)}
                 className="bg-gold text-gold-foreground hover:bg-gold/90"
               >
+                <Eye className="w-4 h-4 mr-2" />
                 Reveal Answer
               </Button>
             </div>

@@ -446,8 +446,8 @@ const SignContract = () => {
       </header>
 
       {/* Document viewer with signing - mobile optimized height using dvh */}
-      <main className="flex-1 overflow-hidden p-2 sm:p-4">
-        <div className="max-w-6xl mx-auto h-full">
+      <main className="flex-1 overflow-auto">
+        <div className="max-w-6xl mx-auto h-full min-h-0">
           {pdfError ? (
             <div className="flex flex-col items-center justify-center h-full p-4 text-center">
               <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
@@ -461,17 +461,19 @@ const SignContract = () => {
               </Button>
             </div>
           ) : (
-            <PDFDocumentViewer
-              fileUrl={contract.file_url}
-              fields={fields}
-              mode="sign"
-              fieldValues={fieldValues}
-              onFieldValueChange={handleFieldValueChange}
-              onSignatureStart={handleSignatureStart}
-              signerPartyFilter="all"
-              onPdfError={handlePdfError}
-              mobileOptimized={isMobile}
-            />
+            <div className="h-full" style={{ minHeight: isMobile ? 'calc(100vh - 200px)' : 'calc(100vh - 180px)' }}>
+              <PDFDocumentViewer
+                fileUrl={contract.file_url}
+                fields={fields}
+                mode="sign"
+                fieldValues={fieldValues}
+                onFieldValueChange={handleFieldValueChange}
+                onSignatureStart={handleSignatureStart}
+                signerPartyFilter="all"
+                onPdfError={handlePdfError}
+                mobileOptimized={isMobile}
+              />
+            </div>
           )}
         </div>
       </main>
