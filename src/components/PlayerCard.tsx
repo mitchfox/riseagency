@@ -76,9 +76,6 @@ export const PlayerCard = ({ player, viewMode = "grid", disableProfileLink = fal
   }, []);
 
   if (viewMode === "list") {
-    // Truncate translated bio
-    const truncatedBio = translatedBio.length > 200 ? translatedBio.substring(0, 200) + "..." : translatedBio;
-
     // Format DOB with age
     const dobDisplay = dateOfBirth ? `${dateOfBirth} (${player.age})` : `Age ${player.age}`;
 
@@ -136,23 +133,13 @@ export const PlayerCard = ({ player, viewMode = "grid", disableProfileLink = fal
               <span>{player.nationality}</span>
             </div>
 
-            {/* Bio Text - show immediately, translate in background */}
-            {truncatedBio ? (
-              <p className={`text-sm text-muted-foreground leading-relaxed line-clamp-4 transition-opacity duration-300 ${isBioLoading ? 'opacity-70' : 'opacity-100'}`}>
-                {truncatedBio}
+            {/* Bio Text - exactly 3 lines with ellipsis */}
+            {translatedBio ? (
+              <p className={`text-sm text-muted-foreground leading-relaxed line-clamp-3 transition-opacity duration-300 ${isBioLoading ? 'opacity-70' : 'opacity-100'}`}>
+                {translatedBio}
               </p>
             ) : null}
           </div>
-
-          {/* View Profile Button - hidden when link is disabled */}
-          {!disableProfileLink && (
-            <div className="mt-2">
-              <div className="inline-flex bg-primary rounded-md py-2.5 px-5 items-center gap-2 transition-all group-hover:brightness-110 group-hover:scale-105">
-                <span className="font-bebas uppercase tracking-wider text-black text-base">{t('player_card.view_profile', 'View Profile')}</span>
-                <ArrowRight className="w-5 h-5 text-black group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-          )}
         </div>
       </>
     );
@@ -171,6 +158,10 @@ export const PlayerCard = ({ player, viewMode = "grid", disableProfileLink = fal
       </Link>
     );
   }
+
+  // WhatsApp link for Declare Interest
+  const whatsappMessage = encodeURIComponent(`Hey, I'm interested in ${player.name}`);
+  const whatsappLink = `https://wa.me/?text=${whatsappMessage}`;
 
   const gridClassName = "group relative block overflow-hidden transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
@@ -276,13 +267,17 @@ export const PlayerCard = ({ player, viewMode = "grid", disableProfileLink = fal
               </div>
             </div>
 
-            {/* Profile Button - hidden when link is disabled */}
-            {!disableProfileLink && (
-              <div className="bg-primary rounded-md py-3 px-4 flex items-center justify-center gap-2 transition-all hover:brightness-110">
-                <span className="font-bebas uppercase tracking-wider text-black">{t('player_card.player_profile', 'Player Profile')}</span>
-                <ArrowRight className="w-5 h-5 text-black" />
-              </div>
-            )}
+            {/* Declare Interest Button - replaces profile link */}
+            <a 
+              href={whatsappLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="bg-primary rounded-md py-3 px-4 flex items-center justify-center gap-2 transition-all hover:brightness-110"
+            >
+              <span className="font-bebas uppercase tracking-wider text-black">{t('player_card.declare_interest', 'Declare Interest')}</span>
+              <ArrowRight className="w-5 h-5 text-black" />
+            </a>
           </div>
         </div>
       </div>
@@ -315,28 +310,15 @@ export const PlayerCard = ({ player, viewMode = "grid", disableProfileLink = fal
     </>
   );
 
-  if (disableProfileLink) {
-    return (
-      <div
-        ref={cardRef as any}
-        className={gridClassName}
-        onTouchStart={() => setIsTouched(true)}
-        onTouchEnd={() => setTimeout(() => setIsTouched(false), 300)}
-      >
-        {gridContent}
-      </div>
-    );
-  }
-
+  // Grid view no longer links to profile - just shows card with declare interest
   return (
-    <Link
-      ref={cardRef}
-      to={`/stars/${playerSlug}`}
+    <div
+      ref={cardRef as any}
       className={gridClassName}
       onTouchStart={() => setIsTouched(true)}
       onTouchEnd={() => setTimeout(() => setIsTouched(false), 300)}
     >
       {gridContent}
-    </Link>
+    </div>
   );
 };

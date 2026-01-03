@@ -2452,10 +2452,12 @@ export type Database = {
           name: string
           nationality: string
           next_program_notes: string | null
+          player_list_order: number | null
           position: string
           preferred_currency: string | null
           programming_notes: string | null
           representation_status: string | null
+          star_order: number | null
           transfer_priority: string | null
           transfer_status: string | null
           updated_at: string | null
@@ -2481,10 +2483,12 @@ export type Database = {
           name: string
           nationality: string
           next_program_notes?: string | null
+          player_list_order?: number | null
           position: string
           preferred_currency?: string | null
           programming_notes?: string | null
           representation_status?: string | null
+          star_order?: number | null
           transfer_priority?: string | null
           transfer_status?: string | null
           updated_at?: string | null
@@ -2510,10 +2514,12 @@ export type Database = {
           name?: string
           nationality?: string
           next_program_notes?: string | null
+          player_list_order?: number | null
           position?: string
           preferred_currency?: string | null
           programming_notes?: string | null
           representation_status?: string | null
+          star_order?: number | null
           transfer_priority?: string | null
           transfer_status?: string | null
           updated_at?: string | null

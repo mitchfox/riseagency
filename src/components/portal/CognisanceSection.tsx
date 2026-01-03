@@ -806,29 +806,30 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
             )}
           </div>
           
-          {/* Title */}
-          <h3 className="text-xl font-semibold text-center mb-6">
-            {currentCard?.title}
-          </h3>
-          
-          {/* Prompt when not revealed */}
+          {/* Question prompt - structured question format */}
           {!isRevealed && (
             <div className="flex-1 flex flex-col items-center justify-center">
-              <p className="text-muted-foreground mb-6 text-center">
-                Can you remember this point?
+              <h3 className="text-xl font-semibold text-center mb-4 text-gold">
+                {currentCard?.title}
+              </h3>
+              <p className="text-muted-foreground mb-6 text-center max-w-lg">
+                What is the key point for this topic?
               </p>
               <Button 
                 onClick={() => setIsRevealed(true)}
                 className="bg-gold text-gold-foreground hover:bg-gold/90"
               >
-                Show Content
+                Reveal Answer
               </Button>
             </div>
           )}
           
-          {/* Content when revealed */}
+          {/* Answer when revealed */}
           {isRevealed && (
             <div className="flex-1 flex flex-col">
+              <h3 className="text-lg font-semibold text-center mb-4 text-gold">
+                {currentCard?.title}
+              </h3>
               <div className="flex-1 flex items-center justify-center">
                 <p className="text-base leading-relaxed text-center max-w-2xl">
                   {currentCard?.content}
