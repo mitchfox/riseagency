@@ -257,7 +257,7 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
             <Accordion type="multiple" className="w-full">
               {PHASES.map(phase => (
                 <AccordionItem key={phase} value={phase}>
-                  <AccordionTrigger className="text-sm md:text-lg font-semibold hover:no-underline py-3 md:py-4">
+                  <AccordionTrigger className="text-lg md:text-xl font-bold hover:no-underline py-3 md:py-4">
                     <div className="flex items-center gap-2 text-left">
                       <span className="line-clamp-1">{phase}</span>
                       <Badge variant="secondary" className="text-[10px] md:text-xs shrink-0">
@@ -273,7 +273,7 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
                         <Card key={subcategory} className="border-l-4 border-l-primary">
                           <CardHeader className="pb-2 px-3 md:px-6 py-2 md:py-4">
                             <div className="flex items-center justify-between gap-2">
-                              <CardTitle className="text-sm md:text-base line-clamp-1">{subcategory}</CardTitle>
+                              <CardTitle className="text-base md:text-lg font-semibold line-clamp-1">{subcategory}</CardTitle>
                               {isAdmin && (
                                 <Button
                                   variant="outline"
@@ -298,7 +298,7 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
                                 >
                                   {/* Point Header */}
                                   <div className="flex items-start justify-between gap-2">
-                                    <h4 className="font-semibold text-primary text-sm md:text-base">{point.title}</h4>
+                                    <h4 className="font-bold text-primary text-base md:text-lg">{point.title}</h4>
                                     {isAdmin && (
                                       <>
                                         {/* Desktop actions */}
@@ -446,7 +446,7 @@ export const PositionalGuides = ({ isAdmin }: { isAdmin: boolean }) => {
                                   {point.paragraphs.length > 0 && (
                                     <div className="space-y-2">
                                       {point.paragraphs.map((para, pIdx) => (
-                                        <p key={pIdx} className="text-xs md:text-sm text-muted-foreground whitespace-pre-line">
+                                        <p key={pIdx} className="text-sm md:text-base text-muted-foreground whitespace-pre-line leading-relaxed">
                                           {para}
                                         </p>
                                       ))}

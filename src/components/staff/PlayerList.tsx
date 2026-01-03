@@ -26,9 +26,11 @@ interface Player {
   category: string | null;
   representation_status: string | null;
   visible_on_stars_page: boolean;
+  star_order: number | null;
+  player_list_order: number | null;
 }
 
-type EditableField = 'position' | 'age' | 'club' | 'league' | 'email' | 'category' | 'representation_status';
+type EditableField = 'position' | 'age' | 'club' | 'league' | 'email' | 'category' | 'representation_status' | 'bio' | 'image_url' | 'star_order' | 'player_list_order';
 
 interface FieldEdit {
   [playerId: string]: string | number;
@@ -55,6 +57,8 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
     category: "",
     representation_status: "",
     visible_on_stars_page: false,
+    star_order: null as number | null,
+    player_list_order: null as number | null,
   });
 
   useEffect(() => {
@@ -65,7 +69,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
     try {
       const { data, error } = await supabase
         .from("players")
-        .select("id, name, club, club_logo, league, position, age, nationality, bio, email, image_url, category, representation_status, visible_on_stars_page")
+        .select("id, name, club, club_logo, league, position, age, nationality, bio, email, image_url, category, representation_status, visible_on_stars_page, star_order, player_list_order")
         .neq("category", "Scouted")
         .order("name");
 
@@ -118,7 +122,8 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
     const editedValue = fieldEdits[player.id];
     if (editedValue !== undefined) return editedValue;
     
-    const value = player[selectedField];
+    const value = player[selectedField as keyof Player];
+    if (typeof value === 'boolean') return '';
     return value ?? "";
   };
 
@@ -130,7 +135,11 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
       league: 'League',
       email: 'Email',
       category: 'Category',
-      representation_status: 'Rep Status'
+      representation_status: 'Rep Status',
+      bio: 'Biography',
+      image_url: 'Image URL',
+      star_order: 'Star Order',
+      player_list_order: 'List Order'
     };
     return labels[field];
   };
@@ -150,6 +159,8 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
       category: player.category || "",
       representation_status: player.representation_status || "",
       visible_on_stars_page: player.visible_on_stars_page || false,
+      star_order: player.star_order,
+      player_list_order: player.player_list_order,
     });
   };
 
@@ -172,6 +183,8 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
           category: formData.category || null,
           representation_status: formData.representation_status || null,
           visible_on_stars_page: formData.visible_on_stars_page,
+          star_order: formData.star_order,
+          player_list_order: formData.player_list_order,
         })
         .eq("id", editingPlayer.id);
 
@@ -239,6 +252,10 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 <SelectItem value="email">Email</SelectItem>
                 <SelectItem value="category">Category</SelectItem>
                 <SelectItem value="representation_status">Rep Status</SelectItem>
+                <SelectItem value="bio">Biography</SelectItem>
+                <SelectItem value="image_url">Image URL</SelectItem>
+                <SelectItem value="star_order">Star Order</SelectItem>
+                <SelectItem value="player_list_order">List Order</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -379,13 +396,22 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                   <TableCell className="py-2.5">
                     {isAdmin ? (
                       <div className="space-y-1">
-                        <Input
-                          type={selectedField === 'age' ? 'number' : 'text'}
-                          value={getFieldValue(player)}
-                          onChange={(e) => handleFieldEdit(player.id, selectedField === 'age' ? parseInt(e.target.value) || 0 : e.target.value)}
-                          className="h-9 max-w-[300px]"
-                          placeholder={`Enter ${getFieldLabel(selectedField).toLowerCase()}`}
-                        />
+                        {selectedField === 'bio' ? (
+                          <textarea
+                            value={String(getFieldValue(player))}
+                            onChange={(e) => handleFieldEdit(player.id, e.target.value)}
+                            className="w-full h-20 max-w-[400px] p-2 text-sm border rounded resize-none"
+                            placeholder="Enter biography"
+                          />
+                        ) : (
+                          <Input
+                            type={['age', 'star_order', 'player_list_order'].includes(selectedField) ? 'number' : 'text'}
+                            value={getFieldValue(player)}
+                            onChange={(e) => handleFieldEdit(player.id, ['age', 'star_order', 'player_list_order'].includes(selectedField) ? parseInt(e.target.value) || 0 : e.target.value)}
+                            className="h-9 max-w-[300px]"
+                            placeholder={`Enter ${getFieldLabel(selectedField).toLowerCase()}`}
+                          />
+                        )}
                         {selectedField === 'league' && player.club && (
                           <div className="text-xs italic text-muted-foreground">
                             {player.club}

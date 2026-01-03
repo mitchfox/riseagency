@@ -251,7 +251,8 @@ export const PDFDocumentViewer = ({
   };
 
   const getPartyColor = (party: string) => {
-    return party === 'owner' ? 'border-green-500 bg-green-50' : 'border-orange-500 bg-orange-50';
+    // Transparent backgrounds to not obscure document content
+    return party === 'owner' ? 'border-green-500 bg-green-100/30' : 'border-orange-500 bg-orange-100/30';
   };
 
   return (
@@ -451,7 +452,7 @@ export const PDFDocumentViewer = ({
                   className={cn(
                     "absolute border-2 rounded transition-colors select-none z-10",
                     mode === 'edit' 
-                      ? cn("cursor-grab hover:opacity-90", getPartyColor(field.signer_party))
+                      ? cn("cursor-grab hover:opacity-90 bg-transparent", getPartyColor(field.signer_party))
                       : (mode === 'sign' || mode === 'owner-sign')
                       ? cn(getPartyColor(field.signer_party), !editable && "opacity-60")
                       : "border-muted bg-muted/20",

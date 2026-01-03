@@ -57,8 +57,8 @@ const PlayersList = () => {
         .from('players')
         .select('*')
         .not('category', 'in', '("Scouted","Fuel For Football")')
-        .neq('representation_status', 'scouted')
-        .order('name');
+        .not('representation_status', 'in', '("scouted","other")')
+        .order('player_list_order', { ascending: true, nullsFirst: false });
       
       if (!error && data) {
         // Parse bio to extract club info for each player
