@@ -47,7 +47,6 @@ interface Player {
   email: string | null;
   visible_on_stars_page: boolean;
   highlights: any;
-  category: string;
   representation_status: string;
   club: string | null;
   club_logo: string | null;
@@ -113,7 +112,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     position: "",
     age: 0,
     nationality: "",
-    category: "",
     representation_status: "",
     visible_on_stars_page: false,
     image_url: "",
@@ -688,7 +686,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       position: player.position,
       age: player.age,
       nationality: player.nationality,
-      category: player.category || "",
       representation_status: player.representation_status || "",
       visible_on_stars_page: player.visible_on_stars_page || false,
       image_url: player.image_url || "",
@@ -988,7 +985,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           bio: bioJSON,
           image_url: finalImageUrl || null,
           hover_image_url: finalHoverImageUrl || null,
-          category: formData.category || 'Scouted',
           representation_status: formData.representation_status || 'other',
           visible_on_stars_page: formData.visible_on_stars_page,
           links: formData.links.length > 0 ? formData.links : null,
@@ -1142,7 +1138,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           bio: bioJSON,
           image_url: finalImageUrl || null,
           hover_image_url: finalHoverImageUrl || null,
-          category: formData.category || null,
           representation_status: formData.representation_status || null,
           visible_on_stars_page: formData.visible_on_stars_page,
           links: formData.links.length > 0 ? formData.links : null,
@@ -1344,7 +1339,6 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   position: "",
                   age: 18,
                   nationality: "",
-                  category: "Scouted",
                   representation_status: "other",
                   visible_on_stars_page: false,
                   image_url: "",
@@ -3164,43 +3158,23 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                    <div className="space-y-1.5 sm:space-y-2">
-                      <Label htmlFor="category" className="text-sm">Category</Label>
-                      <Select
-                        value={formData.category}
-                        onValueChange={(value) => setFormData({ ...formData, category: value })}
-                      >
-                        <SelectTrigger className="h-10 sm:h-11">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Signed">Signed</SelectItem>
-                          <SelectItem value="Mandate">Mandate</SelectItem>
-                          <SelectItem value="Fuel For Football">Fuel For Football</SelectItem>
-                          <SelectItem value="Previously Mandated">Previously Mandated</SelectItem>
-                          <SelectItem value="Scouted">Scouted</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-1.5 sm:space-y-2">
-                      <Label htmlFor="representation_status" className="text-sm">Representation Status</Label>
-                      <Select
-                        value={formData.representation_status}
-                        onValueChange={(value) => setFormData({ ...formData, representation_status: value })}
-                      >
-                        <SelectTrigger className="h-10 sm:h-11">
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="represented">Represented</SelectItem>
-                          <SelectItem value="mandated">Mandated</SelectItem>
-                          <SelectItem value="scouted">Scouted</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="representation_status" className="text-sm">Representation Status</Label>
+                    <Select
+                      value={formData.representation_status}
+                      onValueChange={(value) => setFormData({ ...formData, representation_status: value })}
+                    >
+                      <SelectTrigger className="h-10 sm:h-11">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="represented">Represented</SelectItem>
+                        <SelectItem value="mandated">Mandated</SelectItem>
+                        <SelectItem value="previously_mandated">Previously Mandated</SelectItem>
+                        <SelectItem value="scouted">Scouted</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="flex items-center gap-3 pt-2">

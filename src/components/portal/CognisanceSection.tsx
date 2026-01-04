@@ -877,27 +877,52 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
                   {selectedGame === "pre-match" && "Analysis Point:"}
                 </div>
                 
-                {/* Main content */}
+                {/* Main content - the actual answer */}
                 <div className="bg-muted/30 rounded-lg p-6 max-w-2xl w-full">
-                  <p className="text-base leading-relaxed text-center">
+                  <p className="text-base leading-relaxed text-center font-medium">
                     {currentCard?.content}
                   </p>
                 </div>
                 
-                {/* Contextual application tips */}
-                <div className="text-sm text-muted-foreground text-center max-w-lg mt-4">
-                  {selectedGame === "schemes" && (
-                    <p><span className="font-medium text-foreground">Remember:</span> Execute this during the {currentCard?.category} phase. Communicate with teammates and stay aware of your positioning.</p>
-                  )}
-                  {selectedGame === "positional-guides" && (
-                    <p><span className="font-medium text-foreground">In practice:</span> Focus on timing and body position. This principle applies in {currentCard?.category}.</p>
-                  )}
-                  {selectedGame === "concepts" && (
-                    <p><span className="font-medium text-foreground">Application:</span> Look for opportunities to apply this in training and matches. Recognition is key.</p>
-                  )}
-                  {selectedGame === "pre-match" && (
-                    <p><span className="font-medium text-foreground">Game plan:</span> Use this information to adjust your positioning and decision-making during the match.</p>
-                  )}
+                {/* Practical application guidance based on game type */}
+                <div className="bg-gold/10 border border-gold/20 rounded-lg p-4 max-w-2xl w-full">
+                  <h4 className="text-sm font-bold text-gold mb-2 uppercase tracking-wider">
+                    How to Apply This:
+                  </h4>
+                  <div className="text-sm text-muted-foreground space-y-2">
+                    {selectedGame === "schemes" && (
+                      <>
+                        <p>• <span className="text-foreground font-medium">Phase:</span> {currentCard?.category}</p>
+                        <p>• <span className="text-foreground font-medium">Body Position:</span> Stay balanced with knees bent, ready to move in any direction.</p>
+                        <p>• <span className="text-foreground font-medium">Communication:</span> Talk to teammates about your positioning and theirs.</p>
+                        <p>• <span className="text-foreground font-medium">Awareness:</span> Constantly scan to know where space and opponents are.</p>
+                      </>
+                    )}
+                    {selectedGame === "positional-guides" && (
+                      <>
+                        <p>• <span className="text-foreground font-medium">Context:</span> {currentCard?.category}</p>
+                        <p>• <span className="text-foreground font-medium">Timing:</span> Execute this at the right moment - anticipate, don't react.</p>
+                        <p>• <span className="text-foreground font-medium">Consistency:</span> Practice this in training until it becomes automatic.</p>
+                        <p>• <span className="text-foreground font-medium">Adaptation:</span> Adjust based on opponent positioning and game state.</p>
+                      </>
+                    )}
+                    {selectedGame === "concepts" && (
+                      <>
+                        <p>• <span className="text-foreground font-medium">Category:</span> {currentCard?.category}</p>
+                        <p>• <span className="text-foreground font-medium">Recognition:</span> Look for triggers that signal when to apply this.</p>
+                        <p>• <span className="text-foreground font-medium">Execution:</span> Quality of the action matters more than speed.</p>
+                        <p>• <span className="text-foreground font-medium">Team Integration:</span> Ensure teammates understand when you're applying this.</p>
+                      </>
+                    )}
+                    {selectedGame === "pre-match" && (
+                      <>
+                        <p>• <span className="text-foreground font-medium">Match Context:</span> {currentCard?.category}</p>
+                        <p>• <span className="text-foreground font-medium">Positioning:</span> Adjust your starting positions based on this information.</p>
+                        <p>• <span className="text-foreground font-medium">Exploitation:</span> Plan how to take advantage of or counter this.</p>
+                        <p>• <span className="text-foreground font-medium">Game Management:</span> Re-evaluate as the match progresses.</p>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
               

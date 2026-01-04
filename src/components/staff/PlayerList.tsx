@@ -24,7 +24,6 @@ interface Player {
   email: string | null;
   image_url: string | null;
   hover_image_url: string | null;
-  category: string | null;
   representation_status: string | null;
   visible_on_stars_page: boolean;
   star_order: number | null;
@@ -73,7 +72,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
       // Only show players with valid representation statuses
       const { data, error } = await supabase
         .from("players")
-        .select("id, name, club, club_logo, league, position, age, nationality, bio, email, image_url, hover_image_url, category, representation_status, visible_on_stars_page, star_order, player_list_order")
+        .select("id, name, club, club_logo, league, position, age, nationality, bio, email, image_url, hover_image_url, representation_status, visible_on_stars_page, star_order, player_list_order")
         .in("representation_status", ["mandated", "represented", "previously_mandated"])
         .order("player_list_order", { ascending: true, nullsFirst: false })
         .order("name");
@@ -156,7 +155,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
       club: 'Club',
       league: 'League',
       email: 'Email',
-      representation_status: 'Rep Status',
+      representation_status: 'Representation Status',
       bio: 'Biography',
       star_order: 'Star Order (Stars Only)',
       player_list_order: 'List Order',
@@ -330,7 +329,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 <SelectItem value="club">Club</SelectItem>
                 <SelectItem value="league">League</SelectItem>
                 <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="representation_status">Rep Status</SelectItem>
+                <SelectItem value="representation_status">Representation Status</SelectItem>
                 <SelectItem value="bio">Biography</SelectItem>
                 <SelectItem value="star_order">Star Order (Stars Only)</SelectItem>
                 <SelectItem value="player_list_order">List Order</SelectItem>
