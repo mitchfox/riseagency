@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { Brain, ChevronLeft, RotateCcw, Target, Lightbulb, BookOpen, Eye, Check } from "lucide-react";
+import { Brain, ChevronLeft, RotateCcw, Target, Lightbulb, BookOpen, Eye, Check, Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -14,6 +14,7 @@ interface CognisanceSectionProps {
 }
 
 type GameType = "schemes" | "concepts" | "pre-match" | "positional-guides" | null;
+type GameMode = "flashcards" | "ai-quiz";
 
 interface FlashcardData {
   id: string;
@@ -110,8 +111,21 @@ function calculateNextReview(quality: number, progress: CardProgress | null) {
 
 export function CognisanceSection({ playerId, playerPosition }: CognisanceSectionProps) {
   const [selectedGame, setSelectedGame] = useState<GameType>(null);
+  const [gameMode, setGameMode] = useState<GameMode>("flashcards");
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
+  
+  // AI Quiz state
+  const [aiQuestion, setAiQuestion] = useState<{
+    question: string;
+    options: string[];
+    correctIndex: number;
+    explanation: string;
+  } | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [showAiResult, setShowAiResult] = useState(false);
+  const [loadingAiQuestion, setLoadingAiQuestion] = useState(false);
+  const [aiQuizScore, setAiQuizScore] = useState({ correct: 0, total: 0 });
   
   // Data state
   const [schemes, setSchemes] = useState<SchemeData[]>([]);
@@ -527,6 +541,142 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
     setFlashcards([]);
     setCurrentIndex(0);
     setIsRevealed(false);
+    setAiQuestion(null);
+    setSelectedAnswer(null);
+    setShowAiResult(false);
+    setAiQuizScore({ correct: 0, total: 0 });
+  };
+
+  // Get content for AI question generation
+  const getContentForAiQuestion = (): { content: string; title: string } | null => {
+    if (selectedGame === "schemes") {
+      let filteredSchemes = schemes;
+      if (selectedSchemePosition) {
+        filteredSchemes = filteredSchemes.filter(s => s.position === selectedSchemePosition);
+      }
+      if (selectedTeamSchemeFilter !== "all") {
+        filteredSchemes = filteredSchemes.filter(s => s.team_scheme === selectedTeamSchemeFilter);
+      }
+      if (filteredSchemes.length === 0) return null;
+      
+      const scheme = filteredSchemes[Math.floor(Math.random() * filteredSchemes.length)];
+      const phases = [
+        { name: "Defensive Transition", content: scheme.defensive_transition },
+        { name: "Defence", content: scheme.defence },
+        { name: "Offensive Transition", content: scheme.offensive_transition },
+        { name: "In Possession", content: scheme.offence }
+      ].filter(p => p.content);
+      
+      if (phases.length === 0) return null;
+      const phase = phases[Math.floor(Math.random() * phases.length)];
+      return {
+        content: phase.content || '',
+        title: `${scheme.team_scheme} vs ${scheme.opposition_scheme} - ${phase.name} (${scheme.position})`
+      };
+    }
+    
+    if (selectedGame === "positional-guides") {
+      let filteredPoints = positionalGuidePoints.filter(p => selectedGuidePosition ? p.position === selectedGuidePosition : true);
+      if (filteredPoints.length === 0) return null;
+      
+      const point = filteredPoints[Math.floor(Math.random() * filteredPoints.length)];
+      const content = point.paragraphs?.join('\n\n') || '';
+      return { content, title: `${point.position} - ${point.phase} - ${point.title}` };
+    }
+    
+    if (selectedGame === "concepts") {
+      let filteredConcepts = selectedConceptFilter !== "all" 
+        ? concepts.filter(c => c.id === selectedConceptFilter) 
+        : concepts;
+      if (filteredConcepts.length === 0) return null;
+      
+      const concept = filteredConcepts[Math.floor(Math.random() * filteredConcepts.length)];
+      let content = concept.explanation || '';
+      if (concept.points?.length) {
+        content += '\n\n' + concept.points.map((p: any) => `${p.title}: ${p.description}`).join('\n');
+      }
+      return { content, title: concept.title };
+    }
+    
+    if (selectedGame === "pre-match") {
+      let filteredAnalyses = selectedPreMatchFilter !== "all"
+        ? preMatchAnalyses.filter(p => p.id === selectedPreMatchFilter)
+        : preMatchAnalyses;
+      if (filteredAnalyses.length === 0) return null;
+      
+      const analysis = filteredAnalyses[Math.floor(Math.random() * filteredAnalyses.length)];
+      const content = [
+        analysis.opposition_strengths ? `Opposition Strengths: ${analysis.opposition_strengths}` : '',
+        analysis.opposition_weaknesses ? `Opposition Weaknesses: ${analysis.opposition_weaknesses}` : '',
+        analysis.key_details ? `Key Details: ${analysis.key_details}` : ''
+      ].filter(Boolean).join('\n\n');
+      return { content, title: analysis.title };
+    }
+    
+    return null;
+  };
+
+  // Generate AI question
+  const generateAiQuestion = async () => {
+    setLoadingAiQuestion(true);
+    setAiQuestion(null);
+    setSelectedAnswer(null);
+    setShowAiResult(false);
+    
+    const contentData = getContentForAiQuestion();
+    if (!contentData || !contentData.content) {
+      toast.error("No content available for questions. Try different filters.");
+      setLoadingAiQuestion(false);
+      return;
+    }
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-cognisance-question', {
+        body: {
+          content: contentData.content,
+          gameType: selectedGame,
+          title: contentData.title
+        }
+      });
+      
+      if (error) throw error;
+      if (data.error) {
+        toast.error(data.error);
+        setLoadingAiQuestion(false);
+        return;
+      }
+      
+      setAiQuestion(data);
+    } catch (error) {
+      console.error("Error generating question:", error);
+      toast.error("Failed to generate question. Please try again.");
+    }
+    
+    setLoadingAiQuestion(false);
+  };
+
+  const handleAiAnswer = (index: number) => {
+    if (showAiResult) return;
+    setSelectedAnswer(index);
+  };
+
+  const submitAiAnswer = () => {
+    if (selectedAnswer === null) {
+      toast.error("Please select an answer");
+      return;
+    }
+    setShowAiResult(true);
+    const isCorrect = selectedAnswer === aiQuestion?.correctIndex;
+    setAiQuizScore(prev => ({
+      correct: prev.correct + (isCorrect ? 1 : 0),
+      total: prev.total + 1
+    }));
+  };
+
+  const startAiQuiz = () => {
+    setGameMode("ai-quiz");
+    setIsPlaying(true);
+    generateAiQuestion();
   };
 
   // Game selection view
@@ -631,8 +781,40 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Mode Selection */}
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => setGameMode("flashcards")}
+                className={cn(
+                  "p-4 rounded-lg border-2 transition-all text-left",
+                  gameMode === "flashcards" 
+                    ? "border-gold bg-gold/10" 
+                    : "border-border hover:border-gold/50"
+                )}
+              >
+                <Brain className="w-6 h-6 text-gold mb-2" />
+                <h4 className="font-semibold text-sm">Flashcards</h4>
+                <p className="text-xs text-muted-foreground">Spaced repetition learning</p>
+              </button>
+              <button
+                onClick={() => setGameMode("ai-quiz")}
+                className={cn(
+                  "p-4 rounded-lg border-2 transition-all text-left",
+                  gameMode === "ai-quiz" 
+                    ? "border-gold bg-gold/10" 
+                    : "border-border hover:border-gold/50"
+                )}
+              >
+                <Sparkles className="w-6 h-6 text-gold mb-2" />
+                <h4 className="font-semibold text-sm">AI Quiz</h4>
+                <p className="text-xs text-muted-foreground">Scenario-based questions</p>
+              </button>
+            </div>
+            
             <p className="text-muted-foreground text-sm">
-              Review each point and grade how well you remembered it. Cards you struggle with will appear more often.
+              {gameMode === "flashcards" 
+                ? "Review each point and grade how well you remembered it. Cards you struggle with will appear more often."
+                : "AI generates challenging scenario-based questions to test your understanding of the content."}
             </p>
             
             {/* Filters */}
@@ -732,10 +914,133 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
               </div>
             )}
             
-            <Button onClick={startGame} className="w-full bg-gold text-gold-foreground hover:bg-gold/90">
-              <Brain className="w-4 h-4 mr-2" />
-              Start Learning
-            </Button>
+            {gameMode === "flashcards" ? (
+              <Button onClick={startGame} className="w-full bg-gold text-gold-foreground hover:bg-gold/90">
+                <Brain className="w-4 h-4 mr-2" />
+                Start Flashcards
+              </Button>
+            ) : (
+              <Button onClick={startAiQuiz} className="w-full bg-gold text-gold-foreground hover:bg-gold/90">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Start AI Quiz
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // AI Quiz Playing View
+  if (gameMode === "ai-quiz" && isPlaying) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Button 
+            variant="ghost" 
+            onClick={resetGame}
+            className="text-gold hover:text-gold/80"
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Exit Quiz
+          </Button>
+          <div className="text-sm text-muted-foreground">
+            Score: <span className="text-gold font-semibold">{aiQuizScore.correct}/{aiQuizScore.total}</span>
+          </div>
+        </div>
+        
+        <Card className="min-h-[400px]">
+          <CardContent className="p-6">
+            {loadingAiQuestion ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <Loader2 className="w-12 h-12 text-gold animate-spin mb-4" />
+                <p className="text-muted-foreground">Generating question...</p>
+              </div>
+            ) : aiQuestion ? (
+              <div className="space-y-6">
+                {/* Question */}
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-gold">Match Scenario:</h3>
+                  <p className="text-foreground leading-relaxed">{aiQuestion.question}</p>
+                </div>
+                
+                {/* Options */}
+                <div className="space-y-3">
+                  {aiQuestion.options.map((option, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleAiAnswer(index)}
+                      disabled={showAiResult}
+                      className={cn(
+                        "w-full p-4 text-left rounded-lg border-2 transition-all",
+                        showAiResult
+                          ? index === aiQuestion.correctIndex
+                            ? "bg-green-500/20 border-green-500 text-green-300"
+                            : index === selectedAnswer
+                            ? "bg-red-500/20 border-red-500 text-red-300"
+                            : "bg-muted/30 border-border text-muted-foreground"
+                          : selectedAnswer === index
+                          ? "bg-gold/20 border-gold"
+                          : "bg-muted/30 border-border hover:border-gold/50"
+                      )}
+                    >
+                      <span className="font-semibold mr-2">{String.fromCharCode(65 + index)}.</span>
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Submit or Result */}
+                {!showAiResult ? (
+                  <Button 
+                    onClick={submitAiAnswer} 
+                    disabled={selectedAnswer === null}
+                    className="w-full bg-gold text-gold-foreground hover:bg-gold/90"
+                  >
+                    Submit Answer
+                  </Button>
+                ) : (
+                  <div className="space-y-4">
+                    <div className={cn(
+                      "p-4 rounded-lg border",
+                      selectedAnswer === aiQuestion.correctIndex
+                        ? "bg-green-500/10 border-green-500/30"
+                        : "bg-red-500/10 border-red-500/30"
+                    )}>
+                      <div className="flex items-center gap-2 mb-2">
+                        {selectedAnswer === aiQuestion.correctIndex ? (
+                          <>
+                            <Check className="w-5 h-5 text-green-400" />
+                            <span className="font-semibold text-green-400">Correct!</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="font-semibold text-red-400">Incorrect</span>
+                          </>
+                        )}
+                      </div>
+                      <p className="text-sm text-foreground/80">{aiQuestion.explanation}</p>
+                    </div>
+                    
+                    <Button 
+                      onClick={generateAiQuestion}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Next Question
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16">
+                <p className="text-muted-foreground mb-4">No question loaded</p>
+                <Button onClick={generateAiQuestion}>
+                  Generate Question
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

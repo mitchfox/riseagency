@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,9 +7,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Edit, X, Save, ChevronUp, ChevronDown } from "lucide-react";
+import { Edit, X, Save, ChevronUp, ChevronDown, Upload, ArrowUpDown } from "lucide-react";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+// Position order for smart sorting
+const POSITION_ORDER: Record<string, number> = {
+  'GK': 1, 'Goalkeeper': 1,
+  'LB': 2, 'Left-Back': 2,
+  'LCB': 3,
+  'CB': 4, 'Centre-Back': 4,
+  'RCB': 5,
+  'RB': 6, 'Right-Back': 6,
+  'CDM': 7, 'DM': 7,
+  'LCM': 8,
+  'CM': 9, 'Central Midfielder': 9,
+  'RCM': 10,
+  'LM': 11,
+  'LW': 12, 'Left Winger': 12,
+  'AM': 13, 'CAM': 13, 'Attacking Midfielder': 13,
+  'RM': 14,
+  'RW': 15, 'Right Winger': 15,
+  'CF': 16, 'Centre-Forward': 16,
+  'ST': 17, 'Striker': 17,
+};
+
+type SortField = 'player_list_order' | 'position' | 'age' | 'club' | 'league' | 'name' | 'nationality';
+type SortDirection = 'asc' | 'desc';
 
 interface Player {
   id: string;
@@ -62,6 +86,11 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
   });
   const [uploadingImage, setUploadingImage] = useState<'main' | 'hover' | null>(null);
   const [isMoving, setIsMoving] = useState(false);
+  const [sortField, setSortField] = useState<SortField>('player_list_order');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  
+  const mainImageRef = useRef<HTMLInputElement>(null);
+  const hoverImageRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchPlayers();
@@ -144,9 +173,81 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   // Filter players for star_order - only show star players
-  const displayPlayers = selectedField === 'star_order' 
+  const filteredPlayers = selectedField === 'star_order' 
     ? players.filter(p => p.visible_on_stars_page === true)
     : players;
+
+  // Smart sorting function
+  const getPositionSortValue = (position: string): number => {
+    const normalized = position?.toUpperCase().replace(/[^A-Z]/g, '') || '';
+    for (const [key, value] of Object.entries(POSITION_ORDER)) {
+      if (normalized.includes(key.toUpperCase().replace(/[^A-Z]/g, ''))) return value;
+    }
+    return 99;
+  };
+
+  const displayPlayers = [...filteredPlayers].sort((a, b) => {
+    let comparison = 0;
+    
+    switch (sortField) {
+      case 'player_list_order':
+        comparison = (a.player_list_order ?? 999) - (b.player_list_order ?? 999);
+        break;
+      case 'position':
+        comparison = getPositionSortValue(a.position) - getPositionSortValue(b.position);
+        break;
+      case 'age':
+        comparison = a.age - b.age; // youngest first
+        break;
+      case 'club':
+        comparison = (a.club || 'zzz').localeCompare(b.club || 'zzz');
+        break;
+      case 'league':
+        comparison = (a.league || 'zzz').localeCompare(b.league || 'zzz');
+        break;
+      case 'name':
+        comparison = a.name.localeCompare(b.name);
+        break;
+      case 'nationality':
+        comparison = a.nationality.localeCompare(b.nationality);
+        break;
+    }
+    
+    return sortDirection === 'asc' ? comparison : -comparison;
+  });
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Image upload handler
+  const handleImageUpload = async (file: File, type: 'main' | 'hover') => {
+    setUploadingImage(type);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `player-images/${Date.now()}_${type}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('analysis-files')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      toast.error('Failed to upload image');
+      setUploadingImage(null);
+      return null;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('analysis-files')
+      .getPublicUrl(fileName);
+
+    setUploadingImage(null);
+    return publicUrl;
+  };
 
   const getFieldLabel = (field: EditableField): string => {
     const labels: Record<EditableField, string> = {
@@ -650,40 +751,107 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
               />
               </div>
               <div>
-                <Label htmlFor="image_url">Player Image URL</Label>
-              <Input
-                id="image_url"
-                value={formData.image_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, image_url: e.target.value })
-                }
-                placeholder="https://example.com/player.png"
-              />
+                <Label htmlFor="representation_status">Representation Status</Label>
+                <Select 
+                  value={formData.representation_status} 
+                  onValueChange={(v) => setFormData({ ...formData, representation_status: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="represented">Represented</SelectItem>
+                    <SelectItem value="mandated">Mandated</SelectItem>
+                    <SelectItem value="previously_mandated">Previously Mandated</SelectItem>
+                    <SelectItem value="scouted">Scouted</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="hover_image_url">Hover Image URL</Label>
-              <Input
-                id="hover_image_url"
-                value={formData.hover_image_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, hover_image_url: e.target.value })
-                }
-                placeholder="https://example.com/hover.png"
-              />
+            {/* Image Upload Section */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
+              <div className="space-y-2">
+                <Label>Main Image</Label>
+                <input
+                  ref={mainImageRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const url = await handleImageUpload(file, 'main');
+                      if (url) setFormData({ ...formData, image_url: url });
+                    }
+                  }}
+                />
+                <div className="flex flex-col gap-2">
+                  {formData.image_url && (
+                    <div className="relative w-20 h-20 rounded border overflow-hidden">
+                      <img src={formData.image_url} alt="Main" className="w-full h-full object-cover" />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-5 w-5"
+                        onClick={() => setFormData({ ...formData, image_url: "" })}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => mainImageRef.current?.click()}
+                    disabled={uploadingImage === 'main'}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {uploadingImage === 'main' ? 'Uploading...' : 'Upload Main Image'}
+                  </Button>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="representation_status">Representation Status</Label>
-              <Input
-                id="representation_status"
-                value={formData.representation_status}
-                onChange={(e) =>
-                  setFormData({ ...formData, representation_status: e.target.value })
-                }
-                placeholder="e.g., represented, mandated"
-              />
+
+              <div className="space-y-2">
+                <Label>Hover Image</Label>
+                <input
+                  ref={hoverImageRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const url = await handleImageUpload(file, 'hover');
+                      if (url) setFormData({ ...formData, hover_image_url: url });
+                    }
+                  }}
+                />
+                <div className="flex flex-col gap-2">
+                  {formData.hover_image_url && (
+                    <div className="relative w-20 h-20 rounded border overflow-hidden">
+                      <img src={formData.hover_image_url} alt="Hover" className="w-full h-full object-cover" />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-5 w-5"
+                        onClick={() => setFormData({ ...formData, hover_image_url: "" })}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => hoverImageRef.current?.click()}
+                    disabled={uploadingImage === 'hover'}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {uploadingImage === 'hover' ? 'Uploading...' : 'Upload Hover Image'}
+                  </Button>
+                </div>
               </div>
             </div>
 
