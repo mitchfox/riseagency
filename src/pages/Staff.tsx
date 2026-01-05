@@ -119,10 +119,10 @@ const Staff = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   
-  // Check for app updates on load (before anything else)
+  // Check for app updates on load (force check on every staff portal load)
   useEffect(() => {
     if (navigator.onLine) {
-      VersionManager.initialize();
+      VersionManager.initialize(true); // Force check, bypass interval
     }
   }, []);
   
