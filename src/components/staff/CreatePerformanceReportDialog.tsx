@@ -1713,7 +1713,7 @@ export const CreatePerformanceReportDialog = ({
                           <Sparkles className="h-4 w-4 text-blue-600" />
                         )}
                       </Button>
-                      {action.id && (
+                      {action.id ? (
                         <ActionVideoUpload
                           actionId={action.id}
                           currentVideoUrl={action.video_url || null}
@@ -1721,6 +1721,8 @@ export const CreatePerformanceReportDialog = ({
                             updateAction(index, 'video_url', videoUrl);
                           }}
                         />
+                      ) : (
+                        <span className="inline-flex items-center justify-center h-8 w-8 text-muted-foreground text-xs" title="Save report first to add clips">💾</span>
                       )}
                       <Button
                         onClick={() => removeAction(index)}
@@ -1964,7 +1966,7 @@ export const CreatePerformanceReportDialog = ({
                               <Sparkles className="h-4 w-4 text-blue-600" />
                             )}
                           </Button>
-                          {action.id && (
+                          {action.id ? (
                             <ActionVideoUpload
                               actionId={action.id}
                               currentVideoUrl={action.video_url || null}
@@ -1972,6 +1974,15 @@ export const CreatePerformanceReportDialog = ({
                                 updateAction(index, 'video_url', videoUrl);
                               }}
                             />
+                          ) : (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex items-center justify-center h-8 w-8 text-muted-foreground">
+                                  <span className="text-xs">💾</span>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>Save report first to add video clips</TooltipContent>
+                            </Tooltip>
                           )}
                           <Button
                             onClick={() => removeAction(index)}
@@ -2057,18 +2068,29 @@ export const CreatePerformanceReportDialog = ({
                       </tr>
                     )}
                     
-                    {/* Insert Action Row (Desktop) */}
+                    {/* Insert Action & Update Row (Desktop) */}
                     <tr className="border-t border-dashed hover:bg-accent/50 transition-colors">
                       <td colSpan={7} className="p-1 text-center">
-                        <Button
-                          onClick={() => insertActionAt(index + 1)}
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 text-xs w-full"
-                        >
-                          <Plus className="h-3 w-3 mr-1" />
-                          Insert Action Here
-                        </Button>
+                        <div className="flex gap-2 justify-center">
+                          <Button
+                            onClick={() => insertActionAt(index + 1)}
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 text-xs flex-1"
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add New Action
+                          </Button>
+                          <Button
+                            onClick={handleSave}
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs flex-1"
+                            disabled={loading || deleting || isFillingScores}
+                          >
+                            {loading ? "Saving..." : "Update Report"}
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                     </React.Fragment>

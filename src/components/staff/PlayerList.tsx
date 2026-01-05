@@ -533,9 +533,40 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-b">
-                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-12">#</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Player</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{getFieldLabel(selectedField)}</TableHead>
+                <TableHead 
+                  className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-12 cursor-pointer hover:text-foreground"
+                  onClick={() => handleSort('player_list_order')}
+                >
+                  <div className="flex items-center gap-1">
+                    #
+                    {sortField === 'player_list_order' && <ArrowUpDown className="h-3 w-3" />}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="text-xs uppercase tracking-wider text-muted-foreground font-semibold cursor-pointer hover:text-foreground"
+                  onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center gap-1">
+                    Player
+                    {sortField === 'name' && <ArrowUpDown className="h-3 w-3" />}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="text-xs uppercase tracking-wider text-muted-foreground font-semibold cursor-pointer hover:text-foreground"
+                  onClick={() => {
+                    const fieldToSort = selectedField === 'bio' ? 'name' : 
+                      selectedField === 'club' ? 'club' : 
+                      selectedField === 'league' ? 'league' : 
+                      selectedField === 'position' ? 'position' : 
+                      selectedField === 'age' ? 'age' : 'name';
+                    handleSort(fieldToSort as SortField);
+                  }}
+                >
+                  <div className="flex items-center gap-1">
+                    {getFieldLabel(selectedField)}
+                    <ArrowUpDown className="h-3 w-3" />
+                  </div>
+                </TableHead>
                 {isAdmin && <TableHead className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-32">Actions</TableHead>}
               </TableRow>
             </TableHeader>
@@ -690,16 +721,44 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="club_logo">Club Logo URL</Label>
-              <Input
-                id="club_logo"
-                value={formData.club_logo}
-                onChange={(e) =>
-                  setFormData({ ...formData, club_logo: e.target.value })
-                }
-                placeholder="https://example.com/logo.png"
-              />
+              <div className="space-y-2">
+                <Label>Club Logo</Label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  id="club-logo-upload"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const url = await handleImageUpload(file, 'main');
+                      if (url) setFormData({ ...formData, club_logo: url });
+                    }
+                  }}
+                />
+                <div className="flex flex-col gap-2">
+                  {formData.club_logo && (
+                    <div className="relative w-16 h-16 rounded border overflow-hidden bg-white">
+                      <img src={formData.club_logo} alt="Club Logo" className="w-full h-full object-contain" />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-0 right-0 h-4 w-4"
+                        onClick={() => setFormData({ ...formData, club_logo: "" })}
+                      >
+                        <X className="h-2 w-2" />
+                      </Button>
+                    </div>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => document.getElementById('club-logo-upload')?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Club Logo
+                  </Button>
+                </div>
               </div>
               <div>
                 <Label htmlFor="position">Position</Label>
