@@ -54,12 +54,20 @@ export const ActionVideoUpload = ({
         .getPublicUrl(fileName);
 
       // Update the action in database
-      const { error: updateError } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from('performance_report_actions')
         .update({ video_url: publicUrl })
-        .eq('id', actionId);
+        .eq('id', actionId)
+        .select();
 
       if (updateError) throw updateError;
+      
+      // Verify the update actually affected a row
+      if (!updateData || updateData.length === 0) {
+        console.error('No action found with id:', actionId);
+        toast.error('Failed to save clip - action not found. Please save the report first.');
+        return;
+      }
 
       onVideoUploaded(publicUrl);
       toast.success('Video clip uploaded');
