@@ -49,13 +49,52 @@ const ClubNetworkManagement = () => {
 
   useEffect(() => {
     fetchContacts();
+    syncOutreachContacts();
   }, []);
+
+  const syncOutreachContacts = async () => {
+    // Fetch club outreach entries with meeting, responded, or interested status
+    const { data: outreachData, error: outreachError } = await supabase
+      .from('club_outreach')
+      .select('club_name, contact_name, contact_role')
+      .in('status', ['meeting', 'responded', 'interested']);
+
+    if (outreachError || !outreachData) return;
+
+    // Fetch existing contacts to avoid duplicates
+    const { data: existingContacts } = await supabase
+      .from('club_network_contacts')
+      .select('name, club_name');
+
+    const existingSet = new Set(
+      (existingContacts || []).map(c => `${c.name?.toLowerCase()}-${c.club_name?.toLowerCase()}`)
+    );
+
+    // Filter out entries without contact_name or already existing
+    const newContacts = outreachData
+      .filter(o => o.contact_name && !existingSet.has(`${o.contact_name.toLowerCase()}-${o.club_name.toLowerCase()}`))
+      .map(o => ({
+        name: o.contact_name!,
+        club_name: o.club_name,
+        position: o.contact_role || null,
+      }));
+
+    if (newContacts.length > 0) {
+      const { error: insertError } = await supabase
+        .from('club_network_contacts')
+        .insert(newContacts);
+
+      if (!insertError) {
+        toast.success(`Added ${newContacts.length} contact(s) from Club Outreach`);
+        fetchContacts();
+      }
+    }
+  };
 
   const fetchContacts = async () => {
     const { data, error } = await supabase
       .from('club_network_contacts')
       .select('*')
-      .or('email.not.is.null,phone.not.is.null,position.not.is.null')
       .order('created_at', { ascending: false });
 
     if (error) {
