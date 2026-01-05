@@ -54,7 +54,7 @@ interface Player {
   player_list_order: number | null;
 }
 
-type EditableField = 'position' | 'age' | 'club' | 'league' | 'email' | 'representation_status' | 'bio' | 'star_order' | 'player_list_order' | 'image_url' | 'hover_image_url';
+type EditableField = 'position' | 'age' | 'club' | 'club_logo' | 'league' | 'email' | 'representation_status' | 'bio' | 'star_order' | 'player_list_order' | 'image_url' | 'hover_image_url';
 
 interface FieldEdit {
   [playerId: string]: string | number;
@@ -254,6 +254,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
       position: 'Position',
       age: 'Age',
       club: 'Club',
+      club_logo: 'Club Logo',
       league: 'League',
       email: 'Email',
       representation_status: 'Representation Status',
@@ -428,6 +429,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 <SelectItem value="position">Position</SelectItem>
                 <SelectItem value="age">Age</SelectItem>
                 <SelectItem value="club">Club</SelectItem>
+                <SelectItem value="club_logo">Club Logo</SelectItem>
                 <SelectItem value="league">League</SelectItem>
                 <SelectItem value="email">Email</SelectItem>
                 <SelectItem value="representation_status">Representation Status</SelectItem>
@@ -618,6 +620,45 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                             className="w-full h-20 max-w-[400px] p-2 text-sm border rounded resize-none"
                             placeholder="Enter biography"
                           />
+                        ) : ['image_url', 'hover_image_url', 'club_logo'].includes(selectedField) ? (
+                          <div className="flex items-center gap-2">
+                            {String(getFieldValue(player)) && (
+                              <div className="relative w-12 h-12 rounded border overflow-hidden bg-white shrink-0">
+                                <img src={String(getFieldValue(player))} alt="" className="w-full h-full object-contain" />
+                                <Button
+                                  variant="destructive"
+                                  size="icon"
+                                  className="absolute top-0 right-0 h-4 w-4"
+                                  onClick={() => handleFieldEdit(player.id, '')}
+                                >
+                                  <X className="h-2 w-2" />
+                                </Button>
+                              </div>
+                            )}
+                            <div>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                id={`upload-${selectedField}-${player.id}`}
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const url = await handleImageUpload(file, selectedField === 'hover_image_url' ? 'hover' : 'main');
+                                    if (url) handleFieldEdit(player.id, url);
+                                  }
+                                }}
+                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => document.getElementById(`upload-${selectedField}-${player.id}`)?.click()}
+                              >
+                                <Upload className="h-3 w-3 mr-1" />
+                                Upload
+                              </Button>
+                            </div>
+                          </div>
                         ) : (
                           <Input
                             type={['age', 'star_order', 'player_list_order'].includes(selectedField) ? 'number' : 'text'}

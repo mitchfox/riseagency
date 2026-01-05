@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QuickMessageSection } from './QuickMessageSection';
 
 interface Contact {
@@ -211,9 +212,14 @@ const ClubNetworkManagement = () => {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Quick WhatsApp Message Section */}
-      <QuickMessageSection />
+    <div className="space-y-6">
+      <Tabs defaultValue="contacts" className="w-full">
+        <TabsList>
+          <TabsTrigger value="contacts">Contacts</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="contacts" className="mt-6">
 
       <div>
         <div className="flex justify-between items-center mb-6">
@@ -280,8 +286,14 @@ const ClubNetworkManagement = () => {
               )}
             </div>
         ))}
+          </div>
         </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="templates" className="mt-6">
+          <QuickMessageSection />
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-4 md:p-6">
