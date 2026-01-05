@@ -623,7 +623,7 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                         ) : ['image_url', 'hover_image_url', 'club_logo'].includes(selectedField) ? (
                           <div className="flex items-center gap-2">
                             {String(getFieldValue(player)) && (
-                              <div className="relative w-12 h-12 rounded border overflow-hidden bg-white shrink-0">
+                              <div className="relative w-12 h-12 rounded border overflow-hidden shrink-0" style={{ background: 'repeating-conic-gradient(#e5e7eb 0% 25%, #fff 0% 50%) 50% / 8px 8px' }}>
                                 <img src={String(getFieldValue(player))} alt="" className="w-full h-full object-contain" />
                                 <Button
                                   variant="destructive"

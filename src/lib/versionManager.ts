@@ -50,14 +50,16 @@ export class VersionManager {
   }
 
   // Check if we need to reload due to new version
-  static async checkForUpdates(): Promise<boolean> {
+  static async checkForUpdates(forceCheck: boolean = false): Promise<boolean> {
     try {
-      // Don't check too frequently
-      const lastCheck = localStorage.getItem(LAST_CHECK_KEY);
-      if (lastCheck) {
-        const timeSinceCheck = Date.now() - parseInt(lastCheck, 10);
-        if (timeSinceCheck < CHECK_INTERVAL_MS) {
-          return false;
+      // Don't check too frequently (unless forced)
+      if (!forceCheck) {
+        const lastCheck = localStorage.getItem(LAST_CHECK_KEY);
+        if (lastCheck) {
+          const timeSinceCheck = Date.now() - parseInt(lastCheck, 10);
+          if (timeSinceCheck < CHECK_INTERVAL_MS) {
+            return false;
+          }
         }
       }
 
@@ -123,11 +125,11 @@ export class VersionManager {
   }
 
   // Initialize version tracking on first load
-  static async initialize(): Promise<void> {
+  static async initialize(forceCheck: boolean = false): Promise<void> {
     try {
       // On page load, always verify we have the latest
       if (navigator.onLine) {
-        const hasUpdate = await this.checkForUpdates();
+        const hasUpdate = await this.checkForUpdates(forceCheck);
         if (hasUpdate) {
           console.log('[VersionManager] Update available, will reload');
           await this.forceUpdate();
