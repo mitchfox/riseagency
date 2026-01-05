@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, Image as ImageIcon, X, Download, FileDown } from "lucide-react";
+import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image as ImageIcon, X, Download, FileDown } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
 import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
@@ -1180,17 +1180,25 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   
   const selectedPlayerSeasonStats = selectedPlayer ? getSeasonStats(selectedPlayer) : null;
 
-  // Group players by representation status in order: represented, mandated, other
-  // EXCLUDE scouted players - they are managed in Scouting Centre
+  // Group players by representation status in order: represented, mandated, previously_mandated, fuel_for_football, other, scouted
   const groupedPlayers = {
     represented: players.filter(p => p.representation_status === 'represented'),
     mandated: players.filter(p => p.representation_status === 'mandated'),
+    previously_mandated: players.filter(p => p.representation_status === 'previously_mandated'),
+    fuel_for_football: players.filter(p => p.representation_status === 'fuel_for_football'),
     other: players.filter(p => (p.representation_status === 'other' || !p.representation_status) && p.representation_status !== 'scouted'),
+    scouted: players.filter(p => p.representation_status === 'scouted'),
   };
 
-  // Group players by category (kept for backwards compatibility)
-  const categoryGroups = {
-    scouted: players.filter(p => p.representation_status === 'scouted'),
+  // State for collapsed sections - other, scouted, fuel_for_football collapsed by default
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
+    other: true,
+    scouted: true,
+    fuel_for_football: true,
+  });
+
+  const toggleSection = (section: string) => {
+    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
   if (loading) {
@@ -1199,8 +1207,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const representedPlayers = groupedPlayers.represented;
   const mandatedPlayers = groupedPlayers.mandated;
+  const previouslyMandatedPlayers = groupedPlayers.previously_mandated;
+  const fuelForFootballPlayers = groupedPlayers.fuel_for_football;
   const otherPlayers = groupedPlayers.other;
-  const scoutedPlayers = categoryGroups.scouted;
+  const scoutedPlayers = groupedPlayers.scouted;
 
   return (
     <div className="flex h-full gap-4 flex-col md:flex-row">
@@ -1495,16 +1505,16 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             )}
 
             {/* Gold Border Separator */}
-            {groupedPlayers.mandated.length > 0 && groupedPlayers.other.length > 0 && (
+            {groupedPlayers.mandated.length > 0 && previouslyMandatedPlayers.length > 0 && (
               <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
             )}
 
-            {/* Other Players */}
-            {groupedPlayers.other.length > 0 && (
+            {/* Previously Mandated Players */}
+            {previouslyMandatedPlayers.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold mb-4 text-primary">Other</h3>
+                <h3 className="text-lg font-semibold mb-4 text-primary">Previously Mandated</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                  {groupedPlayers.other.map((player) => {
+                  {previouslyMandatedPlayers.map((player) => {
                     const playerStats = stats[player.id];
                     return (
                       <Card 
@@ -1551,58 +1561,194 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             )}
 
             {/* Gold Border Separator */}
+            {(previouslyMandatedPlayers.length > 0 || groupedPlayers.mandated.length > 0) && fuelForFootballPlayers.length > 0 && (
+              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
+            )}
+
+            {/* Fuel For Football Players - Collapsible */}
+            {fuelForFootballPlayers.length > 0 && (
+              <div>
+                <button 
+                  className="flex items-center gap-2 text-lg font-semibold mb-4 text-primary hover:opacity-80 transition-opacity"
+                  onClick={() => toggleSection('fuel_for_football')}
+                >
+                  {collapsedSections.fuel_for_football ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+                  Fuel For Football ({fuelForFootballPlayers.length})
+                </button>
+                {!collapsedSections.fuel_for_football && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                    {fuelForFootballPlayers.map((player) => {
+                      const playerStats = stats[player.id];
+                      return (
+                        <Card 
+                          key={player.id} 
+                          className="cursor-pointer hover:shadow-lg transition-all"
+                          onClick={() => handlePlayerSelect(player.id)}
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start gap-3">
+                              <Avatar className="w-16 h-16">
+                                <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
+                                <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold truncate">{player.name}</h3>
+                                <p className="text-sm text-muted-foreground">{player.position}</p>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                  <span>{player.age}y</span>
+                                  <span>•</span>
+                                  <span>{player.nationality}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            {playerStats && (
+                              <div className="grid grid-cols-2 gap-4 text-center">
+                                <div>
+                                  <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
+                                  <div className="text-muted-foreground">Matches</div>
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
+                                  <div className="text-muted-foreground">Minutes</div>
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Gold Border Separator */}
+            {(fuelForFootballPlayers.length > 0 || previouslyMandatedPlayers.length > 0 || groupedPlayers.mandated.length > 0) && groupedPlayers.other.length > 0 && (
+              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
+            )}
+
+            {/* Other Players - Collapsible */}
+            {groupedPlayers.other.length > 0 && (
+              <div>
+                <button 
+                  className="flex items-center gap-2 text-lg font-semibold mb-4 text-primary hover:opacity-80 transition-opacity"
+                  onClick={() => toggleSection('other')}
+                >
+                  {collapsedSections.other ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+                  Other ({groupedPlayers.other.length})
+                </button>
+                {!collapsedSections.other && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                    {groupedPlayers.other.map((player) => {
+                      const playerStats = stats[player.id];
+                      return (
+                        <Card 
+                          key={player.id} 
+                          className="cursor-pointer hover:shadow-lg transition-all"
+                          onClick={() => handlePlayerSelect(player.id)}
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start gap-3">
+                              <Avatar className="w-16 h-16">
+                                <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
+                                <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold truncate">{player.name}</h3>
+                                <p className="text-sm text-muted-foreground">{player.position}</p>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                  <span>{player.age}y</span>
+                                  <span>•</span>
+                                  <span>{player.nationality}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            {playerStats && (
+                              <div className="grid grid-cols-2 gap-4 text-center">
+                                <div>
+                                  <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
+                                  <div className="text-muted-foreground">Matches</div>
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
+                                  <div className="text-muted-foreground">Minutes</div>
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Gold Border Separator */}
             {groupedPlayers.other.length > 0 && scoutedPlayers.length > 0 && (
               <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
             )}
 
-            {/* Scouted Players */}
+            {/* Scouted Players - Collapsible */}
             {scoutedPlayers.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold mb-4 text-primary">Scouted</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                  {scoutedPlayers.map((player) => {
-                    const playerStats = stats[player.id];
-                    return (
-                      <Card 
-                        key={player.id} 
-                        className="cursor-pointer hover:shadow-lg transition-all"
-                        onClick={() => handlePlayerSelect(player.id)}
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start gap-3">
-                            <Avatar className="w-16 h-16">
-                              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-                              <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold truncate">{player.name}</h3>
-                              <p className="text-sm text-muted-foreground">{player.position}</p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                <span>{player.age}y</span>
-                                <span>•</span>
-                                <span>{player.nationality}</span>
+                <button 
+                  className="flex items-center gap-2 text-lg font-semibold mb-4 text-primary hover:opacity-80 transition-opacity"
+                  onClick={() => toggleSection('scouted')}
+                >
+                  {collapsedSections.scouted ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+                  Scouted ({scoutedPlayers.length})
+                </button>
+                {!collapsedSections.scouted && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                    {scoutedPlayers.map((player) => {
+                      const playerStats = stats[player.id];
+                      return (
+                        <Card 
+                          key={player.id} 
+                          className="cursor-pointer hover:shadow-lg transition-all"
+                          onClick={() => handlePlayerSelect(player.id)}
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start gap-3">
+                              <Avatar className="w-16 h-16">
+                                <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
+                                <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold truncate">{player.name}</h3>
+                                <p className="text-sm text-muted-foreground">{player.position}</p>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                  <span>{player.age}y</span>
+                                  <span>•</span>
+                                  <span>{player.nationality}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          {playerStats && (
-                            <div className="grid grid-cols-2 gap-4 text-center">
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
-                                <div className="text-muted-foreground">Matches</div>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            {playerStats && (
+                              <div className="grid grid-cols-2 gap-4 text-center">
+                                <div>
+                                  <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
+                                  <div className="text-muted-foreground">Matches</div>
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
+                                  <div className="text-muted-foreground">Minutes</div>
+                                </div>
                               </div>
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
-                                <div className="text-muted-foreground">Minutes</div>
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -3171,6 +3317,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         <SelectItem value="represented">Represented</SelectItem>
                         <SelectItem value="mandated">Mandated</SelectItem>
                         <SelectItem value="previously_mandated">Previously Mandated</SelectItem>
+                        <SelectItem value="fuel_for_football">Fuel For Football</SelectItem>
                         <SelectItem value="scouted">Scouted</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
@@ -3235,19 +3382,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         )}
                       </div>
                       {(clubLogoPreview || formData.club_logo) && (
-                        <div 
-                          className="relative w-24 h-24 border rounded-md overflow-hidden p-2"
-                          style={{
-                            backgroundImage: `
-                              linear-gradient(45deg, hsl(var(--muted)) 25%, transparent 25%),
-                              linear-gradient(-45deg, hsl(var(--muted)) 25%, transparent 25%),
-                              linear-gradient(45deg, transparent 75%, hsl(var(--muted)) 75%),
-                              linear-gradient(-45deg, transparent 75%, hsl(var(--muted)) 75%)
-                            `,
-                            backgroundSize: '12px 12px',
-                            backgroundPosition: '0 0, 0 6px, 6px -6px, -6px 0px'
-                          }}
-                        >
+                        <div className="relative w-24 h-24 border rounded-md overflow-hidden p-2 bg-transparent">
                           <img 
                             src={clubLogoPreview || formData.club_logo} 
                             alt="Club Logo Preview" 
