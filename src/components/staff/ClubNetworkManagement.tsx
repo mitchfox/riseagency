@@ -97,6 +97,7 @@ const ClubNetworkManagement = () => {
     const { data, error } = await supabase
       .from('club_network_contacts')
       .select('*')
+      .not('position', 'is', null) // Only fetch entries that have a position (actual contacts, not clubs)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -104,7 +105,12 @@ const ClubNetworkManagement = () => {
       return;
     }
 
-    setContacts(data || []);
+    // Additional filter: exclude entries where name looks like a club name (no position set means it's a club)
+    const filteredContacts = (data || []).filter(contact => 
+      contact.position !== null && contact.position !== ''
+    );
+
+    setContacts(filteredContacts);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
