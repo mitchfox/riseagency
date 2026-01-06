@@ -16,6 +16,7 @@ import {
   AlertCircle, TrendingUp, Users, MapPin, Building, UserCheck, ChevronRight,
   FileText, Send, Star, MessageSquare
 } from "lucide-react";
+import { ScoutFeedbackDialog } from "./ScoutFeedbackDialog";
 
 interface ScoutingReport {
   id: string;
@@ -130,6 +131,10 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
   const [confirmNote, setConfirmNote] = useState("");
   const [confirmType, setConfirmType] = useState<"exclusive" | "contribution" | "neither" | null>(null);
   const [sendingMessage, setSendingMessage] = useState(false);
+  
+  // Feedback dialog state
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [feedbackReport, setFeedbackReport] = useState<ScoutingReport | null>(null);
 
   useEffect(() => {
     fetchReports();
@@ -891,6 +896,21 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
                         </div>
                       )}
 
+                      {/* Feedback Button */}
+                      {selectedReport.scout_id && (
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => {
+                            setFeedbackReport(selectedReport);
+                            setFeedbackDialogOpen(true);
+                          }}
+                        >
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Send Feedback to Scout
+                        </Button>
+                      )}
+
                       <div className="grid grid-cols-2 gap-2">
                         <Button
                           variant="outline"
@@ -966,6 +986,18 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Scout Feedback Dialog */}
+      {feedbackReport && (
+        <ScoutFeedbackDialog
+          open={feedbackDialogOpen}
+          onOpenChange={setFeedbackDialogOpen}
+          reportId={feedbackReport.id}
+          scoutId={feedbackReport.scout_id || ""}
+          playerName={feedbackReport.player_name}
+          onSuccess={fetchReports}
+        />
+      )}
     </div>
   );
 };
