@@ -2967,6 +2967,69 @@ export type Database = {
         }
         Relationships: []
       }
+      scout_report_feedback: {
+        Row: {
+          commission_percentage: number | null
+          created_at: string
+          created_by: string | null
+          future_reference_notes: string | null
+          id: string
+          is_exclusive: boolean | null
+          next_steps: string | null
+          player_feedback: string | null
+          read_by_scout: boolean | null
+          report_id: string
+          scout_id: string
+          staff_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          commission_percentage?: number | null
+          created_at?: string
+          created_by?: string | null
+          future_reference_notes?: string | null
+          id?: string
+          is_exclusive?: boolean | null
+          next_steps?: string | null
+          player_feedback?: string | null
+          read_by_scout?: boolean | null
+          report_id: string
+          scout_id: string
+          staff_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          commission_percentage?: number | null
+          created_at?: string
+          created_by?: string | null
+          future_reference_notes?: string | null
+          id?: string
+          is_exclusive?: boolean | null
+          next_steps?: string | null
+          player_feedback?: string | null
+          read_by_scout?: boolean | null
+          report_id?: string
+          scout_id?: string
+          staff_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_report_feedback_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "scouting_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_report_feedback_scout_id_fkey"
+            columns: ["scout_id"]
+            isOneToOne: false
+            referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scouting_report_drafts: {
         Row: {
           additional_notes: string | null
@@ -3080,6 +3143,8 @@ export type Database = {
       scouting_reports: {
         Row: {
           added_to_prospects: boolean | null
+          additional_documents: Json | null
+          additional_info: string | null
           age: number | null
           agent_contact: string | null
           agent_name: string | null
@@ -3110,6 +3175,7 @@ export type Database = {
           profile_image_url: string | null
           prospect_id: string | null
           recommendation: string | null
+          rise_report_url: string | null
           scout_id: string | null
           scout_name: string | null
           scouting_date: string
@@ -3125,6 +3191,8 @@ export type Database = {
         }
         Insert: {
           added_to_prospects?: boolean | null
+          additional_documents?: Json | null
+          additional_info?: string | null
           age?: number | null
           agent_contact?: string | null
           agent_name?: string | null
@@ -3155,6 +3223,7 @@ export type Database = {
           profile_image_url?: string | null
           prospect_id?: string | null
           recommendation?: string | null
+          rise_report_url?: string | null
           scout_id?: string | null
           scout_name?: string | null
           scouting_date?: string
@@ -3170,6 +3239,8 @@ export type Database = {
         }
         Update: {
           added_to_prospects?: boolean | null
+          additional_documents?: Json | null
+          additional_info?: string | null
           age?: number | null
           agent_contact?: string | null
           agent_name?: string | null
@@ -3200,6 +3271,7 @@ export type Database = {
           profile_image_url?: string | null
           prospect_id?: string | null
           recommendation?: string | null
+          rise_report_url?: string | null
           scout_id?: string | null
           scout_name?: string | null
           scouting_date?: string
