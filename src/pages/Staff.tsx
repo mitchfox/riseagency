@@ -59,6 +59,8 @@ import { AthleteCentre } from "@/components/staff/AthleteCentre";
 import { OpenAccessManagement } from "@/components/staff/OpenAccessManagement";
 import { FocusedTasksSection } from "@/components/staff/FocusedTasksSection";
 import { StaffNotificationsDropdown } from "@/components/staff/StaffNotificationsDropdown";
+import { TacticsBoard } from "@/components/staff/coaching/TacticsBoard";
+import { Meetings } from "@/components/staff/coaching/Meetings";
 import { NotificationSettingsManagement } from "@/components/staff/NotificationSettingsManagement";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -115,7 +117,7 @@ const Staff = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   
@@ -694,6 +696,8 @@ const Staff = () => {
         sections: [
           { id: 'schedule', title: 'Schedule', icon: Calendar },
           { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
+          { id: 'tacticsboard', title: 'Tactics Board', icon: Target },
+          { id: 'meetings', title: 'Meetings', icon: Users },
           { id: 'analysis', title: 'Analysis Writer', icon: LineChart },
           { id: 'athletecentre', title: 'Athlete Centre', icon: UserRound },
         ]
@@ -1102,6 +1106,8 @@ const Staff = () => {
                   
                   {expandedSection === 'scoutingcentre' && <ScoutingCentreManagement isAdmin={isAdmin} />}
                   {expandedSection === 'coaching' && <CoachingDatabase isAdmin={isAdmin} />}
+                  {expandedSection === 'tacticsboard' && <TacticsBoard />}
+                  {expandedSection === 'meetings' && <Meetings />}
                   {expandedSection === 'analysis' && <AnalysisManagement isAdmin={isAdmin} />}
                   {expandedSection === 'marketing' && <MarketingManagement isAdmin={isAdmin} isMarketeer={isMarketeer} />}
                   {expandedSection === 'contentcreator' && <ContentCreator />}
