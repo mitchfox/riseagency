@@ -1,11 +1,26 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { 
   Eraser, Pencil, Circle, X, ArrowRight, Trash2, 
-  Download, Move, Undo
+  Download, Move, Undo, Save, FolderOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 interface DroppedItem {
   id: string;
@@ -29,6 +44,17 @@ interface DrawPath {
 
 type Tool = "select" | "draw" | "erase" | "arrow";
 
+interface BoardTemplate {
+  id: string;
+  name: string;
+  items: DroppedItem[];
+  arrows: Arrow[];
+  paths: DrawPath[];
+  createdAt: string;
+}
+
+const TEMPLATES_KEY = "tactics-board-templates";
+
 export const TacticsBoard = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -43,6 +69,63 @@ export const TacticsBoard = () => {
   const [draggingItem, setDraggingItem] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [history, setHistory] = useState<{ items: DroppedItem[], arrows: Arrow[], paths: DrawPath[] }[]>([]);
+  
+  // Template state
+  const [templates, setTemplates] = useState<BoardTemplate[]>([]);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+
+  // Load templates from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(TEMPLATES_KEY);
+    if (saved) {
+      try {
+        setTemplates(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse templates", e);
+      }
+    }
+  }, []);
+
+  const saveTemplates = (newTemplates: BoardTemplate[]) => {
+    setTemplates(newTemplates);
+    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(newTemplates));
+  };
+
+  const handleSaveTemplate = () => {
+    if (!templateName.trim()) {
+      toast.error("Please enter a template name");
+      return;
+    }
+    
+    const newTemplate: BoardTemplate = {
+      id: `template-${Date.now()}`,
+      name: templateName.trim(),
+      items: [...items],
+      arrows: [...arrows],
+      paths: [...paths],
+      createdAt: new Date().toISOString(),
+    };
+    
+    saveTemplates([...templates, newTemplate]);
+    setTemplateName("");
+    setSaveDialogOpen(false);
+    toast.success(`Template "${newTemplate.name}" saved`);
+  };
+
+  const loadTemplate = (template: BoardTemplate) => {
+    saveToHistory();
+    setItems([...template.items]);
+    setArrows([...template.arrows]);
+    setPaths([...template.paths]);
+    toast.success(`Loaded template "${template.name}"`);
+  };
+
+  const deleteTemplate = (templateId: string) => {
+    const updated = templates.filter(t => t.id !== templateId);
+    saveTemplates(updated);
+    toast.success("Template deleted");
+  };
   
   const saveToHistory = useCallback(() => {
     setHistory(prev => [...prev.slice(-20), { items: [...items], arrows: [...arrows], paths: [...paths] }]);
@@ -349,6 +432,7 @@ export const TacticsBoard = () => {
   };
 
   return (
+    <>
     <Card className="h-full">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between">
@@ -357,6 +441,53 @@ export const TacticsBoard = () => {
             <Button variant="outline" size="sm" onClick={undo} disabled={history.length === 0}>
               <Undo className="h-4 w-4" />
             </Button>
+            
+            {/* Save Template */}
+            <Button variant="outline" size="sm" onClick={() => setSaveDialogOpen(true)}>
+              <Save className="h-4 w-4 mr-2" />
+              Save Template
+            </Button>
+            
+            {/* Load Template */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Load Template
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {templates.length === 0 ? (
+                  <DropdownMenuItem disabled>No saved templates</DropdownMenuItem>
+                ) : (
+                  templates.map((template) => (
+                    <DropdownMenuItem
+                      key={template.id}
+                      className="flex items-center justify-between group"
+                    >
+                      <span 
+                        className="flex-1 cursor-pointer"
+                        onClick={() => loadTemplate(template)}
+                      >
+                        {template.name}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteTemplate(template.id);
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             <Button variant="outline" size="sm" onClick={downloadBoard}>
               <Download className="h-4 w-4 mr-2" />
               Export
@@ -471,5 +602,31 @@ export const TacticsBoard = () => {
         </p>
       </CardContent>
     </Card>
+
+    {/* Save Template Dialog */}
+    <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Save as Template</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <Input
+            placeholder="Template name..."
+            value={templateName}
+            onChange={(e) => setTemplateName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSaveTemplate()}
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveTemplate}>
+            Save Template
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
