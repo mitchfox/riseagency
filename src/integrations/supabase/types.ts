@@ -2904,6 +2904,45 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permissions: {
+        Row: {
+          can_edit: boolean
+          can_view: boolean
+          category_id: string
+          category_title: string
+          created_at: string
+          id: string
+          role: string
+          section_id: string
+          section_title: string
+          updated_at: string
+        }
+        Insert: {
+          can_edit?: boolean
+          can_view?: boolean
+          category_id: string
+          category_title: string
+          created_at?: string
+          id?: string
+          role: string
+          section_id: string
+          section_title: string
+          updated_at?: string
+        }
+        Update: {
+          can_edit?: boolean
+          can_view?: boolean
+          category_id?: string
+          category_title?: string
+          created_at?: string
+          id?: string
+          role?: string
+          section_id?: string
+          section_title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       saved_signatures: {
         Row: {
           created_at: string
