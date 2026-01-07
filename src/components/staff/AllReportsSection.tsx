@@ -14,7 +14,7 @@ import { format } from "date-fns";
 import {
   Search, Filter, Eye, Edit2, Trash2, UserPlus, Check, X, Clock,
   AlertCircle, TrendingUp, Users, MapPin, Building, UserCheck, ChevronRight,
-  FileText, Send, Star, MessageSquare
+  FileText, Send, Star, MessageSquare, Video, Link, FileDown
 } from "lucide-react";
 import { ScoutFeedbackDialog } from "./ScoutFeedbackDialog";
 
@@ -54,6 +54,9 @@ interface ScoutingReport {
   full_match_url: string | null;
   contribution_type: string | null;
   notes: string | null;
+  rise_report_url: string | null;
+  additional_documents: any;
+  additional_info: string | null;
 }
 
 interface AllReportsSectionProps {
@@ -261,41 +264,42 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
     }
     
     try {
-      const { data: prospect, error } = await supabase
-        .from("prospects")
+      // Add to players table as "Scouted" category
+      const { data: player, error } = await supabase
+        .from("players")
         .insert({
           name: report.player_name,
-          age: report.age,
-          position: report.position,
-          nationality: report.nationality,
-          current_club: report.current_club,
-          age_group: report.age && report.age <= 18 ? "Youth" : "Senior",
-          stage: "scouted",
-          priority: report.priority,
-          profile_image_url: report.profile_image_url,
-          notes: `Scouted on ${report.scouting_date ? format(new Date(report.scouting_date), "dd/MM/yyyy") : "Unknown"}\n\n${report.summary || ""}`
+          age: report.age || 0,
+          position: report.position || "Unknown",
+          nationality: report.nationality || "Unknown",
+          club: report.current_club,
+          category: "Scouted",
+          image_url: report.profile_image_url,
+          bio: `Scouted on ${report.scouting_date ? format(new Date(report.scouting_date), "dd/MM/yyyy") : "Unknown"}. ${report.summary || ""}`
         })
         .select()
         .single();
 
       if (error) throw error;
 
+      // Update the scouting report with the linked player ID
       await supabase
         .from("scouting_reports")
         .update({
           added_to_prospects: true,
-          prospect_id: prospect.id
+          linked_player_id: player.id
         })
         .eq("id", report.id);
 
       setReports(prev => prev.map(r => 
-        r.id === report.id ? { ...r, added_to_prospects: true, prospect_id: prospect.id } : r
+        r.id === report.id ? { ...r, added_to_prospects: true, linked_player_id: player.id } : r
       ));
       
-      // Update existing player names
+      // Update existing player names and refetch players list
       setExistingPlayerNames(prev => new Set([...prev, report.player_name.toLowerCase().trim()]));
+      fetchPlayers();
       
-      toast.success("Player added to database");
+      toast.success("Player added to Scouted Players");
     } catch (error) {
       console.error("Error adding to database:", error);
       toast.error("Failed to add player to database");
@@ -708,6 +712,7 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
                 <TabsList className="w-full">
                   <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
                   <TabsTrigger value="evaluation" className="flex-1">Evaluation</TabsTrigger>
+                  <TabsTrigger value="documents" className="flex-1">Documents</TabsTrigger>
                   <TabsTrigger value="actions" className="flex-1">Actions</TabsTrigger>
                 </TabsList>
 
@@ -773,17 +778,138 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
                       <p className="text-sm">{selectedReport.weaknesses}</p>
                     </div>
                   )}
-                  {selectedReport.video_url && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Video</h4>
+                  
+                  {/* Skill Evaluations from RISE Report */}
+                  {selectedReport.skill_evaluations && Array.isArray(selectedReport.skill_evaluations) && selectedReport.skill_evaluations.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium mb-3">Skill Evaluations</h4>
+                      <div className="space-y-3">
+                        {selectedReport.skill_evaluations.map((skill: any, index: number) => (
+                          <div key={index} className="p-3 rounded-lg bg-muted/50 border">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-medium text-sm">{skill.skill_name}</span>
+                              <Badge variant="outline" className={
+                                skill.grade?.startsWith('A') ? 'bg-green-500/10 text-green-600 border-green-500/30' :
+                                skill.grade?.startsWith('B') ? 'bg-blue-500/10 text-blue-600 border-blue-500/30' :
+                                skill.grade?.startsWith('C') ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' :
+                                'bg-red-500/10 text-red-600 border-red-500/30'
+                              }>
+                                {skill.grade}
+                              </Badge>
+                            </div>
+                            {skill.domain && (
+                              <span className="text-xs text-muted-foreground">{skill.domain}</span>
+                            )}
+                            {skill.description && (
+                              <p className="text-xs text-muted-foreground mt-1">{skill.description}</p>
+                            )}
+                            {skill.notes && skill.notes.length > 0 && (
+                              <p className="text-sm mt-2 italic">{skill.notes.join(' ')}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="documents" className="space-y-4 pt-4">
+                  {/* RISE Report */}
+                  {selectedReport.rise_report_url && (
+                    <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FileText className="h-4 w-4 text-primary" />
+                        <h4 className="text-sm font-medium">RISE Report</h4>
+                      </div>
                       <a 
-                        href={selectedReport.video_url} 
+                        href={selectedReport.rise_report_url} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline"
+                        className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
                       >
-                        Watch footage →
+                        <FileDown className="h-4 w-4" />
+                        View RISE Report
                       </a>
+                    </div>
+                  )}
+
+                  {/* Video Links */}
+                  <div className="space-y-2">
+                    {selectedReport.video_url && (
+                      <div className="p-4 rounded-lg bg-muted/50 border">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Video className="h-4 w-4" />
+                          <h4 className="text-sm font-medium">Highlights Video</h4>
+                        </div>
+                        <a 
+                          href={selectedReport.video_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Watch highlights →
+                        </a>
+                      </div>
+                    )}
+                    {selectedReport.full_match_url && (
+                      <div className="p-4 rounded-lg bg-muted/50 border">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Video className="h-4 w-4" />
+                          <h4 className="text-sm font-medium">Full Match Video</h4>
+                        </div>
+                        <a 
+                          href={selectedReport.full_match_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Watch full match →
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Additional Documents */}
+                  {selectedReport.additional_documents && Array.isArray(selectedReport.additional_documents) && selectedReport.additional_documents.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium mb-2">Additional Documents</h4>
+                      <div className="space-y-2">
+                        {selectedReport.additional_documents.map((doc: any, index: number) => (
+                          <div key={index} className="p-3 rounded-lg bg-muted/50 border flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm">{doc.name || `Document ${index + 1}`}</span>
+                            </div>
+                            <a 
+                              href={doc.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm text-primary hover:underline flex items-center gap-1"
+                            >
+                              <Link className="h-3 w-3" />
+                              Open
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Additional Info */}
+                  {selectedReport.additional_info && (
+                    <div className="mt-4 p-4 rounded-lg bg-muted/50 border">
+                      <h4 className="text-sm font-medium mb-2">Additional Information</h4>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedReport.additional_info}</p>
+                    </div>
+                  )}
+
+                  {/* Empty state */}
+                  {!selectedReport.rise_report_url && !selectedReport.video_url && !selectedReport.full_match_url && 
+                   (!selectedReport.additional_documents || selectedReport.additional_documents.length === 0) && 
+                   !selectedReport.additional_info && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No documents attached to this report</p>
                     </div>
                   )}
                 </TabsContent>
