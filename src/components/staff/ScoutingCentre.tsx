@@ -116,7 +116,7 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
   const [skillEvaluations, setSkillEvaluations] = useState<SkillEvaluation[]>([]);
   const [generatingReview, setGeneratingReview] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
-  const [viewMode, setViewMode] = useState<"positions" | "reports">("positions");
+  const [viewMode, setViewMode] = useState<"positions" | "reports">("reports");
   const [viewingPositionAnalysis, setViewingPositionAnalysis] = useState<ScoutingPosition | null>(null);
   const [viewingProspectTable, setViewingProspectTable] = useState<ScoutingPosition | null>(null);
   const [prospectReports, setProspectReports] = useState<ScoutingReport[]>([]);
@@ -610,7 +610,7 @@ export const ScoutingCentre = ({ open = true, onOpenChange }: ScoutingCentreProp
               </div>
               <Button onClick={() => setViewMode("reports")} variant="outline" size="sm" className="w-full sm:w-auto">
                 <FileText className="h-4 w-4 mr-2" />
-                View All Reports
+                Back to Reports
               </Button>
             </div>
             
