@@ -6,11 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Check, X, Shield, ChevronDown, ChevronUp } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { UserPlus, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { RolePermissionsEditor } from "./RolePermissionsEditor";
 
 interface StaffAccount {
   email: string;
@@ -29,7 +28,6 @@ export const StaffAccountManagement = () => {
   const [resettingPassword, setResettingPassword] = useState<string | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<string | null>(null);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
-  const [permissionsOpen, setPermissionsOpen] = useState(false);
   const [newAccount, setNewAccount] = useState<StaffAccount>({
     email: "",
     password: "",
@@ -278,195 +276,10 @@ export const StaffAccountManagement = () => {
     );
   }
 
-  // Role permissions data - what each role can access
-  type RolePermission = {
-    label: string;
-    description: string;
-    categories: { name: string; sections: string[]; excluded?: string[] }[];
-    excluded?: string[];
-  };
-
-  const rolePermissions: Record<"admin" | "staff" | "marketeer", RolePermission> = {
-    admin: {
-      label: "Admin",
-      description: "Full access to all features",
-      categories: [
-        {
-          name: "Overview",
-          sections: ["Overview", "Focused Tasks", "Goals & Tasks", "Staff Schedules", "Notifications"]
-        },
-        {
-          name: "Coaching",
-          sections: ["Schedule", "Coaching Database", "Tactics Board", "Meetings", "Analysis Writer", "Athlete Centre"]
-        },
-        {
-          name: "Management",
-          sections: ["Player Management", "Transfer Hub", "Player Updates"]
-        },
-        {
-          name: "Network & Recruitment",
-          sections: ["Club Network", "Player List", "Recruitment", "Player Database", "Scouting Centre", "Form Submissions"]
-        },
-        {
-          name: "Marketing & Brand",
-          sections: ["Marketing", "Ideas", "Content Creator", "News Articles", "Between The Lines", "Open Access", "Site Visitors"]
-        },
-        {
-          name: "Financial",
-          sections: ["Invoices", "Payments In/Out", "Expenses", "Tax Records", "Budgets", "Reports"]
-        },
-        {
-          name: "Admin & Legal",
-          sections: ["Legal", "Site Text", "Languages", "Player Passwords", "Staff Accounts", "PWA Install", "Offline Content", "Push Notifications"]
-        }
-      ]
-    },
-    staff: {
-      label: "Staff",
-      description: "Access to most features except admin-only sections",
-      categories: [
-        {
-          name: "Overview",
-          sections: ["Overview", "Focused Tasks", "Goals & Tasks", "Staff Schedules"]
-        },
-        {
-          name: "Coaching",
-          sections: ["Schedule", "Coaching Database", "Tactics Board", "Meetings", "Analysis Writer", "Athlete Centre"]
-        },
-        {
-          name: "Management",
-          sections: ["Player Management", "Transfer Hub", "Player Updates"]
-        },
-        {
-          name: "Network & Recruitment",
-          sections: ["Club Network", "Player List", "Recruitment", "Player Database", "Scouting Centre", "Form Submissions"]
-        },
-        {
-          name: "Marketing & Brand",
-          sections: ["Marketing", "Ideas", "Content Creator", "News Articles", "Between The Lines", "Open Access", "Site Visitors"]
-        },
-        {
-          name: "Financial",
-          sections: ["Invoices", "Payments In/Out", "Expenses", "Tax Records", "Budgets", "Reports"]
-        },
-        {
-          name: "Admin & Legal",
-          sections: ["Legal", "Site Text", "Languages", "PWA Install", "Offline Content", "Push Notifications"],
-          excluded: ["Player Passwords", "Staff Accounts"]
-        }
-      ]
-    },
-    marketeer: {
-      label: "Marketeer",
-      description: "Limited access focused on marketing and content",
-      categories: [
-        {
-          name: "Overview",
-          sections: ["Overview", "Focused Tasks (Content Creator only)", "Goals & Tasks"]
-        },
-        {
-          name: "Management",
-          sections: ["Player Management"]
-        },
-        {
-          name: "Network & Recruitment",
-          sections: ["Club Network", "Player List", "Recruitment", "Player Database", "Scouting Centre", "Form Submissions"]
-        },
-        {
-          name: "Marketing & Brand",
-          sections: ["Marketing", "Ideas", "Content Creator", "News Articles", "Between The Lines", "Open Access", "Site Visitors"]
-        },
-        {
-          name: "Admin & Legal",
-          sections: ["Legal", "PWA Install", "Offline Content"],
-          excluded: ["Site Text", "Languages", "Player Passwords", "Staff Accounts", "Push Notifications"]
-        }
-      ],
-      excluded: ["Coaching", "Financial", "Transfer Hub", "Player Updates", "Staff Schedules"]
-    }
-  };
-
   return (
     <div className="space-y-8">
-      {/* Role Permissions Overview */}
-      <Card>
-        <Collapsible open={permissionsOpen} onOpenChange={setPermissionsOpen}>
-          <CardHeader className="pb-3">
-            <CollapsibleTrigger asChild>
-              <button className="flex items-center justify-between w-full text-left">
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Role Permissions Overview
-                </CardTitle>
-                {permissionsOpen ? (
-                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                )}
-              </button>
-            </CollapsibleTrigger>
-            <p className="text-sm text-muted-foreground mt-1">
-              Click to view what each role can access
-            </p>
-          </CardHeader>
-          <CollapsibleContent>
-            <CardContent className="pt-0">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {(["admin", "staff", "marketeer"] as const).map((role) => {
-                  const perms = rolePermissions[role];
-                  return (
-                    <div
-                      key={role}
-                      className="border border-primary/20 rounded-lg p-4 bg-muted/20"
-                    >
-                      <div className="mb-3">
-                        <h3 className="font-semibold text-lg capitalize">{perms.label}</h3>
-                        <p className="text-xs text-muted-foreground">{perms.description}</p>
-                      </div>
-                      <ScrollArea className="h-[300px] pr-2">
-                        <div className="space-y-3">
-                          {perms.categories.map((cat) => (
-                            <div key={cat.name}>
-                              <p className="text-sm font-medium text-primary mb-1">{cat.name}</p>
-                              <ul className="space-y-0.5">
-                                {cat.sections.map((section) => (
-                                  <li key={section} className="flex items-center gap-1.5 text-xs">
-                                    <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
-                                    <span>{section}</span>
-                                  </li>
-                                ))}
-                                {cat.excluded?.map((section) => (
-                                  <li key={section} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                    <X className="h-3 w-3 text-destructive flex-shrink-0" />
-                                    <span className="line-through">{section}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          ))}
-                          {perms.excluded && (
-                            <div>
-                              <p className="text-sm font-medium text-destructive mb-1">No Access</p>
-                              <ul className="space-y-0.5">
-                                {perms.excluded.map((item) => (
-                                  <li key={item} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                    <X className="h-3 w-3 text-destructive flex-shrink-0" />
-                                    <span className="line-through">{item}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      </ScrollArea>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
+      {/* Role Permissions Editor */}
+      <RolePermissionsEditor />
 
       {/* Existing Accounts */}
       <Card>

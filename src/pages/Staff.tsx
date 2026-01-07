@@ -68,6 +68,7 @@ import { VersionManager } from "@/lib/versionManager";
 import type { User } from "@supabase/supabase-js";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTheme } from "next-themes";
+import { useRolePermissions } from "@/hooks/useRolePermissions";
 import marbleBackground from "@/assets/smudged-marble-overlay.png";
 import whiteMarbleBackground from "@/assets/white-marble-overlay.png";
 import { 
@@ -116,10 +117,14 @@ const Staff = () => {
   const [isStaff, setIsStaff] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMarketeer, setIsMarketeer] = useState(false);
+  const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
   const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  
+  // Role permissions from database
+  const { canView, canEdit, loading: permissionsLoading } = useRolePermissions(currentRole);
   
   // Check for app updates on load (force check on every staff portal load)
   useEffect(() => {
@@ -206,9 +211,12 @@ const Staff = () => {
         if (!roleError && roleData && roleData.length > 0) {
           const hasStaffOrAdmin = roleData.some(row => row.role === 'staff' || row.role === 'admin');
           const hasMarketeer = roleData.some(row => row.role === 'marketeer');
+          const hasAdmin = roleData.some(row => row.role === 'admin');
           setIsStaff(hasStaffOrAdmin || hasMarketeer);
-          setIsAdmin(roleData.some(row => row.role === 'admin'));
+          setIsAdmin(hasAdmin);
           setIsMarketeer(hasMarketeer);
+          // Set current role for permissions (admin > staff > marketeer)
+          setCurrentRole(hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : 'marketeer');
           setUser(session.user);
           
           // Store for edge function auth
@@ -259,9 +267,11 @@ const Staff = () => {
       } else {
         const hasStaffOrAdmin = data?.some(row => row.role === 'staff' || row.role === 'admin') ?? false;
         const hasMarketeer = data?.some(row => row.role === 'marketeer') ?? false;
+        const hasAdmin = data?.some(row => row.role === 'admin') ?? false;
         setIsStaff(hasStaffOrAdmin || hasMarketeer);
-        setIsAdmin(data?.some(row => row.role === 'admin') ?? false);
+        setIsAdmin(hasAdmin);
         setIsMarketeer(hasMarketeer);
+        setCurrentRole(hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : 'marketeer');
       }
     } catch (err) {
       console.error('Error:', err);
