@@ -29,6 +29,7 @@ export const StaffAccountManagement = () => {
   const [resettingPassword, setResettingPassword] = useState<string | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<string | null>(null);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
+  const [permissionsOpen, setPermissionsOpen] = useState(false);
   const [newAccount, setNewAccount] = useState<StaffAccount>({
     email: "",
     password: "",
@@ -276,8 +277,6 @@ export const StaffAccountManagement = () => {
       </Card>
     );
   }
-
-  const [permissionsOpen, setPermissionsOpen] = useState(false);
 
   // Role permissions data - what each role can access
   type RolePermission = {
