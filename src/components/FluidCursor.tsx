@@ -44,13 +44,19 @@ const FluidCursor = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Reduced complexity for better performance
     const E = {
       friction: 0.5,
-      trails: 20,
-      size: 50,
+      trails: 10,      // Reduced from 20
+      size: 30,        // Reduced from 50
       dampening: 0.25,
       tension: 0.98,
     };
+    
+    // Idle detection
+    let isIdle = false;
+    let idleTimeout: number | null = null;
+    const IDLE_DELAY = 150; // ms before pausing animation
 
     const pos = posRef.current;
 
@@ -128,6 +134,12 @@ const FluidCursor = () => {
 
     const render = () => {
       if (!runningRef.current) return;
+      
+      // Skip rendering when idle to save CPU/GPU
+      if (isIdle) {
+        frameRef.current = requestAnimationFrame(render);
+        return;
+      }
 
       ctx.globalCompositeOperation = 'source-over';
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -142,13 +154,21 @@ const FluidCursor = () => {
         line.draw(ctx);
       }
 
-      frameRef.current++;
-      window.requestAnimationFrame(render);
+      frameRef.current = requestAnimationFrame(render);
     };
 
     const handleMouseMove = (e: MouseEvent) => {
       pos.x = e.clientX;
       pos.y = e.clientY;
+      
+      // Reset idle state on movement
+      isIdle = false;
+      if (idleTimeout) {
+        clearTimeout(idleTimeout);
+      }
+      idleTimeout = window.setTimeout(() => {
+        isIdle = true;
+      }, IDLE_DELAY);
     };
 
     const handleFirstMove = (e: MouseEvent) => {
