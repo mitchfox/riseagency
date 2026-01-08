@@ -1111,7 +1111,7 @@ const Potential = () => {
                                   : "bg-red-500/10 text-red-500"
                               }`}
                             >
-                              {report.status}
+                              {report.status === "pending" ? "Analysing" : report.status}
                             </div>
                           </div>
                         </CardHeader>
