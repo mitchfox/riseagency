@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { FileText, Video, ExternalLink, Star, Edit2 } from "lucide-react";
+import { FileText, Video, ExternalLink, Star, Copy } from "lucide-react";
 
 interface ScoutingReport {
   id: string;
@@ -66,8 +66,8 @@ export const ScoutReportView = ({ report, open, onOpenChange, onEdit }: ScoutRep
             </div>
             {onEdit && (
               <Button variant="outline" size="sm" onClick={() => onEdit(report)}>
-                <Edit2 className="h-4 w-4 mr-2" />
-                Update Report
+                <Copy className="h-4 w-4 mr-2" />
+                Provide Update
               </Button>
             )}
           </DialogTitle>
@@ -121,6 +121,49 @@ export const ScoutReportView = ({ report, open, onOpenChange, onEdit }: ScoutRep
                   <span className="text-xs text-muted-foreground">Match Context</span>
                   <p className="font-medium">{report.match_context || "—"}</p>
                 </div>
+              </div>
+
+              {/* Video Links Section - Always show */}
+              <div className="pt-4 space-y-2">
+                <h4 className="text-sm font-medium mb-2">Match Videos</h4>
+                {report.video_url ? (
+                  <a
+                    href={report.video_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 transition-colors"
+                  >
+                    <Video className="h-5 w-5 text-blue-500" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Highlight Video</p>
+                    </div>
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-3 p-3 rounded-lg border border-dashed bg-muted/30">
+                    <Video className="h-5 w-5 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">No highlight video attached</p>
+                  </div>
+                )}
+                {report.full_match_url ? (
+                  <a
+                    href={report.full_match_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 transition-colors"
+                  >
+                    <Video className="h-5 w-5 text-green-500" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Full Match</p>
+                    </div>
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-3 p-3 rounded-lg border border-dashed bg-muted/30">
+                    <Video className="h-5 w-5 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">No full match video attached</p>
+                  </div>
+                )}
               </div>
 
               {report.summary && (
