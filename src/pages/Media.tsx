@@ -1,15 +1,66 @@
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ChevronDown, Video, Camera, Mic, FileText, Newspaper, Calendar, Mail } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 import bannerHero from "@/assets/banner-hero.jpg";
+
+interface PressRelease {
+  id: string;
+  title: string;
+  content: string;
+  excerpt: string | null;
+  published_at: string;
+}
+
+interface GalleryItem {
+  id: string;
+  title: string;
+  file_url: string;
+  file_type: string;
+}
 
 const Media = () => {
   const { t } = useLanguage();
+  const [pressReleases, setPressReleases] = useState<PressRelease[]>([]);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [showPressReleases, setShowPressReleases] = useState(false);
+
+  useEffect(() => {
+    const fetchPressReleases = async () => {
+      const { data, error } = await supabase
+        .from("press_releases")
+        .select("id, title, content, excerpt, published_at")
+        .eq("is_published", true)
+        .order("published_at", { ascending: false });
+
+      if (!error && data) {
+        setPressReleases(data);
+      }
+    };
+
+    const fetchGalleryItems = async () => {
+      const { data, error } = await supabase
+        .from("marketing_gallery")
+        .select("id, title, file_url, file_type")
+        .order("created_at", { ascending: false })
+        .limit(8);
+
+      if (!error && data) {
+        setGalleryItems(data);
+      }
+    };
+
+    fetchPressReleases();
+    fetchGalleryItems();
+  }, []);
   
   return (
     <div className="min-h-screen bg-background overflow-x-hidden" key="media-page">
@@ -110,18 +161,41 @@ const Media = () => {
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="order-2 md:order-1 grid grid-cols-2 gap-4">
-                <div className="aspect-[3/4] bg-card border border-border rounded-lg overflow-hidden flex items-center justify-center">
-                  <Camera className="h-12 w-12 text-muted-foreground/50" />
-                </div>
-                <div className="aspect-[3/4] bg-card border border-border rounded-lg overflow-hidden flex items-center justify-center mt-8">
-                  <Video className="h-12 w-12 text-muted-foreground/50" />
-                </div>
-                <div className="aspect-[3/4] bg-card border border-border rounded-lg overflow-hidden flex items-center justify-center -mt-8">
-                  <Camera className="h-12 w-12 text-muted-foreground/50" />
-                </div>
-                <div className="aspect-[3/4] bg-card border border-border rounded-lg overflow-hidden flex items-center justify-center">
-                  <Video className="h-12 w-12 text-muted-foreground/50" />
-                </div>
+                {galleryItems.length > 0 ? (
+                  galleryItems.slice(0, 4).map((item, index) => (
+                    <div 
+                      key={item.id}
+                      className={`aspect-[3/4] bg-card border border-border rounded-lg overflow-hidden ${index === 1 ? 'mt-8' : index === 2 ? '-mt-8' : ''}`}
+                    >
+                      {item.file_type === 'image' ? (
+                        <img 
+                          src={item.file_url} 
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Video className="h-12 w-12 text-muted-foreground/50" />
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="aspect-[3/4] bg-card border border-border rounded-lg overflow-hidden flex items-center justify-center">
+                      <Camera className="h-12 w-12 text-muted-foreground/50" />
+                    </div>
+                    <div className="aspect-[3/4] bg-card border border-border rounded-lg overflow-hidden flex items-center justify-center mt-8">
+                      <Video className="h-12 w-12 text-muted-foreground/50" />
+                    </div>
+                    <div className="aspect-[3/4] bg-card border border-border rounded-lg overflow-hidden flex items-center justify-center -mt-8">
+                      <Camera className="h-12 w-12 text-muted-foreground/50" />
+                    </div>
+                    <div className="aspect-[3/4] bg-card border border-border rounded-lg overflow-hidden flex items-center justify-center">
+                      <Video className="h-12 w-12 text-muted-foreground/50" />
+                    </div>
+                  </>
+                )}
               </div>
               <div className="order-1 md:order-2 space-y-6">
                 <div className="inline-flex items-center gap-2 text-primary">
@@ -216,8 +290,40 @@ const Media = () => {
         {/* PRESS RELEASES Section */}
         <section className="py-8 md:py-12 bg-muted/30">
           <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div className="order-2 md:order-1 bg-card/50 border border-border rounded-lg p-8 space-y-6">
+            <div className="grid md:grid-cols-2 gap-12 items-start">
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 text-primary">
+                  <Newspaper className="h-6 w-6" />
+                  <span className="text-sm font-bebas uppercase tracking-widest">{t('media.official_updates', 'Official Updates')}</span>
+                </div>
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                  {t('media.press', 'PRESS')} <span className="text-primary">{t('media.releases', 'RELEASES')}</span>
+                </h2>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  {t('media.press_desc', 'Subscribe to our press list for official announcements, transfer news, and player updates delivered directly to your inbox.')}
+                </p>
+                
+                {!showPressReleases ? (
+                  <Button 
+                    size="lg" 
+                    className="btn-shine font-bebas uppercase tracking-wider"
+                    onClick={() => setShowPressReleases(true)}
+                  >
+                    {t('media.view_releases', 'View Press Releases')}
+                  </Button>
+                ) : (
+                  <Button 
+                    size="lg" 
+                    variant="outline"
+                    className="font-bebas uppercase tracking-wider"
+                    onClick={() => setShowPressReleases(false)}
+                  >
+                    {t('media.hide_releases', 'Hide Press Releases')}
+                  </Button>
+                )}
+              </div>
+              
+              <div className="bg-card/50 border border-border rounded-lg p-8 space-y-6">
                 <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground">{t('media.stay_updated', 'Stay Updated')}</h3>
                 <ul className="space-y-4">
                   <li className="flex items-start gap-3">
@@ -248,33 +354,43 @@ const Media = () => {
                   </a>
                 </Button>
               </div>
-              <div className="order-1 md:order-2 space-y-6">
-                <div className="inline-flex items-center gap-2 text-primary">
-                  <Newspaper className="h-6 w-6" />
-                  <span className="text-sm font-bebas uppercase tracking-widest">{t('media.official_updates', 'Official Updates')}</span>
-                </div>
-                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                  {t('media.press', 'PRESS')} <span className="text-primary">{t('media.releases', 'RELEASES')}</span>
-                </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  {t('media.press_desc', 'Subscribe to our press list for official announcements, transfer news, and player updates delivered directly to your inbox.')}
-                </p>
-                <Collapsible>
-                  <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all">
-                    <span className="text-sm uppercase tracking-wider text-primary font-medium">{t('media.what_youll_receive', "What You'll Receive")}</span>
-                    <ChevronDown className="h-4 w-4 text-primary transition-transform group-data-[state=open]:rotate-180" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-6 space-y-4 text-base text-muted-foreground leading-relaxed">
-                    <p>
-                      {t('media.what_youll_receive_p1', 'Our press releases cover all official club announcements for represented players, including transfers, contract extensions, loan moves, and significant career milestones.')}
-                    </p>
-                    <p>
-                      {t('media.what_youll_receive_p2', 'Subscribers get early access to statements and are first to receive high-resolution assets accompanying major announcements.')}
-                    </p>
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
             </div>
+
+            {/* Press Releases Accordion */}
+            {showPressReleases && (
+              <div className="mt-12">
+                {pressReleases.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No press releases available at this time.</p>
+                  </div>
+                ) : (
+                  <Accordion type="single" collapsible defaultValue={pressReleases[0]?.id} className="space-y-4">
+                    {pressReleases.map((release, index) => (
+                      <AccordionItem 
+                        key={release.id} 
+                        value={release.id}
+                        className="border border-border rounded-lg bg-card/50 overflow-hidden"
+                      >
+                        <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50">
+                          <div className="flex flex-col items-start gap-1 text-left">
+                            <span className="text-xs text-primary font-bebas uppercase tracking-wider">
+                              {format(new Date(release.published_at), "MMMM d, yyyy")}
+                            </span>
+                            <span className="text-lg font-medium text-foreground">{release.title}</span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-6 pb-6">
+                          <div className="space-y-4 text-muted-foreground whitespace-pre-line">
+                            {release.content}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
