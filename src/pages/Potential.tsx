@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { LogOut, Plus, Users, MessageSquare, Search, FileText, Trash2, Edit, Target, ChevronDown, Link, Upload, X, Phone, CreditCard, Receipt, Send } from "lucide-react";
+import { LogOut, Plus, Users, MessageSquare, Search, FileText, Trash2, Edit, Target, ChevronDown, Link, Upload, X, Phone, CreditCard, Receipt, Send, Copy, Eye } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import { SkillEvaluationForm } from "@/components/staff/SkillEvaluationForm";
 import { initializeSkillEvaluations, SkillEvaluation, SCOUTING_POSITIONS, ScoutingPosition } from "@/data/scoutingSkills";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { Globe, TrendingUp, Award, Users2 } from "lucide-react";
+import { ScoutReportView } from "@/components/scout/ScoutReportView";
 
 interface VideoEntry {
   url: string;
@@ -196,6 +197,8 @@ const Potential = () => {
   const [showInvoicesModal, setShowInvoicesModal] = useState(false);
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
   const [newMessageForm, setNewMessageForm] = useState({ subject: '', message: '' });
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [viewReportOpen, setViewReportOpen] = useState(false);
   const [bankDetailsForm, setBankDetailsForm] = useState({
     account_name: '',
     bank_name: '',
@@ -369,12 +372,28 @@ const Potential = () => {
     },
   });
 
-  // Calculate exclusive rights and contributor players with pending status support
+  // Calculate exclusive rights and contributor players - use contribution_type from database when set
   const playerRights = submissions.reduce((acc, report) => {
     const playerName = report.player_name;
     const isPending = report.status === 'pending';
     const isAccepted = report.status === 'accepted' || report.status === 'approved';
     
+    // If contribution_type is set in database, use that directly
+    if (report.contribution_type === 'exclusive') {
+      acc.exclusive.push({
+        ...report,
+        rightsStatus: 'confirmed'
+      });
+      return acc;
+    } else if (report.contribution_type === 'contribution' || report.contribution_type === 'contributor') {
+      acc.contributor.push({
+        ...report,
+        rightsStatus: 'confirmed'
+      });
+      return acc;
+    }
+    
+    // Otherwise, use heuristics for pending reports
     // First check if player already exists in the main players database (lenient matching)
     const existsInPlayersDb = existingPlayers.some(p => 
       areNamesSimilar(p.name, playerName)
@@ -411,9 +430,43 @@ const Potential = () => {
     return acc;
   }, { exclusive: [] as any[], contributor: [] as any[] });
 
-  // Count only confirmed (accepted) reports for the stats
+  // Count only confirmed reports for the stats
   const confirmedExclusive = playerRights.exclusive.filter((r: any) => r.rightsStatus === 'confirmed');
   const confirmedContributor = playerRights.contributor.filter((r: any) => r.rightsStatus === 'confirmed');
+
+  // Handle duplicating a report for update
+  const handleDuplicateForUpdate = (report: any) => {
+    setDraftForm({
+      player_name: report.player_name || "",
+      position: report.position || "",
+      year_of_birth: report.age ? (new Date().getFullYear() - report.age).toString() : "",
+      birth_month: "",
+      birth_day: "",
+      current_club: report.current_club || "",
+      nationality: report.nationality || "",
+      competition: report.competition || "",
+      skill_evaluations: report.skill_evaluations || [],
+      strengths: report.strengths || "",
+      weaknesses: report.weaknesses || "",
+      summary: report.summary || "",
+      video_urls: report.video_url ? [report.video_url] : [],
+      video_entries: [],
+      report_type: '',
+      independent_report_url: '',
+      player_contact_email: '',
+      player_contact_phone: '',
+      contact_name: '',
+      contact_relationship: '',
+      contact_email: '',
+      contact_phone: '',
+      existing_agent: '',
+      agent_contract_end: '',
+      additional_notes: '',
+    });
+    setViewReportOpen(false);
+    setIsCreatingNew(true);
+    toast.success("Report duplicated - make your updates and submit");
+  };
 
   // Save draft mutation
   const saveDraftMutation = useMutation({
@@ -1006,11 +1059,12 @@ const Potential = () => {
                     return (
                       <Card 
                         key={report.id} 
-                        className={`overflow-hidden transition-all hover:shadow-lg ${
+                        className={`overflow-hidden transition-all hover:shadow-lg cursor-pointer ${
                           isExclusive 
                             ? 'border-l-4 border-l-green-500' 
                             : 'border-l-4 border-l-blue-500'
                         }`}
+                        onClick={() => { setSelectedReport(report); setViewReportOpen(true); }}
                       >
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between gap-2">
@@ -1994,6 +2048,14 @@ const Potential = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Report View Modal */}
+      <ScoutReportView
+        report={selectedReport}
+        open={viewReportOpen}
+        onOpenChange={setViewReportOpen}
+        onEdit={handleDuplicateForUpdate}
+      />
     </div>
   );
 };
