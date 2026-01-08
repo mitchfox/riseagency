@@ -185,12 +185,12 @@ export const Player3DEffect = ({ className = "", imagePrefix = "player" }: Playe
         return 130.0 * dot(m, g);
       }
       
-      // Flow-based FBM for smooth organic distortion (NOT radial) - HIGH RESOLUTION
+      // Flow-based FBM for smooth organic distortion - OPTIMIZED (reduced iterations)
       float flowFBM(vec2 p, float t) {
         float value = 0.0;
         float amplitude = 0.5;
         vec2 flow = vec2(t * 0.15, t * 0.1);
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 3; i++) {
           value += amplitude * snoise(p + flow);
           p *= 2.0;
           flow *= 1.25;
@@ -221,43 +221,42 @@ export const Player3DEffect = ({ className = "", imagePrefix = "player" }: Playe
       }
       
       // ============= MAIN WATER BLOB FUNCTION =============
-      // Creates smooth, organic water-like blob using SDF with flow distortion - HIGH RESOLUTION
+      // Creates smooth, organic water-like blob using SDF with flow distortion - OPTIMIZED
       float waterBlob(vec2 uv, vec2 center, float baseRadius, float timeOffset) {
-        // Flow-based distortion applied to UV space (NOT radial like before) - MORE DETAIL
+        // Flow-based distortion applied to UV space - reduced detail for performance
         vec2 flowDistort = vec2(
-          flowFBM(uv * 8.0 + timeOffset, noiseTime * 0.8) * 0.035,
-          flowFBM(uv * 8.0 + timeOffset + 100.0, noiseTime * 0.7) * 0.035
+          flowFBM(uv * 6.0 + timeOffset, noiseTime * 0.8) * 0.03,
+          flowFBM(uv * 6.0 + timeOffset + 100.0, noiseTime * 0.7) * 0.03
         );
         vec2 distortedUV = uv + flowDistort;
         
         // Base circle SDF
         float dist = circleSDF(distortedUV, center, baseRadius);
         
-        // Add flowing edge distortion (smooth waves, not spiky) - HIGHER DETAIL
-        float edgeWave = flowFBM(uv * 12.0 + center * 5.0 + timeOffset, noiseTime * 0.5) * 0.02;
-        float edgeWave2 = flowFBM(uv * 20.0 + center * 8.0 + timeOffset * 1.5, noiseTime * 0.7) * 0.01;
-        dist += edgeWave + edgeWave2;
+        // Single edge distortion pass for performance
+        float edgeWave = flowFBM(uv * 10.0 + center * 5.0 + timeOffset, noiseTime * 0.5) * 0.02;
+        dist += edgeWave;
         
         // Sharper, more defined edge
         return 1.0 - smoothstep(-0.015, 0.03, dist);
       }
       
       // ============= CONNECTED WATER LOBES =============
-      // Creates 2-3 smaller connected blobs that merge into main mass - HIGH RESOLUTION
+      // Creates 2-3 smaller connected blobs - OPTIMIZED (reduced from 4 to 3 lobes)
       float waterLobes(vec2 uv, vec2 center, float baseRadius, vec2 velocity, float speed, float timeOffset) {
         float combinedSDF = circleSDF(uv, center, baseRadius);
         
-        // Generate 4 connected lobes with noise-driven positions for more detail
-        for (int i = 0; i < 4; i++) {
+        // Generate 3 connected lobes (reduced from 4)
+        for (int i = 0; i < 3; i++) {
           float fi = float(i);
           
-          // Lobe offset driven by smooth noise (not angle-based) - MORE DETAIL
+          // Lobe offset driven by smooth noise
           vec2 lobeOffset = vec2(
-            snoise(vec2(fi * 3.5 + timeOffset, noiseTime * 0.35)) * 0.14,
-            snoise(vec2(fi * 3.5 + 50.0 + timeOffset, noiseTime * 0.28)) * 0.14
+            snoise(vec2(fi * 3.5 + timeOffset, noiseTime * 0.35)) * 0.12,
+            snoise(vec2(fi * 3.5 + 50.0 + timeOffset, noiseTime * 0.28)) * 0.12
           );
           
-          // Add velocity bias - lobes extend more in movement direction
+          // Add velocity bias
           if (speed > 0.02) {
             lobeOffset += velocity * (0.07 + fi * 0.025);
           }
@@ -267,14 +266,13 @@ export const Player3DEffect = ({ className = "", imagePrefix = "player" }: Playe
           
           float lobeSDF = circleSDF(uv, lobeCenter, lobeRadius);
           
-          // Smooth-min blend creates organic connection - tighter blend
+          // Smooth-min blend creates organic connection
           combinedSDF = smin(combinedSDF, lobeSDF, 0.06);
         }
         
-        // Apply flow distortion to the combined SDF - HIGHER RESOLUTION
-        float flowDistort = flowFBM(uv * 10.0 + timeOffset, noiseTime * 0.6) * 0.018;
-        float flowDistort2 = flowFBM(uv * 18.0 + timeOffset * 1.3, noiseTime * 0.8) * 0.008;
-        combinedSDF += flowDistort + flowDistort2;
+        // Single flow distortion pass
+        float flowDistort = flowFBM(uv * 8.0 + timeOffset, noiseTime * 0.6) * 0.015;
+        combinedSDF += flowDistort;
         
         return 1.0 - smoothstep(-0.012, 0.028, combinedSDF);
       }
@@ -530,11 +528,12 @@ export const Player3DEffect = ({ className = "", imagePrefix = "player" }: Playe
         return 130.0 * dot(m, g);
       }
       
+      // Flow-based FBM - OPTIMIZED (reduced iterations)
       float flowFBM(vec2 p, float t) {
         float value = 0.0;
         float amplitude = 0.5;
         vec2 flow = vec2(t * 0.15, t * 0.1);
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 3; i++) {
           value += amplitude * snoise(p + flow);
           p *= 2.0;
           flow *= 1.25;
@@ -552,26 +551,27 @@ export const Player3DEffect = ({ className = "", imagePrefix = "player" }: Playe
         return length(p - center) - radius;
       }
       
+      // Optimized waterBlob for fragment shader
       float waterBlob(vec2 uv, vec2 center, float baseRadius, float timeOffset) {
         vec2 flowDistort = vec2(
-          flowFBM(uv * 8.0 + timeOffset, noiseTime * 0.8) * 0.035,
-          flowFBM(uv * 8.0 + timeOffset + 100.0, noiseTime * 0.7) * 0.035
+          flowFBM(uv * 6.0 + timeOffset, noiseTime * 0.8) * 0.03,
+          flowFBM(uv * 6.0 + timeOffset + 100.0, noiseTime * 0.7) * 0.03
         );
         vec2 distortedUV = uv + flowDistort;
         float dist = circleSDF(distortedUV, center, baseRadius);
-        float edgeWave = flowFBM(uv * 12.0 + center * 5.0 + timeOffset, noiseTime * 0.5) * 0.02;
-        float edgeWave2 = flowFBM(uv * 20.0 + center * 8.0 + timeOffset * 1.5, noiseTime * 0.7) * 0.01;
-        dist += edgeWave + edgeWave2;
+        float edgeWave = flowFBM(uv * 10.0 + center * 5.0 + timeOffset, noiseTime * 0.5) * 0.02;
+        dist += edgeWave;
         return 1.0 - smoothstep(-0.015, 0.03, dist);
       }
       
+      // Optimized waterLobes (reduced from 4 to 3 lobes)
       float waterLobes(vec2 uv, vec2 center, float baseRadius, vec2 velocity, float speed, float timeOffset) {
         float combinedSDF = circleSDF(uv, center, baseRadius);
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 3; i++) {
           float fi = float(i);
           vec2 lobeOffset = vec2(
-            snoise(vec2(fi * 3.5 + timeOffset, noiseTime * 0.35)) * 0.14,
-            snoise(vec2(fi * 3.5 + 50.0 + timeOffset, noiseTime * 0.28)) * 0.14
+            snoise(vec2(fi * 3.5 + timeOffset, noiseTime * 0.35)) * 0.12,
+            snoise(vec2(fi * 3.5 + 50.0 + timeOffset, noiseTime * 0.28)) * 0.12
           );
           if (speed > 0.02) {
             lobeOffset += velocity * (0.07 + fi * 0.025);
@@ -581,9 +581,8 @@ export const Player3DEffect = ({ className = "", imagePrefix = "player" }: Playe
           float lobeSDF = circleSDF(uv, lobeCenter, lobeRadius);
           combinedSDF = smin(combinedSDF, lobeSDF, 0.06);
         }
-        float flowDistort = flowFBM(uv * 10.0 + timeOffset, noiseTime * 0.6) * 0.018;
-        float flowDistort2 = flowFBM(uv * 18.0 + timeOffset * 1.3, noiseTime * 0.8) * 0.008;
-        combinedSDF += flowDistort + flowDistort2;
+        float flowDistort = flowFBM(uv * 8.0 + timeOffset, noiseTime * 0.6) * 0.015;
+        combinedSDF += flowDistort;
         return 1.0 - smoothstep(-0.012, 0.028, combinedSDF);
       }
       
@@ -604,11 +603,12 @@ export const Player3DEffect = ({ className = "", imagePrefix = "player" }: Playe
         return 1.0 - smoothstep(-0.01, 0.02, dist);
       }
       
+      // Optimized splash droplets (reduced from 4 to 3)
       float splashDroplets(vec2 uv, vec2 center, vec2 velocity, float speed, float baseRadius, float timeOffset) {
         float splash = 0.0;
         if (speed < 0.05) return 0.0;
         float baseSDF = circleSDF(uv, center, baseRadius * 1.2);
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 3; i++) {
           float fi = float(i);
           vec2 dropOffset = vec2(
             snoise(vec2(fi * 5.0 + timeOffset, noiseTime * 0.5)) * 0.1,
@@ -618,7 +618,6 @@ export const Player3DEffect = ({ className = "", imagePrefix = "player" }: Playe
           vec2 dropCenter = center + dropOffset;
           float dropRadius = 0.02 + snoise(vec2(fi * 2.0, noiseTime * 0.6)) * 0.01;
           float dropSDF = circleSDF(uv, dropCenter, dropRadius);
-          float connectedSDF = smin(baseSDF, dropSDF, 0.05);
           float dropMask = 1.0 - smoothstep(-0.01, 0.02, dropSDF);
           splash = max(splash, dropMask * 0.7);
         }
