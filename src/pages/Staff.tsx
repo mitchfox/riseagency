@@ -57,6 +57,7 @@ import { FinancialReports } from "@/components/staff/FinancialReports";
 import { PaymentsManagement } from "@/components/staff/PaymentsManagement";
 import { AthleteCentre } from "@/components/staff/AthleteCentre";
 import { OpenAccessManagement } from "@/components/staff/OpenAccessManagement";
+import PressReleasesManagement from "@/components/staff/PressReleasesManagement";
 import { FocusedTasksSection } from "@/components/staff/FocusedTasksSection";
 import { StaffNotificationsDropdown } from "@/components/staff/StaffNotificationsDropdown";
 import { TacticsBoard } from "@/components/staff/coaching/TacticsBoard";
@@ -119,7 +120,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'pressreleases' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   
@@ -663,6 +664,7 @@ const Staff = () => {
             { id: 'contentcreator', title: 'Content Creator', icon: Film },
             { id: 'blog', title: 'News Articles', icon: Newspaper },
             { id: 'betweenthelines', title: 'Between The Lines', icon: FileText },
+            { id: 'pressreleases', title: 'Press Releases', icon: Newspaper },
             { id: 'openaccess', title: 'Open Access', icon: FileText },
             { id: 'visitors', title: 'Site Visitors', icon: Eye },
           ]
@@ -748,6 +750,7 @@ const Staff = () => {
           { id: 'contentcreator', title: 'Content Creator', icon: Film },
           { id: 'blog', title: 'News Articles', icon: Newspaper },
           { id: 'betweenthelines', title: 'Between The Lines', icon: FileText },
+          { id: 'pressreleases', title: 'Press Releases', icon: Newspaper },
           { id: 'openaccess', title: 'Open Access', icon: FileText },
           { id: 'visitors', title: 'Site Visitors', icon: Eye },
         ]
@@ -1124,6 +1127,7 @@ const Staff = () => {
                   {expandedSection === 'marketingideas' && <MarketingIdeas />}
                   {expandedSection === 'blog' && <BlogManagement isAdmin={isAdmin} />}
                   {expandedSection === 'betweenthelines' && <BetweenTheLinesManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'pressreleases' && <PressReleasesManagement />}
                   {expandedSection === 'openaccess' && <OpenAccessManagement />}
                   {expandedSection === 'submissions' && <FormSubmissionsManagement isAdmin={isAdmin} />}
                   {expandedSection === 'visitors' && <SiteVisitorsManagement isAdmin={isAdmin} />}
