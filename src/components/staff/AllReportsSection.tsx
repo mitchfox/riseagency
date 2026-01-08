@@ -82,7 +82,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
     icon: X 
   },
   pending: { 
-    label: "Pending Review", 
+    label: "Analysing", 
     color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30",
     icon: Clock 
   },
@@ -401,7 +401,7 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
               <Clock className="h-4 w-4 text-yellow-600" />
               <span className="text-2xl font-bold text-yellow-600">{stats.pending}</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Pending</p>
+            <p className="text-xs text-muted-foreground mt-1">Analysing</p>
           </CardContent>
         </Card>
         
@@ -467,7 +467,7 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="pending">Analysing</SelectItem>
                 <SelectItem value="recruiting">Recruiting</SelectItem>
                 <SelectItem value="scouting_further">Scouting Further</SelectItem>
                 <SelectItem value="no_interest">No Interest</SelectItem>
@@ -742,10 +742,53 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
                         <p className="font-medium">{selectedReport.scouting_date ? format(new Date(selectedReport.scouting_date), "dd MMM yyyy") : "—"}</p>
                       </div>
                       <div>
-                        <span className="text-xs text-muted-foreground">Location</span>
-                        <p className="font-medium">{selectedReport.location || "—"}</p>
+                        <span className="text-xs text-muted-foreground">Competition</span>
+                        <p className="font-medium">{selectedReport.competition || "—"}</p>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Match Videos - Always show */}
+                  <div className="pt-4 space-y-2">
+                    <h4 className="text-sm font-medium mb-2">Match Videos</h4>
+                    {selectedReport.video_url ? (
+                      <a
+                        href={selectedReport.video_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 transition-colors"
+                      >
+                        <Video className="h-5 w-5 text-blue-500" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Highlight Video</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      <div className="flex items-center gap-3 p-3 rounded-lg border border-dashed bg-muted/30">
+                        <Video className="h-5 w-5 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">No highlight video attached</p>
+                      </div>
+                    )}
+                    {selectedReport.full_match_url ? (
+                      <a
+                        href={selectedReport.full_match_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 transition-colors"
+                      >
+                        <Video className="h-5 w-5 text-green-500" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Full Match</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      <div className="flex items-center gap-3 p-3 rounded-lg border border-dashed bg-muted/30">
+                        <Video className="h-5 w-5 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">No full match video attached</p>
+                      </div>
+                    )}
                   </div>
 
                   {selectedReport.auto_generated_review && (
@@ -930,7 +973,7 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="pending">Pending Review</SelectItem>
+                          <SelectItem value="pending">Analysing</SelectItem>
                           <SelectItem value="recruiting">Recruiting</SelectItem>
                           <SelectItem value="scouting_further">Scouting Further</SelectItem>
                           <SelectItem value="no_interest">No Interest At This Time</SelectItem>

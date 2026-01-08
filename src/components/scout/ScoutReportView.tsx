@@ -75,15 +75,14 @@ export const ScoutReportView = ({ report, open, onOpenChange, onEdit }: ScoutRep
 
         <ScrollArea className="max-h-[70vh]">
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="w-full grid grid-cols-4">
+            <TabsList className="w-full grid grid-cols-3">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="evaluation">Evaluation</TabsTrigger>
-              <TabsTrigger value="skills">Skills</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4 pt-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
                   <span className="text-xs text-muted-foreground">Age</span>
                   <p className="font-medium">{report.age || "—"}</p>
@@ -93,33 +92,21 @@ export const ScoutReportView = ({ report, open, onOpenChange, onEdit }: ScoutRep
                   <p className="font-medium">{report.nationality || "—"}</p>
                 </div>
                 <div>
-                  <span className="text-xs text-muted-foreground">Height</span>
-                  <p className="font-medium">{report.height_cm ? `${report.height_cm}cm` : "—"}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground">Preferred Foot</span>
-                  <p className="font-medium">{report.preferred_foot || "—"}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div>
                   <span className="text-xs text-muted-foreground">Scouting Date</span>
                   <p className="font-medium">
                     {report.scouting_date ? format(new Date(report.scouting_date), "dd MMMM yyyy") : "—"}
                   </p>
                 </div>
-                <div>
-                  <span className="text-xs text-muted-foreground">Location</span>
-                  <p className="font-medium">{report.location || "—"}</p>
-                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-2">
                 <div>
                   <span className="text-xs text-muted-foreground">Competition</span>
                   <p className="font-medium">{report.competition || "—"}</p>
                 </div>
                 <div>
-                  <span className="text-xs text-muted-foreground">Match Context</span>
-                  <p className="font-medium">{report.match_context || "—"}</p>
+                  <span className="text-xs text-muted-foreground">Scouted by</span>
+                  <p className="font-medium">{(report as any).scout_name || "—"}</p>
                 </div>
               </div>
 
@@ -182,7 +169,7 @@ export const ScoutReportView = ({ report, open, onOpenChange, onEdit }: ScoutRep
 
               <div className="flex items-center gap-2 pt-4">
                 <Badge variant={report.status === "recruiting" ? "default" : "secondary"}>
-                  {report.status}
+                  {report.status === "pending" ? "Analysing" : report.status}
                 </Badge>
                 {report.contribution_type && (
                   <Badge variant="outline" className={
@@ -199,44 +186,70 @@ export const ScoutReportView = ({ report, open, onOpenChange, onEdit }: ScoutRep
             </TabsContent>
 
             <TabsContent value="evaluation" className="space-y-4 pt-4">
-              {report.strengths && (
-                <Card className="border-green-500/30 bg-green-500/5">
-                  <CardContent className="pt-4">
-                    <h4 className="text-sm font-medium text-green-600 mb-2">Strengths</h4>
-                    <p className="text-sm whitespace-pre-wrap">{report.strengths}</p>
-                  </CardContent>
-                </Card>
-              )}
-              {report.weaknesses && (
-                <Card className="border-red-500/30 bg-red-500/5">
-                  <CardContent className="pt-4">
-                    <h4 className="text-sm font-medium text-red-600 mb-2">Weaknesses</h4>
-                    <p className="text-sm whitespace-pre-wrap">{report.weaknesses}</p>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
+              {/* Strengths & Weaknesses */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium">Assessment</h4>
+                {report.strengths && (
+                  <Card className="border-green-500/30 bg-green-500/5">
+                    <CardContent className="pt-4">
+                      <h4 className="text-sm font-medium text-green-600 mb-2">Strengths</h4>
+                      <p className="text-sm whitespace-pre-wrap">{report.strengths}</p>
+                    </CardContent>
+                  </Card>
+                )}
+                {report.weaknesses && (
+                  <Card className="border-red-500/30 bg-red-500/5">
+                    <CardContent className="pt-4">
+                      <h4 className="text-sm font-medium text-red-600 mb-2">Weaknesses</h4>
+                      <p className="text-sm whitespace-pre-wrap">{report.weaknesses}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
 
-            <TabsContent value="skills" className="pt-4">
-              {skillEvaluations.length > 0 ? (
-                <div className="grid gap-2">
-                  {skillEvaluations.map((skill: any, index: number) => (
-                    <div key={index} className="flex items-start justify-between p-3 rounded-lg bg-muted/50 border">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">{skill.skill}</span>
-                          <Badge variant="outline" className="text-xs">{skill.rating}</Badge>
+              {/* Skill Evaluations */}
+              <div className="pt-4 space-y-3">
+                <h4 className="text-sm font-medium">Skill Evaluations</h4>
+                {skillEvaluations.length > 0 ? (
+                  <div className="grid gap-2">
+                    {(() => {
+                      // Group skills by category/domain
+                      const grouped = skillEvaluations.reduce((acc: Record<string, any[]>, skill: any) => {
+                        const category = skill.domain || skill.category || "General";
+                        if (!acc[category]) acc[category] = [];
+                        acc[category].push(skill);
+                        return acc;
+                      }, {});
+                      
+                      return Object.entries(grouped).map(([category, skills]) => (
+                        <div key={category} className="space-y-2">
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{category}</span>
+                          {(skills as any[]).map((skill: any, index: number) => (
+                            <div key={index} className="flex items-start justify-between p-3 rounded-lg bg-muted/50 border">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm">{skill.skill || skill.skill_name}</span>
+                                  <Badge variant="outline" className={
+                                    (skill.rating || skill.grade)?.toString().startsWith('A') ? 'bg-green-500/10 text-green-600 border-green-500/30' :
+                                    (skill.rating || skill.grade)?.toString().startsWith('B') ? 'bg-blue-500/10 text-blue-600 border-blue-500/30' :
+                                    (skill.rating || skill.grade)?.toString().startsWith('C') ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' :
+                                    'bg-muted'
+                                  }>{skill.rating || skill.grade}</Badge>
+                                </div>
+                                {(skill.notes || skill.description) && (
+                                  <p className="text-xs text-muted-foreground mt-1">{skill.notes || skill.description}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        {skill.notes && (
-                          <p className="text-xs text-muted-foreground mt-1">{skill.notes}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">No skill evaluations recorded</p>
-              )}
+                      ));
+                    })()}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-4 text-sm">No skill evaluations recorded</p>
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="documents" className="space-y-4 pt-4">
