@@ -721,25 +721,25 @@ export const AllReportsSection = ({ onViewReport, onEditReport }: AllReportsSect
                     <div className="space-y-3">
                       <div>
                         <span className="text-xs text-muted-foreground">Age</span>
-                        <p className="font-medium">{selectedReport.age || "—"}</p>
+                        <p className="font-medium">{selectedReport.age || "-"}</p>
                       </div>
                       <div>
                         <span className="text-xs text-muted-foreground">Club</span>
-                        <p className="font-medium">{selectedReport.current_club || "—"}</p>
+                        <p className="font-medium">{selectedReport.current_club || "-"}</p>
                       </div>
                       <div>
                         <span className="text-xs text-muted-foreground">Nationality</span>
-                        <p className="font-medium">{selectedReport.nationality || "—"}</p>
+                        <p className="font-medium">{selectedReport.nationality || "-"}</p>
                       </div>
                     </div>
                     <div className="space-y-3">
                       <div>
                         <span className="text-xs text-muted-foreground">Scouted by</span>
-                        <p className="font-medium">{selectedReport.scout_name || "—"}</p>
+                        <p className="font-medium">{selectedReport.scout_name || "-"}</p>
                       </div>
                       <div>
                         <span className="text-xs text-muted-foreground">Date</span>
-                        <p className="font-medium">{selectedReport.scouting_date ? format(new Date(selectedReport.scouting_date), "dd MMM yyyy") : "—"}</p>
+                        <p className="font-medium">{selectedReport.scouting_date ? format(new Date(selectedReport.scouting_date), "dd MMM yyyy") : "-"}</p>
                       </div>
                       <div>
                         <span className="text-xs text-muted-foreground">Competition</span>

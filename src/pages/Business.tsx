@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, ArrowRight, Sparkles, Briefcase, Users, Targ
 import { useLanguage } from "@/contexts/LanguageContext";
 import { HoverText } from "@/components/HoverText";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 // Case study / showcase card data
 interface ShowcaseCard {
@@ -93,10 +94,86 @@ const Business = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const [playerImages, setPlayerImages] = useState<string[]>([]);
+  const autoSlideRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch player images for hero background
+  useEffect(() => {
+    const fetchPlayerImages = async () => {
+      const { data } = await supabase
+        .from('players')
+        .select('image_url')
+        .not('image_url', 'is', null)
+        .limit(5);
+      if (data) {
+        setPlayerImages(data.map(p => p.image_url).filter(Boolean) as string[]);
+      }
+    };
+    fetchPlayerImages();
+  }, []);
+
+  // Auto-slide functionality
+  useEffect(() => {
+    const startAutoSlide = () => {
+      autoSlideRef.current = setInterval(() => {
+        if (scrollContainerRef.current) {
+          const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+          const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 10;
+          
+          if (isAtEnd) {
+            // Reset to start
+            scrollContainerRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+            setActiveCardIndex(0);
+          } else {
+            // Scroll to next card
+            const cardWidth = 360; // approximate card width + gap
+            scrollContainerRef.current.scrollBy({ left: cardWidth, behavior: 'smooth' });
+            setActiveCardIndex(prev => Math.min(prev + 1, showcaseCardsConfig.length - 1));
+          }
+          setTimeout(checkScrollPosition, 300);
+        }
+      }, 4000);
+    };
+
+    startAutoSlide();
+
+    return () => {
+      if (autoSlideRef.current) {
+        clearInterval(autoSlideRef.current);
+      }
+    };
+  }, []);
+
+  // Pause auto-slide on hover
+  const handleMouseEnter = () => {
+    if (autoSlideRef.current) {
+      clearInterval(autoSlideRef.current);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    autoSlideRef.current = setInterval(() => {
+      if (scrollContainerRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+        const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 10;
+        
+        if (isAtEnd) {
+          scrollContainerRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+          setActiveCardIndex(0);
+        } else {
+          const cardWidth = 360;
+          scrollContainerRef.current.scrollBy({ left: cardWidth, behavior: 'smooth' });
+          setActiveCardIndex(prev => Math.min(prev + 1, showcaseCardsConfig.length - 1));
+        }
+        setTimeout(checkScrollPosition, 300);
+      }
+    }, 4000);
+  };
 
   // Fallback content for cards
   const cardFallbacks: Record<string, { category: string; title: string; desc: string; cta: string }> = {
-    "player-brands": { category: "Featured", title: "Player Brand Building", desc: "Authentic personal branding for athletes", cta: "Explore Services" },
+    "player-brands": { category: "Featured", title: "Athlete Influence Packages", desc: "Leverage our roster's reach to amplify your brand through authentic athlete partnerships and campaigns", cta: "Explore Services" },
     "sponsorship": { category: "Case Study", title: "Strategic Sponsorship Deals", desc: "Connecting brands with rising talent", cta: "View Case" },
     "commercial": { category: "Collaboration", title: "Commercial Partnerships", desc: "End-to-end campaign management", cta: "Learn More" },
     "talent-access": { category: "Service", title: "Exclusive Talent Access", desc: "Connect with our roster of professionals", cta: "View Roster" },
@@ -179,6 +256,26 @@ const Business = () => {
       <main className="pt-24 md:pt-20">
         {/* Hero Section - Minimal with large typography */}
         <section className="relative py-20 md:py-32 overflow-hidden">
+          {/* Faded player images background */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute inset-0 flex">
+              {playerImages.slice(0, 3).map((img, index) => (
+                <div 
+                  key={index}
+                  className="flex-1 relative opacity-[0.08]"
+                  style={{
+                    backgroundImage: `url(${img})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'top center',
+                    filter: 'grayscale(100%)',
+                  }}
+                />
+              ))}
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background" />
+          </div>
+          
           {/* Background pattern */}
           <div className="absolute inset-0 opacity-[0.03]">
             <div className="absolute inset-0" style={{
@@ -187,19 +284,19 @@ const Business = () => {
             }} />
           </div>
           
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-5xl">
               {/* Large outlined text */}
-              <h1 className="text-[15vw] md:text-[12vw] lg:text-[10vw] font-bebas uppercase leading-[0.85] tracking-tight text-transparent" 
-                  style={{ WebkitTextStroke: "1px hsl(var(--foreground) / 0.15)" }}>
+              <h1 className="text-[15vw] md:text-[12vw] lg:text-[10vw] font-bebas uppercase leading-[0.85] tracking-tight text-foreground/90" 
+                  style={{ WebkitTextStroke: "2px hsl(var(--foreground))" }}>
                 {t('business.ready', 'READY?')}
               </h1>
               <div className="flex items-baseline gap-4 md:gap-8">
-                <h1 className="text-[15vw] md:text-[12vw] lg:text-[10vw] font-bebas uppercase leading-[0.85] tracking-tight text-transparent" 
-                    style={{ WebkitTextStroke: "1px hsl(var(--foreground) / 0.15)" }}>
+                <h1 className="text-[15vw] md:text-[12vw] lg:text-[10vw] font-bebas uppercase leading-[0.85] tracking-tight text-foreground/90" 
+                    style={{ WebkitTextStroke: "2px hsl(var(--foreground))" }}>
                   {t('business.set', 'SET.')}
                 </h1>
-                <h1 className="text-[15vw] md:text-[12vw] lg:text-[10vw] font-bebas uppercase leading-[0.85] tracking-tight text-foreground">
+                <h1 className="text-[15vw] md:text-[12vw] lg:text-[10vw] font-bebas uppercase leading-[0.85] tracking-tight text-primary">
                   {t('business.go', 'GO.')}
                 </h1>
               </div>
@@ -265,7 +362,17 @@ const Business = () => {
           {/* Cards Container */}
           <div 
             ref={scrollContainerRef}
-            onScroll={checkScrollPosition}
+            onScroll={() => {
+              checkScrollPosition();
+              // Update active card based on scroll position
+              if (scrollContainerRef.current) {
+                const cardWidth = 360;
+                const newIndex = Math.round(scrollContainerRef.current.scrollLeft / cardWidth);
+                setActiveCardIndex(Math.min(newIndex, showcaseCardsConfig.length - 1));
+              }
+            }}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
             className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide px-4 md:px-8 pb-4 snap-x snap-mandatory"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
@@ -276,8 +383,10 @@ const Business = () => {
               <div
                 key={card.id}
                 className={cn(
-                  "flex-shrink-0 snap-start rounded-2xl overflow-hidden relative group cursor-pointer transition-transform duration-500 hover:scale-[1.02]",
-                  index === 0 ? "w-[340px] md:w-[420px] h-[480px] md:h-[520px]" : "w-[280px] md:w-[340px] h-[480px] md:h-[520px]"
+                  "flex-shrink-0 snap-start rounded-2xl overflow-hidden relative group cursor-pointer transition-all duration-500",
+                  index === activeCardIndex 
+                    ? "w-[340px] md:w-[420px] h-[480px] md:h-[520px] scale-100 opacity-100" 
+                    : "w-[280px] md:w-[340px] h-[480px] md:h-[520px] scale-95 opacity-70 hover:opacity-90"
                 )}
               >
                 {/* Background gradient */}
@@ -372,7 +481,7 @@ const Business = () => {
                   titleKey: "business.discovery",
                   titleFallback: "Discovery",
                   descKey: "business.discovery_desc",
-                  descFallback: "Every successful partnership begins with understanding. We take time to learn about your brand identity, marketing objectives, target demographics, and campaign vision. This discovery phase allows us to identify the ideal talent match from our roster—ensuring authentic alignment between your brand values and the athlete's persona."
+                  descFallback: "Every successful partnership begins with understanding. We take time to learn about your brand identity, marketing objectives, target demographics, and campaign vision. This discovery phase allows us to identify the ideal talent match from our roster, ensuring authentic alignment between your brand values and the athlete's persona."
                 },
                 {
                   step: "02",
