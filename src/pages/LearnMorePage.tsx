@@ -36,7 +36,7 @@ const Performance = () => {
               {t('learnmore.hero_title', 'REALISE POTENTIAL')}
             </h1>
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto px-4">
-              {t('learnmore.hero_description', 'We develop our players on and off the pitch — because better players create better careers')}
+              {t('learnmore.hero_description', 'We develop our players on and off the pitch because better players create better careers')}
             </p>
           </div>
         </section>

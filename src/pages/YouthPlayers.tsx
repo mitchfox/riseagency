@@ -43,7 +43,7 @@ const YouthPlayers = () => {
       titleKey: "youth.step2_title",
       titleFallback: "Discussion",
       descKey: "youth.step2_desc",
-      descFallback: "If we're interested, we discuss further—including with parents if you're under 18. Full transparency from day one."
+      descFallback: "If we're interested, we discuss further, including with parents if you're under 18. Full transparency from day one."
     },
     {
       step: 3,
@@ -68,7 +68,7 @@ const YouthPlayers = () => {
       questionKey: "youth.faq1_q",
       questionFallback: "How does the signing process work?",
       answerKey: "youth.faq1_a",
-      answerFallback: "It starts with either you contacting us or us scouting you. If there's mutual interest, we arrange a discussion—parents included if you're under 18. We'll explain exactly what we offer, what's expected, and if it's a fit, we formalize the partnership and get to work."
+      answerFallback: "It starts with either you contacting us or us scouting you. If there's mutual interest, we arrange a discussion with parents included if you're under 18. We'll explain exactly what we offer, what's expected, and if it's a fit, we formalize the partnership and get to work."
     },
     {
       questionKey: "youth.faq2_q",
@@ -80,7 +80,7 @@ const YouthPlayers = () => {
       questionKey: "youth.faq3_q",
       questionFallback: "What makes RISE different from other agencies?",
       answerKey: "youth.faq3_a",
-      answerFallback: "We started as players, became coaches, developed performance teams around Premier League talents, and built this into the agency we run today. We understand development from the inside—not just the business side. Our USP is knowing how to develop a player and guide them to realise their potential."
+      answerFallback: "We started as players, became coaches, developed performance teams around Premier League talents, and built this into the agency we run today. We understand development from the inside, not just the business side. Our USP is knowing how to develop a player and guide them to realise their potential."
     },
     {
       questionKey: "youth.faq4_q",
@@ -92,13 +92,13 @@ const YouthPlayers = () => {
       questionKey: "youth.faq5_q",
       questionFallback: "What support do I actually get?",
       answerKey: "youth.faq5_a",
-      answerFallback: "You get access to our performance teams, match analysis, development programs, and guidance from people who've been through the journey. We don't just represent you—we help you become the player you're capable of being."
+      answerFallback: "You get access to our performance teams, match analysis, development programs, and guidance from people who've been through the journey. We don't just represent you. We help you become the player you're capable of being."
     },
     {
       questionKey: "youth.faq6_q",
       questionFallback: "What are the costs involved?",
       answerKey: "youth.faq6_a",
-      answerFallback: "We'll explain our fee structure clearly during our initial discussions. There are no hidden costs. We succeed when you succeed—our model is built around your career progression, not upfront payments."
+      answerFallback: "We'll explain our fee structure clearly during our initial discussions. There are no hidden costs. We succeed when you succeed. Our model is built around your career progression, not upfront payments."
     }
   ];
 
@@ -199,13 +199,13 @@ const YouthPlayers = () => {
               </h2>
               <div className="space-y-6 text-lg text-muted-foreground">
                 <p>
-                  {t('youth.story_p1', 'We started as players. We understand the journey—the sacrifices, the setbacks, and what it takes to make it.')}
+                  {t('youth.story_p1', 'We started as players. We understand the journey: the sacrifices, the setbacks, and what it takes to make it.')}
                 </p>
                 <p>
                   {t('youth.story_p2', 'We became coaches. We learned how to develop talent, how to identify potential, and how to build players who could compete at the highest level.')}
                 </p>
                 <p>
-                  {t('youth.story_p3', "We developed performance teams around Premier League talents. We saw firsthand what separates good players from great ones—and it's not always what you'd expect.")}
+                  {t('youth.story_p3', "We developed performance teams around Premier League talents. We saw firsthand what separates good players from great ones, and it's not always what you'd expect.")}
                 </p>
                 <p className="text-foreground font-medium">
                   {t('youth.story_p4', 'We built this into the agency we run today. Every lesson, every insight, every connection—now focused on helping the next generation realise their potential.')}
