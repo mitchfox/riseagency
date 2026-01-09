@@ -1249,6 +1249,51 @@ export type Database = {
           },
         ]
       }
+      jobs: {
+        Row: {
+          created_at: string
+          department: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          location: string | null
+          requirements: string | null
+          responsibilities: string | null
+          salary_range: string | null
+          title: string
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          requirements?: string | null
+          responsibilities?: string | null
+          salary_range?: string | null
+          title: string
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          requirements?: string | null
+          responsibilities?: string | null
+          salary_range?: string | null
+          title?: string
+          type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       legal_documents: {
         Row: {
           category: string
