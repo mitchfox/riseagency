@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
 import { useAutoTranslate } from "@/hooks/useAutoTranslate";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { linkPlayerNames, usePlayerNames } from "@/lib/playerLinking";
@@ -170,8 +170,107 @@ const ArticleView = ({ article }: { article: NewsArticle }) => {
             </p>
           ))}
         </div>
+        
+        {/* Ask Question & Contact Buttons */}
+        <div className="mt-12 pt-8 border-t border-border/50">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button asChild variant="outline" className="font-bebas uppercase tracking-wider">
+              <a href="mailto:jolon.levene@risefootballagency.com?subject=Question%20about%20Article">
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Ask a Question
+              </a>
+            </Button>
+            <Button asChild className="btn-shine font-bebas uppercase tracking-wider">
+              <Link to="/contact">
+                Contact Us
+              </Link>
+            </Button>
+          </div>
+        </div>
       </article>
+      
+      {/* Similar Articles - Only for BTL articles */}
+      {isBTL && <SimilarArticles currentArticleId={article.id} category={article.category} />}
     </>
+  );
+};
+
+// Component to fetch and display similar articles
+const SimilarArticles = ({ currentArticleId, category }: { currentArticleId: string; category: string }) => {
+  const { t } = useLanguage();
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  
+  useEffect(() => {
+    const fetchSimilar = async () => {
+      // Fetch articles from same category, excluding current article
+      const { data } = await supabase
+        .from("blog_posts")
+        .select("*")
+        .eq("published", true)
+        .eq("category", category)
+        .neq("id", currentArticleId)
+        .order("created_at", { ascending: false })
+        .limit(3);
+      
+      if (data && data.length > 0) {
+        setArticles(data);
+      } else {
+        // Fallback to other BTL articles if no same-category articles found
+        const { data: fallbackData } = await supabase
+          .from("blog_posts")
+          .select("*")
+          .eq("published", true)
+          .neq("category", "PLAYER NEWS")
+          .neq("id", currentArticleId)
+          .order("created_at", { ascending: false })
+          .limit(3);
+        
+        if (fallbackData) {
+          setArticles(fallbackData);
+        }
+      }
+    };
+    
+    fetchSimilar();
+  }, [currentArticleId, category]);
+  
+  if (articles.length === 0) return null;
+  
+  return (
+    <div className="mt-16 pt-8 border-t border-border/50">
+      <h3 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider mb-8 text-center">
+        {t("btl.similar_articles", "Similar Articles")}
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {articles.map((article) => (
+          <Link 
+            key={article.id} 
+            to={`/between-the-lines/${createSlug(article.title)}`}
+            className="group"
+          >
+            <div className="overflow-hidden rounded-lg border border-border hover:border-primary/50 transition-all">
+              {article.image_url && (
+                <div className="aspect-[16/9] overflow-hidden">
+                  <img 
+                    src={article.image_url} 
+                    alt={article.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
+              )}
+              <div className="p-4 bg-card">
+                <span className="text-xs text-primary font-bebas uppercase tracking-wider">
+                  {article.category}
+                </span>
+                <h4 className="text-lg font-bebas uppercase tracking-wider mt-1 group-hover:text-primary transition-colors line-clamp-2">
+                  {article.title}
+                </h4>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 };
 

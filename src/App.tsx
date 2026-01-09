@@ -61,6 +61,9 @@ const PlayerJourney = lazy(() => import("./pages/PlayerJourney"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
 const SignContract = lazy(() => import("./pages/SignContract"));
+const Jobs = lazy(() => import("./pages/Jobs"));
+const AgentRequests = lazy(() => import("./pages/AgentRequests"));
+const ClubDirection = lazy(() => import("./pages/ClubDirection"));
 const FluidCursor = lazy(() => import("./components/FluidCursor"));
 
 // Loading fallback component
@@ -151,7 +154,10 @@ const App = () => {
                       <Route path="/potential" element={<Potential />} />
                       <Route path="/realise-potential" element={<RealisePotential />} />
                       {createLocalizedRoutes('/youth-players', <YouthPlayers />)}
-                      {createLocalizedRoutes('/player-journey', <PlayersDraft />)}
+                      {createLocalizedRoutes('/player-journey', <PlayerJourney />)}
+                      {createLocalizedRoutes('/jobs', <Jobs />)}
+                      {createLocalizedRoutes('/agent-requests', <AgentRequests />)}
+                      {createLocalizedRoutes('/club-direction', <ClubDirection />)}
                       <Route path="/performance-report/:slug" element={<PerformanceReport />} />
                       <Route path="/analysis/:analysisId" element={<AnalysisViewer />} />
                       <Route path="/import-program" element={<ImportProgramCSV />} />
