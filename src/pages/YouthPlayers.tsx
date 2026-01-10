@@ -68,37 +68,37 @@ const YouthPlayers = () => {
       questionKey: "youth.faq1_q",
       questionFallback: "How does the signing process work?",
       answerKey: "youth.faq1_a",
-      answerFallback: "It starts with either you contacting us or us scouting you. If there's mutual interest, we arrange a discussion with parents included if you're under 18. We'll explain exactly what we offer, what's expected, and if it's a fit, we formalize the partnership and get to work."
+      answerFallback: "The signing process begins with an initial point of contact, which may originate from our scouting network identifying your potential, or from you reaching out to us directly. Following this, we conduct an internal assessment to determine whether representation is appropriate. If we identify a strong fit, we arrange a formal discussion during which we outline our services, expectations, and the pathway forward. For players under 18 years of age, we require the involvement of a parent or guardian at all stages. Upon mutual agreement, we formalise the partnership through a representation agreement, and work commences immediately on your development programme."
     },
     {
       questionKey: "youth.faq2_q",
       questionFallback: "What level do you work with?",
       answerKey: "youth.faq2_a",
-      answerFallback: "We work with first team professionals and talented youth players with the will and skill to make it. We're looking for players who are committed to reaching their potential, not just those already at the top."
+      answerFallback: "We represent first-team professionals competing across Europe's major leagues, as well as exceptionally talented youth players who demonstrate both the ability and commitment required to succeed at the highest level. Our selection criteria are rigorous: we seek players who possess not only technical proficiency but also the psychological attributes, work ethic, and ambition necessary for sustained success in professional football. We do not measure potential solely by current ability, but by the trajectory and scalability of a player's development."
     },
     {
       questionKey: "youth.faq3_q",
       questionFallback: "What makes RISE different from other agencies?",
       answerKey: "youth.faq3_a",
-      answerFallback: "We started as players, became coaches, developed performance teams around Premier League talents, and built this into the agency we run today. We understand development from the inside, not just the business side. Our USP is knowing how to develop a player and guide them to realise their potential."
+      answerFallback: "RISE was founded by individuals who have experienced the professional football journey firsthand, as both players and coaches. This background informs our unique approach to representation. Unlike traditional agencies that focus primarily on transactional aspects, we have built comprehensive performance infrastructure around our players, including tactical analysis, physical conditioning programmes, and psychological support. We have developed talent that has collectively commanded over £100 million in transfer fees across Europe's major leagues. Our distinguishing characteristic is our deep understanding of player development, which enables us to guide athletes toward their full potential rather than simply facilitating transfers."
     },
     {
       questionKey: "youth.faq4_q",
       questionFallback: "What happens if I'm under 18?",
       answerKey: "youth.faq4_a",
-      answerFallback: "Parents are involved in all discussions from the start. We believe in complete transparency with families. Your parent or guardian will be part of every conversation, every decision, and will have full visibility into what we do."
+      answerFallback: "For players under the age of 18, we maintain a strict protocol of parental or guardian involvement at every stage of the process. This includes all initial discussions, assessment meetings, contract negotiations, and ongoing career decisions. We provide complete transparency regarding our activities, fees, and strategic recommendations. Parents receive regular updates on their child's development progress and are included in all significant communications with clubs. We consider family support to be an essential component of a young player's success, and we work collaboratively to ensure all parties are fully informed and aligned."
     },
     {
       questionKey: "youth.faq5_q",
       questionFallback: "What support do I actually get?",
       answerKey: "youth.faq5_a",
-      answerFallback: "You get access to our performance teams, match analysis, development programs, and guidance from people who've been through the journey. We don't just represent you. We help you become the player you're capable of being."
+      answerFallback: "Upon signing with RISE, you gain access to our comprehensive support infrastructure. This includes: detailed performance analysis of your match footage with actionable developmental feedback; bespoke physical conditioning programmes designed around your specific needs and position requirements; psychological performance support to develop mental resilience and competitive mindset; tactical coaching and positional guidance; career strategy and pathway planning; contract negotiation and transfer management when opportunities arise; and continuous access to our team for guidance and support. Our approach is holistic: we focus on developing the complete professional footballer."
     },
     {
       questionKey: "youth.faq6_q",
       questionFallback: "What are the costs involved?",
       answerKey: "youth.faq6_a",
-      answerFallback: "We'll explain our fee structure clearly during our initial discussions. There are no hidden costs. We succeed when you succeed. Our model is built around your career progression, not upfront payments."
+      answerFallback: "Our fee structure is transparent and clearly communicated during our initial discussions. We operate on a success-based model, meaning our remuneration is aligned with your career progression. Standard agency fees apply to contract negotiations and transfers, in accordance with FA regulations. Development services are provided as part of our representation agreement. There are no hidden charges, and all financial arrangements are documented clearly before any partnership is formalised. We encourage prospective clients and their families to seek independent legal advice when reviewing our terms."
     }
   ];
 
@@ -193,23 +193,68 @@ const YouthPlayers = () => {
         {/* Our Story */}
         <section className="py-16 md:py-24 bg-muted/30">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8 text-center">
-                {t('youth.our', 'OUR')} <span className="text-primary">{t('youth.story', 'STORY')}</span>
-              </h2>
-              <div className="space-y-6 text-lg text-muted-foreground">
-                <p>
-                  {t('youth.story_p1', 'We started as players. We understand the journey: the sacrifices, the setbacks, and what it takes to make it.')}
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-4">
+                  {t('youth.our', 'OUR')} <span className="text-primary">{t('youth.story', 'STORY')}</span>
+                </h2>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  {t('youth.story_intro', 'The foundation of our approach, built on experience.')}
                 </p>
-                <p>
-                  {t('youth.story_p2', 'We became coaches. We learned how to develop talent, how to identify potential, and how to build players who could compete at the highest level.')}
-                </p>
-                <p>
-                  {t('youth.story_p3', "We developed performance teams around Premier League talents. We saw firsthand what separates good players from great ones, and it's not always what you'd expect.")}
-                </p>
-                <p className="text-foreground font-medium">
-                  {t('youth.story_p4', 'We built this into the agency we run today. Every lesson, every insight, every connection—now focused on helping the next generation realise their potential.')}
-                </p>
+              </div>
+              <div className="grid md:grid-cols-2 gap-8">
+                <div className="p-8 border border-border/50 bg-card/30 rounded-lg">
+                  <div className="flex items-start gap-4">
+                    <span className="text-4xl font-bebas text-primary/30">01</span>
+                    <div>
+                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-3">
+                        {t('youth.story_title_1', 'Player Origins')}
+                      </h3>
+                      <p className="text-muted-foreground">
+                        {t('youth.story_p1', 'We started as players. We understand the journey: the sacrifices, the setbacks, and what it takes to succeed at the highest levels of the game.')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-8 border border-border/50 bg-card/30 rounded-lg">
+                  <div className="flex items-start gap-4">
+                    <span className="text-4xl font-bebas text-primary/30">02</span>
+                    <div>
+                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-3">
+                        {t('youth.story_title_2', 'Coaching Experience')}
+                      </h3>
+                      <p className="text-muted-foreground">
+                        {t('youth.story_p2', 'We became coaches. We learned how to develop talent, identify potential, and build players capable of competing at the highest level.')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-8 border border-border/50 bg-card/30 rounded-lg">
+                  <div className="flex items-start gap-4">
+                    <span className="text-4xl font-bebas text-primary/30">03</span>
+                    <div>
+                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-3">
+                        {t('youth.story_title_3', 'Performance Development')}
+                      </h3>
+                      <p className="text-muted-foreground">
+                        {t('youth.story_p3', 'We developed performance teams around Premier League talents. We witnessed firsthand what separates good players from exceptional ones.')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-8 border border-primary/30 bg-primary/5 rounded-lg">
+                  <div className="flex items-start gap-4">
+                    <span className="text-4xl font-bebas text-primary">04</span>
+                    <div>
+                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-3">
+                        {t('youth.story_title_4', 'The Agency Today')}
+                      </h3>
+                      <p className="text-foreground">
+                        {t('youth.story_p4', 'We built this into the agency we operate today. Every lesson, every insight, every connection: now focused on helping the next generation realise their potential.')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -223,35 +268,40 @@ const YouthPlayers = () => {
                 {t('youth.signing', 'THE SIGNING')} <span className="text-primary">{t('youth.process', 'PROCESS')}</span>
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                {t('youth.process_desc', 'Complete transparency at every step')}
+                {t('youth.process_desc', 'A structured, transparent approach to representation.')}
               </p>
             </div>
 
-            <div className="max-w-5xl mx-auto">
-              <div className="grid md:grid-cols-4 gap-6">
-                {signingProcess.map((step, index) => (
-                  <div key={step.step} className="relative">
-                    {/* Connector line */}
-                    {index < signingProcess.length - 1 && (
-                      <div className="hidden md:block absolute top-12 left-1/2 w-full h-0.5 bg-primary/30" />
-                    )}
-                    
-                    <div className="relative bg-card/50 border border-border/50 rounded-lg p-6 text-center hover:border-primary/50 transition-all">
-                      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-primary">
-                        <step.icon className="w-8 h-8 text-primary" />
+            <div className="max-w-6xl mx-auto">
+              <div className="relative">
+                {/* Horizontal connector line */}
+                <div className="hidden md:block absolute top-20 left-[12%] right-[12%] h-0.5 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20" />
+                
+                <div className="grid md:grid-cols-4 gap-8">
+                  {signingProcess.map((step, index) => (
+                    <div key={step.step} className="relative">
+                      <div className="relative bg-card border border-border/50 rounded-xl p-8 hover:border-primary/50 hover:shadow-lg transition-all duration-300 group">
+                        {/* Step number badge */}
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bebas text-lg z-10">
+                          {step.step}
+                        </div>
+                        
+                        {/* Icon */}
+                        <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                          <step.icon className="w-10 h-10 text-primary" />
+                        </div>
+                        
+                        <h3 className="text-2xl font-bebas uppercase tracking-wider text-center mb-4">
+                          {t(step.titleKey, step.titleFallback)}
+                        </h3>
+                        
+                        <p className="text-sm text-muted-foreground text-center leading-relaxed">
+                          {t(step.descKey, step.descFallback)}
+                        </p>
                       </div>
-                      <span className="text-sm font-bebas text-primary/50 uppercase tracking-widest">
-                        {t('youth.step', 'Step')} {step.step}
-                      </span>
-                      <h3 className="text-xl font-bebas uppercase tracking-wider mt-2 mb-3">
-                        {t(step.titleKey, step.titleFallback)}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {t(step.descKey, step.descFallback)}
-                      </p>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>

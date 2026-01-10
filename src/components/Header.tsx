@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import riseStar from "@/assets/rise-star.png";
-import { X, MessageCircle, Users, LogIn, Handshake, ArrowRight, Compass, FileText, Search, Star, Calendar, Briefcase, Send, BookOpen, Activity, Newspaper, Heart, Package, Phone } from "lucide-react";
+import { X, MessageCircle, Users, LogIn, Handshake, ArrowRight, Compass, FileText, Search, Star, Calendar, Briefcase, Send, BookOpen, Activity, Newspaper, Heart, Package, Phone, TrendingUp } from "lucide-react";
 import workingTogether from "@/assets/menu-working-together.jpg";
 import playerPortalImage from "@/assets/menu-player-portal.png";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
@@ -74,7 +74,7 @@ const subdomainSubHeaders: Record<string, SubHeaderConfig> = {
   },
   clubs: {
     left: [
-      { type: 'link', to: '/clubs', labelKey: 'header.club_direction', fallback: 'Club Direction', mobileFallback: 'Direction', icon: Compass },
+      { type: 'link', to: '/club-direction', labelKey: 'header.club_direction', fallback: 'Club Direction', mobileFallback: 'Direction', icon: Compass },
       { type: 'button', action: 'arrangeMeeting', labelKey: 'header.arrange_meeting', fallback: 'Arrange Meeting', mobileFallback: 'Meeting', icon: Calendar },
     ],
     right: [
@@ -95,7 +95,7 @@ const subdomainSubHeaders: Record<string, SubHeaderConfig> = {
   agents: {
     left: [
       { type: 'link', to: '/stars', labelKey: 'header.stars', fallback: 'Stars', mobileFallback: 'Stars', icon: Star },
-      { type: 'link', to: '/contact', labelKey: 'header.requests', fallback: 'Requests', mobileFallback: 'Requests', icon: FileText },
+      { type: 'link', to: '/agent-requests', labelKey: 'header.requests', fallback: 'Requests', mobileFallback: 'Requests', icon: FileText },
     ],
     right: [
       { type: 'button', action: 'declareInterest', labelKey: 'header.declare_interest', fallback: 'Declare Interest', mobileFallback: 'Interest', icon: Users },
@@ -104,8 +104,8 @@ const subdomainSubHeaders: Record<string, SubHeaderConfig> = {
   },
   coaches: {
     left: [
-      { type: 'link', to: '/login', labelKey: 'header.portal', fallback: 'Portal', mobileFallback: 'Portal', icon: LogIn },
-      { type: 'link', to: '/potential', labelKey: 'header.performance', fallback: 'Performance', mobileFallback: 'Performance', icon: Activity },
+      { type: 'link', to: '/coaches', labelKey: 'header.coaching', fallback: 'Coaching', mobileFallback: 'Coach', icon: Activity },
+      { type: 'link', to: '/performance', labelKey: 'header.performance', fallback: 'Performance', mobileFallback: 'Performance', icon: TrendingUp },
     ],
     right: [
       { type: 'button', action: 'representation', labelKey: 'header.represent_me', fallback: 'Represent Me', mobileFallback: 'Represent', icon: Handshake },
