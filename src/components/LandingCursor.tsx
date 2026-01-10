@@ -38,10 +38,10 @@ export const LandingCursor = () => {
   return (
     <div
       ref={cursorRef}
-      className="fixed pointer-events-none z-[3] opacity-0"
+      className="fixed pointer-events-none z-[100] opacity-0"
       style={{
         transform: 'translate(-50%, -50%)',
-        transition: 'opacity 0.15s ease-out',
+        willChange: 'left, top',
       }}
     >
       {/* Simple gold dot cursor */}
