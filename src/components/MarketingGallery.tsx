@@ -28,15 +28,34 @@ export const MarketingGallery = () => {
 
   useEffect(() => {
     const fetchGallery = async () => {
+      // Only fetch gallery items linked to represented/mandated/previously_mandated players
       const { data, error } = await supabase
         .from("marketing_gallery")
-        .select("*")
+        .select(`
+          id,
+          title,
+          file_url,
+          file_type,
+          category,
+          thumbnail_url,
+          player_id,
+          players!inner(representation_status)
+        `)
         .eq("file_type", "image")
+        .in("players.representation_status", ["represented", "mandated", "previously_mandated"])
         .order("created_at", { ascending: false })
         .limit(6);
 
       if (!error && data) {
-        setItems(data);
+        // Map to expected GalleryItem structure
+        setItems(data.map(item => ({
+          id: item.id,
+          title: item.title,
+          file_url: item.file_url,
+          file_type: item.file_type,
+          category: item.category,
+          thumbnail_url: item.thumbnail_url
+        })));
       }
       setLoading(false);
     };
