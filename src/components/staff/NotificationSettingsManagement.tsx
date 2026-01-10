@@ -39,6 +39,7 @@ const EVENT_TYPES = [
   { id: "post_moved_to_schedule", label: "Post Moved to Schedule", icon: Calendar, description: "When a post is moved to schedule/ready to post", category: "Marketing" },
   { id: "post_posted", label: "Post Marked as Posted", icon: CheckSquare, description: "When a post is marked as posted", category: "Marketing" },
   { id: "post_image_added", label: "Image/Link Added to Post", icon: Film, description: "When an image or link is added to a post", category: "Marketing" },
+  { id: "marketing_tip_new", label: "New Marketing Tip", icon: Lightbulb, description: "When a new tip, idea or lesson is added", category: "Marketing" },
   // Contracts
   { id: "contract_signed", label: "Contract Signed", icon: FileText, description: "When a contract is signed by the other party", category: "Contracts" },
 ];

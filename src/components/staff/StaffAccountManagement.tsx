@@ -16,6 +16,7 @@ interface StaffAccount {
   password: string;
   role: "admin" | "staff" | "marketeer";
   fullName: string;
+  phoneNumber: string;
 }
 
 export const StaffAccountManagement = () => {
@@ -33,7 +34,10 @@ export const StaffAccountManagement = () => {
     password: "",
     role: "staff",
     fullName: "",
+    phoneNumber: "",
   });
+  const [editingPhone, setEditingPhone] = useState<{ userId: string; phone: string } | null>(null);
+  const [savingPhone, setSavingPhone] = useState(false);
 
   useEffect(() => {
     checkAdminRole();
@@ -50,7 +54,8 @@ export const StaffAccountManagement = () => {
           user_id,
           profiles!inner (
             email,
-            full_name
+            full_name,
+            phone_number
           )
         `)
         .in('role', ['admin', 'staff', 'marketeer']);
@@ -148,6 +153,7 @@ export const StaffAccountManagement = () => {
         password: "",
         role: "staff",
         fullName: "",
+        phoneNumber: "",
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "An error occurred";
@@ -260,6 +266,27 @@ export const StaffAccountManagement = () => {
     }
   };
 
+  const handleSavePhone = async (userId: string, phoneNumber: string) => {
+    setSavingPhone(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ phone_number: phoneNumber || null })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast.success("Phone number updated");
+      setEditingPhone(null);
+      fetchExistingAccounts();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      toast.error(errorMessage);
+    } finally {
+      setSavingPhone(false);
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner size="md" className="py-8" />;
   }
@@ -298,7 +325,7 @@ export const StaffAccountManagement = () => {
                   key={account.user_id} 
                   className="p-3 md:p-4 border border-primary/20 rounded-lg bg-muted/30"
                 >
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 items-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 items-center">
                     <div>
                       <p className="text-xs md:text-sm text-muted-foreground">Email</p>
                       <p className="font-medium text-sm md:text-base break-all">{account.profiles?.email || 'N/A'}</p>
@@ -306,6 +333,48 @@ export const StaffAccountManagement = () => {
                     <div>
                       <p className="text-xs md:text-sm text-muted-foreground">Full Name</p>
                       <p className="font-medium text-sm md:text-base">{account.profiles?.full_name || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs md:text-sm text-muted-foreground mb-1">Phone Number</p>
+                      {editingPhone?.userId === account.user_id ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="tel"
+                            value={editingPhone.phone}
+                            onChange={(e) => setEditingPhone({ ...editingPhone, phone: e.target.value })}
+                            placeholder="+44 7..."
+                            className="h-8 text-sm"
+                          />
+                          <Button
+                            size="sm"
+                            className="h-8"
+                            onClick={() => handleSavePhone(account.user_id, editingPhone.phone)}
+                            disabled={savingPhone}
+                          >
+                            {savingPhone ? "..." : "Save"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8"
+                            onClick={() => setEditingPhone(null)}
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      ) : (
+                        <div
+                          className="font-medium text-sm md:text-base cursor-pointer hover:text-primary"
+                          onClick={() => setEditingPhone({
+                            userId: account.user_id,
+                            phone: account.profiles?.phone_number || ''
+                          })}
+                        >
+                          {account.profiles?.phone_number || (
+                            <span className="text-muted-foreground italic">Click to add</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <p className="text-xs md:text-sm text-muted-foreground mb-1">Role</p>
