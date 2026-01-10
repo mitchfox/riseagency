@@ -51,6 +51,7 @@ const AVAILABLE_LINKS: QuickLinkOption[] = [
   { id: "bank-details", title: "Bank Details", url: "/staff?tab=bank-details", category: "Finance" },
   
   // Admin & Settings
+  { id: "jobs", title: "Jobs Management", url: "/staff?tab=jobs", category: "Admin" },
   { id: "fixtures", title: "Fixtures", url: "/staff?tab=fixtures", category: "Admin" },
   { id: "updates", title: "Updates Manager", url: "/staff?tab=updates", category: "Admin" },
   { id: "analytics", title: "Site Analytics", url: "/staff?tab=analytics", category: "Admin" },

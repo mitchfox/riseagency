@@ -6,6 +6,7 @@ import { SEO } from "@/components/SEO";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { useState } from "react";
+import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
 import { 
   Search, 
   MessageCircle, 

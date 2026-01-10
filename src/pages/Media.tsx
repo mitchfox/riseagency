@@ -10,6 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { ScrollReveal } from "@/components/ScrollReveal";
 import bannerHero from "@/assets/banner-hero.jpg";
 
 interface PressRelease {
@@ -92,69 +93,71 @@ const Media = () => {
         </section>
 
         {/* INTERVIEW REQUESTS Section */}
-        <section className="py-8 md:py-12 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6">
-                <div className="inline-flex items-center gap-2 text-primary">
-                  <Mic className="h-6 w-6" />
-                  <span className="text-sm font-bebas uppercase tracking-widest">{t('media.for_journalists', 'For Journalists')}</span>
+        <ScrollReveal>
+          <section className="py-8 md:py-12 bg-background">
+            <div className="container mx-auto px-4">
+              <div className="grid md:grid-cols-2 gap-12 items-center">
+                <div className="space-y-6">
+                  <div className="inline-flex items-center gap-2 text-primary">
+                    <Mic className="h-6 w-6" />
+                    <span className="text-sm font-bebas uppercase tracking-widest">{t('media.for_journalists', 'For Journalists')}</span>
+                  </div>
+                  <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                    {t('media.interview', 'INTERVIEW')} <span className="text-primary">{t('media.requests', 'REQUESTS')}</span>
+                  </h2>
+                  <p className="text-lg text-muted-foreground leading-relaxed">
+                    {t('media.interview_desc', 'Looking to speak with one of our players? Submit an interview request and our media team will coordinate with player schedules and availability.')}
+                  </p>
+                  <Collapsible>
+                    <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all">
+                      <span className="text-sm uppercase tracking-wider text-primary font-medium">{t('media.how_it_works', 'How It Works')}</span>
+                      <ChevronDown className="h-4 w-4 text-primary transition-transform group-data-[state=open]:rotate-180" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-6 space-y-4 text-base text-muted-foreground leading-relaxed">
+                      <p>
+                        {t('media.how_it_works_p1', "Submit your request with details about your publication, the topics you'd like to cover, and your preferred timeline. Our media team reviews all requests and coordinates with players based on their training and match schedules.")}
+                      </p>
+                      <p>
+                        {t('media.how_it_works_p2', 'We aim to respond to all interview requests within 48 hours. Please allow adequate lead time for scheduling, especially during transfer windows or match-heavy periods.')}
+                      </p>
+                    </CollapsibleContent>
+                  </Collapsible>
+                  <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider">
+                    <a href="mailto:media@risefootballagency.com?subject=Interview%20Request">
+                      {t('media.request_interview', 'Request Interview')}
+                    </a>
+                  </Button>
                 </div>
-                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                  {t('media.interview', 'INTERVIEW')} <span className="text-primary">{t('media.requests', 'REQUESTS')}</span>
-                </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  {t('media.interview_desc', 'Looking to speak with one of our players? Submit an interview request and our media team will coordinate with player schedules and availability.')}
-                </p>
-                <Collapsible>
-                  <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all">
-                    <span className="text-sm uppercase tracking-wider text-primary font-medium">{t('media.how_it_works', 'How It Works')}</span>
-                    <ChevronDown className="h-4 w-4 text-primary transition-transform group-data-[state=open]:rotate-180" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-6 space-y-4 text-base text-muted-foreground leading-relaxed">
-                    <p>
-                      {t('media.how_it_works_p1', "Submit your request with details about your publication, the topics you'd like to cover, and your preferred timeline. Our media team reviews all requests and coordinates with players based on their training and match schedules.")}
-                    </p>
-                    <p>
-                      {t('media.how_it_works_p2', 'We aim to respond to all interview requests within 48 hours. Please allow adequate lead time for scheduling, especially during transfer windows or match-heavy periods.')}
-                    </p>
-                  </CollapsibleContent>
-                </Collapsible>
-                <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider">
-                  <a href="mailto:media@risefootballagency.com?subject=Interview%20Request">
-                    {t('media.request_interview', 'Request Interview')}
-                  </a>
-                </Button>
-              </div>
-              <div className="bg-card/50 border border-border rounded-lg p-8 space-y-6">
-                <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground">{t('media.request_guidelines', 'Request Guidelines')}</h3>
-                <ul className="space-y-4">
-                  <li className="flex items-start gap-3">
-                    <Newspaper className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                    <div>
-                      <span className="font-medium text-foreground">{t('media.publication_details', 'Publication Details')}</span>
-                      <p className="text-sm text-muted-foreground">{t('media.publication_details_desc', 'Include your outlet name, circulation/reach, and interview format')}</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <FileText className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                    <div>
-                      <span className="font-medium text-foreground">{t('media.topic_brief', 'Topic Brief')}</span>
-                      <p className="text-sm text-muted-foreground">{t('media.topic_brief_desc', "Outline the subjects and questions you'd like to discuss")}</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Calendar className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                    <div>
-                      <span className="font-medium text-foreground">{t('media.timeline', 'Timeline')}</span>
-                      <p className="text-sm text-muted-foreground">{t('media.timeline_desc', 'Provide your deadline and preferred interview dates')}</p>
-                    </div>
-                  </li>
-                </ul>
+                <div className="bg-card/50 border border-border rounded-lg p-8 space-y-6">
+                  <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground">{t('media.request_guidelines', 'Request Guidelines')}</h3>
+                  <ul className="space-y-4">
+                    <li className="flex items-start gap-3">
+                      <Newspaper className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                      <div>
+                        <span className="font-medium text-foreground">{t('media.publication_details', 'Publication Details')}</span>
+                        <p className="text-sm text-muted-foreground">{t('media.publication_details_desc', 'Include your outlet name, circulation/reach, and interview format')}</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <FileText className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                      <div>
+                        <span className="font-medium text-foreground">{t('media.topic_brief', 'Topic Brief')}</span>
+                        <p className="text-sm text-muted-foreground">{t('media.topic_brief_desc', "Outline the subjects and questions you'd like to discuss")}</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <Calendar className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                      <div>
+                        <span className="font-medium text-foreground">{t('media.timeline', 'Timeline')}</span>
+                        <p className="text-sm text-muted-foreground">{t('media.timeline_desc', 'Provide your deadline and preferred interview dates')}</p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* CONTENT ACCESS Section */}
         <section className="py-8 md:py-12 bg-muted/30">

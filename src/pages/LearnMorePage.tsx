@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { ScrollReveal } from "@/components/ScrollReveal";
 import bannerHero from "@/assets/banner-hero.jpg";
 import blackMarble from "@/assets/black-marble-smudged.png";
 import celebration1 from "@/assets/gallery/celebration-1.jpg";
@@ -42,39 +43,41 @@ const Performance = () => {
         </section>
 
         {/* ATTRACT Section - Text Left, Image Right */}
-        <section className="grid md:grid-cols-2">
-          <div 
-            className="relative p-6 sm:p-8 md:p-12 lg:p-16 flex items-center"
-            style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-          >
-            <div className="max-w-xl space-y-6">
-              <div>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
-                  {t('learnmore.attract_title', 'Attract')}
-                </h2>
-                <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed">
-                  {t('learnmore.attract_description', 'Through our vast scouting network, we maximise visibility across the footballing world to ensure player interest and demand.')}
-                </p>
+        <ScrollReveal>
+          <section className="grid md:grid-cols-2">
+            <div 
+              className="relative p-6 sm:p-8 md:p-12 lg:p-16 flex items-center"
+              style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+            >
+              <div className="max-w-xl space-y-6">
+                <div>
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-4 md:mb-6">
+                    {t('learnmore.attract_title', 'Attract')}
+                  </h2>
+                  <p className="text-base sm:text-lg md:text-xl text-white/90 leading-relaxed">
+                    {t('learnmore.attract_description', 'Through our vast scouting network, we maximise visibility across the footballing world to ensure player interest and demand.')}
+                  </p>
+                </div>
+                <Collapsible>
+                  <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                    <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('common.learn_more', 'Learn More')}</span>
+                    <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                    <p>{t('learnmore.attract_p1', 'One of the significant advantages of partnering with our agency is the breadth and depth of our connections within the industry. Over the years, we have cultivated a wide scouting network that spans across clubs, leagues, and continents.')}</p>
+                    <p>{t('learnmore.attract_p2', 'Our network includes technical directors, recruitment analysts, coaches, and other decision-makers across professional football. These are the individuals who identify and recruit talent, making decisions that can shape a player\'s career trajectory. By maintaining close ties with these professionals, we can keep our players in the forefront of their minds, promoting your skills, potential, and performance throughout each season.')}</p>
+                    <p>{t('learnmore.attract_p3', 'This continuous promotion is not just about putting your name out there; it is about strategically aligning your strengths and abilities with the needs and goals of potential suitors. We work to understand the specific requirements and ambitions of different clubs, positioning our players as the solution to their needs. This might involve highlighting certain aspects of your performance, demonstrating your ability to fit within a particular system or style of play, or showcasing your potential for growth and development.')}</p>
+                    <p>{t('learnmore.attract_p4', 'It is not only about marketing you to potential suitors; it is also about finding the right fit for you, clubs and roles where you can thrive, both professionally and personally. We consider factors such as the club\'s culture, the coaching staff\'s philosophy, the team\'s style of play, and even the location and lifestyle.')}</p>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
-              <Collapsible>
-                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
-                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('common.learn_more', 'Learn More')}</span>
-                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
-                  <p>{t('learnmore.attract_p1', 'One of the significant advantages of partnering with our agency is the breadth and depth of our connections within the industry. Over the years, we have cultivated a wide scouting network that spans across clubs, leagues, and continents.')}</p>
-                  <p>{t('learnmore.attract_p2', 'Our network includes technical directors, recruitment analysts, coaches, and other decision-makers across professional football. These are the individuals who identify and recruit talent, making decisions that can shape a player\'s career trajectory. By maintaining close ties with these professionals, we can keep our players in the forefront of their minds, promoting your skills, potential, and performance throughout each season.')}</p>
-                  <p>{t('learnmore.attract_p3', 'This continuous promotion is not just about putting your name out there; it is about strategically aligning your strengths and abilities with the needs and goals of potential suitors. We work to understand the specific requirements and ambitions of different clubs, positioning our players as the solution to their needs. This might involve highlighting certain aspects of your performance, demonstrating your ability to fit within a particular system or style of play, or showcasing your potential for growth and development.')}</p>
-                  <p>{t('learnmore.attract_p4', 'It is not only about marketing you to potential suitors; it is also about finding the right fit for you, clubs and roles where you can thrive, both professionally and personally. We consider factors such as the club\'s culture, the coaching staff\'s philosophy, the team\'s style of play, and even the location and lifestyle.')}</p>
-                </CollapsibleContent>
-              </Collapsible>
             </div>
-          </div>
-          <div 
-            className="relative min-h-[400px] md:min-h-[600px] bg-cover bg-center"
-            style={{ backgroundImage: `url(${celebration1})` }}
-          />
-        </section>
+            <div 
+              className="relative min-h-[400px] md:min-h-[600px] bg-cover bg-center"
+              style={{ backgroundImage: `url(${celebration1})` }}
+            />
+          </section>
+        </ScrollReveal>
 
         {/* SIGN Section - Image Left, Text Right */}
         <section className="grid md:grid-cols-2">
