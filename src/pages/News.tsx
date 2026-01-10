@@ -6,10 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, MessageCircle, HelpCircle } from "lucide-react";
 import { useAutoTranslate } from "@/hooks/useAutoTranslate";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { linkPlayerNames, usePlayerNames } from "@/lib/playerLinking";
+import { AskQuestionDialog } from "@/components/AskQuestionDialog";
 interface NewsArticle {
   id: string;
   title: string;
@@ -43,6 +44,7 @@ const isBTLArticle = (category: string | undefined) => {
 const ArticleView = ({ article }: { article: NewsArticle }) => {
   const { t, language } = useLanguage();
   const playerNames = usePlayerNames();
+  const [askQuestionOpen, setAskQuestionOpen] = useState(false);
   const { translatedContent, isTranslating } = useAutoTranslate({
     title: article.title,
     excerpt: article.excerpt,
@@ -174,11 +176,9 @@ const ArticleView = ({ article }: { article: NewsArticle }) => {
         {/* Ask Question & Contact Buttons */}
         <div className="mt-12 pt-8 border-t border-border/50">
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild variant="outline" className="font-bebas uppercase tracking-wider">
-              <a href="mailto:jolon.levene@risefootballagency.com?subject=Question%20about%20Article">
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Ask a Question
-              </a>
+            <Button onClick={() => setAskQuestionOpen(true)} variant="outline" className="font-bebas uppercase tracking-wider">
+              <HelpCircle className="w-4 h-4 mr-2" />
+              Ask a Question
             </Button>
             <Button asChild className="btn-shine font-bebas uppercase tracking-wider">
               <Link to="/contact">
@@ -187,6 +187,12 @@ const ArticleView = ({ article }: { article: NewsArticle }) => {
             </Button>
           </div>
         </div>
+        
+        <AskQuestionDialog 
+          open={askQuestionOpen} 
+          onOpenChange={setAskQuestionOpen}
+          articleTitle={article.title}
+        />
       </article>
       
       {/* Similar Articles - Only for BTL articles */}
