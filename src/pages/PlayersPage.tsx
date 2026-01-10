@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
 import { IntroModal } from "@/components/IntroModal";
+import { PlayerReportDialog } from "@/components/PlayerReportDialog";
 import { SEO } from "@/components/SEO";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { CapabilityAccordion } from "@/components/CapabilityAccordion";
@@ -41,6 +42,7 @@ interface NewsArticle {
 const Index = () => {
   const { t } = useLanguage();
   const [showIntroModal, setShowIntroModal] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [insideAccessArticles, setInsideAccessArticles] = useState<NewsArticle[]>([]);
   const [selectedPosition, setSelectedPosition] = useState<ScoutingPosition>(SCOUTING_POSITIONS[0]);
@@ -157,13 +159,12 @@ const Index = () => {
 
       <div 
         ref={containerRef}
-        className="bg-background min-h-screen w-full max-w-full relative z-10 overflow-y-auto overflow-x-hidden snap-y snap-mandatory"
-        style={{ scrollBehavior: "smooth" }}
+        className="bg-background min-h-screen w-full max-w-full relative z-10 overflow-y-auto overflow-x-hidden scroll-smooth"
       >
         {/* Section 1: Hero */}
         <section 
           ref={(el) => (sectionsRef.current[0] = el)}
-          className="min-h-screen flex items-center justify-center px-4 pt-24 md:pt-28 relative overflow-hidden snap-start snap-always"
+          className="min-h-screen flex items-center justify-center px-4 pt-24 md:pt-28 relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background/80"></div>
           <div className="container mx-auto max-w-7xl relative z-10">
@@ -196,7 +197,7 @@ const Index = () => {
         {translatedInsideAccess.length > 0 && (
           <section 
             ref={(el) => (sectionsRef.current[1] = el)}
-            className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/80 backdrop-blur-sm snap-start snap-always"
+            className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/80 backdrop-blur-sm"
           >
             <div className="container mx-auto max-w-7xl w-full">
               <ScrollReveal>
@@ -237,7 +238,7 @@ const Index = () => {
         {/* Section 3: Scouting Network */}
         <section 
           ref={(el) => (sectionsRef.current[2] = el)}
-          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/90 backdrop-blur-sm snap-start snap-always"
+          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/90 backdrop-blur-sm"
         >
           <div className="container mx-auto max-w-7xl">
             <ScrollReveal>
@@ -265,14 +266,15 @@ const Index = () => {
                 <p className="text-muted-foreground mb-4">
                   If you see players scouted in your side, we may have a detailed report on your game. Reach out to request to learn more about our observations.
                 </p>
-                <Link 
-                  to="/contact" 
+                <button 
+                  onClick={() => setShowReportDialog(true)}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-bebas text-lg uppercase tracking-wider rounded-lg hover:bg-primary/90 transition-colors"
                 >
                   My Report
-                </Link>
+                </button>
               </div>
             </ScrollReveal>
+            <PlayerReportDialog open={showReportDialog} onOpenChange={setShowReportDialog} />
 
             <ScrollRevealContainer className="mt-12 grid md:grid-cols-3 gap-6" staggerDelay={0.15}>
               <ScrollRevealItem>
@@ -327,12 +329,12 @@ const Index = () => {
         </section>
 
         {/* Marquee Section */}
-        <Marquee className="snap-start" />
+        <Marquee />
 
         {/* Section 4: Player Development */}
         <section 
           ref={(el) => (sectionsRef.current[3] = el)}
-          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/85 backdrop-blur-sm relative overflow-hidden snap-start snap-always"
+          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/85 backdrop-blur-sm relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5 pointer-events-none" />
           <div className="container mx-auto max-w-7xl relative z-10">
@@ -412,7 +414,7 @@ const Index = () => {
         {/* Section 5: Skills That Level Up */}
         <section 
           ref={(el) => (sectionsRef.current[4] = el)}
-          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/90 backdrop-blur-sm snap-start snap-always"
+          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/90 backdrop-blur-sm"
         >
           <div className="container mx-auto max-w-7xl">
             <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -464,7 +466,7 @@ const Index = () => {
         {/* Section 6: CTA */}
         <section 
           ref={(el) => (sectionsRef.current[5] = el)}
-          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/85 backdrop-blur-sm relative overflow-hidden snap-start snap-always"
+          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/85 backdrop-blur-sm relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-primary/10"></div>
           <ScrollReveal className="container mx-auto max-w-6xl text-center space-y-8 relative z-10">
@@ -510,7 +512,7 @@ const Index = () => {
         {/* Section 7: News */}
         <section 
           ref={(el) => (sectionsRef.current[6] = el)}
-          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/90 backdrop-blur-sm snap-start snap-always"
+          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/90 backdrop-blur-sm"
         >
           <div className="container mx-auto max-w-7xl w-full">
             <ScrollReveal>
@@ -588,7 +590,7 @@ const Index = () => {
         {/* Section 8: Watch Now */}
         <section 
           ref={(el) => (sectionsRef.current[7] = el)}
-          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/95 backdrop-blur-sm snap-start snap-always"
+          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/95 backdrop-blur-sm"
         >
           <div className="container mx-auto max-w-7xl">
             <ScrollReveal>
@@ -644,7 +646,7 @@ const Index = () => {
         {/* Section 9: Broadcast */}
         <section 
           ref={(el) => (sectionsRef.current[8] = el)}
-          className="min-h-screen flex items-center justify-center py-16 px-4 bg-muted/30 snap-start snap-always"
+          className="min-h-screen flex items-center justify-center py-16 px-4 bg-muted/30"
         >
           <div className="container mx-auto">
             <ScrollReveal>

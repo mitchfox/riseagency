@@ -84,12 +84,12 @@ const subdomainSubHeaders: Record<string, SubHeaderConfig> = {
   },
   scouts: {
     left: [
-      { type: 'link', to: '/learnmore', labelKey: 'header.what_we_look_for', fallback: 'What We Look For', mobileFallback: 'Look For', icon: Search },
+      { type: 'button', action: 'whatWeLookFor', labelKey: 'header.what_we_look_for', fallback: 'What We Look For', mobileFallback: 'Look For', icon: Search },
       { type: 'link', to: '/login', labelKey: 'header.portal', fallback: 'Portal', mobileFallback: 'Portal', icon: LogIn },
     ],
     right: [
       { type: 'button', action: 'workWithUs', labelKey: 'header.scout_for_rise', fallback: 'Scout for RISE', mobileFallback: 'Scout', icon: Send },
-      { type: 'link', to: '/scouts', labelKey: 'header.jobs', fallback: 'Jobs', mobileFallback: 'Jobs', icon: Briefcase },
+      { type: 'link', to: '/jobs', labelKey: 'header.jobs', fallback: 'Jobs', mobileFallback: 'Jobs', icon: Briefcase },
     ],
   },
   agents: {
