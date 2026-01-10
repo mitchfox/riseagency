@@ -19,7 +19,7 @@ import { ChevronDown } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-type Role = "player" | "coach" | "club" | "agent" | "parent" | "media" | "other" | null;
+type Role = "player" | "coach" | "club" | "agent" | "parent" | "media" | "scout" | "other" | null;
 
 // Map subdomain to role
 const subdomainToRole: Record<Exclude<RoleSubdomain, null>, Role> = {
@@ -27,7 +27,7 @@ const subdomainToRole: Record<Exclude<RoleSubdomain, null>, Role> = {
   clubs: "club",
   agents: "agent",
   coaches: "coach",
-  scouts: "other",
+  scouts: "scout",
   business: "other",
   media: "media",
 };
@@ -40,6 +40,7 @@ const roleTranslations: Record<string, Record<string, string>> = {
   agent: { en: "Agent", es: "Agente", pt: "Agente", fr: "Agent", de: "Agent", it: "Agente", pl: "Agent", cs: "Agent", ru: "Агент", tr: "Menajer", hr: "Agent", no: "Agent" },
   parent: { en: "Parent", es: "Padre/Madre", pt: "Pai/Mãe", fr: "Parent", de: "Elternteil", it: "Genitore", pl: "Rodzic", cs: "Rodič", ru: "Родитель", tr: "Veli", hr: "Roditelj", no: "Forelder" },
   media: { en: "Media", es: "Medios", pt: "Mídia", fr: "Média", de: "Medien", it: "Media", pl: "Media", cs: "Média", ru: "СМИ", tr: "Medya", hr: "Mediji", no: "Media" },
+  scout: { en: "Scout", es: "Ojeador", pt: "Olheiro", fr: "Recruteur", de: "Scout", it: "Scout", pl: "Skaut", cs: "Skaut", ru: "Скаут", tr: "İzci", hr: "Skaut", no: "Speider" },
   other: { en: "Other", es: "Otro", pt: "Outro", fr: "Autre", de: "Andere", it: "Altro", pl: "Inne", cs: "Jiné", ru: "Другое", tr: "Diğer", hr: "Ostalo", no: "Annet" },
 };
 
@@ -195,6 +196,7 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
     { value: "agent" as const, label: getRoleLabel("agent") },
     { value: "parent" as const, label: getRoleLabel("parent") },
     { value: "media" as const, label: getRoleLabel("media") },
+    { value: "scout" as const, label: getRoleLabel("scout") },
     { value: "other" as const, label: getRoleLabel("other") },
   ];
 
@@ -531,6 +533,46 @@ export const WorkWithUsDialog = ({ children, open, onOpenChange }: WorkWithUsDia
             </div>
             <Button type="submit" size="lg" hoverEffect className="w-full btn-shine font-bebas uppercase tracking-wider">
               Submit Inquiry
+            </Button>
+          </form>
+        );
+
+      case "scout":
+        return (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={resetSelection}
+              className="mb-2"
+            >
+              {getTranslation("backToRoleSelection")}
+            </Button>
+            {commonFields}
+            <div className="space-y-2">
+              <Label htmlFor="regions">Regions/Countries You Scout *</Label>
+              <Input id="regions" name="regions" placeholder="e.g., Northern Europe, Spain, Germany" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="experience">Years of Scouting Experience *</Label>
+              <Input id="experience" name="experience" type="number" placeholder="3" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="networks">Current Scouting Networks/Clubs</Label>
+              <Input id="networks" name="networks" placeholder="Previous or current affiliations" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="message">Tell us about your scouting experience</Label>
+              <Textarea
+                id="message"
+                name="message"
+                placeholder="Share your background, the levels you scout at, notable discoveries..."
+                className="min-h-[100px]"
+              />
+            </div>
+            <Button type="submit" size="lg" hoverEffect className="w-full btn-shine font-bebas uppercase tracking-wider">
+              {getTranslation("submitApplication")}
             </Button>
           </form>
         );
