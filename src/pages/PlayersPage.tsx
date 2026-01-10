@@ -160,7 +160,7 @@ const Index = () => {
         {/* Section 1: Hero */}
         <section 
           ref={(el) => (sectionsRef.current[0] = el)}
-          className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden snap-start snap-always"
+          className="min-h-screen flex items-center justify-center px-4 pt-24 md:pt-28 relative overflow-hidden snap-start snap-always"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background/80"></div>
           <div className="container mx-auto max-w-7xl relative z-10">
