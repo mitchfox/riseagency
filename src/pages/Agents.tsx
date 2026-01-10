@@ -11,6 +11,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { ScrollReveal } from "@/components/ScrollReveal";
+import { Marquee } from "@/components/Marquee";
 
 const Agents = () => {
   const { t } = useLanguage();
@@ -155,6 +157,9 @@ const Agents = () => {
             </div>
           </div>
         </section>
+
+        {/* Marquee */}
+        <Marquee />
 
         {/* Why Partner Section */}
         <section className="py-8 md:py-12 px-4 relative">

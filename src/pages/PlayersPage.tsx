@@ -14,6 +14,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useTranslatedNews } from "@/hooks/useTranslateContent";
 import { Activity, Brain, Zap, Crosshair, ChevronDown } from "lucide-react";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
+import { Marquee } from "@/components/Marquee";
+import { MarketingGallery } from "@/components/MarketingGallery";
+import { ScrollReveal } from "@/components/ScrollReveal";
 
 const domainConfig = {
   Physical: { icon: Activity, color: "text-red-500", bgColor: "bg-red-500/10", borderColor: "border-red-500/20", solidBg: "bg-red-500" },
@@ -309,6 +312,9 @@ const Index = () => {
             </div>
           </div>
         </section>
+
+        {/* Marquee Section */}
+        <Marquee className="snap-start" />
 
         {/* Section 4: Player Development */}
         <section 
@@ -621,6 +627,21 @@ const Index = () => {
                 </a>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Gallery Section */}
+        <section className="py-16 px-4 bg-background snap-start">
+          <div className="container mx-auto max-w-7xl">
+            <ScrollReveal className="text-center mb-12">
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground mb-4">
+                {t("home.gallery_title", "GALLERY")}
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                {t("home.gallery_desc", "A glimpse into the RISE world")}
+              </p>
+            </ScrollReveal>
+            <MarketingGallery />
           </div>
         </section>
       </div>

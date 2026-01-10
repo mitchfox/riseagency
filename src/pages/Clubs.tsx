@@ -7,6 +7,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { ArrangeMeetingDialog } from "@/components/ArrangeMeetingDialog";
 import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { useState } from "react";
+import { ScrollReveal } from "@/components/ScrollReveal";
+import { Marquee } from "@/components/Marquee";
 import { 
   Target, 
   Users, 
@@ -134,6 +136,9 @@ const Clubs = () => {
             </div>
           </div>
         </section>
+
+        {/* Marquee */}
+        <Marquee />
 
         {/* Services Section */}
         <section className="py-16 md:py-24 bg-background">
