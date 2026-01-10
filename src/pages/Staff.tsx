@@ -30,7 +30,7 @@ import { InvoiceManagement } from "@/components/staff/InvoiceManagement";
 import { UpdatesManagement } from "@/components/staff/UpdatesManagement";
 import { StaffSchedule } from "@/components/staff/StaffSchedule";
 import { StaffOverview } from "@/components/staff/StaffOverview";
-import { GoalsTasksManagement } from "@/components/staff/GoalsTasksManagement";
+// GoalsTasksManagement removed - replaced by VisionBoardSection
 import { StaffAvailabilityManagement } from "@/components/staff/StaffAvailabilityManagement";
 import { StaffSchedulesManagement } from "@/components/staff/StaffSchedulesManagement";
 import { MarketingManagement } from "@/components/staff/MarketingManagement";
@@ -126,7 +126,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'pressreleases' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'marketingtips' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'pressreleases' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'marketingtips' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   
@@ -635,10 +635,10 @@ const Staff = () => {
           id: 'overview',
           title: 'Overview',
           icon: Calendar,
-          sections: [
+        sections: [
             { id: 'overview', title: 'Overview', icon: Calendar },
             { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
-            { id: 'goalstasks', title: 'Goals & Tasks', icon: Target },
+            { id: 'visionboard', title: 'Vision Board', icon: Target },
           ],
           locked: false
         },
@@ -705,7 +705,6 @@ const Staff = () => {
           { id: 'overview', title: 'Overview', icon: Calendar },
           { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
           { id: 'visionboard', title: 'Vision Board', icon: Target },
-          { id: 'goalstasks', title: 'Goals & Tasks', icon: Target },
           { id: 'staffschedules', title: 'Staff Schedules', icon: Users },
           ...(user?.email === 'jolonlevene98@gmail.com' ? [
             { id: 'notifications', title: 'Notifications', icon: BellRing },
@@ -1128,7 +1127,6 @@ const Staff = () => {
                     </div>
                   )}
                   {expandedSection === 'visionboard' && <VisionBoardSection />}
-                  {expandedSection === 'goalstasks' && <GoalsTasksManagement />}
                   {expandedSection === 'staffschedules' && <StaffSchedulesManagement />}
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
                   {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
