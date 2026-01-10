@@ -21,7 +21,7 @@ import { MarketingGallery } from "@/components/MarketingGallery";
 import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
 
 // Tyrese Omotoye half-season highlights video URL
-const HERO_VIDEO_URL = "https://qwethimbtaamlhbajmal.supabase.co/storage/v1/object/public/analysis-files/highlights/b94fd8f6-ad14-4ad0-ba0b-6cace592ee8e_1766739052605_Tyrese_Omotoye_Highlights___1st_Half_Season.mp4";
+const HERO_VIDEO_URL = "https://qwethimbtaamlhbajmal.supabase.co/storage/v1/object/public/analysis-files/highlights/b94fd8f6-ad14-4ad0-ba0b-6cace592ee8e_1764829376950_Tyrese_Omotoye_-_2025_Half_Season_Highlights.mov";
 
 const domainConfig = {
   Physical: { icon: Activity, color: "text-red-500", bgColor: "bg-red-500/10", borderColor: "border-red-500/20", solidBg: "bg-red-500" },
@@ -171,21 +171,23 @@ const Index = () => {
           className="flex flex-col items-center justify-start px-2 sm:px-4 pt-20 sm:pt-24 md:pt-28 pb-8 relative overflow-hidden w-full"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background/80"></div>
-          <div className="w-full max-w-7xl mx-auto relative z-10 px-2 sm:px-4">
+          
+          {/* Wide-screen video player FIRST - autoplay, no controls */}
+          <div className="w-full max-w-7xl mx-auto animate-fade-in relative z-10 px-2 sm:px-4">
+            <HeroVideoPlayer videoUrl={HERO_VIDEO_URL} className="rounded-lg overflow-hidden shadow-2xl" />
+          </div>
+
+          {/* REALISE POTENTIAL text AFTER video */}
+          <div className="w-full max-w-7xl mx-auto relative z-10 px-2 sm:px-4 mt-6 sm:mt-8">
             <div className="text-center space-y-4">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-bebas uppercase tracking-wider mb-0 animate-fade-in break-words">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-bebas uppercase tracking-wider mb-0 animate-fade-in break-words" style={{ animationDelay: '0.2s' }}>
                 <span className="text-foreground">{t("home.hero_title_1", "REALISE")} </span>
                 <span className="text-primary">{t("home.hero_title_2", "POTENTIAL")}</span>
               </h1>
-              <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic !mt-0 animate-fade-in px-2" style={{ animationDelay: '0.2s' }}>
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic !mt-0 animate-fade-in px-2" style={{ animationDelay: '0.3s' }}>
                 {t("home.hero_subtitle", "Elite Football Representation & Performance Optimisation")}
               </p>
             </div>
-          </div>
-          
-          {/* Wide-screen video player - autoplay, no controls */}
-          <div className="w-full max-w-7xl mx-auto mt-4 sm:mt-6 md:mt-8 animate-fade-in relative z-10 px-2 sm:px-4" style={{ animationDelay: '0.3s' }}>
-            <HeroVideoPlayer videoUrl={HERO_VIDEO_URL} className="rounded-lg overflow-hidden shadow-2xl" />
           </div>
 
           {/* Capability accordion */}
