@@ -104,7 +104,7 @@ const Scouts = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-full">
       <SEO 
         title="For Scouts - Join RISE Network"
         description="Join RISE's scouting network. Access our database, competitive incentives, and forever commission structure."
@@ -127,7 +127,7 @@ const Scouts = () => {
               <span className="text-sm font-semibold uppercase tracking-wider">{t('scouts.elite_badge', 'Elite Scouting Network')}</span>
             </div>
             
-            <h1 className="text-5xl md:text-8xl font-bebas uppercase tracking-wider leading-none">
+            <h1 className="text-4xl sm:text-5xl md:text-8xl font-bebas uppercase tracking-wider leading-none px-2">
               <span className="text-foreground">{t('scouts.hero_discover', 'Discover Talent.')}</span>
               <br />
               <span className="bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
@@ -135,14 +135,14 @@ const Scouts = () => {
               </span>
             </h1>
             
-            <p className="text-lg md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light leading-relaxed">
+            <p className="text-base sm:text-lg md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light leading-relaxed px-2">
               {t('scouts.hero_desc', "Join our extensive network of scouts; where we provide the tools, training, and structure to find the stars of tomorrow.")}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 px-4">
               <Button 
                 size="lg" 
-                className="btn-shine font-bebas uppercase tracking-wider text-lg px-10 py-6 rounded-xl group"
+                className="btn-shine font-bebas uppercase tracking-wider text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-6 rounded-xl group w-full sm:w-auto"
                 onClick={handleWhatsApp}
               >
                 <MessageCircle className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
@@ -151,7 +151,7 @@ const Scouts = () => {
               <Button 
                 size="lg" 
                 variant="outline"
-                className="font-bebas uppercase tracking-wider text-lg px-10 py-6 hover:scale-105 transition-all rounded-xl group"
+                className="font-bebas uppercase tracking-wider text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-6 hover:scale-105 transition-all rounded-xl group w-full sm:w-auto"
                 onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 {t('scouts.learn_more', 'Learn How It Works')}

@@ -70,7 +70,7 @@ const Clubs = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden" key="clubs-page">
+    <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-full" key="clubs-page">
       <SEO 
         title="For Clubs - Strategic Partnerships | RISE Agency"
         description="Work with RISE to strategise, recruit, and optimise your squad. Access our network of players and development programmes."
@@ -96,17 +96,17 @@ const Clubs = () => {
                 {t('clubs.badge', 'Club Partnerships')}
               </span>
             </div>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider text-white mb-6">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider text-white mb-6 px-2">
               {t('clubs.title', 'FOR')} <span className="text-primary">{t('clubs.title_highlight', 'CLUBS')}</span>
             </h1>
-            <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-8">
+            <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-8 px-2">
               {t('clubs.subtitle', 'Strategic partnerships that deliver competitive advantage')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
               <Button 
                 onClick={() => setArrangeMeetingOpen(true)}
                 size="lg" 
-                className="btn-shine font-bebas uppercase tracking-wider text-lg px-8"
+                className="btn-shine font-bebas uppercase tracking-wider text-base sm:text-lg px-6 sm:px-8 w-full sm:w-auto"
               >
                 {t('clubs.arrange_meeting', 'Arrange Meeting')}
               </Button>
@@ -114,7 +114,7 @@ const Clubs = () => {
                 asChild 
                 variant="outline" 
                 size="lg" 
-                className="font-bebas uppercase tracking-wider text-lg px-8 border-white/30 text-white hover:bg-white/10"
+                className="font-bebas uppercase tracking-wider text-base sm:text-lg px-6 sm:px-8 border-white/30 text-white hover:bg-white/10 w-full sm:w-auto"
               >
                 <Link to="/club-direction">{t('clubs.club_direction', 'Club Direction')}</Link>
               </Button>

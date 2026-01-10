@@ -8,6 +8,7 @@ import { PlayerReportDialog } from "@/components/PlayerReportDialog";
 import { SEO } from "@/components/SEO";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { CapabilityAccordion } from "@/components/CapabilityAccordion";
+import { HeroVideoPlayer } from "@/components/HeroVideoPlayer";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { HoverText } from "@/components/HoverText";
@@ -18,6 +19,9 @@ import { SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/sc
 import { Marquee } from "@/components/Marquee";
 import { MarketingGallery } from "@/components/MarketingGallery";
 import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
+
+// Tyrese Omotoye half-season highlights video URL
+const HERO_VIDEO_URL = "https://qwethimbtaamlhbajmal.supabase.co/storage/v1/object/public/analysis-files/highlights/b94fd8f6-ad14-4ad0-ba0b-6cace592ee8e_1766739052605_Tyrese_Omotoye_Highlights___1st_Half_Season.mp4";
 
 const domainConfig = {
   Physical: { icon: Activity, color: "text-red-500", bgColor: "bg-red-500/10", borderColor: "border-red-500/20", solidBg: "bg-red-500" },
@@ -164,29 +168,37 @@ const Index = () => {
         {/* Section 1: Hero */}
         <section 
           ref={(el) => (sectionsRef.current[0] = el)}
-          className="min-h-screen flex items-center justify-center px-4 pt-24 md:pt-28 relative overflow-hidden"
+          className="flex flex-col items-center justify-start px-4 pt-24 md:pt-28 pb-8 relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background/80"></div>
           <div className="container mx-auto max-w-7xl relative z-10">
-            <div className="text-center space-y-6">
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider mb-0 animate-fade-in">
+            <div className="text-center space-y-4">
+              <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider mb-0 animate-fade-in">
                 <span className="text-foreground">{t("home.hero_title_1", "REALISE")} </span>
                 <span className="text-primary">{t("home.hero_title_2", "POTENTIAL")}</span>
               </h1>
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic !mt-0 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic !mt-0 animate-fade-in px-2" style={{ animationDelay: '0.2s' }}>
                 {t("home.hero_subtitle", "Elite Football Representation & Performance Optimisation")}
               </p>
-              
-              <div className="mt-12 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                <CapabilityAccordion />
-              </div>
+            </div>
+          </div>
+          
+          {/* Wide-screen video player - autoplay, no controls */}
+          <div className="w-full max-w-7xl mx-auto mt-6 md:mt-8 animate-fade-in relative z-10" style={{ animationDelay: '0.3s' }}>
+            <HeroVideoPlayer videoUrl={HERO_VIDEO_URL} className="rounded-lg overflow-hidden shadow-2xl" />
+          </div>
+
+          {/* Capability accordion */}
+          <div className="container mx-auto max-w-7xl relative z-10 mt-8">
+            <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <CapabilityAccordion />
             </div>
           </div>
           
           {/* Scroll hint */}
           <button 
             onClick={handleScrollHint}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="mt-8 flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             <span className="text-xs uppercase tracking-wider font-bebas">{t("home.scroll", "Scroll")}</span>
             <ChevronDown className="w-5 h-5 animate-bounce" />

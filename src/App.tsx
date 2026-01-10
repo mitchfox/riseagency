@@ -110,7 +110,9 @@ const App = () => {
               <SubdomainRouter />
               <TransitionProvider>
               <Suspense fallback={null}>
-                <FluidCursor />
+                <ErrorBoundary silent>
+                  <FluidCursor />
+                </ErrorBoundary>
               </Suspense>
               <PageTracker />
               <ScrollToTop />
