@@ -301,6 +301,7 @@ const Agents = () => {
         </ScrollReveal>
 
         {/* Collaboration Types Section */}
+        <ScrollReveal>
         <section className="py-8 md:py-12 px-4 relative">
           <div className="container mx-auto">
             <div className="text-center mb-12">
@@ -432,8 +433,10 @@ const Agents = () => {
             </div>
           </div>
         </section>
+        </ScrollReveal>
 
         {/* FAQ Section */}
+        <ScrollReveal>
         <section className="py-8 md:py-12 px-4 relative bg-muted/20">
           <div className="container mx-auto max-w-4xl">
             <div className="text-center mb-12">
@@ -463,8 +466,10 @@ const Agents = () => {
             </Accordion>
           </div>
         </section>
+        </ScrollReveal>
 
         {/* Testimonial/Trust Section */}
+        <ScrollReveal>
         <section className="py-16 md:py-24 px-4 relative">
           <div className="container mx-auto max-w-4xl">
             <div className="text-center p-8 md:p-12 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
@@ -488,8 +493,10 @@ const Agents = () => {
             </div>
           </div>
         </section>
+        </ScrollReveal>
 
         {/* CTA Section */}
+        <ScrollReveal>
         <section className="py-16 md:py-24 px-4 relative">
           <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
           
@@ -551,6 +558,7 @@ const Agents = () => {
             </div>
           </div>
         </section>
+        </ScrollReveal>
       </main>
       
       <Footer />
