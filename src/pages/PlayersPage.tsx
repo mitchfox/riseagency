@@ -16,7 +16,7 @@ import { Activity, Brain, Zap, Crosshair, ChevronDown } from "lucide-react";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/scoutingSkills";
 import { Marquee } from "@/components/Marquee";
 import { MarketingGallery } from "@/components/MarketingGallery";
-import { ScrollReveal } from "@/components/ScrollReveal";
+import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
 
 const domainConfig = {
   Physical: { icon: Activity, color: "text-red-500", bgColor: "bg-red-500/10", borderColor: "border-red-500/20", solidBg: "bg-red-500" },
@@ -199,36 +199,37 @@ const Index = () => {
             className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/80 backdrop-blur-sm snap-start snap-always"
           >
             <div className="container mx-auto max-w-7xl w-full">
-              <div className="text-center mb-8 space-y-3">
-                <div className="inline-block">
-                  <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                    {t("home.exclusive", "Exclusive")}
-                  </span>
+              <ScrollReveal>
+                <div className="text-center mb-8 space-y-3">
+                  <div className="inline-block">
+                    <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                      {t("home.exclusive", "Exclusive")}
+                    </span>
+                  </div>
+                  <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                    INSIDE<span className="text-primary">:ACCESS</span>
+                  </h2>
                 </div>
-                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                  INSIDE<span className="text-primary">:ACCESS</span>
-                </h2>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              </ScrollReveal>
+              <ScrollRevealContainer className="grid grid-cols-2 md:grid-cols-3 gap-4" staggerDelay={0.1}>
                 {translatedInsideAccess.map((article, index) => (
                   article.image_url && (
-                    <Link
-                      key={article.id}
-                      to={`/news/${article.id}`}
-                      className={`group relative aspect-[4/5] overflow-hidden rounded-lg ${
-                        index >= 2 ? 'hidden md:block' : ''
-                      }`}
-                    >
-                      <img 
-                        src={article.image_url} 
-                        alt={article.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </Link>
+                    <ScrollRevealItem key={article.id} className={index >= 2 ? 'hidden md:block' : ''}>
+                      <Link
+                        to={`/news/${article.id}`}
+                        className="group relative aspect-[4/5] overflow-hidden rounded-lg block"
+                      >
+                        <img 
+                          src={article.image_url} 
+                          alt={article.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </Link>
+                    </ScrollRevealItem>
                   )
                 ))}
-              </div>
+              </ScrollRevealContainer>
             </div>
           </section>
         )}
@@ -239,77 +240,89 @@ const Index = () => {
           className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/90 backdrop-blur-sm snap-start snap-always"
         >
           <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-8 space-y-3">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  {t("home.eyes_across_europe", "Eyes Across All Of Europe")}
-                </span>
+            <ScrollReveal>
+              <div className="text-center mb-8 space-y-3">
+                <div className="inline-block">
+                  <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                    {t("home.eyes_across_europe", "Eyes Across All Of Europe")}
+                  </span>
+                </div>
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                  {t("home.scouting", "SCOUTING")} <span className="text-primary">{t("home.network", "NETWORK")}</span>
+                </h2>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  {t("home.scouting_desc", "If you're a professional or academy player in Europe, chances are we know about you")}
+                </p>
               </div>
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                {t("home.scouting", "SCOUTING")} <span className="text-primary">{t("home.network", "NETWORK")}</span>
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                {t("home.scouting_desc", "If you're a professional or academy player in Europe, chances are we know about you")}
-              </p>
-            </div>
-            <ScoutingNetworkMap hideGridToggle={true} />
+            </ScrollReveal>
+            <ScrollReveal delay={0.2}>
+              <ScoutingNetworkMap hideGridToggle={true} />
+            </ScrollReveal>
             
             {/* My Report CTA - Only on Players page */}
-            <div className="mt-8 p-6 bg-primary/5 border border-primary/20 rounded-xl text-center">
-              <p className="text-muted-foreground mb-4">
-                If you see players scouted in your side, we may have a detailed report on your game. Reach out to request to learn more about our observations.
-              </p>
-              <Link 
-                to="/contact" 
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-bebas text-lg uppercase tracking-wider rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                My Report
-              </Link>
-            </div>
+            <ScrollReveal delay={0.3}>
+              <div className="mt-8 p-6 bg-primary/5 border border-primary/20 rounded-xl text-center">
+                <p className="text-muted-foreground mb-4">
+                  If you see players scouted in your side, we may have a detailed report on your game. Reach out to request to learn more about our observations.
+                </p>
+                <Link 
+                  to="/contact" 
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-bebas text-lg uppercase tracking-wider rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  My Report
+                </Link>
+              </div>
+            </ScrollReveal>
 
-            <div className="mt-12 grid md:grid-cols-3 gap-6">
-              <div className="p-6 border border-border/50 bg-card/30">
-                <div className="flex items-start gap-4">
-                  <span className="text-4xl font-bebas text-primary/30">01</span>
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
-                      {t("home.scouting_point_1_title", "Deep European Network")}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t("home.scouting_point_1_desc", "We have built an extensive scouting network across Europe, with eyes at every level of the professional game.")}
-                    </p>
+            <ScrollRevealContainer className="mt-12 grid md:grid-cols-3 gap-6" staggerDelay={0.15}>
+              <ScrollRevealItem>
+                <div className="p-6 border border-border/50 bg-card/30 h-full">
+                  <div className="flex items-start gap-4">
+                    <span className="text-4xl font-bebas text-primary/30">01</span>
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
+                        {t("home.scouting_point_1_title", "Deep European Network")}
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {t("home.scouting_point_1_desc", "We have built an extensive scouting network across Europe, with eyes at every level of the professional game.")}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </ScrollRevealItem>
 
-              <div className="p-6 border border-border/50 bg-card/30">
-                <div className="flex items-start gap-4">
-                  <span className="text-4xl font-bebas text-primary/30">02</span>
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
-                      {t("home.scouting_point_2_title", "Future-Focused Scouting")}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t("home.scouting_point_2_desc", "Novel scouting based on qualities that level up through the game, not just what works now, but what scales with a player's career.")}
-                    </p>
+              <ScrollRevealItem>
+                <div className="p-6 border border-border/50 bg-card/30 h-full">
+                  <div className="flex items-start gap-4">
+                    <span className="text-4xl font-bebas text-primary/30">02</span>
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
+                        {t("home.scouting_point_2_title", "Future-Focused Scouting")}
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {t("home.scouting_point_2_desc", "Novel scouting based on qualities that level up through the game, not just what works now, but what scales with a player's career.")}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </ScrollRevealItem>
 
-              <div className="p-6 border border-border/50 bg-card/30">
-                <div className="flex items-start gap-4">
-                  <span className="text-4xl font-bebas text-primary/30">03</span>
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
-                      {t("home.scouting_point_3_title", "Complete Player Knowledge")}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t("home.scouting_point_3_desc", "For any professional or academy player, we intend to know not just who they are, but how they play, what makes them tick, and what qualities they have that level up.")}
-                    </p>
+              <ScrollRevealItem>
+                <div className="p-6 border border-border/50 bg-card/30 h-full">
+                  <div className="flex items-start gap-4">
+                    <span className="text-4xl font-bebas text-primary/30">03</span>
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground">
+                        {t("home.scouting_point_3_title", "Complete Player Knowledge")}
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {t("home.scouting_point_3_desc", "For any professional or academy player, we intend to know not just who they are, but how they play, what makes them tick, and what qualities they have that level up.")}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              </ScrollRevealItem>
+            </ScrollRevealContainer>
           </div>
         </section>
 
@@ -323,64 +336,76 @@ const Index = () => {
         >
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5 pointer-events-none" />
           <div className="container mx-auto max-w-7xl relative z-10">
-            <div className="text-center mb-12">
-              <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground">
-                {t("home.player", "PLAYER")} <span className="text-primary">{t("home.development", "DEVELOPMENT")}</span>
-              </h2>
-            </div>
+            <ScrollReveal>
+              <div className="text-center mb-12">
+                <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground">
+                  {t("home.player", "PLAYER")} <span className="text-primary">{t("home.development", "DEVELOPMENT")}</span>
+                </h2>
+              </div>
+            </ScrollReveal>
 
             {/* Big Impact Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
-              <div className="text-center group">
-                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">74</div>
-                <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("home.stat_professionals", "Professionals")}</p>
-              </div>
-              <div className="text-center group">
-                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">18</div>
-                <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("home.stat_big5", "Big 5 League Players")}</p>
-              </div>
-              <div className="text-center group">
-                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">10</div>
-                <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("home.stat_national", "National Team Players")}</p>
-              </div>
-              <div className="text-center group">
-                <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">£100M+</div>
-                <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("home.stat_transfer", "Transfer Fees Developed")}</p>
-              </div>
-            </div>
+            <ScrollRevealContainer className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16" staggerDelay={0.1}>
+              <ScrollRevealItem>
+                <div className="text-center group">
+                  <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">74</div>
+                  <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
+                  <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("home.stat_professionals", "Professionals")}</p>
+                </div>
+              </ScrollRevealItem>
+              <ScrollRevealItem>
+                <div className="text-center group">
+                  <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">18</div>
+                  <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
+                  <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("home.stat_big5", "Big 5 League Players")}</p>
+                </div>
+              </ScrollRevealItem>
+              <ScrollRevealItem>
+                <div className="text-center group">
+                  <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">10</div>
+                  <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
+                  <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("home.stat_national", "National Team Players")}</p>
+                </div>
+              </ScrollRevealItem>
+              <ScrollRevealItem>
+                <div className="text-center group">
+                  <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">£100M+</div>
+                  <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
+                  <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("home.stat_transfer", "Transfer Fees Developed")}</p>
+                </div>
+              </ScrollRevealItem>
+            </ScrollRevealContainer>
             
             {/* Big 5 Leagues */}
-            <div className="text-center space-y-4">
-              <p className="text-lg font-bebas uppercase tracking-widest text-muted-foreground">
-                {t("home.trusted_clubs", "Trusted by clubs across Europe's Big 5 leagues")}
-              </p>
-              <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-xs font-bebas uppercase tracking-wider text-foreground/50">
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary/60"></span>
-                  Premier League
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary/60"></span>
-                  La Liga
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary/60"></span>
-                  Bundesliga
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary/60"></span>
-                  Serie A
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary/60"></span>
-                  Ligue 1
-                </span>
+            <ScrollReveal delay={0.4}>
+              <div className="text-center space-y-4">
+                <p className="text-lg font-bebas uppercase tracking-widest text-muted-foreground">
+                  {t("home.trusted_clubs", "Trusted by clubs across Europe's Big 5 leagues")}
+                </p>
+                <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-xs font-bebas uppercase tracking-wider text-foreground/50">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary/60"></span>
+                    Premier League
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary/60"></span>
+                    La Liga
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary/60"></span>
+                    Bundesliga
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary/60"></span>
+                    Serie A
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary/60"></span>
+                    Ligue 1
+                  </span>
+                </div>
               </div>
-            </div>
+            </ScrollReveal>
           </div>
         </section>
 
@@ -391,37 +416,47 @@ const Index = () => {
         >
           <div className="container mx-auto max-w-7xl">
             <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div>
-                <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground mb-6">
-                  {t("home.skills_that", "SKILLS THAT")} <span className="text-primary">{t("home.level_up", "LEVEL UP")}</span>
-                </h2>
-                <p className="text-lg text-muted-foreground mb-8">
-                  {t("home.skills_desc", "We develop for where you're going, not just where you are.")}
-                </p>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4 p-4 border-l-4 border-primary/30 bg-card/20">
-                    <span className="text-3xl font-bebas text-primary">01</span>
-                    <span className="text-foreground">{t("home.skill_1", "Qualities that scale with competition level")}</span>
-                  </div>
-                  <div className="flex items-center gap-4 p-4 border-l-4 border-primary/50 bg-card/20">
-                    <span className="text-3xl font-bebas text-primary">02</span>
-                    <span className="text-foreground">{t("home.skill_2", "Techniques that adapt as pace increases")}</span>
-                  </div>
-                  <div className="flex items-center gap-4 p-4 border-l-4 border-primary bg-card/20">
-                    <span className="text-3xl font-bebas text-primary">03</span>
-                    <span className="text-foreground">{t("home.skill_3", "Prepared for target destination demands")}</span>
-                  </div>
+              <ScrollReveal>
+                <div>
+                  <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground mb-6">
+                    {t("home.skills_that", "SKILLS THAT")} <span className="text-primary">{t("home.level_up", "LEVEL UP")}</span>
+                  </h2>
+                  <p className="text-lg text-muted-foreground mb-8">
+                    {t("home.skills_desc", "We develop for where you're going, not just where you are.")}
+                  </p>
+                  <ScrollRevealContainer className="space-y-4" staggerDelay={0.1}>
+                    <ScrollRevealItem>
+                      <div className="flex items-center gap-4 p-4 border-l-4 border-primary/30 bg-card/20">
+                        <span className="text-3xl font-bebas text-primary">01</span>
+                        <span className="text-foreground">{t("home.skill_1", "Qualities that scale with competition level")}</span>
+                      </div>
+                    </ScrollRevealItem>
+                    <ScrollRevealItem>
+                      <div className="flex items-center gap-4 p-4 border-l-4 border-primary/50 bg-card/20">
+                        <span className="text-3xl font-bebas text-primary">02</span>
+                        <span className="text-foreground">{t("home.skill_2", "Techniques that adapt as pace increases")}</span>
+                      </div>
+                    </ScrollRevealItem>
+                    <ScrollRevealItem>
+                      <div className="flex items-center gap-4 p-4 border-l-4 border-primary bg-card/20">
+                        <span className="text-3xl font-bebas text-primary">03</span>
+                        <span className="text-foreground">{t("home.skill_3", "Prepared for target destination demands")}</span>
+                      </div>
+                    </ScrollRevealItem>
+                  </ScrollRevealContainer>
                 </div>
-              </div>
+              </ScrollReveal>
               
-              <div className="relative">
-                <div className="aspect-square rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-8xl md:text-9xl font-bebas text-primary/20">↑</div>
-                    <p className="text-xl font-bebas uppercase tracking-widest text-foreground/60 mt-4">{t("home.trajectory", "TRAJECTORY")}</p>
+              <ScrollReveal delay={0.3}>
+                <div className="relative">
+                  <div className="aspect-square rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-8xl md:text-9xl font-bebas text-primary/20">↑</div>
+                      <p className="text-xl font-bebas uppercase tracking-widest text-foreground/60 mt-4">{t("home.trajectory", "TRAJECTORY")}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </ScrollReveal>
             </div>
           </div>
         </section>
@@ -432,7 +467,7 @@ const Index = () => {
           className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/85 backdrop-blur-sm relative overflow-hidden snap-start snap-always"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-primary/10"></div>
-          <div className="container mx-auto max-w-6xl text-center space-y-8 relative z-10">
+          <ScrollReveal className="container mx-auto max-w-6xl text-center space-y-8 relative z-10">
             <div className="space-y-4">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
@@ -469,7 +504,7 @@ const Index = () => {
             <p className="text-sm text-muted-foreground italic">
               {t("home.portfolio_description", "Learn more about our portfolio, including how we work and with whom we work.")}
             </p>
-          </div>
+          </ScrollReveal>
         </section>
 
         {/* Section 7: News */}
@@ -478,72 +513,75 @@ const Index = () => {
           className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/90 backdrop-blur-sm snap-start snap-always"
         >
           <div className="container mx-auto max-w-7xl w-full">
-            <div className="text-center mb-8 space-y-3">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  {t("home.latest_updates", "Latest Updates")}
-                </span>
+            <ScrollReveal>
+              <div className="text-center mb-8 space-y-3">
+                <div className="inline-block">
+                  <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                    {t("home.latest_updates", "Latest Updates")}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                {t("home.news", "News")}
-              </h2>
-              <Link to="/news">
-                <Button 
-                  variant="outline"
-                  className="font-bebas uppercase tracking-wider border-primary/30 text-foreground hover:bg-primary/10"
-                >
-                  <HoverText text={t("home.all_news", "All News →")} />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid md:grid-cols-3 gap-6">
-              {translatedNews.map((article) => (
-                <Link
-                  key={article.id}
-                  to={`/news/${article.id}`}
-                  className="group relative aspect-[16/10] overflow-hidden rounded-lg"
-                >
-                  {article.image_url && (
-                    <>
-                      <img 
-                        src={article.image_url} 
-                        alt={article.title}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/20" />
-                    </>
-                  )}
-                  
-                  <div className="absolute top-4 left-4 flex items-center gap-2 text-white/80 text-xs font-bebas uppercase tracking-wider">
-                    <span className="text-primary">▶</span>
-                    <span>
-                      {new Date(article.created_at).toLocaleDateString('en-GB', { 
-                        day: '2-digit', 
-                        month: '2-digit', 
-                        year: 'numeric' 
-                      })} {new Date(article.created_at).toLocaleTimeString('en-GB', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </span>
-                  </div>
-
-                  <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <h3 className="text-xl md:text-2xl font-bebas uppercase text-white leading-tight">
-                      {article.title}
-                    </h3>
-                    
-                    <div className="h-0 group-hover:h-12 overflow-hidden transition-all duration-300 ease-out">
-                      <button className="mt-3 px-4 py-2 text-sm font-bebas uppercase tracking-wider text-white bg-white/10 backdrop-blur-sm border border-white/30 rounded hover:bg-white/20 transition-colors">
-                        {t("home.read_article", "Read Article")}
-                      </button>
-                    </div>
-                  </div>
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                  {t("home.news", "News")}
+                </h2>
+                <Link to="/news">
+                  <Button 
+                    variant="outline"
+                    className="font-bebas uppercase tracking-wider border-primary/30 text-foreground hover:bg-primary/10"
+                  >
+                    <HoverText text={t("home.all_news", "All News →")} />
+                  </Button>
                 </Link>
+              </div>
+            </ScrollReveal>
+            <ScrollRevealContainer className="grid md:grid-cols-3 gap-6" staggerDelay={0.15}>
+              {translatedNews.map((article) => (
+                <ScrollRevealItem key={article.id}>
+                  <Link
+                    to={`/news/${article.id}`}
+                    className="group relative aspect-[16/10] overflow-hidden rounded-lg block"
+                  >
+                    {article.image_url && (
+                      <>
+                        <img 
+                          src={article.image_url} 
+                          alt={article.title}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/20" />
+                      </>
+                    )}
+                    
+                    <div className="absolute top-4 left-4 flex items-center gap-2 text-white/80 text-xs font-bebas uppercase tracking-wider">
+                      <span className="text-primary">▶</span>
+                      <span>
+                        {new Date(article.created_at).toLocaleDateString('en-GB', { 
+                          day: '2-digit', 
+                          month: '2-digit', 
+                          year: 'numeric' 
+                        })} {new Date(article.created_at).toLocaleTimeString('en-GB', { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </span>
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 right-0 p-6">
+                      <h3 className="text-xl md:text-2xl font-bebas uppercase text-white leading-tight">
+                        {article.title}
+                      </h3>
+                      
+                      <div className="h-0 group-hover:h-12 overflow-hidden transition-all duration-300 ease-out">
+                        <button className="mt-3 px-4 py-2 text-sm font-bebas uppercase tracking-wider text-white bg-white/10 backdrop-blur-sm border border-white/30 rounded hover:bg-white/20 transition-colors">
+                          {t("home.read_article", "Read Article")}
+                        </button>
+                      </div>
+                    </div>
+                  </Link>
+                </ScrollRevealItem>
               ))}
-            </div>
+            </ScrollRevealContainer>
           </div>
         </section>
 
@@ -553,47 +591,53 @@ const Index = () => {
           className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/95 backdrop-blur-sm snap-start snap-always"
         >
           <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-8 space-y-3">
-              <div className="inline-block">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  {t("home.our_work", "OUR WORK")}
-                </span>
+            <ScrollReveal>
+              <div className="text-center mb-8 space-y-3">
+                <div className="inline-block">
+                  <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                    {t("home.our_work", "OUR WORK")}
+                  </span>
+                </div>
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                  {t("home.watch", "WATCH")} <span className="text-primary">{t("home.now", "NOW")}</span>
+                </h2>
               </div>
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                {t("home.watch", "WATCH")} <span className="text-primary">{t("home.now", "NOW")}</span>
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src="https://www.youtube-nocookie.com/embed/pWH2cdmzwVg?rel=0"
-                  title="RISE Football Video 1"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  className="absolute inset-0 w-full h-full"
-                />
-              </div>
+            </ScrollReveal>
+            <ScrollRevealContainer className="grid grid-cols-1 md:grid-cols-2 gap-8" staggerDelay={0.2}>
+              <ScrollRevealItem>
+                <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src="https://www.youtube-nocookie.com/embed/pWH2cdmzwVg?rel=0"
+                    title="RISE Football Video 1"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="absolute inset-0 w-full h-full"
+                  />
+                </div>
+              </ScrollRevealItem>
 
-              <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg hidden md:block">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src="https://www.youtube-nocookie.com/embed/XtmRhHvXeyo?rel=0"
-                  title="RISE Football Video 2"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  className="absolute inset-0 w-full h-full"
-                />
-              </div>
-            </div>
+              <ScrollRevealItem className="hidden md:block">
+                <div className="relative aspect-video rounded-xl overflow-hidden border border-border shadow-lg">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src="https://www.youtube-nocookie.com/embed/XtmRhHvXeyo?rel=0"
+                    title="RISE Football Video 2"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="absolute inset-0 w-full h-full"
+                  />
+                </div>
+              </ScrollRevealItem>
+            </ScrollRevealContainer>
           </div>
         </section>
 
@@ -603,30 +647,32 @@ const Index = () => {
           className="min-h-screen flex items-center justify-center py-16 px-4 bg-muted/30 snap-start snap-always"
         >
           <div className="container mx-auto">
-            <div className="max-w-5xl mx-auto p-8 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent"></div>
-              <div className="text-center relative z-10 space-y-4">
-                <div className="inline-block">
-                  <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                    {t("home.stay_up_to_date", "STAY UP TO DATE")}
-                  </span>
+            <ScrollReveal>
+              <div className="max-w-5xl mx-auto p-8 rounded-lg border border-primary/20 bg-primary/5 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent"></div>
+                <div className="text-center relative z-10 space-y-4">
+                  <div className="inline-block">
+                    <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                      {t("home.stay_up_to_date", "STAY UP TO DATE")}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary">
+                    {t("home.join_broadcast", "Join RISE Broadcast on Instagram")}
+                  </h2>
+                  <p className="text-foreground mb-6 text-base md:text-lg leading-relaxed">
+                    {t("home.broadcast_desc", "Get daily updates on agency insights, performance optimisation, coaching systems, and player development strategies")}
+                  </p>
+                  <a
+                    href="https://www.instagram.com/channel/AbY33s3ZhuxaNwuo/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 hover:scale-105 transition-all rounded shadow-lg"
+                  >
+                    <HoverText text={t("home.join_channel", "Join the Channel")} />
+                  </a>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider text-primary">
-                  {t("home.join_broadcast", "Join RISE Broadcast on Instagram")}
-                </h2>
-                <p className="text-foreground mb-6 text-base md:text-lg leading-relaxed">
-                  {t("home.broadcast_desc", "Get daily updates on agency insights, performance optimisation, coaching systems, and player development strategies")}
-                </p>
-                <a
-                  href="https://www.instagram.com/channel/AbY33s3ZhuxaNwuo/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background font-bebas uppercase tracking-wider text-lg hover:bg-primary/90 hover:scale-105 transition-all rounded shadow-lg"
-                >
-                  <HoverText text={t("home.join_channel", "Join the Channel")} />
-                </a>
               </div>
-            </div>
+            </ScrollReveal>
           </div>
         </section>
 
