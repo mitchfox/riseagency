@@ -550,7 +550,7 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
             </>}
 
           {/* RISE WITH US Button - Right */}
-          <Button onClick={() => setWorkWithUsOpen(true)} size="sm" className={`btn-shine font-bebas uppercase tracking-wider transition-all duration-500 ease-out flex items-center justify-center whitespace-nowrap max-w-[140px] md:max-w-[160px] overflow-hidden ${isScrolled ? 'text-xs md:text-sm px-3 md:px-5 h-8 md:h-9 leading-none' : 'text-sm md:text-base px-4 md:px-6 h-9 md:h-10 leading-none'}`}>
+          <Button onClick={() => setWorkWithUsOpen(true)} size="sm" className={`btn-shine font-bebas uppercase tracking-wider transition-all duration-500 ease-out flex items-center justify-center whitespace-nowrap max-w-[140px] md:max-w-[160px] overflow-hidden rounded-lg ${isScrolled ? 'text-xs md:text-sm px-3 md:px-5 h-8 md:h-9 leading-none' : 'text-sm md:text-base px-4 md:px-6 h-9 md:h-10 leading-none'}`}>
             <span className="hidden md:inline truncate"><HoverText text={t("header.rise_with_us", "RISE WITH US")} /></span>
             <span className="md:hidden flex flex-col items-center leading-[0.9]">
               <span>RISE</span>
