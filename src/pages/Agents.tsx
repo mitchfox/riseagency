@@ -162,139 +162,143 @@ const Agents = () => {
         <Marquee />
 
         {/* Why Partner Section */}
-        <section className="py-8 md:py-12 px-4 relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/30 to-background" />
-          
-          <div className="container mx-auto relative z-10">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                {t('agents.why_partner', 'Why Partner With RISE')}
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                {t('agents.why_partner_desc', 'Access our network, development infrastructure, and industry expertise to better serve your players.')}
-              </p>
+        <ScrollReveal>
+          <section className="py-8 md:py-12 px-4 relative">
+            <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/30 to-background" />
+            
+            <div className="container mx-auto relative z-10">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+                  {t('agents.why_partner', 'Why Partner With RISE')}
+                </h2>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  {t('agents.why_partner_desc', 'Access our network, development infrastructure, and industry expertise to better serve your players.')}
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                <Card className="group p-6 border-2 border-transparent hover:border-primary/30 bg-gradient-to-br from-card to-primary/5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <Globe className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="font-bebas text-2xl uppercase tracking-wider mb-2">
+                    {t('agents.network_title', 'Extensive Network')}
+                  </h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                    {t('agents.network_desc', 'Leverage our established relationships with clubs across the UK and Europe to find the right opportunities for your players.')}
+                  </p>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>{t('agents.network_point1', 'Direct relationships with sporting directors')}</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>{t('agents.network_point2', 'EFL, Scottish & European connections')}</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>{t('agents.network_point3', 'Academy pathway relationships')}</span>
+                    </li>
+                  </ul>
+                </Card>
+
+                <Card className="group p-6 border-2 border-transparent hover:border-primary/30 bg-gradient-to-br from-card to-primary/5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <TrendingUp className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="font-bebas text-2xl uppercase tracking-wider mb-2">
+                    {t('agents.dev_title', 'Player Development')}
+                  </h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                    {t('agents.dev_desc', 'Our in-house performance analysis and coaching connections help players improve, making them more attractive to clubs.')}
+                  </p>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>{t('agents.dev_point1', 'Professional performance analysis')}</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>{t('agents.dev_point2', 'Tailored training programmes')}</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>{t('agents.dev_point3', 'Specialised sports psychology support')}</span>
+                    </li>
+                  </ul>
+                </Card>
+
+                <Card className="group p-6 border-2 border-transparent hover:border-primary/30 bg-gradient-to-br from-card to-primary/5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <Shield className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="font-bebas text-2xl uppercase tracking-wider mb-2">
+                    {t('agents.standards_title', 'Professional Standards')}
+                  </h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                    {t('agents.standards_desc', 'We operate with full transparency and integrity. All agreements are documented, fees are fair, and player welfare comes first.')}
+                  </p>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>{t('agents.standards_point1', 'FA Licensed intermediaries')}</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>{t('agents.standards_point2', 'Transparent fee structures')}</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>{t('agents.standards_point3', 'Player welfare first approach')}</span>
+                    </li>
+                  </ul>
+                </Card>
+              </div>
             </div>
-
-            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              <Card className="group p-6 border-2 border-transparent hover:border-primary/30 bg-gradient-to-br from-card to-primary/5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                  <Globe className="h-7 w-7 text-primary" />
-                </div>
-                <h3 className="font-bebas text-2xl uppercase tracking-wider mb-2">
-                  {t('agents.network_title', 'Extensive Network')}
-                </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                  {t('agents.network_desc', 'Leverage our established relationships with clubs across the UK and Europe to find the right opportunities for your players.')}
-                </p>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{t('agents.network_point1', 'Direct relationships with sporting directors')}</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{t('agents.network_point2', 'EFL, Scottish & European connections')}</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{t('agents.network_point3', 'Academy pathway relationships')}</span>
-                  </li>
-                </ul>
-              </Card>
-
-              <Card className="group p-6 border-2 border-transparent hover:border-primary/30 bg-gradient-to-br from-card to-primary/5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                  <TrendingUp className="h-7 w-7 text-primary" />
-                </div>
-                <h3 className="font-bebas text-2xl uppercase tracking-wider mb-2">
-                  {t('agents.dev_title', 'Player Development')}
-                </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                  {t('agents.dev_desc', 'Our in-house performance analysis and coaching connections help players improve, making them more attractive to clubs.')}
-                </p>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{t('agents.dev_point1', 'Professional performance analysis')}</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{t('agents.dev_point2', 'Tailored training programmes')}</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{t('agents.dev_point3', 'Specialised sports psychology support')}</span>
-                  </li>
-                </ul>
-              </Card>
-
-              <Card className="group p-6 border-2 border-transparent hover:border-primary/30 bg-gradient-to-br from-card to-primary/5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                  <Shield className="h-7 w-7 text-primary" />
-                </div>
-                <h3 className="font-bebas text-2xl uppercase tracking-wider mb-2">
-                  {t('agents.standards_title', 'Professional Standards')}
-                </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                  {t('agents.standards_desc', 'We operate with full transparency and integrity. All agreements are documented, fees are fair, and player welfare comes first.')}
-                </p>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{t('agents.standards_point1', 'FA Licensed intermediaries')}</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{t('agents.standards_point2', 'Transparent fee structures')}</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{t('agents.standards_point3', 'Player welfare first approach')}</span>
-                  </li>
-                </ul>
-              </Card>
-            </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* Process Section */}
-        <section className="py-8 md:py-12 px-4 relative bg-muted/20">
-          <div className="container mx-auto">
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-4">
-                <Clock className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">{t('agents.process_badge', 'Simple Process')}</span>
-              </div>
-              
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                {t('agents.how_it_works', 'How It Works')}
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                {t('agents.how_it_works_desc', 'Getting started is straightforward. No complex onboarding, no lengthy contracts – just a conversation about how we can help each other.')}
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-              {processSteps.map((step, index) => (
-                <div key={index} className="relative">
-                  <div className="p-6 rounded-2xl bg-card border border-border hover:border-primary/30 transition-colors h-full">
-                    <div className="text-5xl font-bebas text-primary/20 mb-2">{step.step}</div>
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                      <step.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <h3 className="font-bebas text-xl uppercase tracking-wider mb-2">{t(step.titleKey, step.titleFallback)}</h3>
-                    <p className="text-sm text-muted-foreground">{t(step.descKey, step.descFallback)}</p>
-                  </div>
-                  {index < processSteps.length - 1 && (
-                    <div className="hidden md:block absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
-                      <ArrowRight className="h-6 w-6 text-primary/30" />
-                    </div>
-                  )}
+        <ScrollReveal>
+          <section className="py-8 md:py-12 px-4 relative bg-muted/20">
+            <div className="container mx-auto">
+              <div className="text-center mb-12">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-full border border-primary/20 mb-4">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold">{t('agents.process_badge', 'Simple Process')}</span>
                 </div>
-              ))}
+                
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+                  {t('agents.how_it_works', 'How It Works')}
+                </h2>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  {t('agents.how_it_works_desc', 'Getting started is straightforward. No complex onboarding, no lengthy contracts – just a conversation about how we can help each other.')}
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                {processSteps.map((step, index) => (
+                  <div key={index} className="relative">
+                    <div className="p-6 rounded-2xl bg-card border border-border hover:border-primary/30 transition-colors h-full">
+                      <div className="text-5xl font-bebas text-primary/20 mb-2">{step.step}</div>
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                        <step.icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <h3 className="font-bebas text-xl uppercase tracking-wider mb-2">{t(step.titleKey, step.titleFallback)}</h3>
+                      <p className="text-sm text-muted-foreground">{t(step.descKey, step.descFallback)}</p>
+                    </div>
+                    {index < processSteps.length - 1 && (
+                      <div className="hidden md:block absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
+                        <ArrowRight className="h-6 w-6 text-primary/30" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* Collaboration Types Section */}
         <section className="py-8 md:py-12 px-4 relative">
