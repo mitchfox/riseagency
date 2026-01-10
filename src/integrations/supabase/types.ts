@@ -2368,6 +2368,42 @@ export type Database = {
           },
         ]
       }
+      player_requests: {
+        Row: {
+          age_range: string | null
+          created_at: string
+          id: string
+          is_visible: boolean
+          league: string
+          playstyle: string | null
+          position: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          age_range?: string | null
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          league: string
+          playstyle?: string | null
+          position: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          age_range?: string | null
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          league?: string
+          playstyle?: string | null
+          position?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       player_stats: {
         Row: {
           assists: number | null

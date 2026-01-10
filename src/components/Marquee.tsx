@@ -10,14 +10,14 @@ interface MarqueeProps {
 export const Marquee = ({ 
   text = "REALISE POTENTIAL", 
   className = "",
-  speed = 20,
+  speed = 40, // Slower speed for more natural feel
   separator = " • "
 }: MarqueeProps) => {
   // Create repeated text for seamless loop
   const repeatedText = `${text}${separator}`.repeat(10);
 
   return (
-    <div className={cn("w-full overflow-hidden bg-primary py-4 md:py-6", className)}>
+    <div className={cn("w-full overflow-hidden bg-transparent py-3 md:py-4", className)}>
       <div className="relative flex">
         <div 
           className="flex whitespace-nowrap animate-marquee"
@@ -25,10 +25,10 @@ export const Marquee = ({
             animationDuration: `${speed}s`,
           }}
         >
-          <span className="text-2xl md:text-4xl lg:text-5xl font-bebas uppercase tracking-[0.2em] text-primary-foreground px-4">
+          <span className="text-lg md:text-2xl lg:text-3xl font-bebas uppercase tracking-[0.15em] text-foreground/60 px-4">
             {repeatedText}
           </span>
-          <span className="text-2xl md:text-4xl lg:text-5xl font-bebas uppercase tracking-[0.2em] text-primary-foreground px-4">
+          <span className="text-lg md:text-2xl lg:text-3xl font-bebas uppercase tracking-[0.15em] text-foreground/60 px-4">
             {repeatedText}
           </span>
         </div>

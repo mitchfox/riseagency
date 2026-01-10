@@ -64,6 +64,7 @@ import { TacticsBoard } from "@/components/staff/coaching/TacticsBoard";
 import { Meetings } from "@/components/staff/coaching/Meetings";
 import { NotificationSettingsManagement } from "@/components/staff/NotificationSettingsManagement";
 import { JobsManagement } from "@/components/staff/JobsManagement";
+import { RequestsManagement } from "@/components/staff/RequestsManagement";
 
 import { supabase } from "@/integrations/supabase/client";
 import { VersionManager } from "@/lib/versionManager";
@@ -122,7 +123,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'pressreleases' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'jobs' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'pressreleases' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   
@@ -725,6 +726,7 @@ const Staff = () => {
           { id: 'players', title: 'Player Management', icon: UserCog },
           { id: 'transferhub', title: 'Transfer Hub', icon: Building2 },
           { id: 'updates', title: 'Player Updates', icon: BellRing },
+          { id: 'requests', title: 'Requests', icon: Target },
         ]
       },
       {
@@ -1146,6 +1148,7 @@ const Staff = () => {
                   {expandedSection === 'athletecentre' && <AthleteCentre />}
                   {expandedSection === 'legal' && <LegalManagement isAdmin={isAdmin} />}
                   {expandedSection === 'jobs' && <JobsManagement />}
+                  {expandedSection === 'requests' && <RequestsManagement />}
                   {expandedSection === 'sitetext' && <SiteTextManagement isAdmin={isAdmin} />}
                   {expandedSection === 'languages' && <LanguagesManagement isAdmin={isAdmin} />}
                   {expandedSection === 'passwords' && isAdmin && <PlayerPasswordManagement />}

@@ -16,49 +16,22 @@ import { Send, FileText, Users, Globe, MessageCircle, Mail, Clock, MapPin, User,
 import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
 import bannerHero from "@/assets/banner-hero.jpg";
 
-// Sample active requests - in a real app these would come from the database
-const activeRequests = [
-  {
-    id: "1",
-    position: "Central Midfielder",
-    ageRange: "22-26",
-    league: "Championship",
-    style: "Box-to-box, high work rate",
-    status: "Active",
-    postedDate: "2 days ago"
-  },
-  {
-    id: "2", 
-    position: "Left-Back",
-    ageRange: "18-23",
-    league: "League One / Two",
-    style: "Attacking, good crosser",
-    status: "Active",
-    postedDate: "5 days ago"
-  },
-  {
-    id: "3",
-    position: "Striker",
-    ageRange: "24-28",
-    league: "Eredivisie / Belgian Pro League",
-    style: "Target man, aerial presence",
-    status: "Active",
-    postedDate: "1 week ago"
-  },
-  {
-    id: "4",
-    position: "Centre-Back",
-    ageRange: "20-25",
-    league: "Scottish Premiership",
-    style: "Ball-playing, left-footed preferred",
-    status: "Active",
-    postedDate: "3 days ago"
-  }
-];
+interface PlayerRequest {
+  id: string;
+  position: string;
+  age_range: string | null;
+  league: string;
+  playstyle: string | null;
+  status: string;
+  is_visible: boolean;
+  created_at: string;
+}
 
 const AgentRequests = () => {
   const { t } = useLanguage();
   const [formOpen, setFormOpen] = useState(false);
+  const [activeRequests, setActiveRequests] = useState<PlayerRequest[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(true);
   const [formData, setFormData] = useState({
     agentName: '',
     agencyName: '',
@@ -71,6 +44,36 @@ const AgentRequests = () => {
     message: '',
   });
   const [submitting, setSubmitting] = useState(false);
+
+  // Fetch active requests from database
+  useEffect(() => {
+    const fetchRequests = async () => {
+      const { data, error } = await supabase
+        .from('player_requests')
+        .select('*')
+        .eq('is_visible', true)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        setActiveRequests(data as PlayerRequest[]);
+      }
+      setLoadingRequests(false);
+    };
+    fetchRequests();
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return date.toLocaleDateString();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,7 +182,11 @@ const AgentRequests = () => {
             </ScrollReveal>
 
             <ScrollRevealContainer className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto" staggerDelay={0.1}>
-              {activeRequests.map((request) => (
+              {loadingRequests ? (
+                <div className="col-span-2 text-center py-12 text-muted-foreground">Loading requests...</div>
+              ) : activeRequests.length === 0 ? (
+                <div className="col-span-2 text-center py-12 text-muted-foreground">No active requests at the moment. Check back soon!</div>
+              ) : activeRequests.map((request) => (
                 <ScrollRevealItem key={request.id}>
                   <Card className="group hover:border-primary/50 transition-all hover:shadow-lg">
                     <CardHeader className="pb-3">
@@ -194,25 +201,29 @@ const AgentRequests = () => {
                         </div>
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {request.postedDate}
+                          {formatDate(request.created_at)}
                         </span>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <User className="w-4 h-4 text-primary" />
-                          <span>Age: {request.ageRange}</span>
-                        </div>
+                        {request.age_range && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <User className="w-4 h-4 text-primary" />
+                            <span>Age: {request.age_range}</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <MapPin className="w-4 h-4 text-primary" />
                           <span>{request.league}</span>
                         </div>
                       </div>
-                      <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <Target className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span>{request.style}</span>
-                      </div>
+                      {request.playstyle && (
+                        <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <Target className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                          <span>{request.playstyle}</span>
+                        </div>
+                      )}
                       
                       <Dialog open={formOpen} onOpenChange={setFormOpen}>
                         <DialogTrigger asChild>
