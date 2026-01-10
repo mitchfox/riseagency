@@ -42,7 +42,7 @@ export const MarketingGallery = () => {
           players!inner(representation_status)
         `)
         .eq("file_type", "image")
-        .in("players.representation_status", ["represented", "mandated", "previously_mandated"])
+        .eq("players.representation_status", "represented")
         .order("created_at", { ascending: false })
         .limit(6);
 
