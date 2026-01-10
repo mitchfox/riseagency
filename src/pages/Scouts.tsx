@@ -10,6 +10,7 @@ import { SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/sc
 import useEmblaCarousel from "embla-carousel-react";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
 
 const domainConfig = {
   Physical: {
