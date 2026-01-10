@@ -1,5 +1,5 @@
-import { motion, Variants } from "framer-motion";
-import { ReactNode } from "react";
+import { motion, Variants, useInView } from "framer-motion";
+import { ReactNode, useRef } from "react";
 
 interface ScrollRevealProps {
   children: ReactNode;
@@ -10,11 +10,6 @@ interface ScrollRevealProps {
   once?: boolean;
 }
 
-const defaultVariants: Variants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0 }
-};
-
 export const ScrollReveal = ({ 
   children, 
   className = "",
@@ -23,11 +18,14 @@ export const ScrollReveal = ({
   y = 30,
   once = true
 }: ScrollRevealProps) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once, margin: "-100px" });
+
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once, margin: "-50px" }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y }}
       transition={{ 
         duration, 
         delay,
@@ -52,11 +50,14 @@ export const ScrollRevealContainer = ({
   staggerDelay?: number;
   once?: boolean;
 }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once, margin: "-100px" });
+
   return (
     <motion.div
+      ref={ref}
       initial="hidden"
-      whileInView="visible"
-      viewport={{ once, margin: "-50px" }}
+      animate={isInView ? "visible" : "hidden"}
       variants={{
         hidden: {},
         visible: {
