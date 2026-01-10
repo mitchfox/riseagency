@@ -160,6 +160,7 @@ const Media = () => {
         </ScrollReveal>
 
         {/* CONTENT ACCESS Section */}
+        <ScrollReveal>
         <section className="py-8 md:py-12 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -234,8 +235,10 @@ const Media = () => {
             </div>
           </div>
         </section>
+        </ScrollReveal>
 
         {/* BROADCAST & FILM Section */}
+        <ScrollReveal>
         <section className="py-8 md:py-12 bg-background">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -289,8 +292,10 @@ const Media = () => {
             </div>
           </div>
         </section>
+        </ScrollReveal>
 
         {/* PRESS RELEASES Section */}
+        <ScrollReveal>
         <section className="py-8 md:py-12 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12 items-start">
@@ -396,8 +401,10 @@ const Media = () => {
             )}
           </div>
         </section>
+        </ScrollReveal>
 
         {/* CTA Section */}
+        <ScrollReveal>
         <section className="py-16 md:py-24 bg-background">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-6">
@@ -420,6 +427,7 @@ const Media = () => {
             </div>
           </div>
         </section>
+        </ScrollReveal>
       </main>
       
       <Footer />
