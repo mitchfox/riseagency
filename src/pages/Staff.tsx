@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,7 @@ import { JobsManagement } from "@/components/staff/JobsManagement";
 import { RequestsManagement } from "@/components/staff/RequestsManagement";
 import { MarketingTipsManagement } from "@/components/staff/MarketingTipsManagement";
 import { StaffSMSNotifications } from "@/components/staff/StaffSMSNotifications";
+import { VisionBoardSection } from "@/components/staff/VisionBoardSection";
 
 import { supabase } from "@/integrations/supabase/client";
 import { VersionManager } from "@/lib/versionManager";
@@ -125,7 +126,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'pressreleases' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'marketingtips' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'schedule' | 'goalstasks' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'pressreleases' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'marketingtips' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   
@@ -144,13 +145,19 @@ const Staff = () => {
     setIsHydrated(true);
   }, []);
   
+  // Memoize notification triggers to prevent infinite re-renders
+  const notificationTriggers = useMemo(() => {
+    if (!isHydrated) return {};
+    return {
+      onVisitor: true,
+      onFormSubmission: true,
+      onClipUpload: true,
+      onPlaylistChange: true,
+    };
+  }, [isHydrated]);
+  
   // Enable staff notifications - only after hydration
-  useStaffNotifications(isHydrated ? {
-    onVisitor: true,
-    onFormSubmission: true,
-    onClipUpload: true,
-    onPlaylistChange: true,
-  } : {});
+  useStaffNotifications(notificationTriggers);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [sidebarSearchOpen, setSidebarSearchOpen] = useState(false);
@@ -697,6 +704,7 @@ const Staff = () => {
         sections: [
           { id: 'overview', title: 'Overview', icon: Calendar },
           { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
+          { id: 'visionboard', title: 'Vision Board', icon: Target },
           { id: 'goalstasks', title: 'Goals & Tasks', icon: Target },
           { id: 'staffschedules', title: 'Staff Schedules', icon: Users },
           ...(user?.email === 'jolonlevene98@gmail.com' ? [
@@ -1119,6 +1127,7 @@ const Staff = () => {
                       <StaffAvailabilityManagement isAdmin={isAdmin} />
                     </div>
                   )}
+                  {expandedSection === 'visionboard' && <VisionBoardSection />}
                   {expandedSection === 'goalstasks' && <GoalsTasksManagement />}
                   {expandedSection === 'staffschedules' && <StaffSchedulesManagement />}
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}

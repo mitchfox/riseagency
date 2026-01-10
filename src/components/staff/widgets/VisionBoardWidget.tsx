@@ -188,7 +188,7 @@ export const VisionBoardWidget = ({ isExpanded = false, onNavigate }: VisionBoar
     );
   }
 
-  // Compact view for widget
+  // Compact view for widget - navigate to visionboard section
   if (!isExpanded) {
     return (
       <div className="space-y-2 h-full overflow-auto p-1">
@@ -204,7 +204,7 @@ export const VisionBoardWidget = ({ isExpanded = false, onNavigate }: VisionBoar
               <div 
                 key={item.id} 
                 className={`p-1.5 rounded border ${CATEGORY_COLORS[item.category] || 'bg-muted/30'} cursor-pointer hover:opacity-80 transition-opacity`}
-                onClick={() => onNavigate?.('goals-tasks')}
+                onClick={() => onNavigate?.('visionboard')}
               >
                 <Icon className="h-3 w-3 mb-0.5 mx-auto" />
                 <div className="text-[8px] font-medium text-center truncate">{item.category}</div>
@@ -216,13 +216,21 @@ export const VisionBoardWidget = ({ isExpanded = false, onNavigate }: VisionBoar
           })}
         </div>
         <div className="space-y-1">
-          {visionItems.slice(0, 2).map((item) => (
-            <div key={item.id} className="text-[9px] p-1.5 bg-muted/20 rounded">
-              <span className="font-semibold text-primary">{item.category}:</span>{" "}
-              <span className="text-muted-foreground truncate">{item.vision_statement}</span>
+          {visionItems.slice(0, 3).map((item) => (
+            <div key={item.id} className="text-[9px] p-1.5 bg-muted/20 rounded flex items-start gap-1">
+              <span className="font-bold text-primary shrink-0">{item.category}:</span>
+              <span className="text-muted-foreground line-clamp-1">{item.vision_statement}</span>
             </div>
           ))}
         </div>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="w-full h-6 text-[10px]"
+          onClick={() => onNavigate?.('visionboard')}
+        >
+          View Full Vision Board →
+        </Button>
       </div>
     );
   }

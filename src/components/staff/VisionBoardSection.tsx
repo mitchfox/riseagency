@@ -4,14 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
   Target, 
   CheckSquare, 
-  Eye, 
   ChevronDown, 
   ChevronRight,
   Search,
@@ -24,7 +22,8 @@ import {
   Loader2,
   Lightbulb,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Save
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -40,20 +39,41 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
   Performance: BarChart3,
 };
 
-const CATEGORY_COLORS: Record<string, string> = {
-  Scouting: "from-blue-500/20 to-blue-600/10 border-blue-500/30",
-  Recruitment: "from-emerald-500/20 to-emerald-600/10 border-emerald-500/30",
-  Networking: "from-purple-500/20 to-purple-600/10 border-purple-500/30",
-  Marketing: "from-amber-500/20 to-amber-600/10 border-amber-500/30",
-  Performance: "from-rose-500/20 to-rose-600/10 border-rose-500/30",
+const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string; gradient: string }> = {
+  Scouting: { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/30", gradient: "from-blue-500/20 to-blue-600/5" },
+  Recruitment: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/30", gradient: "from-emerald-500/20 to-emerald-600/5" },
+  Networking: { bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/30", gradient: "from-purple-500/20 to-purple-600/5" },
+  Marketing: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/30", gradient: "from-amber-500/20 to-amber-600/5" },
+  Performance: { bg: "bg-rose-500/10", text: "text-rose-400", border: "border-rose-500/30", gradient: "from-rose-500/20 to-rose-600/5" },
 };
 
-const CATEGORY_BADGE_COLORS: Record<string, string> = {
-  Scouting: "bg-blue-500/20 text-blue-400",
-  Recruitment: "bg-emerald-500/20 text-emerald-400",
-  Networking: "bg-purple-500/20 text-purple-400",
-  Marketing: "bg-amber-500/20 text-amber-400",
-  Performance: "bg-rose-500/20 text-rose-400",
+// Default goals from the image
+const DEFAULT_GOALS: Record<string, Array<{ title: string; target: string; unit: string }>> = {
+  Scouting: [
+    { title: "New Scouts", target: "5", unit: "scouts p/m" },
+    { title: "Reports Received", target: "10", unit: "reports p/m" },
+  ],
+  Recruitment: [
+    { title: "New Players", target: "2", unit: "players p/m" },
+    { title: "International Profiles", target: "30", unit: "profiles p/m" },
+    { title: "Player Outreach", target: "7", unit: "outreach p/w" },
+  ],
+  Networking: [
+    { title: "New Contacts of Interest", target: "10", unit: "contacts p/m" },
+    { title: "Relations Maintained", target: "20", unit: "relations p/m" },
+    { title: "Messages Outreach", target: "10", unit: "messages p/w" },
+    { title: "LinkedIn Presence", target: "1", unit: "ongoing" },
+  ],
+  Marketing: [
+    { title: "Daily Posts", target: "2", unit: "posts + story" },
+    { title: "Non-Follower Engagement", target: "50", unit: "engagements p/w" },
+    { title: "Cross Posting", target: "1", unit: "ongoing" },
+    { title: "Engagement Monitoring", target: "1", unit: "ongoing" },
+  ],
+  Performance: [
+    { title: "Client Satisfaction Rate", target: "100", unit: "%" },
+    { title: "Clear Pipeline", target: "1", unit: "system" },
+  ],
 };
 
 interface VisionItem {
@@ -92,7 +112,6 @@ export const VisionBoardSection = () => {
   const [editingVision, setEditingVision] = useState<VisionItem | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addGoalDialogOpen, setAddGoalDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [newGoal, setNewGoal] = useState({
     title: "",
     target_value: "",
@@ -221,278 +240,351 @@ export const VisionBoardSection = () => {
     : 0;
 
   return (
-    <div className="space-y-6">
-      {/* Header with overall stats */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bebas tracking-wider flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            RISE VISION BOARD
-          </h2>
-          <p className="text-muted-foreground">Strategic direction and quarterly goals</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <div className="text-2xl font-bold text-primary">{Math.round(overallProgress)}%</div>
-            <div className="text-xs text-muted-foreground">Overall Progress</div>
+    <div className="space-y-8">
+      {/* ===== SECTION 1: RISE BOARD VISION ===== */}
+      <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-primary/20 rounded-lg">
+                <Sparkles className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-bebas tracking-wider text-primary">RISE BOARD VISION</CardTitle>
+                <p className="text-sm text-muted-foreground mt-0.5">Strategic direction for each department</p>
+              </div>
+            </div>
+            <Badge variant="outline" className="text-sm px-3 py-1">
+              {Math.round(overallProgress)}% Overall
+            </Badge>
           </div>
-          <Button onClick={() => setAddGoalDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Goal
-          </Button>
-        </div>
-      </div>
-
-      {/* Vision Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-        {visionItems.map((item) => {
-          const Icon = CATEGORY_ICONS[item.category] || Target;
-          const categoryGoals = getGoalsByCategory(item.category);
-          const categoryProgress = categoryGoals.length > 0 
-            ? categoryGoals.reduce((acc, g) => acc + (g.current_value / g.target_value) * 100, 0) / categoryGoals.length
-            : 0;
-
-          return (
-            <Card 
-              key={item.id} 
-              className={`bg-gradient-to-br ${CATEGORY_COLORS[item.category] || 'from-muted/20 to-muted/10'} border cursor-pointer hover:shadow-lg transition-all`}
-              onClick={() => toggleCategory(item.category)}
-            >
-              <CardContent className="p-4 text-center">
-                <div className={`inline-flex p-2 rounded-lg mb-2 ${CATEGORY_BADGE_COLORS[item.category] || 'bg-muted'}`}>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {visionItems.map((item) => {
+            const Icon = CATEGORY_ICONS[item.category] || Target;
+            const colors = CATEGORY_COLORS[item.category] || { bg: "bg-muted", text: "text-muted-foreground", border: "border-border" };
+            
+            return (
+              <div 
+                key={item.id} 
+                className={`flex items-center gap-4 p-3 rounded-lg ${colors.bg} border ${colors.border}`}
+              >
+                <div className={`p-2 rounded-md ${colors.bg} ${colors.text}`}>
                   <Icon className="h-5 w-5" />
                 </div>
-                <h3 className="font-semibold text-sm mb-1">{item.category}</h3>
-                <p className="text-[10px] text-muted-foreground line-clamp-2 mb-2">{item.vision_statement}</p>
-                <Progress value={categoryProgress} className="h-1.5" />
-                <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
-                  <span>{categoryGoals.length} goals</span>
-                  <span>{Math.round(categoryProgress)}%</span>
+                <div className="flex-1 min-w-0">
+                  <span className={`font-bold uppercase tracking-wide ${colors.text}`}>{item.category}</span>
+                  <span className="text-muted-foreground mx-2">→</span>
+                  <span className="text-foreground">{item.vision_statement}</span>
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="shrink-0"
+                  onClick={() => {
+                    setEditingVision(item);
+                    setEditDialogOpen(true);
+                  }}
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
 
-      {/* Detailed Category Sections */}
-      <div className="space-y-4">
-        {visionItems.map((item) => {
-          const Icon = CATEGORY_ICONS[item.category] || Target;
-          const categoryGoals = getGoalsByCategory(item.category);
-          const categoryTasks = getTasksByCategory(item.category);
-          const isOpen = openCategories.includes(item.category);
-
-          return (
-            <Collapsible 
-              key={item.id} 
-              open={isOpen} 
-              onOpenChange={() => toggleCategory(item.category)}
-            >
-              <Card className={`overflow-hidden border ${CATEGORY_COLORS[item.category]?.split(' ')[2] || 'border-border'}`}>
-                <CollapsibleTrigger className="w-full">
-                  <CardHeader className={`p-4 bg-gradient-to-r ${CATEGORY_COLORS[item.category] || 'from-muted/20 to-transparent'}`}>
+      {/* ===== SECTION 2: GOALS ===== */}
+      <Card>
+        <CardHeader className="pb-4 border-b">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-primary/20 rounded-lg">
+                <Target className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-bebas tracking-wider">GOALS</CardTitle>
+                <p className="text-sm text-muted-foreground mt-0.5">Quarterly targets by category</p>
+              </div>
+            </div>
+            <Button onClick={() => setAddGoalDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Goal
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {visionItems.map((item) => {
+              const Icon = CATEGORY_ICONS[item.category] || Target;
+              const colors = CATEGORY_COLORS[item.category] || { bg: "bg-muted", text: "text-muted-foreground", border: "border-border", gradient: "from-muted/20" };
+              const categoryGoals = getGoalsByCategory(item.category);
+              const defaultGoals = DEFAULT_GOALS[item.category] || [];
+              
+              const categoryProgress = categoryGoals.length > 0 
+                ? categoryGoals.reduce((acc, g) => acc + (g.current_value / g.target_value) * 100, 0) / categoryGoals.length
+                : 0;
+              
+              return (
+                <Card 
+                  key={item.id} 
+                  className={`bg-gradient-to-br ${colors.gradient} border ${colors.border} overflow-hidden`}
+                >
+                  <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${CATEGORY_BADGE_COLORS[item.category] || 'bg-muted'}`}>
-                          <Icon className="h-5 w-5" />
+                      <div className="flex items-center gap-2">
+                        <div className={`p-1.5 rounded-md ${colors.bg} ${colors.text}`}>
+                          <Icon className="h-4 w-4" />
                         </div>
-                        <div className="text-left">
-                          <CardTitle className="text-lg font-semibold">{item.category}</CardTitle>
-                          <p className="text-sm text-muted-foreground">{item.vision_statement}</p>
-                        </div>
+                        <CardTitle className={`text-base font-semibold uppercase tracking-wide ${colors.text}`}>
+                          {item.category}
+                        </CardTitle>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Badge variant="outline" className="text-xs">
-                          {categoryGoals.length} goals
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {categoryTasks.length} tasks
-                        </Badge>
-                        {isOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        {categoryGoals.length} active
+                      </Badge>
                     </div>
+                    {categoryGoals.length > 0 && (
+                      <Progress value={categoryProgress} className="h-1.5 mt-2" />
+                    )}
                   </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="p-4 space-y-4">
-                    {/* Goals Grid */}
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-medium flex items-center gap-2">
-                          <Target className="h-4 w-4 text-primary" />
-                          Goals
-                        </h4>
+                  <CardContent className="pt-0 space-y-2">
+                    {categoryGoals.length > 0 ? (
+                      categoryGoals.map((goal) => (
+                        <div key={goal.id} className="flex items-center justify-between p-2 bg-background/50 rounded-md border border-border/50">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 text-sm">
+                              <span className="font-medium">{goal.title}</span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Progress 
+                                value={(goal.current_value / goal.target_value) * 100} 
+                                className="h-1.5 flex-1" 
+                              />
+                              <span className="text-xs text-muted-foreground shrink-0">
+                                {goal.current_value}/{goal.target_value} {goal.unit}
+                              </span>
+                            </div>
+                          </div>
+                          <Input
+                            type="number"
+                            value={goal.current_value}
+                            onChange={(e) => handleUpdateGoalProgress(goal.id, parseFloat(e.target.value) || 0)}
+                            className="h-7 w-16 text-xs ml-2"
+                          />
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-xs text-muted-foreground mb-3">Suggested goals from the board:</p>
+                        <div className="space-y-1.5">
+                          {defaultGoals.map((dg, idx) => (
+                            <div key={idx} className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                              <span className="font-medium">•</span>
+                              <span>{dg.title}: {dg.target} {dg.unit}</span>
+                            </div>
+                          ))}
+                        </div>
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="h-7 text-xs"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedCategory(item.category);
+                          className="mt-3 text-xs"
+                          onClick={() => {
                             setNewGoal({ ...newGoal, category: item.category });
                             setAddGoalDialogOpen(true);
                           }}
                         >
                           <Plus className="h-3 w-3 mr-1" />
-                          Add
+                          Add Goal
                         </Button>
-                      </div>
-                      {categoryGoals.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4 bg-muted/20 rounded-lg">
-                          No goals set for {item.category} yet
-                        </p>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {categoryGoals.map((goal) => (
-                            <Card key={goal.id} className="bg-muted/20">
-                              <CardContent className="p-3">
-                                <div className="flex items-start justify-between mb-2">
-                                  <span className="text-sm font-medium">{goal.title}</span>
-                                  <Badge variant="secondary" className="text-[10px]">
-                                    {goal.quarter} {goal.year}
-                                  </Badge>
-                                </div>
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Input
-                                    type="number"
-                                    value={goal.current_value}
-                                    onChange={(e) => handleUpdateGoalProgress(goal.id, parseFloat(e.target.value) || 0)}
-                                    className="h-7 w-16 text-xs"
-                                  />
-                                  <span className="text-xs text-muted-foreground">/ {goal.target_value} {goal.unit}</span>
-                                </div>
-                                <Progress 
-                                  value={(goal.current_value / goal.target_value) * 100} 
-                                  className="h-2" 
-                                />
-                                <div className="text-right text-xs text-muted-foreground mt-1">
-                                  {Math.round((goal.current_value / goal.target_value) * 100)}% complete
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Actionable Plans */}
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-medium flex items-center gap-2">
-                          <Lightbulb className="h-4 w-4 text-amber-500" />
-                          Actionable Plans
-                        </h4>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          className="h-7 text-xs"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingVision(item);
-                            setEditDialogOpen(true);
-                          }}
-                        >
-                          <Edit2 className="h-3 w-3 mr-1" />
-                          Edit
-                        </Button>
-                      </div>
-                      {item.actionable_plans && item.actionable_plans.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {item.actionable_plans.map((plan, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs py-1">
-                              <ArrowRight className="h-3 w-3 mr-1 text-primary" />
-                              {plan}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">No actionable plans defined yet</p>
-                      )}
-                    </div>
-
-                    {/* Active Tasks */}
-                    {categoryTasks.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium flex items-center gap-2 mb-3">
-                          <CheckSquare className="h-4 w-4 text-emerald-500" />
-                          Active Tasks ({categoryTasks.length})
-                        </h4>
-                        <div className="space-y-1">
-                          {categoryTasks.slice(0, 5).map((task) => (
-                            <div key={task.id} className="flex items-center gap-2 text-sm p-2 bg-muted/20 rounded">
-                              <CheckSquare className="h-4 w-4 text-muted-foreground" />
-                              <span>{task.title}</span>
-                            </div>
-                          ))}
-                          {categoryTasks.length > 5 && (
-                            <p className="text-xs text-muted-foreground pl-6">
-                              +{categoryTasks.length - 5} more tasks
-                            </p>
-                          )}
-                        </div>
                       </div>
                     )}
                   </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-          );
-        })}
-      </div>
+                </Card>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ===== SECTION 3: ACTIONABLE PLANS ===== */}
+      <Card>
+        <CardHeader className="pb-4 border-b">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-amber-500/20 rounded-lg">
+              <Lightbulb className="h-6 w-6 text-amber-500" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl font-bebas tracking-wider">ACTIONABLE PLANS</CardTitle>
+              <p className="text-sm text-muted-foreground mt-0.5">Concrete steps to achieve each vision</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {visionItems.map((item) => {
+              const Icon = CATEGORY_ICONS[item.category] || Target;
+              const colors = CATEGORY_COLORS[item.category] || { bg: "bg-muted", text: "text-muted-foreground", border: "border-border" };
+              
+              return (
+                <Card key={item.id} className="overflow-hidden">
+                  <CardHeader className={`py-2 px-3 ${colors.bg} border-b ${colors.border}`}>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className={`text-sm font-semibold uppercase tracking-wide ${colors.text} flex items-center gap-2`}>
+                        <Icon className="h-4 w-4" />
+                        {item.category}
+                      </CardTitle>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-6 w-6 p-0"
+                        onClick={() => {
+                          setEditingVision(item);
+                          setEditDialogOpen(true);
+                        }}
+                      >
+                        <Edit2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-3">
+                    {item.actionable_plans && item.actionable_plans.length > 0 ? (
+                      <ul className="space-y-2">
+                        {item.actionable_plans.map((plan, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm">
+                            <ArrowRight className={`h-4 w-4 mt-0.5 shrink-0 ${colors.text}`} />
+                            <span>{plan}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-2">
+                        No plans defined yet
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ===== SECTION 4: ACTIVE TASKS BY CATEGORY ===== */}
+      {tasks.length > 0 && (
+        <Card>
+          <CardHeader className="pb-4 border-b">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-emerald-500/20 rounded-lg">
+                <CheckSquare className="h-6 w-6 text-emerald-500" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-bebas tracking-wider">ACTIVE TASKS</CardTitle>
+                <p className="text-sm text-muted-foreground mt-0.5">Tasks categorized by department</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {visionItems.map((item) => {
+                const Icon = CATEGORY_ICONS[item.category] || Target;
+                const colors = CATEGORY_COLORS[item.category] || { bg: "bg-muted", text: "text-muted-foreground", border: "border-border" };
+                const categoryTasks = getTasksByCategory(item.category);
+                
+                if (categoryTasks.length === 0) return null;
+                
+                return (
+                  <Card key={item.id} className="overflow-hidden">
+                    <CardHeader className={`py-2 px-3 ${colors.bg} border-b ${colors.border}`}>
+                      <CardTitle className={`text-sm font-semibold uppercase tracking-wide ${colors.text} flex items-center gap-2`}>
+                        <Icon className="h-4 w-4" />
+                        {item.category}
+                        <Badge variant="secondary" className="ml-auto text-[10px]">
+                          {categoryTasks.length}
+                        </Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-2">
+                      <ScrollArea className="h-32">
+                        <div className="space-y-1.5">
+                          {categoryTasks.map((task) => (
+                            <div key={task.id} className="flex items-center gap-2 text-xs p-1.5 bg-muted/30 rounded">
+                              <CheckSquare className="h-3 w-3 text-emerald-500 shrink-0" />
+                              <span className="truncate">{task.title}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Edit Vision Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Edit {editingVision?.category} Vision</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit2 className="h-5 w-5" />
+              Edit {editingVision?.category} Vision
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Vision Statement</Label>
-              <Textarea
-                value={editingVision?.vision_statement || ""}
-                onChange={(e) => setEditingVision(prev => 
-                  prev ? { ...prev, vision_statement: e.target.value } : null
-                )}
-                placeholder="Enter vision statement..."
-              />
+          {editingVision && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Vision Statement</Label>
+                <Textarea
+                  value={editingVision.vision_statement}
+                  onChange={(e) => setEditingVision({ ...editingVision, vision_statement: e.target.value })}
+                  placeholder="What's the vision for this category?"
+                  rows={2}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Actionable Plans (one per line)</Label>
+                <Textarea
+                  value={editingVision.actionable_plans?.join('\n') || ''}
+                  onChange={(e) => setEditingVision({ 
+                    ...editingVision, 
+                    actionable_plans: e.target.value.split('\n').filter(p => p.trim()) 
+                  })}
+                  placeholder="Enter each actionable plan on a new line..."
+                  rows={5}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdateVision}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </Button>
+              </div>
             </div>
-            <div>
-              <Label>Actionable Plans (one per line)</Label>
-              <Textarea
-                value={editingVision?.actionable_plans?.join("\n") || ""}
-                onChange={(e) => setEditingVision(prev => 
-                  prev ? { ...prev, actionable_plans: e.target.value.split("\n").filter(p => p.trim()) } : null
-                )}
-                placeholder="Enter plans, one per line..."
-                rows={5}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleUpdateVision}>
-                Save Changes
-              </Button>
-            </div>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
 
       {/* Add Goal Dialog */}
       <Dialog open={addGoalDialogOpen} onOpenChange={setAddGoalDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add New Goal</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              Add New Goal
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
+            <div className="space-y-2">
               <Label>Category</Label>
               <Select 
                 value={newGoal.category} 
-                onValueChange={(value) => setNewGoal({ ...newGoal, category: value })}
+                onValueChange={(v) => setNewGoal({ ...newGoal, category: v })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
@@ -506,26 +598,17 @@ export const VisionBoardSection = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-2">
               <Label>Goal Title</Label>
               <Input
                 value={newGoal.title}
                 onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
-                placeholder="e.g., 5+ New Scouts p/m"
+                placeholder="e.g., New Scouts Recruited"
               />
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label>Current</Label>
-                <Input
-                  type="number"
-                  value={newGoal.current_value}
-                  onChange={(e) => setNewGoal({ ...newGoal, current_value: e.target.value })}
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <Label>Target</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Target Value</Label>
                 <Input
                   type="number"
                   value={newGoal.target_value}
@@ -533,12 +616,12 @@ export const VisionBoardSection = () => {
                   placeholder="10"
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label>Unit</Label>
                 <Input
                   value={newGoal.unit}
                   onChange={(e) => setNewGoal({ ...newGoal, unit: e.target.value })}
-                  placeholder="scouts"
+                  placeholder="scouts p/m"
                 />
               </div>
             </div>
@@ -547,6 +630,7 @@ export const VisionBoardSection = () => {
                 Cancel
               </Button>
               <Button onClick={handleAddGoal}>
+                <Plus className="h-4 w-4 mr-2" />
                 Add Goal
               </Button>
             </div>
