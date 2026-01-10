@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { WorkWithUsDialog } from "@/components/WorkWithUsDialog";
+import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
 import bannerHero from "@/assets/banner-hero.jpg";
 import { Target, Users, Globe, Heart, TrendingUp, Brain, Zap, Shield } from "lucide-react";
 
@@ -48,15 +49,19 @@ const About = () => {
         <section className="py-12 md:py-20 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
-              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
-                {t('about.our_story', 'OUR')} <span className="text-primary">{t('about.story', 'STORY')}</span>
-              </h2>
-              <div className="space-y-6 text-lg text-muted-foreground">
-                <p>{t('about.story_p1', 'We started as players. We understand the journey: the sacrifices, the setbacks, and what it takes to make it.')}</p>
-                <p>{t('about.story_p2', 'RISE was founded on a simple belief: talent needs more than opportunity—it needs the right guidance, structure, and support to truly flourish.')}</p>
-                <p>{t('about.story_p3', 'We combine data-driven performance analysis with personalized career management to help players reach their full potential.')}</p>
-                <p className="text-foreground font-medium">{t('about.story_p4', 'We built this into the agency we run today. Every lesson, every insight, every connection. Now focused on helping the next generation realise their potential.')}</p>
-              </div>
+              <ScrollReveal>
+                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
+                  {t('about.our_story', 'OUR')} <span className="text-primary">{t('about.story', 'STORY')}</span>
+                </h2>
+              </ScrollReveal>
+              <ScrollReveal delay={0.1}>
+                <div className="space-y-6 text-lg text-muted-foreground">
+                  <p>{t('about.story_p1', 'We started as players. We understand the journey: the sacrifices, the setbacks, and what it takes to make it.')}</p>
+                  <p>{t('about.story_p2', 'RISE was founded on a simple belief: talent needs more than opportunity—it needs the right guidance, structure, and support to truly flourish.')}</p>
+                  <p>{t('about.story_p3', 'We combine data-driven performance analysis with personalized career management to help players reach their full potential.')}</p>
+                  <p className="text-foreground font-medium">{t('about.story_p4', 'We built this into the agency we run today. Every lesson, every insight, every connection. Now focused on helping the next generation realise their potential.')}</p>
+                </div>
+              </ScrollReveal>
             </div>
           </div>
         </section>
@@ -65,38 +70,50 @@ const About = () => {
         <section className="py-12 md:py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
-              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
-                {t('about.who_we_are', 'WHO WE ARE')}
-              </h2>
-              <div className="space-y-6 text-lg text-muted-foreground">
-                <p>{t('about.who_we_are_p1', 'We are a team of football professionals, analysts, and agents dedicated to elevating the game.')}</p>
-                <p>{t('about.who_we_are_p2', 'Our expertise spans performance analysis, tactical development, contract negotiation, and career guidance.')}</p>
-                <p>{t('about.who_p3', "We understand that success in football extends beyond what happens on the pitch. That's why we provide comprehensive support covering all aspects of a player's career, from performance optimisation and transfer dealings to personal development and career guidance.")}</p>
-              </div>
+              <ScrollReveal>
+                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
+                  {t('about.who_we_are', 'WHO WE ARE')}
+                </h2>
+              </ScrollReveal>
+              <ScrollReveal delay={0.1}>
+                <div className="space-y-6 text-lg text-muted-foreground">
+                  <p>{t('about.who_we_are_p1', 'We are a team of football professionals, analysts, and agents dedicated to elevating the game.')}</p>
+                  <p>{t('about.who_we_are_p2', 'Our expertise spans performance analysis, tactical development, contract negotiation, and career guidance.')}</p>
+                  <p>{t('about.who_p3', "We understand that success in football extends beyond what happens on the pitch. That's why we provide comprehensive support covering all aspects of a player's career, from performance optimisation and transfer dealings to personal development and career guidance.")}</p>
+                </div>
+              </ScrollReveal>
               
               {/* Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
-                <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
-                  <div className="text-5xl font-bebas text-primary group-hover:scale-110 transition-transform">74</div>
-                  <div className="h-px w-12 bg-primary/50 mx-auto my-3" />
-                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">{t('about.stat_professionals', 'Professionals')}</p>
-                </div>
-                <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
-                  <div className="text-5xl font-bebas text-primary group-hover:scale-110 transition-transform">18</div>
-                  <div className="h-px w-12 bg-primary/50 mx-auto my-3" />
-                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">{t('about.stat_big5', 'Big 5 League Players')}</p>
-                </div>
-                <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
-                  <div className="text-5xl font-bebas text-primary group-hover:scale-110 transition-transform">10</div>
-                  <div className="h-px w-12 bg-primary/50 mx-auto my-3" />
-                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">{t('about.stat_national', 'National Team Players')}</p>
-                </div>
-                <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
-                  <div className="text-4xl font-bebas text-primary group-hover:scale-110 transition-transform">£100M+</div>
-                  <div className="h-px w-12 bg-primary/50 mx-auto my-3" />
-                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">{t('about.stat_transfers', 'Transfer Fees')}</p>
-                </div>
-              </div>
+              <ScrollRevealContainer className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12" staggerDelay={0.1}>
+                <ScrollRevealItem>
+                  <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
+                    <div className="text-5xl font-bebas text-primary group-hover:scale-110 transition-transform">74</div>
+                    <div className="h-px w-12 bg-primary/50 mx-auto my-3" />
+                    <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">{t('about.stat_professionals', 'Professionals')}</p>
+                  </div>
+                </ScrollRevealItem>
+                <ScrollRevealItem>
+                  <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
+                    <div className="text-5xl font-bebas text-primary group-hover:scale-110 transition-transform">18</div>
+                    <div className="h-px w-12 bg-primary/50 mx-auto my-3" />
+                    <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">{t('about.stat_big5', 'Big 5 League Players')}</p>
+                  </div>
+                </ScrollRevealItem>
+                <ScrollRevealItem>
+                  <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
+                    <div className="text-5xl font-bebas text-primary group-hover:scale-110 transition-transform">10</div>
+                    <div className="h-px w-12 bg-primary/50 mx-auto my-3" />
+                    <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">{t('about.stat_national', 'National Team Players')}</p>
+                  </div>
+                </ScrollRevealItem>
+                <ScrollRevealItem>
+                  <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
+                    <div className="text-4xl font-bebas text-primary group-hover:scale-110 transition-transform">£100M+</div>
+                    <div className="h-px w-12 bg-primary/50 mx-auto my-3" />
+                    <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">{t('about.stat_transfers', 'Transfer Fees')}</p>
+                  </div>
+                </ScrollRevealItem>
+              </ScrollRevealContainer>
             </div>
           </div>
         </section>

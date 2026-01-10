@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
 import { MapPin, Clock, Briefcase, ChevronDown, ChevronUp, Send } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -126,14 +127,16 @@ const Jobs = () => {
         <section className="py-16 md:py-24 bg-background">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-12">
-                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-4">
-                  {t('jobs.open_positions', 'OPEN')} <span className="text-primary">{t('jobs.positions', 'POSITIONS')}</span>
-                </h2>
-                <p className="text-lg text-muted-foreground">
-                  {t('jobs.positions_desc', 'Find your role in helping players realise their potential')}
-                </p>
-              </div>
+              <ScrollReveal>
+                <div className="text-center mb-12">
+                  <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-4">
+                    {t('jobs.open_positions', 'OPEN')} <span className="text-primary">{t('jobs.positions', 'POSITIONS')}</span>
+                  </h2>
+                  <p className="text-lg text-muted-foreground">
+                    {t('jobs.positions_desc', 'Find your role in helping players realise their potential')}
+                  </p>
+                </div>
+              </ScrollReveal>
 
               {loading ? (
                 <div className="space-y-4">
@@ -151,168 +154,172 @@ const Jobs = () => {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <ScrollRevealContainer className="space-y-4" staggerDelay={0.1}>
                   {jobs.map((job) => (
-                    <Card key={job.id} className="overflow-hidden border-border/50 hover:border-primary/30 transition-colors">
-                      <div 
-                        className="p-6 cursor-pointer"
-                        onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary mb-2">
-                              {job.title}
-                            </h3>
-                            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Briefcase className="w-4 h-4" />
-                                {job.department}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <MapPin className="w-4 h-4" />
-                                {job.location}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                {job.type}
-                              </span>
-                            </div>
-                          </div>
-                          <button className="p-2 hover:bg-muted rounded-full transition-colors">
-                            {expandedJob === job.id ? (
-                              <ChevronUp className="w-5 h-5 text-primary" />
-                            ) : (
-                              <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                      
-                      {expandedJob === job.id && (
-                        <div className="px-6 pb-6 space-y-6 border-t border-border/50 pt-6">
-                          {job.description && (
+                    <ScrollRevealItem key={job.id}>
+                      <Card className="overflow-hidden border-border/50 hover:border-primary/30 transition-colors">
+                        <div 
+                          className="p-6 cursor-pointer"
+                          onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}
+                        >
+                          <div className="flex items-start justify-between">
                             <div>
-                              <h4 className="font-bebas text-lg uppercase tracking-wider mb-2">About the Role</h4>
-                              <p className="text-muted-foreground">{job.description}</p>
-                            </div>
-                          )}
-                          
-                          {job.requirements && (
-                            <div>
-                              <h4 className="font-bebas text-lg uppercase tracking-wider mb-2">Requirements</h4>
-                              <p className="text-muted-foreground whitespace-pre-line">{job.requirements}</p>
-                            </div>
-                          )}
-                          
-                          {job.responsibilities && (
-                            <div>
-                              <h4 className="font-bebas text-lg uppercase tracking-wider mb-2">Responsibilities</h4>
-                              <p className="text-muted-foreground whitespace-pre-line">{job.responsibilities}</p>
-                            </div>
-                          )}
-                          
-                          {job.salary_range && (
-                            <div>
-                              <h4 className="font-bebas text-lg uppercase tracking-wider mb-2">Salary</h4>
-                              <p className="text-muted-foreground">{job.salary_range}</p>
-                            </div>
-                          )}
-                          
-                          <Dialog open={applyingTo?.id === job.id} onOpenChange={(open) => !open && setApplyingTo(null)}>
-                            <DialogTrigger asChild>
-                              <Button 
-                                onClick={() => setApplyingTo(job)}
-                                className="btn-shine font-bebas uppercase tracking-wider"
-                              >
-                                <Send className="w-4 h-4 mr-2" />
-                                Apply Now
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-md">
-                              <DialogHeader>
-                                <DialogTitle className="font-bebas text-2xl uppercase tracking-wider">
-                                  Apply for {job.title}
-                                </DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4 pt-4">
-                                <div>
-                                  <Label htmlFor="name">Full Name *</Label>
-                                  <Input 
-                                    id="name"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                    placeholder="Your full name"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="email">Email *</Label>
-                                  <Input 
-                                    id="email"
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                                    placeholder="your@email.com"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="phone">Phone</Label>
-                                  <Input 
-                                    id="phone"
-                                    value={formData.phone}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                                    placeholder="+44 7..."
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="message">Cover Letter / Message</Label>
-                                  <Textarea 
-                                    id="message"
-                                    value={formData.message}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-                                    placeholder="Tell us about yourself and why you'd be a great fit..."
-                                    rows={4}
-                                  />
-                                </div>
-                                <Button 
-                                  onClick={handleApply}
-                                  disabled={submitting}
-                                  className="w-full btn-shine font-bebas uppercase tracking-wider"
-                                >
-                                  {submitting ? 'Submitting...' : 'Submit Application'}
-                                </Button>
+                              <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary mb-2">
+                                {job.title}
+                              </h3>
+                              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Briefcase className="w-4 h-4" />
+                                  {job.department}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  {job.location}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  {job.type}
+                                </span>
                               </div>
-                            </DialogContent>
-                          </Dialog>
+                            </div>
+                            <button className="p-2 hover:bg-muted rounded-full transition-colors">
+                              {expandedJob === job.id ? (
+                                <ChevronUp className="w-5 h-5 text-primary" />
+                              ) : (
+                                <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                              )}
+                            </button>
+                          </div>
                         </div>
-                      )}
-                    </Card>
+                        
+                        {expandedJob === job.id && (
+                          <div className="px-6 pb-6 space-y-6 border-t border-border/50 pt-6">
+                            {job.description && (
+                              <div>
+                                <h4 className="font-bebas text-lg uppercase tracking-wider mb-2">About the Role</h4>
+                                <p className="text-muted-foreground">{job.description}</p>
+                              </div>
+                            )}
+                            
+                            {job.requirements && (
+                              <div>
+                                <h4 className="font-bebas text-lg uppercase tracking-wider mb-2">Requirements</h4>
+                                <p className="text-muted-foreground whitespace-pre-line">{job.requirements}</p>
+                              </div>
+                            )}
+                            
+                            {job.responsibilities && (
+                              <div>
+                                <h4 className="font-bebas text-lg uppercase tracking-wider mb-2">Responsibilities</h4>
+                                <p className="text-muted-foreground whitespace-pre-line">{job.responsibilities}</p>
+                              </div>
+                            )}
+                            
+                            {job.salary_range && (
+                              <div>
+                                <h4 className="font-bebas text-lg uppercase tracking-wider mb-2">Salary</h4>
+                                <p className="text-muted-foreground">{job.salary_range}</p>
+                              </div>
+                            )}
+                            
+                            <Dialog open={applyingTo?.id === job.id} onOpenChange={(open) => !open && setApplyingTo(null)}>
+                              <DialogTrigger asChild>
+                                <Button 
+                                  onClick={() => setApplyingTo(job)}
+                                  className="btn-shine font-bebas uppercase tracking-wider"
+                                >
+                                  <Send className="w-4 h-4 mr-2" />
+                                  Apply Now
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle className="font-bebas text-2xl uppercase tracking-wider">
+                                    Apply for {job.title}
+                                  </DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4 pt-4">
+                                  <div>
+                                    <Label htmlFor="name">Full Name *</Label>
+                                    <Input 
+                                      id="name"
+                                      value={formData.name}
+                                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                      placeholder="Your full name"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="email">Email *</Label>
+                                    <Input 
+                                      id="email"
+                                      type="email"
+                                      value={formData.email}
+                                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                      placeholder="your@email.com"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="phone">Phone</Label>
+                                    <Input 
+                                      id="phone"
+                                      value={formData.phone}
+                                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                                      placeholder="+44 7..."
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="message">Cover Letter / Message</Label>
+                                    <Textarea 
+                                      id="message"
+                                      value={formData.message}
+                                      onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                                      placeholder="Tell us about yourself and why you'd be a great fit..."
+                                      rows={4}
+                                    />
+                                  </div>
+                                  <Button 
+                                    onClick={handleApply}
+                                    disabled={submitting}
+                                    className="w-full btn-shine font-bebas uppercase tracking-wider"
+                                  >
+                                    {submitting ? 'Submitting...' : 'Submit Application'}
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        )}
+                      </Card>
+                    </ScrollRevealItem>
                   ))}
-                </div>
+                </ScrollRevealContainer>
               )}
             </div>
           </div>
         </section>
 
         {/* Speculative Application */}
-        <section className="py-16 md:py-24 bg-muted/30">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-              {t('jobs.dont_see', "DON'T SEE YOUR")} <span className="text-primary">{t('jobs.role', 'ROLE?')}</span>
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              {t('jobs.speculative', "We're always looking for talented individuals. Send us your details and we'll keep you in mind for future opportunities.")}
-            </p>
-            <Button 
-              asChild
-              size="lg" 
-              className="btn-shine font-bebas uppercase tracking-wider"
-            >
-              <a href="mailto:jolon.levene@risefootballagency.com?subject=Speculative%20Application">
-                Send Speculative Application
-              </a>
-            </Button>
-          </div>
-        </section>
+        <ScrollReveal>
+          <section className="py-16 md:py-24 bg-muted/30">
+            <div className="container mx-auto px-4 text-center">
+              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
+                {t('jobs.dont_see', "DON'T SEE YOUR")} <span className="text-primary">{t('jobs.role', 'ROLE?')}</span>
+              </h2>
+              <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+                {t('jobs.speculative', "We're always looking for talented individuals. Send us your details and we'll keep you in mind for future opportunities.")}
+              </p>
+              <Button 
+                asChild
+                size="lg" 
+                className="btn-shine font-bebas uppercase tracking-wider"
+              >
+                <a href="mailto:jolon.levene@risefootballagency.com?subject=Speculative%20Application">
+                  Send Speculative Application
+                </a>
+              </Button>
+            </div>
+          </section>
+        </ScrollReveal>
       </main>
 
       <Footer />

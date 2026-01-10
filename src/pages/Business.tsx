@@ -8,6 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { HoverText } from "@/components/HoverText";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
 
 // Case study / showcase card data
 interface ShowcaseCard {

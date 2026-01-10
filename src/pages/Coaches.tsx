@@ -6,6 +6,7 @@ import { SEO } from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { ScrollReveal } from "@/components/ScrollReveal";
 import bannerHero from "@/assets/banner-hero.jpg";
 import blackMarble from "@/assets/black-marble-smudged.png";
 import coachesSection from "@/assets/coaches-section.png";
@@ -44,156 +45,166 @@ const Coaches = () => {
         </section>
 
         {/* RESULTS Section - Text Left, Image Right */}
-        <section className="grid md:grid-cols-2">
-          <div 
-            className="relative p-8 md:p-16 flex items-center"
-            style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-          >
-            <div className="max-w-xl space-y-6">
-              <div>
-                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                  {t('coaches.results')}
-                </h2>
-                <p className="text-base md:text-xl text-white/90 leading-relaxed">
-                  {t('coaches.results_desc')}
-                </p>
+        <ScrollReveal>
+          <section className="grid md:grid-cols-2">
+            <div 
+              className="relative p-8 md:p-16 flex items-center"
+              style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+            >
+              <div className="max-w-xl space-y-6">
+                <div>
+                  <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+                    {t('coaches.results')}
+                  </h2>
+                  <p className="text-base md:text-xl text-white/90 leading-relaxed">
+                    {t('coaches.results_desc')}
+                  </p>
+                </div>
+                <Collapsible>
+                  <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                    <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('coaches.learn_more')}</span>
+                    <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                    <p>{t('coaches.results_p1')}</p>
+                    <p>{t('coaches.results_p2')}</p>
+                    <p>{t('coaches.results_p3')}</p>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
-              <Collapsible>
-                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
-                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('coaches.learn_more')}</span>
-                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
-                  <p>{t('coaches.results_p1')}</p>
-                  <p>{t('coaches.results_p2')}</p>
-                  <p>{t('coaches.results_p3')}</p>
-                </CollapsibleContent>
-              </Collapsible>
             </div>
-          </div>
-          <div 
-            className="relative min-h-[300px] md:min-h-[600px] bg-cover bg-center"
-            style={{ backgroundImage: `url(${coachesSection})` }}
-          />
-        </section>
+            <div 
+              className="relative min-h-[300px] md:min-h-[600px] bg-cover bg-center"
+              style={{ backgroundImage: `url(${coachesSection})` }}
+            />
+          </section>
+        </ScrollReveal>
 
         {/* FOSTER Section - Image Left, Text Right */}
-        <section className="grid md:grid-cols-2">
-          <div 
-            className="relative min-h-[300px] md:min-h-[600px] bg-cover bg-center order-2 md:order-1"
-            style={{ backgroundImage: `url(${coachesNetwork})` }}
-          />
-          <div 
-            className="relative p-8 md:p-16 flex items-center order-1 md:order-2"
-            style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-          >
-            <div className="max-w-xl space-y-6">
-              <div>
-                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                  {t('coaches.foster')}
-                </h2>
-                <p className="text-base md:text-xl text-white/90 leading-relaxed">
-                  {t('coaches.foster_desc')}
-                </p>
+        <ScrollReveal>
+          <section className="grid md:grid-cols-2">
+            <div 
+              className="relative min-h-[300px] md:min-h-[600px] bg-cover bg-center order-2 md:order-1"
+              style={{ backgroundImage: `url(${coachesNetwork})` }}
+            />
+            <div 
+              className="relative p-8 md:p-16 flex items-center order-1 md:order-2"
+              style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+            >
+              <div className="max-w-xl space-y-6">
+                <div>
+                  <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+                    {t('coaches.foster')}
+                  </h2>
+                  <p className="text-base md:text-xl text-white/90 leading-relaxed">
+                    {t('coaches.foster_desc')}
+                  </p>
+                </div>
+                <Collapsible>
+                  <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                    <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('coaches.learn_more')}</span>
+                    <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                    <p>{t('coaches.foster_p1')}</p>
+                    <p>{t('coaches.foster_p2')}</p>
+                    <p>{t('coaches.foster_p3')}</p>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
-              <Collapsible>
-                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
-                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('coaches.learn_more')}</span>
-                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
-                  <p>{t('coaches.foster_p1')}</p>
-                  <p>{t('coaches.foster_p2')}</p>
-                  <p>{t('coaches.foster_p3')}</p>
-                </CollapsibleContent>
-              </Collapsible>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* ALLURE Section - Text Left, Image Right */}
-        <section className="grid md:grid-cols-2">
-          <div 
-            className="relative p-8 md:p-16 flex items-center"
-            style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-          >
-            <div className="max-w-xl space-y-6">
-              <div>
-                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                  {t('coaches.allure')}
-                </h2>
-                <p className="text-base md:text-xl text-white/90 leading-relaxed">
-                  {t('coaches.allure_desc')}
-                </p>
+        <ScrollReveal>
+          <section className="grid md:grid-cols-2">
+            <div 
+              className="relative p-8 md:p-16 flex items-center"
+              style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+            >
+              <div className="max-w-xl space-y-6">
+                <div>
+                  <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+                    {t('coaches.allure')}
+                  </h2>
+                  <p className="text-base md:text-xl text-white/90 leading-relaxed">
+                    {t('coaches.allure_desc')}
+                  </p>
+                </div>
+                <Collapsible>
+                  <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                    <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('coaches.learn_more')}</span>
+                    <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                    <p>{t('coaches.allure_p1')}</p>
+                    <p>{t('coaches.allure_p2')}</p>
+                    <p>{t('coaches.allure_p3')}</p>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
-              <Collapsible>
-                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
-                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('coaches.learn_more')}</span>
-                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
-                  <p>{t('coaches.allure_p1')}</p>
-                  <p>{t('coaches.allure_p2')}</p>
-                  <p>{t('coaches.allure_p3')}</p>
-                </CollapsibleContent>
-              </Collapsible>
             </div>
-          </div>
-          <div 
-            className="relative min-h-[300px] md:min-h-[600px] bg-cover bg-center"
-            style={{ backgroundImage: `url(${coachesSection2})` }}
-          />
-        </section>
+            <div 
+              className="relative min-h-[300px] md:min-h-[600px] bg-cover bg-center"
+              style={{ backgroundImage: `url(${coachesSection2})` }}
+            />
+          </section>
+        </ScrollReveal>
 
         {/* PROGRESS Section - Image Left, Text Right */}
-        <section className="grid md:grid-cols-2">
-          <div 
-            className="relative min-h-[300px] md:min-h-[600px] bg-cover bg-center order-2 md:order-1"
-            style={{ backgroundImage: `url(${coachesSection})` }}
-          />
-          <div 
-            className="relative p-8 md:p-16 flex items-center order-1 md:order-2"
-            style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-          >
-            <div className="max-w-xl space-y-6">
-              <div>
-                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
-                  {t('coaches.progress')}
-                </h2>
-                <p className="text-base md:text-xl text-white/90 leading-relaxed">
-                  {t('coaches.progress_desc')}
-                </p>
+        <ScrollReveal>
+          <section className="grid md:grid-cols-2">
+            <div 
+              className="relative min-h-[300px] md:min-h-[600px] bg-cover bg-center order-2 md:order-1"
+              style={{ backgroundImage: `url(${coachesSection})` }}
+            />
+            <div 
+              className="relative p-8 md:p-16 flex items-center order-1 md:order-2"
+              style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+            >
+              <div className="max-w-xl space-y-6">
+                <div>
+                  <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-[--gold] mb-6">
+                    {t('coaches.progress')}
+                  </h2>
+                  <p className="text-base md:text-xl text-white/90 leading-relaxed">
+                    {t('coaches.progress_desc')}
+                  </p>
+                </div>
+                <Collapsible>
+                  <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
+                    <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('coaches.learn_more')}</span>
+                    <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
+                    <p>{t('coaches.progress_p1')}</p>
+                    <p>{t('coaches.progress_p2')}</p>
+                    <p>{t('coaches.progress_p3')}</p>
+                    <p>{t('coaches.progress_p4')}</p>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
-              <Collapsible>
-                <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-[--gold]/10 hover:bg-[--gold]/20 border border-[--gold]/30 rounded-md transition-all">
-                  <span className="text-sm uppercase tracking-wider text-[--gold] font-medium">{t('coaches.learn_more')}</span>
-                  <ChevronDown className="h-4 w-4 text-[--gold] transition-transform group-data-[state=open]:rotate-180" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-6 space-y-4 text-sm md:text-base text-white/80 leading-relaxed">
-                  <p>{t('coaches.progress_p1')}</p>
-                  <p>{t('coaches.progress_p2')}</p>
-                  <p>{t('coaches.progress_p3')}</p>
-                  <p>{t('coaches.progress_p4')}</p>
-                </CollapsibleContent>
-              </Collapsible>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* CTA Section */}
-        <section className="py-6 md:py-8 bg-background">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-              {t('coaches.cta_title')}
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              {t('coaches.cta_subtitle')}
-            </p>
-            <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider">
-              <Link to="/contact">{t('coaches.cta_button')}</Link>
-            </Button>
-          </div>
-        </section>
+        <ScrollReveal>
+          <section className="py-6 md:py-8 bg-background">
+            <div className="container mx-auto px-4 text-center">
+              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
+                {t('coaches.cta_title')}
+              </h2>
+              <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+                {t('coaches.cta_subtitle')}
+              </p>
+              <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider">
+                <Link to="/contact">{t('coaches.cta_button')}</Link>
+              </Button>
+            </div>
+          </section>
+        </ScrollReveal>
       </main>
 
       <Footer />
