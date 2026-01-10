@@ -13,6 +13,7 @@ import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { ContactDialog } from "@/components/ContactDialog";
 import { PortfolioRequestDialog } from "@/components/PortfolioRequestDialog";
 import { useNavigate } from "react-router-dom";
+import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
 
 const PLAYERS_PER_PAGE = 12;
 
@@ -163,20 +164,22 @@ const Stars = () => {
           
           <div className="container mx-auto relative z-10">
             {/* Title Block */}
-            <div className="text-center mb-12 md:mb-16">
-              <p className="text-primary uppercase tracking-[0.3em] text-xs md:text-sm font-medium mb-4">
-                {t('stars.subtitle', 'Elite Football Representation')}
-              </p>
-              <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-bebas uppercase tracking-wider text-foreground leading-none">
-                {t('stars.title', 'Our Stars')}
-              </h1>
-              
-              <div className="w-20 h-px bg-primary mx-auto mt-8 mb-8" />
-              
-              <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
-                {t('stars.description', 'Because of our background, we have the mandate to many top players across Europe\'s major divisions not under exclusive representation. Clubs can request our full portfolio through the button below.')}
-              </p>
-            </div>
+            <ScrollReveal>
+              <div className="text-center mb-12 md:mb-16">
+                <p className="text-primary uppercase tracking-[0.3em] text-xs md:text-sm font-medium mb-4">
+                  {t('stars.subtitle', 'Elite Football Representation')}
+                </p>
+                <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-bebas uppercase tracking-wider text-foreground leading-none">
+                  {t('stars.title', 'Our Stars')}
+                </h1>
+                
+                <div className="w-20 h-px bg-primary mx-auto mt-8 mb-8" />
+                
+                <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
+                  {t('stars.description', 'Because of our background, we have the mandate to many top players across Europe\'s major divisions not under exclusive representation. Clubs can request our full portfolio through the button below.')}
+                </p>
+              </div>
+            </ScrollReveal>
 
             {/* Action Cards - Premium Design */}
             <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto mb-12">

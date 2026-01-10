@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HoverText } from "@/components/HoverText";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
+import { ScrollReveal } from "@/components/ScrollReveal";
 import {
   Carousel,
   CarouselContent,
@@ -151,17 +152,19 @@ export default function BetweenTheLines() {
       <main className="flex-1 pt-28 pb-12 touch-pan-y overflow-x-hidden">
         <div className="container mx-auto px-4">
           {/* Page Title */}
-          <div className="text-center mb-8 space-y-2 animate-fade-in">
-            <span className="text-xs font-bebas uppercase tracking-widest text-primary">
-              {t('btl.badge')}
-            </span>
-            <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-              {t('btl.title_part1')} <span className="text-primary">{t('btl.title_part2')}</span>
-            </h1>
-            <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto">
-              {t('btl.subtitle')}
-            </p>
-          </div>
+          <ScrollReveal>
+            <div className="text-center mb-8 space-y-2">
+              <span className="text-xs font-bebas uppercase tracking-widest text-primary">
+                {t('btl.badge')}
+              </span>
+              <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                {t('btl.title_part1')} <span className="text-primary">{t('btl.title_part2')}</span>
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto">
+                {t('btl.subtitle')}
+              </p>
+            </div>
+          </ScrollReveal>
 
           {/* Compact Filters */}
           <div className="flex flex-wrap justify-center gap-3 mb-8">

@@ -6,6 +6,7 @@ import { SEO } from "@/components/SEO";
 import { HoverText } from "@/components/HoverText";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { BarChart3, Video, Target, TrendingUp, Activity, Brain } from "lucide-react";
+import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
 import bannerHero from "@/assets/banner-hero.jpg";
 
 const PerformancePage = () => {
@@ -77,62 +78,65 @@ const PerformancePage = () => {
         {/* Services Grid */}
         <section className="py-16 md:py-24 px-4">
           <div className="container mx-auto max-w-6xl">
-            <div className="grid md:grid-cols-2 gap-8">
+            <ScrollRevealContainer className="grid md:grid-cols-2 gap-8" staggerDelay={0.1}>
               {services.map((service, index) => (
-                <div 
-                  key={index}
-                  className="p-8 border border-border/50 bg-card/30 rounded-lg hover:border-primary/30 transition-all group"
-                >
-                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colours">
-                    <service.icon className="h-7 w-7 text-primary" />
+                <ScrollRevealItem key={index}>
+                  <div 
+                    className="p-8 border border-border/50 bg-card/30 rounded-lg hover:border-primary/30 transition-all group"
+                  >
+                    <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colours">
+                      <service.icon className="h-7 w-7 text-primary" />
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider mb-4">
+                      {service.title}
+                    </h3>
+                    <p className="text-lg text-muted-foreground leading-relaxed mb-4">
+                      {service.description}
+                    </p>
+                    {service.items && (
+                      <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+                        {service.items.map((item, idx) => (
+                          <li key={idx}>{item}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
-                  <h3 className="text-2xl md:text-3xl font-bebas uppercase tracking-wider mb-4">
-                    {service.title}
-                  </h3>
-                  <p className="text-lg text-muted-foreground leading-relaxed mb-4">
-                    {service.description}
-                  </p>
-                  {service.items && (
-                    <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-                      {service.items.map((item, idx) => (
-                        <li key={idx}>{item}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                </ScrollRevealItem>
               ))}
-            </div>
+            </ScrollRevealContainer>
           </div>
         </section>
 
         {/* Visual Stats Section */}
-        <section className="py-16 md:py-24 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-4">
-                {t('performance.our_approach', 'OUR')} <span className="text-primary">{t('performance.approach', 'APPROACH')}</span>
-              </h2>
+        <ScrollReveal>
+          <section className="py-16 md:py-24 bg-muted/30">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-4">
+                  {t('performance.our_approach', 'OUR')} <span className="text-primary">{t('performance.approach', 'APPROACH')}</span>
+                </h2>
+              </div>
+              
+              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <div className="text-center p-8 border border-border/50 bg-card rounded-lg">
+                  <Activity className="w-12 h-12 text-primary mx-auto mb-4" />
+                  <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">Physical</h3>
+                  <p className="text-sm text-muted-foreground">Strength, speed, endurance and injury prevention metrics tracked and optimised</p>
+                </div>
+                <div className="text-center p-8 border border-border/50 bg-card rounded-lg">
+                  <Brain className="w-12 h-12 text-primary mx-auto mb-4" />
+                  <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">Psychological</h3>
+                  <p className="text-sm text-muted-foreground">Mental resilience, focus and match preparation support</p>
+                </div>
+                <div className="text-center p-8 border border-border/50 bg-card rounded-lg">
+                  <Target className="w-12 h-12 text-primary mx-auto mb-4" />
+                  <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">Tactical</h3>
+                  <p className="text-sm text-muted-foreground">Positional intelligence, decision-making and game understanding</p>
+                </div>
+              </div>
             </div>
-            
-            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              <div className="text-center p-8 border border-border/50 bg-card rounded-lg">
-                <Activity className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">Physical</h3>
-                <p className="text-sm text-muted-foreground">Strength, speed, endurance and injury prevention metrics tracked and optimised</p>
-              </div>
-              <div className="text-center p-8 border border-border/50 bg-card rounded-lg">
-                <Brain className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">Psychological</h3>
-                <p className="text-sm text-muted-foreground">Mental resilience, focus and match preparation support</p>
-              </div>
-              <div className="text-center p-8 border border-border/50 bg-card rounded-lg">
-                <Target className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">Tactical</h3>
-                <p className="text-sm text-muted-foreground">Positional intelligence, decision-making and game understanding</p>
-              </div>
-            </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* CTA Section */}
         <section className="py-16 md:py-24 bg-background">
