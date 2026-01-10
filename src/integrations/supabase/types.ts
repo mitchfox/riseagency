@@ -3866,6 +3866,7 @@ export type Database = {
       staff_goals: {
         Row: {
           assigned_to: string[] | null
+          category: string | null
           color: string
           created_at: string
           current_value: number
@@ -3880,6 +3881,7 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string[] | null
+          category?: string | null
           color?: string
           created_at?: string
           current_value?: number
@@ -3894,6 +3896,7 @@ export type Database = {
         }
         Update: {
           assigned_to?: string[] | null
+          category?: string | null
           color?: string
           created_at?: string
           current_value?: number
@@ -4212,6 +4215,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vision_board: {
+        Row: {
+          actionable_plans: string[] | null
+          category: string
+          created_at: string
+          display_order: number | null
+          id: string
+          updated_at: string
+          vision_statement: string | null
+        }
+        Insert: {
+          actionable_plans?: string[] | null
+          category: string
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          updated_at?: string
+          vision_statement?: string | null
+        }
+        Update: {
+          actionable_plans?: string[] | null
+          category?: string
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          updated_at?: string
+          vision_statement?: string | null
+        }
+        Relationships: []
       }
       web_push_subscriptions: {
         Row: {

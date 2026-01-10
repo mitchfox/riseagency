@@ -25,6 +25,7 @@ import { IdeasNotesWidget } from "./widgets/IdeasNotesWidget";
 import { FormSubmissionsWidget } from "./widgets/FormSubmissionsWidget";
 import { ProductivityInsightsWidget } from "./widgets/ProductivityInsightsWidget";
 import { QuickLinksWidget } from "./widgets/QuickLinksWidget";
+import { VisionBoardWidget } from "./widgets/VisionBoardWidget";
 import { FocusedTasksSection } from "./FocusedTasksSection";
 
 interface Goal {
@@ -53,6 +54,7 @@ interface WidgetConfig {
 
 const WIDGET_CONFIGS: WidgetConfig[] = [
   // Default visible
+  { id: "visionboard", title: "Vision Board", icon: Sparkles, defaultVisible: true },
   { id: "goals", title: "Quarter Goals", icon: Target, defaultVisible: true },
   { id: "todo", title: "To Do", icon: CheckSquare, defaultVisible: true },
   { id: "quicklinks", title: "Quick Links", icon: Link2, defaultVisible: true },
@@ -98,12 +100,13 @@ const WIDGET_CONFIGS: WidgetConfig[] = [
 ];
 
 const DEFAULT_LAYOUTS: WidgetLayout[] = [
-  { id: "goals", row: 0, order: 0, widthPercent: 33, heightPx: 200 },
-  { id: "todo", row: 0, order: 1, widthPercent: 33, heightPx: 200 },
-  { id: "quicklinks", row: 0, order: 2, widthPercent: 34, heightPx: 200 },
-  { id: "financial", row: 1, order: 0, widthPercent: 100, heightPx: 200 },
-  { id: "schedule", row: 2, order: 0, widthPercent: 60, heightPx: 450 },
-  { id: "represented", row: 2, order: 1, widthPercent: 40, heightPx: 280 },
+  { id: "visionboard", row: 0, order: 0, widthPercent: 100, heightPx: 200 },
+  { id: "goals", row: 1, order: 0, widthPercent: 33, heightPx: 200 },
+  { id: "todo", row: 1, order: 1, widthPercent: 33, heightPx: 200 },
+  { id: "quicklinks", row: 1, order: 2, widthPercent: 34, heightPx: 200 },
+  { id: "financial", row: 2, order: 0, widthPercent: 100, heightPx: 200 },
+  { id: "schedule", row: 3, order: 0, widthPercent: 60, heightPx: 450 },
+  { id: "represented", row: 3, order: 1, widthPercent: 40, heightPx: 280 },
 ];
 
 const DEFAULT_HEIGHT_PX = 200;
@@ -546,6 +549,14 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
     if (!config) return null;
 
     switch (widgetId) {
+      case "visionboard":
+        return (
+          <VisionBoardWidget 
+            isExpanded={expandedWidget === "visionboard"} 
+            onNavigate={(section) => setSearchParams({ section })}
+          />
+        );
+
       case "goals":
         return (
           <div className="space-y-2 px-1 cursor-pointer" onClick={navigateToGoalsTasks}>
