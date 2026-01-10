@@ -5,6 +5,7 @@ import { AlertTriangle } from "lucide-react";
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  silent?: boolean; // If true, renders nothing on error (useful for optional components)
 }
 
 interface State {
@@ -27,6 +28,11 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
+      // Silent mode - render nothing on error (for optional components)
+      if (this.props.silent) {
+        return null;
+      }
+
       if (this.props.fallback) {
         return this.props.fallback;
       }

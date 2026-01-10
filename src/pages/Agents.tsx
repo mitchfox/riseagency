@@ -92,8 +92,8 @@ const Agents = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
-      <SEO 
+    <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-full">
+      <SEO
         title="For Agents - Collaborate with RISE"
         description="Partner with RISE Football Agency. Collaborate on player opportunities, share networks, and grow together."
         image="/og-preview-agents.png"
@@ -112,7 +112,7 @@ const Agents = () => {
               <span className="text-sm font-semibold">{t('agents.badge', 'Agent Partnerships')}</span>
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider mb-6 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bebas uppercase tracking-wider mb-6 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent px-2">
               {t('agents.title', 'Partner With Us')}
             </h1>
             
