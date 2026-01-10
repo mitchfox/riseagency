@@ -1492,6 +1492,36 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_tips: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           analyses: boolean
@@ -2802,18 +2832,21 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          phone_number: string | null
         }
         Insert: {
           created_at?: string | null
           email?: string | null
           full_name?: string | null
           id: string
+          phone_number?: string | null
         }
         Update: {
           created_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          phone_number?: string | null
         }
         Relationships: []
       }
@@ -3929,6 +3962,33 @@ export type Database = {
           id?: string
           role?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      staff_sms_notifications: {
+        Row: {
+          id: string
+          message: string
+          sent_at: string
+          sent_by: string | null
+          sent_to: string[]
+          status: string | null
+        }
+        Insert: {
+          id?: string
+          message: string
+          sent_at?: string
+          sent_by?: string | null
+          sent_to: string[]
+          status?: string | null
+        }
+        Update: {
+          id?: string
+          message?: string
+          sent_at?: string
+          sent_by?: string | null
+          sent_to?: string[]
+          status?: string | null
         }
         Relationships: []
       }
