@@ -123,161 +123,169 @@ const Clubs = () => {
         </section>
 
         {/* Stats Section */}
-        <section className="py-12 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center group">
-                  <div className="text-4xl md:text-5xl font-bebas text-primary group-hover:scale-110 transition-transform">{stat.value}</div>
-                  <div className="h-px w-12 bg-primary/50 mx-auto my-3" />
-                  <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">{stat.label}</p>
-                </div>
-              ))}
+        <ScrollReveal>
+          <section className="py-12 bg-muted/30">
+            <div className="container mx-auto px-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                {stats.map((stat, index) => (
+                  <div key={index} className="text-center group">
+                    <div className="text-4xl md:text-5xl font-bebas text-primary group-hover:scale-110 transition-transform">{stat.value}</div>
+                    <div className="h-px w-12 bg-primary/50 mx-auto my-3" />
+                    <p className="text-xs font-bebas uppercase tracking-widest text-foreground/70">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* Marquee */}
         <Marquee />
 
         {/* Services Section */}
-        <section className="py-16 md:py-24 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4">
-                {t('clubs.how_we_help', 'HOW WE')} <span className="text-primary">{t('clubs.help', 'HELP')}</span>
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                {t('clubs.services_desc', 'Comprehensive support across strategy, recruitment, and performance.')}
-              </p>
-            </div>
+        <ScrollReveal>
+          <section className="py-16 md:py-24 bg-background">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4">
+                  {t('clubs.how_we_help', 'HOW WE')} <span className="text-primary">{t('clubs.help', 'HELP')}</span>
+                </h2>
+                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                  {t('clubs.services_desc', 'Comprehensive support across strategy, recruitment, and performance.')}
+                </p>
+              </div>
 
-            <div className="max-w-6xl mx-auto">
-              <div className="grid md:grid-cols-3 gap-8">
-                {services.map((service, index) => (
-                  <div key={index} className="group relative bg-card border border-border/50 rounded-xl p-8 hover:border-primary/50 hover:shadow-xl transition-all duration-300">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-[100px] -z-10" />
-                    
-                    <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 border border-primary/20 group-hover:bg-primary/20 transition-colors">
-                      <service.icon className="w-8 h-8 text-primary" />
+              <div className="max-w-6xl mx-auto">
+                <div className="grid md:grid-cols-3 gap-8">
+                  {services.map((service, index) => (
+                    <div key={index} className="group relative bg-card border border-border/50 rounded-xl p-8 hover:border-primary/50 hover:shadow-xl transition-all duration-300">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-[100px] -z-10" />
+                      
+                      <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                        <service.icon className="w-8 h-8 text-primary" />
+                      </div>
+                      
+                      <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3">
+                        {service.title}
+                      </h3>
+                      
+                      <p className="text-muted-foreground mb-6">
+                        {service.description}
+                      </p>
+                      
+                      <ul className="space-y-3">
+                        {service.details.map((detail, idx) => (
+                          <li key={idx} className="flex items-start gap-3">
+                            <CheckCircle2 className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                            <span className="text-sm text-muted-foreground">{detail}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    
-                    <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3">
-                      {service.title}
-                    </h3>
-                    
-                    <p className="text-muted-foreground mb-6">
-                      {service.description}
-                    </p>
-                    
-                    <ul className="space-y-3">
-                      {service.details.map((detail, idx) => (
-                        <li key={idx} className="flex items-start gap-3">
-                          <CheckCircle2 className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
-                          <span className="text-sm text-muted-foreground">{detail}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* Our Approach Section */}
-        <section className="py-16 md:py-24 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="max-w-6xl mx-auto">
-              <div className="grid md:grid-cols-2 gap-12 items-center">
-                <div>
-                  <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
-                    {t('clubs.our_approach', 'OUR')} <span className="text-primary">{t('clubs.approach', 'APPROACH')}</span>
-                  </h2>
+        <ScrollReveal>
+          <section className="py-16 md:py-24 bg-muted/30">
+            <div className="container mx-auto px-4">
+              <div className="max-w-6xl mx-auto">
+                <div className="grid md:grid-cols-2 gap-12 items-center">
+                  <div>
+                    <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
+                      {t('clubs.our_approach', 'OUR')} <span className="text-primary">{t('clubs.approach', 'APPROACH')}</span>
+                    </h2>
+                    
+                    <div className="space-y-6">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0">
+                          <Shield className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">National Exclusivity</h3>
+                          <p className="text-muted-foreground">We offer exclusive partnerships within domestic leagues, ensuring your club receives our undivided attention and resources for greater success.</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0">
+                          <BarChart3 className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">Data-Driven Insights</h3>
+                          <p className="text-muted-foreground">Our analysis extends across the entirety of professional football within Europe, identifying opportunities that traditional scouting networks can miss.</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0">
+                          <Zap className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">Proactive Strategy</h3>
+                          <p className="text-muted-foreground">Unlike reactive organisations, we stay ahead of key developments in the footballing landscape to avoid future pitfalls and seize opportunities first.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   
-                  <div className="space-y-6">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0">
-                        <Shield className="w-6 h-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">National Exclusivity</h3>
-                        <p className="text-muted-foreground">We offer exclusive partnerships within domestic leagues, ensuring your club receives our undivided attention and resources for greater success.</p>
-                      </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-6 border border-border/50 bg-card/30 rounded-lg text-center">
+                      <Globe className="w-10 h-10 text-primary mx-auto mb-4" />
+                      <h4 className="text-lg font-bebas uppercase tracking-wider mb-2">European Network</h4>
+                      <p className="text-sm text-muted-foreground">Key decision-makers across half the globe</p>
                     </div>
-                    
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0">
-                        <BarChart3 className="w-6 h-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">Data-Driven Insights</h3>
-                        <p className="text-muted-foreground">Our analysis extends across the entirety of professional football within Europe, identifying opportunities that traditional scouting networks can miss.</p>
-                      </div>
+                    <div className="p-6 border border-border/50 bg-card/30 rounded-lg text-center">
+                      <Handshake className="w-10 h-10 text-primary mx-auto mb-4" />
+                      <h4 className="text-lg font-bebas uppercase tracking-wider mb-2">Trusted Partners</h4>
+                      <p className="text-sm text-muted-foreground">Reputation for recruiting great fits</p>
                     </div>
-                    
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0">
-                        <Zap className="w-6 h-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">Proactive Strategy</h3>
-                        <p className="text-muted-foreground">Unlike reactive organisations, we stay ahead of key developments in the footballing landscape to avoid future pitfalls and seize opportunities first.</p>
-                      </div>
+                    <div className="p-6 border border-border/50 bg-card/30 rounded-lg text-center col-span-2">
+                      <TrendingUp className="w-10 h-10 text-primary mx-auto mb-4" />
+                      <h4 className="text-lg font-bebas uppercase tracking-wider mb-2">Performance Expertise</h4>
+                      <p className="text-sm text-muted-foreground">Unique expertise in performance development that elevates your entire organisation</p>
                     </div>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-6 border border-border/50 bg-card/30 rounded-lg text-center">
-                    <Globe className="w-10 h-10 text-primary mx-auto mb-4" />
-                    <h4 className="text-lg font-bebas uppercase tracking-wider mb-2">European Network</h4>
-                    <p className="text-sm text-muted-foreground">Key decision-makers across half the globe</p>
-                  </div>
-                  <div className="p-6 border border-border/50 bg-card/30 rounded-lg text-center">
-                    <Handshake className="w-10 h-10 text-primary mx-auto mb-4" />
-                    <h4 className="text-lg font-bebas uppercase tracking-wider mb-2">Trusted Partners</h4>
-                    <p className="text-sm text-muted-foreground">Reputation for recruiting great fits</p>
-                  </div>
-                  <div className="p-6 border border-border/50 bg-card/30 rounded-lg text-center col-span-2">
-                    <TrendingUp className="w-10 h-10 text-primary mx-auto mb-4" />
-                    <h4 className="text-lg font-bebas uppercase tracking-wider mb-2">Performance Expertise</h4>
-                    <p className="text-sm text-muted-foreground">Unique expertise in performance development that elevates your entire organisation</p>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* CTA Section */}
-        <section className="py-16 md:py-24 bg-background">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-              {t('clubs.cta_title', 'READY TO ELEVATE YOUR CLUB?')}
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              {t('clubs.cta_subtitle', 'Schedule a consultation to discuss how we can support your objectives.')}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                onClick={() => setArrangeMeetingOpen(true)}
-                size="lg" 
-                className="btn-shine font-bebas uppercase tracking-wider"
-              >
-                {t('clubs.arrange_meeting', 'Arrange Meeting')}
-              </Button>
-              <Button 
-                onClick={() => setDeclareInterestOpen(true)}
-                variant="outline" 
-                size="lg" 
-                className="font-bebas uppercase tracking-wider"
-              >
-                {t('clubs.declare_interest', 'Declare Interest in Player')}
-              </Button>
+        <ScrollReveal>
+          <section className="py-16 md:py-24 bg-background">
+            <div className="container mx-auto px-4 text-center">
+              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
+                {t('clubs.cta_title', 'READY TO ELEVATE YOUR CLUB?')}
+              </h2>
+              <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+                {t('clubs.cta_subtitle', 'Schedule a consultation to discuss how we can support your objectives.')}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button 
+                  onClick={() => setArrangeMeetingOpen(true)}
+                  size="lg" 
+                  className="btn-shine font-bebas uppercase tracking-wider"
+                >
+                  {t('clubs.arrange_meeting', 'Arrange Meeting')}
+                </Button>
+                <Button 
+                  onClick={() => setDeclareInterestOpen(true)}
+                  variant="outline" 
+                  size="lg" 
+                  className="font-bebas uppercase tracking-wider"
+                >
+                  {t('clubs.declare_interest', 'Declare Interest in Player')}
+                </Button>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
       </main>
 
       <Footer />

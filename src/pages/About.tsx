@@ -119,210 +119,218 @@ const About = () => {
         </section>
 
         {/* Our Mission */}
-        <section className="py-12 md:py-20 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="max-w-6xl mx-auto">
-              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
-                {t('about.our_mission', 'OUR MISSION')}
-              </h2>
-              <div className="space-y-6 text-lg text-muted-foreground">
-                <p className="text-xl md:text-2xl text-foreground font-medium">
-                  {t('about.mission_p1', 'To provide comprehensive support that enables footballers to reach their highest potential, both on and off the pitch.')}
-                </p>
-                <p>{t('about.mission_p2', "Through our extensive network of clubs, scouts, and industry professionals, we create pathways for players to achieve their dreams. We pride ourselves on building lasting relationships based on trust, transparency, and mutual respect.")}</p>
-              </div>
-              
-              {/* Mission Pillars */}
-              <div className="grid md:grid-cols-3 gap-6 mt-12">
-                <div className="p-6 border border-border/50 bg-card/30 rounded-lg">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-primary/10 rounded-lg">
-                      <TrendingUp className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Development First</h3>
-                      <p className="text-sm text-muted-foreground">We focus on making players better, knowing career opportunities follow performance improvement.</p>
+        <ScrollReveal>
+          <section className="py-12 md:py-20 bg-muted/30">
+            <div className="container mx-auto px-4">
+              <div className="max-w-6xl mx-auto">
+                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
+                  {t('about.our_mission', 'OUR MISSION')}
+                </h2>
+                <div className="space-y-6 text-lg text-muted-foreground">
+                  <p className="text-xl md:text-2xl text-foreground font-medium">
+                    {t('about.mission_p1', 'To provide comprehensive support that enables footballers to reach their highest potential, both on and off the pitch.')}
+                  </p>
+                  <p>{t('about.mission_p2', "Through our extensive network of clubs, scouts, and industry professionals, we create pathways for players to achieve their dreams. We pride ourselves on building lasting relationships based on trust, transparency, and mutual respect.")}</p>
+                </div>
+                
+                {/* Mission Pillars */}
+                <div className="grid md:grid-cols-3 gap-6 mt-12">
+                  <div className="p-6 border border-border/50 bg-card/30 rounded-lg">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-primary/10 rounded-lg">
+                        <TrendingUp className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Development First</h3>
+                        <p className="text-sm text-muted-foreground">We focus on making players better, knowing career opportunities follow performance improvement.</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="p-6 border border-border/50 bg-card/30 rounded-lg">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-primary/10 rounded-lg">
-                      <Brain className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Data-Driven</h3>
-                      <p className="text-sm text-muted-foreground">Performance analysis and tactical insights guide every decision we make for our players.</p>
+                  <div className="p-6 border border-border/50 bg-card/30 rounded-lg">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-primary/10 rounded-lg">
+                        <Brain className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Data-Driven</h3>
+                        <p className="text-sm text-muted-foreground">Performance analysis and tactical insights guide every decision we make for our players.</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="p-6 border border-border/50 bg-card/30 rounded-lg">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-primary/10 rounded-lg">
-                      <Shield className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Long-Term Vision</h3>
-                      <p className="text-sm text-muted-foreground">We build careers, not just transfers. Every move is part of a bigger picture.</p>
+                  <div className="p-6 border border-border/50 bg-card/30 rounded-lg">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-primary/10 rounded-lg">
+                        <Shield className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Long-Term Vision</h3>
+                        <p className="text-sm text-muted-foreground">We build careers, not just transfers. Every move is part of a bigger picture.</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* What We Do */}
-        <section className="py-12 md:py-20">
-          <div className="container mx-auto px-4">
-            <div className="max-w-6xl mx-auto">
-              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-12">
-                {t('about.what_we_do', 'WHAT WE DO')}
-              </h2>
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="p-8 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                      <Target className="w-6 h-6 text-primary" />
+        <ScrollReveal>
+          <section className="py-12 md:py-20">
+            <div className="container mx-auto px-4">
+              <div className="max-w-6xl mx-auto">
+                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-12">
+                  {t('about.what_we_do', 'WHAT WE DO')}
+                </h2>
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="p-8 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                        <Target className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
+                        {t('about.service_representation', 'Representation')}
+                      </h3>
                     </div>
-                    <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                      {t('about.service_representation', 'Representation')}
-                    </h3>
+                    <p className="text-muted-foreground">
+                      {t('about.service_representation_desc', 'Professional contract negotiation and career management')}
+                    </p>
                   </div>
-                  <p className="text-muted-foreground">
-                    {t('about.service_representation_desc', 'Professional contract negotiation and career management')}
-                  </p>
-                </div>
-                <div className="p-8 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                      <Zap className="w-6 h-6 text-primary" />
+                  <div className="p-8 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                        <Zap className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
+                        {t('about.service_analysis', 'Performance Analysis')}
+                      </h3>
                     </div>
-                    <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                      {t('about.service_analysis', 'Performance Analysis')}
-                    </h3>
+                    <p className="text-muted-foreground">
+                      {t('about.service_analysis_desc', 'Data-driven insights to optimize player development')}
+                    </p>
                   </div>
-                  <p className="text-muted-foreground">
-                    {t('about.service_analysis_desc', 'Data-driven insights to optimize player development')}
-                  </p>
-                </div>
-                <div className="p-8 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                      <Users className="w-6 h-6 text-primary" />
+                  <div className="p-8 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                        <Users className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
+                        {t('about.service_development', 'Player Development')}
+                      </h3>
                     </div>
-                    <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                      {t('about.service_development', 'Player Development')}
-                    </h3>
+                    <p className="text-muted-foreground">
+                      {t('about.service_development_desc', 'Tailored training programs and mentorship')}
+                    </p>
                   </div>
-                  <p className="text-muted-foreground">
-                    {t('about.service_development_desc', 'Tailored training programs and mentorship')}
-                  </p>
-                </div>
-                <div className="p-8 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                      <Globe className="w-6 h-6 text-primary" />
+                  <div className="p-8 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                        <Globe className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
+                        {t('about.service_marketing', 'Marketing & Brand')}
+                      </h3>
                     </div>
-                    <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                      {t('about.service_marketing', 'Marketing & Brand')}
-                    </h3>
+                    <p className="text-muted-foreground">
+                      {t('about.service_marketing_desc', 'Building player profiles and commercial opportunities')}
+                    </p>
                   </div>
-                  <p className="text-muted-foreground">
-                    {t('about.service_marketing_desc', 'Building player profiles and commercial opportunities')}
-                  </p>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* The RISE Difference */}
-        <section className="py-12 md:py-20 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="max-w-6xl mx-auto">
-              <div className="text-center mb-12">
-                <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-4">
-                  THE RISE <span className="text-primary">DIFFERENCE</span>
-                </h2>
-                <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                  What sets us apart from traditional football agencies
-                </p>
-              </div>
-              
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <span className="text-4xl font-bebas text-primary/30">01</span>
-                    <div>
-                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Former Players & Coaches</h3>
-                      <p className="text-muted-foreground">We've lived the journey. We understand the sacrifices, the pressure, and what it takes to succeed at every level.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <span className="text-4xl font-bebas text-primary/30">02</span>
-                    <div>
-                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Development-Focused</h3>
-                      <p className="text-muted-foreground">We're not just agents—we're performance partners. Our in-house team provides tactical analysis, physical training, and psychological support.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <span className="text-4xl font-bebas text-primary/30">03</span>
-                    <div>
-                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">European Network</h3>
-                      <p className="text-muted-foreground">With scouts across every major European league, we ensure our players are visible to the right clubs at the right time.</p>
-                    </div>
-                  </div>
+        <ScrollReveal>
+          <section className="py-12 md:py-20 bg-muted/30">
+            <div className="container mx-auto px-4">
+              <div className="max-w-6xl mx-auto">
+                <div className="text-center mb-12">
+                  <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-4">
+                    THE RISE <span className="text-primary">DIFFERENCE</span>
+                  </h2>
+                  <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                    What sets us apart from traditional football agencies
+                  </p>
                 </div>
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <span className="text-4xl font-bebas text-primary/30">04</span>
-                    <div>
-                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Individualised Attention</h3>
-                      <p className="text-muted-foreground">Unlike club staff who manage many players, we provide continuity and personalised support throughout your entire career.</p>
+                
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div className="flex items-start gap-4">
+                      <span className="text-4xl font-bebas text-primary/30">01</span>
+                      <div>
+                        <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Former Players & Coaches</h3>
+                        <p className="text-muted-foreground">We've lived the journey. We understand the sacrifices, the pressure, and what it takes to succeed at every level.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <span className="text-4xl font-bebas text-primary/30">02</span>
+                      <div>
+                        <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Development-Focused</h3>
+                        <p className="text-muted-foreground">We're not just agents—we're performance partners. Our in-house team provides tactical analysis, physical training, and psychological support.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <span className="text-4xl font-bebas text-primary/30">03</span>
+                      <div>
+                        <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">European Network</h3>
+                        <p className="text-muted-foreground">With scouts across every major European league, we ensure our players are visible to the right clubs at the right time.</p>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <span className="text-4xl font-bebas text-primary/30">05</span>
-                    <div>
-                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Technology-Driven</h3>
-                      <p className="text-muted-foreground">From performance tracking to video analysis, we use cutting-edge tools to give our players every advantage.</p>
+                  <div className="space-y-6">
+                    <div className="flex items-start gap-4">
+                      <span className="text-4xl font-bebas text-primary/30">04</span>
+                      <div>
+                        <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Individualised Attention</h3>
+                        <p className="text-muted-foreground">Unlike club staff who manage many players, we provide continuity and personalised support throughout your entire career.</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <span className="text-4xl font-bebas text-primary/30">06</span>
-                    <div>
-                      <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Transparent Partnership</h3>
-                      <p className="text-muted-foreground">We believe in open communication and honest guidance. Your career is your career—we're here to support it.</p>
+                    <div className="flex items-start gap-4">
+                      <span className="text-4xl font-bebas text-primary/30">05</span>
+                      <div>
+                        <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Technology-Driven</h3>
+                        <p className="text-muted-foreground">From performance tracking to video analysis, we use cutting-edge tools to give our players every advantage.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <span className="text-4xl font-bebas text-primary/30">06</span>
+                      <div>
+                        <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Transparent Partnership</h3>
+                        <p className="text-muted-foreground">We believe in open communication and honest guidance. Your career is your career—we're here to support it.</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* CTA Section */}
-        <section className="py-16 md:py-24">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-              {t('about.cta_title', 'Join the RISE Family')}
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              {t('about.cta_subtitle', 'Ready to take your career to the next level?')}
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <WorkWithUsDialog>
-                <Button size="lg" className="btn-shine font-bebas uppercase tracking-wider">
-                  Work With Us
+        <ScrollReveal>
+          <section className="py-16 md:py-24">
+            <div className="container mx-auto px-4 text-center">
+              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
+                {t('about.cta_title', 'Join the RISE Family')}
+              </h2>
+              <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+                {t('about.cta_subtitle', 'Ready to take your career to the next level?')}
+              </p>
+              <div className="flex flex-wrap justify-center gap-4">
+                <WorkWithUsDialog>
+                  <Button size="lg" className="btn-shine font-bebas uppercase tracking-wider">
+                    Work With Us
+                  </Button>
+                </WorkWithUsDialog>
+                <Button asChild variant="outline" size="lg" className="font-bebas uppercase tracking-wider">
+                  <Link to="/learnmore">Learn More</Link>
                 </Button>
-              </WorkWithUsDialog>
-              <Button asChild variant="outline" size="lg" className="font-bebas uppercase tracking-wider">
-                <Link to="/learnmore">Learn More</Link>
-              </Button>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
       </main>
 
       <Footer />

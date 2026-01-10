@@ -56,8 +56,8 @@ export const Footer = () => {
               <LocalizedLink to="/news" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.news", "News")}
               </LocalizedLink>
-              <LocalizedLink to="/between-the-lines" className="text-muted-foreground hover:text-primary transition-colors">
-                {t("footer.between_the_lines", "Between The Lines")}
+              <LocalizedLink to="/jobs" className="text-muted-foreground hover:text-primary transition-colors">
+                {t("footer.jobs", "Jobs")}
               </LocalizedLink>
               <Link to="/staff" className="text-muted-foreground hover:text-primary transition-colors">
                 {t("footer.staff", "Staff")}
