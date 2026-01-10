@@ -163,33 +163,33 @@ const Index = () => {
 
       <div 
         ref={containerRef}
-        className="bg-background min-h-screen w-full max-w-full relative z-10 overflow-y-auto overflow-x-hidden scroll-smooth"
+        className="bg-background min-h-screen w-full max-w-[100vw] relative z-10 overflow-y-auto overflow-x-hidden scroll-smooth box-border"
       >
         {/* Section 1: Hero */}
         <section 
           ref={(el) => (sectionsRef.current[0] = el)}
-          className="flex flex-col items-center justify-start px-4 pt-24 md:pt-28 pb-8 relative overflow-hidden"
+          className="flex flex-col items-center justify-start px-2 sm:px-4 pt-20 sm:pt-24 md:pt-28 pb-8 relative overflow-hidden w-full"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background/80"></div>
-          <div className="container mx-auto max-w-7xl relative z-10">
+          <div className="w-full max-w-7xl mx-auto relative z-10 px-2 sm:px-4">
             <div className="text-center space-y-4">
-              <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider mb-0 animate-fade-in">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-bebas uppercase tracking-wider mb-0 animate-fade-in break-words">
                 <span className="text-foreground">{t("home.hero_title_1", "REALISE")} </span>
                 <span className="text-primary">{t("home.hero_title_2", "POTENTIAL")}</span>
               </h1>
-              <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic !mt-0 animate-fade-in px-2" style={{ animationDelay: '0.2s' }}>
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto font-light tracking-wide italic !mt-0 animate-fade-in px-2" style={{ animationDelay: '0.2s' }}>
                 {t("home.hero_subtitle", "Elite Football Representation & Performance Optimisation")}
               </p>
             </div>
           </div>
           
           {/* Wide-screen video player - autoplay, no controls */}
-          <div className="w-full max-w-7xl mx-auto mt-6 md:mt-8 animate-fade-in relative z-10" style={{ animationDelay: '0.3s' }}>
+          <div className="w-full max-w-7xl mx-auto mt-4 sm:mt-6 md:mt-8 animate-fade-in relative z-10 px-2 sm:px-4" style={{ animationDelay: '0.3s' }}>
             <HeroVideoPlayer videoUrl={HERO_VIDEO_URL} className="rounded-lg overflow-hidden shadow-2xl" />
           </div>
 
           {/* Capability accordion */}
-          <div className="container mx-auto max-w-7xl relative z-10 mt-8">
+          <div className="w-full max-w-7xl mx-auto relative z-10 mt-6 sm:mt-8 px-2 sm:px-4">
             <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
               <CapabilityAccordion />
             </div>
@@ -250,20 +250,20 @@ const Index = () => {
         {/* Section 3: Scouting Network */}
         <section 
           ref={(el) => (sectionsRef.current[2] = el)}
-          className="min-h-screen flex items-center justify-center py-16 px-4 bg-background/90 backdrop-blur-sm"
+          className="min-h-screen flex items-center justify-center py-12 sm:py-16 px-2 sm:px-4 bg-background/90 backdrop-blur-sm w-full"
         >
-          <div className="container mx-auto max-w-7xl">
+          <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
             <ScrollReveal>
-              <div className="text-center mb-8 space-y-3">
+              <div className="text-center mb-6 sm:mb-8 space-y-3 px-2">
                 <div className="inline-block">
-                  <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                  <span className="text-xs sm:text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-4 sm:px-6 py-2 rounded-full">
                     {t("home.eyes_across_europe", "Eyes Across All Of Europe")}
                   </span>
                 </div>
-                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bebas uppercase tracking-wider text-foreground">
                   {t("home.scouting", "SCOUTING")} <span className="text-primary">{t("home.network", "NETWORK")}</span>
                 </h2>
-                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
                   {t("home.scouting_desc", "If you're a professional or academy player in Europe, chances are we know about you")}
                 </p>
               </div>
@@ -274,8 +274,8 @@ const Index = () => {
             
             {/* My Report CTA - Only on Players page */}
             <ScrollReveal delay={0.3}>
-              <div className="mt-8 p-6 bg-primary/5 border border-primary/20 rounded-xl text-center">
-                <p className="text-muted-foreground mb-4">
+              <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-primary/5 border border-primary/20 rounded-xl text-center">
+                <p className="text-sm sm:text-base text-muted-foreground mb-4 px-2">
                   If you see players scouted in your side, we may have a detailed report on your game. Reach out to request to learn more about our observations.
                 </p>
                 <button 
@@ -288,7 +288,7 @@ const Index = () => {
             </ScrollReveal>
             <PlayerReportDialog open={showReportDialog} onOpenChange={setShowReportDialog} />
 
-            <ScrollRevealContainer className="mt-12 grid md:grid-cols-3 gap-6" staggerDelay={0.15}>
+            <ScrollRevealContainer className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6" staggerDelay={0.15}>
               <ScrollRevealItem>
                 <div className="p-6 border border-border/50 bg-card/30 h-full">
                   <div className="flex items-start gap-4">

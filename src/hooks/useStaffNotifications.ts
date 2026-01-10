@@ -8,25 +8,38 @@ interface NotificationTrigger {
   onPlaylistChange?: boolean;
 }
 
-export const useStaffNotifications = (triggers: NotificationTrigger = {}) => {
+// Stable empty object to prevent re-renders
+const EMPTY_TRIGGERS: NotificationTrigger = {};
+
+export const useStaffNotifications = (triggers: NotificationTrigger = EMPTY_TRIGGERS) => {
+  // Skip entirely if no triggers are set
+  const hasAnyTrigger = triggers.onVisitor || triggers.onFormSubmission || triggers.onClipUpload || triggers.onPlaylistChange;
+  
   // Deferred initialization to prevent React hook errors during PWA cold start
   const [isMounted, setIsMounted] = useState(false);
   const channelsRef = useRef<any[]>([]);
+  const hasSetup = useRef(false);
 
-  // First effect: mark component as mounted after initial render
+  // First effect: mark component as mounted after initial render (only if we have triggers)
   useEffect(() => {
+    if (!hasAnyTrigger) return;
+    
     // Use a small delay to ensure React is fully initialized
     const timer = setTimeout(() => {
       setIsMounted(true);
-    }, 100);
+    }, 500); // Increased delay for stability
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [hasAnyTrigger]);
 
   // Second effect: only set up subscriptions after mounted
   useEffect(() => {
-    // Guard: don't run until component is fully mounted
-    if (!isMounted) return;
+    // Guard: don't run until component is fully mounted or if no triggers
+    if (!isMounted || !hasAnyTrigger) return;
+    
+    // Prevent duplicate setup
+    if (hasSetup.current) return;
+    hasSetup.current = true;
 
     const channels: any[] = [];
 
@@ -193,6 +206,7 @@ export const useStaffNotifications = (triggers: NotificationTrigger = {}) => {
     channelsRef.current = channels;
 
     return () => {
+      hasSetup.current = false;
       channels.forEach(channel => {
         try {
           supabase.removeChannel(channel);
@@ -201,5 +215,6 @@ export const useStaffNotifications = (triggers: NotificationTrigger = {}) => {
         }
       });
     };
-  }, [isMounted, triggers.onVisitor, triggers.onFormSubmission, triggers.onClipUpload, triggers.onPlaylistChange]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMounted, hasAnyTrigger]);
 };
