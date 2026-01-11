@@ -43,6 +43,7 @@ export const MarketingTipsManagement = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -413,13 +414,37 @@ export const MarketingTipsManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Quick Filters */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Button
+              variant={selectedCategory === null ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(null)}
+            >
+              All
+            </Button>
+            {CATEGORIES.map((cat) => (
+              <Button
+                key={cat.id}
+                variant={selectedCategory === cat.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={selectedCategory === cat.id ? cat.color : ""}
+              >
+                {cat.label}
+              </Button>
+            ))}
+          </div>
+
           {tips.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
               No tips added yet
             </p>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {tips.map((tip) => (
+              {tips
+                .filter((tip) => selectedCategory === null || tip.category === selectedCategory)
+                .map((tip) => (
                 <Card key={tip.id} className="border-primary/20 overflow-hidden">
                   {tip.image_url && (
                     <div className="aspect-video w-full overflow-hidden">
