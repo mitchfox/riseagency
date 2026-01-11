@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, X, Clock, XCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Check, X, Clock, XCircle, Plus, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
@@ -20,6 +22,8 @@ interface MarketingIdea {
 
 export const IdeasReview = () => {
   const queryClient = useQueryClient();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newIdeaTitle, setNewIdeaTitle] = useState("");
 
   const { data: ideas = [], isLoading } = useQuery({
     queryKey: ["marketing-ideas-review"],
@@ -31,6 +35,24 @@ export const IdeasReview = () => {
       if (error) throw error;
       return data as MarketingIdea[];
     },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (ideaTitle: string) => {
+      const { error } = await supabase.from("marketing_ideas").insert({
+        title: ideaTitle,
+        status: "pending",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketing-ideas-review"] });
+      queryClient.invalidateQueries({ queryKey: ["btl-writer-ideas"] });
+      toast.success("Idea submitted for review");
+      setNewIdeaTitle("");
+      setIsDialogOpen(false);
+    },
+    onError: () => toast.error("Failed to submit idea"),
   });
 
   const updateMutation = useMutation({
@@ -56,6 +78,14 @@ export const IdeasReview = () => {
 
   const handleReject = (idea: MarketingIdea) => {
     updateMutation.mutate({ id: idea.id, updates: { status: "rejected" } });
+  };
+
+  const handleSubmitIdea = () => {
+    if (!newIdeaTitle.trim()) {
+      toast.error("Please enter your idea");
+      return;
+    }
+    createMutation.mutate(newIdeaTitle);
   };
 
   const IdeaCard = ({ idea, showActions = false }: { idea: MarketingIdea; showActions?: boolean }) => (
@@ -93,6 +123,49 @@ export const IdeasReview = () => {
 
   return (
     <div className="space-y-6">
+      {/* Submit Idea Section */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Lightbulb className="w-4 h-4 text-yellow-500" />
+            Submit an Idea
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Have a marketing idea? Submit it here for review. Accepted ideas will appear in the BTL Writer.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="gap-2">
+                <Plus className="h-3.5 w-3.5" />
+                Add Idea
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="w-full max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Submit New Idea</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Your Idea</label>
+                  <Textarea
+                    placeholder="Describe your marketing idea..."
+                    value={newIdeaTitle}
+                    onChange={(e) => setNewIdeaTitle(e.target.value)}
+                    className="min-h-[160px]"
+                  />
+                </div>
+                <Button onClick={handleSubmitIdea} className="w-full" disabled={createMutation.isPending}>
+                  Submit Idea
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </CardContent>
+      </Card>
+
+      {/* Review Tabs */}
       <Tabs defaultValue="pending" className="w-full">
         <TabsList className="w-full sm:w-auto justify-start">
           <TabsTrigger value="pending" className="gap-1.5 sm:gap-2 text-xs sm:text-sm flex-1 sm:flex-initial">
