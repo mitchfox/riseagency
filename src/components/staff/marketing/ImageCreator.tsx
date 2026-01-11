@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Image, ExternalLink, Calendar, Link2, Upload, ArrowRight, Folder, HardDrive, Table, CheckCircle, Download, ImageIcon, User, FileText, Copy } from "lucide-react";
+import { Image, ExternalLink, Calendar, Link2, Upload, ArrowRight, Folder, HardDrive, Table, CheckCircle, Download, ImageIcon, User, FileText, Copy, Trophy, Clock, Target } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -141,6 +141,24 @@ export const ImageCreator = () => {
         .order("image_due_date", { ascending: true, nullsFirst: false });
       if (error) throw error;
       return data as BlogPost[];
+    },
+  });
+
+  // Fetch completed posts for stats/leaderboard (last 30 days)
+  const { data: completedPosts = [] } = useQuery({
+    queryKey: ["image-creator-completed-stats"],
+    queryFn: async () => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("id, completed_by, assigned_to")
+        .in("workflow_status", ["ready_to_post", "posted"])
+        .not("completed_by", "is", null)
+        .gte("updated_at", thirtyDaysAgo.toISOString());
+      if (error) throw error;
+      return data as { id: string; completed_by: string | null; assigned_to: string | null }[];
     },
   });
 
@@ -323,6 +341,21 @@ export const ImageCreator = () => {
     return firstName;
   };
 
+  // Calculate user stats
+  const myDuePosts = imageCreatorPosts.filter(p => p.assigned_to === currentUserId).length;
+  const myCompletedPosts = completedPosts.filter(p => p.completed_by === currentUserId).length;
+  
+  // Build leaderboard
+  const leaderboard = staffMembers
+    .map(staff => ({
+      id: staff.id,
+      name: getStaffDisplayName(staff.id),
+      completed: completedPosts.filter(p => p.completed_by === staff.id).length,
+    }))
+    .filter(s => s.completed > 0)
+    .sort((a, b) => b.completed - a.completed)
+    .slice(0, 5);
+
   // Helper to clean content from draft markers
   const getCleanContent = (content: string) => {
     // Remove **Intro**, **Main**, **Secondary**, **Conclusion** markers
@@ -361,6 +394,55 @@ export const ImageCreator = () => {
 
   return (
     <div className="space-y-6">
+      {/* Stats Section */}
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
+            {/* Your Stats */}
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-orange-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Your Queue</p>
+                  <p className="text-lg font-semibold">{myDuePosts}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Completed (30d)</p>
+                  <p className="text-lg font-semibold">{myCompletedPosts}</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Mini Leaderboard */}
+            {leaderboard.length > 0 && (
+              <div className="flex-1 border-t sm:border-t-0 sm:border-l pt-3 sm:pt-0 sm:pl-6">
+                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                  <Trophy className="w-3 h-3 text-amber-500" />
+                  Team (30 days)
+                </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                  {leaderboard.map((entry, idx) => (
+                    <span 
+                      key={entry.id} 
+                      className={`${entry.id === currentUserId ? 'font-medium text-primary' : 'text-muted-foreground'}`}
+                    >
+                      {idx === 0 && <span className="text-amber-500">🥇</span>}
+                      {idx === 1 && <span className="text-gray-400">🥈</span>}
+                      {idx === 2 && <span className="text-amber-700">🥉</span>}
+                      {idx > 2 && <span className="text-muted-foreground">{idx + 1}.</span>}
+                      {' '}{entry.name}: {entry.completed}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Resource Links */}
       <Card>
         <CardHeader className="pb-3">
