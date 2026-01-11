@@ -14,6 +14,29 @@ serve(async (req) => {
   }
 
   try {
+    // Parse request body for dynamic phone, message, and email
+    const { phone, message, email } = await req.json();
+
+    if (!phone) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Phone number is required'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!message) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Message is required'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const authHeader = `Basic ${btoa(`${CLIENT_ID}:${CLIENT_SECRET}`)}`;
     
     const response = await fetch('https://api.notificationapi.com/sender/send', {
@@ -25,13 +48,13 @@ serve(async (req) => {
       body: JSON.stringify({
         notificationId: 'rise_staff',
         user: {
-          id: 'jolonlevene98@gmail.com',
-          number: '+15005550006'
+          id: email || phone,
+          number: phone
         },
         mergeTags: {},
         options: {
           sms: {
-            message: 'Your verification code is: 123456. Reply STOP to opt-out.'
+            message: message
           }
         }
       }),
