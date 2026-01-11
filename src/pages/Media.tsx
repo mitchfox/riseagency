@@ -49,15 +49,47 @@ const Media = () => {
     };
 
     const fetchGalleryItems = async () => {
-      // Only fetch gallery items (filtering handled at display level for simplicity)
-      const { data, error } = await supabase
-        .from("marketing_gallery")
-        .select("id, title, file_url, file_type")
-        .order("created_at", { ascending: false })
-        .limit(8);
+      try {
+        // Get all players and filter to represented only
+        const { data: allPlayers } = await supabase.from("players").select("id, representation_status");
+        
+        const representedPlayerIds: string[] = [];
+        if (allPlayers) {
+          for (const p of allPlayers) {
+            if (p.representation_status === "represented") {
+              representedPlayerIds.push(p.id);
+            }
+          }
+        }
+        
+        // Fetch gallery items
+        const { data: galleryData } = await supabase
+          .from("marketing_gallery")
+          .select("id, title, file_url, file_type, player_id")
+          .order("created_at", { ascending: false })
+          .limit(50);
 
-      if (!error && data) {
-        setGalleryItems(data as GalleryItem[]);
+        if (galleryData) {
+          // Filter strictly to represented players only
+          const filteredItems: GalleryItem[] = [];
+          for (let i = 0; i < galleryData.length && filteredItems.length < 8; i++) {
+            const item = galleryData[i];
+            // Skip items linked to non-represented players (must have player_id AND be in represented list, OR have no player_id)
+            if (item.player_id && !representedPlayerIds.includes(item.player_id)) {
+              continue;
+            }
+            filteredItems.push({
+              id: item.id,
+              title: item.title,
+              file_url: item.file_url,
+              file_type: item.file_type
+            });
+          }
+          setGalleryItems(filteredItems);
+        }
+      } catch (err) {
+        console.error("Error fetching gallery items:", err);
+        setGalleryItems([]);
       }
     };
 
