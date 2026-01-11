@@ -302,6 +302,7 @@ export type Database = {
           content: string
           created_at: string | null
           excerpt: string | null
+          graphic_suggestions: string | null
           id: string
           image_due_date: string | null
           image_url: string | null
@@ -322,6 +323,7 @@ export type Database = {
           content: string
           created_at?: string | null
           excerpt?: string | null
+          graphic_suggestions?: string | null
           id?: string
           image_due_date?: string | null
           image_url?: string | null
@@ -342,6 +344,7 @@ export type Database = {
           content?: string
           created_at?: string | null
           excerpt?: string | null
+          graphic_suggestions?: string | null
           id?: string
           image_due_date?: string | null
           image_url?: string | null
