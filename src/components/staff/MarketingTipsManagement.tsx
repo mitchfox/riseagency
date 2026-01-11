@@ -6,10 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Lightbulb, Plus, Trash2, Edit, Loader2, Bell } from "lucide-react";
+import { Lightbulb, Plus, Trash2, Edit, Loader2, Bell, Upload, X, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -19,6 +18,7 @@ interface MarketingTip {
   title: string;
   content: string;
   category: string;
+  image_url: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -38,6 +38,9 @@ export const MarketingTipsManagement = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTip, setEditingTip] = useState<MarketingTip | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -103,12 +106,54 @@ export const MarketingTipsManagement = () => {
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `tips/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+    
+    const { error } = await supabase.storage
+      .from('marketing-gallery')
+      .upload(fileName, file);
+      
+    if (error) throw error;
+    
+    const { data: urlData } = supabase.storage
+      .from('marketing-gallery')
+      .getPublicUrl(fileName);
+      
+    return urlData.publicUrl;
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
     try {
       const staffUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
+      
+      let imageUrl: string | null = editingTip?.image_url || null;
+      
+      // Upload new image if selected
+      if (imageFile) {
+        setUploadingImage(true);
+        imageUrl = await uploadImage(imageFile);
+        setUploadingImage(false);
+      } else if (!imagePreview && editingTip?.image_url) {
+        // Image was removed
+        imageUrl = null;
+      }
 
       if (editingTip) {
         const { error } = await supabase
@@ -117,6 +162,7 @@ export const MarketingTipsManagement = () => {
             title: formData.title,
             content: formData.content,
             category: formData.category,
+            image_url: imageUrl,
           })
           .eq("id", editingTip.id);
 
@@ -129,6 +175,7 @@ export const MarketingTipsManagement = () => {
             title: formData.title,
             content: formData.content,
             category: formData.category,
+            image_url: imageUrl,
             created_by: staffUserId,
           });
 
@@ -139,12 +186,15 @@ export const MarketingTipsManagement = () => {
       setDialogOpen(false);
       setEditingTip(null);
       setFormData({ title: "", content: "", category: "tip" });
+      setImageFile(null);
+      setImagePreview(null);
       fetchTips();
     } catch (error) {
       console.error("Error saving tip:", error);
       toast.error("Failed to save tip");
     } finally {
       setSaving(false);
+      setUploadingImage(false);
     }
   };
 
@@ -155,6 +205,8 @@ export const MarketingTipsManagement = () => {
       content: tip.content,
       category: tip.category,
     });
+    setImagePreview(tip.image_url || null);
+    setImageFile(null);
     setDialogOpen(true);
   };
 
@@ -172,6 +224,13 @@ export const MarketingTipsManagement = () => {
       console.error("Error deleting tip:", error);
       toast.error("Failed to delete tip");
     }
+  };
+
+  const resetForm = () => {
+    setEditingTip(null);
+    setFormData({ title: "", content: "", category: "tip" });
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const getCategoryBadge = (category: string) => {
@@ -210,79 +269,132 @@ export const MarketingTipsManagement = () => {
                 </span>
               </div>
               {isAdmin && (
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <Dialog open={dialogOpen} onOpenChange={(open) => {
+                  setDialogOpen(open);
+                  if (!open) resetForm();
+                }}>
                   <DialogTrigger asChild>
                     <Button
                       size="sm"
-                      onClick={() => {
-                        setEditingTip(null);
-                        setFormData({ title: "", content: "", category: "tip" });
-                      }}
+                      onClick={resetForm}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add New
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-lg">
+                  <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>
                         {editingTip ? "Edit" : "Create"} Tip
                       </DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="title">Title</Label>
-                        <Input
-                          id="title"
-                          value={formData.title}
-                          onChange={(e) =>
-                            setFormData({ ...formData, title: e.target.value })
-                          }
-                          placeholder="Enter title"
-                          required
-                        />
+                    <form onSubmit={handleSubmit}>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Left Column: Form Fields */}
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="title">Title</Label>
+                            <Input
+                              id="title"
+                              value={formData.title}
+                              onChange={(e) =>
+                                setFormData({ ...formData, title: e.target.value })
+                              }
+                              placeholder="Enter title"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="category">Category</Label>
+                            <Select
+                              value={formData.category}
+                              onValueChange={(value) =>
+                                setFormData({ ...formData, category: value })
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {CATEGORIES.map((cat) => (
+                                  <SelectItem key={cat.id} value={cat.id}>
+                                    {cat.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="content">Content</Label>
+                            <Textarea
+                              id="content"
+                              value={formData.content}
+                              onChange={(e) =>
+                                setFormData({ ...formData, content: e.target.value })
+                              }
+                              placeholder="Enter content..."
+                              rows={10}
+                              required
+                            />
+                          </div>
+                        </div>
+                        
+                        {/* Right Column: Image Upload */}
+                        <div className="space-y-4">
+                          <Label>Image (optional)</Label>
+                          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4">
+                            {imagePreview ? (
+                              <div className="relative">
+                                <img 
+                                  src={imagePreview} 
+                                  alt="Preview" 
+                                  className="rounded-lg w-full max-h-64 object-cover"
+                                />
+                                <Button 
+                                  type="button"
+                                  variant="destructive" 
+                                  size="icon"
+                                  className="absolute top-2 right-2 h-8 w-8"
+                                  onClick={removeImage}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <label className="flex flex-col items-center justify-center h-48 cursor-pointer hover:bg-muted/50 rounded-lg transition-colors">
+                                <ImageIcon className="h-12 w-12 text-muted-foreground mb-2" />
+                                <span className="text-sm text-muted-foreground mb-2">
+                                  Click to upload an image
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  JPG, PNG, WEBP up to 10MB
+                                </span>
+                                <Input 
+                                  type="file" 
+                                  accept="image/*" 
+                                  className="hidden"
+                                  onChange={handleImageSelect}
+                                />
+                              </label>
+                            )}
+                          </div>
+                          {uploadingImage && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Uploading image...
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="category">Category</Label>
-                        <Select
-                          value={formData.category}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, category: value })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {CATEGORIES.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.id}>
-                                {cat.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="content">Content</Label>
-                        <Textarea
-                          id="content"
-                          value={formData.content}
-                          onChange={(e) =>
-                            setFormData({ ...formData, content: e.target.value })
-                          }
-                          placeholder="Enter content..."
-                          rows={6}
-                          required
-                        />
-                      </div>
-                      <DialogFooter>
+                      
+                      <DialogFooter className="mt-6">
                         <DialogClose asChild>
                           <Button variant="outline" type="button">
                             Cancel
                           </Button>
                         </DialogClose>
-                        <Button type="submit" disabled={saving}>
-                          {saving && (
+                        <Button type="submit" disabled={saving || uploadingImage}>
+                          {(saving || uploadingImage) && (
                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
                           )}
                           {editingTip ? "Update" : "Create"}
@@ -306,7 +418,16 @@ export const MarketingTipsManagement = () => {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {tips.map((tip) => (
-                <Card key={tip.id} className="border-primary/20">
+                <Card key={tip.id} className="border-primary/20 overflow-hidden">
+                  {tip.image_url && (
+                    <div className="aspect-video w-full overflow-hidden">
+                      <img 
+                        src={tip.image_url} 
+                        alt={tip.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="space-y-1">
@@ -358,7 +479,7 @@ export const MarketingTipsManagement = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">
                       {tip.content}
                     </p>
                     <p className="text-xs text-muted-foreground mt-4">
