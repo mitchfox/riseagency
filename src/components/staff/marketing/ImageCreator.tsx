@@ -470,11 +470,28 @@ export const ImageCreator = () => {
                               <User className="w-3 h-3" /> {getStaffDisplayName(post.assigned_to)}
                             </span>
                           )}
-                          {post.image_due_date && (
-                            <span className="flex items-center gap-1 text-orange-500">
-                              <Calendar className="w-3 h-3" /> {new Date(post.image_due_date).toLocaleDateString()}
-                            </span>
-                          )}
+                          {post.image_due_date && (() => {
+                            const dueDate = new Date(post.image_due_date);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            dueDate.setHours(0, 0, 0, 0);
+                            const diffTime = dueDate.getTime() - today.getTime();
+                            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                            
+                            return (
+                              <span className="flex items-center gap-1 text-orange-500">
+                                <Calendar className="w-3 h-3" /> 
+                                {diffDays < 0 ? (
+                                  <span className="italic text-red-500">overdue by {Math.abs(diffDays)} day{Math.abs(diffDays) !== 1 ? 's' : ''}</span>
+                                ) : diffDays === 0 ? (
+                                  <span className="italic text-amber-500">due today</span>
+                                ) : (
+                                  <span className="italic text-amber-500">due in {diffDays} day{diffDays !== 1 ? 's' : ''}</span>
+                                )}
+                                <span className="text-muted-foreground ml-1">{new Date(post.image_due_date).toLocaleDateString()}</span>
+                              </span>
+                            );
+                          })()}
                           {post.canva_link && (
                             <a 
                               href={post.canva_link} 
