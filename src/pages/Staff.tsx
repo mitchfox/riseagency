@@ -43,6 +43,7 @@ import { StaffAccountManagement } from "@/components/staff/StaffAccountManagemen
 import { PlayerPasswordManagement } from "@/components/staff/PlayerPasswordManagement";
 import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
 import LegalManagement from "@/components/staff/LegalManagement";
+import { PartnersManagement } from "@/components/staff/PartnersManagement";
 import { LanguagesManagement } from "@/components/staff/LanguagesManagement";
 import { SiteTextManagement } from "@/components/staff/SiteTextManagement";
 import { StaffPWAInstall } from "@/components/staff/StaffPWAInstall";
@@ -112,6 +113,7 @@ import {
   UserRound,
   MessageSquare,
   Briefcase,
+  Handshake,
 } from "lucide-react";
 
 const Staff = () => {
@@ -126,7 +128,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'pressreleases' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'marketingtips' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'pressreleases' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'marketingtips' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   
@@ -789,6 +791,7 @@ const Staff = () => {
         locked: false,
         sections: [
           { id: 'legal', title: 'Legal', icon: Scale },
+          { id: 'partners', title: 'Partners', icon: Handshake },
           { id: 'jobs', title: 'Jobs', icon: Briefcase },
           { id: 'sitetext', title: 'Site Text', icon: FileText },
           { id: 'languages', title: 'Languages', icon: Languages },
@@ -1156,6 +1159,7 @@ const Staff = () => {
                   {expandedSection === 'transferhub' && <TransferHub isAdmin={isAdmin} />}
                   {expandedSection === 'athletecentre' && <AthleteCentre />}
                   {expandedSection === 'legal' && <LegalManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'partners' && <PartnersManagement isAdmin={isAdmin} />}
                   {expandedSection === 'jobs' && <JobsManagement />}
                   {expandedSection === 'requests' && <RequestsManagement />}
                   {expandedSection === 'sitetext' && <SiteTextManagement isAdmin={isAdmin} />}
