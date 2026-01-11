@@ -30,6 +30,12 @@ interface ScoutingReport {
   scout_name: string | null;
   skill_evaluations?: any;
   auto_generated_review?: string | null;
+  location?: string | null;
+  competition?: string | null;
+  match_context?: string | null;
+  video_url?: string | null;
+  full_match_url?: string | null;
+  scout_id?: string | null;
 }
 
 interface PlayerScoutingManagementProps {
@@ -252,10 +258,10 @@ export const PlayerScoutingManagement = ({ playerId, playerName }: PlayerScoutin
       scouting_year: format(date, "yyyy"),
       current_club: report.current_club || "",
       nationality: report.nationality || "",
-      location: "",
-      competition: "",
-      match_context: "",
-      video_url: "",
+      location: report.location || "",
+      competition: report.competition || "",
+      match_context: report.match_context || "",
+      video_url: report.video_url || "",
       scout_name: report.scout_name || "",
       auto_generated_review: report.auto_generated_review || "",
     });
