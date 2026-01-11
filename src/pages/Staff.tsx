@@ -34,7 +34,7 @@ import { StaffOverview } from "@/components/staff/StaffOverview";
 import { StaffAvailabilityManagement } from "@/components/staff/StaffAvailabilityManagement";
 import { StaffSchedulesManagement } from "@/components/staff/StaffSchedulesManagement";
 import { MarketingManagement } from "@/components/staff/MarketingManagement";
-import { ContentCreator, MarketingIdeas } from "@/components/staff/marketing";
+import { ContentCreator } from "@/components/staff/marketing";
 import { RecruitmentManagement } from "@/components/staff/RecruitmentManagement";
 import { ScoutingCentreManagement } from "@/components/staff/ScoutingCentreManagement";
 
@@ -672,7 +672,6 @@ const Staff = () => {
           locked: false,
           sections: [
             { id: 'marketing', title: 'Marketing', icon: Megaphone },
-            { id: 'marketingideas', title: 'Ideas', icon: Target },
             { id: 'contentcreator', title: 'Content Creator', icon: Film },
             { id: 'blog', title: 'News Articles', icon: Newspaper },
             { id: 'betweenthelines', title: 'Between The Lines', icon: FileText },
@@ -760,7 +759,6 @@ const Staff = () => {
         locked: false,
         sections: [
           { id: 'marketing', title: 'Marketing', icon: Megaphone },
-          { id: 'marketingideas', title: 'Ideas', icon: Target },
           { id: 'marketingtips', title: 'Tips & Lessons', icon: Lightbulb },
           { id: 'contentcreator', title: 'Content Creator', icon: Film },
           { id: 'blog', title: 'News Articles', icon: Newspaper },
@@ -1140,7 +1138,6 @@ const Staff = () => {
                   {expandedSection === 'analysis' && <AnalysisManagement isAdmin={isAdmin} />}
                   {expandedSection === 'marketing' && <MarketingManagement isAdmin={isAdmin} isMarketeer={isMarketeer} />}
                   {expandedSection === 'contentcreator' && <ContentCreator />}
-                  {expandedSection === 'marketingideas' && <MarketingIdeas />}
                   {expandedSection === 'marketingtips' && <MarketingTipsManagement />}
                   {expandedSection === 'blog' && <BlogManagement isAdmin={isAdmin} />}
                   {expandedSection === 'betweenthelines' && <BetweenTheLinesManagement isAdmin={isAdmin} />}
