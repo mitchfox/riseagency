@@ -31,6 +31,7 @@ interface BlogPost {
   category: string | null;
   workflow_status: string;
   created_at: string;
+  graphic_suggestions: string | null;
 }
 
 const BTL_CATEGORIES = [
@@ -89,6 +90,7 @@ export const BTLWriter = () => {
     conclusion: "",
     category: "",
     finalArticle: "",
+    graphicSuggestions: "",
   });
   const [draftSectionOpen, setDraftSectionOpen] = useState(true);
   const [finalArticleSectionOpen, setFinalArticleSectionOpen] = useState(false);
@@ -218,6 +220,7 @@ export const BTLWriter = () => {
         excerpt: data.excerpt || null,
         content: combinedContent,
         category: data.category || null,
+        graphic_suggestions: data.graphicSuggestions || null,
         author_id: userData.user.id,
         published: false,
         workflow_status: "draft",
@@ -236,7 +239,7 @@ export const BTLWriter = () => {
       toast.success("Draft created");
       setDraftDialogOpen(false);
       setSelectedIdea(null);
-      setDraftForm({ title: "", excerpt: "", intro: "", mainPara: "", secondaryPara: "", conclusion: "", category: "", finalArticle: "" });
+      setDraftForm({ title: "", excerpt: "", intro: "", mainPara: "", secondaryPara: "", conclusion: "", category: "", finalArticle: "", graphicSuggestions: "" });
     },
     onError: () => toast.error("Failed to create draft"),
   });
@@ -254,6 +257,7 @@ export const BTLWriter = () => {
           excerpt: data.excerpt || null,
           content: contentToSave,
           category: data.category || null,
+          graphic_suggestions: data.graphicSuggestions || null,
         })
         .eq("id", id);
       if (error) throw error;
@@ -296,6 +300,7 @@ export const BTLWriter = () => {
       conclusion: "",
       category: "",
       finalArticle: "",
+      graphicSuggestions: "",
     });
     setDraftDialogOpen(true);
   };
@@ -312,6 +317,7 @@ export const BTLWriter = () => {
       conclusion: parsed.conclusion,
       category: draft.category || "",
       finalArticle: "",
+      graphicSuggestions: draft.graphic_suggestions || "",
     });
     setDraftSectionOpen(true);
     setFinalArticleSectionOpen(false);
@@ -554,6 +560,18 @@ ${WRITING_STYLE_GUIDE}`;
                 placeholder="Brief summary of the post..."
               />
             </div>
+            <div className="space-y-2">
+              <Label>Graphic Suggestions (optional)</Label>
+              <Textarea
+                value={draftForm.graphicSuggestions}
+                onChange={(e) => setDraftForm({ ...draftForm, graphicSuggestions: e.target.value })}
+                rows={2}
+                placeholder="Which player to feature, visual ideas, imagery concepts..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Suggestions for the graphic designer: player to feature, visual style, imagery ideas, etc.
+              </p>
+            </div>
             
             {/* Structured Content Sections */}
             <div className="space-y-4 border-t pt-4">
@@ -667,6 +685,18 @@ ${WRITING_STYLE_GUIDE}`;
                 rows={2}
                 placeholder="Brief summary of the post..."
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Graphic Suggestions (optional)</Label>
+              <Textarea
+                value={draftForm.graphicSuggestions}
+                onChange={(e) => setDraftForm({ ...draftForm, graphicSuggestions: e.target.value })}
+                rows={2}
+                placeholder="Which player to feature, visual ideas, imagery concepts..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Suggestions for the graphic designer: player to feature, visual style, imagery ideas, etc.
+              </p>
             </div>
             
             {/* Draft Section - Collapsible */}
