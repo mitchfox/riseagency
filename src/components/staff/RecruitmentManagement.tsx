@@ -9,11 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, MessageSquare, Plus, Trash2, Edit, Sparkles, Copy, UserPlus, MapPin, Mail } from "lucide-react";
+import { Users, MessageSquare, Plus, Trash2, Edit, Sparkles, Copy, UserPlus, MapPin, Mail, Route } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PlayerOutreach } from "./PlayerOutreach";
+import MessagePathways from "./MessagePathways";
 
 interface Prospect {
   id: string;
@@ -48,7 +49,7 @@ const RECIPIENT_TYPES = [
   "Manager"
 ];
 
-export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { isAdmin: boolean; initialTab?: 'prospects' | 'outreach' | 'templates' }) => {
+export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { isAdmin: boolean; initialTab?: 'prospects' | 'outreach' | 'templates' | 'pathways' }) => {
   const [activeTab, setActiveTab] = useState<string>(initialTab);
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);
@@ -436,7 +437,7 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
   return (
     <div className="space-y-4 sm:space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 h-auto sm:h-10">
+        <TabsList className="grid w-full grid-cols-4 h-auto sm:h-10">
           <TabsTrigger value="prospects" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
             <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Prospect Board</span>
@@ -451,6 +452,11 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
             <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Message Templates</span>
             <span className="sm:hidden">Templates</span>
+          </TabsTrigger>
+          <TabsTrigger value="pathways" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
+            <Route className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Message Pathways</span>
+            <span className="sm:hidden">Pathways</span>
           </TabsTrigger>
         </TabsList>
 
@@ -872,6 +878,10 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
               })}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="pathways" className="space-y-4">
+          <MessagePathways />
         </TabsContent>
       </Tabs>
 

@@ -137,21 +137,50 @@ export const StaffSMSNotifications = () => {
     try {
       const staffUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
 
-      // Log the notification (actual SMS sending would require a service like Twilio)
-      const { error } = await supabase
+      // Send SMS to each recipient via edge function
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const staff of staffWithPhone) {
+        try {
+          const { error } = await supabase.functions.invoke('notificationapi-rise_staff', {
+            body: {
+              phone: staff.phone_number,
+              message: message.trim(),
+              email: staff.email,
+            }
+          });
+
+          if (error) {
+            console.error(`Failed to send to ${staff.full_name}:`, error);
+            failCount++;
+          } else {
+            successCount++;
+          }
+        } catch (err) {
+          console.error(`Error sending to ${staff.full_name}:`, err);
+          failCount++;
+        }
+      }
+
+      // Log the notification
+      const { error: logError } = await supabase
         .from("staff_sms_notifications")
         .insert({
           message: message.trim(),
           sent_by: staffUserId,
           sent_to: selectedStaff,
-          status: "sent",
+          status: failCount === 0 ? "sent" : (successCount > 0 ? "partial" : "failed"),
         });
 
-      if (error) throw error;
+      if (logError) console.error("Error logging notification:", logError);
 
-      toast.success(
-        `Notification sent to ${staffWithPhone.length} staff member(s)`
-      );
+      if (successCount > 0) {
+        toast.success(`SMS sent to ${successCount} staff member(s)${failCount > 0 ? `, ${failCount} failed` : ''}`);
+      } else {
+        toast.error("Failed to send SMS to all recipients");
+      }
+
       setMessage("");
       setSelectedStaff([]);
       fetchRecentNotifications();
