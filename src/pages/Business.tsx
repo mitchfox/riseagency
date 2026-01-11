@@ -9,6 +9,7 @@ import { HoverText } from "@/components/HoverText";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
+import { PartnersSection } from "@/components/business/PartnersSection";
 
 // Case study / showcase card data
 interface ShowcaseCard {
@@ -508,6 +509,9 @@ const Business = () => {
             </div>
           </div>
         </section>
+
+        {/* Partners Section */}
+        <PartnersSection />
 
         {/* CTA Section */}
         <section className="py-10 md:py-16 relative overflow-hidden">

@@ -1674,6 +1674,54 @@ export type Database = {
           },
         ]
       }
+      partners: {
+        Row: {
+          case_study_content: string | null
+          case_study_image_url: string | null
+          case_study_title: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          is_featured: boolean | null
+          logo_url: string | null
+          name: string
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          case_study_content?: string | null
+          case_study_image_url?: string | null
+          case_study_title?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_featured?: boolean | null
+          logo_url?: string | null
+          name: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          case_study_content?: string | null
+          case_study_image_url?: string | null
+          case_study_title?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_featured?: boolean | null
+          logo_url?: string | null
+          name?: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number

@@ -26,6 +26,7 @@ interface GalleryItem {
   title: string;
   file_url: string;
   file_type: string;
+  player_id?: string | null;
 }
 
 const Media = () => {
@@ -48,6 +49,7 @@ const Media = () => {
     };
 
     const fetchGalleryItems = async () => {
+      // Only fetch gallery items (filtering handled at display level for simplicity)
       const { data, error } = await supabase
         .from("marketing_gallery")
         .select("id, title, file_url, file_type")
@@ -55,7 +57,7 @@ const Media = () => {
         .limit(8);
 
       if (!error && data) {
-        setGalleryItems(data);
+        setGalleryItems(data as GalleryItem[]);
       }
     };
 
