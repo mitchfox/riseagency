@@ -4,6 +4,18 @@ const APP_VERSION_KEY = 'rise_app_version';
 const LAST_CHECK_KEY = 'rise_last_version_check';
 const CHECK_INTERVAL_MS = 60000; // Check every minute
 
+// Check if running in Lovable preview environment
+function isLovablePreview(): boolean {
+  try {
+    const hostname = window.location.hostname;
+    return hostname.includes('lovableproject.com') || 
+           hostname.includes('localhost') ||
+           hostname.includes('127.0.0.1');
+  } catch {
+    return false;
+  }
+}
+
 export class VersionManager {
   private static buildTimestamp: string | null = null;
 
@@ -127,6 +139,12 @@ export class VersionManager {
   // Initialize version tracking on first load
   static async initialize(forceCheck: boolean = false): Promise<void> {
     try {
+      // Skip version checking in Lovable preview to prevent infinite refresh loops
+      if (isLovablePreview()) {
+        console.log('[VersionManager] Skipping version check in preview environment');
+        return;
+      }
+      
       // On page load, always verify we have the latest
       if (navigator.onLine) {
         const hasUpdate = await this.checkForUpdates(forceCheck);
