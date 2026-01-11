@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QuickMessageSection } from './QuickMessageSection';
+import MessagePathways from './MessagePathways';
 
 interface Contact {
   id: string;
@@ -224,6 +225,7 @@ const ClubNetworkManagement = () => {
         <TabsList>
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="pathways">Message Pathways</TabsTrigger>
         </TabsList>
 
         <TabsContent value="contacts" className="mt-6">
@@ -316,6 +318,10 @@ const ClubNetworkManagement = () => {
 
         <TabsContent value="templates" className="mt-6">
           <QuickMessageSection />
+        </TabsContent>
+
+        <TabsContent value="pathways" className="mt-6">
+          <MessagePathways />
         </TabsContent>
       </Tabs>
 
