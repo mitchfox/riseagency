@@ -28,6 +28,8 @@ const CATEGORIES = [
   { id: "tip", label: "Tip", color: "bg-blue-500" },
   { id: "idea", label: "Idea", color: "bg-green-500" },
   { id: "lesson", label: "Lesson", color: "bg-purple-500" },
+  { id: "canva", label: "Canva Tutorial", color: "bg-pink-500" },
+  { id: "rules", label: "Rules", color: "bg-orange-500" },
 ];
 
 export const MarketingTipsManagement = () => {
