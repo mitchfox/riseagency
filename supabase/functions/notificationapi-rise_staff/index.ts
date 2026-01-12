@@ -25,16 +25,29 @@ serve(async (req) => {
   }
 
   try {
-    const { phone, message, email } = await req.json();
+    const { phone, message, email, type = 'sms', subject } = await req.json();
 
-    if (!phone) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Phone number is required'
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    // Validate based on type
+    if (type === 'sms') {
+      if (!phone) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Phone number is required for SMS'
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    } else if (type === 'email') {
+      if (!email) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Email address is required for email'
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
     }
 
     if (!message) {
@@ -47,24 +60,41 @@ serve(async (req) => {
       });
     }
 
-    console.log('Sending SMS to:', phone, 'with message:', message);
+    console.log(`Sending ${type} to:`, type === 'sms' ? phone : email, 'with message:', message);
 
-    // Format phone number
-    const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
-
-    const payload = {
-      notificationId: 'rise_staff',
-      user: {
-        id: email || phone,
-        number: formattedPhone
-      },
-      mergeTags: {},
-      options: {
-        sms: {
+    // Build payload based on type
+    let payload: any;
+    
+    if (type === 'email') {
+      // Email notification
+      payload = {
+        notificationId: 'rise_staff_email',
+        user: {
+          id: email,
+          email: email
+        },
+        mergeTags: {
+          subject: subject || 'Message from RISE Football',
           message: message
         }
-      }
-    };
+      };
+    } else {
+      // SMS notification (default)
+      const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+      payload = {
+        notificationId: 'rise_staff',
+        user: {
+          id: email || phone,
+          number: formattedPhone
+        },
+        mergeTags: {},
+        options: {
+          sms: {
+            message: message
+          }
+        }
+      };
+    }
 
     // Create proper Basic Auth header using reliable encoding
     const credentials = `${CLIENT_ID}:${CLIENT_SECRET}`;
