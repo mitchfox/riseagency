@@ -62,49 +62,51 @@ serve(async (req) => {
 
     console.log(`Sending ${type} to:`, type === 'sms' ? phone : email, 'with message:', message);
 
-    // Build payload based on type
+    // Build payload - NotificationAPI uses 'type' for notification template ID
+    // and the endpoint is /sender (not /sender/send)
     let payload: any;
     
     if (type === 'email') {
       // Email notification
       payload = {
-        notificationId: 'rise_staff_email',
-        user: {
+        type: 'rise_staff_email', // Notification template ID from dashboard
+        to: {
           id: email,
           email: email
         },
-        mergeTags: {
+        email: {
           subject: subject || 'Message from RISE Football',
-          message: message
+          html: `<div style="font-family: Arial, sans-serif;">
+            <h2 style="color: #B8A574;">RISE Football</h2>
+            ${message.split('\n').map((line: string) => `<p>${line || '<br>'}</p>`).join('')}
+          </div>`
         }
       };
     } else {
-      // SMS notification (default)
+      // SMS notification
       const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
       payload = {
-        notificationId: 'rise_staff',
-        user: {
+        type: 'rise_staff', // Notification template ID from dashboard
+        to: {
           id: email || phone,
           number: formattedPhone
         },
-        mergeTags: {},
-        options: {
-          sms: {
-            message: message
-          }
+        sms: {
+          message: message
         }
       };
     }
 
-    // Create proper Basic Auth header using reliable encoding
+    // Create proper Basic Auth header
     const credentials = `${CLIENT_ID}:${CLIENT_SECRET}`;
     const authString = encodeBase64(credentials);
     
-    console.log('Auth credentials length:', credentials.length);
-    console.log('Base64 result length:', authString.length);
-    console.log('Making request to NotificationAPI...');
+    console.log('Auth header:', `Basic ${authString.substring(0, 20)}...`);
+    console.log('Payload:', JSON.stringify(payload));
+    console.log('Making request to NotificationAPI /sender endpoint...');
 
-    const response = await fetch(`https://api.notificationapi.com/${CLIENT_ID}/sender/send`, {
+    // Correct endpoint is /{clientId}/sender (NOT /sender/send)
+    const response = await fetch(`https://api.notificationapi.com/${CLIENT_ID}/sender`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
