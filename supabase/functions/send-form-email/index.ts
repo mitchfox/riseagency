@@ -9,6 +9,12 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const NOTIFICATION_EMAIL = "jolon.levene@risefootballagency.com";
 
+// Allowed email addresses for sending/receiving emails
+const ALLOWED_STAFF_EMAILS = [
+  "jolon.levene@risefootballagency.com",
+  "kuda.butawo@risefootballagency.com"
+];
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -61,6 +67,21 @@ const handler = async (req: Request): Promise<Response> => {
     // Check if this is an email sending request
     if (body.to && body.subject && body.message) {
       const { to, subject, message }: EmailRequest = body;
+      
+      // Validate recipient email is in allowed list
+      const recipientEmail = to.toLowerCase().trim();
+      if (!ALLOWED_STAFF_EMAILS.some(allowed => allowed.toLowerCase() === recipientEmail)) {
+        console.error("Attempted to send email to unauthorized recipient:", to);
+        return new Response(
+          JSON.stringify({ 
+            error: "Email can only be sent to authorized Rise Football staff addresses" 
+          }),
+          {
+            status: 403,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
       
       console.log("Sending email to:", to);
 
