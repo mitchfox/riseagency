@@ -8,6 +8,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Reliable Base64 encoding for Deno
+function encodeBase64(str: string): string {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  let binary = '';
+  for (let i = 0; i < data.length; i++) {
+    binary += String.fromCharCode(data[i]);
+  }
+  return btoa(binary);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -55,10 +66,13 @@ serve(async (req) => {
       }
     };
 
-    // Use Basic Auth - NotificationAPI uses clientId:clientSecret base64 encoded
-    const authString = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`);
+    // Create proper Basic Auth header using reliable encoding
+    const credentials = `${CLIENT_ID}:${CLIENT_SECRET}`;
+    const authString = encodeBase64(credentials);
     
-    console.log('Making request to NotificationAPI with Basic Auth...');
+    console.log('Auth credentials length:', credentials.length);
+    console.log('Base64 result length:', authString.length);
+    console.log('Making request to NotificationAPI...');
 
     const response = await fetch(`https://api.notificationapi.com/${CLIENT_ID}/sender/send`, {
       method: 'POST',
