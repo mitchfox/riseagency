@@ -26,6 +26,8 @@ import { FormSubmissionsWidget } from "./widgets/FormSubmissionsWidget";
 import { ProductivityInsightsWidget } from "./widgets/ProductivityInsightsWidget";
 import { QuickLinksWidget } from "./widgets/QuickLinksWidget";
 import { VisionBoardWidget } from "./widgets/VisionBoardWidget";
+import { DocsWidget } from "./widgets/DocsWidget";
+import { SheetsWidget } from "./widgets/SheetsWidget";
 import { FocusedTasksSection } from "./FocusedTasksSection";
 
 interface Goal {
@@ -80,6 +82,8 @@ const WIDGET_CONFIGS: WidgetConfig[] = [
   // Organizational
   { id: "invoices", title: "Pending Invoices", icon: Receipt, defaultVisible: false },
   { id: "documents", title: "Recent Documents", icon: FolderOpen, defaultVisible: false },
+  { id: "docs", title: "Staff Docs", icon: FileText, defaultVisible: false },
+  { id: "sheets", title: "Staff Sheets", icon: BarChart3, defaultVisible: false },
   { id: "deadlines", title: "Upcoming Deadlines", icon: Clock, defaultVisible: false },
   { id: "projects", title: "Active Projects", icon: Briefcase, defaultVisible: false },
   // Advanced Productivity
@@ -1066,6 +1070,12 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
             </div>
           </div>
         );
+
+      case "docs":
+        return <DocsWidget />;
+
+      case "sheets":
+        return <SheetsWidget />;
 
       case "deadlines":
         return (
