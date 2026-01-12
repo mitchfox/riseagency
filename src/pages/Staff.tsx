@@ -69,8 +69,8 @@ import { RequestsManagement } from "@/components/staff/RequestsManagement";
 import { MarketingTipsManagement } from "@/components/staff/MarketingTipsManagement";
 import { StaffSMSNotifications } from "@/components/staff/StaffSMSNotifications";
 import { VisionBoardSection } from "@/components/staff/VisionBoardSection";
-import { DocsWidget } from "@/components/staff/widgets/DocsWidget";
-import { SheetsWidget } from "@/components/staff/widgets/SheetsWidget";
+import { DocsSection } from "@/components/staff/DocsSection";
+import { SheetsSection } from "@/components/staff/SheetsSection";
 
 import { supabase } from "@/integrations/supabase/client";
 import { VersionManager } from "@/lib/versionManager";
@@ -1134,8 +1134,8 @@ const Staff = () => {
                     </div>
                   )}
                   {expandedSection === 'visionboard' && <VisionBoardSection />}
-                  {expandedSection === 'docs' && <DocsWidget />}
-                  {expandedSection === 'sheets' && <SheetsWidget />}
+                  {expandedSection === 'docs' && <DocsSection />}
+                  {expandedSection === 'sheets' && <SheetsSection />}
                   {expandedSection === 'staffschedules' && <StaffSchedulesManagement />}
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
                   {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
