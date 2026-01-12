@@ -69,6 +69,8 @@ import { RequestsManagement } from "@/components/staff/RequestsManagement";
 import { MarketingTipsManagement } from "@/components/staff/MarketingTipsManagement";
 import { StaffSMSNotifications } from "@/components/staff/StaffSMSNotifications";
 import { VisionBoardSection } from "@/components/staff/VisionBoardSection";
+import { DocsWidget } from "@/components/staff/widgets/DocsWidget";
+import { SheetsWidget } from "@/components/staff/widgets/SheetsWidget";
 
 import { supabase } from "@/integrations/supabase/client";
 import { VersionManager } from "@/lib/versionManager";
@@ -128,7 +130,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'pressreleases' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'marketingtips' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'pressreleases' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'marketingtips' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   
@@ -641,6 +643,8 @@ const Staff = () => {
             { id: 'overview', title: 'Overview', icon: Calendar },
             { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
             { id: 'visionboard', title: 'Vision Board', icon: Target },
+            { id: 'docs', title: 'Docs', icon: FileText },
+            { id: 'sheets', title: 'Sheets', icon: FileSpreadsheet },
           ],
           locked: false
         },
@@ -706,6 +710,8 @@ const Staff = () => {
           { id: 'overview', title: 'Overview', icon: Calendar },
           { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
           { id: 'visionboard', title: 'Vision Board', icon: Target },
+          { id: 'docs', title: 'Docs', icon: FileText },
+          { id: 'sheets', title: 'Sheets', icon: FileSpreadsheet },
           { id: 'staffschedules', title: 'Staff Schedules', icon: Users },
           ...(user?.email === 'jolonlevene98@gmail.com' ? [
             { id: 'notifications', title: 'Notifications', icon: BellRing },
@@ -1128,6 +1134,8 @@ const Staff = () => {
                     </div>
                   )}
                   {expandedSection === 'visionboard' && <VisionBoardSection />}
+                  {expandedSection === 'docs' && <DocsWidget />}
+                  {expandedSection === 'sheets' && <SheetsWidget />}
                   {expandedSection === 'staffschedules' && <StaffSchedulesManagement />}
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
                   {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
