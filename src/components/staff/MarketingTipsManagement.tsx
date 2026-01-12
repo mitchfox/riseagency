@@ -12,6 +12,7 @@ import { Lightbulb, Plus, Trash2, Edit, Loader2, Bell, Upload, X, Image as Image
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { MarkdownContent } from "@/utils/markdownRenderer";
 
 interface MarketingTip {
   id: string;
@@ -506,9 +507,9 @@ export const MarketingTipsManagement = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">
-                      {tip.content}
-                    </p>
+                    <div className="text-sm text-muted-foreground">
+                      <MarkdownContent content={tip.content} className="line-clamp-6" />
+                    </div>
                     <p className="text-xs text-muted-foreground mt-4">
                       {format(new Date(tip.created_at), "MMM d, yyyy")}
                     </p>
