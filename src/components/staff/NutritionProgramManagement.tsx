@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Trash2, Edit, Apple, Loader2, Save } from "lucide-react";
+import { Plus, Trash2, Edit, Apple, Loader2, Save, Database } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SaveNutritionToCoachingDBDialog } from "./SaveNutritionToCoachingDBDialog";
 
@@ -115,10 +115,112 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
   const [isEditing, setIsEditing] = useState(false);
   const [showSaveToDBDialog, setShowSaveToDBDialog] = useState(false);
   const [programToSave, setProgramToSave] = useState<NutritionProgram | null>(null);
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [coachingPrograms, setCoachingPrograms] = useState<any[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   useEffect(() => {
     fetchPrograms();
   }, [playerId]);
+
+  // Helper function to create a deep copy of data to ensure complete independence
+  const deepClone = <T,>(obj: T): T => {
+    return JSON.parse(JSON.stringify(obj));
+  };
+
+  const loadCoachingPrograms = async () => {
+    setLoadingTemplates(true);
+    try {
+      const { data, error } = await supabase
+        .from('coaching_programmes')
+        .select('*')
+        .eq('category', 'Nutrition')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCoachingPrograms(data || []);
+    } catch (error) {
+      console.error('Error loading coaching programs:', error);
+      toast.error('Failed to load templates');
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
+  const createProgramFromTemplate = async (template: any) => {
+    if (!template) return;
+
+    setSaving(true);
+    try {
+      // Deep clone the template attachments to ensure complete independence
+      const templateData = deepClone(template.attachments || {});
+      
+      // Create program data from template - use explicit typing to satisfy Supabase
+      const programData = {
+        player_id: playerId,
+        phase_name: template.title || 'Imported Program',
+        diet_framework: templateData.diet_framework || null,
+        weekly_structure: templateData.weekly_structure || null,
+        key_additions: templateData.key_additions || null,
+        overview: template.content || templateData.overview || null,
+        is_current: programs.length === 0,
+        calories: templateData.calories || null,
+        carbohydrates: templateData.carbohydrates || null,
+        protein: templateData.protein || null,
+        fat: templateData.fat || null,
+        micro_1_name: templateData.micro_1_name || null,
+        micro_1_amount: templateData.micro_1_amount || null,
+        micro_2_name: templateData.micro_2_name || null,
+        micro_2_amount: templateData.micro_2_amount || null,
+        supplement_1_name: templateData.supplement_1_name || null,
+        supplement_1_amount: templateData.supplement_1_amount || null,
+        supplement_2_name: templateData.supplement_2_name || null,
+        supplement_2_amount: templateData.supplement_2_amount || null,
+        supplement_3_name: templateData.supplement_3_name || null,
+        supplement_3_amount: templateData.supplement_3_amount || null,
+        training_day_overview: templateData.training_day_overview || null,
+        training_day_timings: templateData.training_day_timings || null,
+        calories_training_day: templateData.calories_training_day || null,
+        carbs_training_day: templateData.carbs_training_day || null,
+        protein_training_day: templateData.protein_training_day || null,
+        fat_training_day: templateData.fat_training_day || null,
+        match_day_overview: templateData.match_day_overview || null,
+        pre_match_timings: templateData.pre_match_timings || null,
+        in_match_timings: templateData.in_match_timings || null,
+        post_match_timings: templateData.post_match_timings || null,
+        calories_match_day: templateData.calories_match_day || null,
+        carbs_match_day: templateData.carbs_match_day || null,
+        protein_match_day: templateData.protein_match_day || null,
+        fat_match_day: templateData.fat_match_day || null,
+        recovery_day_overview: templateData.recovery_day_overview || null,
+        recovery_day_timings: templateData.recovery_day_timings || null,
+        calories_recovery_day: templateData.calories_recovery_day || null,
+        carbs_recovery_day: templateData.carbs_recovery_day || null,
+        protein_recovery_day: templateData.protein_recovery_day || null,
+        fat_recovery_day: templateData.fat_recovery_day || null,
+      };
+
+      const { error } = await supabase
+        .from('player_nutrition_programs')
+        .insert([programData]);
+
+      if (error) throw error;
+
+      toast.success('✅ Nutrition program created from template!');
+      setShowTemplateDialog(false);
+      fetchPrograms();
+    } catch (error) {
+      console.error('Error creating program from template:', error);
+      toast.error('Failed to create program from template');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openTemplateDialog = () => {
+    loadCoachingPrograms();
+    setShowTemplateDialog(true);
+  };
 
   const fetchPrograms = async () => {
     setLoading(true);
@@ -313,10 +415,16 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Nutrition Programs</h3>
-        <Button size="sm" onClick={openNewDialog}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Program
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={openTemplateDialog}>
+            <Database className="w-4 h-4 mr-2" />
+            Use Template
+          </Button>
+          <Button size="sm" onClick={openNewDialog}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Program
+          </Button>
+        </div>
       </div>
 
       {programs.length === 0 ? (
@@ -781,6 +889,57 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
         nutritionProgram={programToSave}
         playerName={playerName}
       />
+
+      {/* Template Selection Dialog */}
+      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Select Nutrition Template</DialogTitle>
+          </DialogHeader>
+          
+          {loadingTemplates ? (
+            <div className="text-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+              <p className="text-sm text-muted-foreground mt-2">Loading templates...</p>
+            </div>
+          ) : coachingPrograms.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No nutrition templates found in the coaching database.</p>
+              <p className="text-sm mt-2">Save a nutrition program to the coaching database first.</p>
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              {coachingPrograms.map((template) => (
+                <Card 
+                  key={template.id} 
+                  className="cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => createProgramFromTemplate(template)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium">{template.title}</h4>
+                        {template.description && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                            {template.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Created: {new Date(template.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Button size="sm" disabled={saving}>
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Use'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
