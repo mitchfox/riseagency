@@ -512,18 +512,29 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
               pointerEvents: isScrolled ? "auto" : "none",
               transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
             }}>
-                <Link to="/contact" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title={t("header.contact_us", "Contact Us")}>
-                  <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                  <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                    {t("header.contact_us", "Contact Us")}
-                  </span>
-                </Link>
-                <button onClick={() => setDeclareInterestOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title={t("header.declare_interest_short", "Declare Interest")}>
-                  <Users className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                  <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                    {t("header.declare_interest_short", "Declare Interest")}
-                  </span>
-                </button>
+                {subHeaderConfig.left.map((item, index) => {
+                  const IconComponent = item.icon;
+                  if (item.type === 'link') {
+                    const LinkComponent = pathToRole[item.to!] ? SubdomainLink : LocalizedLink;
+                    const linkProps = pathToRole[item.to!] ? { role: pathToRole[item.to!] } : { to: item.to! };
+                    return (
+                      <LinkComponent key={`scrolled-left-${index}`} {...linkProps as any} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title={t(item.labelKey, item.fallback)}>
+                        <IconComponent className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                        <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                          {t(item.labelKey, item.fallback)}
+                        </span>
+                      </LinkComponent>
+                    );
+                  }
+                  return (
+                    <button key={`scrolled-left-${index}`} onClick={() => handleSubHeaderAction(item.action)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title={t(item.labelKey, item.fallback)}>
+                      <IconComponent className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                      <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                        {t(item.labelKey, item.fallback)}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
               
               {/* Right side icons - positioned relative to RISE WITH US button */}
@@ -534,18 +545,29 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
               pointerEvents: isScrolled ? "auto" : "none",
               transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
             }}>
-                <button onClick={() => setRepresentationOpen(true)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title={t("header.request_representation", "Request Representation")}>
-                  <Handshake className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                  <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                    {t("header.request_representation", "Request Representation")}
-                  </span>
-                </button>
-                <LocalizedLink to="/login" className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title={t("header.portal", "Portal")}>
-                  <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
-                  <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
-                    {t("header.portal", "Portal")}
-                  </span>
-                </LocalizedLink>
+                {subHeaderConfig.right.map((item, index) => {
+                  const IconComponent = item.icon;
+                  if (item.type === 'link') {
+                    const LinkComponent = pathToRole[item.to!] ? SubdomainLink : LocalizedLink;
+                    const linkProps = pathToRole[item.to!] ? { role: pathToRole[item.to!] } : { to: item.to! };
+                    return (
+                      <LinkComponent key={`scrolled-right-${index}`} {...linkProps as any} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title={t(item.labelKey, item.fallback)}>
+                        <IconComponent className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                        <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                          {t(item.labelKey, item.fallback)}
+                        </span>
+                      </LinkComponent>
+                    );
+                  }
+                  return (
+                    <button key={`scrolled-right-${index}`} onClick={() => handleSubHeaderAction(item.action)} className="group p-1.5 md:p-2 rounded-full hover:bg-primary/10 transition-all duration-300 flex items-center gap-1.5 overflow-hidden" title={t(item.labelKey, item.fallback)}>
+                      <IconComponent className="w-4 h-4 md:w-5 md:h-5 text-white/80 group-hover:text-primary transition-colors flex-shrink-0" />
+                      <span className="max-w-0 md:group-hover:max-w-xs transition-all duration-300 text-xs font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary whitespace-nowrap overflow-hidden">
+                        {t(item.labelKey, item.fallback)}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </>}
 
