@@ -9,6 +9,7 @@ import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { useState } from "react";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { Marquee } from "@/components/Marquee";
+import { ShaderAnimation } from "@/components/ui/shader-animation";
 import { 
   Target, 
   Users, 
@@ -20,14 +21,21 @@ import {
   ArrowRight,
   CheckCircle2,
   Shield,
-  Zap
+  Zap,
+  Play,
+  FileText
 } from "lucide-react";
 import bannerHero from "@/assets/banner-hero.jpg";
+import realisePotentialReport from "@/assets/realise-potential-report.png";
+import realisePotentialAnalysis from "@/assets/realise-potential-analysis.png";
+import realisePotentialSessions from "@/assets/realise-potential-sessions.png";
+import realisePotentialPaos from "@/assets/realise-potential-paos.png";
 
 const Clubs = () => {
   const { t } = useLanguage();
   const [arrangeMeetingOpen, setArrangeMeetingOpen] = useState(false);
   const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
+  const [activeApproachImage, setActiveApproachImage] = useState(0);
 
   const services = [
     {
@@ -63,10 +71,17 @@ const Clubs = () => {
   ];
 
   const stats = [
-    { value: '74', label: t('clubs.stat_professionals', 'Professionals Developed') },
-    { value: '18', label: t('clubs.stat_big5', 'Big 5 League Players') },
-    { value: '£100M+', label: t('clubs.stat_transfers', 'Transfer Fees') },
-    { value: '30+', label: t('clubs.stat_countries', 'Countries Covered') }
+    { value: '120+', label: t('clubs.stat_network', 'Club Network Size') },
+    { value: '3', label: t('clubs.stat_prem', 'Premier League Clubs') },
+    { value: '30+', label: t('clubs.stat_countries', 'Countries Covered') },
+    { value: '74', label: t('clubs.stat_professionals', 'Professionals Developed') }
+  ];
+
+  const approachImages = [
+    { src: realisePotentialReport, label: 'R90 Performance Reports' },
+    { src: realisePotentialAnalysis, label: 'Match Analysis' },
+    { src: realisePotentialSessions, label: 'Development Sessions' },
+    { src: realisePotentialPaos, label: 'Player Action Overviews' }
   ];
 
   return (
@@ -85,7 +100,7 @@ const Clubs = () => {
         {/* Hero Section */}
         <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
           <div 
-            className="absolute inset-0 bg-cover bg-center"
+            className="absolute inset-0 bg-cover bg-top"
             style={{ backgroundImage: `url(${bannerHero})` }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-background" />
@@ -96,12 +111,17 @@ const Clubs = () => {
                 {t('clubs.badge', 'Club Partnerships')}
               </span>
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider text-white mb-6 px-2">
-              {t('clubs.title', 'FOR')} <span className="text-primary">{t('clubs.title_highlight', 'CLUBS')}</span>
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider text-primary mb-6 px-2">
+              {t('clubs.title', 'FOR CLUBS')}
             </h1>
-            <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-8 px-2">
-              {t('clubs.subtitle', 'Strategic partnerships that deliver competitive advantage')}
-            </p>
+            <div className="relative inline-block mb-8">
+              <div className="absolute inset-0 -z-10">
+                <ShaderAnimation />
+              </div>
+              <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto px-6 py-3 font-light">
+                <em>{t('clubs.subtitle', 'Strategic partnerships to elevate your club\'s performance')}</em>
+              </p>
+            </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
               <Button 
                 onClick={() => setArrangeMeetingOpen(true)}
@@ -151,7 +171,7 @@ const Clubs = () => {
                   {t('clubs.how_we_help', 'HOW WE')} <span className="text-primary">{t('clubs.help', 'HELP')}</span>
                 </h2>
                 <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                  {t('clubs.services_desc', 'Comprehensive support across strategy, recruitment, and performance.')}
+                  <em>{t('clubs.services_desc', 'Comprehensive support across strategy, recruitment, and performance.')}</em>
                 </p>
               </div>
 
@@ -165,11 +185,11 @@ const Clubs = () => {
                         <service.icon className="w-8 h-8 text-primary" />
                       </div>
                       
-                      <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3">
+                      <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3 text-center">
                         {service.title}
                       </h3>
                       
-                      <p className="text-muted-foreground mb-6">
+                      <p className="text-muted-foreground mb-6 text-center">
                         {service.description}
                       </p>
                       
@@ -189,12 +209,20 @@ const Clubs = () => {
           </section>
         </ScrollReveal>
 
-        {/* Our Approach Section */}
+        {/* Our Approach Section - Enhanced with visuals */}
         <ScrollReveal>
-          <section className="py-16 md:py-24 bg-muted/30">
-            <div className="container mx-auto px-4">
+          <section className="py-16 md:py-24 bg-muted/30 relative overflow-hidden">
+            {/* Faded background images */}
+            <div className="absolute inset-0 opacity-5 pointer-events-none">
+              <div 
+                className="absolute top-0 right-0 w-1/2 h-full bg-cover bg-center grayscale"
+                style={{ backgroundImage: `url(${bannerHero})` }}
+              />
+            </div>
+            
+            <div className="container mx-auto px-4 relative z-10">
               <div className="max-w-6xl mx-auto">
-                <div className="grid md:grid-cols-2 gap-12 items-center">
+                <div className="grid md:grid-cols-2 gap-12 items-start">
                   <div>
                     <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
                       {t('clubs.our_approach', 'OUR')} <span className="text-primary">{t('clubs.approach', 'APPROACH')}</span>
@@ -233,21 +261,49 @@ const Clubs = () => {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-6 border border-border/50 bg-card/30 rounded-lg text-center">
-                      <Globe className="w-10 h-10 text-primary mx-auto mb-4" />
-                      <h4 className="text-lg font-bebas uppercase tracking-wider mb-2">European Network</h4>
-                      <p className="text-sm text-muted-foreground">Key decision-makers across half the globe</p>
+                  {/* Interactive visual gallery */}
+                  <div className="space-y-4">
+                    <div className="relative aspect-[4/3] rounded-xl overflow-hidden border border-border/50 bg-card/50">
+                      {approachImages.map((img, index) => (
+                        <img 
+                          key={index}
+                          src={img.src} 
+                          alt={img.label}
+                          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${activeApproachImage === index ? 'opacity-100' : 'opacity-0'}`}
+                        />
+                      ))}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                        <p className="text-white font-bebas uppercase tracking-wider text-lg">
+                          {approachImages[activeApproachImage]?.label}
+                        </p>
+                      </div>
                     </div>
-                    <div className="p-6 border border-border/50 bg-card/30 rounded-lg text-center">
-                      <Handshake className="w-10 h-10 text-primary mx-auto mb-4" />
-                      <h4 className="text-lg font-bebas uppercase tracking-wider mb-2">Trusted Partners</h4>
-                      <p className="text-sm text-muted-foreground">Reputation for recruiting great fits</p>
+                    
+                    {/* Thumbnail selectors */}
+                    <div className="grid grid-cols-4 gap-2">
+                      {approachImages.map((img, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setActiveApproachImage(index)}
+                          className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-all duration-300 ${activeApproachImage === index ? 'border-primary scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                        >
+                          <img src={img.src} alt={img.label} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
                     </div>
-                    <div className="p-6 border border-border/50 bg-card/30 rounded-lg text-center col-span-2">
-                      <TrendingUp className="w-10 h-10 text-primary mx-auto mb-4" />
-                      <h4 className="text-lg font-bebas uppercase tracking-wider mb-2">Performance Expertise</h4>
-                      <p className="text-sm text-muted-foreground">Unique expertise in performance development that elevates your entire organisation</p>
+                    
+                    {/* Quick stats grid */}
+                    <div className="grid grid-cols-2 gap-3 mt-6">
+                      <div className="p-4 border border-border/50 bg-card/30 rounded-lg text-center">
+                        <Globe className="w-8 h-8 text-primary mx-auto mb-2" />
+                        <h4 className="text-sm font-bebas uppercase tracking-wider mb-1">European Network</h4>
+                        <p className="text-xs text-muted-foreground">Key decision-makers across half the globe</p>
+                      </div>
+                      <div className="p-4 border border-border/50 bg-card/30 rounded-lg text-center">
+                        <Handshake className="w-8 h-8 text-primary mx-auto mb-2" />
+                        <h4 className="text-sm font-bebas uppercase tracking-wider mb-1">Trusted Partners</h4>
+                        <p className="text-xs text-muted-foreground">Reputation for recruiting great fits</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -258,8 +314,16 @@ const Clubs = () => {
 
         {/* CTA Section */}
         <ScrollReveal>
-          <section className="py-16 md:py-24 bg-background">
-            <div className="container mx-auto px-4 text-center">
+          <section className="py-16 md:py-24 bg-background relative overflow-hidden">
+            {/* Faded background */}
+            <div className="absolute inset-0 opacity-5 pointer-events-none">
+              <div 
+                className="absolute inset-0 bg-cover bg-center grayscale"
+                style={{ backgroundImage: `url(${bannerHero})` }}
+              />
+            </div>
+            
+            <div className="container mx-auto px-4 text-center relative z-10">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
                 {t('clubs.cta_title', 'READY TO ELEVATE YOUR CLUB?')}
               </h2>
