@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Trash2, Edit, Apple, Loader2 } from "lucide-react";
+import { Plus, Trash2, Edit, Apple, Loader2, Save } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SaveNutritionToCoachingDBDialog } from "./SaveNutritionToCoachingDBDialog";
 
 interface NutritionProgram {
   id: string;
@@ -112,6 +113,8 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Partial<NutritionProgram>>(defaultProgram);
   const [isEditing, setIsEditing] = useState(false);
+  const [showSaveToDBDialog, setShowSaveToDBDialog] = useState(false);
+  const [programToSave, setProgramToSave] = useState<NutritionProgram | null>(null);
 
   useEffect(() => {
     fetchPrograms();
@@ -349,6 +352,17 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
                     </div>
                   </div>
                   <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        setProgramToSave(program);
+                        setShowSaveToDBDialog(true);
+                      }}
+                      title="Save to Coaching DB"
+                    >
+                      <Save className="w-4 h-4" />
+                    </Button>
                     {!program.is_current && (
                       <Button variant="outline" size="sm" onClick={() => handleSetCurrent(program.id)}>
                         Set Current
