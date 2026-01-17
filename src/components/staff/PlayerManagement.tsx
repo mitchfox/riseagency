@@ -91,7 +91,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [isNutritionDialogOpen, setIsNutritionDialogOpen] = useState(false);
   const [selectedNutritionPlayerId, setSelectedNutritionPlayerId] = useState<string>("");
   const [selectedNutritionPlayerName, setSelectedNutritionPlayerName] = useState<string>("");
-  const [nutritionPrograms, setNutritionPrograms] = useState<any[]>([]);
+  const [nutritionPrograms, setNutritionPrograms] = useState<Record<string, any[]>>({});
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [isEditHighlightOpen, setIsEditHighlightOpen] = useState(false);
@@ -196,6 +196,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     fetchAllInvoices();
     fetchTacticalAnalyses();
     fetchAllPrograms();
+    fetchAllNutritionPrograms();
     fetchAllTestResults();
     fetchOtherAnalyses();
     fetchAvailableAnalyses();
@@ -478,6 +479,28 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       setPlayerPrograms(programsMap);
     } catch (error: any) {
       toast.error("Failed to fetch programs: " + error.message);
+    }
+  };
+
+  const fetchAllNutritionPrograms = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("player_nutrition_programs")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const programsMap: Record<string, any[]> = {};
+      data?.forEach(program => {
+        if (!programsMap[program.player_id]) {
+          programsMap[program.player_id] = [];
+        }
+        programsMap[program.player_id].push(program);
+      });
+      setNutritionPrograms(programsMap);
+    } catch (error: any) {
+      console.error("Failed to fetch nutrition programs:", error.message);
     }
   };
 
@@ -3227,6 +3250,19 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         playerId={selectedProgrammingPlayerId}
         playerName={selectedProgrammingPlayerName}
         isAdmin={isAdmin}
+      />
+
+      <NutritionProgramManagement
+        isOpen={isNutritionDialogOpen}
+        onClose={() => setIsNutritionDialogOpen(false)}
+        playerId={selectedNutritionPlayerId}
+        playerName={selectedNutritionPlayerName}
+        onProgramsChange={(programs) => {
+          setNutritionPrograms(prev => ({
+            ...prev,
+            [selectedNutritionPlayerId]: programs
+          }));
+        }}
       />
 
       <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
