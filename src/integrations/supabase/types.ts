@@ -2644,6 +2644,8 @@ export type Database = {
           name: string
           nationality: string
           next_program_notes: string | null
+          nutrition_next_program_notes: string | null
+          nutrition_programming_notes: string | null
           player_list_order: number | null
           position: string
           preferred_currency: string | null
@@ -2675,6 +2677,8 @@ export type Database = {
           name: string
           nationality: string
           next_program_notes?: string | null
+          nutrition_next_program_notes?: string | null
+          nutrition_programming_notes?: string | null
           player_list_order?: number | null
           position: string
           preferred_currency?: string | null
@@ -2706,6 +2710,8 @@ export type Database = {
           name?: string
           nationality?: string
           next_program_notes?: string | null
+          nutrition_next_program_notes?: string | null
+          nutrition_programming_notes?: string | null
           player_list_order?: number | null
           position?: string
           preferred_currency?: string | null

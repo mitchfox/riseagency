@@ -2470,10 +2470,129 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   </TabsContent>
 
                   <TabsContent value="nutrition" className="mt-0">
-                    <NutritionProgramManagement 
-                      playerId={selectedPlayerId!} 
-                      playerName={selectedPlayer?.name || ''} 
-                    />
+                    {/* Nutrition Notes - Same structure as SPS */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <Card>
+                        <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                          <CardTitle className="text-base">Nutrition Notes</CardTitle>
+                          <p className="text-xs text-muted-foreground">Health, dietary needs, nutrition considerations - visible in player's nutrition section</p>
+                        </CardHeader>
+                        <CardContent className="px-3 md:px-6 py-4">
+                          <Textarea
+                            placeholder="Add notes about the player's dietary needs, allergies, preferences..."
+                            value={(selectedPlayer as any)?.nutrition_programming_notes || ''}
+                            onChange={async (e) => {
+                              const newValue = e.target.value;
+                              setPlayers(prev => prev.map(p => 
+                                p.id === selectedPlayerId ? { ...p, nutrition_programming_notes: newValue } : p
+                              ));
+                            }}
+                            onBlur={async (e) => {
+                              try {
+                                const { error } = await supabase
+                                  .from('players')
+                                  .update({ nutrition_programming_notes: e.target.value } as any)
+                                  .eq('id', selectedPlayerId);
+                                if (error) throw error;
+                              } catch (error: any) {
+                                toast.error('Failed to save notes: ' + error.message);
+                              }
+                            }}
+                            className="min-h-[200px] resize-none"
+                          />
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                          <CardTitle className="text-base">Next Nutrition Program Notes</CardTitle>
+                          <p className="text-xs text-muted-foreground">Ideas and brainstorming for upcoming nutrition programs</p>
+                        </CardHeader>
+                        <CardContent className="px-3 md:px-6 py-4">
+                          <Textarea
+                            placeholder="Brainstorm ideas for the player's next nutrition program, goals, focus areas..."
+                            value={(selectedPlayer as any)?.nutrition_next_program_notes || ''}
+                            onChange={async (e) => {
+                              const newValue = e.target.value;
+                              setPlayers(prev => prev.map(p => 
+                                p.id === selectedPlayerId ? { ...p, nutrition_next_program_notes: newValue } : p
+                              ));
+                            }}
+                            onBlur={async (e) => {
+                              try {
+                                const { error } = await supabase
+                                  .from('players')
+                                  .update({ nutrition_next_program_notes: e.target.value } as any)
+                                  .eq('id', selectedPlayerId);
+                                if (error) throw error;
+                              } catch (error: any) {
+                                toast.error('Failed to save notes: ' + error.message);
+                              }
+                            }}
+                            className="min-h-[200px] resize-none"
+                          />
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <Card>
+                      <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                          <CardTitle>Nutrition Programs</CardTitle>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setSelectedNutritionPlayerId(selectedPlayerId!);
+                              setSelectedNutritionPlayerName(selectedPlayer!.name);
+                              setIsNutritionDialogOpen(true);
+                            }}
+                            className="w-full sm:w-auto"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Manage Programs
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="px-3 md:px-6 py-4">
+                        {nutritionPrograms[selectedPlayerId!]?.length > 0 ? (
+                          <div className="space-y-3">
+                            {nutritionPrograms[selectedPlayerId!].map((program: any) => (
+                              <div
+                                key={program.id}
+                                className="p-3 md:p-4 border rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer"
+                                onClick={() => {
+                                  setSelectedNutritionPlayerId(selectedPlayerId!);
+                                  setSelectedNutritionPlayerName(selectedPlayer!.name);
+                                  setIsNutritionDialogOpen(true);
+                                }}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                                      <h4 className="font-medium text-sm md:text-base truncate">{program.phase_name}</h4>
+                                      {program.is_current && (
+                                        <span className="text-[10px] md:text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium whitespace-nowrap">
+                                          Current
+                                        </span>
+                                      )}
+                                    </div>
+                                    {program.diet_framework && (
+                                      <p className="text-xs md:text-sm text-muted-foreground">
+                                        {program.diet_framework}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-center text-muted-foreground py-8 text-sm">
+                            No programs yet. Click "Manage Programs" to create one.
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
                   </TabsContent>
                 </Tabs>
               </TabsContent>

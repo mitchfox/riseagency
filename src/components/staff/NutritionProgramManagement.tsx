@@ -8,11 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Trash2, Edit, Apple, Loader2, Save, Database } from "lucide-react";
+import { Plus, Trash2, Edit, Apple, Loader2, Save, Database, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SaveNutritionToCoachingDBDialog } from "./SaveNutritionToCoachingDBDialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-interface NutritionProgram {
+export interface NutritionProgram {
   id: string;
   player_id: string;
   phase_name: string;
@@ -59,8 +60,11 @@ interface NutritionProgram {
 }
 
 interface NutritionProgramManagementProps {
+  isOpen: boolean;
+  onClose: () => void;
   playerId: string;
   playerName: string;
+  onProgramsChange?: (programs: NutritionProgram[]) => void;
 }
 
 const defaultProgram: Partial<NutritionProgram> = {
@@ -106,24 +110,31 @@ const defaultProgram: Partial<NutritionProgram> = {
   fat_recovery_day: "",
 };
 
-export const NutritionProgramManagement = ({ playerId, playerName }: NutritionProgramManagementProps) => {
+export const NutritionProgramManagement = ({ isOpen, onClose, playerId, playerName, onProgramsChange }: NutritionProgramManagementProps) => {
   const [programs, setPrograms] = useState<NutritionProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingProgram, setEditingProgram] = useState<Partial<NutritionProgram>>(defaultProgram);
+  const [editingProgram, setEditingProgram] = useState<Partial<NutritionProgram> | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showSaveToDBDialog, setShowSaveToDBDialog] = useState(false);
   const [programToSave, setProgramToSave] = useState<NutritionProgram | null>(null);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [coachingPrograms, setCoachingPrograms] = useState<any[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [activeTab, setActiveTab] = useState("programs");
 
   useEffect(() => {
-    fetchPrograms();
-  }, [playerId]);
+    if (isOpen) {
+      fetchPrograms();
+    }
+  }, [playerId, isOpen]);
 
-  // Helper function to create a deep copy of data to ensure complete independence
+  useEffect(() => {
+    if (onProgramsChange) {
+      onProgramsChange(programs);
+    }
+  }, [programs, onProgramsChange]);
+
   const deepClone = <T,>(obj: T): T => {
     return JSON.parse(JSON.stringify(obj));
   };
@@ -152,12 +163,9 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
 
     setSaving(true);
     try {
-      // Deep clone the template attachments to ensure complete independence
-      // The nutrition data is stored under attachments.nutrition_data by SaveNutritionToCoachingDBDialog
       const attachments = deepClone(template.attachments || {});
       const nutritionData = attachments.nutrition_data || {};
       
-      // Create program data from template - use explicit typing to satisfy Supabase
       const programData = {
         player_id: playerId,
         phase_name: nutritionData.phase_name || template.title || 'Imported Program',
@@ -214,7 +222,6 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
       setShowTemplateDialog(false);
       fetchPrograms();
       
-      // Open the new program for editing
       if (newProgram) {
         openEditDialog(newProgram as NutritionProgram);
       }
@@ -256,7 +263,7 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
   };
 
   const handleSave = async () => {
-    if (!editingProgram.phase_name?.trim()) {
+    if (!editingProgram?.phase_name?.trim()) {
       toast.error("Phase name is required");
       return;
     }
@@ -264,7 +271,6 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
     setSaving(true);
     try {
       if (isEditing && editingProgram.id) {
-        // Update existing
         const { error } = await supabase
           .from("player_nutrition_programs")
           .update({
@@ -276,7 +282,6 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
         if (error) throw error;
         toast.success("Nutrition program updated");
       } else {
-        // If setting as current, unset others first
         if (editingProgram.is_current) {
           await supabase
             .from("player_nutrition_programs")
@@ -284,7 +289,6 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
             .eq("player_id", playerId);
         }
 
-        // Create new
         const { id, created_at, ...programData } = editingProgram as any;
         const { error } = await supabase
           .from("player_nutrition_programs")
@@ -297,7 +301,7 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
         toast.success("Nutrition program created");
       }
 
-      setDialogOpen(false);
+      setEditingProgram(null);
       fetchPrograms();
     } catch (error: any) {
       toast.error("Failed to save: " + error.message);
@@ -324,13 +328,11 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
 
   const handleSetCurrent = async (id: string) => {
     try {
-      // Unset all
       await supabase
         .from("player_nutrition_programs")
         .update({ is_current: false })
         .eq("player_id", playerId);
 
-      // Set this one
       await supabase
         .from("player_nutrition_programs")
         .update({ is_current: true })
@@ -346,16 +348,13 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
   const openNewDialog = () => {
     setEditingProgram({ ...defaultProgram });
     setIsEditing(false);
-    setDialogOpen(true);
   };
 
   const openEditDialog = (program: NutritionProgram) => {
     setEditingProgram(program);
     setIsEditing(true);
-    setDialogOpen(true);
   };
 
-  // Calculate calories from macros (carbs*4 + protein*4 + fat*9), rounded to nearest 10
   const calculateCalories = (carbs: string, protein: string, fat: string): string => {
     const carbsNum = parseFloat(carbs.replace(/[^0-9.]/g, '')) || 0;
     const proteinNum = parseFloat(protein.replace(/[^0-9.]/g, '')) || 0;
@@ -370,9 +369,9 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
 
   const updateField = (field: keyof NutritionProgram, value: any) => {
     setEditingProgram(prev => {
+      if (!prev) return prev;
       const updated = { ...prev, [field]: value };
       
-      // Auto-calculate base calories when carbs, protein, or fat changes
       if (field === 'carbohydrates' || field === 'protein' || field === 'fat') {
         updated.calories = calculateCalories(
           field === 'carbohydrates' ? value : (prev.carbohydrates || ''),
@@ -381,7 +380,6 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
         );
       }
       
-      // Auto-calculate training day calories
       if (field === 'carbs_training_day' || field === 'protein_training_day' || field === 'fat_training_day') {
         updated.calories_training_day = calculateCalories(
           field === 'carbs_training_day' ? value : (prev.carbs_training_day || ''),
@@ -390,7 +388,6 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
         );
       }
       
-      // Auto-calculate match day calories
       if (field === 'carbs_match_day' || field === 'protein_match_day' || field === 'fat_match_day') {
         updated.calories_match_day = calculateCalories(
           field === 'carbs_match_day' ? value : (prev.carbs_match_day || ''),
@@ -399,7 +396,6 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
         );
       }
       
-      // Auto-calculate recovery day calories
       if (field === 'carbs_recovery_day' || field === 'protein_recovery_day' || field === 'fat_recovery_day') {
         updated.calories_recovery_day = calculateCalories(
           field === 'carbs_recovery_day' ? value : (prev.carbs_recovery_day || ''),
@@ -412,543 +408,551 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
     });
   };
 
-  if (loading) {
+  // Render program editor form
+  const renderProgramEditor = () => {
+    if (!editingProgram) return null;
+
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Nutrition Programs</h3>
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={openTemplateDialog}>
-            <Database className="w-4 h-4 mr-2" />
-            Use Template
-          </Button>
-          <Button size="sm" onClick={openNewDialog}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Program
-          </Button>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between pb-4 border-b">
+          <h3 className="text-lg font-semibold">
+            {isEditing ? "Edit Program" : "New Program"}
+          </h3>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setEditingProgram(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {isEditing ? "Update" : "Create"} Program
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {programs.length === 0 ? (
-        <Card>
-          <CardContent className="py-8">
-            <div className="text-center text-muted-foreground">
-              <Apple className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No nutrition programs yet. Click "Add Program" to create one.</p>
+        <ScrollArea className="h-[calc(80vh-200px)]">
+          <div className="space-y-6 pr-4">
+            {/* Phase Info */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label>Phase Name *</Label>
+                <Input
+                  value={editingProgram.phase_name || ""}
+                  onChange={(e) => updateField("phase_name", e.target.value)}
+                  placeholder="e.g., Endurance Phase"
+                />
+              </div>
+              <div className="flex items-center gap-2 pt-6">
+                <Checkbox
+                  id="is_current"
+                  checked={editingProgram.is_current}
+                  onCheckedChange={(checked) => updateField("is_current", checked)}
+                />
+                <Label htmlFor="is_current">Set as current program</Label>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-3">
-          {programs.map((program) => (
-            <Card key={program.id} className={program.is_current ? "border-primary" : ""}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium truncate">{program.phase_name}</h4>
-                      {program.is_current && (
-                        <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium">
-                          Current
-                        </span>
-                      )}
-                    </div>
-                    {program.diet_framework && (
-                      <p className="text-sm text-muted-foreground truncate">{program.diet_framework}</p>
-                    )}
-                    <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                      {program.calories && <span>Calories: {program.calories}</span>}
-                      {program.protein && <span>Protein: {program.protein}</span>}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => {
-                        setProgramToSave(program);
-                        setShowSaveToDBDialog(true);
-                      }}
-                      title="Save to Coaching DB"
-                    >
-                      <Save className="w-4 h-4" />
-                    </Button>
-                    {!program.is_current && (
-                      <Button variant="outline" size="sm" onClick={() => handleSetCurrent(program.id)}>
-                        Set Current
-                      </Button>
-                    )}
-                    <Button variant="ghost" size="sm" onClick={() => openEditDialog(program)}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(program.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
-          <DialogHeader className="px-6 pt-6 pb-0">
-            <DialogTitle>{isEditing ? "Edit" : "New"} Nutrition Program</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="max-h-[calc(90vh-120px)] px-6 pb-6">
-            <div className="space-y-6 pt-4">
-              {/* Phase Info */}
-              <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label>Diet Framework</Label>
+              <Input
+                value={editingProgram.diet_framework || ""}
+                onChange={(e) => updateField("diet_framework", e.target.value)}
+                placeholder="e.g., Cardiovascular endurance improvement and controlled weight increase"
+              />
+            </div>
+
+            <div>
+              <Label>Weekly Structure</Label>
+              <Input
+                value={editingProgram.weekly_structure || ""}
+                onChange={(e) => updateField("weekly_structure", e.target.value)}
+                placeholder="e.g., Maintain consistency with minor calorie surplus"
+              />
+            </div>
+
+            <div>
+              <Label>Key Additions</Label>
+              <Input
+                value={editingProgram.key_additions || ""}
+                onChange={(e) => updateField("key_additions", e.target.value)}
+                placeholder="e.g., +150 calories daily; new supplements"
+              />
+            </div>
+
+            <div>
+              <Label>Overview</Label>
+              <Textarea
+                value={editingProgram.overview || ""}
+                onChange={(e) => updateField("overview", e.target.value)}
+                placeholder="Detailed overview of this nutrition phase..."
+                className="min-h-[100px]"
+              />
+            </div>
+
+            {/* Key Macros */}
+            <div>
+              <h4 className="font-semibold mb-3 text-primary">Key Macros (Base Values)</h4>
+              <div className="grid gap-3 md:grid-cols-4">
                 <div>
-                  <Label>Phase Name *</Label>
+                  <Label>Calories</Label>
                   <Input
-                    value={editingProgram.phase_name || ""}
-                    onChange={(e) => updateField("phase_name", e.target.value)}
-                    placeholder="e.g., Endurance Phase"
+                    value={editingProgram.calories || ""}
+                    onChange={(e) => updateField("calories", e.target.value)}
+                    placeholder="3650"
                   />
                 </div>
-                <div className="flex items-center gap-2 pt-6">
-                  <Checkbox
-                    id="is_current"
-                    checked={editingProgram.is_current}
-                    onCheckedChange={(checked) => updateField("is_current", checked)}
+                <div>
+                  <Label>Carbohydrates</Label>
+                  <Input
+                    value={editingProgram.carbohydrates || ""}
+                    onChange={(e) => updateField("carbohydrates", e.target.value)}
+                    placeholder="475g"
                   />
-                  <Label htmlFor="is_current">Set as current program</Label>
+                </div>
+                <div>
+                  <Label>Protein</Label>
+                  <Input
+                    value={editingProgram.protein || ""}
+                    onChange={(e) => updateField("protein", e.target.value)}
+                    placeholder="200g"
+                  />
+                </div>
+                <div>
+                  <Label>Fat</Label>
+                  <Input
+                    value={editingProgram.fat || ""}
+                    onChange={(e) => updateField("fat", e.target.value)}
+                    placeholder="105g"
+                  />
                 </div>
               </div>
+            </div>
 
-              <div>
-                <Label>Diet Framework</Label>
-                <Input
-                  value={editingProgram.diet_framework || ""}
-                  onChange={(e) => updateField("diet_framework", e.target.value)}
-                  placeholder="e.g., Cardiovascular endurance improvement and controlled weight increase"
-                />
+            {/* Micronutrients */}
+            <div>
+              <h4 className="font-semibold mb-3 text-primary">Key Micronutrients</h4>
+              <div className="grid gap-3 md:grid-cols-4">
+                <div>
+                  <Label>Micro 1 Name</Label>
+                  <Input
+                    value={editingProgram.micro_1_name || ""}
+                    onChange={(e) => updateField("micro_1_name", e.target.value)}
+                    placeholder="Omega-3's"
+                  />
+                </div>
+                <div>
+                  <Label>Micro 1 Amount</Label>
+                  <Input
+                    value={editingProgram.micro_1_amount || ""}
+                    onChange={(e) => updateField("micro_1_amount", e.target.value)}
+                    placeholder="3g"
+                  />
+                </div>
+                <div>
+                  <Label>Micro 2 Name</Label>
+                  <Input
+                    value={editingProgram.micro_2_name || ""}
+                    onChange={(e) => updateField("micro_2_name", e.target.value)}
+                    placeholder="Vitamin D"
+                  />
+                </div>
+                <div>
+                  <Label>Micro 2 Amount</Label>
+                  <Input
+                    value={editingProgram.micro_2_amount || ""}
+                    onChange={(e) => updateField("micro_2_amount", e.target.value)}
+                    placeholder="3g"
+                  />
+                </div>
               </div>
+            </div>
 
-              <div>
-                <Label>Weekly Structure</Label>
-                <Input
-                  value={editingProgram.weekly_structure || ""}
-                  onChange={(e) => updateField("weekly_structure", e.target.value)}
-                  placeholder="e.g., Maintain consistency with minor calorie surplus"
-                />
+            {/* Supplements */}
+            <div>
+              <h4 className="font-semibold mb-3 text-primary">Supplements</h4>
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label>Supplement 1</Label>
+                  <Input
+                    value={editingProgram.supplement_1_name || ""}
+                    onChange={(e) => updateField("supplement_1_name", e.target.value)}
+                    placeholder="Name"
+                  />
+                  <Input
+                    value={editingProgram.supplement_1_amount || ""}
+                    onChange={(e) => updateField("supplement_1_amount", e.target.value)}
+                    placeholder="Amount"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Supplement 2</Label>
+                  <Input
+                    value={editingProgram.supplement_2_name || ""}
+                    onChange={(e) => updateField("supplement_2_name", e.target.value)}
+                    placeholder="Name"
+                  />
+                  <Input
+                    value={editingProgram.supplement_2_amount || ""}
+                    onChange={(e) => updateField("supplement_2_amount", e.target.value)}
+                    placeholder="Amount"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Supplement 3</Label>
+                  <Input
+                    value={editingProgram.supplement_3_name || ""}
+                    onChange={(e) => updateField("supplement_3_name", e.target.value)}
+                    placeholder="Name"
+                  />
+                  <Input
+                    value={editingProgram.supplement_3_amount || ""}
+                    onChange={(e) => updateField("supplement_3_amount", e.target.value)}
+                    placeholder="Amount"
+                  />
+                </div>
               </div>
+            </div>
 
-              <div>
-                <Label>Key Additions</Label>
-                <Input
-                  value={editingProgram.key_additions || ""}
-                  onChange={(e) => updateField("key_additions", e.target.value)}
-                  placeholder="e.g., +150 calories daily; new supplements"
-                />
-              </div>
-
-              <div>
-                <Label>Overview</Label>
-                <Textarea
-                  value={editingProgram.overview || ""}
-                  onChange={(e) => updateField("overview", e.target.value)}
-                  placeholder="Detailed overview of this nutrition phase..."
-                  className="min-h-[100px]"
-                />
-              </div>
-
-              {/* Key Macros */}
-              <div>
-                <h4 className="font-semibold mb-3 text-primary">Key Macros (Base Values)</h4>
+            {/* Training Day */}
+            <div>
+              <h4 className="font-semibold mb-3 text-primary">Training Day</h4>
+              <div className="space-y-3">
+                <div>
+                  <Label>Overview</Label>
+                  <Textarea
+                    value={editingProgram.training_day_overview || ""}
+                    onChange={(e) => updateField("training_day_overview", e.target.value)}
+                    placeholder="Training day nutrition overview..."
+                  />
+                </div>
+                <div>
+                  <Label>Timings</Label>
+                  <Textarea
+                    value={editingProgram.training_day_timings || ""}
+                    onChange={(e) => updateField("training_day_timings", e.target.value)}
+                    placeholder="Meal timings for training days..."
+                  />
+                </div>
                 <div className="grid gap-3 md:grid-cols-4">
                   <div>
                     <Label>Calories</Label>
                     <Input
-                      value={editingProgram.calories || ""}
-                      onChange={(e) => updateField("calories", e.target.value)}
-                      placeholder="3650"
+                      value={editingProgram.calories_training_day || ""}
+                      onChange={(e) => updateField("calories_training_day", e.target.value)}
                     />
                   </div>
                   <div>
-                    <Label>Carbohydrates</Label>
+                    <Label>Carbs</Label>
                     <Input
-                      value={editingProgram.carbohydrates || ""}
-                      onChange={(e) => updateField("carbohydrates", e.target.value)}
-                      placeholder="475g"
+                      value={editingProgram.carbs_training_day || ""}
+                      onChange={(e) => updateField("carbs_training_day", e.target.value)}
                     />
                   </div>
                   <div>
                     <Label>Protein</Label>
                     <Input
-                      value={editingProgram.protein || ""}
-                      onChange={(e) => updateField("protein", e.target.value)}
-                      placeholder="200g"
+                      value={editingProgram.protein_training_day || ""}
+                      onChange={(e) => updateField("protein_training_day", e.target.value)}
                     />
                   </div>
                   <div>
                     <Label>Fat</Label>
                     <Input
-                      value={editingProgram.fat || ""}
-                      onChange={(e) => updateField("fat", e.target.value)}
-                      placeholder="105g"
+                      value={editingProgram.fat_training_day || ""}
+                      onChange={(e) => updateField("fat_training_day", e.target.value)}
                     />
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Key Micros */}
-              <div>
-                <h4 className="font-semibold mb-3 text-primary">Key Micros</h4>
+            {/* Match Day */}
+            <div>
+              <h4 className="font-semibold mb-3 text-primary">Match Day</h4>
+              <div className="space-y-3">
+                <div>
+                  <Label>Overview</Label>
+                  <Textarea
+                    value={editingProgram.match_day_overview || ""}
+                    onChange={(e) => updateField("match_day_overview", e.target.value)}
+                    placeholder="Match day nutrition overview..."
+                  />
+                </div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div>
+                    <Label>Pre-Match Timings</Label>
+                    <Textarea
+                      value={editingProgram.pre_match_timings || ""}
+                      onChange={(e) => updateField("pre_match_timings", e.target.value)}
+                      placeholder="Pre-match nutrition..."
+                    />
+                  </div>
+                  <div>
+                    <Label>In-Match Timings</Label>
+                    <Textarea
+                      value={editingProgram.in_match_timings || ""}
+                      onChange={(e) => updateField("in_match_timings", e.target.value)}
+                      placeholder="In-match nutrition..."
+                    />
+                  </div>
+                  <div>
+                    <Label>Post-Match Timings</Label>
+                    <Textarea
+                      value={editingProgram.post_match_timings || ""}
+                      onChange={(e) => updateField("post_match_timings", e.target.value)}
+                      placeholder="Post-match nutrition..."
+                    />
+                  </div>
+                </div>
                 <div className="grid gap-3 md:grid-cols-4">
                   <div>
-                    <Label>Micro 1 Name</Label>
+                    <Label>Calories</Label>
                     <Input
-                      value={editingProgram.micro_1_name || ""}
-                      onChange={(e) => updateField("micro_1_name", e.target.value)}
-                      placeholder="Omega-3's"
+                      value={editingProgram.calories_match_day || ""}
+                      onChange={(e) => updateField("calories_match_day", e.target.value)}
                     />
                   </div>
                   <div>
-                    <Label>Amount</Label>
+                    <Label>Carbs</Label>
                     <Input
-                      value={editingProgram.micro_1_amount || ""}
-                      onChange={(e) => updateField("micro_1_amount", e.target.value)}
-                      placeholder="3g"
+                      value={editingProgram.carbs_match_day || ""}
+                      onChange={(e) => updateField("carbs_match_day", e.target.value)}
                     />
                   </div>
                   <div>
-                    <Label>Micro 2 Name</Label>
+                    <Label>Protein</Label>
                     <Input
-                      value={editingProgram.micro_2_name || ""}
-                      onChange={(e) => updateField("micro_2_name", e.target.value)}
-                      placeholder="Vitamin D"
+                      value={editingProgram.protein_match_day || ""}
+                      onChange={(e) => updateField("protein_match_day", e.target.value)}
                     />
                   </div>
                   <div>
-                    <Label>Amount</Label>
+                    <Label>Fat</Label>
                     <Input
-                      value={editingProgram.micro_2_amount || ""}
-                      onChange={(e) => updateField("micro_2_amount", e.target.value)}
-                      placeholder="3g"
+                      value={editingProgram.fat_match_day || ""}
+                      onChange={(e) => updateField("fat_match_day", e.target.value)}
                     />
                   </div>
                 </div>
-              </div>
-
-              {/* Supplements */}
-              <div>
-                <h4 className="font-semibold mb-3 text-primary">Supplements</h4>
-                <div className="grid gap-3 md:grid-cols-6">
-                  <div>
-                    <Label>Supplement 1</Label>
-                    <Input
-                      value={editingProgram.supplement_1_name || ""}
-                      onChange={(e) => updateField("supplement_1_name", e.target.value)}
-                      placeholder="Beta-Alanine"
-                    />
-                  </div>
-                  <div>
-                    <Label>Amount</Label>
-                    <Input
-                      value={editingProgram.supplement_1_amount || ""}
-                      onChange={(e) => updateField("supplement_1_amount", e.target.value)}
-                      placeholder="5g"
-                    />
-                  </div>
-                  <div>
-                    <Label>Supplement 2</Label>
-                    <Input
-                      value={editingProgram.supplement_2_name || ""}
-                      onChange={(e) => updateField("supplement_2_name", e.target.value)}
-                      placeholder="Beet Shots"
-                    />
-                  </div>
-                  <div>
-                    <Label>Amount</Label>
-                    <Input
-                      value={editingProgram.supplement_2_amount || ""}
-                      onChange={(e) => updateField("supplement_2_amount", e.target.value)}
-                      placeholder="2 Shots"
-                    />
-                  </div>
-                  <div>
-                    <Label>Supplement 3</Label>
-                    <Input
-                      value={editingProgram.supplement_3_name || ""}
-                      onChange={(e) => updateField("supplement_3_name", e.target.value)}
-                      placeholder="Omega-3's"
-                    />
-                  </div>
-                  <div>
-                    <Label>Amount</Label>
-                    <Input
-                      value={editingProgram.supplement_3_amount || ""}
-                      onChange={(e) => updateField("supplement_3_amount", e.target.value)}
-                      placeholder="up to 3g"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Training Day */}
-              <div className="border-t pt-4">
-                <h4 className="font-semibold mb-3 text-primary">Training Day</h4>
-                <div className="space-y-3">
-                  <div>
-                    <Label>Important Timings</Label>
-                    <Textarea
-                      value={editingProgram.training_day_timings || ""}
-                      onChange={(e) => updateField("training_day_timings", e.target.value)}
-                      placeholder="Protein evenly split across meals..."
-                      className="min-h-[60px]"
-                    />
-                  </div>
-                  <div>
-                    <Label>Notes/Overview</Label>
-                    <Textarea
-                      value={editingProgram.training_day_overview || ""}
-                      onChange={(e) => updateField("training_day_overview", e.target.value)}
-                      placeholder="On training days, the focus is..."
-                      className="min-h-[80px]"
-                    />
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-4">
-                    <div>
-                      <Label>Calories</Label>
-                      <Input
-                        value={editingProgram.calories_training_day || ""}
-                        onChange={(e) => updateField("calories_training_day", e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label>Carbs</Label>
-                      <Input
-                        value={editingProgram.carbs_training_day || ""}
-                        onChange={(e) => updateField("carbs_training_day", e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label>Protein</Label>
-                      <Input
-                        value={editingProgram.protein_training_day || ""}
-                        onChange={(e) => updateField("protein_training_day", e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label>Fat</Label>
-                      <Input
-                        value={editingProgram.fat_training_day || ""}
-                        onChange={(e) => updateField("fat_training_day", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Match Day */}
-              <div className="border-t pt-4">
-                <h4 className="font-semibold mb-3 text-primary">Match Day</h4>
-                <div className="space-y-3">
-                  <div className="grid gap-3 md:grid-cols-3">
-                    <div>
-                      <Label>Pre-Match Timings</Label>
-                      <Input
-                        value={editingProgram.pre_match_timings || ""}
-                        onChange={(e) => updateField("pre_match_timings", e.target.value)}
-                        placeholder="Highest-carb meal 3-4h before..."
-                      />
-                    </div>
-                    <div>
-                      <Label>In-Match Timings</Label>
-                      <Input
-                        value={editingProgram.in_match_timings || ""}
-                        onChange={(e) => updateField("in_match_timings", e.target.value)}
-                        placeholder="Simple carbs at half-time..."
-                      />
-                    </div>
-                    <div>
-                      <Label>Post-Match Timings</Label>
-                      <Input
-                        value={editingProgram.post_match_timings || ""}
-                        onChange={(e) => updateField("post_match_timings", e.target.value)}
-                        placeholder="Carbs within 60m..."
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Notes/Overview</Label>
-                    <Textarea
-                      value={editingProgram.match_day_overview || ""}
-                      onChange={(e) => updateField("match_day_overview", e.target.value)}
-                      placeholder="In general, look for leaner meats..."
-                      className="min-h-[80px]"
-                    />
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-4">
-                    <div>
-                      <Label>Calories</Label>
-                      <Input
-                        value={editingProgram.calories_match_day || ""}
-                        onChange={(e) => updateField("calories_match_day", e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label>Carbs</Label>
-                      <Input
-                        value={editingProgram.carbs_match_day || ""}
-                        onChange={(e) => updateField("carbs_match_day", e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label>Protein</Label>
-                      <Input
-                        value={editingProgram.protein_match_day || ""}
-                        onChange={(e) => updateField("protein_match_day", e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label>Fat</Label>
-                      <Input
-                        value={editingProgram.fat_match_day || ""}
-                        onChange={(e) => updateField("fat_match_day", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Recovery Day */}
-              <div className="border-t pt-4">
-                <h4 className="font-semibold mb-3 text-primary">Recovery Day</h4>
-                <div className="space-y-3">
-                  <div>
-                    <Label>Important Timings</Label>
-                    <Textarea
-                      value={editingProgram.recovery_day_timings || ""}
-                      onChange={(e) => updateField("recovery_day_timings", e.target.value)}
-                      placeholder="Fibre-rich carbs should be consumed earlier..."
-                      className="min-h-[60px]"
-                    />
-                  </div>
-                  <div>
-                    <Label>Notes/Overview</Label>
-                    <Textarea
-                      value={editingProgram.recovery_day_overview || ""}
-                      onChange={(e) => updateField("recovery_day_overview", e.target.value)}
-                      placeholder="Retain a similar intake all-around..."
-                      className="min-h-[80px]"
-                    />
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-4">
-                    <div>
-                      <Label>Calories</Label>
-                      <Input
-                        value={editingProgram.calories_recovery_day || ""}
-                        onChange={(e) => updateField("calories_recovery_day", e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label>Carbs</Label>
-                      <Input
-                        value={editingProgram.carbs_recovery_day || ""}
-                        onChange={(e) => updateField("carbs_recovery_day", e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label>Protein</Label>
-                      <Input
-                        value={editingProgram.protein_recovery_day || ""}
-                        onChange={(e) => updateField("protein_recovery_day", e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label>Fat</Label>
-                      <Input
-                        value={editingProgram.fat_recovery_day || ""}
-                        onChange={(e) => updateField("fat_recovery_day", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4 border-t">
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  {isEditing ? "Update" : "Create"} Program
-                </Button>
               </div>
             </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
 
-      <SaveNutritionToCoachingDBDialog
-        isOpen={showSaveToDBDialog}
-        onClose={() => setShowSaveToDBDialog(false)}
-        nutritionProgram={programToSave}
-        playerName={playerName}
-      />
+            {/* Recovery Day */}
+            <div>
+              <h4 className="font-semibold mb-3 text-primary">Recovery Day</h4>
+              <div className="space-y-3">
+                <div>
+                  <Label>Overview</Label>
+                  <Textarea
+                    value={editingProgram.recovery_day_overview || ""}
+                    onChange={(e) => updateField("recovery_day_overview", e.target.value)}
+                    placeholder="Recovery day nutrition overview..."
+                  />
+                </div>
+                <div>
+                  <Label>Timings</Label>
+                  <Textarea
+                    value={editingProgram.recovery_day_timings || ""}
+                    onChange={(e) => updateField("recovery_day_timings", e.target.value)}
+                    placeholder="Meal timings for recovery days..."
+                  />
+                </div>
+                <div className="grid gap-3 md:grid-cols-4">
+                  <div>
+                    <Label>Calories</Label>
+                    <Input
+                      value={editingProgram.calories_recovery_day || ""}
+                      onChange={(e) => updateField("calories_recovery_day", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Carbs</Label>
+                    <Input
+                      value={editingProgram.carbs_recovery_day || ""}
+                      onChange={(e) => updateField("carbs_recovery_day", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Protein</Label>
+                    <Input
+                      value={editingProgram.protein_recovery_day || ""}
+                      onChange={(e) => updateField("protein_recovery_day", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Fat</Label>
+                    <Input
+                      value={editingProgram.fat_recovery_day || ""}
+                      onChange={(e) => updateField("fat_recovery_day", e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  };
 
-      {/* Template Selection Dialog */}
-      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Select Nutrition Template</DialogTitle>
-          </DialogHeader>
-          
-          {loadingTemplates ? (
-            <div className="text-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-              <p className="text-sm text-muted-foreground mt-2">Loading templates...</p>
-            </div>
-          ) : coachingPrograms.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No nutrition templates found in the coaching database.</p>
-              <p className="text-sm mt-2">Save a nutrition program to the coaching database first.</p>
-            </div>
-          ) : (
-            <div className="grid gap-3">
-              {coachingPrograms.map((template) => (
-                <Card 
-                  key={template.id} 
-                  className="cursor-pointer hover:border-primary transition-colors"
-                  onClick={() => createProgramFromTemplate(template)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium">{template.title}</h4>
-                        {template.description && (
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                            {template.description}
-                          </p>
+  // Render programs list
+  const renderProgramsList = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between pb-4 border-b">
+          <h3 className="text-lg font-semibold">Nutrition Programs</h3>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={openTemplateDialog}>
+              <Database className="w-4 h-4 mr-2" />
+              Use Template
+            </Button>
+            <Button size="sm" onClick={openNewDialog}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Program
+            </Button>
+          </div>
+        </div>
+
+        {programs.length === 0 ? (
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center text-muted-foreground">
+                <Apple className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No nutrition programs yet. Click "Add Program" to create one.</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-3 max-h-[60vh] overflow-y-auto">
+            {programs.map((program) => (
+              <Card key={program.id} className={program.is_current ? "border-primary" : ""}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium truncate">{program.phase_name}</h4>
+                        {program.is_current && (
+                          <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium">
+                            Current
+                          </span>
                         )}
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Created: {new Date(template.created_at).toLocaleDateString()}
-                        </p>
                       </div>
-                      <Button size="sm" disabled={saving}>
-                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Use'}
+                      {program.diet_framework && (
+                        <p className="text-sm text-muted-foreground truncate">{program.diet_framework}</p>
+                      )}
+                      <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                        {program.calories && <span>Calories: {program.calories}</span>}
+                        {program.protein && <span>Protein: {program.protein}</span>}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          setProgramToSave(program);
+                          setShowSaveToDBDialog(true);
+                        }}
+                        title="Save to Coaching DB"
+                      >
+                        <Save className="w-4 h-4" />
+                      </Button>
+                      {!program.is_current && (
+                        <Button variant="outline" size="sm" onClick={() => handleSetCurrent(program.id)}>
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="sm" onClick={() => openEditDialog(program)}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(program.id)}>
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-5xl max-h-[90vh] p-6 overflow-hidden">
+        <DialogHeader>
+          <DialogTitle>Manage Nutrition Programs - {playerName}</DialogTitle>
+        </DialogHeader>
+        
+        {editingProgram ? renderProgramEditor() : renderProgramsList()}
+
+        <SaveNutritionToCoachingDBDialog
+          isOpen={showSaveToDBDialog}
+          onClose={() => setShowSaveToDBDialog(false)}
+          nutritionProgram={programToSave}
+          playerName={playerName}
+        />
+
+        {/* Template Selection Dialog */}
+        <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Select Nutrition Template</DialogTitle>
+            </DialogHeader>
+            
+            {loadingTemplates ? (
+              <div className="text-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                <p className="text-sm text-muted-foreground mt-2">Loading templates...</p>
+              </div>
+            ) : coachingPrograms.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No nutrition templates found in the coaching database.</p>
+                <p className="text-sm mt-2">Save a nutrition program to the coaching database first.</p>
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {coachingPrograms.map((template) => (
+                  <Card 
+                    key={template.id} 
+                    className="cursor-pointer hover:border-primary transition-colors"
+                    onClick={() => createProgramFromTemplate(template)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium">{template.title}</h4>
+                          {template.description && (
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                              {template.description}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Created: {new Date(template.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Button size="sm" disabled={saving}>
+                          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Use'}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </DialogContent>
+    </Dialog>
   );
 };
