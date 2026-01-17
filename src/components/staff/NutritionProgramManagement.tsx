@@ -153,62 +153,71 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
     setSaving(true);
     try {
       // Deep clone the template attachments to ensure complete independence
-      const templateData = deepClone(template.attachments || {});
+      // The nutrition data is stored under attachments.nutrition_data by SaveNutritionToCoachingDBDialog
+      const attachments = deepClone(template.attachments || {});
+      const nutritionData = attachments.nutrition_data || {};
       
       // Create program data from template - use explicit typing to satisfy Supabase
       const programData = {
         player_id: playerId,
-        phase_name: template.title || 'Imported Program',
-        diet_framework: templateData.diet_framework || null,
-        weekly_structure: templateData.weekly_structure || null,
-        key_additions: templateData.key_additions || null,
-        overview: template.content || templateData.overview || null,
+        phase_name: nutritionData.phase_name || template.title || 'Imported Program',
+        diet_framework: nutritionData.diet_framework || null,
+        weekly_structure: nutritionData.weekly_structure || null,
+        key_additions: nutritionData.key_additions || null,
+        overview: nutritionData.overview || template.content || null,
         is_current: programs.length === 0,
-        calories: templateData.calories || null,
-        carbohydrates: templateData.carbohydrates || null,
-        protein: templateData.protein || null,
-        fat: templateData.fat || null,
-        micro_1_name: templateData.micro_1_name || null,
-        micro_1_amount: templateData.micro_1_amount || null,
-        micro_2_name: templateData.micro_2_name || null,
-        micro_2_amount: templateData.micro_2_amount || null,
-        supplement_1_name: templateData.supplement_1_name || null,
-        supplement_1_amount: templateData.supplement_1_amount || null,
-        supplement_2_name: templateData.supplement_2_name || null,
-        supplement_2_amount: templateData.supplement_2_amount || null,
-        supplement_3_name: templateData.supplement_3_name || null,
-        supplement_3_amount: templateData.supplement_3_amount || null,
-        training_day_overview: templateData.training_day_overview || null,
-        training_day_timings: templateData.training_day_timings || null,
-        calories_training_day: templateData.calories_training_day || null,
-        carbs_training_day: templateData.carbs_training_day || null,
-        protein_training_day: templateData.protein_training_day || null,
-        fat_training_day: templateData.fat_training_day || null,
-        match_day_overview: templateData.match_day_overview || null,
-        pre_match_timings: templateData.pre_match_timings || null,
-        in_match_timings: templateData.in_match_timings || null,
-        post_match_timings: templateData.post_match_timings || null,
-        calories_match_day: templateData.calories_match_day || null,
-        carbs_match_day: templateData.carbs_match_day || null,
-        protein_match_day: templateData.protein_match_day || null,
-        fat_match_day: templateData.fat_match_day || null,
-        recovery_day_overview: templateData.recovery_day_overview || null,
-        recovery_day_timings: templateData.recovery_day_timings || null,
-        calories_recovery_day: templateData.calories_recovery_day || null,
-        carbs_recovery_day: templateData.carbs_recovery_day || null,
-        protein_recovery_day: templateData.protein_recovery_day || null,
-        fat_recovery_day: templateData.fat_recovery_day || null,
+        calories: nutritionData.calories || null,
+        carbohydrates: nutritionData.carbohydrates || null,
+        protein: nutritionData.protein || null,
+        fat: nutritionData.fat || null,
+        micro_1_name: nutritionData.micro_1_name || null,
+        micro_1_amount: nutritionData.micro_1_amount || null,
+        micro_2_name: nutritionData.micro_2_name || null,
+        micro_2_amount: nutritionData.micro_2_amount || null,
+        supplement_1_name: nutritionData.supplement_1_name || null,
+        supplement_1_amount: nutritionData.supplement_1_amount || null,
+        supplement_2_name: nutritionData.supplement_2_name || null,
+        supplement_2_amount: nutritionData.supplement_2_amount || null,
+        supplement_3_name: nutritionData.supplement_3_name || null,
+        supplement_3_amount: nutritionData.supplement_3_amount || null,
+        training_day_overview: nutritionData.training_day_overview || null,
+        training_day_timings: nutritionData.training_day_timings || null,
+        calories_training_day: nutritionData.calories_training_day || null,
+        carbs_training_day: nutritionData.carbs_training_day || null,
+        protein_training_day: nutritionData.protein_training_day || null,
+        fat_training_day: nutritionData.fat_training_day || null,
+        match_day_overview: nutritionData.match_day_overview || null,
+        pre_match_timings: nutritionData.pre_match_timings || null,
+        in_match_timings: nutritionData.in_match_timings || null,
+        post_match_timings: nutritionData.post_match_timings || null,
+        calories_match_day: nutritionData.calories_match_day || null,
+        carbs_match_day: nutritionData.carbs_match_day || null,
+        protein_match_day: nutritionData.protein_match_day || null,
+        fat_match_day: nutritionData.fat_match_day || null,
+        recovery_day_overview: nutritionData.recovery_day_overview || null,
+        recovery_day_timings: nutritionData.recovery_day_timings || null,
+        calories_recovery_day: nutritionData.calories_recovery_day || null,
+        carbs_recovery_day: nutritionData.carbs_recovery_day || null,
+        protein_recovery_day: nutritionData.protein_recovery_day || null,
+        fat_recovery_day: nutritionData.fat_recovery_day || null,
       };
 
-      const { error } = await supabase
+      const { error, data: newProgram } = await supabase
         .from('player_nutrition_programs')
-        .insert([programData]);
+        .insert([programData])
+        .select()
+        .single();
 
       if (error) throw error;
 
       toast.success('✅ Nutrition program created from template!');
       setShowTemplateDialog(false);
       fetchPrograms();
+      
+      // Open the new program for editing
+      if (newProgram) {
+        openEditDialog(newProgram as NutritionProgram);
+      }
     } catch (error) {
       console.error('Error creating program from template:', error);
       toast.error('Failed to create program from template');
