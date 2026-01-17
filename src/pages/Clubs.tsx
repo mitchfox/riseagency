@@ -9,7 +9,7 @@ import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { useState } from "react";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { Marquee } from "@/components/Marquee";
-import { ShaderAnimation } from "@/components/ui/shader-animation";
+
 import { 
   Target, 
   Users, 
@@ -74,7 +74,7 @@ const Clubs = () => {
     { value: '120+', label: t('clubs.stat_network', 'Club Network Size') },
     { value: '3', label: t('clubs.stat_prem', 'Premier League Clubs') },
     { value: '30+', label: t('clubs.stat_countries', 'Countries Covered') },
-    { value: '74', label: t('clubs.stat_professionals', 'Professionals Developed') }
+    { value: '£10M+', label: t('clubs.stat_revenue', 'Transfer Revenue') }
   ];
 
   const approachImages = [
@@ -115,9 +115,7 @@ const Clubs = () => {
               {t('clubs.title', 'FOR CLUBS')}
             </h1>
             <div className="relative inline-block mb-8">
-              <div className="absolute inset-0 -z-10">
-                <ShaderAnimation />
-              </div>
+              <div className="absolute inset-0 -z-10 bg-black/40 rounded-lg" />
               <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto px-6 py-3 font-light">
                 <em>{t('clubs.subtitle', 'Strategic partnerships to elevate your club\'s performance')}</em>
               </p>
@@ -181,7 +179,7 @@ const Clubs = () => {
                     <div key={index} className="group relative bg-card border border-border/50 rounded-xl p-8 hover:border-primary/50 hover:shadow-xl transition-all duration-300">
                       <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-[100px] -z-10" />
                       
-                      <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                      <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 border border-primary/20 group-hover:bg-primary/20 transition-colors mx-auto">
                         <service.icon className="w-8 h-8 text-primary" />
                       </div>
                       
@@ -314,38 +312,36 @@ const Clubs = () => {
 
         {/* CTA Section */}
         <ScrollReveal>
-          <section className="py-16 md:py-24 bg-background relative overflow-hidden">
-            {/* Faded background */}
-            <div className="absolute inset-0 opacity-5 pointer-events-none">
-              <div 
-                className="absolute inset-0 bg-cover bg-center grayscale"
-                style={{ backgroundImage: `url(${bannerHero})` }}
-              />
-            </div>
+          <section className="py-16 md:py-24 relative overflow-hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+            {/* White marble overlay */}
+            <div className="absolute inset-0 bg-white/90" />
             
             <div className="container mx-auto px-4 text-center relative z-10">
-              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
+              <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6 text-black">
                 {t('clubs.cta_title', 'READY TO ELEVATE YOUR CLUB?')}
               </h2>
-              <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              <p className="text-xl text-black/70 mb-8 max-w-2xl mx-auto">
                 {t('clubs.cta_subtitle', 'Schedule a consultation to discuss how we can support your objectives.')}
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
-                  onClick={() => setArrangeMeetingOpen(true)}
-                  size="lg" 
-                  className="btn-shine font-bebas uppercase tracking-wider"
-                >
-                  {t('clubs.arrange_meeting', 'Arrange Meeting')}
-                </Button>
-                <Button 
-                  onClick={() => setDeclareInterestOpen(true)}
-                  variant="outline" 
-                  size="lg" 
-                  className="font-bebas uppercase tracking-wider"
-                >
-                  {t('clubs.declare_interest', 'Declare Interest in Player')}
-                </Button>
+              <div className="inline-block bg-black/90 px-8 py-6 rounded-lg">
+                <p className="text-white font-bebas uppercase tracking-wider text-lg mb-4">Contact Us Today</p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button 
+                    onClick={() => setArrangeMeetingOpen(true)}
+                    size="lg" 
+                    className="btn-shine font-bebas uppercase tracking-wider"
+                  >
+                    {t('clubs.arrange_meeting', 'Arrange Meeting')}
+                  </Button>
+                  <Button 
+                    onClick={() => setDeclareInterestOpen(true)}
+                    variant="outline" 
+                    size="lg" 
+                    className="font-bebas uppercase tracking-wider border-white text-white hover:bg-white/10"
+                  >
+                    {t('clubs.declare_interest', 'Declare Interest in Player')}
+                  </Button>
+                </div>
               </div>
             </div>
           </section>
