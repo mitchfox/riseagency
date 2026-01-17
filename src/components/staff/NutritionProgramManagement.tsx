@@ -774,6 +774,13 @@ export const NutritionProgramManagement = ({ playerId, playerName }: NutritionPr
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      <SaveNutritionToCoachingDBDialog
+        isOpen={showSaveToDBDialog}
+        onClose={() => setShowSaveToDBDialog(false)}
+        nutritionProgram={programToSave}
+        playerName={playerName}
+      />
     </div>
   );
 };
