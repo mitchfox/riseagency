@@ -88,6 +88,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [isProgrammingDialogOpen, setIsProgrammingDialogOpen] = useState(false);
   const [selectedProgrammingPlayerId, setSelectedProgrammingPlayerId] = useState<string>("");
   const [selectedProgrammingPlayerName, setSelectedProgrammingPlayerName] = useState<string>("");
+  const [isNutritionDialogOpen, setIsNutritionDialogOpen] = useState(false);
+  const [selectedNutritionPlayerId, setSelectedNutritionPlayerId] = useState<string>("");
+  const [selectedNutritionPlayerName, setSelectedNutritionPlayerName] = useState<string>("");
+  const [nutritionPrograms, setNutritionPrograms] = useState<any[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [isEditHighlightOpen, setIsEditHighlightOpen] = useState(false);
