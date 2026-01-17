@@ -25,7 +25,8 @@ import {
   Play,
   FileText
 } from "lucide-react";
-import bannerHero from "@/assets/banner-hero.jpg";
+import omotoyeCelebrating from "@/assets/omotoye-celebrating.png";
+import whiteMarble from "@/assets/white-marble.png";
 import realisePotentialReport from "@/assets/realise-potential-report.png";
 import realisePotentialAnalysis from "@/assets/realise-potential-analysis.png";
 import realisePotentialSessions from "@/assets/realise-potential-sessions.png";
@@ -100,10 +101,10 @@ const Clubs = () => {
         {/* Hero Section */}
         <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
           <div 
-            className="absolute inset-0 bg-cover bg-top"
-            style={{ backgroundImage: `url(${bannerHero})` }}
+            className="absolute inset-0 bg-contain bg-no-repeat bg-top"
+            style={{ backgroundImage: `url(${omotoyeCelebrating})`, backgroundPosition: 'top center' }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-background" />
           
           <div className="relative container mx-auto px-4 text-center z-10">
             <div className="inline-block mb-6">
@@ -115,8 +116,8 @@ const Clubs = () => {
               {t('clubs.title', 'FOR CLUBS')}
             </h1>
             <div className="relative inline-block mb-8">
-              <div className="absolute inset-0 -z-10 bg-black/40 rounded-lg" />
-              <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto px-6 py-3 font-light">
+              <div className="absolute inset-0 -z-10 bg-black/50 rounded-full" style={{ transform: 'scaleX(1.1)' }} />
+              <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto px-8 py-3 font-light">
                 <em>{t('clubs.subtitle', 'Strategic partnerships to elevate your club\'s performance')}</em>
               </p>
             </div>
@@ -214,7 +215,7 @@ const Clubs = () => {
             <div className="absolute inset-0 opacity-5 pointer-events-none">
               <div 
                 className="absolute top-0 right-0 w-1/2 h-full bg-cover bg-center grayscale"
-                style={{ backgroundImage: `url(${bannerHero})` }}
+                style={{ backgroundImage: `url(${omotoyeCelebrating})` }}
               />
             </div>
             
@@ -312,9 +313,12 @@ const Clubs = () => {
 
         {/* CTA Section */}
         <ScrollReveal>
-          <section className="py-16 md:py-24 relative overflow-hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-            {/* White marble overlay */}
-            <div className="absolute inset-0 bg-white/90" />
+          <section className="py-16 md:py-24 relative overflow-hidden">
+            {/* White marble background */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${whiteMarble})` }}
+            />
             
             <div className="container mx-auto px-4 text-center relative z-10">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6 text-black">
@@ -323,25 +327,25 @@ const Clubs = () => {
               <p className="text-xl text-black/70 mb-8 max-w-2xl mx-auto">
                 {t('clubs.cta_subtitle', 'Schedule a consultation to discuss how we can support your objectives.')}
               </p>
-              <div className="inline-block bg-black/90 px-8 py-6 rounded-lg">
-                <p className="text-white font-bebas uppercase tracking-wider text-lg mb-4">Contact Us Today</p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button 
-                    onClick={() => setArrangeMeetingOpen(true)}
-                    size="lg" 
-                    className="btn-shine font-bebas uppercase tracking-wider"
-                  >
-                    {t('clubs.arrange_meeting', 'Arrange Meeting')}
-                  </Button>
-                  <Button 
-                    onClick={() => setDeclareInterestOpen(true)}
-                    variant="outline" 
-                    size="lg" 
-                    className="font-bebas uppercase tracking-wider border-white text-white hover:bg-white/10"
-                  >
-                    {t('clubs.declare_interest', 'Declare Interest in Player')}
-                  </Button>
-                </div>
+              <div className="inline-block bg-black/90 px-6 py-3 rounded-lg mb-6">
+                <p className="text-white font-bebas uppercase tracking-wider text-lg">Contact Us Today</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button 
+                  onClick={() => setArrangeMeetingOpen(true)}
+                  size="lg" 
+                  className="btn-shine font-bebas uppercase tracking-wider"
+                >
+                  {t('clubs.arrange_meeting', 'Arrange Meeting')}
+                </Button>
+                <Button 
+                  onClick={() => setDeclareInterestOpen(true)}
+                  variant="outline" 
+                  size="lg" 
+                  className="font-bebas uppercase tracking-wider border-black text-black hover:bg-black/10"
+                >
+                  {t('clubs.declare_interest', 'Declare Interest in Player')}
+                </Button>
               </div>
             </div>
           </section>
