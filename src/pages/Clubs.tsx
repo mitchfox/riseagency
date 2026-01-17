@@ -101,8 +101,8 @@ const Clubs = () => {
         {/* Hero Section */}
         <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
           <div 
-            className="absolute inset-0 bg-contain bg-no-repeat bg-top"
-            style={{ backgroundImage: `url(${omotoyeCelebrating})`, backgroundPosition: 'top center' }}
+            className="absolute inset-0 bg-cover bg-center grayscale"
+            style={{ backgroundImage: `url(${omotoyeCelebrating})` }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-background" />
           
@@ -313,7 +313,7 @@ const Clubs = () => {
 
         {/* CTA Section */}
         <ScrollReveal>
-          <section className="py-16 md:py-24 relative overflow-hidden">
+          <section className="py-16 md:py-24 relative overflow-hidden border-t-2 border-b-2 border-primary">
             {/* White marble background */}
             <div 
               className="absolute inset-0 bg-cover bg-center"
@@ -340,9 +340,8 @@ const Clubs = () => {
                 </Button>
                 <Button 
                   onClick={() => setDeclareInterestOpen(true)}
-                  variant="outline" 
                   size="lg" 
-                  className="font-bebas uppercase tracking-wider border-black text-black hover:bg-black/10"
+                  className="font-bebas uppercase tracking-wider bg-black text-white hover:bg-black/80"
                 >
                   {t('clubs.declare_interest', 'Declare Interest in Player')}
                 </Button>
