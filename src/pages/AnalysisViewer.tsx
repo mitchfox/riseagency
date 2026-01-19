@@ -169,7 +169,7 @@ const TacticalSymbols = () => (
 const SectionTitle = ({ title, icon }: { title: string; icon?: "plus" | "minus" | null }) => (
   <div className="relative mb-4">
     <div 
-      className="relative rounded-lg overflow-hidden cursor-pointer group border-2 border-primary"
+      className="relative rounded-2xl overflow-hidden cursor-pointer group border-2 border-primary"
       style={{
         backgroundImage: `url(${whiteMarble})`,
         backgroundSize: 'cover',
@@ -192,7 +192,7 @@ const SectionTitle = ({ title, icon }: { title: string; icon?: "plus" | "minus" 
 // Content card - grey background with black text (matches fuelforfootball)
 const ContentCard = ({ children, className = "", transparent = false }: { children: React.ReactNode; className?: string; transparent?: boolean }) => (
   <div 
-    className={`rounded-lg p-4 md:p-6 ${className}`}
+    className={`rounded-2xl p-4 md:p-6 ${className}`}
     style={transparent ? {} : { backgroundColor: 'hsl(0 0% 75%)', color: 'black' }}
   >
     {children}
@@ -495,7 +495,7 @@ const AnalysisHeader = ({
       {matchDate && (
         <div 
           className="text-center py-2"
-          style={{ backgroundColor: '#0a2e12' }}
+          style={{ backgroundColor: '#000000' }}
         >
           <span 
             className="text-white font-bebas tracking-wider text-base md:text-lg italic"
@@ -591,7 +591,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="text-base md:text-lg px-6 py-2 font-bebas tracking-wider hover:bg-white/90 transition-colors border-primary border-2 text-black"
+                className="text-base md:text-lg px-6 py-2 font-bebas tracking-wider hover:bg-white/90 transition-colors border-primary border-2 text-black rounded-2xl"
                 style={{
                   backgroundImage: `url(${whiteMarble})`,
                   backgroundSize: 'cover',
@@ -603,7 +603,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="w-[96vw] max-w-none max-h-[70vh] overflow-y-auto z-50 p-4 md:p-6 border-primary border-2"
+              className="w-[96vw] max-w-none max-h-[70vh] overflow-y-auto z-50 p-4 md:p-6 border-primary border-2 rounded-2xl"
               style={{
                 backgroundImage: `url(${blackMarble})`,
                 backgroundSize: 'cover',
@@ -624,7 +624,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
                       <DropdownMenuItem
                         key={section.id}
                         onClick={() => handleNavigate(section.id)}
-                        className="cursor-pointer hover:opacity-80 font-bebas tracking-wide text-sm md:text-base py-1.5 px-3 rounded-md border text-black border-primary/60"
+                        className="cursor-pointer hover:opacity-80 font-bebas tracking-wide text-sm md:text-base py-1.5 px-3 rounded-xl border text-black border-primary/60"
                         style={{
                           backgroundImage: `url(${whiteMarble})`,
                           backgroundSize: 'cover',
@@ -652,7 +652,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
                       <DropdownMenuItem
                         key={section.id}
                         onClick={() => handleNavigate(section.id)}
-                        className="cursor-pointer hover:opacity-80 font-bebas tracking-wide text-sm md:text-base py-1.5 px-3 rounded-md border text-black border-primary/60"
+                        className="cursor-pointer hover:opacity-80 font-bebas tracking-wide text-sm md:text-base py-1.5 px-3 rounded-xl border text-black border-primary/60"
                         style={{
                           backgroundImage: `url(${whiteMarble})`,
                           backgroundSize: 'cover',
@@ -1340,7 +1340,7 @@ const AnalysisViewer = () => {
         >
           <Button
             onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}
-            className="font-bebas uppercase tracking-wider text-lg px-8 py-4 bg-primary text-black border-2 border-primary hover:bg-primary/90"
+            className="font-bebas uppercase tracking-wider text-lg px-8 py-4 bg-primary text-black border-2 border-primary hover:bg-primary/90 rounded-2xl"
           >
             <ArrowLeft className="w-4 h-4 mr-2 rotate-90" />
             Back to Top
