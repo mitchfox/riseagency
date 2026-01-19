@@ -822,24 +822,24 @@ const AnalysisViewer = () => {
                   {playerName && (
                     <div className="absolute bottom-0 left-0 right-0 flex justify-center" style={{ transform: 'translateY(50%)' }}>
                       <svg 
-                        viewBox="0 0 400 80" 
-                        className="w-[85%] max-w-[400px] h-auto"
+                        viewBox="0 0 400 70" 
+                        className="w-[90%] max-w-[500px] h-auto"
                         preserveAspectRatio="xMidYMid meet"
                       >
-                        {/* Arched banner shape - inward curving arch like fuelforfootball */}
+                        {/* Arched banner shape - concave top edge like fuelforfootball */}
                         <path
-                          d="M0,60 Q0,30 60,20 L340,20 Q400,30 400,60 L400,60 Q400,80 340,80 L60,80 Q0,80 0,60 Z"
+                          d="M0,35 Q200,0 400,35 L400,70 L0,70 Z"
                           fill="hsl(var(--primary))"
                         />
                         {/* Player name text */}
                         <text
                           x="200"
-                          y="55"
+                          y="52"
                           textAnchor="middle"
                           dominantBaseline="middle"
                           className="font-bebas"
                           style={{
-                            fontSize: '26px',
+                            fontSize: '28px',
                             fontFamily: 'Bebas Neue, sans-serif',
                             letterSpacing: '0.12em',
                             fill: 'black',
@@ -869,23 +869,23 @@ const AnalysisViewer = () => {
               >
                 <div className="flex justify-center">
                   <svg 
-                    viewBox="0 0 400 80" 
-                    className="w-[85%] max-w-[400px] h-auto"
+                    viewBox="0 0 400 70" 
+                    className="w-[90%] max-w-[500px] h-auto"
                     preserveAspectRatio="xMidYMid meet"
                   >
-                    {/* Arched banner shape - inward curving arch like fuelforfootball */}
+                    {/* Arched banner shape - concave top edge like fuelforfootball */}
                     <path
-                      d="M0,60 Q0,30 60,20 L340,20 Q400,30 400,60 L400,60 Q400,80 340,80 L60,80 Q0,80 0,60 Z"
+                      d="M0,35 Q200,0 400,35 L400,70 L0,70 Z"
                       fill="hsl(var(--primary))"
                     />
                     <text
                       x="200"
-                      y="55"
+                      y="52"
                       textAnchor="middle"
                       dominantBaseline="middle"
                       className="font-bebas"
                       style={{
-                        fontSize: '26px',
+                        fontSize: '28px',
                         fontFamily: 'Bebas Neue, sans-serif',
                         letterSpacing: '0.12em',
                         fill: 'black',
