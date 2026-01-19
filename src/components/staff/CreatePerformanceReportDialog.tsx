@@ -1148,6 +1148,22 @@ export const CreatePerformanceReportDialog = ({
 
         if (analysisError) throw analysisError;
 
+        // Fetch existing actions to preserve video_url before deleting
+        const { data: existingActions } = await supabase
+          .from("performance_report_actions")
+          .select("action_number, video_url")
+          .eq("analysis_id", analysisId);
+        
+        // Create a map of action_number to video_url
+        const existingVideoUrls = new Map<number, string | null>();
+        if (existingActions) {
+          existingActions.forEach(a => {
+            if (a.video_url) {
+              existingVideoUrls.set(a.action_number, a.video_url);
+            }
+          });
+        }
+
         // Delete existing actions
         const { error: deleteError } = await supabase
           .from("performance_report_actions")
@@ -1155,6 +1171,9 @@ export const CreatePerformanceReportDialog = ({
           .eq("analysis_id", analysisId);
 
         if (deleteError) throw deleteError;
+        
+        // Store the map for use when inserting
+        (window as any).__preservedVideoUrls = existingVideoUrls;
       } else {
         // Create mode - check for existing analysis by fixture_id
         const { data: existingAnalysis } = await supabase
@@ -1193,6 +1212,9 @@ export const CreatePerformanceReportDialog = ({
       }
 
       // Insert performance actions
+      // Retrieve preserved video URLs if in edit mode
+      const preservedVideoUrls = (window as any).__preservedVideoUrls as Map<number, string | null> | undefined;
+      
       const actionsToInsert = actions
         .filter(a => a.action_number)
         .map(a => ({
@@ -1203,7 +1225,12 @@ export const CreatePerformanceReportDialog = ({
           action_type: a.action_type || null,
           action_description: a.action_description || null,
           notes: a.notes || null,
+          // Preserve video_url: use the one from the action state, or fall back to preserved from DB
+          video_url: a.video_url || preservedVideoUrls?.get(a.action_number) || null,
         }));
+      
+      // Clean up the temporary storage
+      delete (window as any).__preservedVideoUrls;
 
       if (actionsToInsert.length > 0) {
         const { error: actionsError } = await supabase

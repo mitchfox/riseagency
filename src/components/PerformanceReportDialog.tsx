@@ -275,7 +275,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
       if (analysis.striker_stats[attemptedKey] != null && !key.endsWith('_attempted')) {
         const attempted = Number(analysis.striker_stats[attemptedKey]);
         const successful = Number(value);
-        if (attempted > 0 && !isNaN(successful)) {
+        // Show paired stats even if attempted is 0 (display as 0/0)
+        if (!isNaN(attempted) && !isNaN(successful)) {
           processedKeys.add(attemptedKey);
           const per90Key = `${key}_per90`;
           const per90Value = analysis.striker_stats[per90Key];
@@ -286,7 +287,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
             isPaired: true,
             successful,
             attempted,
-            percentage: ((successful / attempted) * 100).toFixed(1)
+            percentage: attempted > 0 ? ((successful / attempted) * 100).toFixed(1) : '0'
           });
           continue;
         }
