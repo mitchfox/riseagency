@@ -555,9 +555,12 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
       style={{
         backgroundImage: `url(${blackMarble})`,
         backgroundSize: 'cover',
-        backgroundPosition: 'center'
+        backgroundPosition: 'center',
+        transform: 'scaleY(-1)'
       }}
     >
+      {/* Inner container to flip content back to normal */}
+      <div style={{ transform: 'scaleY(-1)' }}>
       {/* Cone icon above Jump to Section */}
       <div className="flex justify-center pt-6">
         <svg width="40" height="50" viewBox="0 0 40 50" className="drop-shadow-lg">
@@ -657,6 +660,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
           </DropdownMenu>
         </div>
       </motion.div>
+      </div>
     </div>
   );
 };
