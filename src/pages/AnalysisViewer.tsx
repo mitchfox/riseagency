@@ -491,35 +491,26 @@ const AnalysisHeader = ({
         </div>
       </div>
 
-      {/* Match Date with gradient fade below */}
+      {/* Match Date - no margin, gradient will overlay match image */}
       {matchDate && (
-        <>
-          <div 
-            className="text-center py-2"
-            style={{ backgroundColor: '#0a2e12' }}
-          >
-            <span 
-              className="text-white font-bebas tracking-wider text-base md:text-lg italic"
-              style={{
-                textShadow: '2px 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.6)'
-              }}
-            >
-              {new Date(matchDate).toLocaleDateString('en-GB', {
-                weekday: 'long',
-                day: '2-digit',
-                month: 'long',
-                year: 'numeric'
-              })}
-            </span>
-          </div>
-          {/* Green fade gradient overlay - doubled height, layered ON TOP of match image */}
-          <div 
-            className="h-24 w-full"
+        <div 
+          className="text-center py-2"
+          style={{ backgroundColor: '#0a2e12' }}
+        >
+          <span 
+            className="text-white font-bebas tracking-wider text-base md:text-lg italic"
             style={{
-              background: 'linear-gradient(to bottom, #0a2e12 0%, rgba(10,46,18,0.7) 30%, rgba(10,46,18,0.3) 60%, transparent 100%)'
+              textShadow: '2px 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.6)'
             }}
-          />
-        </>
+          >
+            {new Date(matchDate).toLocaleDateString('en-GB', {
+              weekday: 'long',
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric'
+            })}
+          </span>
+        </div>
       )}
     </motion.div>
   );
@@ -834,6 +825,13 @@ const AnalysisViewer = () => {
                       src={analysis.player_image_url || analysis.match_image_url || ''}
                       alt="Match"
                       className="w-full h-full object-cover object-top"
+                    />
+                    {/* Black gradient fading down from top - overlays match image */}
+                    <div 
+                      className="absolute top-0 left-0 right-0 h-24 pointer-events-none"
+                      style={{
+                        background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 40%, transparent 100%)'
+                      }}
                     />
                   </div>
                   
