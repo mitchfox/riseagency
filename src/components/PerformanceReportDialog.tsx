@@ -389,11 +389,11 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                   <Button
                     variant="default"
                     size="sm"
-                    className="bg-amber-500 hover:bg-amber-600 text-black font-semibold flex items-center gap-2"
+                    className="bg-risegold hover:bg-risegold/90 text-black font-semibold flex items-center gap-2"
                     onClick={() => setShowClippedActions(true)}
                   >
                     <Play className="h-4 w-4" />
-                    Clipped Actions ({actions.filter(a => a.video_url).length})
+                    {actions.filter(a => a.video_url).length}
                   </Button>
                 )}
               </div>
@@ -481,26 +481,25 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                     <div className="block md:hidden space-y-3">
                       {actions.map((action) => (
                         <div key={action.id} className="p-3 bg-muted/30 rounded-lg">
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex gap-3 items-center">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex gap-2 items-center flex-wrap">
                               <span className="font-semibold">#{action.action_number}</span>
                               <span className="text-sm text-muted-foreground">{formatMinute(action.minute)}'</span>
-                              {action.video_url && (
-                                <button
-                                  onClick={() => {
-                                    setSelectedVideoUrl(action.video_url!);
-                                    setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
-                                  }}
-                                  className="bg-amber-500 hover:bg-amber-600 text-black px-2 py-0.5 rounded text-xs font-bold flex items-center gap-1"
-                                >
-                                  <Video className="h-3 w-3" />
-                                  Clip
-                                </button>
-                              )}
+                              <span className={`text-sm font-bold ${getActionScoreColor(action.action_score)}`}>
+                                {action.action_score?.toFixed(5)}
+                              </span>
                             </div>
-                            <span className={`text-sm font-bold ${getActionScoreColor(action.action_score)}`}>
-                              {action.action_score?.toFixed(5)}
-                            </span>
+                            {action.video_url && (
+                              <button
+                                onClick={() => {
+                                  setSelectedVideoUrl(action.video_url!);
+                                  setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
+                                }}
+                                className="text-risegold hover:text-risegold/80 p-1"
+                              >
+                                <Video className="h-4 w-4" />
+                              </button>
+                            )}
                           </div>
                           <div className="font-medium text-sm mb-1">{action.action_type}</div>
                           <div className="text-sm text-foreground/80">{action.action_description}</div>
@@ -545,9 +544,9 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                                       setSelectedVideoUrl(action.video_url!);
                                       setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
                                     }}
-                                    className="bg-amber-500 hover:bg-amber-600 text-black px-2 py-1 rounded text-xs font-bold inline-flex items-center gap-1"
+                                    className="text-risegold hover:text-risegold/80 p-1"
                                   >
-                                    <Video className="h-3 w-3" />
+                                    <Video className="h-4 w-4" />
                                   </button>
                                 ) : (
                                   <span className="text-muted-foreground">-</span>
