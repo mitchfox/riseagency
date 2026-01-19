@@ -898,7 +898,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
               </div>
 
               <div>
-                <Label htmlFor="edit_analysis_writer">Link to Analysis Writer (Optional)</Label>
+                <Label htmlFor="edit_analysis_writer">Link to Analysis (Optional)</Label>
                 <Select
                   value={editGameData.analysis_writer_id || "none"}
                   onValueChange={(value) => setEditGameData({ ...editGameData, analysis_writer_id: value === "none" ? "" : value })}
@@ -916,7 +916,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Link this performance report to a detailed analysis from Analysis Writer
+                  Link this performance report to a detailed analysis
                 </p>
               </div>
 
