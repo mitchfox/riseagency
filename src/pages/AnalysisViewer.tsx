@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import riseLogo from "@/assets/logo.png";
 import smokyBackground from "@/assets/smudged-marble-overlay.png";
+import blackMarble from "@/assets/black-marble.png";
+import whiteMarble from "@/assets/white-marble.png";
 
 interface Analysis {
   id: string;
@@ -163,15 +165,22 @@ const TacticalSymbols = () => (
   </svg>
 );
 
-// Section title with marble background
+// Section title with white marble background
 const SectionTitle = ({ title, icon }: { title: string; icon?: "plus" | "minus" | null }) => (
   <div className="relative mb-4">
-    <div className="relative rounded-lg overflow-hidden cursor-pointer group bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-2 border-primary">
+    <div 
+      className="relative rounded-lg overflow-hidden cursor-pointer group border-2 border-primary"
+      style={{
+        backgroundImage: `url(${whiteMarble})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}
+    >
       <div className="py-3 md:py-4 px-4">
         <div className="flex items-center justify-center gap-3">
           {icon === "plus" && <Plus className="w-5 h-5 md:w-6 md:h-6 text-primary" />}
           {icon === "minus" && <Minus className="w-5 h-5 md:w-6 md:h-6 text-primary" />}
-          <h2 className="text-xl md:text-2xl font-bebas uppercase tracking-widest text-center text-primary drop-shadow-md">
+          <h2 className="text-xl md:text-2xl font-bebas uppercase tracking-widest text-center text-black drop-shadow-sm">
             <HoverText text={title} />
           </h2>
         </div>
@@ -180,9 +189,9 @@ const SectionTitle = ({ title, icon }: { title: string; icon?: "plus" | "minus" 
   </div>
 );
 
-// Content card
+// Content card - greyish background with black text
 const ContentCard = ({ children, className = "", transparent = false }: { children: React.ReactNode; className?: string; transparent?: boolean }) => (
-  <div className={`rounded-lg p-4 md:p-6 ${transparent ? 'bg-transparent' : 'bg-card/90 backdrop-blur-sm'} ${className}`}>
+  <div className={`rounded-lg p-4 md:p-6 ${transparent ? 'bg-transparent' : 'bg-muted/90 backdrop-blur-sm text-black'} ${className}`}>
     {children}
   </div>
 );
@@ -249,7 +258,17 @@ const ExpandableSection = ({
 
   if (forceOpen) {
     return (
-      <section ref={sectionRef} id={id} data-expandable className="relative w-full bg-background">
+      <section 
+        ref={sectionRef} 
+        id={id} 
+        data-expandable 
+        className="relative w-full"
+        style={{
+          backgroundImage: `url(${blackMarble})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
         <TacticalSymbols />
         <div className="relative px-4 md:px-6 pt-4 md:pt-5 pb-2 md:pb-3">
           <div className="w-full">
@@ -265,7 +284,17 @@ const ExpandableSection = ({
   }
 
   return (
-    <section ref={sectionRef} id={id} data-expandable className="relative w-full bg-background">
+    <section 
+      ref={sectionRef} 
+      id={id} 
+      data-expandable 
+      className="relative w-full"
+      style={{
+        backgroundImage: `url(${blackMarble})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}
+    >
       <TacticalSymbols />
       <div className="relative px-4 md:px-6 pt-4 md:pt-5 pb-2 md:pb-3">
         <motion.div
