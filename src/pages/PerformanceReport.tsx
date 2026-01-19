@@ -342,9 +342,10 @@ const PerformanceReport = () => {
                       if (stats[attemptedKey] != null && stats[key] != null) {
                         const attempted = Number(stats[attemptedKey]);
                         const successful = Number(stats[key]);
-                        if (attempted > 0) {
+                        // Show paired stats even if attempted is 0 (display as 0/0)
+                        if (!isNaN(attempted) && !isNaN(successful)) {
                           return {
-                            percentage: ((successful / attempted) * 100).toFixed(1),
+                            percentage: attempted > 0 ? ((successful / attempted) * 100).toFixed(1) : '0',
                             successful,
                             attempted
                           };
@@ -356,9 +357,10 @@ const PerformanceReport = () => {
                       if (stats[attemptedKey] != null && stats[successfulKey] != null) {
                         const attempted = Number(stats[attemptedKey]);
                         const successful = Number(stats[successfulKey]);
-                        if (attempted > 0) {
+                        // Show paired stats even if attempted is 0 (display as 0/0)
+                        if (!isNaN(attempted) && !isNaN(successful)) {
                           return {
-                            percentage: ((successful / attempted) * 100).toFixed(1),
+                            percentage: attempted > 0 ? ((successful / attempted) * 100).toFixed(1) : '0',
                             successful,
                             attempted,
                             useSuccessfulKey: true

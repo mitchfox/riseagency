@@ -826,22 +826,22 @@ const AnalysisViewer = () => {
                         className="w-[85%] max-w-[400px] h-auto"
                         preserveAspectRatio="xMidYMid meet"
                       >
-                        {/* Arched banner shape */}
+                        {/* Arched banner shape - inward curving arch like fuelforfootball */}
                         <path
-                          d="M0,40 Q0,0 40,0 L360,0 Q400,0 400,40 L400,40 Q400,80 360,80 L40,80 Q0,80 0,40 Z"
+                          d="M0,60 Q0,30 60,20 L340,20 Q400,30 400,60 L400,60 Q400,80 340,80 L60,80 Q0,80 0,60 Z"
                           fill="hsl(var(--primary))"
                         />
                         {/* Player name text */}
                         <text
                           x="200"
-                          y="48"
+                          y="55"
                           textAnchor="middle"
                           dominantBaseline="middle"
                           className="font-bebas"
                           style={{
-                            fontSize: '28px',
+                            fontSize: '26px',
                             fontFamily: 'Bebas Neue, sans-serif',
-                            letterSpacing: '0.1em',
+                            letterSpacing: '0.12em',
                             fill: 'black',
                             textTransform: 'uppercase'
                           }}
@@ -873,20 +873,21 @@ const AnalysisViewer = () => {
                     className="w-[85%] max-w-[400px] h-auto"
                     preserveAspectRatio="xMidYMid meet"
                   >
+                    {/* Arched banner shape - inward curving arch like fuelforfootball */}
                     <path
-                      d="M0,40 Q0,0 40,0 L360,0 Q400,0 400,40 L400,40 Q400,80 360,80 L40,80 Q0,80 0,40 Z"
+                      d="M0,60 Q0,30 60,20 L340,20 Q400,30 400,60 L400,60 Q400,80 340,80 L60,80 Q0,80 0,60 Z"
                       fill="hsl(var(--primary))"
                     />
                     <text
                       x="200"
-                      y="48"
+                      y="55"
                       textAnchor="middle"
                       dominantBaseline="middle"
                       className="font-bebas"
                       style={{
-                        fontSize: '28px',
+                        fontSize: '26px',
                         fontFamily: 'Bebas Neue, sans-serif',
-                        letterSpacing: '0.1em',
+                        letterSpacing: '0.12em',
                         fill: 'black',
                         textTransform: 'uppercase'
                       }}
