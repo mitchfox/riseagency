@@ -805,7 +805,7 @@ const AnalysisViewer = () => {
               matchDate={analysis.match_date}
             />
 
-            {/* Player/Match Image with overlapping arched gold name bar */}
+            {/* Player/Match Image with gold arch and player name oval - exact fuelforfootball style */}
             {(analysis.player_image_url || analysis.match_image_url) && (
               <ScrollReveal className="w-full">
                 <div className="relative w-full overflow-hidden">
@@ -818,83 +818,101 @@ const AnalysisViewer = () => {
                     />
                   </div>
                   
-                  {/* Arched gold name bar - overlaps bottom of image */}
-                  {playerName && (
-                    <div className="absolute bottom-0 left-0 right-0 flex justify-center" style={{ transform: 'translateY(50%)' }}>
-                      <svg 
-                        viewBox="0 0 400 70" 
-                        className="w-[90%] max-w-[500px] h-auto"
-                        preserveAspectRatio="xMidYMid meet"
-                      >
-                        {/* Arched banner shape - concave top edge like fuelforfootball */}
-                        <path
-                          d="M0,35 Q200,0 400,35 L400,70 L0,70 Z"
-                          fill="hsl(var(--primary))"
-                        />
-                        {/* Player name text */}
-                        <text
-                          x="200"
-                          y="52"
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          className="font-bebas"
+                  {/* Gold arch with transparent outer glow and solid center - positioned at bottom of image */}
+                  <div className="absolute bottom-0 left-0 right-0 z-30">
+                    {/* Outer transparent glow arch - fades naturally into image */}
+                    <svg 
+                      className="w-full"
+                      viewBox="0 0 400 120" 
+                      preserveAspectRatio="none"
+                      style={{ height: '120px' }}
+                    >
+                      <defs>
+                        <linearGradient id="goldFadeUp" x1="0%" y1="100%" x2="0%" y2="0%">
+                          <stop offset="0%" stopColor="hsl(var(--primary))" />
+                          <stop offset="60%" stopColor="hsla(var(--primary), 0.4)" />
+                          <stop offset="100%" stopColor="hsla(var(--primary), 0)" />
+                        </linearGradient>
+                      </defs>
+                      {/* Transparent outer arch for natural fade */}
+                      <path d="M0,20 Q200,70 400,20 L400,120 L0,120 Z" fill="url(#goldFadeUp)" />
+                      {/* Solid gold arch band - main visible arch */}
+                      <path d="M0,50 Q200,90 400,50 L400,120 L0,120 Z" fill="hsl(var(--primary))" />
+                    </svg>
+                    
+                    {/* Player name positioned centered on the arch */}
+                    {playerName && (
+                      <div className="absolute inset-0 flex items-center justify-center z-10" style={{ paddingTop: '30px' }}>
+                        <div 
+                          className="relative overflow-hidden rounded-full px-8 md:px-12 py-2 md:py-3"
                           style={{
-                            fontSize: '28px',
-                            fontFamily: 'Bebas Neue, sans-serif',
-                            letterSpacing: '0.12em',
-                            fill: 'black',
-                            textTransform: 'uppercase'
+                            backgroundImage: `url(${blackMarble})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            border: `2px solid hsl(var(--primary))`,
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.4)'
                           }}
                         >
-                          {playerName.toUpperCase()}
-                        </text>
-                      </svg>
-                    </div>
-                  )}
+                          {/* Dark overlay for smoky effect */}
+                          <div className="absolute inset-0 bg-black/40 rounded-full" />
+                          <h2 
+                            className="relative text-lg md:text-2xl lg:text-3xl font-bebas uppercase tracking-widest text-center drop-shadow-md text-white"
+                          >
+                            {playerName.toUpperCase()}
+                          </h2>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                {/* Spacer for the overlapping name bar */}
-                {playerName && <div className="h-10" />}
               </ScrollReveal>
             )}
 
-            {/* Fallback player name section when no image */}
+            {/* Fallback player name section when no image - exact fuelforfootball style */}
             {!(analysis.player_image_url || analysis.match_image_url) && playerName && (
-              <div 
-                className="relative py-8 overflow-hidden"
-                style={{
-                  backgroundImage: `url(${blackMarble})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }}
-              >
-                <div className="flex justify-center">
+              <div className="relative overflow-hidden">
+                {/* Gold arch with transparent outer glow and solid center */}
+                <div className="relative z-30" style={{ backgroundColor: 'hsl(var(--primary))' }}>
                   <svg 
-                    viewBox="0 0 400 70" 
-                    className="w-[90%] max-w-[500px] h-auto"
-                    preserveAspectRatio="xMidYMid meet"
+                    className="w-full"
+                    viewBox="0 0 400 120" 
+                    preserveAspectRatio="none"
+                    style={{ height: '120px' }}
                   >
-                    {/* Arched banner shape - concave top edge like fuelforfootball */}
-                    <path
-                      d="M0,35 Q200,0 400,35 L400,70 L0,70 Z"
-                      fill="hsl(var(--primary))"
-                    />
-                    <text
-                      x="200"
-                      y="52"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      className="font-bebas"
+                    <defs>
+                      <linearGradient id="goldFadeUpFallback" x1="0%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" />
+                        <stop offset="60%" stopColor="hsla(var(--primary), 0.4)" />
+                        <stop offset="100%" stopColor="hsla(var(--primary), 0)" />
+                      </linearGradient>
+                    </defs>
+                    {/* Transparent outer arch for natural fade */}
+                    <path d="M0,20 Q200,70 400,20 L400,120 L0,120 Z" fill="url(#goldFadeUpFallback)" />
+                    {/* Solid gold arch band - main visible arch */}
+                    <path d="M0,50 Q200,90 400,50 L400,120 L0,120 Z" fill="hsl(var(--primary))" />
+                  </svg>
+                  
+                  {/* Player name positioned centered on the arch */}
+                  <div className="absolute inset-0 flex items-center justify-center z-10" style={{ paddingTop: '30px' }}>
+                    <div 
+                      className="relative overflow-hidden rounded-full px-8 md:px-12 py-2 md:py-3"
                       style={{
-                        fontSize: '28px',
-                        fontFamily: 'Bebas Neue, sans-serif',
-                        letterSpacing: '0.12em',
-                        fill: 'black',
-                        textTransform: 'uppercase'
+                        backgroundImage: `url(${blackMarble})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        border: `2px solid hsl(var(--primary))`,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.4)'
                       }}
                     >
-                      {playerName.toUpperCase()}
-                    </text>
-                  </svg>
+                      {/* Dark overlay for smoky effect */}
+                      <div className="absolute inset-0 bg-black/40 rounded-full" />
+                      <h2 
+                        className="relative text-lg md:text-2xl lg:text-3xl font-bebas uppercase tracking-widest text-center drop-shadow-md text-white"
+                      >
+                        {playerName.toUpperCase()}
+                      </h2>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
