@@ -225,6 +225,7 @@ const ExpandableSection = ({
   const [isOpen, setIsOpen] = useState(defaultOpen || forceOpen);
   const [wasManuallyToggled, setWasManuallyToggled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isAutoOpening, setIsAutoOpening] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { margin: "-10% 0px -30% 0px" });
 
@@ -241,6 +242,7 @@ const ExpandableSection = ({
 
       if (!wasManuallyToggled) {
         if (isInView && isScrollingDown && !isOpen) {
+          setIsAutoOpening(true);
           setIsOpen(true);
         } else if (!isInView && isOpen) {
           setIsOpen(false);
@@ -329,7 +331,8 @@ const ExpandableSection = ({
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                  transition={{ duration: isAutoOpening ? 0 : 0.4, ease: "easeInOut" }}
+                  onAnimationComplete={() => setIsAutoOpening(false)}
                 >
                   <ContentCard transparent={transparentContent}>{children}</ContentCard>
                 </motion.div>
@@ -801,7 +804,7 @@ const AnalysisViewer = () => {
         </motion.div>
       )}
 
-      <main className="w-full mx-auto px-[8px]">
+      <main className="w-full mx-auto">
         {/* Pre-Match Content */}
         {isPreMatch && (
           <div className="w-full">
