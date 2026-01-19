@@ -377,8 +377,15 @@ const AnalysisHeader = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      {/* Top section with logo */}
-      <div className="relative py-2 px-3 bg-background">
+      {/* Top section with logo - black marble background */}
+      <div 
+        className="relative py-2 px-3"
+        style={{
+          backgroundImage: `url(${blackMarble})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
         <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
         <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
 
@@ -533,10 +540,26 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
   };
 
   return (
-    <div className="relative z-40">
+    <div 
+      className="relative z-40"
+      style={{
+        backgroundImage: `url(${blackMarble})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}
+    >
+      {/* Cone icon above Jump to Section */}
+      <div className="flex justify-center pt-6">
+        <svg width="40" height="50" viewBox="0 0 40 50" className="drop-shadow-lg">
+          <polygon points="20,5 35,45 5,45" fill="hsl(var(--primary))" stroke="hsl(var(--primary-foreground))" strokeWidth="2"/>
+          <line x1="20" y1="12" x2="20" y2="38" stroke="hsl(var(--primary-foreground))" strokeWidth="2"/>
+          <line x1="12" y1="35" x2="28" y2="35" stroke="hsl(var(--primary-foreground))" strokeWidth="2"/>
+        </svg>
+      </div>
+      
       <motion.div
         ref={dropdownRef}
-        className="relative py-5 mt-5"
+        className="relative py-5"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
@@ -546,14 +569,24 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="text-base md:text-lg px-6 py-2 font-bebas tracking-wider hover:bg-black/50 transition-colors backdrop-blur-sm bg-black/60 text-white border-primary border-2"
+                className="text-base md:text-lg px-6 py-2 font-bebas tracking-wider hover:bg-white/90 transition-colors border-primary border-2 text-black"
+                style={{
+                  backgroundImage: `url(${whiteMarble})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
               >
                 Jump to Section
                 <ChevronDown className="w-4 h-4 ml-2" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="w-[96vw] max-w-none max-h-[70vh] overflow-y-auto z-50 p-4 md:p-6 bg-card/95 backdrop-blur-sm border-primary border-2"
+              className="w-[96vw] max-w-none max-h-[70vh] overflow-y-auto z-50 p-4 md:p-6 border-primary border-2"
+              style={{
+                backgroundImage: `url(${blackMarble})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
               side="bottom"
               align="center"
               sideOffset={4}
@@ -569,7 +602,12 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
                       <DropdownMenuItem
                         key={section.id}
                         onClick={() => handleNavigate(section.id)}
-                        className="cursor-pointer hover:bg-primary/20 font-bebas tracking-wide text-sm md:text-base py-1.5 px-3 rounded-md border text-white bg-black/80 border-primary/60"
+                        className="cursor-pointer hover:opacity-80 font-bebas tracking-wide text-sm md:text-base py-1.5 px-3 rounded-md border text-black border-primary/60"
+                        style={{
+                          backgroundImage: `url(${whiteMarble})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center'
+                        }}
                       >
                         {section.label}
                       </DropdownMenuItem>
@@ -592,7 +630,12 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
                       <DropdownMenuItem
                         key={section.id}
                         onClick={() => handleNavigate(section.id)}
-                        className="cursor-pointer hover:bg-primary/20 font-bebas tracking-wide text-sm md:text-base py-1.5 px-3 rounded-md border text-white bg-black/80 border-primary/60"
+                        className="cursor-pointer hover:opacity-80 font-bebas tracking-wide text-sm md:text-base py-1.5 px-3 rounded-md border text-black border-primary/60"
+                        style={{
+                          backgroundImage: `url(${whiteMarble})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center'
+                        }}
                       >
                         {section.label}
                       </DropdownMenuItem>
@@ -749,6 +792,24 @@ const AnalysisViewer = () => {
                   </div>
                 </div>
               </ScrollReveal>
+            )}
+
+            {/* Player Name Section */}
+            {analysis.title && (
+              <div 
+                className="relative py-6"
+                style={{
+                  backgroundImage: `url(${blackMarble})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
+              >
+                <div className="text-center">
+                  <h1 className="text-3xl md:text-5xl font-bebas uppercase tracking-widest text-primary drop-shadow-lg">
+                    <HoverText text={analysis.title} />
+                  </h1>
+                </div>
+              </div>
             )}
 
             {navSections.length > 0 && <QuickNavDropdown sections={navSections} />}
