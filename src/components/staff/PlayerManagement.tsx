@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,6 +71,7 @@ interface PlayerStats {
 
 const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [players, setPlayers] = useState<Player[]>([]);
   const [stats, setStats] = useState<Record<string, PlayerStats>>({});
   const [loading, setLoading] = useState(true);
@@ -2182,7 +2183,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
+                                    onClick={() => navigate(`/analysis/${analysis.id}`)}
                                     className="w-full sm:w-auto"
                                   >
                                     View
