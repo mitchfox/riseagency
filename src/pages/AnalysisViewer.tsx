@@ -402,7 +402,7 @@ const AnalysisHeader = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate(-1)}
+          onClick={() => window.history.back()}
           className="absolute left-4 md:left-8 top-4 bg-black/50 backdrop-blur-sm border-white/30 hover:bg-black/70 text-white h-8 py-1.5 px-3 text-xs z-20"
         >
           <ArrowLeft className="w-3 h-3 mr-1" />
@@ -491,18 +491,32 @@ const AnalysisHeader = ({
         </div>
       </div>
 
-      {/* Match Date */}
+      {/* Match Date with gradient fade below */}
       {matchDate && (
-        <div className="text-center py-2 bg-black/80">
-          <span className="text-white/90 font-bebas tracking-wider text-base md:text-lg italic">
-            {new Date(matchDate).toLocaleDateString('en-GB', {
-              weekday: 'long',
-              day: '2-digit',
-              month: 'long',
-              year: 'numeric'
-            })}
-          </span>
-        </div>
+        <>
+          <div className="text-center py-2 bg-black/80">
+            <span 
+              className="text-white/90 font-bebas tracking-wider text-base md:text-lg italic"
+              style={{
+                textShadow: '2px 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.6)'
+              }}
+            >
+              {new Date(matchDate).toLocaleDateString('en-GB', {
+                weekday: 'long',
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+              })}
+            </span>
+          </div>
+          {/* Black gradient fading out from underneath the date */}
+          <div 
+            className="h-12 w-full"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 40%, transparent 100%)'
+            }}
+          />
+        </>
       )}
     </motion.div>
   );
@@ -550,15 +564,24 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
   };
 
   return (
-    <div 
-      className="relative z-40"
-      style={{
-        backgroundImage: `url(${blackMarble})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        transform: 'scaleY(-1)'
-      }}
-    >
+    <div className="relative z-40">
+      {/* Radiating gold shade behind the section */}
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at center, hsla(var(--primary), 0.5) 0%, hsla(var(--primary), 0.3) 30%, hsla(var(--primary), 0.1) 60%, transparent 100%)'
+        }}
+      />
+      
+      <div 
+        className="relative"
+        style={{
+          backgroundImage: `url(${blackMarble})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          transform: 'scaleY(-1)'
+        }}
+      >
       {/* Inner container to flip content back to normal */}
       <div style={{ transform: 'scaleY(-1)' }}>
       {/* Cone icon above Jump to Section */}
@@ -660,6 +683,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
           </DropdownMenu>
         </div>
       </motion.div>
+      </div>
       </div>
     </div>
   );
@@ -768,7 +792,7 @@ const AnalysisViewer = () => {
   }
 
   return (
-    <div className="min-h-screen relative bg-background">
+    <div className="min-h-screen relative" style={{ backgroundColor: 'hsl(0 0% 15%)' }}>
       {/* Gold inset vertical lines */}
       <div className="fixed top-0 bottom-0 left-[6px] w-[2px] z-10 pointer-events-none bg-primary" />
       <div className="fixed top-0 bottom-0 right-[6px] w-[2px] z-10 pointer-events-none bg-primary" />
@@ -829,12 +853,12 @@ const AnalysisViewer = () => {
                     >
                       <defs>
                         <linearGradient id="goldFadeUp" x1="0%" y1="100%" x2="0%" y2="0%">
-                          <stop offset="0%" stopColor="hsl(var(--primary))" />
-                          <stop offset="60%" stopColor="hsla(var(--primary), 0.4)" />
-                          <stop offset="100%" stopColor="hsla(var(--primary), 0)" />
+                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="1" />
+                          <stop offset="60%" stopColor="hsl(var(--primary))" stopOpacity="0.5" />
+                          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
                         </linearGradient>
                       </defs>
-                      {/* Transparent outer arch for natural fade */}
+                      {/* Semi-transparent gold outer arch - 50% opacity risegold */}
                       <path d="M0,20 Q200,70 400,20 L400,120 L0,120 Z" fill="url(#goldFadeUp)" />
                       {/* Solid gold arch band - main visible arch */}
                       <path d="M0,50 Q200,90 400,50 L400,120 L0,120 Z" fill="hsl(var(--primary))" />
@@ -858,7 +882,7 @@ const AnalysisViewer = () => {
                           <h2 
                             className="relative text-lg md:text-2xl lg:text-3xl font-bebas uppercase tracking-widest text-center drop-shadow-md text-white"
                           >
-                            {playerName.toUpperCase()}
+                            <HoverText text={playerName.toUpperCase()} />
                           </h2>
                         </div>
                       </div>
@@ -881,12 +905,12 @@ const AnalysisViewer = () => {
                   >
                     <defs>
                       <linearGradient id="goldFadeUpFallback" x1="0%" y1="100%" x2="0%" y2="0%">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" />
-                        <stop offset="60%" stopColor="hsla(var(--primary), 0.4)" />
-                        <stop offset="100%" stopColor="hsla(var(--primary), 0)" />
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="1" />
+                        <stop offset="60%" stopColor="hsl(var(--primary))" stopOpacity="0.5" />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
                       </linearGradient>
                     </defs>
-                    {/* Transparent outer arch for natural fade */}
+                    {/* Semi-transparent gold outer arch - 50% opacity risegold */}
                     <path d="M0,20 Q200,70 400,20 L400,120 L0,120 Z" fill="url(#goldFadeUpFallback)" />
                     {/* Solid gold arch band - main visible arch */}
                     <path d="M0,50 Q200,90 400,50 L400,120 L0,120 Z" fill="hsl(var(--primary))" />
@@ -909,7 +933,7 @@ const AnalysisViewer = () => {
                       <h2 
                         className="relative text-lg md:text-2xl lg:text-3xl font-bebas uppercase tracking-widest text-center drop-shadow-md text-white"
                       >
-                        {playerName.toUpperCase()}
+                        <HoverText text={playerName.toUpperCase()} />
                       </h2>
                     </div>
                   </div>
@@ -1309,9 +1333,14 @@ const AnalysisViewer = () => {
           </div>
         )}
 
-        {/* Back to Top */}
+        {/* Back to Top - use black marble background to match sections */}
         <motion.div
           className="flex justify-center py-8"
+          style={{
+            backgroundImage: `url(${blackMarble})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
