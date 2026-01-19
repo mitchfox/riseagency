@@ -207,7 +207,8 @@ const ExpandableSection = ({
   defaultOpen = false,
   icon,
   transparentContent = false,
-  forceOpen = false
+  forceOpen = false,
+  flipBackground = false
 }: {
   title: string;
   children: React.ReactNode;
@@ -216,6 +217,7 @@ const ExpandableSection = ({
   icon?: "plus" | "minus" | null;
   transparentContent?: boolean;
   forceOpen?: boolean;
+  flipBackground?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen || forceOpen);
   const [wasManuallyToggled, setWasManuallyToggled] = useState(false);
@@ -256,6 +258,15 @@ const ExpandableSection = ({
     setWasManuallyToggled(true);
   };
 
+  const backgroundStyle = {
+    backgroundImage: `url(${blackMarble})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    transform: flipBackground ? 'scaleY(-1)' : 'none'
+  };
+
+  const contentStyle = flipBackground ? { transform: 'scaleY(-1)' } : {};
+
   if (forceOpen) {
     return (
       <section 
@@ -263,20 +274,18 @@ const ExpandableSection = ({
         id={id} 
         data-expandable 
         className="relative w-full"
-        style={{
-          backgroundImage: `url(${blackMarble})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
+        style={backgroundStyle}
       >
-        <TacticalSymbols />
-        <div className="relative px-4 md:px-6 pt-4 md:pt-5 pb-2 md:pb-3">
-          <div className="w-full">
-            <SectionTitle title={title} icon={icon} />
-            <div className="flex justify-center -mt-2 mb-2">
-              <ChevronDown className="w-5 h-5 text-primary rotate-180" />
+        <div style={contentStyle}>
+          <TacticalSymbols />
+          <div className="relative px-4 md:px-6 pt-4 md:pt-5 pb-2 md:pb-3">
+            <div className="w-full">
+              <SectionTitle title={title} icon={icon} />
+              <div className="flex justify-center -mt-2 mb-2">
+                <ChevronDown className="w-5 h-5 text-primary rotate-180" />
+              </div>
+              <ContentCard transparent={transparentContent}>{children}</ContentCard>
             </div>
-            <ContentCard transparent={transparentContent}>{children}</ContentCard>
           </div>
         </div>
       </section>
@@ -289,44 +298,42 @@ const ExpandableSection = ({
       id={id} 
       data-expandable 
       className="relative w-full"
-      style={{
-        backgroundImage: `url(${blackMarble})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
-      }}
+      style={backgroundStyle}
     >
-      <TacticalSymbols />
-      <div className="relative px-4 md:px-6 pt-4 md:pt-5 pb-2 md:pb-3">
-        <motion.div
-          className="w-full overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-        >
-          <button onClick={handleToggle} className="w-full">
-            <SectionTitle title={title} icon={icon} />
-            <motion.div
-              className="flex justify-center -mt-2 mb-2"
-              animate={{ rotate: isOpen ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ChevronDown className="w-5 h-5 text-primary" />
-            </motion.div>
-          </button>
-          <AnimatePresence initial={false}>
-            {isOpen && (
+      <div style={contentStyle}>
+        <TacticalSymbols />
+        <div className="relative px-4 md:px-6 pt-4 md:pt-5 pb-2 md:pb-3">
+          <motion.div
+            className="w-full overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+          >
+            <button onClick={handleToggle} className="w-full">
+              <SectionTitle title={title} icon={icon} />
               <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="flex justify-center -mt-2 mb-2"
+                animate={{ rotate: isOpen ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
               >
-                <ContentCard transparent={transparentContent}>{children}</ContentCard>
+                <ChevronDown className="w-5 h-5 text-primary" />
               </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+            </button>
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                >
+                  <ContentCard transparent={transparentContent}>{children}</ContentCard>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </div>
       </div>
     </section>
   );
@@ -794,18 +801,37 @@ const AnalysisViewer = () => {
               </ScrollReveal>
             )}
 
-            {/* Player Name Section */}
+            {/* Player Name Section with backing polygons */}
             {analysis.title && (
               <div 
-                className="relative py-6"
+                className="relative py-8 overflow-hidden"
                 style={{
                   backgroundImage: `url(${blackMarble})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
                 }}
               >
-                <div className="text-center">
-                  <h1 className="text-3xl md:text-5xl font-bebas uppercase tracking-widest text-primary drop-shadow-lg">
+                {/* Left polygon backing */}
+                <div 
+                  className="absolute left-0 top-0 bottom-0 w-1/3 opacity-40"
+                  style={{
+                    backgroundColor: 'hsl(var(--primary))',
+                    clipPath: 'polygon(0 0, 100% 20%, 80% 80%, 0 100%)'
+                  }}
+                />
+                {/* Right polygon backing */}
+                <div 
+                  className="absolute right-0 top-0 bottom-0 w-1/3 opacity-40"
+                  style={{
+                    backgroundColor: 'hsl(var(--primary))',
+                    clipPath: 'polygon(20% 20%, 100% 0, 100% 100%, 0 80%)'
+                  }}
+                />
+                {/* Center glow */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent" />
+                
+                <div className="relative text-center z-10">
+                  <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-[0.2em] text-primary drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]">
                     <HoverText text={analysis.title} />
                   </h1>
                 </div>
@@ -814,9 +840,9 @@ const AnalysisViewer = () => {
 
             {navSections.length > 0 && <QuickNavDropdown sections={navSections} />}
 
-            {/* Overview */}
+            {/* Overview - Section 0 (no flip) */}
             {analysis.key_details && (
-              <ExpandableSection title="Overview" id={SECTION_IDS.overview}>
+              <ExpandableSection title="Overview" id={SECTION_IDS.overview} flipBackground={false}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-base md:text-lg text-foreground">
                     {analysis.key_details}
@@ -825,9 +851,9 @@ const AnalysisViewer = () => {
               </ExpandableSection>
             )}
 
-            {/* Opposition Strengths */}
+            {/* Opposition Strengths - Section 1 (flip) */}
             {analysis.opposition_strengths && (
-              <ExpandableSection title="Opposition Strengths" id={SECTION_IDS.strengths} icon="plus">
+              <ExpandableSection title="Opposition Strengths" id={SECTION_IDS.strengths} icon="plus" flipBackground={true}>
                 <div className="space-y-3">
                   {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => {
                     const cleanLine = line.trim().replace(/^[-•]\s*/, '');
@@ -846,9 +872,9 @@ const AnalysisViewer = () => {
               </ExpandableSection>
             )}
 
-            {/* Opposition Weaknesses */}
+            {/* Opposition Weaknesses - Section 2 (no flip) */}
             {analysis.opposition_weaknesses && (
-              <ExpandableSection title="Opposition Weaknesses" id={SECTION_IDS.weaknesses} icon="minus">
+              <ExpandableSection title="Opposition Weaknesses" id={SECTION_IDS.weaknesses} icon="minus" flipBackground={false}>
                 <div className="space-y-3">
                   {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => {
                     const cleanLine = line.trim().replace(/^[-•]\s*/, '');
@@ -867,9 +893,9 @@ const AnalysisViewer = () => {
               </ExpandableSection>
             )}
 
-            {/* Key Matchups */}
+            {/* Key Matchups - Section 3 (flip) */}
             {analysis.matchups && analysis.matchups.length > 0 && (
-              <ExpandableSection title="Potential Matchup(s)" id={SECTION_IDS.matchups} transparentContent>
+              <ExpandableSection title="Potential Matchup(s)" id={SECTION_IDS.matchups} transparentContent flipBackground={true}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {analysis.matchups.map((matchup: any, index: number) => (
                     <TextReveal key={index} delay={index * 0.15}>
@@ -903,9 +929,9 @@ const AnalysisViewer = () => {
               </ExpandableSection>
             )}
 
-            {/* Scheme Section */}
+            {/* Scheme Section - Section 4 (no flip) */}
             {(analysis.scheme_title || analysis.selected_scheme) && (
-              <ExpandableSection title={analysis.scheme_title || "Tactical Scheme"} id={SECTION_IDS.scheme}>
+              <ExpandableSection title={analysis.scheme_title || "Tactical Scheme"} id={SECTION_IDS.scheme} flipBackground={false}>
                 <div className="space-y-4 md:space-y-6">
                   {analysis.scheme_paragraph_1 && (
                     <TextReveal>
@@ -968,43 +994,48 @@ const AnalysisViewer = () => {
               </ExpandableSection>
             )}
 
-            {/* Points */}
+            {/* Points - alternating flip starting from section 5 */}
             {analysis.points && analysis.points.length > 0 && (
               <div className="w-full">
-                {analysis.points.map((point: any, index: number) => (
-                  <ExpandableSection key={index} title={point.title} id={`section-point-${index}`}>
-                    <div className="space-y-4 md:space-y-6">
-                      {point.paragraph_1 && (
-                        <TextReveal>
-                          <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
-                            {point.paragraph_1}
-                          </p>
-                        </TextReveal>
-                      )}
-                      {point.images && point.images.length > 0 && (
-                        <TextReveal delay={0.15}>
-                          <div className="flex flex-col items-center gap-4">
-                            {point.images.map((img: string, imgIndex: number) => (
-                              <img
-                                key={imgIndex}
-                                src={img}
-                                alt={`${point.title} - Image ${imgIndex + 1}`}
-                                className="w-full rounded-lg shadow-md border-2 border-primary"
-                              />
-                            ))}
-                          </div>
-                        </TextReveal>
-                      )}
-                      {point.paragraph_2 && (
-                        <TextReveal delay={0.25}>
-                          <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
-                            {point.paragraph_2}
-                          </p>
-                        </TextReveal>
-                      )}
-                    </div>
-                  </ExpandableSection>
-                ))}
+                {analysis.points.map((point: any, index: number) => {
+                  // Points start at section index 5, so flip odd-indexed points (5=flip, 6=no, 7=flip, etc.)
+                  const sectionIndex = 5 + index;
+                  const shouldFlip = sectionIndex % 2 === 1;
+                  return (
+                    <ExpandableSection key={index} title={point.title} id={`section-point-${index}`} flipBackground={shouldFlip}>
+                      <div className="space-y-4 md:space-y-6">
+                        {point.paragraph_1 && (
+                          <TextReveal>
+                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                              {point.paragraph_1}
+                            </p>
+                          </TextReveal>
+                        )}
+                        {point.images && point.images.length > 0 && (
+                          <TextReveal delay={0.15}>
+                            <div className="flex flex-col items-center gap-4">
+                              {point.images.map((img: string, imgIndex: number) => (
+                                <img
+                                  key={imgIndex}
+                                  src={img}
+                                  alt={`${point.title} - Image ${imgIndex + 1}`}
+                                  className="w-full rounded-lg shadow-md border-2 border-primary"
+                                />
+                              ))}
+                            </div>
+                          </TextReveal>
+                        )}
+                        {point.paragraph_2 && (
+                          <TextReveal delay={0.25}>
+                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                              {point.paragraph_2}
+                            </p>
+                          </TextReveal>
+                        )}
+                      </div>
+                    </ExpandableSection>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1039,8 +1070,9 @@ const AnalysisViewer = () => {
 
             {navSections.length > 0 && <QuickNavDropdown sections={navSections} />}
 
+            {/* Overview - Section 0 (no flip) */}
             {analysis.key_details && (
-              <ExpandableSection title="Overview" id={SECTION_IDS.overview}>
+              <ExpandableSection title="Overview" id={SECTION_IDS.overview} flipBackground={false}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
                     {analysis.key_details}
@@ -1049,8 +1081,9 @@ const AnalysisViewer = () => {
               </ExpandableSection>
             )}
 
+            {/* Improvements - Section 1 (flip) */}
             {analysis.strengths_improvements && (
-              <ExpandableSection title="Strengths & Areas for Improvement" id={SECTION_IDS.improvements}>
+              <ExpandableSection title="Strengths & Areas for Improvement" id={SECTION_IDS.improvements} flipBackground={true}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
                     {analysis.strengths_improvements}
@@ -1059,37 +1092,42 @@ const AnalysisViewer = () => {
               </ExpandableSection>
             )}
 
+            {/* Points - alternating from section 2 */}
             {analysis.points && analysis.points.length > 0 && (
               <div className="w-full">
-                {analysis.points.map((point: any, index: number) => (
-                  <ExpandableSection key={index} title={point.title} id={`section-point-${index}`}>
-                    <div className="space-y-4 md:space-y-6">
-                      {point.paragraph_1 && (
-                        <TextReveal>
-                          <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
-                            {point.paragraph_1}
-                          </p>
-                        </TextReveal>
-                      )}
-                      {point.images && point.images.length > 0 && (
-                        <TextReveal delay={0.15}>
-                          <div className="flex flex-col items-center gap-4">
-                            {point.images.map((img: string, imgIndex: number) => (
-                              <img key={imgIndex} src={img} alt={`${point.title} - Image ${imgIndex + 1}`} className="w-full rounded-lg shadow-md border-2 border-primary" />
-                            ))}
-                          </div>
-                        </TextReveal>
-                      )}
-                      {point.paragraph_2 && (
-                        <TextReveal delay={0.25}>
-                          <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
-                            {point.paragraph_2}
-                          </p>
-                        </TextReveal>
-                      )}
-                    </div>
-                  </ExpandableSection>
-                ))}
+                {analysis.points.map((point: any, index: number) => {
+                  const sectionIndex = 2 + index;
+                  const shouldFlip = sectionIndex % 2 === 1;
+                  return (
+                    <ExpandableSection key={index} title={point.title} id={`section-point-${index}`} flipBackground={shouldFlip}>
+                      <div className="space-y-4 md:space-y-6">
+                        {point.paragraph_1 && (
+                          <TextReveal>
+                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                              {point.paragraph_1}
+                            </p>
+                          </TextReveal>
+                        )}
+                        {point.images && point.images.length > 0 && (
+                          <TextReveal delay={0.15}>
+                            <div className="flex flex-col items-center gap-4">
+                              {point.images.map((img: string, imgIndex: number) => (
+                                <img key={imgIndex} src={img} alt={`${point.title} - Image ${imgIndex + 1}`} className="w-full rounded-lg shadow-md border-2 border-primary" />
+                              ))}
+                            </div>
+                          </TextReveal>
+                        )}
+                        {point.paragraph_2 && (
+                          <TextReveal delay={0.25}>
+                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                              {point.paragraph_2}
+                            </p>
+                          </TextReveal>
+                        )}
+                      </div>
+                    </ExpandableSection>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1129,8 +1167,9 @@ const AnalysisViewer = () => {
               </div>
             </section>
 
+            {/* Concept - Section 0 (no flip) */}
             {analysis.concept && (
-              <ExpandableSection title="Concept" defaultOpen>
+              <ExpandableSection title="Concept" defaultOpen flipBackground={false}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
                     {analysis.concept}
@@ -1139,8 +1178,9 @@ const AnalysisViewer = () => {
               </ExpandableSection>
             )}
 
+            {/* Explanation - Section 1 (flip) */}
             {analysis.explanation && (
-              <ExpandableSection title="Explanation">
+              <ExpandableSection title="Explanation" flipBackground={true}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
                     {analysis.explanation}
@@ -1149,37 +1189,42 @@ const AnalysisViewer = () => {
               </ExpandableSection>
             )}
 
+            {/* Points - alternating from section 2 */}
             {analysis.points && analysis.points.length > 0 && (
               <div className="w-full">
-                {analysis.points.map((point: any, index: number) => (
-                  <ExpandableSection key={index} title={point.title} id={`section-point-${index}`}>
-                    <div className="space-y-4 md:space-y-6">
-                      {point.paragraph_1 && (
-                        <TextReveal>
-                          <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
-                            {point.paragraph_1}
-                          </p>
-                        </TextReveal>
-                      )}
-                      {point.images && point.images.length > 0 && (
-                        <TextReveal delay={0.15}>
-                          <div className="flex flex-col gap-4">
-                            {point.images.map((img: string, imgIndex: number) => (
-                              <img key={imgIndex} src={img} alt={`${point.title} - Image ${imgIndex + 1}`} className="w-full rounded-lg border-2 border-primary" />
-                            ))}
-                          </div>
-                        </TextReveal>
-                      )}
-                      {point.paragraph_2 && (
-                        <TextReveal delay={0.25}>
-                          <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
-                            {point.paragraph_2}
-                          </p>
-                        </TextReveal>
-                      )}
-                    </div>
-                  </ExpandableSection>
-                ))}
+                {analysis.points.map((point: any, index: number) => {
+                  const sectionIndex = 2 + index;
+                  const shouldFlip = sectionIndex % 2 === 1;
+                  return (
+                    <ExpandableSection key={index} title={point.title} id={`section-point-${index}`} flipBackground={shouldFlip}>
+                      <div className="space-y-4 md:space-y-6">
+                        {point.paragraph_1 && (
+                          <TextReveal>
+                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                              {point.paragraph_1}
+                            </p>
+                          </TextReveal>
+                        )}
+                        {point.images && point.images.length > 0 && (
+                          <TextReveal delay={0.15}>
+                            <div className="flex flex-col gap-4">
+                              {point.images.map((img: string, imgIndex: number) => (
+                                <img key={imgIndex} src={img} alt={`${point.title} - Image ${imgIndex + 1}`} className="w-full rounded-lg border-2 border-primary" />
+                              ))}
+                            </div>
+                          </TextReveal>
+                        )}
+                        {point.paragraph_2 && (
+                          <TextReveal delay={0.25}>
+                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                              {point.paragraph_2}
+                            </p>
+                          </TextReveal>
+                        )}
+                      </div>
+                    </ExpandableSection>
+                  );
+                })}
               </div>
             )}
           </div>
