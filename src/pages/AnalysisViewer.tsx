@@ -189,9 +189,12 @@ const SectionTitle = ({ title, icon }: { title: string; icon?: "plus" | "minus" 
   </div>
 );
 
-// Content card - greyish background with black text
+// Content card - grey background with black text (matches fuelforfootball)
 const ContentCard = ({ children, className = "", transparent = false }: { children: React.ReactNode; className?: string; transparent?: boolean }) => (
-  <div className={`rounded-lg p-4 md:p-6 ${transparent ? 'bg-transparent' : 'bg-muted/90 backdrop-blur-sm text-black'} ${className}`}>
+  <div 
+    className={`rounded-lg p-4 md:p-6 ${className}`}
+    style={transparent ? {} : { backgroundColor: 'hsl(0 0% 75%)', color: 'black' }}
+  >
     {children}
   </div>
 );
@@ -663,6 +666,7 @@ const AnalysisViewer = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [playerName, setPlayerName] = useState<string | null>(null);
 
   useEffect(() => {
     if (analysisId) fetchAnalysis();
@@ -670,6 +674,7 @@ const AnalysisViewer = () => {
 
   const fetchAnalysis = async () => {
     try {
+      // Fetch analysis data
       const { data, error } = await supabase
         .from("analyses")
         .select("*")
@@ -680,6 +685,17 @@ const AnalysisViewer = () => {
       if (!data) {
         setLoading(false);
         return;
+      }
+
+      // Fetch linked player name from player_analysis
+      const { data: playerData } = await supabase
+        .from("player_analysis")
+        .select("player_id, players(name)")
+        .eq("analysis_writer_id", analysisId)
+        .maybeSingle();
+
+      if (playerData?.players) {
+        setPlayerName((playerData.players as any).name);
       }
 
       const parsedAnalysis: Analysis = {
@@ -785,7 +801,7 @@ const AnalysisViewer = () => {
               matchDate={analysis.match_date}
             />
 
-            {/* Player/Match Image with overlapping gold name bar */}
+            {/* Player/Match Image with overlapping arched gold name bar */}
             {(analysis.player_image_url || analysis.match_image_url) && (
               <ScrollReveal className="w-full">
                 <div className="relative w-full overflow-hidden">
@@ -798,30 +814,47 @@ const AnalysisViewer = () => {
                     />
                   </div>
                   
-                  {/* Gold polygon name bar - overlaps bottom of image */}
-                  {analysis.title && (
+                  {/* Arched gold name bar - overlaps bottom of image */}
+                  {playerName && (
                     <div className="absolute bottom-0 left-0 right-0 flex justify-center" style={{ transform: 'translateY(50%)' }}>
-                      <div 
-                        className="relative px-12 py-4"
-                        style={{
-                          backgroundColor: 'hsl(var(--primary))',
-                          clipPath: 'polygon(5% 0%, 95% 0%, 100% 50%, 95% 100%, 5% 100%, 0% 50%)'
-                        }}
+                      <svg 
+                        viewBox="0 0 400 80" 
+                        className="w-[85%] max-w-[400px] h-auto"
+                        preserveAspectRatio="xMidYMid meet"
                       >
-                        <h1 className="text-2xl md:text-4xl font-bebas uppercase tracking-[0.15em] text-black whitespace-nowrap">
-                          <HoverText text={analysis.title} />
-                        </h1>
-                      </div>
+                        {/* Arched banner shape */}
+                        <path
+                          d="M0,40 Q0,0 40,0 L360,0 Q400,0 400,40 L400,40 Q400,80 360,80 L40,80 Q0,80 0,40 Z"
+                          fill="hsl(var(--primary))"
+                        />
+                        {/* Player name text */}
+                        <text
+                          x="200"
+                          y="48"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className="font-bebas"
+                          style={{
+                            fontSize: '28px',
+                            fontFamily: 'Bebas Neue, sans-serif',
+                            letterSpacing: '0.1em',
+                            fill: 'black',
+                            textTransform: 'uppercase'
+                          }}
+                        >
+                          {playerName.toUpperCase()}
+                        </text>
+                      </svg>
                     </div>
                   )}
                 </div>
                 {/* Spacer for the overlapping name bar */}
-                {analysis.title && <div className="h-8" />}
+                {playerName && <div className="h-10" />}
               </ScrollReveal>
             )}
 
             {/* Fallback player name section when no image */}
-            {!(analysis.player_image_url || analysis.match_image_url) && analysis.title && (
+            {!(analysis.player_image_url || analysis.match_image_url) && playerName && (
               <div 
                 className="relative py-8 overflow-hidden"
                 style={{
@@ -831,17 +864,32 @@ const AnalysisViewer = () => {
                 }}
               >
                 <div className="flex justify-center">
-                  <div 
-                    className="relative px-12 py-4"
-                    style={{
-                      backgroundColor: 'hsl(var(--primary))',
-                      clipPath: 'polygon(5% 0%, 95% 0%, 100% 50%, 95% 100%, 5% 100%, 0% 50%)'
-                    }}
+                  <svg 
+                    viewBox="0 0 400 80" 
+                    className="w-[85%] max-w-[400px] h-auto"
+                    preserveAspectRatio="xMidYMid meet"
                   >
-                    <h1 className="text-2xl md:text-4xl font-bebas uppercase tracking-[0.15em] text-black whitespace-nowrap">
-                      <HoverText text={analysis.title} />
-                    </h1>
-                  </div>
+                    <path
+                      d="M0,40 Q0,0 40,0 L360,0 Q400,0 400,40 L400,40 Q400,80 360,80 L40,80 Q0,80 0,40 Z"
+                      fill="hsl(var(--primary))"
+                    />
+                    <text
+                      x="200"
+                      y="48"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      className="font-bebas"
+                      style={{
+                        fontSize: '28px',
+                        fontFamily: 'Bebas Neue, sans-serif',
+                        letterSpacing: '0.1em',
+                        fill: 'black',
+                        textTransform: 'uppercase'
+                      }}
+                    >
+                      {playerName.toUpperCase()}
+                    </text>
+                  </svg>
                 </div>
               </div>
             )}
