@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +87,7 @@ interface AnalysisManagementProps {
 }
 
 export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
+  const navigate = useNavigate();
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -1072,7 +1074,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
+                        onClick={() => navigate(`/analysis/${analysis.id}`)}
                         className="flex-1 sm:flex-initial"
                       >
                         View Analysis
@@ -1185,7 +1187,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
+                        onClick={() => navigate(`/analysis/${analysis.id}`)}
                         className="flex-1 sm:flex-initial"
                       >
                         View Analysis
@@ -1276,7 +1278,7 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(`/analysis/${analysis.id}`, '_blank')}
+                        onClick={() => navigate(`/analysis/${analysis.id}`)}
                         className="flex-1 sm:flex-initial"
                       >
                         View Analysis
