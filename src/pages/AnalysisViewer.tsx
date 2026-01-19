@@ -1,15 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, ChevronDown } from "lucide-react";
+import { ArrowLeft, ChevronDown, Play, Plus, Minus, Download } from "lucide-react";
 import { toast } from "sonner";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import smudgedMarbleDate from "@/assets/smudged-marble-date.png";
+import { motion, AnimatePresence, useInView } from "framer-motion";
+import { ScrollReveal } from "@/components/ScrollReveal";
+import { HoverText } from "@/components/HoverText";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import riseLogo from "@/assets/logo.png";
+import smokyBackground from "@/assets/smudged-marble-overlay.png";
 
 interface Analysis {
   id: string;
@@ -45,21 +50,534 @@ interface Analysis {
   video_url: string | null;
 }
 
-// Kit SVG Component - Larger size
-const PlayerKit = ({ primaryColor, secondaryColor, number }: { primaryColor: string; secondaryColor: string; number: string }) => (
-  <svg width="80" height="80" viewBox="0 0 100 100" className="drop-shadow-lg">
-    {/* Kit Body */}
-    <path d="M30 25 L25 35 L25 65 L30 75 L70 75 L75 65 L75 35 L70 25 Z" fill={primaryColor} stroke={secondaryColor} strokeWidth="2"/>
-    {/* Stripes */}
-    <rect x="42" y="25" width="16" height="50" fill={secondaryColor} opacity="0.8"/>
-    {/* Collar */}
-    <circle cx="50" cy="25" r="8" fill={primaryColor} stroke={secondaryColor} strokeWidth="2"/>
-    {/* Number */}
-    <text x="50" y="55" textAnchor="middle" fontSize="24" fontWeight="bold" fill="white" stroke="black" strokeWidth="1">
-      {number}
-    </text>
+// Brand colors - Rise Agency tokens (gold/black theme)
+const BRAND = {
+  gold: "hsl(var(--primary))",
+  darkBg: "hsl(var(--background))",
+  contentBg: "hsl(var(--card))",
+  bodyText: "hsl(var(--foreground))",
+  mutedText: "hsl(var(--muted-foreground))",
+};
+
+// Section IDs for quick navigation
+const SECTION_IDS = {
+  overview: "section-overview",
+  strengths: "section-strengths",
+  weaknesses: "section-weaknesses",
+  matchups: "section-matchups",
+  scheme: "section-scheme",
+  improvements: "section-improvements",
+};
+
+// Enhanced Kit SVG Component - THINNER design with stripe patterns
+interface KitProps {
+  primaryColor: string;
+  secondaryColor: string;
+  numberColor?: string;
+  stripeStyle?: 'none' | 'thin' | 'thick' | 'halves';
+  number: string;
+}
+
+const PlayerKit = ({ primaryColor, secondaryColor, numberColor = 'white', stripeStyle = 'thick', number }: KitProps) => {
+  return (
+    <svg width="50" height="60" viewBox="0 0 100 120" className="drop-shadow-lg">
+      <defs>
+        <pattern id={`thinStripes-${number}`} patternUnits="userSpaceOnUse" width="6" height="120">
+          <rect width="3" height="120" fill={primaryColor} />
+          <rect x="3" width="3" height="120" fill={secondaryColor} />
+        </pattern>
+        <pattern id={`thickStripes-${number}`} patternUnits="userSpaceOnUse" width="16" height="120">
+          <rect width="8" height="120" fill={primaryColor} />
+          <rect x="8" width="8" height="120" fill={secondaryColor} />
+        </pattern>
+      </defs>
+
+      {/* Main shirt body */}
+      <path
+        d="M30 28 L25 38 L25 95 L35 100 L65 100 L75 95 L75 38 L70 28 L62 24 L58 28 L42 28 L38 24 Z"
+        fill={stripeStyle === 'thin' ? `url(#thinStripes-${number})` :
+              stripeStyle === 'thick' ? `url(#thickStripes-${number})` :
+              stripeStyle === 'halves' ? primaryColor : primaryColor}
+        stroke={secondaryColor}
+        strokeWidth="2"
+      />
+
+      {stripeStyle === 'halves' && (
+        <path
+          d="M50 28 L58 28 L62 24 L70 28 L75 38 L75 95 L65 100 L50 100 Z"
+          fill={secondaryColor}
+        />
+      )}
+
+      {/* Sleeves */}
+      <path d="M25 38 L18 48 L22 58 L25 52 Z" fill={primaryColor} stroke={secondaryColor} strokeWidth="1.5"/>
+      <path d="M75 38 L82 48 L78 58 L75 52 Z" fill={stripeStyle === 'halves' ? secondaryColor : primaryColor} stroke={secondaryColor} strokeWidth="1.5"/>
+
+      {/* Collar */}
+      <path d="M42 28 L50 40 L58 28" fill="none" stroke={secondaryColor} strokeWidth="3" strokeLinecap="round"/>
+      <ellipse cx="50" cy="25" rx="10" ry="3" fill={secondaryColor} />
+
+      {/* Number */}
+      <text
+        x="50"
+        y="72"
+        textAnchor="middle"
+        fontSize="26"
+        fontWeight="bold"
+        fill={numberColor}
+        stroke={numberColor === 'white' || numberColor === '#ffffff' || numberColor === '#FFFFFF' ? 'black' : 'rgba(0,0,0,0.3)'}
+        strokeWidth="0.8"
+        fontFamily="Arial Black, sans-serif"
+      >
+        {number}
+      </text>
+
+      {/* Shading */}
+      <path d="M30 28 L25 38 L25 95 L35 100 L38 95 L38 35 Z" fill="rgba(0,0,0,0.12)" />
+      <path d="M62 28 L70 28 L75 38 L75 95 L72 95 L72 40 L68 30 Z" fill="rgba(255,255,255,0.08)" />
+    </svg>
+  );
+};
+
+// Tactical symbols SVG background
+const TacticalSymbols = () => (
+  <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <pattern id="tacticalPattern" x="0" y="0" width="300" height="300" patternUnits="userSpaceOnUse">
+        <g opacity="0.06">
+          <circle cx="50" cy="50" r="18" stroke="hsl(var(--primary))" strokeWidth="2" fill="none" />
+          <line x1="38" y1="38" x2="62" y2="62" stroke="hsl(var(--primary))" strokeWidth="2" />
+          <line x1="62" y1="38" x2="38" y2="62" stroke="hsl(var(--primary))" strokeWidth="2" />
+        </g>
+        <rect x="180" y="40" width="40" height="25" stroke="hsl(var(--primary))" strokeWidth="2" fill="none" opacity="0.05" />
+        <g stroke="hsl(var(--primary))" strokeWidth="2" opacity="0.07" fill="none">
+          <path d="M80 150 L140 150" strokeDasharray="8 4" />
+          <polygon points="140,145 150,150 140,155" fill="hsl(var(--primary))" />
+        </g>
+        <circle cx="120" cy="250" r="10" fill="hsl(var(--primary))" opacity="0.05" />
+        <circle cx="260" cy="260" r="6" fill="hsl(var(--primary))" opacity="0.07" />
+        <circle cx="280" cy="280" r="6" fill="hsl(var(--primary))" opacity="0.07" />
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#tacticalPattern)" />
   </svg>
 );
+
+// Section title with marble background
+const SectionTitle = ({ title, icon }: { title: string; icon?: "plus" | "minus" | null }) => (
+  <div className="relative mb-4">
+    <div className="relative rounded-lg overflow-hidden cursor-pointer group bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-2 border-primary">
+      <div className="py-3 md:py-4 px-4">
+        <div className="flex items-center justify-center gap-3">
+          {icon === "plus" && <Plus className="w-5 h-5 md:w-6 md:h-6 text-primary" />}
+          {icon === "minus" && <Minus className="w-5 h-5 md:w-6 md:h-6 text-primary" />}
+          <h2 className="text-xl md:text-2xl font-bebas uppercase tracking-widest text-center text-primary drop-shadow-md">
+            <HoverText text={title} />
+          </h2>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// Content card
+const ContentCard = ({ children, className = "", transparent = false }: { children: React.ReactNode; className?: string; transparent?: boolean }) => (
+  <div className={`rounded-lg p-4 md:p-6 ${transparent ? 'bg-transparent' : 'bg-card/90 backdrop-blur-sm'} ${className}`}>
+    {children}
+  </div>
+);
+
+// Global flag to prevent auto-open during navigation
+let navigationUsed = false;
+
+// Expandable section with auto-open on scroll
+const ExpandableSection = ({
+  title,
+  children,
+  id,
+  defaultOpen = false,
+  icon,
+  transparentContent = false,
+  forceOpen = false
+}: {
+  title: string;
+  children: React.ReactNode;
+  id?: string;
+  defaultOpen?: boolean;
+  icon?: "plus" | "minus" | null;
+  transparentContent?: boolean;
+  forceOpen?: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen || forceOpen);
+  const [wasManuallyToggled, setWasManuallyToggled] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(sectionRef, { margin: "-10% 0px -30% 0px" });
+
+  useEffect(() => {
+    if (forceOpen) setIsOpen(true);
+  }, [forceOpen]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (navigationUsed) return;
+      const currentScrollY = window.scrollY;
+      const isScrollingDown = currentScrollY > lastScrollY;
+      setLastScrollY(currentScrollY);
+
+      if (!wasManuallyToggled) {
+        if (isInView && isScrollingDown && !isOpen) {
+          setIsOpen(true);
+        } else if (!isInView && isOpen) {
+          setIsOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isInView, isOpen, lastScrollY, wasManuallyToggled]);
+
+  useEffect(() => {
+    if (!isInView) setWasManuallyToggled(false);
+  }, [isInView]);
+
+  const handleToggle = () => {
+    setIsOpen(!isOpen);
+    setWasManuallyToggled(true);
+  };
+
+  if (forceOpen) {
+    return (
+      <section ref={sectionRef} id={id} data-expandable className="relative w-full bg-background">
+        <TacticalSymbols />
+        <div className="relative px-4 md:px-6 pt-4 md:pt-5 pb-2 md:pb-3">
+          <div className="w-full">
+            <SectionTitle title={title} icon={icon} />
+            <div className="flex justify-center -mt-2 mb-2">
+              <ChevronDown className="w-5 h-5 text-primary rotate-180" />
+            </div>
+            <ContentCard transparent={transparentContent}>{children}</ContentCard>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section ref={sectionRef} id={id} data-expandable className="relative w-full bg-background">
+      <TacticalSymbols />
+      <div className="relative px-4 md:px-6 pt-4 md:pt-5 pb-2 md:pb-3">
+        <motion.div
+          className="w-full overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+        >
+          <button onClick={handleToggle} className="w-full">
+            <SectionTitle title={title} icon={icon} />
+            <motion.div
+              className="flex justify-center -mt-2 mb-2"
+              animate={{ rotate: isOpen ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ChevronDown className="w-5 h-5 text-primary" />
+            </motion.div>
+          </button>
+          <AnimatePresence initial={false}>
+            {isOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+              >
+                <ContentCard transparent={transparentContent}>{children}</ContentCard>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+// Text reveal animation
+const TextReveal = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 15 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.6, delay, ease: "easeOut" }}
+    viewport={{ once: true }}
+  >
+    {children}
+  </motion.div>
+);
+
+// Main Header
+const AnalysisHeader = ({
+  homeTeam,
+  awayTeam,
+  homeLogo,
+  awayLogo,
+  homeBgColor,
+  awayBgColor,
+  homeScore,
+  awayScore,
+  matchDate,
+  isPostMatch = false,
+}: {
+  homeTeam: string | null;
+  awayTeam: string | null;
+  homeLogo: string | null;
+  awayLogo: string | null;
+  homeBgColor: string | null;
+  awayBgColor: string | null;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  matchDate?: string | null;
+  isPostMatch?: boolean;
+}) => {
+  const navigate = useNavigate();
+
+  return (
+    <motion.div
+      className="w-full relative z-40"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      {/* Top section with logo */}
+      <div className="relative py-2 px-3 bg-background">
+        <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="absolute left-4 md:left-8 top-4 bg-black/50 backdrop-blur-sm border-white/30 hover:bg-black/70 text-white h-8 py-1.5 px-3 text-xs z-20"
+        >
+          <ArrowLeft className="w-3 h-3 mr-1" />
+          Back
+        </Button>
+
+        <div className="relative flex items-center justify-center py-2">
+          <img src={riseLogo} alt="Rise Agency" className="w-16 h-16 md:w-20 md:h-20 object-contain" />
+        </div>
+      </div>
+
+      {/* Team colors bar */}
+      <div className="relative h-10 md:h-14 overflow-visible bg-black">
+        {homeLogo && (
+          <div className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-[15vw] h-[15vw] min-w-16 max-w-28 md:min-w-20 md:max-w-36 z-20 -mt-2">
+            <img src={homeLogo} alt="" className="w-full h-full object-contain drop-shadow-xl" />
+          </div>
+        )}
+        {awayLogo && (
+          <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-[15vw] h-[15vw] min-w-16 max-w-28 md:min-w-20 md:max-w-36 z-20 -mt-2">
+            <img src={awayLogo} alt="" className="w-full h-full object-contain drop-shadow-xl" />
+          </div>
+        )}
+
+        {/* Home Team Color */}
+        <div
+          className="absolute left-0 top-0 bottom-0 w-1/2 z-10 flex items-center justify-end"
+          style={{
+            backgroundColor: homeBgColor || '#1a1a1a',
+            clipPath: 'polygon(0 0, 100% 0, 85% 100%, 0 100%)'
+          }}
+        >
+          <span
+            className="font-bebas text-white tracking-wide uppercase text-center leading-tight ml-[18vw] mr-[10vw]"
+            style={{
+              fontSize: 'clamp(0.6rem, 2.2vw, 1.4rem)',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+              lineHeight: 1.1
+            }}
+          >
+            {homeTeam}
+          </span>
+        </div>
+
+        {/* Away Team Color */}
+        <div
+          className="absolute right-0 top-0 bottom-0 w-1/2 z-10 flex items-center justify-start"
+          style={{
+            backgroundColor: awayBgColor || '#8B0000',
+            clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 0 100%)'
+          }}
+        >
+          <span
+            className="font-bebas text-white tracking-wide uppercase text-center leading-tight ml-[10vw] mr-[18vw]"
+            style={{
+              fontSize: 'clamp(0.6rem, 2.2vw, 1.4rem)',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+              lineHeight: 1.1
+            }}
+          >
+            {awayTeam}
+          </span>
+        </div>
+
+        {/* VS Badge */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+          {isPostMatch && homeScore !== null && awayScore !== null ? (
+            <div className="rounded-full w-14 h-14 md:w-16 md:h-16 flex items-center justify-center shadow-lg border-2 border-white bg-primary">
+              <span className="text-black text-lg md:text-xl font-bebas font-bold">
+                {homeScore} - {awayScore}
+              </span>
+            </div>
+          ) : (
+            <div
+              className="relative rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center border-2 border-white shadow-lg overflow-hidden"
+              style={{
+                backgroundImage: `url(${smokyBackground})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
+            >
+              <div className="absolute inset-0 bg-black/30" />
+              <span className="relative text-white text-base md:text-lg font-bebas font-bold">VS</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Match Date */}
+      {matchDate && (
+        <div className="text-center py-2 bg-black/80">
+          <span className="text-white/90 font-bebas tracking-wider text-base md:text-lg italic">
+            {new Date(matchDate).toLocaleDateString('en-GB', {
+              weekday: 'long',
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric'
+            })}
+          </span>
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
+// Quick Navigation Dropdown
+const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string }[] }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const keyInfoSections = sections.filter(s =>
+    s.id.includes('overview') ||
+    s.id.includes('strengths') ||
+    s.id.includes('weaknesses') ||
+    s.id.includes('matchups') ||
+    s.id.includes('scheme') ||
+    s.id.includes('improvements')
+  );
+  const pointSections = sections.filter(s => s.id.includes('point'));
+
+  useEffect(() => {
+    if (isOpen && dropdownRef.current) {
+      setTimeout(() => {
+        dropdownRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+  }, [isOpen]);
+
+  const handleNavigate = (sectionId: string) => {
+    setIsOpen(false);
+    navigationUsed = true;
+
+    requestAnimationFrame(() => {
+      const el = document.getElementById(sectionId);
+      if (el) {
+        const sectionButton = el.querySelector('button');
+        if (sectionButton) sectionButton.click();
+
+        setTimeout(() => {
+          const finalY = el.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top: Math.max(0, finalY), behavior: 'instant' as ScrollBehavior });
+        }, 200);
+      }
+    });
+  };
+
+  return (
+    <div className="relative z-40">
+      <motion.div
+        ref={dropdownRef}
+        className="relative py-5 mt-5"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <div className="relative flex justify-center px-4">
+          <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="text-base md:text-lg px-6 py-2 font-bebas tracking-wider hover:bg-black/50 transition-colors backdrop-blur-sm bg-black/60 text-white border-primary border-2"
+              >
+                Jump to Section
+                <ChevronDown className="w-4 h-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="w-[96vw] max-w-none max-h-[70vh] overflow-y-auto z-50 p-4 md:p-6 bg-card/95 backdrop-blur-sm border-primary border-2"
+              side="bottom"
+              align="center"
+              sideOffset={4}
+              avoidCollisions={true}
+            >
+              {keyInfoSections.length > 0 && (
+                <div className="relative mb-4 text-center">
+                  <div className="py-2 text-xl md:text-2xl uppercase tracking-widest font-bebas border-b mb-4 text-primary border-primary/50">
+                    Key Info
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {keyInfoSections.map((section) => (
+                      <DropdownMenuItem
+                        key={section.id}
+                        onClick={() => handleNavigate(section.id)}
+                        className="cursor-pointer hover:bg-primary/20 font-bebas tracking-wide text-sm md:text-base py-1.5 px-3 rounded-md border text-white bg-black/80 border-primary/60"
+                      >
+                        {section.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {keyInfoSections.length > 0 && pointSections.length > 0 && (
+                <div className="relative my-3 h-[1px] bg-primary opacity-40" />
+              )}
+
+              {pointSections.length > 0 && (
+                <div className="relative text-center">
+                  <div className="py-2 text-xl md:text-2xl uppercase tracking-widest font-bebas border-b mb-4 text-primary border-primary/50">
+                    Analysis Points
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {pointSections.map((section) => (
+                      <DropdownMenuItem
+                        key={section.id}
+                        onClick={() => handleNavigate(section.id)}
+                        className="cursor-pointer hover:bg-primary/20 font-bebas tracking-wide text-sm md:text-base py-1.5 px-3 rounded-md border text-white bg-black/80 border-primary/60"
+                      >
+                        {section.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
 
 const AnalysisViewer = () => {
   const { analysisId } = useParams();
@@ -68,9 +586,7 @@ const AnalysisViewer = () => {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
 
   useEffect(() => {
-    if (analysisId) {
-      fetchAnalysis();
-    }
+    if (analysisId) fetchAnalysis();
   }, [analysisId]);
 
   const fetchAnalysis = async () => {
@@ -79,11 +595,14 @@ const AnalysisViewer = () => {
         .from("analyses")
         .select("*")
         .eq("id", analysisId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      
-      // Parse matchups and points from JSON
+      if (!data) {
+        setLoading(false);
+        return;
+      }
+
       const parsedAnalysis: Analysis = {
         ...data,
         match_date: data.match_date || null,
@@ -99,7 +618,7 @@ const AnalysisViewer = () => {
         matchups: Array.isArray(data.matchups) ? data.matchups : [],
         points: Array.isArray(data.points) ? data.points : []
       };
-      
+
       setAnalysis(parsedAnalysis);
     } catch (error: any) {
       console.error("Error fetching analysis:", error);
@@ -111,21 +630,21 @@ const AnalysisViewer = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background overflow-x-hidden">
-        <Header />
-        <div className="pt-24 px-4">
-          <p className="text-muted-foreground">Loading analysis...</p>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (!analysis) {
     return (
-      <div className="min-h-screen bg-background overflow-x-hidden">
-        <Header />
-        <div className="pt-24 px-4">
-          <p className="text-muted-foreground">Analysis not found</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center px-4">
+          <p className="text-muted-foreground text-xl mb-4">Analysis not found</p>
+          <Button onClick={() => navigate(-1)} variant="outline">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Go Back
+          </Button>
         </div>
       </div>
     );
@@ -135,637 +654,463 @@ const AnalysisViewer = () => {
   const isPostMatch = analysis.analysis_type === "post-match";
   const isConcept = analysis.analysis_type === "concept";
 
+  // Build quick nav sections
+  const navSections = [];
+  if (analysis.key_details) navSections.push({ id: SECTION_IDS.overview, label: "Overview" });
+  if (analysis.opposition_strengths) navSections.push({ id: SECTION_IDS.strengths, label: "Opposition Strengths" });
+  if (analysis.opposition_weaknesses) navSections.push({ id: SECTION_IDS.weaknesses, label: "Opposition Weaknesses" });
+  if (analysis.matchups?.length > 0) navSections.push({ id: SECTION_IDS.matchups, label: "Potential Matchups" });
+  if (analysis.scheme_title || analysis.selected_scheme) navSections.push({ id: SECTION_IDS.scheme, label: "Scheme" });
+  if (analysis.strengths_improvements) navSections.push({ id: SECTION_IDS.improvements, label: "Improvements" });
+  if (analysis.points && analysis.points.length > 0) {
+    analysis.points.forEach((point: any, index: number) => {
+      navSections.push({ id: `section-point-${index}`, label: point.title });
+    });
+  }
+
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <Header />
-      <main className="pt-24 pb-12 px-4">
-        <div className="container mx-auto max-w-5xl">
-          <div className="flex justify-between items-center mb-6">
-            <Button
-              variant="ghost"
-              onClick={() => navigate(-1)}
-              className="text-white hover:text-primary"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
+    <div className="min-h-screen relative bg-background">
+      {/* Gold inset vertical lines */}
+      <div className="fixed top-0 bottom-0 left-[6px] w-[2px] z-10 pointer-events-none bg-primary" />
+      <div className="fixed top-0 bottom-0 right-[6px] w-[2px] z-10 pointer-events-none bg-primary" />
 
-            {analysis.video_url && (
-              <Button
-                onClick={() => window.open(analysis.video_url!, '_blank')}
-                className="btn-shine font-bebas uppercase tracking-wider"
-              >
-                Watch Analysis Video
-              </Button>
-            )}
-          </div>
+      {/* Video Button */}
+      {analysis.video_url && (
+        <motion.div
+          className="fixed bottom-4 right-8 z-50"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Button
+            onClick={() => window.open(analysis.video_url!, '_blank')}
+            className="font-bebas uppercase tracking-wider shadow-lg bg-primary text-black hover:bg-primary/90"
+          >
+            <Play className="w-4 h-4 mr-2" />
+            Watch Video
+          </Button>
+        </motion.div>
+      )}
 
-          {/* Pre-Match Content - Redesigned */}
-          {isPreMatch && (
-            <div className="border-4 border-primary rounded-lg">
-              <Accordion type="single" collapsible className="space-y-0">
-                {/* Teams Header with Gold Background */}
-                <div className="relative border-t-4 border-b-4 border-primary rounded-lg overflow-hidden bg-primary">
-                  <div className="flex items-center justify-between">
-                    {/* Home Team */}
-                    <div 
-                      className="flex-1 flex items-center justify-center gap-3 py-2 px-4"
-                      style={{ backgroundColor: analysis.home_team_bg_color || '#1a1a1a' }}
-                    >
-                      {analysis.home_team_logo && (
-                        <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden p-1">
-                          <img
-                            src={analysis.home_team_logo}
-                            alt={analysis.home_team || "Home team"}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      )}
-                      <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide uppercase">
-                        {analysis.home_team}
-                      </span>
-                    </div>
+      <main className="w-full mx-auto px-[8px]">
+        {/* Pre-Match Content */}
+        {isPreMatch && (
+          <div className="w-full">
+            <AnalysisHeader
+              homeTeam={analysis.home_team}
+              awayTeam={analysis.away_team}
+              homeLogo={analysis.home_team_logo}
+              awayLogo={analysis.away_team_logo}
+              homeBgColor={analysis.home_team_bg_color}
+              awayBgColor={analysis.away_team_bg_color}
+              matchDate={analysis.match_date}
+            />
 
-                    {/* VS Divider */}
-                    <div className="px-4 bg-black">
-                      <span className="text-white text-xl font-bebas">VS</span>
-                    </div>
-
-                    {/* Away Team */}
-                    <div 
-                      className="flex-1 flex items-center justify-center gap-3 py-2 px-4"
-                      style={{ backgroundColor: analysis.away_team_bg_color || '#8B0000' }}
-                    >
-                      <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide uppercase">
-                        {analysis.away_team}
-                      </span>
-                      {analysis.away_team_logo && (
-                        <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden p-1">
-                          <img
-                            src={analysis.away_team_logo}
-                            alt={analysis.away_team || "Away team"}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {/* Match Date underneath teams in italics */}
-                  {analysis.match_date && (
-                    <div 
-                      className="text-center text-white/90 text-base font-bebas tracking-wide italic py-2 bg-cover bg-center"
-                      style={{ backgroundImage: `url(${smudgedMarbleDate})` }}
-                    >
-                      {new Date(analysis.match_date).toLocaleDateString('en-GB', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* Optional Match Image */}
-                {analysis.match_image_url && (
-                  <div className="mb-8 flex justify-center">
-                    <img 
-                      src={analysis.match_image_url} 
-                      alt="Match" 
-                      className="w-full max-w-5xl rounded-lg shadow-lg max-h-[540px] object-cover"
+            {/* Player/Match Image */}
+            {(analysis.player_image_url || analysis.match_image_url) && (
+              <ScrollReveal className="w-full">
+                <div className="relative w-full overflow-hidden bg-background">
+                  <div className="relative w-full" style={{ height: '400px', maxHeight: '400px' }}>
+                    <img
+                      src={analysis.player_image_url || analysis.match_image_url || ''}
+                      alt="Match"
+                      className="w-full h-full object-cover object-top"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
                   </div>
-                )}
+                </div>
+              </ScrollReveal>
+            )}
 
-              {/* Overview Section with Custom Background */}
-              {analysis.key_details && (
-                <AccordionItem value="overview" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
-                  <AccordionTrigger 
-                    className="w-full text-center bg-primary py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
-                  >
-                    <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
-                      Overview
-                    </h2>
-                    <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <Card className="rounded-t-none border-t-0 border-0 animate-accordion-down" style={{ backgroundColor: 'rgba(245, 245, 245, 0.95)' }}>
-                      <CardContent className="p-3">
-                        <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                          {analysis.key_details}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </AccordionContent>
-                </AccordionItem>
-              )}
+            {navSections.length > 0 && <QuickNavDropdown sections={navSections} />}
 
-              {/* Opposition Strengths */}
-              {analysis.opposition_strengths && (
-                <AccordionItem value="strengths" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
-                  <AccordionTrigger 
-                    className="w-full text-center bg-primary py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
-                  >
-                    <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
-                      Opposition Strengths
-                    </h2>
-                    <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <Card className="bg-gradient-to-br from-gray-900 to-black rounded-t-none border-t-0 border-0 animate-accordion-down">
-                      <CardContent className="p-3">
-                        <div className="space-y-3 max-w-4xl mx-auto">
-                          {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => {
-                            const cleanLine = line.trim().replace(/^[-•]\s*/, '');
-                            return (
-                              <div key={idx} className="flex items-center justify-center gap-3 bg-white/10 backdrop-blur-sm p-4 rounded-lg shadow-lg hover:bg-white/15 transition-all">
-                                <div className="bg-primary rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-black font-bold text-lg">✓</span>
-                                </div>
-                                <p className="text-white text-lg leading-relaxed flex-1 text-center font-medium">{cleanLine}</p>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </AccordionContent>
-                </AccordionItem>
-              )}
+            {/* Overview */}
+            {analysis.key_details && (
+              <ExpandableSection title="Overview" id={SECTION_IDS.overview}>
+                <TextReveal>
+                  <p className="leading-relaxed whitespace-pre-wrap text-base md:text-lg text-foreground">
+                    {analysis.key_details}
+                  </p>
+                </TextReveal>
+              </ExpandableSection>
+            )}
 
-              {/* Opposition Weaknesses */}
-              {analysis.opposition_weaknesses && (
-                <AccordionItem value="weaknesses" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
-                  <AccordionTrigger 
-                    className="w-full text-center bg-primary py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
-                  >
-                    <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
-                      Opposition Weaknesses
-                    </h2>
-                    <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <Card className="bg-gradient-to-br from-gray-900 to-black rounded-t-none border-t-0 border-0 animate-accordion-down">
-                      <CardContent className="p-3">
-                        <div className="space-y-3 max-w-4xl mx-auto">
-                          {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => {
-                            const cleanLine = line.trim().replace(/^[-•]\s*/, '');
-                            return (
-                              <div key={idx} className="flex items-center justify-center gap-3 bg-white/10 backdrop-blur-sm p-4 rounded-lg shadow-lg hover:bg-white/15 transition-all">
-                                <div className="bg-primary rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-black font-bold text-lg">!</span>
-                                </div>
-                                <p className="text-white text-lg leading-relaxed flex-1 text-center font-medium">{cleanLine}</p>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </AccordionContent>
-                </AccordionItem>
-              )}
-
-              {/* Key Matchups */}
-              {analysis.matchups && analysis.matchups.length > 0 && (
-                <AccordionItem value="matchups" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
-                  <AccordionTrigger 
-                    className="w-full text-center bg-primary py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
-                  >
-                    <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
-                      Potential Matchup(s)
-                    </h2>
-                    <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="rounded-t-none border-t-0 bg-transparent animate-accordion-down">
-                      <div className="py-3 px-3">
-                        <div className={`flex justify-center items-center gap-8 flex-wrap max-w-5xl mx-auto`}>
-                          {analysis.matchups.map((matchup: any, index: number) => (
-                            <div key={index} className="text-center flex-shrink-0" style={{ 
-                              width: analysis.matchups.length === 1 ? '300px' : analysis.matchups.length === 2 ? '250px' : '200px'
-                            }}>
-                              <div className={`mb-3 rounded-lg overflow-hidden border-4 border-primary/30 bg-gradient-to-br from-gray-50 to-gray-100 aspect-square flex items-center justify-center shadow-lg`} style={{
-                                width: analysis.matchups.length === 1 ? '300px' : analysis.matchups.length === 2 ? '250px' : '200px',
-                                height: analysis.matchups.length === 1 ? '300px' : analysis.matchups.length === 2 ? '250px' : '200px'
-                              }}>
-                                {matchup.image_url ? (
-                                  <img
-                                    src={matchup.image_url}
-                                    alt={matchup.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="text-gray-400 text-sm">No image</div>
-                                )}
-                              </div>
-                              <p className="font-bold text-white text-lg">{matchup.name}</p>
-                              {matchup.shirt_number && (
-                                <p className="text-sm text-white/80 font-semibold">
-                                  #{matchup.shirt_number}
-                                </p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              )}
-
-              {/* Scheme Section */}
-              {(analysis.scheme_title || analysis.selected_scheme) && (
-                <AccordionItem value="scheme" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg print:page-break-after-always">
-                  <AccordionTrigger 
-                    className="w-full text-center bg-primary py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
-                  >
-                    <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
-                      {analysis.scheme_title || "Tactical Scheme"}
-                    </h2>
-                    <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <Card className="rounded-t-none border-t-0 border-0 animate-accordion-down" style={{ backgroundColor: 'rgba(245, 245, 245, 0.95)' }}>
-                      <CardContent className="p-3 space-y-3">
-                        {analysis.scheme_paragraph_1 && (
-                          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                            {analysis.scheme_paragraph_1}
-                          </p>
-                        )}
-                        
-                        {analysis.selected_scheme && (
-                          <div className="relative bg-gradient-to-b from-green-700 to-green-800 rounded-lg p-8 min-h-[700px] border-4 border-white shadow-xl">
-                            <div className="text-white text-center mb-4 text-2xl font-bebas tracking-wider">
-                              {analysis.selected_scheme}
-                            </div>
-                            {/* Field markings - Outer border */}
-                            <div className="absolute inset-8 border-2 border-white/30 rounded-lg"></div>
-                            {/* Halfway line */}
-                            <div className="absolute inset-x-8 top-1/2 h-0.5 bg-white/30"></div>
-                            {/* Center circle */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 border-2 border-white/30 rounded-full"></div>
-                            {/* 18-yard box - top */}
-                            <div className="absolute left-1/2 -translate-x-1/2 top-8 w-48 h-24 border-2 border-white/30 border-t-0"></div>
-                            {/* 6-yard box - top */}
-                            <div className="absolute left-1/2 -translate-x-1/2 top-8 w-24 h-12 border-2 border-white/30 border-t-0"></div>
-                            {/* Penalty spot - top */}
-                            <div className="absolute left-1/2 -translate-x-1/2 top-24 w-2 h-2 bg-white/50 rounded-full"></div>
-                            {/* 18-yard box - bottom */}
-                            <div className="absolute left-1/2 -translate-x-1/2 bottom-8 w-48 h-24 border-2 border-white/30 border-b-0"></div>
-                            {/* 6-yard box - bottom */}
-                            <div className="absolute left-1/2 -translate-x-1/2 bottom-8 w-24 h-12 border-2 border-white/30 border-b-0"></div>
-                            {/* Penalty spot - bottom */}
-                            <div className="absolute left-1/2 -translate-x-1/2 bottom-24 w-2 h-2 bg-white/50 rounded-full"></div>
-                            
-                            {analysis.starting_xi && analysis.starting_xi.length > 0 && (
-                              <div className="absolute inset-0 p-8">
-                                {analysis.starting_xi.map((player: any, index: number) => (
-                                  <div
-                                    key={index}
-                                    className="absolute flex flex-col items-center gap-1"
-                                    style={{
-                                      left: `${player.x}%`,
-                                      top: `${player.y}%`,
-                                      transform: 'translate(-50%, -50%)'
-                                    }}
-                                  >
-                                    <PlayerKit 
-                                      primaryColor={analysis.kit_primary_color || '#FFD700'}
-                                      secondaryColor={analysis.kit_secondary_color || '#000000'}
-                                      number={player.number || '0'}
-                                    />
-                                    <div className="bg-black/80 text-white px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap">
-                                      {player.surname || player.position}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        
-                        {analysis.scheme_paragraph_2 && (
-                          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                            {analysis.scheme_paragraph_2}
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </AccordionContent>
-                </AccordionItem>
-              )}
-
-              {/* Additional Sections from Points with Gap and Custom Background Colors */}
-              {analysis.points && analysis.points.length > 0 && (
-                <div className="mt-12 space-y-0">
-                  {analysis.points.map((point: any, index: number) => {
-                    const bgColor = index % 2 === 0 ? 'bg-gray-300' : 'bg-gray-400';
+            {/* Opposition Strengths */}
+            {analysis.opposition_strengths && (
+              <ExpandableSection title="Opposition Strengths" id={SECTION_IDS.strengths} icon="plus">
+                <div className="space-y-3">
+                  {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => {
+                    const cleanLine = line.trim().replace(/^[-•]\s*/, '');
                     return (
-                      <AccordionItem key={index} value={`point-${index}`} className={`border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg ${index > 0 ? 'mt-0' : ''}`}>
-                        <AccordionTrigger 
-                          className={`w-full text-center py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180 ${bgColor}`}
-                        >
-                          <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
-                            {point.title}
-                          </h2>
-                          <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <Card className="rounded-t-none border-t-0 border-0 animate-accordion-down" style={{ backgroundColor: 'rgba(245, 245, 245, 0.95)' }}>
-                            <CardContent className="p-3 space-y-3">
-                              {point.paragraph_1 && (
-                                <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                                  {point.paragraph_1}
-                                </p>
-                              )}
-                              {point.images && point.images.length > 0 && (
-                                <div className="bg-primary -mx-3 px-3 py-3 flex flex-col items-center gap-3">
-                                  {point.images.map((img: string, imgIndex: number) => (
-                                    <img
-                                      key={imgIndex}
-                                      src={img}
-                                      alt={`${point.title} - Image ${imgIndex + 1}`}
-                                      className="w-full max-w-4xl rounded-lg shadow-md"
-                                    />
-                                  ))}
-                                </div>
-                              )}
-                              {point.paragraph_2 && (
-                                <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                                  {point.paragraph_2}
-                                </p>
-                              )}
-                            </CardContent>
-                          </Card>
-                        </AccordionContent>
-                      </AccordionItem>
+                      <TextReveal key={idx} delay={idx * 0.1}>
+                        <div className="flex items-start gap-3">
+                          <div className="rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center flex-shrink-0 bg-primary">
+                            <Plus className="w-4 h-4 md:w-5 md:h-5 text-black" />
+                          </div>
+                          <p className="text-sm md:text-base leading-relaxed pt-0.5 italic text-foreground">{cleanLine}</p>
+                        </div>
+                      </TextReveal>
                     );
                   })}
                 </div>
-              )}
-              </Accordion>
-            </div>
-          )}
+              </ExpandableSection>
+            )}
 
-          {/* Post-Match Content */}
-          {isPostMatch && (
-            <div className="border-4 border-primary rounded-lg">
-              <Accordion type="single" collapsible className="space-y-0">
-                {/* Teams Header with Custom Background Colors */}
-                <div className="relative border-t-4 border-b-4 border-primary rounded-lg overflow-hidden bg-primary">
-                  <div className="flex items-center justify-between">
-                    {/* Home Team */}
-                    <div 
-                      className="flex-1 flex items-center justify-center gap-3 py-2 px-4"
-                      style={{ backgroundColor: analysis.home_team_bg_color || '#1a1a1a' }}
-                    >
-                      {analysis.home_team_logo && (
-                        <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden p-1">
-                          <img
-                            src={analysis.home_team_logo}
-                            alt={analysis.home_team || "Home team"}
-                            className="w-full h-full object-contain"
-                          />
+            {/* Opposition Weaknesses */}
+            {analysis.opposition_weaknesses && (
+              <ExpandableSection title="Opposition Weaknesses" id={SECTION_IDS.weaknesses} icon="minus">
+                <div className="space-y-3">
+                  {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => {
+                    const cleanLine = line.trim().replace(/^[-•]\s*/, '');
+                    return (
+                      <TextReveal key={idx} delay={idx * 0.1}>
+                        <div className="flex items-start gap-3">
+                          <div className="rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center flex-shrink-0 bg-primary">
+                            <Minus className="w-4 h-4 md:w-5 md:h-5 text-black" />
+                          </div>
+                          <p className="text-sm md:text-base leading-relaxed pt-0.5 italic text-foreground">{cleanLine}</p>
                         </div>
-                      )}
-                      <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide uppercase">
-                        {analysis.home_team}
-                      </span>
-                    </div>
+                      </TextReveal>
+                    );
+                  })}
+                </div>
+              </ExpandableSection>
+            )}
 
-                    {/* Score Divider */}
-                    <div className="px-4 bg-black flex items-center gap-2">
-                      {analysis.home_score !== null && analysis.away_score !== null && (
-                        <span className="text-primary text-xl font-bebas">
-                          {analysis.home_score} - {analysis.away_score}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Away Team */}
-                    <div 
-                      className="flex-1 flex items-center justify-center gap-3 py-2 px-4"
-                      style={{ backgroundColor: analysis.away_team_bg_color || '#8B0000' }}
-                    >
-                      <span className="text-2xl md:text-3xl font-bebas text-white tracking-wide uppercase">
-                        {analysis.away_team}
-                      </span>
-                      {analysis.away_team_logo && (
-                        <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden p-1">
-                          <img
-                            src={analysis.away_team_logo}
-                            alt={analysis.away_team || "Away team"}
-                            className="w-full h-full object-contain"
-                          />
+            {/* Key Matchups */}
+            {analysis.matchups && analysis.matchups.length > 0 && (
+              <ExpandableSection title="Potential Matchup(s)" id={SECTION_IDS.matchups} transparentContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                  {analysis.matchups.map((matchup: any, index: number) => (
+                    <TextReveal key={index} delay={index * 0.15}>
+                      <div className="relative rounded-xl overflow-hidden bg-card border-2 border-primary shadow-lg">
+                        <div className="relative flex">
+                          <div className="w-28 md:w-32 flex-shrink-0 self-stretch">
+                            {matchup.image_url ? (
+                              <img src={matchup.image_url} alt={matchup.name} className="w-full h-full object-cover object-top" style={{ minHeight: '100%' }} />
+                            ) : (
+                              <div className="w-full h-full bg-black/40 flex items-center justify-center text-white/50 text-xs min-h-[120px]">No image</div>
+                            )}
+                          </div>
+                          <div className="flex-1 p-4 md:p-5 flex flex-col justify-center">
+                            <h3 className="font-bebas text-lg md:text-xl uppercase tracking-wide text-white drop-shadow-lg leading-tight">
+                              {matchup.name?.toUpperCase()}
+                            </h3>
+                            {matchup.shirt_number && (
+                              <p className="text-2xl md:text-3xl font-bold mt-1 text-primary">#{matchup.shirt_number}</p>
+                            )}
+                            {matchup.notes && (
+                              <div className="mt-3 pt-3 border-t border-primary/40">
+                                <p className="text-sm md:text-base text-white/90 leading-relaxed">{matchup.notes}</p>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                  {/* Match Date underneath teams in italics */}
-                  {analysis.match_date && (
-                    <div 
-                      className="text-center text-white/90 text-base font-bebas tracking-wide italic py-2 bg-cover bg-center"
-                      style={{ backgroundImage: `url(${smudgedMarbleDate})` }}
-                    >
-                      {new Date(analysis.match_date).toLocaleDateString('en-GB', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </div>
+                      </div>
+                    </TextReveal>
+                  ))}
+                </div>
+              </ExpandableSection>
+            )}
+
+            {/* Scheme Section */}
+            {(analysis.scheme_title || analysis.selected_scheme) && (
+              <ExpandableSection title={analysis.scheme_title || "Tactical Scheme"} id={SECTION_IDS.scheme}>
+                <div className="space-y-4 md:space-y-6">
+                  {analysis.scheme_paragraph_1 && (
+                    <TextReveal>
+                      <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                        {analysis.scheme_paragraph_1}
+                      </p>
+                    </TextReveal>
+                  )}
+
+                  {analysis.selected_scheme && (
+                    <TextReveal delay={0.2}>
+                      <div className="relative rounded-lg min-h-[400px] md:min-h-[600px] border-4 border-primary shadow-xl overflow-hidden bg-gradient-to-b from-green-700 via-green-800 to-green-900">
+                        {/* Field markings */}
+                        <div className="absolute inset-8 border-2 border-white/30 rounded-lg"></div>
+                        <div className="absolute inset-x-8 top-1/2 h-0.5 bg-white/30"></div>
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 border-2 border-white/30 rounded-full"></div>
+                        <div className="absolute left-1/2 -translate-x-1/2 top-8 w-48 h-24 border-2 border-white/30 border-t-0"></div>
+                        <div className="absolute left-1/2 -translate-x-1/2 bottom-8 w-48 h-24 border-2 border-white/30 border-b-0"></div>
+
+                        <div className="text-white text-center py-4 text-2xl font-bebas tracking-wider">
+                          {analysis.selected_scheme}
+                        </div>
+
+                        {analysis.starting_xi && analysis.starting_xi.length > 0 && (
+                          <div className="absolute inset-0 p-8">
+                            {analysis.starting_xi.map((player: any, index: number) => (
+                              <div
+                                key={index}
+                                className="absolute flex flex-col items-center gap-1"
+                                style={{
+                                  left: `${player.x}%`,
+                                  top: `${player.y}%`,
+                                  transform: 'translate(-50%, -50%)'
+                                }}
+                              >
+                                <PlayerKit
+                                  primaryColor={analysis.kit_primary_color || '#FFD700'}
+                                  secondaryColor={analysis.kit_secondary_color || '#000000'}
+                                  number={player.number || '0'}
+                                />
+                                <div className="bg-black/80 text-white px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap">
+                                  {player.surname || player.position}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </TextReveal>
+                  )}
+
+                  {analysis.scheme_paragraph_2 && (
+                    <TextReveal delay={0.3}>
+                      <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                        {analysis.scheme_paragraph_2}
+                      </p>
+                    </TextReveal>
                   )}
                 </div>
+              </ExpandableSection>
+            )}
 
-                {/* Optional Player Image */}
-                {analysis.player_image_url && (
-                  <div className="mb-8 flex justify-center mt-8">
-                    <img
-                      src={analysis.player_image_url}
-                      alt="Player"
-                      className="w-full max-w-5xl rounded-lg shadow-lg max-h-48 object-cover"
-                    />
-                  </div>
-                )}
-
-                {/* Overview Section */}
-                {analysis.key_details && (
-                  <AccordionItem value="overview" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
-                    <AccordionTrigger 
-                      className="w-full text-center bg-primary py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
-                    >
-                      <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
-                        Overview
-                      </h2>
-                      <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <Card className="rounded-t-none border-t-0 border-0 animate-accordion-down" style={{ backgroundColor: 'rgba(245, 245, 245, 0.95)' }}>
-                        <CardContent className="p-3">
-                          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                            {analysis.key_details}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-
-                {/* Strengths & Areas for Improvement */}
-                {analysis.strengths_improvements && (
-                  <AccordionItem value="strengths-improvements" className="mb-8 border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg">
-                    <AccordionTrigger 
-                      className="w-full text-center bg-primary py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180"
-                    >
-                      <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
-                        Strengths & Areas for Improvement
-                      </h2>
-                      <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <Card className="rounded-t-none border-t-0 border-0 animate-accordion-down" style={{ backgroundColor: 'rgba(245, 245, 245, 0.95)' }}>
-                        <CardContent className="p-3">
-                          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                            {analysis.strengths_improvements}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-
-                {/* Additional Sections from Points */}
-                {analysis.points && analysis.points.length > 0 && (
-                  <div className="mt-12 space-y-0">
-                    {analysis.points.map((point: any, index: number) => {
-                      const bgColor = index % 2 === 0 ? 'bg-gray-300' : 'bg-gray-400';
-                      return (
-                        <AccordionItem key={index} value={`point-${index}`} className={`border-0 data-[state=open]:border-4 data-[state=open]:border-primary data-[state=open]:rounded-lg ${index > 0 ? 'mt-0' : ''}`}>
-                          <AccordionTrigger 
-                            className={`w-full text-center py-4 rounded-t-lg hover:opacity-90 flex items-center justify-center gap-2 transition-all [&[data-state=open]>svg]:rotate-180 ${bgColor}`}
-                          >
-                            <h2 className="text-3xl font-bebas uppercase tracking-widest text-black">
-                              {point.title}
-                            </h2>
-                            <ChevronDown className="w-5 h-5 text-black transition-transform duration-200" />
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <Card className="rounded-t-none border-t-0 border-0 animate-accordion-down" style={{ backgroundColor: 'rgba(245, 245, 245, 0.95)' }}>
-                              <CardContent className="p-3 space-y-3">
-                                {point.paragraph_1 && (
-                                  <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                                    {point.paragraph_1}
-                                  </p>
-                                )}
-                                {point.images && point.images.length > 0 && (
-                                  <div className="bg-primary -mx-3 px-3 py-3 flex flex-col items-center gap-3">
-                                    {point.images.map((img: string, imgIndex: number) => (
-                                      <img
-                                        key={imgIndex}
-                                        src={img}
-                                        alt={`${point.title} - Image ${imgIndex + 1}`}
-                                        className="w-full max-w-4xl rounded-lg shadow-md"
-                                      />
-                                    ))}
-                                  </div>
-                                )}
-                                {point.paragraph_2 && (
-                                  <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                                    {point.paragraph_2}
-                                  </p>
-                                )}
-                              </CardContent>
-                            </Card>
-                          </AccordionContent>
-                        </AccordionItem>
-                      );
-                    })}
-                  </div>
-                )}
-              </Accordion>
-            </div>
-          )}
-
-          {/* Concept Content */}
-          {isConcept && (
-            <div className="space-y-8">
-              {/* Header */}
-              <div className="text-center mb-8">
-                <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-4 py-1 rounded-full inline-block">
-                  Concept
-                </span>
-                <h1 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-white mt-4">
-                  {analysis.title || "Concept Analysis"}
-                </h1>
-              </div>
-
-              {analysis.concept && (
-                <Card className="bg-card/50 border-primary/20">
-                  <CardContent className="p-6">
-                    <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary mb-4">
-                      Concept
-                    </h3>
-                    <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
-                      {analysis.concept}
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {analysis.explanation && (
-                <Card className="bg-card/50 border-primary/20">
-                  <CardContent className="p-6">
-                    <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary mb-4">
-                      Explanation
-                    </h3>
-                    <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
-                      {analysis.explanation}
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {analysis.points && analysis.points.length > 0 && (
-                <div className="space-y-6">
-                  {analysis.points.map((point: any, index: number) => (
-                    <Card key={index} className="bg-card/50 border-primary/20">
-                      <CardContent className="p-6 space-y-4">
-                        <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                          {point.title}
-                        </h3>
-                        {point.paragraph_1 && (
-                          <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
+            {/* Points */}
+            {analysis.points && analysis.points.length > 0 && (
+              <div className="w-full">
+                {analysis.points.map((point: any, index: number) => (
+                  <ExpandableSection key={index} title={point.title} id={`section-point-${index}`}>
+                    <div className="space-y-4 md:space-y-6">
+                      {point.paragraph_1 && (
+                        <TextReveal>
+                          <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
                             {point.paragraph_1}
                           </p>
-                        )}
-                        {point.images && point.images.length > 0 && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        </TextReveal>
+                      )}
+                      {point.images && point.images.length > 0 && (
+                        <TextReveal delay={0.15}>
+                          <div className="flex flex-col items-center gap-4">
                             {point.images.map((img: string, imgIndex: number) => (
                               <img
                                 key={imgIndex}
                                 src={img}
                                 alt={`${point.title} - Image ${imgIndex + 1}`}
-                                className="w-full rounded-lg"
+                                className="w-full rounded-lg shadow-md border-2 border-primary"
                               />
                             ))}
                           </div>
-                        )}
-                        {point.paragraph_2 && (
-                          <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
+                        </TextReveal>
+                      )}
+                      {point.paragraph_2 && (
+                        <TextReveal delay={0.25}>
+                          <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
                             {point.paragraph_2}
                           </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </TextReveal>
+                      )}
+                    </div>
+                  </ExpandableSection>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Post-Match Content */}
+        {isPostMatch && (
+          <div className="w-full">
+            <AnalysisHeader
+              homeTeam={analysis.home_team}
+              awayTeam={analysis.away_team}
+              homeLogo={analysis.home_team_logo}
+              awayLogo={analysis.away_team_logo}
+              homeBgColor={analysis.home_team_bg_color}
+              awayBgColor={analysis.away_team_bg_color}
+              homeScore={analysis.home_score}
+              awayScore={analysis.away_score}
+              matchDate={analysis.match_date}
+              isPostMatch
+            />
+
+            {analysis.player_image_url && (
+              <ScrollReveal className="w-full">
+                <div className="relative w-full overflow-hidden bg-background">
+                  <div className="relative w-full" style={{ aspectRatio: '1/1', maxHeight: '400px' }}>
+                    <img src={analysis.player_image_url} alt="Player" className="w-full h-full object-cover object-top" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
+              </ScrollReveal>
+            )}
+
+            {navSections.length > 0 && <QuickNavDropdown sections={navSections} />}
+
+            {analysis.key_details && (
+              <ExpandableSection title="Overview" id={SECTION_IDS.overview}>
+                <TextReveal>
+                  <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                    {analysis.key_details}
+                  </p>
+                </TextReveal>
+              </ExpandableSection>
+            )}
+
+            {analysis.strengths_improvements && (
+              <ExpandableSection title="Strengths & Areas for Improvement" id={SECTION_IDS.improvements}>
+                <TextReveal>
+                  <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                    {analysis.strengths_improvements}
+                  </p>
+                </TextReveal>
+              </ExpandableSection>
+            )}
+
+            {analysis.points && analysis.points.length > 0 && (
+              <div className="w-full">
+                {analysis.points.map((point: any, index: number) => (
+                  <ExpandableSection key={index} title={point.title} id={`section-point-${index}`}>
+                    <div className="space-y-4 md:space-y-6">
+                      {point.paragraph_1 && (
+                        <TextReveal>
+                          <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                            {point.paragraph_1}
+                          </p>
+                        </TextReveal>
+                      )}
+                      {point.images && point.images.length > 0 && (
+                        <TextReveal delay={0.15}>
+                          <div className="flex flex-col items-center gap-4">
+                            {point.images.map((img: string, imgIndex: number) => (
+                              <img key={imgIndex} src={img} alt={`${point.title} - Image ${imgIndex + 1}`} className="w-full rounded-lg shadow-md border-2 border-primary" />
+                            ))}
+                          </div>
+                        </TextReveal>
+                      )}
+                      {point.paragraph_2 && (
+                        <TextReveal delay={0.25}>
+                          <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                            {point.paragraph_2}
+                          </p>
+                        </TextReveal>
+                      )}
+                    </div>
+                  </ExpandableSection>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Concept Content */}
+        {isConcept && (
+          <div className="w-full">
+            <motion.div
+              className="py-6 bg-background border-4 border-primary"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="flex flex-col items-center">
+                <img src={riseLogo} alt="Rise Agency" className="w-20 h-20 md:w-28 md:h-28 object-contain mb-2" />
+                <h1 className="text-white text-lg md:text-2xl font-bebas tracking-widest uppercase mb-1">RISE AGENCY</h1>
+                <p className="text-base md:text-xl font-bebas tracking-wider uppercase mb-4 text-primary">REALISE YOUR POTENTIAL</p>
+                <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="bg-black/50 backdrop-blur-sm border-white/30 hover:bg-black/70 text-white">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+              </div>
+            </motion.div>
+
+            <section className="relative w-full py-6 bg-background">
+              <TacticalSymbols />
+              <div className="relative px-4 md:px-6">
+                <ContentCard>
+                  <div className="text-center">
+                    <span className="text-xs md:text-sm font-bebas uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-3 bg-primary text-black">Concept</span>
+                    <h1 className="text-2xl md:text-4xl font-bebas uppercase tracking-wider text-foreground">
+                      {analysis.title || "Concept Analysis"}
+                    </h1>
+                  </div>
+                </ContentCard>
+              </div>
+            </section>
+
+            {analysis.concept && (
+              <ExpandableSection title="Concept" defaultOpen>
+                <TextReveal>
+                  <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                    {analysis.concept}
+                  </p>
+                </TextReveal>
+              </ExpandableSection>
+            )}
+
+            {analysis.explanation && (
+              <ExpandableSection title="Explanation">
+                <TextReveal>
+                  <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                    {analysis.explanation}
+                  </p>
+                </TextReveal>
+              </ExpandableSection>
+            )}
+
+            {analysis.points && analysis.points.length > 0 && (
+              <div className="w-full">
+                {analysis.points.map((point: any, index: number) => (
+                  <ExpandableSection key={index} title={point.title} id={`section-point-${index}`}>
+                    <div className="space-y-4 md:space-y-6">
+                      {point.paragraph_1 && (
+                        <TextReveal>
+                          <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                            {point.paragraph_1}
+                          </p>
+                        </TextReveal>
+                      )}
+                      {point.images && point.images.length > 0 && (
+                        <TextReveal delay={0.15}>
+                          <div className="flex flex-col gap-4">
+                            {point.images.map((img: string, imgIndex: number) => (
+                              <img key={imgIndex} src={img} alt={`${point.title} - Image ${imgIndex + 1}`} className="w-full rounded-lg border-2 border-primary" />
+                            ))}
+                          </div>
+                        </TextReveal>
+                      )}
+                      {point.paragraph_2 && (
+                        <TextReveal delay={0.25}>
+                          <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                            {point.paragraph_2}
+                          </p>
+                        </TextReveal>
+                      )}
+                    </div>
+                  </ExpandableSection>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Back to Top */}
+        <motion.div
+          className="flex justify-center py-8"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+        >
+          <Button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}
+            className="font-bebas uppercase tracking-wider text-lg px-8 py-4 bg-primary text-black border-2 border-primary hover:bg-primary/90"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2 rotate-90" />
+            Back to Top
+          </Button>
+        </motion.div>
       </main>
-      <Footer />
     </div>
   );
 };
