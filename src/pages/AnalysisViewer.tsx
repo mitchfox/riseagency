@@ -410,7 +410,7 @@ const AnalysisHeader = ({
         </Button>
 
         <div className="relative flex items-center justify-center py-2">
-          <img src={riseLogo} alt="Rise Agency" className="w-16 h-16 md:w-20 md:h-20 object-contain" />
+          <img src={riseLogo} alt="Rise Agency" className="w-24 h-24 md:w-32 md:h-32 object-contain" />
         </div>
       </div>
 
@@ -494,9 +494,12 @@ const AnalysisHeader = ({
       {/* Match Date with gradient fade below */}
       {matchDate && (
         <>
-          <div className="text-center py-2 bg-black/80">
+          <div 
+            className="text-center py-2"
+            style={{ backgroundColor: '#0a2e12' }}
+          >
             <span 
-              className="text-white/90 font-bebas tracking-wider text-base md:text-lg italic"
+              className="text-white font-bebas tracking-wider text-base md:text-lg italic"
               style={{
                 textShadow: '2px 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.6)'
               }}
@@ -509,11 +512,11 @@ const AnalysisHeader = ({
               })}
             </span>
           </div>
-          {/* Black gradient fading out from underneath the date */}
+          {/* Green fade gradient overlay - doubled height, layered ON TOP of match image */}
           <div 
-            className="h-12 w-full"
+            className="h-24 w-full"
             style={{
-              background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 40%, transparent 100%)'
+              background: 'linear-gradient(to bottom, #0a2e12 0%, rgba(10,46,18,0.7) 30%, rgba(10,46,18,0.3) 60%, transparent 100%)'
             }}
           />
         </>
@@ -565,11 +568,11 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
 
   return (
     <div className="relative z-40">
-      {/* Radiating gold shade behind the section */}
+      {/* Radiating dark shader ring behind the button */}
       <div 
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at center, hsla(var(--primary), 0.5) 0%, hsla(var(--primary), 0.3) 30%, hsla(var(--primary), 0.1) 60%, transparent 100%)'
+          background: 'radial-gradient(ellipse at center, rgba(253,198,27,0.7) 0%, rgba(253,198,27,0.5) 30%, rgba(253,198,27,0.2) 60%, transparent 100%)'
         }}
       />
       
@@ -584,14 +587,6 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
       >
       {/* Inner container to flip content back to normal */}
       <div style={{ transform: 'scaleY(-1)' }}>
-      {/* Cone icon above Jump to Section */}
-      <div className="flex justify-center pt-6">
-        <svg width="40" height="50" viewBox="0 0 40 50" className="drop-shadow-lg">
-          <polygon points="20,5 35,45 5,45" fill="hsl(var(--primary))" stroke="hsl(var(--primary-foreground))" strokeWidth="2"/>
-          <line x1="20" y1="12" x2="20" y2="38" stroke="hsl(var(--primary-foreground))" strokeWidth="2"/>
-          <line x1="12" y1="35" x2="28" y2="35" stroke="hsl(var(--primary-foreground))" strokeWidth="2"/>
-        </svg>
-      </div>
       
       <motion.div
         ref={dropdownRef}
