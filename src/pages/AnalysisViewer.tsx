@@ -785,24 +785,43 @@ const AnalysisViewer = () => {
               matchDate={analysis.match_date}
             />
 
-            {/* Player/Match Image */}
+            {/* Player/Match Image with overlapping gold name bar */}
             {(analysis.player_image_url || analysis.match_image_url) && (
               <ScrollReveal className="w-full">
-                <div className="relative w-full overflow-hidden bg-background">
+                <div className="relative w-full overflow-hidden">
+                  {/* Player image */}
                   <div className="relative w-full" style={{ height: '400px', maxHeight: '400px' }}>
                     <img
                       src={analysis.player_image_url || analysis.match_image_url || ''}
                       alt="Match"
                       className="w-full h-full object-cover object-top"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
                   </div>
+                  
+                  {/* Gold polygon name bar - overlaps bottom of image */}
+                  {analysis.title && (
+                    <div className="absolute bottom-0 left-0 right-0 flex justify-center" style={{ transform: 'translateY(50%)' }}>
+                      <div 
+                        className="relative px-12 py-4"
+                        style={{
+                          backgroundColor: 'hsl(var(--primary))',
+                          clipPath: 'polygon(5% 0%, 95% 0%, 100% 50%, 95% 100%, 5% 100%, 0% 50%)'
+                        }}
+                      >
+                        <h1 className="text-2xl md:text-4xl font-bebas uppercase tracking-[0.15em] text-black whitespace-nowrap">
+                          <HoverText text={analysis.title} />
+                        </h1>
+                      </div>
+                    </div>
+                  )}
                 </div>
+                {/* Spacer for the overlapping name bar */}
+                {analysis.title && <div className="h-8" />}
               </ScrollReveal>
             )}
 
-            {/* Player Name Section with backing polygons */}
-            {analysis.title && (
+            {/* Fallback player name section when no image */}
+            {!(analysis.player_image_url || analysis.match_image_url) && analysis.title && (
               <div 
                 className="relative py-8 overflow-hidden"
                 style={{
@@ -811,29 +830,18 @@ const AnalysisViewer = () => {
                   backgroundPosition: 'center'
                 }}
               >
-                {/* Left polygon backing */}
-                <div 
-                  className="absolute left-0 top-0 bottom-0 w-1/3 opacity-40"
-                  style={{
-                    backgroundColor: 'hsl(var(--primary))',
-                    clipPath: 'polygon(0 0, 100% 20%, 80% 80%, 0 100%)'
-                  }}
-                />
-                {/* Right polygon backing */}
-                <div 
-                  className="absolute right-0 top-0 bottom-0 w-1/3 opacity-40"
-                  style={{
-                    backgroundColor: 'hsl(var(--primary))',
-                    clipPath: 'polygon(20% 20%, 100% 0, 100% 100%, 0 80%)'
-                  }}
-                />
-                {/* Center glow */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent" />
-                
-                <div className="relative text-center z-10">
-                  <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-[0.2em] text-primary drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]">
-                    <HoverText text={analysis.title} />
-                  </h1>
+                <div className="flex justify-center">
+                  <div 
+                    className="relative px-12 py-4"
+                    style={{
+                      backgroundColor: 'hsl(var(--primary))',
+                      clipPath: 'polygon(5% 0%, 95% 0%, 100% 50%, 95% 100%, 5% 100%, 0% 50%)'
+                    }}
+                  >
+                    <h1 className="text-2xl md:text-4xl font-bebas uppercase tracking-[0.15em] text-black whitespace-nowrap">
+                      <HoverText text={analysis.title} />
+                    </h1>
+                  </div>
                 </div>
               </div>
             )}
@@ -844,7 +852,7 @@ const AnalysisViewer = () => {
             {analysis.key_details && (
               <ExpandableSection title="Overview" id={SECTION_IDS.overview} flipBackground={false}>
                 <TextReveal>
-                  <p className="leading-relaxed whitespace-pre-wrap text-base md:text-lg text-foreground">
+                  <p className="leading-relaxed whitespace-pre-wrap text-base md:text-lg text-black">
                     {analysis.key_details}
                   </p>
                 </TextReveal>
@@ -863,7 +871,7 @@ const AnalysisViewer = () => {
                           <div className="rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center flex-shrink-0 bg-primary">
                             <Plus className="w-4 h-4 md:w-5 md:h-5 text-black" />
                           </div>
-                          <p className="text-sm md:text-base leading-relaxed pt-0.5 italic text-foreground">{cleanLine}</p>
+                          <p className="text-sm md:text-base leading-relaxed pt-0.5 italic text-black">{cleanLine}</p>
                         </div>
                       </TextReveal>
                     );
@@ -884,7 +892,7 @@ const AnalysisViewer = () => {
                           <div className="rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center flex-shrink-0 bg-primary">
                             <Minus className="w-4 h-4 md:w-5 md:h-5 text-black" />
                           </div>
-                          <p className="text-sm md:text-base leading-relaxed pt-0.5 italic text-foreground">{cleanLine}</p>
+                          <p className="text-sm md:text-base leading-relaxed pt-0.5 italic text-black">{cleanLine}</p>
                         </div>
                       </TextReveal>
                     );
@@ -935,7 +943,7 @@ const AnalysisViewer = () => {
                 <div className="space-y-4 md:space-y-6">
                   {analysis.scheme_paragraph_1 && (
                     <TextReveal>
-                      <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                      <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                         {analysis.scheme_paragraph_1}
                       </p>
                     </TextReveal>
@@ -985,7 +993,7 @@ const AnalysisViewer = () => {
 
                   {analysis.scheme_paragraph_2 && (
                     <TextReveal delay={0.3}>
-                      <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                      <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                         {analysis.scheme_paragraph_2}
                       </p>
                     </TextReveal>
@@ -1006,7 +1014,7 @@ const AnalysisViewer = () => {
                       <div className="space-y-4 md:space-y-6">
                         {point.paragraph_1 && (
                           <TextReveal>
-                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                               {point.paragraph_1}
                             </p>
                           </TextReveal>
@@ -1027,7 +1035,7 @@ const AnalysisViewer = () => {
                         )}
                         {point.paragraph_2 && (
                           <TextReveal delay={0.25}>
-                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                               {point.paragraph_2}
                             </p>
                           </TextReveal>
@@ -1074,7 +1082,7 @@ const AnalysisViewer = () => {
             {analysis.key_details && (
               <ExpandableSection title="Overview" id={SECTION_IDS.overview} flipBackground={false}>
                 <TextReveal>
-                  <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                  <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                     {analysis.key_details}
                   </p>
                 </TextReveal>
@@ -1085,7 +1093,7 @@ const AnalysisViewer = () => {
             {analysis.strengths_improvements && (
               <ExpandableSection title="Strengths & Areas for Improvement" id={SECTION_IDS.improvements} flipBackground={true}>
                 <TextReveal>
-                  <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                  <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                     {analysis.strengths_improvements}
                   </p>
                 </TextReveal>
@@ -1103,7 +1111,7 @@ const AnalysisViewer = () => {
                       <div className="space-y-4 md:space-y-6">
                         {point.paragraph_1 && (
                           <TextReveal>
-                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                               {point.paragraph_1}
                             </p>
                           </TextReveal>
@@ -1119,7 +1127,7 @@ const AnalysisViewer = () => {
                         )}
                         {point.paragraph_2 && (
                           <TextReveal delay={0.25}>
-                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                               {point.paragraph_2}
                             </p>
                           </TextReveal>
@@ -1159,7 +1167,7 @@ const AnalysisViewer = () => {
                 <ContentCard>
                   <div className="text-center">
                     <span className="text-xs md:text-sm font-bebas uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-3 bg-primary text-black">Concept</span>
-                    <h1 className="text-2xl md:text-4xl font-bebas uppercase tracking-wider text-foreground">
+                    <h1 className="text-2xl md:text-4xl font-bebas uppercase tracking-wider text-black">
                       {analysis.title || "Concept Analysis"}
                     </h1>
                   </div>
@@ -1171,7 +1179,7 @@ const AnalysisViewer = () => {
             {analysis.concept && (
               <ExpandableSection title="Concept" defaultOpen flipBackground={false}>
                 <TextReveal>
-                  <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                  <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                     {analysis.concept}
                   </p>
                 </TextReveal>
@@ -1182,7 +1190,7 @@ const AnalysisViewer = () => {
             {analysis.explanation && (
               <ExpandableSection title="Explanation" flipBackground={true}>
                 <TextReveal>
-                  <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                  <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                     {analysis.explanation}
                   </p>
                 </TextReveal>
@@ -1200,7 +1208,7 @@ const AnalysisViewer = () => {
                       <div className="space-y-4 md:space-y-6">
                         {point.paragraph_1 && (
                           <TextReveal>
-                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                               {point.paragraph_1}
                             </p>
                           </TextReveal>
@@ -1216,7 +1224,7 @@ const AnalysisViewer = () => {
                         )}
                         {point.paragraph_2 && (
                           <TextReveal delay={0.25}>
-                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-foreground">
+                            <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                               {point.paragraph_2}
                             </p>
                           </TextReveal>
