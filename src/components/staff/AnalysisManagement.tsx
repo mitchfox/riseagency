@@ -976,35 +976,46 @@ Title: ${formData.scheme_title || 'Not specified'}`;
         </div>
 
         <TabsContent value="pre-match" className="space-y-4">
-          <div className="flex gap-2 flex-wrap">
+          {/* Primary Action Row */}
+          <div className="flex items-center gap-3">
             <Button 
               onClick={() => handleOpenDialog("pre-match")}
               className="bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500"
             >
               <Plus className="w-4 h-4 mr-2" />
-              New Pre-Match Analysis
+              New Pre-Match
             </Button>
+          </div>
+
+          {/* AI Tools Row */}
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs font-medium text-muted-foreground self-center mr-1">AI:</span>
             <Button 
               onClick={() => setOverviewWriter({ open: true, category: 'pre-match', overviewInfo: '' })}
               variant="outline"
+              size="sm"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              AI Pre-Match Overview Writer
+              <Sparkles className="w-3 h-3 mr-1.5" />
+              Overview
             </Button>
             <Button 
               onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'pre-match', paragraph1Info: '', paragraph2Info: '' })}
               variant="outline"
+              size="sm"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              AI Pre-Match Point Writer
+              <Sparkles className="w-3 h-3 mr-1.5" />
+              Point
             </Button>
             <Button 
               onClick={() => setSchemeWriter({ open: true, schemeInfo: '' })}
               variant="outline"
+              size="sm"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              AI Scheme Writer
+              <Sparkles className="w-3 h-3 mr-1.5" />
+              Scheme
             </Button>
+            <div className="w-px h-6 bg-border self-center mx-1" />
+            <span className="text-xs font-medium text-muted-foreground self-center mr-1">Examples:</span>
             <Button 
               onClick={() => {
                 setExamplesCategory('pre-match');
@@ -1012,9 +1023,11 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                 setExamplesDialogOpen(true);
                 fetchExamples('pre-match', 'point');
               }}
-              variant="outline"
+              variant="ghost"
+              size="sm"
             >
-              Point Examples
+              <Database className="w-3 h-3 mr-1.5" />
+              Points
             </Button>
             <Button 
               onClick={() => {
@@ -1023,9 +1036,11 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                 setExamplesDialogOpen(true);
                 fetchExamples('pre-match', 'overview');
               }}
-              variant="outline"
+              variant="ghost"
+              size="sm"
             >
-              Overview Examples
+              <Database className="w-3 h-3 mr-1.5" />
+              Overview
             </Button>
             <Button 
               onClick={() => {
@@ -1034,9 +1049,11 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                 setExamplesDialogOpen(true);
                 fetchExamples('scheme', 'point');
               }}
-              variant="outline"
+              variant="ghost"
+              size="sm"
             >
-              Scheme Examples
+              <Database className="w-3 h-3 mr-1.5" />
+              Schemes
             </Button>
           </div>
 
@@ -1093,28 +1110,38 @@ Title: ${formData.scheme_title || 'Not specified'}`;
         </TabsContent>
 
         <TabsContent value="post-match" className="space-y-4">
-          <div className="flex gap-2 flex-wrap">
+          {/* Primary Action Row */}
+          <div className="flex items-center gap-3">
             <Button 
               onClick={() => handleOpenDialog("post-match")}
               className="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 hover:from-amber-500 hover:to-yellow-600"
             >
               <Plus className="w-4 h-4 mr-2" />
-              New Post-Match Analysis
+              New Post-Match
             </Button>
+          </div>
+
+          {/* AI Tools Row */}
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs font-medium text-muted-foreground self-center mr-1">AI:</span>
             <Button 
               onClick={() => setOverviewWriter({ open: true, category: 'post-match', overviewInfo: '' })}
               variant="outline"
+              size="sm"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              AI Post-Match Overview Writer
+              <Sparkles className="w-3 h-3 mr-1.5" />
+              Overview
             </Button>
             <Button 
               onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'post-match', paragraph1Info: '', paragraph2Info: '' })}
               variant="outline"
+              size="sm"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              AI Post-Match Point Writer
+              <Sparkles className="w-3 h-3 mr-1.5" />
+              Point
             </Button>
+            <div className="w-px h-6 bg-border self-center mx-1" />
+            <span className="text-xs font-medium text-muted-foreground self-center mr-1">Examples:</span>
             <Button 
               onClick={() => {
                 setExamplesCategory('post-match');
@@ -1122,9 +1149,11 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                 setExamplesDialogOpen(true);
                 fetchExamples('post-match', 'point');
               }}
-              variant="outline"
+              variant="ghost"
+              size="sm"
             >
-              Point Examples
+              <Database className="w-3 h-3 mr-1.5" />
+              Points
             </Button>
             <Button 
               onClick={() => {
@@ -1133,9 +1162,11 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                 setExamplesDialogOpen(true);
                 fetchExamples('post-match', 'overview');
               }}
-              variant="outline"
+              variant="ghost"
+              size="sm"
             >
-              Overview Examples
+              <Database className="w-3 h-3 mr-1.5" />
+              Overview
             </Button>
           </div>
 
@@ -1192,20 +1223,29 @@ Title: ${formData.scheme_title || 'Not specified'}`;
         </TabsContent>
 
         <TabsContent value="concepts" className="space-y-4">
-          <div className="flex gap-2 flex-wrap">
+          {/* Primary Action Row */}
+          <div className="flex items-center gap-3">
             <Button 
               onClick={() => handleOpenDialog("concept")}
             >
               <Plus className="w-4 h-4 mr-2" />
               New Concept
             </Button>
+          </div>
+
+          {/* AI Tools Row */}
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs font-medium text-muted-foreground self-center mr-1">AI:</span>
             <Button 
               onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'concept', paragraph1Info: '', paragraph2Info: '' })}
               variant="outline"
+              size="sm"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              AI Concept Writer
+              <Sparkles className="w-3 h-3 mr-1.5" />
+              Writer
             </Button>
+            <div className="w-px h-6 bg-border self-center mx-1" />
+            <span className="text-xs font-medium text-muted-foreground self-center mr-1">Examples:</span>
             <Button 
               onClick={() => {
                 setExamplesCategory('concept');
@@ -1213,9 +1253,11 @@ Title: ${formData.scheme_title || 'Not specified'}`;
                 setExamplesDialogOpen(true);
                 fetchExamples('concept', 'point');
               }}
-              variant="outline"
+              variant="ghost"
+              size="sm"
             >
-              Concept Examples Database
+              <Database className="w-3 h-3 mr-1.5" />
+              Concepts
             </Button>
           </div>
 

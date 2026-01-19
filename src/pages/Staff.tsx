@@ -385,7 +385,7 @@ const Staff = () => {
           id: analysis.id,
           title: analysis.title || 'Untitled Analysis',
           description: analysis.analysis_type,
-          section: 'Analysis Writer',
+          section: 'Analysis',
           sectionId: 'analysis',
           type: 'analysis'
         });
@@ -730,7 +730,7 @@ const Staff = () => {
           { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
           { id: 'tacticsboard', title: 'Tactics Board', icon: Target },
           { id: 'meetings', title: 'Meetings', icon: Users },
-          { id: 'analysis', title: 'Analysis Writer', icon: LineChart },
+          { id: 'analysis', title: 'Analysis', icon: LineChart },
           { id: 'athletecentre', title: 'Athlete Centre', icon: UserRound },
         ]
       },
