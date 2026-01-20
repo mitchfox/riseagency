@@ -777,9 +777,11 @@ const AnalysisViewer = () => {
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'hsl(0 0% 15%)' }}>
-      {/* Gold inset vertical lines - start below team color bar (approx 180px from top) */}
-      <div className="fixed left-[6px] w-[2px] z-50 pointer-events-none bg-primary" style={{ top: '180px', bottom: 0 }} />
-      <div className="fixed right-[6px] w-[2px] z-50 pointer-events-none bg-primary" style={{ top: '180px', bottom: 0 }} />
+      {/* Gold vertical lines container - positioned absolutely within page, starting behind arch area */}
+      <div className="absolute inset-x-0 pointer-events-none" style={{ top: '280px', bottom: 0 }}>
+        <div className="absolute left-[6px] top-0 bottom-0 w-[2px] bg-primary z-10" />
+        <div className="absolute right-[6px] top-0 bottom-0 w-[2px] bg-primary z-10" />
+      </div>
 
       {/* Video Button */}
       {analysis.video_url && (
@@ -1303,42 +1305,92 @@ const AnalysisViewer = () => {
             {/* Improvements - Section 1 (flip) */}
             {analysis.strengths_improvements && (
               <ExpandableSection title="Strengths & Areas for Improvement" id={SECTION_IDS.improvements} flipBackground={true} transparentContent>
-                <div className="grid grid-cols-1 gap-4">
-                  {analysis.strengths_improvements.split('|').map((part: string, idx: number) => {
+                {(() => {
+                  // Parse and group items by color
+                  const items = analysis.strengths_improvements.split('|').map((part: string) => {
                     const trimmedPart = part.trim();
                     const match = trimmedPart.match(/^(Green|Amber|Red):\s*(.*)$/i);
                     const color = match ? match[1].toLowerCase() : 'green';
                     const text = match ? match[2].trim() : trimmedPart;
-                    
-                    const getBorderColor = (c: string) => {
-                      switch (c) {
-                        case 'green': return 'border-green-500';
-                        case 'amber': return 'border-amber-500';
-                        case 'red': return 'border-red-500';
-                        default: return 'border-green-500';
-                      }
-                    };
+                    return { color, text };
+                  }).filter(item => item.text);
 
-                    const getBgColor = (c: string) => {
-                      switch (c) {
-                        case 'green': return 'bg-green-500/10';
-                        case 'amber': return 'bg-amber-500/10';
-                        case 'red': return 'bg-red-500/10';
-                        default: return 'bg-green-500/10';
-                      }
-                    };
-                    
+                  const greenItems = items.filter(i => i.color === 'green');
+                  const amberItems = items.filter(i => i.color === 'amber');
+                  const redItems = items.filter(i => i.color === 'red');
+
+                  const CategoryCard = ({ 
+                    title, 
+                    items, 
+                    borderColor, 
+                    bgColor, 
+                    textColor,
+                    delay 
+                  }: { 
+                    title: string; 
+                    items: { color: string; text: string }[]; 
+                    borderColor: string; 
+                    bgColor: string;
+                    textColor: string;
+                    delay: number;
+                  }) => {
+                    if (items.length === 0) return null;
                     return (
-                      <TextReveal key={idx} delay={idx * 0.1}>
-                        <div className={`relative rounded-xl overflow-hidden border-2 ${getBorderColor(color)} ${getBgColor(color)} bg-card shadow-lg`}>
-                          <div className="p-4 md:p-5">
-                            <p className="text-sm md:text-base leading-relaxed italic text-white">{text}</p>
+                      <TextReveal delay={delay}>
+                        <div className={`rounded-2xl overflow-hidden border-2 ${borderColor} ${bgColor} shadow-xl`}>
+                          {/* Header */}
+                          <div className={`py-3 px-4 ${borderColor.replace('border-', 'bg-')} bg-opacity-100`}>
+                            <h3 className="font-bebas text-lg md:text-xl uppercase tracking-wider text-center text-white drop-shadow-md">
+                              {title}
+                            </h3>
+                          </div>
+                          {/* Content */}
+                          <div className="p-4 md:p-5 space-y-3">
+                            {items.map((item, idx) => (
+                              <div key={idx} className="text-center">
+                                <p className={`text-sm md:text-base leading-relaxed ${textColor}`}>
+                                  {item.text}
+                                </p>
+                                {idx < items.length - 1 && (
+                                  <div className={`mt-3 h-px ${borderColor.replace('border-', 'bg-')} opacity-30`} />
+                                )}
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </TextReveal>
                     );
-                  })}
-                </div>
+                  };
+
+                  return (
+                    <div className="space-y-4">
+                      <CategoryCard 
+                        title="Strengths" 
+                        items={greenItems} 
+                        borderColor="border-green-500" 
+                        bgColor="bg-green-950/50"
+                        textColor="text-green-100"
+                        delay={0}
+                      />
+                      <CategoryCard 
+                        title="Areas for Consistency" 
+                        items={amberItems} 
+                        borderColor="border-amber-500" 
+                        bgColor="bg-amber-950/50"
+                        textColor="text-amber-100"
+                        delay={0.1}
+                      />
+                      <CategoryCard 
+                        title="Areas for Improvement" 
+                        items={redItems} 
+                        borderColor="border-red-500" 
+                        bgColor="bg-red-950/50"
+                        textColor="text-red-100"
+                        delay={0.2}
+                      />
+                    </div>
+                  );
+                })()}
               </ExpandableSection>
             )}
 
