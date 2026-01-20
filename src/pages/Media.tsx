@@ -70,12 +70,12 @@ const Media = () => {
           .limit(50);
 
         if (galleryData) {
-          // Filter strictly to represented players only
+          // Filter STRICTLY to represented players only - must have player_id AND be represented
           const filteredItems: GalleryItem[] = [];
           for (let i = 0; i < galleryData.length && filteredItems.length < 8; i++) {
             const item = galleryData[i];
-            // Skip items linked to non-represented players (must have player_id AND be in represented list, OR have no player_id)
-            if (item.player_id && !representedPlayerIds.includes(item.player_id)) {
+            // MUST have a player_id AND that player MUST be represented - no exceptions
+            if (!item.player_id || !representedPlayerIds.includes(item.player_id)) {
               continue;
             }
             filteredItems.push({
