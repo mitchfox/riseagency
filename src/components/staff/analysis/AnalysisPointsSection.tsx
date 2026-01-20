@@ -231,6 +231,7 @@ export const AnalysisPointsSection = ({
                   <video 
                     src={point.video_url} 
                     controls 
+                    muted
                     className="mt-2 max-w-xs rounded"
                   />
                 )}

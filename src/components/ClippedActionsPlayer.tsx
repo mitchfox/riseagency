@@ -112,6 +112,7 @@ export const ClippedActionsPlayer = ({
             className="w-full max-h-[70vh] object-contain"
             controls
             autoPlay
+            muted
             onEnded={handleVideoEnded}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
