@@ -270,8 +270,24 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
       if (typeof value === 'string' && value.trim() === '') continue;
       if (typeof value === 'number' && isNaN(value)) continue;
       
-      // Check for paired stat (e.g., dribbles + dribbles_attempted)
-      const attemptedKey = `${key}_attempted`;
+      // Check for paired stat patterns:
+      // Pattern 1: dribbles + dribbles_attempted
+      // Pattern 2: aerial_duels_won + aerial_duels_attempted
+      // Pattern 3: long_passes_completed + long_passes_attempted
+      let attemptedKey = `${key}_attempted`;
+      let baseKey = key;
+      
+      // Handle _won suffix (e.g., aerial_duels_won -> aerial_duels_attempted)
+      if (key.endsWith('_won')) {
+        baseKey = key.replace('_won', '');
+        attemptedKey = `${baseKey}_attempted`;
+      }
+      // Handle _completed suffix (e.g., long_passes_completed -> long_passes_attempted)
+      else if (key.endsWith('_completed')) {
+        baseKey = key.replace('_completed', '');
+        attemptedKey = `${baseKey}_attempted`;
+      }
+      
       if (analysis.striker_stats[attemptedKey] != null && !key.endsWith('_attempted')) {
         const attempted = Number(analysis.striker_stats[attemptedKey]);
         const successful = Number(value);
@@ -281,7 +297,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
           const per90Key = `${key}_per90`;
           const per90Value = analysis.striker_stats[per90Key];
           stats.push({
-            key,
+            key: baseKey !== key ? baseKey : key, // Use cleaner base key for display
             value: successful,
             per90Value: per90Value !== null && per90Value !== undefined ? per90Value as number | string : undefined,
             isPaired: true,

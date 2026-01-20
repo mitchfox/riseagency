@@ -24,6 +24,7 @@ interface Point {
   paragraph_2: string;
   images: string[];
   video_url?: string;
+  video_urls?: string[];
 }
 
 interface PerformanceReportAction {
@@ -184,17 +185,20 @@ export const AnalysisPointsSection = ({
               </div>
 
               <div>
-                <Label>Video (Optional)</Label>
+                <Label>Videos (Optional - Add Multiple)</Label>
                 
                 {/* Select from R90 clips if available */}
                 {performanceReportClips.length > 0 && (
                   <div className="mb-2">
                     <Select
                       value=""
-                      onValueChange={(value) => handleSelectClip(index, value)}
+                      onValueChange={(value) => {
+                        const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
+                        updatePoint(index, "video_urls", [...currentVideos, value]);
+                      }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select from R90 clips..." />
+                        <SelectValue placeholder="Add from R90 clips..." />
                       </SelectTrigger>
                       <SelectContent>
                         {performanceReportClips
@@ -222,18 +226,45 @@ export const AnalysisPointsSection = ({
                   disabled={uploadingImage}
                 />
                 <Input
-                  value={point.video_url || ""}
-                  onChange={(e) => updatePoint(index, "video_url", e.target.value)}
-                  placeholder="Or paste video URL..."
+                  placeholder="Or paste video URL and press Enter..."
                   className="mt-2"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const input = e.target as HTMLInputElement;
+                      if (input.value.trim()) {
+                        const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
+                        updatePoint(index, "video_urls", [...currentVideos, input.value.trim()]);
+                        input.value = '';
+                      }
+                    }
+                  }}
                 />
-                {point.video_url && (
-                  <video 
-                    src={point.video_url} 
-                    controls 
-                    muted
-                    className="mt-2 max-w-xs rounded"
-                  />
+                
+                {/* Display all videos */}
+                {(point.video_urls?.length || point.video_url) && (
+                  <div className="mt-2 space-y-2">
+                    {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url, vidIndex) => (
+                      <div key={vidIndex} className="relative">
+                        <video 
+                          src={url} 
+                          controls 
+                          muted
+                          className="max-w-xs rounded"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-1 right-1 h-6 w-6 p-0"
+                          onClick={() => {
+                            const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
+                            updatePoint(index, "video_urls", currentVideos.filter((_, i) => i !== vidIndex));
+                          }}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
