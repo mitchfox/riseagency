@@ -147,6 +147,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     content: ''
   });
   const [linkedPlayers, setLinkedPlayers] = useState<Record<string, { playerId: string; playerName: string }[]>>({});
+  const [concepts, setConcepts] = useState<any[]>([]);
 
   // Form states
   const [formData, setFormData] = useState<Record<string, any>>({
@@ -234,6 +235,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     fetchAnalyses();
     fetchPlayers();
     fetchLinkedPlayers();
+    fetchConcepts();
   }, []);
 
   useEffect(() => {
@@ -314,6 +316,22 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       setLinkedPlayers(grouped);
     } catch (error: any) {
       console.error("Failed to fetch linked players:", error);
+    }
+  };
+
+  const fetchConcepts = async () => {
+    try {
+      // Fetch concepts from coaching_analysis table (shared with coaching database)
+      const { data, error } = await supabase
+        .from("coaching_analysis")
+        .select("*")
+        .eq("analysis_type", "concept")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setConcepts(data || []);
+    } catch (error: any) {
+      console.error("Failed to fetch concepts:", error);
     }
   };
 
@@ -1213,6 +1231,56 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     ));
   };
 
+  const renderConceptsList = () => {
+    return concepts.map((concept) => (
+      <Card key={concept.id} className="p-4">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <h3 className="font-semibold">
+              {concept.title || 'Untitled Concept'}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {new Date(concept.created_at).toLocaleDateString()}
+            </p>
+            {concept.category && (
+              <span className="text-xs bg-muted px-2 py-0.5 rounded mt-1 inline-block">
+                {concept.category}
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate(`/staff/coaching?tab=analysis&edit=${concept.id}`)}>
+              <Eye className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate(`/staff/coaching?tab=analysis&edit=${concept.id}`)}>
+              <Pencil className="w-4 h-4" />
+            </Button>
+            {isAdmin && (
+              <Button variant="ghost" size="sm" onClick={() => handleDeleteConcept(concept.id)}>
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </Card>
+    ));
+  };
+
+  const handleDeleteConcept = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this concept?")) return;
+
+    try {
+      const { error } = await supabase.from("coaching_analysis").delete().eq("id", id);
+
+      if (error) throw error;
+      toast.success("Concept deleted successfully");
+      fetchConcepts();
+    } catch (error: any) {
+      toast.error("Failed to delete concept");
+      console.error(error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header with Settings button */}
@@ -1235,7 +1303,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
         <TabsContent value="pre-match" className="space-y-4">
           <Button
             onClick={() => handleOpenDialog("pre-match")}
-            className="bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500"
+            variant="secondary"
           >
             <Plus className="w-4 h-4 mr-2" />
             New Pre-Match Analysis
@@ -1246,7 +1314,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
         <TabsContent value="post-match" className="space-y-4">
           <Button
             onClick={() => handleOpenDialog("post-match")}
-            className="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 hover:from-amber-500 hover:to-yellow-600"
+            className="bg-gold text-foreground hover:bg-gold/90"
           >
             <Plus className="w-4 h-4 mr-2" />
             New Post-Match Analysis
@@ -1259,7 +1327,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
             <Plus className="w-4 h-4 mr-2" />
             New Concept
           </Button>
-          {renderAnalysisList("concept")}
+          {renderConceptsList()}
         </TabsContent>
 
         <TabsContent value="other" className="space-y-4">
@@ -1404,19 +1472,6 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
               performanceReports={performanceReports}
               selectedPerformanceReportId={selectedPerformanceReportId}
               setSelectedPerformanceReportId={setSelectedPerformanceReportId}
-              analysisType="post-match"
-            />
-
-            <AnalysisSchemeSection
-              formData={formData}
-              setFormData={setFormData}
-              applyFormation={handleSchemeChange}
-              updatePlayer={updateStartingXIPlayer}
-              handleImageUpload={handleImageUpload}
-              uploadingImage={uploadingImage}
-              generateWithAI={generateWithAI}
-              aiGenerating={aiGenerating}
-              formationTemplates={formationTemplates}
               analysisType="post-match"
             />
 
