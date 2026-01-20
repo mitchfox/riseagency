@@ -265,9 +265,7 @@ const ExpandableSection = ({
   };
 
   const backgroundStyle = {
-    backgroundImage: `url(${blackMarble})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
+    backgroundColor: '#000000',
     transform: flipBackground ? 'scaleY(-1)' : 'none'
   };
 
@@ -407,7 +405,7 @@ const AnalysisHeader = ({
           variant="outline"
           size="sm"
           onClick={() => window.history.back()}
-          className="absolute left-4 md:left-8 top-4 bg-black/50 backdrop-blur-sm border-white/30 hover:bg-black/70 text-white h-8 py-1.5 px-3 text-xs z-20"
+          className="absolute left-4 md:left-8 top-4 bg-black/50 backdrop-blur-sm border-white/30 hover:bg-black/70 text-white hover:text-primary h-8 py-1.5 px-3 text-xs z-20"
         >
           <ArrowLeft className="w-3 h-3 mr-1" />
           Back
@@ -574,9 +572,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
       <div 
         className="relative"
         style={{
-          backgroundImage: `url(${blackMarble})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundColor: '#000000',
           transform: 'scaleY(-1)'
         }}
       >
@@ -607,12 +603,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="w-[96vw] max-w-none max-h-[70vh] overflow-y-auto z-50 p-4 md:p-6 border-primary border-2 rounded-2xl"
-              style={{
-                backgroundImage: `url(${blackMarble})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}
+              className="w-[96vw] max-w-none max-h-[70vh] overflow-y-auto z-50 p-4 md:p-6 border-primary border-2 rounded-2xl bg-black"
               side="bottom"
               align="center"
               sideOffset={4}
