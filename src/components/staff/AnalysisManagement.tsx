@@ -98,6 +98,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState<'list' | 'pre-match' | 'post-match' | 'concept'>('list');
+  const [activeListTab, setActiveListTab] = useState<string>("pre-match");
   const [editingAnalysis, setEditingAnalysis] = useState<Analysis | null>(null);
   const [analysisType, setAnalysisType] = useState<AnalysisType>("pre-match");
   const [aiGenerating, setAiGenerating] = useState(false);
@@ -1529,7 +1530,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
         </Button>
       </div>
 
-      <Tabs defaultValue="pre-match" className="space-y-4">
+      <Tabs value={activeListTab} onValueChange={setActiveListTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="pre-match">Pre-Match</TabsTrigger>
           <TabsTrigger value="post-match">Post-Match</TabsTrigger>

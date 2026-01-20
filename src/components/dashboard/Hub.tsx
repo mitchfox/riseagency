@@ -124,11 +124,10 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
       
       console.log('Fetching marketing images for player:', playerData?.id, playerData?.name);
       
-      // Fetch images filtered by this specific player's ID
+      // Fetch images filtered by this specific player's ID - no category filter
       const { data: images, error } = await supabase
         .from('marketing_gallery')
         .select('file_url')
-        .eq('category', 'players')
         .eq('file_type', 'image')
         .eq('player_id', playerData.id)
         .order('created_at', { ascending: false });
