@@ -768,7 +768,7 @@ const AnalysisViewer = () => {
   if (analysis.opposition_weaknesses) navSections.push({ id: SECTION_IDS.weaknesses, label: "Opposition Weaknesses" });
   if (analysis.matchups?.length > 0) navSections.push({ id: SECTION_IDS.matchups, label: "Potential Matchups" });
   if (analysis.scheme_title || analysis.selected_scheme) navSections.push({ id: SECTION_IDS.scheme, label: "Scheme" });
-  if (analysis.strengths_improvements) navSections.push({ id: SECTION_IDS.improvements, label: "Improvements" });
+  if (analysis.strengths_improvements) navSections.push({ id: SECTION_IDS.improvements, label: "Strengths & Areas for Improvement" });
   if (analysis.points && analysis.points.length > 0) {
     analysis.points.forEach((point: any, index: number) => {
       navSections.push({ id: `section-point-${index}`, label: point.title });
@@ -777,8 +777,8 @@ const AnalysisViewer = () => {
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'hsl(0 0% 15%)' }}>
-      {/* Gold vertical lines container - positioned absolutely within page, starting behind arch area */}
-      <div className="absolute inset-x-0 pointer-events-none" style={{ top: '280px', bottom: 0 }}>
+      {/* Gold vertical lines container - positioned absolutely, starting behind the arch (at image area) */}
+      <div className="absolute inset-x-0 pointer-events-none" style={{ top: '160px', bottom: 0 }}>
         <div className="absolute left-[6px] top-0 bottom-0 w-[2px] bg-primary z-10" />
         <div className="absolute right-[6px] top-0 bottom-0 w-[2px] bg-primary z-10" />
       </div>
@@ -1566,14 +1566,9 @@ const AnalysisViewer = () => {
           </div>
         )}
 
-        {/* Back to Top - use black marble background to match sections */}
+        {/* Back to Top - simple black background */}
         <motion.div
-          className="flex justify-center py-8"
-          style={{
-            backgroundImage: `url(${blackMarble})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
+          className="flex justify-center py-8 bg-black"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
