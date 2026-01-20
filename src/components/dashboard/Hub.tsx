@@ -2,13 +2,14 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
-import { Calendar, TrendingUp, ArrowRight, Trophy, X } from "lucide-react";
+import { Calendar, TrendingUp, ArrowRight, Trophy, X, FileText } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine, Rectangle } from "recharts";
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } from "date-fns";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade } from "@/lib/gradeCalculations";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
+import { createAnalysisSlug } from "@/lib/urlHelpers";
 
 interface PlayerProgram {
   id: string;
@@ -41,6 +42,7 @@ interface HubProps {
 }
 
 export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateToAnalysis, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
+  const navigate = useNavigate();
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
   const [imagesPreloaded, setImagesPreloaded] = React.useState(false);
   const hasAnimated = React.useRef(false);
@@ -48,7 +50,29 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
   const [tooltipVisible, setTooltipVisible] = React.useState(true);
   const [reportDialogOpen, setReportDialogOpen] = React.useState(false);
   const [selectedReportId, setSelectedReportId] = React.useState<string | null>(null);
-  
+  const [postMatchAnalyses, setPostMatchAnalyses] = React.useState<Map<string, { id: string; homeTeam: string; awayTeam: string }>>(new Map());
+
+  // Fetch post-match analyses linked to fixtures
+  React.useEffect(() => {
+    const fetchPostMatchAnalyses = async () => {
+      const { data } = await supabase
+        .from('analyses')
+        .select('id, fixture_id, home_team, away_team')
+        .eq('analysis_type', 'post-match')
+        .not('fixture_id', 'is', null);
+      
+      if (data) {
+        const map = new Map<string, { id: string; homeTeam: string; awayTeam: string }>();
+        data.forEach(a => {
+          if (a.fixture_id) {
+            map.set(a.fixture_id, { id: a.id, homeTeam: a.home_team || '', awayTeam: a.away_team || '' });
+          }
+        });
+        setPostMatchAnalyses(map);
+      }
+    };
+    fetchPostMatchAnalyses();
+  }, []);
   // Custom Tooltip Component with close button
   const CustomTooltip = ({ active, payload }: any) => {
     if (!active || !payload || !payload.length || !tooltipVisible) return null;
@@ -728,21 +752,42 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                     }}
                     className="w-full text-left block border-l-2 border-primary pl-3 pt-0 pb-2 hover:bg-accent/5 transition-colors rounded"
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         <div className="font-medium text-sm">{analysis.opponent}</div>
                         <div className="text-xs text-muted-foreground">
                           {format(new Date(analysis.analysis_date), "MMM dd, yyyy")}
                         </div>
                       </div>
-                      {analysis.r90_score != null && (
-                        <div 
-                          className="px-3 py-1 rounded text-white text-sm font-bold mt-[3px] -ml-1 mr-2 border-2 border-transparent hover:border-[hsl(var(--gold))] transition-colors duration-200"
-                          style={{ backgroundColor: getR90Color(analysis.r90_score) }}
-                        >
-                          R90: {analysis.r90_score}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {/* Post-match analysis icon - check if there's an analysis linked to this fixture */}
+                        {postMatchAnalyses.has((analysis as any).fixture_id) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-1 h-8 w-8 bg-risegold/20 hover:bg-risegold/40"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const postMatch = postMatchAnalyses.get((analysis as any).fixture_id);
+                              if (postMatch) {
+                                const slug = createAnalysisSlug(postMatch.homeTeam, postMatch.awayTeam, postMatch.id);
+                                navigate(slug);
+                              }
+                            }}
+                            title="View Post-Match Analysis"
+                          >
+                            <FileText className="h-4 w-4 text-risegold" />
+                          </Button>
+                        )}
+                        {analysis.r90_score != null && (
+                          <div 
+                            className="px-3 py-1 rounded text-white text-sm font-bold border-2 border-transparent hover:border-[hsl(var(--gold))] transition-colors duration-200"
+                            style={{ backgroundColor: getR90Color(analysis.r90_score) }}
+                          >
+                            R90: {analysis.r90_score}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </button>
                 ))}

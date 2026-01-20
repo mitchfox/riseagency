@@ -777,11 +777,6 @@ const AnalysisViewer = () => {
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'hsl(0 0% 15%)' }}>
-      {/* Gold vertical lines container - positioned absolutely, starting behind the arch (at header top) */}
-      <div className="absolute inset-x-0 pointer-events-none" style={{ top: '280px', bottom: 0 }}>
-        <div className="absolute left-[6px] top-0 bottom-0 w-[2px] bg-primary z-0" />
-        <div className="absolute right-[6px] top-0 bottom-0 w-[2px] bg-primary z-0" />
-      </div>
 
       {/* Video Button */}
       {analysis.video_url && (

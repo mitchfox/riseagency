@@ -481,7 +481,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                     <CardTitle className="text-lg">Performance Overview</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground whitespace-pre-wrap">{analysis.performance_overview}</p>
+                    <p className="text-muted-foreground whitespace-pre-wrap text-center text-sm">{analysis.performance_overview}</p>
                   </CardContent>
                 </Card>
               )}
