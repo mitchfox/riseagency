@@ -254,27 +254,6 @@ export const AnalysisMatchDetails = ({
               </div>
             </div>
 
-            {/* Player's Team Selector for transparency */}
-            <div>
-              <Label>Player's Team (Full Opacity)</Label>
-              <p className="text-xs text-muted-foreground mb-2">The other team will appear at 70% opacity</p>
-              <Select
-                value={formData.player_team || ""}
-                onValueChange={(value) => setFormData({ ...formData, player_team: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select player's team" />
-                </SelectTrigger>
-                <SelectContent>
-                  {formData.home_team && (
-                    <SelectItem value="home">{formData.home_team} (Home)</SelectItem>
-                  )}
-                  {formData.away_team && (
-                    <SelectItem value="away">{formData.away_team} (Away)</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -490,28 +469,6 @@ export const AnalysisMatchDetails = ({
                   onChange={(e) => setFormData({ ...formData, away_team_bg_color: e.target.value })}
                 />
               </div>
-            </div>
-
-            {/* Player's Team Selector for transparency */}
-            <div>
-              <Label>Player's Team (Full Opacity)</Label>
-              <p className="text-xs text-muted-foreground mb-2">The other team will appear at 70% opacity</p>
-              <Select
-                value={formData.player_team || ""}
-                onValueChange={(value) => setFormData({ ...formData, player_team: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select player's team" />
-                </SelectTrigger>
-                <SelectContent>
-                  {formData.home_team && (
-                    <SelectItem value="home">{formData.home_team} (Home)</SelectItem>
-                  )}
-                  {formData.away_team && (
-                    <SelectItem value="away">{formData.away_team} (Away)</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Strengths & Areas for Improvement */}
