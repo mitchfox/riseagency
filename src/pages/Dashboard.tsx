@@ -2219,16 +2219,21 @@ const Dashboard = () => {
                                 { value: "xgbuildup", label: "xG Buildup", statKey: "xGBuildup_per90" },
                                 { value: "progressivepasses", label: "Progressive Passes", statKey: "progressive_passes_adj_per90" },
                                 { value: "ppturnoversratio", label: "Progressive Passes/Turnovers Ratio", statKey: "progressive_passes,turnovers" },
-                                { value: "shots", label: "Shots", statKey: "Shots_per90" },
+                                { value: "shots", label: "Shots", statKey: "shots" },
                                 { value: "shotsontarget", label: "Shots on Target", statKey: "ShotsOnTarget_per90" },
                                 { value: "triplethreatxc", label: "Triple Threat xC", statKey: "triple_threat_xC_per90" },
                                 { value: "movementtofeetxc", label: "Movement to Feet xC", statKey: "movement_to_feet_xC_per90" },
                                 { value: "movementinbehindxc", label: "Movement in Behind xC", statKey: "movement_in_behind_xC_per90" },
                                 { value: "movementdownsidexc", label: "Movement Down Side xC", statKey: "movement_down_side_xC_per90" },
                                 { value: "crossingmovementxc", label: "Crossing Movement xC", statKey: "crossing_movement_xC_per90" },
-                                { value: "boxentries", label: "Box Entries", statKey: "box_entries_per90" },
-                                { value: "dribblescompleted", label: "Dribbles Completed", statKey: "dribbles_completed_per90" },
-                                { value: "longpassescompleted", label: "Long Passes Completed", statKey: "long_passes_completed_per90" },
+                                { value: "dribbles", label: "Dribbles", statKey: "dribbles_per90" },
+                                { value: "dribblesattempted", label: "Dribbles Attempted", statKey: "dribbles_attempted_per90" },
+                                { value: "successfuldribbles", label: "Successful Dribbles", statKey: "successful_dribbles" },
+                                { value: "turnovers", label: "Turnovers", statKey: "turnovers_adj_per90" },
+                                { value: "touchesinbox", label: "Touches in Box", statKey: "touches_in_box" },
+                                { value: "aerialduels", label: "Aerial Duels Won", statKey: "aerial_duels_won" },
+                                { value: "duelswon", label: "Duels Won", statKey: "duels_won" },
+                                { value: "longpassescompleted", label: "Long Passes Completed", statKey: "long_passes_completed" },
                               ];
 
                               return availableMetrics
@@ -2266,13 +2271,21 @@ const Dashboard = () => {
                                           selectedFormMetric === "xgchain" ? "xGChain_per90" :
                                           selectedFormMetric === "xgbuildup" ? "xGBuildup_per90" :
                                           selectedFormMetric === "progressivepasses" ? "progressive_passes_adj_per90" :
-                                          selectedFormMetric === "shots" ? "Shots_per90" :
+                                          selectedFormMetric === "shots" ? "shots" :
                                           selectedFormMetric === "shotsontarget" ? "ShotsOnTarget_per90" :
                                           selectedFormMetric === "triplethreatxc" ? "triple_threat_xC_per90" :
                                           selectedFormMetric === "movementtofeetxc" ? "movement_to_feet_xC_per90" :
                                           selectedFormMetric === "movementinbehindxc" ? "movement_in_behind_xC_per90" :
                                           selectedFormMetric === "movementdownsidexc" ? "movement_down_side_xC_per90" :
-                                          selectedFormMetric === "crossingmovementxc" ? "crossing_movement_xC_per90" : null;
+                                          selectedFormMetric === "crossingmovementxc" ? "crossing_movement_xC_per90" :
+                                          selectedFormMetric === "dribbles" ? "dribbles_per90" :
+                                          selectedFormMetric === "dribblesattempted" ? "dribbles_attempted_per90" :
+                                          selectedFormMetric === "successfuldribbles" ? "successful_dribbles" :
+                                          selectedFormMetric === "turnovers" ? "turnovers_adj_per90" :
+                                          selectedFormMetric === "touchesinbox" ? "touches_in_box" :
+                                          selectedFormMetric === "aerialduels" ? "aerial_duels_won" :
+                                          selectedFormMetric === "duelswon" ? "duels_won" :
+                                          selectedFormMetric === "longpassescompleted" ? "long_passes_completed" : null;
                           
                           return statKey ? analysis.striker_stats[statKey] : null;
                         };
@@ -2296,6 +2309,14 @@ const Dashboard = () => {
                             case "movementinbehindxc": return "Movement in Behind xC";
                             case "movementdownsidexc": return "Movement Down Side xC";
                             case "crossingmovementxc": return "Crossing Movement xC";
+                            case "dribbles": return "Dribbles";
+                            case "dribblesattempted": return "Dribbles Attempted";
+                            case "successfuldribbles": return "Successful Dribbles";
+                            case "turnovers": return "Turnovers";
+                            case "touchesinbox": return "Touches in Box";
+                            case "aerialduels": return "Aerial Duels Won";
+                            case "duelswon": return "Duels Won";
+                            case "longpassescompleted": return "Long Passes";
                             default: return "R90";
                           }
                         };
