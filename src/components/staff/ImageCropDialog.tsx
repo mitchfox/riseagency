@@ -191,6 +191,8 @@ export const ImageCropDialog = ({
             onCropChange={onCropChange}
             onZoomChange={onZoomChange}
             onCropComplete={onCropAreaChange}
+            restrictPosition={false}
+            minZoom={0.1}
           />
         </div>
 
