@@ -777,9 +777,9 @@ const AnalysisViewer = () => {
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'hsl(0 0% 15%)' }}>
-      {/* Gold inset vertical lines - using inset values for proper positioning */}
-      <div className="fixed inset-y-0 left-[6px] w-[2px] z-50 pointer-events-none bg-primary" />
-      <div className="fixed inset-y-0 right-[6px] w-[2px] z-50 pointer-events-none bg-primary" />
+      {/* Gold inset vertical lines - start below team color bar (approx 180px from top) */}
+      <div className="fixed left-[6px] w-[2px] z-50 pointer-events-none bg-primary" style={{ top: '180px', bottom: 0 }} />
+      <div className="fixed right-[6px] w-[2px] z-50 pointer-events-none bg-primary" style={{ top: '180px', bottom: 0 }} />
 
       {/* Video Button */}
       {analysis.video_url && (
@@ -1168,15 +1168,123 @@ const AnalysisViewer = () => {
               isPostMatch
             />
 
-            {analysis.player_image_url && (
+            {/* Player/Match Image with gold arch and player name oval - same as pre-match */}
+            {(analysis.player_image_url || analysis.match_image_url) && (
               <ScrollReveal className="w-full">
-                <div className="relative w-full overflow-hidden bg-background">
-                  <div className="relative w-full" style={{ aspectRatio: '1/1', maxHeight: '400px' }}>
-                    <img src={analysis.player_image_url} alt="Player" className="w-full h-full object-cover object-top" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+                <div className="relative w-full overflow-hidden">
+                  {/* Player image */}
+                  <div className="relative w-full" style={{ height: '400px', maxHeight: '400px' }}>
+                    <img
+                      src={analysis.match_image_url || analysis.player_image_url || ''}
+                      alt="Match"
+                      className="w-full h-full object-cover object-top"
+                    />
+                    {/* Black gradient fading down from top - overlays match image */}
+                    <div 
+                      className="absolute top-0 left-0 right-0 h-24 pointer-events-none"
+                      style={{
+                        background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 40%, transparent 100%)'
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Gold arch with transparent outer glow and solid center - positioned at bottom of image */}
+                  <div className="absolute bottom-0 left-0 right-0 z-30">
+                    {/* Outer transparent glow arch - fades naturally into image */}
+                    <svg 
+                      className="w-full"
+                      viewBox="0 0 400 120" 
+                      preserveAspectRatio="none"
+                      style={{ height: '120px' }}
+                    >
+                      <defs>
+                        <linearGradient id="goldFadeUpPostMatch" x1="0%" y1="100%" x2="0%" y2="0%">
+                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="1" />
+                          <stop offset="60%" stopColor="hsl(var(--primary))" stopOpacity="0.5" />
+                          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                      {/* Semi-transparent gold outer arch - 50% opacity risegold */}
+                      <path d="M0,20 Q200,70 400,20 L400,120 L0,120 Z" fill="url(#goldFadeUpPostMatch)" />
+                      {/* Solid gold arch band - main visible arch */}
+                      <path d="M0,50 Q200,90 400,50 L400,120 L0,120 Z" fill="hsl(var(--primary))" />
+                    </svg>
+                    
+                    {/* Player name positioned centered on the arch */}
+                    {playerName && (
+                      <div className="absolute inset-0 flex items-center justify-center z-10" style={{ paddingTop: '30px' }}>
+                        <div 
+                          className="relative overflow-hidden rounded-full px-8 md:px-12 py-2 md:py-3"
+                          style={{
+                            backgroundImage: `url(${blackMarble})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            border: `2px solid hsl(var(--primary))`,
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.4)'
+                          }}
+                        >
+                          {/* Dark overlay for smoky effect */}
+                          <div className="absolute inset-0 bg-black/40 rounded-full" />
+                          <h2 
+                            className="relative text-lg md:text-2xl lg:text-3xl font-bebas uppercase tracking-widest text-center drop-shadow-md text-white"
+                          >
+                            <HoverText text={playerName.toUpperCase()} />
+                          </h2>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </ScrollReveal>
+            )}
+
+            {/* Fallback player name section when no image - same as pre-match */}
+            {!(analysis.player_image_url || analysis.match_image_url) && playerName && (
+              <div className="relative overflow-hidden">
+                {/* Gold arch with transparent outer glow and solid center */}
+                <div className="relative z-30" style={{ backgroundColor: 'hsl(var(--primary))' }}>
+                  <svg 
+                    className="w-full"
+                    viewBox="0 0 400 120" 
+                    preserveAspectRatio="none"
+                    style={{ height: '120px' }}
+                  >
+                    <defs>
+                      <linearGradient id="goldFadeUpPostMatchFallback" x1="0%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="1" />
+                        <stop offset="60%" stopColor="hsl(var(--primary))" stopOpacity="0.5" />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    {/* Semi-transparent gold outer arch - 50% opacity risegold */}
+                    <path d="M0,20 Q200,70 400,20 L400,120 L0,120 Z" fill="url(#goldFadeUpPostMatchFallback)" />
+                    {/* Solid gold arch band - main visible arch */}
+                    <path d="M0,50 Q200,90 400,50 L400,120 L0,120 Z" fill="hsl(var(--primary))" />
+                  </svg>
+                  
+                  {/* Player name positioned centered on the arch */}
+                  <div className="absolute inset-0 flex items-center justify-center z-10" style={{ paddingTop: '30px' }}>
+                    <div 
+                      className="relative overflow-hidden rounded-full px-8 md:px-12 py-2 md:py-3"
+                      style={{
+                        backgroundImage: `url(${blackMarble})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        border: `2px solid hsl(var(--primary))`,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.4)'
+                      }}
+                    >
+                      {/* Dark overlay for smoky effect */}
+                      <div className="absolute inset-0 bg-black/40 rounded-full" />
+                      <h2 
+                        className="relative text-lg md:text-2xl lg:text-3xl font-bebas uppercase tracking-widest text-center drop-shadow-md text-white"
+                      >
+                        <HoverText text={playerName.toUpperCase()} />
+                      </h2>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
             {navSections.length > 0 && <QuickNavDropdown sections={navSections} />}
@@ -1194,28 +1302,38 @@ const AnalysisViewer = () => {
 
             {/* Improvements - Section 1 (flip) */}
             {analysis.strengths_improvements && (
-              <ExpandableSection title="Strengths & Areas for Improvement" id={SECTION_IDS.improvements} flipBackground={true}>
-                <div className="space-y-3">
+              <ExpandableSection title="Strengths & Areas for Improvement" id={SECTION_IDS.improvements} flipBackground={true} transparentContent>
+                <div className="grid grid-cols-1 gap-4">
                   {analysis.strengths_improvements.split('|').map((part: string, idx: number) => {
                     const trimmedPart = part.trim();
                     const match = trimmedPart.match(/^(Green|Amber|Red):\s*(.*)$/i);
                     const color = match ? match[1].toLowerCase() : 'green';
                     const text = match ? match[2].trim() : trimmedPart;
                     
-                    const getBulletColor = (c: string) => {
+                    const getBorderColor = (c: string) => {
                       switch (c) {
-                        case 'green': return 'bg-green-500';
-                        case 'amber': return 'bg-amber-500';
-                        case 'red': return 'bg-red-500';
-                        default: return 'bg-green-500';
+                        case 'green': return 'border-green-500';
+                        case 'amber': return 'border-amber-500';
+                        case 'red': return 'border-red-500';
+                        default: return 'border-green-500';
+                      }
+                    };
+
+                    const getBgColor = (c: string) => {
+                      switch (c) {
+                        case 'green': return 'bg-green-500/10';
+                        case 'amber': return 'bg-amber-500/10';
+                        case 'red': return 'bg-red-500/10';
+                        default: return 'bg-green-500/10';
                       }
                     };
                     
                     return (
                       <TextReveal key={idx} delay={idx * 0.1}>
-                        <div className="flex items-start gap-3">
-                          <div className={`rounded-full w-4 h-4 md:w-5 md:h-5 flex-shrink-0 mt-1 ${getBulletColor(color)}`} />
-                          <p className="text-sm md:text-base leading-relaxed italic text-black">{text}</p>
+                        <div className={`relative rounded-xl overflow-hidden border-2 ${getBorderColor(color)} ${getBgColor(color)} bg-card shadow-lg`}>
+                          <div className="p-4 md:p-5">
+                            <p className="text-sm md:text-base leading-relaxed italic text-white">{text}</p>
+                          </div>
                         </div>
                       </TextReveal>
                     );
