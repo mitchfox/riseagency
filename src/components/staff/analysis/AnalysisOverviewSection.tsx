@@ -3,7 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Plus, X, Crop } from "lucide-react";
+import { ChevronDown, Plus, X, Crop, Sparkles, Settings } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -43,6 +43,9 @@ interface OverviewSectionProps {
   removeMatchup?: (index: number) => void;
   updateMatchup?: (index: number, field: string, value: string) => void;
   defaultOpen?: boolean;
+  generateOverviewWithAI?: () => Promise<void>;
+  aiGenerating?: boolean;
+  onOpenSettings?: (category: string) => void;
 }
 
 export const AnalysisOverviewSection = ({
@@ -62,6 +65,9 @@ export const AnalysisOverviewSection = ({
   removeMatchup,
   updateMatchup,
   defaultOpen = false,
+  generateOverviewWithAI,
+  aiGenerating = false,
+  onOpenSettings,
 }: OverviewSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
@@ -90,6 +96,8 @@ export const AnalysisOverviewSection = ({
     await handleImageUpload(syntheticEvent, "matchup_image", undefined, false, cropMatchupIndex);
   };
 
+  const settingsCategory = analysisType === 'pre-match' ? 'pre-match' : 'post-match';
+
   return (
     <>
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -98,11 +106,42 @@ export const AnalysisOverviewSection = ({
         <ChevronDown className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-4 space-y-4">
-        {/* Pre-match specific fields moved from Match Details */}
+        {/* Pre-match specific fields */}
         {analysisType === "pre-match" && (
           <>
             <div>
-              <Label>Key Details</Label>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Label>Key Details</Label>
+                  {onOpenSettings && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => onOpenSettings(settingsCategory)}
+                      title="Edit overview examples"
+                    >
+                      <Settings className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
+                {generateOverviewWithAI && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={generateOverviewWithAI}
+                    disabled={aiGenerating}
+                  >
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    {aiGenerating ? 'Generating...' : 'Use AI'}
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mb-1">
+                AI will summarize points content in the style of your overview examples
+              </p>
               <Textarea
                 value={formData.key_details || ""}
                 onChange={(e) => setFormData({ ...formData, key_details: e.target.value })}
@@ -189,10 +228,41 @@ export const AnalysisOverviewSection = ({
           </>
         )}
 
-        {/* Post-match specific fields - Key Details moved here */}
+        {/* Post-match specific fields */}
         {analysisType === "post-match" && (
           <div>
-            <Label>Key Details</Label>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Label>Key Details</Label>
+                {onOpenSettings && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => onOpenSettings(settingsCategory)}
+                    title="Edit overview examples"
+                  >
+                    <Settings className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
+              {generateOverviewWithAI && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={generateOverviewWithAI}
+                  disabled={aiGenerating}
+                >
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  {aiGenerating ? 'Generating...' : 'Use AI'}
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mb-1">
+              AI will summarize points content in the style of your overview examples
+            </p>
             <Textarea
               value={formData.key_details || ""}
               onChange={(e) => setFormData({ ...formData, key_details: e.target.value })}

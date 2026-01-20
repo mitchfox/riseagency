@@ -39,6 +39,7 @@ interface MatchDetailsProps {
   selectedPerformanceReportId: string;
   setSelectedPerformanceReportId: (id: string) => void;
   defaultOpen?: boolean;
+  showPlayerLinking?: boolean;
 }
 
 export const AnalysisMatchDetails = ({
@@ -55,6 +56,7 @@ export const AnalysisMatchDetails = ({
   selectedPerformanceReportId,
   setSelectedPerformanceReportId,
   defaultOpen = false,
+  showPlayerLinking = false,
 }: MatchDetailsProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -150,6 +152,48 @@ export const AnalysisMatchDetails = ({
         <ChevronDown className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-4 space-y-4">
+        {/* Link to Player/Performance Report - for post-match only */}
+        {showPlayerLinking && analysisType === "post-match" && (
+          <>
+            <div>
+              <Label>Link to Player</Label>
+              <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a player..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No player link</SelectItem>
+                  {players.map((player) => (
+                    <SelectItem key={player.id} value={player.id}>
+                      {player.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedPlayerId && selectedPlayerId !== "none" && performanceReports.length > 0 && (
+              <div>
+                <Label>Link to Performance Report (R90)</Label>
+                <Select value={selectedPerformanceReportId} onValueChange={setSelectedPerformanceReportId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a performance report..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No report link</SelectItem>
+                    {performanceReports.map((report) => (
+                      <SelectItem key={report.id} value={report.id}>
+                        {report.opponent} - {new Date(report.analysis_date).toLocaleDateString()}
+                        {report.r90_score ? ` (R90: ${report.r90_score})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </>
+        )}
+
         {/* Title - shared for both types */}
         <div>
           <Label>Title</Label>

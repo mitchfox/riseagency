@@ -3,12 +3,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Sparkles, ChevronDown } from "lucide-react";
+import { Plus, X, Sparkles, ChevronDown, Film } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useState } from "react";
 
 interface Point {
@@ -17,6 +24,14 @@ interface Point {
   paragraph_2: string;
   images: string[];
   video_url?: string;
+}
+
+interface PerformanceReportAction {
+  id: string;
+  video_url?: string;
+  action_type?: string;
+  action_number?: number;
+  minute?: number;
 }
 
 interface PointsSectionProps {
@@ -33,6 +48,7 @@ interface PointsSectionProps {
   aiGenerating: boolean;
   analysisType: "pre-match" | "post-match" | "concept";
   defaultOpen?: boolean;
+  performanceReportClips?: PerformanceReportAction[];
 }
 
 export const AnalysisPointsSection = ({
@@ -49,8 +65,13 @@ export const AnalysisPointsSection = ({
   aiGenerating,
   analysisType,
   defaultOpen = false,
+  performanceReportClips = [],
 }: PointsSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  const handleSelectClip = (pointIndex: number, clipUrl: string) => {
+    updatePoint(pointIndex, "video_url", clipUrl);
+  };
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -164,6 +185,36 @@ export const AnalysisPointsSection = ({
 
               <div>
                 <Label>Video (Optional)</Label>
+                
+                {/* Select from R90 clips if available */}
+                {performanceReportClips.length > 0 && (
+                  <div className="mb-2">
+                    <Select
+                      value=""
+                      onValueChange={(value) => handleSelectClip(index, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select from R90 clips..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {performanceReportClips
+                          .filter(clip => clip.video_url)
+                          .map((clip) => (
+                            <SelectItem key={clip.id} value={clip.video_url!}>
+                              <div className="flex items-center gap-2">
+                                <Film className="w-3 h-3" />
+                                <span>
+                                  {clip.action_type || 'Action'} #{clip.action_number}
+                                  {clip.minute ? ` (${clip.minute}')` : ''}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <Input
                   type="file"
                   accept="video/*"
