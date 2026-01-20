@@ -70,19 +70,33 @@ interface PointsSectionProps {
   performanceReportClips?: PerformanceReportAction[];
 }
 
-// Helper to get R90 score color
+// Helper to get R90 score color - matches standard R90 grading scale (0-2.5+ range)
 const getScoreColor = (score: number | undefined | null): string => {
   if (score === undefined || score === null) return 'text-muted-foreground';
-  if (score >= 8) return 'text-green-500';
-  if (score >= 6) return 'text-amber-500';
-  return 'text-red-500';
+  if (score < 0) return 'text-red-950';
+  if (score < 0.2) return 'text-red-600';
+  if (score < 0.4) return 'text-red-400';
+  if (score < 0.6) return 'text-orange-700';
+  if (score < 0.8) return 'text-orange-500';
+  if (score < 1.0) return 'text-yellow-400';
+  if (score < 1.4) return 'text-lime-400';
+  if (score < 1.8) return 'text-green-500';
+  if (score < 2.5) return 'text-green-700';
+  return 'text-primary'; // gold for 2.5+
 };
 
 const getScoreBgColor = (score: number | undefined | null): string => {
   if (score === undefined || score === null) return 'bg-muted';
-  if (score >= 8) return 'bg-green-500';
-  if (score >= 6) return 'bg-amber-500';
-  return 'bg-red-500';
+  if (score < 0) return 'bg-red-950';
+  if (score < 0.2) return 'bg-red-600';
+  if (score < 0.4) return 'bg-red-400';
+  if (score < 0.6) return 'bg-orange-700';
+  if (score < 0.8) return 'bg-orange-500';
+  if (score < 1.0) return 'bg-yellow-400';
+  if (score < 1.4) return 'bg-lime-400';
+  if (score < 1.8) return 'bg-green-500';
+  if (score < 2.5) return 'bg-green-700';
+  return 'bg-primary'; // gold for 2.5+
 };
 
 // Sortable Point Card Component

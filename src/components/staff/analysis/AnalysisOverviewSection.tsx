@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ImageCropDialog } from "../ImageCropDialog";
 
 interface Matchup {
@@ -24,6 +24,11 @@ interface Matchup {
   shirt_number: string;
   image_url: string;
   notes?: string;
+}
+
+interface StrengthPoint {
+  color: 'green' | 'amber' | 'red';
+  text: string;
 }
 
 interface OverviewSectionProps {
@@ -73,6 +78,63 @@ export const AnalysisOverviewSection = ({
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState("");
   const [cropMatchupIndex, setCropMatchupIndex] = useState<number | null>(null);
+
+  // Strengths & Areas for Improvement logic
+  const parseStrengthPoints = (): StrengthPoint[] => {
+    if (formData.strength_points && Array.isArray(formData.strength_points)) {
+      return formData.strength_points;
+    }
+    if (formData.strengths_improvements && typeof formData.strengths_improvements === 'string') {
+      const parts = formData.strengths_improvements.split('|').map((p: string) => p.trim()).filter(Boolean);
+      return parts.map((part: string) => {
+        const match = part.match(/^(Green|Amber|Red):\s*(.*)$/i);
+        if (match) {
+          return { color: match[1].toLowerCase() as 'green' | 'amber' | 'red', text: match[2].trim() };
+        }
+        return { color: 'green' as const, text: part };
+      });
+    }
+    return [];
+  };
+
+  const [strengthPoints, setStrengthPoints] = useState<StrengthPoint[]>(parseStrengthPoints);
+
+  useEffect(() => {
+    const parsed = parseStrengthPoints();
+    if (JSON.stringify(parsed) !== JSON.stringify(strengthPoints)) {
+      setStrengthPoints(parsed);
+    }
+  }, [formData.strengths_improvements, formData.strength_points]);
+
+  const updateStrengthPoint = (index: number, field: 'color' | 'text', value: string) => {
+    const updated = [...strengthPoints];
+    updated[index] = { ...updated[index], [field]: value as any };
+    setStrengthPoints(updated);
+    const legacyFormat = updated.map(p => `${p.color.charAt(0).toUpperCase() + p.color.slice(1)}: ${p.text}`).join(' | ');
+    setFormData({ ...formData, strengths_improvements: legacyFormat, strength_points: updated });
+  };
+
+  const addStrengthPoint = () => {
+    const updated = [...strengthPoints, { color: 'green' as const, text: '' }];
+    setStrengthPoints(updated);
+    const legacyFormat = updated.map(p => `${p.color.charAt(0).toUpperCase() + p.color.slice(1)}: ${p.text}`).join(' | ');
+    setFormData({ ...formData, strengths_improvements: legacyFormat, strength_points: updated });
+  };
+
+  const removeStrengthPoint = (index: number) => {
+    const updated = strengthPoints.filter((_, i) => i !== index);
+    setStrengthPoints(updated);
+    const legacyFormat = updated.map(p => `${p.color.charAt(0).toUpperCase() + p.color.slice(1)}: ${p.text}`).join(' | ');
+    setFormData({ ...formData, strengths_improvements: legacyFormat, strength_points: updated });
+  };
+
+  const getColorClass = (color: 'green' | 'amber' | 'red') => {
+    switch (color) {
+      case 'green': return 'bg-green-500';
+      case 'amber': return 'bg-amber-500';
+      case 'red': return 'bg-red-500';
+    }
+  };
 
   const handleMatchupImageSelect = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
@@ -230,44 +292,88 @@ export const AnalysisOverviewSection = ({
 
         {/* Post-match specific fields */}
         {analysisType === "post-match" && (
-          <div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Label>Key Details</Label>
-                {onOpenSettings && (
+          <>
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Label>Key Details</Label>
+                  {onOpenSettings && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => onOpenSettings(settingsCategory)}
+                      title="Edit overview examples"
+                    >
+                      <Settings className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
+                {generateOverviewWithAI && (
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => onOpenSettings(settingsCategory)}
-                    title="Edit overview examples"
+                    onClick={generateOverviewWithAI}
+                    disabled={aiGenerating}
                   >
-                    <Settings className="w-3 h-3" />
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    {aiGenerating ? 'Generating...' : 'Use AI'}
                   </Button>
                 )}
               </div>
-              {generateOverviewWithAI && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={generateOverviewWithAI}
-                  disabled={aiGenerating}
-                >
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  {aiGenerating ? 'Generating...' : 'Use AI'}
-                </Button>
-              )}
+              <p className="text-xs text-muted-foreground mb-1">
+                AI will summarize points content in the style of your overview examples
+              </p>
+              <Textarea
+                value={formData.key_details || ""}
+                onChange={(e) => setFormData({ ...formData, key_details: e.target.value })}
+              />
             </div>
-            <p className="text-xs text-muted-foreground mb-1">
-              AI will summarize points content in the style of your overview examples
-            </p>
-            <Textarea
-              value={formData.key_details || ""}
-              onChange={(e) => setFormData({ ...formData, key_details: e.target.value })}
-            />
-          </div>
+
+            {/* Strengths & Areas for Improvement */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <Label>Strengths & Areas For Improvement</Label>
+                <Button variant="outline" size="sm" onClick={addStrengthPoint}>
+                  <Plus className="w-3 h-3 mr-1" /> Add Point
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">
+                Green = Strength, Amber = Consistency, Red = Improvement
+              </p>
+              <div className="space-y-2">
+                {strengthPoints.map((point, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="flex gap-1">
+                      {(['green', 'amber', 'red'] as const).map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          onClick={() => updateStrengthPoint(index, 'color', color)}
+                          className={`w-6 h-6 rounded ${getColorClass(color)} ${
+                            point.color === color ? 'ring-2 ring-offset-2 ring-foreground' : 'opacity-50 hover:opacity-75'
+                          } transition-all`}
+                        />
+                      ))}
+                    </div>
+                    <Input
+                      value={point.text}
+                      onChange={(e) => updateStrengthPoint(index, 'text', e.target.value)}
+                      placeholder="Enter point..."
+                      className="flex-1"
+                    />
+                    {strengthPoints.length > 1 && (
+                      <Button variant="ghost" size="sm" onClick={() => removeStrengthPoint(index)}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
         )}
 
         {analysisType === "concept" && (

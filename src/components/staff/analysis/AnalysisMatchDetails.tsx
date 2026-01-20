@@ -457,45 +457,6 @@ export const AnalysisMatchDetails = ({
                 />
               </div>
             </div>
-
-            {/* Strengths & Areas for Improvement */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <Label>Strengths & Areas For Improvement</Label>
-                <Button variant="outline" size="sm" onClick={addStrengthPoint}>
-                  <Plus className="w-3 h-3 mr-1" /> Add Point
-                </Button>
-              </div>
-              <div className="space-y-2">
-                {strengthPoints.map((point, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <div className="flex gap-1">
-                      {(['green', 'amber', 'red'] as const).map((color) => (
-                        <button
-                          key={color}
-                          type="button"
-                          onClick={() => updateStrengthPoint(index, 'color', color)}
-                          className={`w-6 h-6 rounded ${getColorClass(color)} ${
-                            point.color === color ? 'ring-2 ring-offset-2 ring-foreground' : 'opacity-50 hover:opacity-75'
-                          } transition-all`}
-                        />
-                      ))}
-                    </div>
-                    <Input
-                      value={point.text}
-                      onChange={(e) => updateStrengthPoint(index, 'text', e.target.value)}
-                      placeholder="Enter point..."
-                      className="flex-1"
-                    />
-                    {strengthPoints.length > 1 && (
-                      <Button variant="ghost" size="sm" onClick={() => removeStrengthPoint(index)}>
-                        <X className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
           </>
         )}
       </CollapsibleContent>

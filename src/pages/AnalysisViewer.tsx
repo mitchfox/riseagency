@@ -405,7 +405,7 @@ const AnalysisHeader = ({
           variant="outline"
           size="sm"
           onClick={() => navigate(-1)}
-          className="absolute left-4 md:left-8 top-4 bg-black/50 backdrop-blur-sm border-white/30 hover:bg-black/70 text-white hover:text-primary h-8 py-1.5 px-3 text-xs z-20"
+          className="absolute left-4 md:left-8 top-4 bg-black/50 backdrop-blur-sm border-white/30 hover:bg-black/70 text-white hover:text-primary h-8 py-1.5 px-3 text-xs z-20 rounded-2xl"
         >
           <ArrowLeft className="w-3 h-3 mr-1" />
           Back
@@ -777,10 +777,10 @@ const AnalysisViewer = () => {
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'hsl(0 0% 15%)' }}>
-      {/* Gold vertical lines container - positioned absolutely, starting behind the arch (at image area) */}
-      <div className="absolute inset-x-0 pointer-events-none" style={{ top: '160px', bottom: 0 }}>
-        <div className="absolute left-[6px] top-0 bottom-0 w-[2px] bg-primary z-10" />
-        <div className="absolute right-[6px] top-0 bottom-0 w-[2px] bg-primary z-10" />
+      {/* Gold vertical lines container - positioned absolutely, starting behind the arch (at header top) */}
+      <div className="absolute inset-x-0 pointer-events-none" style={{ top: '280px', bottom: 0 }}>
+        <div className="absolute left-[6px] top-0 bottom-0 w-[2px] bg-primary z-0" />
+        <div className="absolute right-[6px] top-0 bottom-0 w-[2px] bg-primary z-0" />
       </div>
 
       {/* Video Button */}
