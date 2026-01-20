@@ -225,20 +225,6 @@ export const AnalysisMatchDetails = ({
           />
         </div>
 
-        {/* Video URL and Upload */}
-        <div>
-          <Label>Video URL (Optional)</Label>
-          <Input
-            value={formData.video_url || ""}
-            onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-            placeholder="Video URL or upload below..."
-          />
-        </div>
-        <div>
-          <Label>Or Upload Video</Label>
-          <Input type="file" accept="video/*" onChange={handleVideoUpload} disabled={uploadingImage} />
-        </div>
-
         {analysisType === "pre-match" ? (
           <>
             <div>
@@ -369,15 +355,13 @@ export const AnalysisMatchDetails = ({
           </>
         ) : (
           <>
-            {/* Player Name - stored directly on analysis for display */}
             <div>
-              <Label>Player Name (for display)</Label>
+              <Label>Match Date</Label>
               <Input
-                value={formData.player_name || ""}
-                onChange={(e) => setFormData({ ...formData, player_name: e.target.value })}
-                placeholder="Enter player's full name (e.g. JAROSLAV SVOBODA)..."
+                type="date"
+                value={formData.match_date || ""}
+                onChange={(e) => setFormData({ ...formData, match_date: e.target.value })}
               />
-              <p className="text-xs text-muted-foreground mt-1">This name will appear below the player image</p>
             </div>
 
             <div>
@@ -446,6 +430,88 @@ export const AnalysisMatchDetails = ({
                   onChange={(e) => setFormData({ ...formData, away_team: e.target.value })}
                 />
               </div>
+            </div>
+
+            {/* Team Logos */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="flex items-center gap-1">
+                  Home Team Logo
+                  <Crop className="w-3 h-3" />
+                </Label>
+                <p className="text-xs text-muted-foreground mb-1">Click to upload & crop</p>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  ref={homeLogoInputRef}
+                  onChange={(e) => handleLogoFileSelect(e, "home_team_logo")}
+                  disabled={uploadingImage}
+                />
+                {formData.home_team_logo && (
+                  <img src={formData.home_team_logo} alt="Home logo" className="mt-2 w-16 h-16 object-contain" />
+                )}
+              </div>
+              <div>
+                <Label className="flex items-center gap-1">
+                  Away Team Logo
+                  <Crop className="w-3 h-3" />
+                </Label>
+                <p className="text-xs text-muted-foreground mb-1">Click to upload & crop</p>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  ref={awayLogoInputRef}
+                  onChange={(e) => handleLogoFileSelect(e, "away_team_logo")}
+                  disabled={uploadingImage}
+                />
+                {formData.away_team_logo && (
+                  <img src={formData.away_team_logo} alt="Away logo" className="mt-2 w-16 h-16 object-contain" />
+                )}
+              </div>
+            </div>
+
+            {/* Background Colors */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Home Team Background Color</Label>
+                <p className="text-xs text-muted-foreground mb-1">Background color for home team sections</p>
+                <Input
+                  type="color"
+                  value={formData.home_team_bg_color || "#1a1a1a"}
+                  onChange={(e) => setFormData({ ...formData, home_team_bg_color: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Away Team Background Color</Label>
+                <p className="text-xs text-muted-foreground mb-1">Background color for opposition sections</p>
+                <Input
+                  type="color"
+                  value={formData.away_team_bg_color || "#1a1a1a"}
+                  onChange={(e) => setFormData({ ...formData, away_team_bg_color: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Player's Team Selector for transparency */}
+            <div>
+              <Label>Player's Team (Full Opacity)</Label>
+              <p className="text-xs text-muted-foreground mb-2">The other team will appear at 70% opacity</p>
+              <Select
+                value={formData.player_team || ""}
+                onValueChange={(value) => setFormData({ ...formData, player_team: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select player's team" />
+                </SelectTrigger>
+                <SelectContent>
+                  {formData.home_team && (
+                    <SelectItem value="home">{formData.home_team} (Home)</SelectItem>
+                  )}
+                  {formData.away_team && (
+                    <SelectItem value="away">{formData.away_team} (Away)</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Strengths & Areas for Improvement */}
