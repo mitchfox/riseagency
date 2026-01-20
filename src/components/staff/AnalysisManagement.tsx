@@ -268,7 +268,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     try {
       const { data, error } = await supabase
         .from("players")
-        .select("id, name")
+        .select("id, name, representation_status")
         .order("name");
 
       if (error) throw error;
