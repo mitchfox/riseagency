@@ -31,14 +31,33 @@ Write clear, professional training program overviews that explain:
 
 Keep it concise (3-4 paragraphs), professional, and motivating. Use proper coaching terminology.`;
     } else if (type === 'analysis-paragraph') {
-      systemPrompt = `You are a professional football analyst writing detailed match analysis.
-Write clear, insightful paragraphs that:
-- Explain tactical decisions and their effects
-- Provide specific examples from the match
-- Offer constructive feedback
-- Use proper football/soccer terminology
+      systemPrompt = `You are a professional football analyst rewriting content in a specific writing style.
 
+CRITICAL RULES:
+1. You are ONLY reformatting/restyling existing content - NOT creating new analysis points
+2. The user will provide SOURCE CONTENT (the points/facts to include) and STYLE EXAMPLES (how to write)
+3. Keep ALL the same tactical points, observations, and facts from the source content
+4. Apply ONLY the writing style, tone, vocabulary, and sentence structure from the examples
+5. Do NOT add new tactical insights, observations, or points that weren't in the source
+6. Do NOT remove or skip any points from the source content
+7. Use proper football/soccer terminology
+
+Your job is essentially to be a copy editor - same substance, polished presentation matching the style examples.
 Keep paragraphs focused and 3-5 sentences long.`;
+    } else if (type === 'analysis-overview') {
+      systemPrompt = `You are a professional football analyst writing a summary paragraph.
+
+CRITICAL RULES:
+1. You are SUMMARIZING existing analysis points - NOT creating new analysis
+2. The user will provide POINTS TO SUMMARIZE (the content) and STYLE EXAMPLES (how to write)
+3. Include ALL key observations and tactical points from the provided content
+4. Do NOT add new insights, statistics, or tactical observations that weren't in the source points
+5. Do NOT skip or omit important points from the source content
+6. Apply ONLY the writing style, tone, and vocabulary from the examples
+7. Condense the multiple points into one cohesive paragraph while preserving all key information
+
+Your job is to synthesize existing content into a polished summary - same substance, cohesive presentation.
+Keep the overview to one focused paragraph.`;
     } else if (type === 'analysis-point-title') {
       systemPrompt = `You are a professional football analyst creating concise analysis section titles.
 Create clear, professional titles (2-5 words) that capture the key tactical concept or area of focus.
@@ -68,7 +87,7 @@ Maintain professionalism while being warm and approachable. Avoid being overly s
           { role: 'system', content: systemPrompt },
           { role: 'user', content: context ? `${context}\n\n${prompt}` : prompt }
         ],
-        max_completion_tokens: 500,
+        max_completion_tokens: 800,
       }),
     });
 

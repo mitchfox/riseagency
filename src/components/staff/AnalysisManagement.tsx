@@ -787,14 +787,19 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           .eq('example_type', 'point')
           .limit(3);
 
-        const exampleContext = styleExamples && styleExamples.length > 0
-          ? `\n\nExample writing style references for scheme first paragraph:\n${styleExamples.map((ex, i) => 
-              `Example ${i + 1}: ${ex.paragraph_1 || ''}`
-            ).join('\n\n')}`
+        const existingContent = formData.scheme_paragraph_1 || '';
+        const styleExamplesText = styleExamples && styleExamples.length > 0
+          ? styleExamples.map((ex, i) => `Style Example ${i + 1}: ${ex.paragraph_1 || ''}`).join('\n\n')
           : '';
 
-        context = `Analysis Type: ${analysisType}\nTeams: ${formData.home_team} vs ${formData.away_team}\nTitle: ${formData.scheme_title || 'Not specified'}${exampleContext}`;
-        prompt = `Write a detailed tactical analysis first paragraph for this match scheme. Match the writing style shown in the examples.`;
+        if (!existingContent.trim()) {
+          toast.error('Please write some content first - AI will restyle it, not create new content');
+          setAiGenerating(false);
+          return;
+        }
+
+        context = `STYLE EXAMPLES (copy the tone, vocabulary, and sentence structure from these):\n${styleExamplesText}\n\n---`;
+        prompt = `SOURCE CONTENT TO RESTYLE (keep ALL these points/facts, just improve the writing style):\n${existingContent}\n\nRewrite the source content using the writing style from the examples. Keep ALL the same tactical points and observations - only change HOW it's written, not WHAT it says.`;
         type = 'analysis-paragraph';
       } else if (field === 'scheme_paragraph_2') {
         const schemeCategory = 'scheme-p2';
@@ -805,14 +810,19 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           .eq('example_type', 'point')
           .limit(3);
 
-        const exampleContext = styleExamples && styleExamples.length > 0
-          ? `\n\nExample writing style references for scheme second paragraph:\n${styleExamples.map((ex, i) => 
-              `Example ${i + 1}: ${ex.paragraph_1 || ''}`
-            ).join('\n\n')}`
+        const existingContent = formData.scheme_paragraph_2 || '';
+        const styleExamplesText = styleExamples && styleExamples.length > 0
+          ? styleExamples.map((ex, i) => `Style Example ${i + 1}: ${ex.paragraph_1 || ''}`).join('\n\n')
           : '';
 
-        context = `Analysis Type: ${analysisType}\nTeams: ${formData.home_team} vs ${formData.away_team}\nTitle: ${formData.scheme_title || 'Not specified'}\nFirst Paragraph: ${formData.scheme_paragraph_1 || 'Not written yet'}${exampleContext}`;
-        prompt = `Write a detailed tactical analysis second paragraph for this match scheme, building on the first paragraph. Match the writing style shown in the examples.`;
+        if (!existingContent.trim()) {
+          toast.error('Please write some content first - AI will restyle it, not create new content');
+          setAiGenerating(false);
+          return;
+        }
+
+        context = `STYLE EXAMPLES (copy the tone, vocabulary, and sentence structure from these):\n${styleExamplesText}\n\n---`;
+        prompt = `SOURCE CONTENT TO RESTYLE (keep ALL these points/facts, just improve the writing style):\n${existingContent}\n\nRewrite the source content using the writing style from the examples. Keep ALL the same tactical points and observations - only change HOW it's written, not WHAT it says.`;
         type = 'analysis-paragraph';
       } else if (field === 'point_title') {
         prompt = `Create a concise, professional title for a match analysis section.`;
@@ -828,14 +838,19 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           .eq('example_type', 'point')
           .limit(3);
 
-        const exampleContext = styleExamples && styleExamples.length > 0
-          ? `\n\nExample writing style references for first paragraph:\n${styleExamples.map((ex, i) => 
-              `Example ${i + 1}: ${ex.paragraph_1 || ''}`
-            ).join('\n\n')}`
+        const existingContent = point?.paragraph_1 || '';
+        const styleExamplesText = styleExamples && styleExamples.length > 0
+          ? styleExamples.map((ex, i) => `Style Example ${i + 1}: ${ex.paragraph_1 || ''}`).join('\n\n')
           : '';
 
-        context = `Section Title: ${point?.title || 'Not specified'}${exampleContext}`;
-        prompt = `Write a detailed analysis first paragraph for this section. Match the writing style shown in the examples.`;
+        if (!existingContent.trim()) {
+          toast.error('Please write some content first - AI will restyle it, not create new content');
+          setAiGenerating(false);
+          return;
+        }
+
+        context = `Section Title: ${point?.title || 'Not specified'}\n\nSTYLE EXAMPLES (copy the tone, vocabulary, and sentence structure from these):\n${styleExamplesText}\n\n---`;
+        prompt = `SOURCE CONTENT TO RESTYLE (keep ALL these points/facts, just improve the writing style):\n${existingContent}\n\nRewrite the source content using the writing style from the examples. Keep ALL the same tactical points and observations - only change HOW it's written, not WHAT it says.`;
         type = 'analysis-paragraph';
       } else if (field === 'point_paragraph_2') {
         const point = formData.points?.[pointIndex!];
@@ -848,14 +863,19 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           .eq('example_type', 'point')
           .limit(3);
 
-        const exampleContext = styleExamples && styleExamples.length > 0
-          ? `\n\nExample writing style references for second paragraph:\n${styleExamples.map((ex, i) => 
-              `Example ${i + 1}: ${ex.paragraph_1 || ''}`
-            ).join('\n\n')}`
+        const existingContent = point?.paragraph_2 || '';
+        const styleExamplesText = styleExamples && styleExamples.length > 0
+          ? styleExamples.map((ex, i) => `Style Example ${i + 1}: ${ex.paragraph_1 || ''}`).join('\n\n')
           : '';
 
-        context = `Section Title: ${point?.title || 'Not specified'}\nFirst Paragraph: ${point?.paragraph_1 || 'Not written yet'}${exampleContext}`;
-        prompt = `Write a detailed analysis second paragraph for this section, building on the first paragraph context. Match the writing style shown in the examples.`;
+        if (!existingContent.trim()) {
+          toast.error('Please write some content first - AI will restyle it, not create new content');
+          setAiGenerating(false);
+          return;
+        }
+
+        context = `Section Title: ${point?.title || 'Not specified'}\nFirst Paragraph for context: ${point?.paragraph_1 || ''}\n\nSTYLE EXAMPLES (copy the tone, vocabulary, and sentence structure from these):\n${styleExamplesText}\n\n---`;
+        prompt = `SOURCE CONTENT TO RESTYLE (keep ALL these points/facts, just improve the writing style):\n${existingContent}\n\nRewrite the source content using the writing style from the examples. Keep ALL the same tactical points and observations - only change HOW it's written, not WHAT it says.`;
         type = 'analysis-paragraph';
       }
 
@@ -920,16 +940,14 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
         .eq('example_type', 'overview')
         .limit(3);
 
-      const exampleContext = styleExamples && styleExamples.length > 0
-        ? `\n\nExample overview writing style references:\n${styleExamples.map((ex, i) => 
-            `Example ${i + 1}:\n${ex.content || ''}`
-          ).join('\n\n')}`
+      const styleExamplesText = styleExamples && styleExamples.length > 0
+        ? styleExamples.map((ex, i) => `Style Example ${i + 1}:\n${ex.content || ''}`).join('\n\n')
         : '';
 
       const { data, error } = await localSupabase.functions.invoke('ai-write', {
         body: {
-          prompt: `Write a comprehensive overview/key details paragraph that summarizes the following analysis points. Match the writing style, vocabulary level, and level of detail shown in the examples. This should be one cohesive paragraph that captures the essence of all the points.\n\nPoints to summarize:\n${pointsContent}`,
-          context: `Analysis Type: ${analysisType}${exampleContext}`,
+          prompt: `SOURCE POINTS TO SUMMARIZE (include ALL key observations from these - do NOT add new points):\n${pointsContent}\n\nWrite a single cohesive overview paragraph that captures ALL the key points above. Use the writing style from the examples but keep the exact same observations and tactical insights.`,
+          context: `Analysis Type: ${analysisType}\n\nSTYLE EXAMPLES (copy the tone, vocabulary, and sentence structure from these):\n${styleExamplesText}`,
           type: 'analysis-overview'
         }
       });
