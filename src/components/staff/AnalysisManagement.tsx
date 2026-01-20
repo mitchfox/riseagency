@@ -306,7 +306,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     try {
       const { data, error } = await supabase
         .from("performance_report_actions")
-        .select("id, video_url, action_type, action_number, minute")
+        .select("id, video_url, action_type, action_number, minute, action_score")
         .eq("analysis_id", reportId)
         .not("video_url", "is", null)
         .order("action_number");
