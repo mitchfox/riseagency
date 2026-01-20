@@ -261,6 +261,7 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
                  ref={videoRef}
                  src={`${highlightedMatch.video_url}#t=0.001`}
                  controls
+                 muted
                  className="w-full h-full"
                  playsInline
                  preload="auto"

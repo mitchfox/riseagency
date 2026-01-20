@@ -36,6 +36,7 @@ export const VideoPreviewCard = ({ videoUrl, videoTitle, onImport, isImporting }
             className="w-full h-full object-cover"
             controls
             autoPlay
+            muted
           />
         )}
       </div>
