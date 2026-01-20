@@ -108,6 +108,7 @@ export type Database = {
           opposition_strengths: string | null
           opposition_weaknesses: string | null
           player_image_url: string | null
+          player_name: string | null
           points: Json | null
           scheme_image_url: string | null
           scheme_paragraph_1: string | null
@@ -144,6 +145,7 @@ export type Database = {
           opposition_strengths?: string | null
           opposition_weaknesses?: string | null
           player_image_url?: string | null
+          player_name?: string | null
           points?: Json | null
           scheme_image_url?: string | null
           scheme_paragraph_1?: string | null
@@ -180,6 +182,7 @@ export type Database = {
           opposition_strengths?: string | null
           opposition_weaknesses?: string | null
           player_image_url?: string | null
+          player_name?: string | null
           points?: Json | null
           scheme_image_url?: string | null
           scheme_paragraph_1?: string | null

@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ImageCropDialog } from "../ImageCropDialog";
 
 interface StrengthPoint {
@@ -99,18 +99,39 @@ export const AnalysisMatchDetails = ({
   };
 
   const parseStrengthPoints = (): StrengthPoint[] => {
+    // First check for the array format
     if (formData.strength_points && Array.isArray(formData.strength_points)) {
       return formData.strength_points;
     }
-    // Default to 3 empty points
-    return [
-      { color: 'green', text: '' },
-      { color: 'amber', text: '' },
-      { color: 'red', text: '' }
-    ];
+    
+    // Parse from legacy string format (e.g., "Green: text | Amber: text")
+    if (formData.strengths_improvements && typeof formData.strengths_improvements === 'string') {
+      const parts = formData.strengths_improvements.split('|').map((p: string) => p.trim()).filter(Boolean);
+      return parts.map((part: string) => {
+        const match = part.match(/^(Green|Amber|Red):\s*(.*)$/i);
+        if (match) {
+          return {
+            color: match[1].toLowerCase() as 'green' | 'amber' | 'red',
+            text: match[2].trim()
+          };
+        }
+        return { color: 'green' as const, text: part };
+      });
+    }
+    
+    // Default to empty array
+    return [];
   };
 
   const [strengthPoints, setStrengthPoints] = useState<StrengthPoint[]>(parseStrengthPoints);
+  
+  // Update strengthPoints when formData changes (e.g., when loading an existing analysis)
+  useEffect(() => {
+    const parsed = parseStrengthPoints();
+    if (JSON.stringify(parsed) !== JSON.stringify(strengthPoints)) {
+      setStrengthPoints(parsed);
+    }
+  }, [formData.strengths_improvements, formData.strength_points]);
 
   const updateStrengthPoint = (index: number, field: 'color' | 'text', value: string) => {
     const updated = [...strengthPoints];
