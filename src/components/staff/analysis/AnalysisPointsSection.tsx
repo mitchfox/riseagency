@@ -247,8 +247,10 @@ export const AnalysisPointsSection = ({
                       <div key={vidIndex} className="relative">
                         <video 
                           src={url} 
-                          controls 
+                          autoPlay
+                          loop
                           muted
+                          playsInline
                           className="max-w-xs rounded"
                         />
                         <Button

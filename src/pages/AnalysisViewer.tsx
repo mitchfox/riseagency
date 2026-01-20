@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { ArrowLeft, ChevronDown, Play, Plus, Minus, Download } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence, useInView } from "framer-motion";
@@ -679,11 +680,14 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
 };
 
 const AnalysisViewer = () => {
-  const { analysisId } = useParams();
+  const { analysisId: rawSlug } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [playerName, setPlayerName] = useState<string | null>(null);
+
+  // Extract UUID from slug (e.g., "team-vs-team-uuid" -> "uuid")
+  const analysisId = rawSlug ? extractAnalysisIdFromSlug(rawSlug) : null;
 
   useEffect(() => {
     if (analysisId) fetchAnalysis();
@@ -1124,6 +1128,23 @@ const AnalysisViewer = () => {
                             </div>
                           </TextReveal>
                         )}
+                        {(point.video_urls?.length > 0 || point.video_url) && (
+                          <TextReveal delay={0.2}>
+                            <div className="flex flex-col items-center gap-4">
+                              {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
+                                <video
+                                  key={vidIndex}
+                                  src={url}
+                                  autoPlay
+                                  loop
+                                  muted
+                                  playsInline
+                                  className="w-full rounded-lg shadow-md border-2 border-primary"
+                                />
+                              ))}
+                            </div>
+                          </TextReveal>
+                        )}
                         {point.paragraph_2 && (
                           <TextReveal delay={0.25}>
                             <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
@@ -1212,6 +1233,23 @@ const AnalysisViewer = () => {
                             <div className="flex flex-col items-center gap-4">
                               {point.images.map((img: string, imgIndex: number) => (
                                 <img key={imgIndex} src={img} alt={`${point.title} - Image ${imgIndex + 1}`} className="w-full rounded-lg shadow-md border-2 border-primary" />
+                              ))}
+                            </div>
+                          </TextReveal>
+                        )}
+                        {(point.video_urls?.length > 0 || point.video_url) && (
+                          <TextReveal delay={0.2}>
+                            <div className="flex flex-col items-center gap-4">
+                              {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
+                                <video
+                                  key={vidIndex}
+                                  src={url}
+                                  autoPlay
+                                  loop
+                                  muted
+                                  playsInline
+                                  className="w-full rounded-lg shadow-md border-2 border-primary"
+                                />
                               ))}
                             </div>
                           </TextReveal>
@@ -1309,6 +1347,23 @@ const AnalysisViewer = () => {
                             <div className="flex flex-col gap-4">
                               {point.images.map((img: string, imgIndex: number) => (
                                 <img key={imgIndex} src={img} alt={`${point.title} - Image ${imgIndex + 1}`} className="w-full rounded-lg border-2 border-primary" />
+                              ))}
+                            </div>
+                          </TextReveal>
+                        )}
+                        {(point.video_urls?.length > 0 || point.video_url) && (
+                          <TextReveal delay={0.2}>
+                            <div className="flex flex-col items-center gap-4">
+                              {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
+                                <video
+                                  key={vidIndex}
+                                  src={url}
+                                  autoPlay
+                                  loop
+                                  muted
+                                  playsInline
+                                  className="w-full rounded-lg border-2 border-primary"
+                                />
                               ))}
                             </div>
                           </TextReveal>
