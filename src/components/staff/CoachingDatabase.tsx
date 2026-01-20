@@ -19,11 +19,13 @@ import { TacticalSchemes } from "./TacticalSchemes";
 import { SchemeEditor } from "./SchemeEditor";
 import { PositionalGuides } from "./PositionalGuides";
 import { ClubRatings } from "./ClubRatings";
+import { FormGradesManagement } from "./FormGradesManagement";
 import { MarkdownText } from "@/utils/markdownRenderer";
 import { downloadFile } from "@/utils/openExternalUrl";
+import { GraduationCap } from "lucide-react";
 
 
-type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides' | 'club_ratings';
+type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides' | 'club_ratings' | 'form_grades';
 
 interface Exercise {
   name: string;
@@ -167,6 +169,13 @@ const tableConfigs = {
     fields: [],
     icon: Building2,
     color: 'slate',
+  },
+  form_grades: {
+    label: 'Form Grades',
+    singular: 'Form Grade',
+    fields: [],
+    icon: GraduationCap,
+    color: 'gold',
   },
 };
 
@@ -998,6 +1007,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
               <PositionalGuides isAdmin={isAdmin} />
             ) : key === 'club_ratings' ? (
               <ClubRatings />
+            ) : key === 'form_grades' ? (
+              <FormGradesManagement />
             ) : (
               <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-end gap-4">

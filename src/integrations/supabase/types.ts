@@ -1054,6 +1054,36 @@ export type Database = {
         }
         Relationships: []
       }
+      form_grade_configs: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          metric_key: string
+          metric_name: string
+          thresholds: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          metric_key: string
+          metric_name: string
+          thresholds?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          metric_key?: string
+          metric_name?: string
+          thresholds?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       form_submissions: {
         Row: {
           created_at: string
