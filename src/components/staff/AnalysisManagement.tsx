@@ -228,6 +228,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
   const [selectedPlayerId, setSelectedPlayerId] = useState("none");
   const [performanceReports, setPerformanceReports] = useState<any[]>([]);
   const [selectedPerformanceReportId, setSelectedPerformanceReportId] = useState("none");
+  const [performanceReportClips, setPerformanceReportClips] = useState<any[]>([]);
 
   useEffect(() => {
     fetchAnalyses();
@@ -242,8 +243,18 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     } else {
       setPerformanceReports([]);
       setSelectedPerformanceReportId("none");
+      setPerformanceReportClips([]);
     }
   }, [selectedPlayerId]);
+
+  // Fetch clips when a performance report is selected
+  useEffect(() => {
+    if (selectedPerformanceReportId && selectedPerformanceReportId !== "none") {
+      fetchPerformanceReportClips(selectedPerformanceReportId);
+    } else {
+      setPerformanceReportClips([]);
+    }
+  }, [selectedPerformanceReportId]);
 
   const fetchAnalyses = async () => {
     try {
@@ -288,6 +299,22 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       setPerformanceReports(data || []);
     } catch (error: any) {
       console.error("Failed to fetch performance reports:", error);
+    }
+  };
+
+  const fetchPerformanceReportClips = async (reportId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("performance_report_actions")
+        .select("id, video_url, action_type, action_number, minute")
+        .eq("analysis_id", reportId)
+        .not("video_url", "is", null)
+        .order("action_number");
+
+      if (error) throw error;
+      setPerformanceReportClips(data || []);
+    } catch (error: any) {
+      console.error("Failed to fetch performance report clips:", error);
     }
   };
 
@@ -870,6 +897,74 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     }
   };
 
+  // Generate overview from points content using AI
+  const generateOverviewFromPoints = async () => {
+    const points = formData.points || [];
+    if (points.length === 0) {
+      toast.error("Please add some points first before generating an overview");
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      // Build content from points
+      const pointsContent = points
+        .map((p: any, i: number) => `Point ${i + 1}: ${p.title || 'Untitled'}\n${p.paragraph_1 || ''}\n${p.paragraph_2 || ''}`)
+        .join('\n\n');
+
+      // Fetch overview examples for the current analysis type
+      const { data: styleExamples } = await supabase
+        .from('analysis_point_examples')
+        .select('content')
+        .eq('category', analysisType)
+        .eq('example_type', 'overview')
+        .limit(3);
+
+      const exampleContext = styleExamples && styleExamples.length > 0
+        ? `\n\nExample overview writing style references:\n${styleExamples.map((ex, i) => 
+            `Example ${i + 1}:\n${ex.content || ''}`
+          ).join('\n\n')}`
+        : '';
+
+      const { data, error } = await localSupabase.functions.invoke('ai-write', {
+        body: {
+          prompt: `Write a comprehensive overview/key details paragraph that summarizes the following analysis points. Match the writing style, vocabulary level, and level of detail shown in the examples. This should be one cohesive paragraph that captures the essence of all the points.\n\nPoints to summarize:\n${pointsContent}`,
+          context: `Analysis Type: ${analysisType}${exampleContext}`,
+          type: 'analysis-overview'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        if (data.error.includes('Rate limit')) {
+          toast.error('AI rate limit reached. Please wait a moment and try again.');
+        } else if (data.error.includes('credits')) {
+          toast.error('AI credits exhausted. Please add credits in Settings > Workspace > Usage.');
+        } else {
+          throw new Error(data.error);
+        }
+        return;
+      }
+
+      setFormData({ ...formData, key_details: data.text });
+      toast.success('Overview generated from points!');
+    } catch (error: any) {
+      console.error('Error generating overview from points:', error);
+      toast.error(error.message || "Failed to generate overview");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  // Handler to open settings for a specific overview category
+  const handleOpenOverviewSettings = (category: string) => {
+    setExamplesCategory(category);
+    setExamplesType('overview');
+    setExamplesDialogOpen(true);
+    fetchExamples(category, 'overview');
+  };
+
   const generateOverview = async () => {
     if (!overviewWriter.overviewInfo.trim()) {
       toast.error("Please provide information for the overview");
@@ -1182,7 +1277,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           </h2>
         </div>
 
-        {/* Quick Link - only show when creating new analysis (not for concepts) */}
+        {/* Quick Link - only show when creating new analysis (not for concepts) - stays open */}
         {!editingAnalysis && !isConcept && (
           <AnalysisQuickLink
             formData={formData}
@@ -1192,7 +1287,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           />
         )}
 
-        {/* Match Details (Pre-Match and Post-Match only) */}
+        {/* Match Details (Pre-Match and Post-Match only) - collapsed by default */}
         {!isConcept && (
           <AnalysisMatchDetails
             formData={formData}
@@ -1207,11 +1302,12 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
             performanceReports={performanceReports}
             selectedPerformanceReportId={selectedPerformanceReportId}
             setSelectedPerformanceReportId={setSelectedPerformanceReportId}
-            defaultOpen={true}
+            defaultOpen={false}
+            showPlayerLinking={isPostMatch}
           />
         )}
 
-        {/* Scheme Section (Pre-Match only) */}
+        {/* Scheme Section (Pre-Match only) - collapsed by default */}
         {isPreMatch && (
           <AnalysisSchemeSection
             formData={formData}
@@ -1224,10 +1320,11 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
             aiGenerating={aiGenerating}
             formationTemplates={formationTemplates}
             analysisType="pre-match"
+            defaultOpen={false}
           />
         )}
 
-        {/* Overview Section for Concept - shown first */}
+        {/* Overview Section for Concept - shown first, collapsed by default */}
         {isConcept && (
           <AnalysisOverviewSection
             formData={formData}
@@ -1242,11 +1339,11 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
             selectedPerformanceReportId={selectedPerformanceReportId}
             setSelectedPerformanceReportId={setSelectedPerformanceReportId}
             analysisType="concept"
-            defaultOpen={true}
+            defaultOpen={false}
           />
         )}
 
-        {/* Points Section */}
+        {/* Points Section - collapsed by default */}
         <AnalysisPointsSection
           formData={formData}
           setFormData={setFormData}
@@ -1260,9 +1357,11 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           generateWithAI={generateWithAI}
           aiGenerating={aiGenerating}
           analysisType={activeView as AnalysisType}
+          defaultOpen={false}
+          performanceReportClips={performanceReportClips}
         />
 
-        {/* Overview Section (Pre-Match and Post-Match - shown after points) */}
+        {/* Overview Section (Pre-Match and Post-Match - shown after points) - collapsed by default */}
         {!isConcept && (
           <AnalysisOverviewSection
             formData={formData}
@@ -1280,6 +1379,10 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
             addMatchup={addMatchup}
             removeMatchup={removeMatchup}
             updateMatchup={updateMatchup}
+            defaultOpen={false}
+            generateOverviewWithAI={generateOverviewFromPoints}
+            aiGenerating={aiGenerating}
+            onOpenSettings={handleOpenOverviewSettings}
           />
         )}
 
