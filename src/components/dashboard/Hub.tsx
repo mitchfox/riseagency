@@ -28,6 +28,7 @@ interface PlayerAnalysis {
   result: string;
   minutes_played?: number;
   striker_stats?: any;
+  fixture_id?: string;
 }
 
 interface HubProps {
