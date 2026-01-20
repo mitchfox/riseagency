@@ -2226,6 +2226,9 @@ const Dashboard = () => {
                                 { value: "movementinbehindxc", label: "Movement in Behind xC", statKey: "movement_in_behind_xC_per90" },
                                 { value: "movementdownsidexc", label: "Movement Down Side xC", statKey: "movement_down_side_xC_per90" },
                                 { value: "crossingmovementxc", label: "Crossing Movement xC", statKey: "crossing_movement_xC_per90" },
+                                { value: "boxentries", label: "Box Entries", statKey: "box_entries_per90" },
+                                { value: "dribblescompleted", label: "Dribbles Completed", statKey: "dribbles_completed_per90" },
+                                { value: "longpassescompleted", label: "Long Passes Completed", statKey: "long_passes_completed_per90" },
                               ];
 
                               return availableMetrics

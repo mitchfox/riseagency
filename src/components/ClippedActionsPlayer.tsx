@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, SkipBack, SkipForward, Play, Pause } from 'lucide-react';
+import { X, SkipBack, SkipForward, Play, Pause, Maximize } from 'lucide-react';
 
 interface ClipAction {
   id: string;
@@ -29,13 +29,33 @@ export const ClippedActionsPlayer = ({
 
   const currentClip = clips[currentIndex];
 
-  // Reset to first clip when dialog opens
+  // Reset to first clip when dialog opens and auto-fullscreen
   useEffect(() => {
     if (open) {
       setCurrentIndex(0);
       setIsPlaying(true);
+      // Auto-open fullscreen after short delay
+      const timer = setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.requestFullscreen?.().catch(() => {
+            // Fallback for iOS Safari
+            (videoRef.current as any)?.webkitEnterFullscreen?.();
+          });
+        }
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [open]);
+
+  const handleFullscreen = () => {
+    if (videoRef.current) {
+      if (videoRef.current.requestFullscreen) {
+        videoRef.current.requestFullscreen();
+      } else if ((videoRef.current as any).webkitEnterFullscreen) {
+        (videoRef.current as any).webkitEnterFullscreen();
+      }
+    }
+  };
 
   const handleVideoEnded = () => {
     if (currentIndex < clips.length - 1) {
@@ -84,15 +104,26 @@ export const ClippedActionsPlayer = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black">
         <div className="relative">
-          {/* Close button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 z-10 bg-black/50 hover:bg-black/70 text-white"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          {/* Top buttons */}
+          <div className="absolute top-2 right-2 z-10 flex gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-black/50 hover:bg-black/70 text-white"
+              onClick={handleFullscreen}
+              title="Fullscreen"
+            >
+              <Maximize className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-black/50 hover:bg-black/70 text-white"
+              onClick={() => onOpenChange(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
 
           {/* Clip info overlay */}
           <div className="absolute top-2 left-2 z-10 bg-black/70 text-white text-sm px-3 py-2 rounded max-w-[70%]">
