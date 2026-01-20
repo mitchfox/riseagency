@@ -71,32 +71,39 @@ interface PointsSectionProps {
 }
 
 // Helper to get R90 score color - matches standard R90 grading scale (0-2.5+ range)
+// Use R90 grade color system - matches gradeCalculations.ts
 const getScoreColor = (score: number | undefined | null): string => {
-  if (score === undefined || score === null) return 'text-muted-foreground';
-  if (score < 0) return 'text-red-950';
-  if (score < 0.2) return 'text-red-600';
-  if (score < 0.4) return 'text-red-400';
-  if (score < 0.6) return 'text-orange-700';
-  if (score < 0.8) return 'text-orange-500';
-  if (score < 1.0) return 'text-yellow-400';
-  if (score < 1.4) return 'text-lime-400';
-  if (score < 1.8) return 'text-green-500';
-  if (score < 2.5) return 'text-green-700';
-  return 'text-primary'; // gold for 2.5+
+  if (score === undefined || score === null) return 'hsl(var(--muted-foreground))';
+  if (score < 0) return 'hsl(0, 84%, 30%)'; // U - Dark Red
+  if (score < 0.2) return 'hsl(0, 84%, 45%)'; // D - Red
+  if (score < 0.4) return 'hsl(0, 84%, 60%)'; // C- - Light Red
+  if (score < 0.6) return 'hsl(25, 75%, 45%)'; // C - Orange-Brown
+  if (score < 0.8) return 'hsl(40, 85%, 50%)'; // C+ - Yellow-Orange
+  if (score < 1.0) return 'hsl(60, 70%, 50%)'; // B- - Yellow-Green
+  if (score < 1.2) return 'hsl(142, 76%, 36%)'; // B - Green 400
+  if (score < 1.4) return 'hsl(142, 70%, 40%)'; // B+ - Green 450
+  if (score < 1.6) return 'hsl(142, 65%, 45%)'; // A- - Green 530
+  if (score < 1.8) return 'hsl(142, 70%, 50%)'; // A - Green 625
+  if (score < 2.0) return 'hsl(142, 76%, 55%)'; // A+ - Green 750
+  if (score < 2.5) return 'hsl(43, 96%, 56%)'; // A* - Rise Gold
+  return 'hsl(43, 96%, 56%)'; // A* - Rise Gold for 2.5+
 };
 
 const getScoreBgColor = (score: number | undefined | null): string => {
-  if (score === undefined || score === null) return 'bg-muted';
-  if (score < 0) return 'bg-red-950';
-  if (score < 0.2) return 'bg-red-600';
-  if (score < 0.4) return 'bg-red-400';
-  if (score < 0.6) return 'bg-orange-700';
-  if (score < 0.8) return 'bg-orange-500';
-  if (score < 1.0) return 'bg-yellow-400';
-  if (score < 1.4) return 'bg-lime-400';
-  if (score < 1.8) return 'bg-green-500';
-  if (score < 2.5) return 'bg-green-700';
-  return 'bg-primary'; // gold for 2.5+
+  if (score === undefined || score === null) return 'hsl(var(--muted))';
+  if (score < 0) return 'hsl(0, 84%, 30%)'; // U - Dark Red
+  if (score < 0.2) return 'hsl(0, 84%, 45%)'; // D - Red
+  if (score < 0.4) return 'hsl(0, 84%, 60%)'; // C- - Light Red
+  if (score < 0.6) return 'hsl(25, 75%, 45%)'; // C - Orange-Brown
+  if (score < 0.8) return 'hsl(40, 85%, 50%)'; // C+ - Yellow-Orange
+  if (score < 1.0) return 'hsl(60, 70%, 50%)'; // B- - Yellow-Green
+  if (score < 1.2) return 'hsl(142, 76%, 36%)'; // B - Green 400
+  if (score < 1.4) return 'hsl(142, 70%, 40%)'; // B+ - Green 450
+  if (score < 1.6) return 'hsl(142, 65%, 45%)'; // A- - Green 530
+  if (score < 1.8) return 'hsl(142, 70%, 50%)'; // A - Green 625
+  if (score < 2.0) return 'hsl(142, 76%, 55%)'; // A+ - Green 750
+  if (score < 2.5) return 'hsl(43, 96%, 56%)'; // A* - Rise Gold
+  return 'hsl(43, 96%, 56%)'; // A* - Rise Gold for 2.5+
 };
 
 // Sortable Point Card Component
@@ -286,7 +293,10 @@ const SortablePointCard = ({
                             {clip.minute ? ` (${clip.minute}')` : ''}
                           </span>
                           {clip.action_score !== undefined && clip.action_score !== null && (
-                            <span className={`ml-2 px-1.5 py-0.5 rounded text-xs font-bold text-white ${getScoreBgColor(clip.action_score)}`}>
+                            <span 
+                              className="ml-2 px-1.5 py-0.5 rounded text-xs font-bold text-white"
+                              style={{ backgroundColor: getScoreBgColor(clip.action_score) }}
+                            >
                               {clip.action_score}
                             </span>
                           )}
