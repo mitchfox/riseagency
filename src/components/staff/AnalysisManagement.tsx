@@ -361,14 +361,14 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
     const startingXI = template.map((pos, idx) => ({
       ...pos,
-      surname: existingXI[idx]?.surname || "",
-      number: existingXI[idx]?.number || "",
+      name: existingXI[idx]?.name || "",
+      shirt_number: existingXI[idx]?.shirt_number || "",
       id: idx
     }));
     setFormData({ ...formData, selected_scheme: scheme, starting_xi: startingXI });
   };
 
-  const updateStartingXIPlayer = (index: number, field: 'surname' | 'number', value: string) => {
+  const updateStartingXIPlayer = (index: number, field: 'name' | 'shirt_number' | 'position' | 'x' | 'y', value: string | number) => {
     const updatedXI = [...(formData.starting_xi || [])];
     updatedXI[index] = { ...updatedXI[index], [field]: value };
     setFormData({ ...formData, starting_xi: updatedXI });
@@ -1327,13 +1327,14 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
             <AnalysisSchemeSection
               formData={formData}
               setFormData={setFormData}
-              handleSchemeChange={handleSchemeChange}
-              updateStartingXIPlayer={updateStartingXIPlayer}
+              applyFormation={handleSchemeChange}
+              updatePlayer={updateStartingXIPlayer}
               handleImageUpload={handleImageUpload}
               uploadingImage={uploadingImage}
               generateWithAI={generateWithAI}
               aiGenerating={aiGenerating}
               formationTemplates={formationTemplates}
+              analysisType="pre-match"
             />
 
             <AnalysisPointsSection
@@ -1409,13 +1410,14 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
             <AnalysisSchemeSection
               formData={formData}
               setFormData={setFormData}
-              handleSchemeChange={handleSchemeChange}
-              updateStartingXIPlayer={updateStartingXIPlayer}
+              applyFormation={handleSchemeChange}
+              updatePlayer={updateStartingXIPlayer}
               handleImageUpload={handleImageUpload}
               uploadingImage={uploadingImage}
               generateWithAI={generateWithAI}
               aiGenerating={aiGenerating}
               formationTemplates={formationTemplates}
+              analysisType="post-match"
             />
 
             <AnalysisPointsSection

@@ -15,6 +15,18 @@ export const createPerformanceReportSlug = (
   return `/performance-report/${slug}-${analysisId}`;
 };
 
+export const createAnalysisSlug = (
+  homeTeam: string | null, 
+  awayTeam: string | null, 
+  analysisId: string
+): string => {
+  // Create a readable slug from team names
+  const home = (homeTeam || 'home').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const away = (awayTeam || 'away').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const slug = `${home}-vs-${away}`.replace(/-+/g, '-').replace(/^-|-$/g, '');
+  return `/analysis/${slug}-${analysisId}`;
+};
+
 export const extractAnalysisIdFromSlug = (slug: string): string => {
   // Extract UUID from the end of the slug
   // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
