@@ -11,6 +11,131 @@ interface ActionVideoUploadProps {
   disabled?: boolean;
 }
 
+/**
+ * Strips audio from a video file by re-encoding it without an audio track.
+ * This ensures downloaded videos have no audio data at all.
+ */
+async function stripVideoAudio(videoFile: File, onProgress?: (progress: number) => void): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = 'auto';
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      reject(new Error('Could not get canvas context'));
+      return;
+    }
+
+    let mediaRecorder: MediaRecorder | null = null;
+    let animationId: number | null = null;
+
+    video.onloadedmetadata = () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      // Create a MediaStream from the canvas (video only, no audio)
+      const stream = canvas.captureStream(30); // 30 fps
+      
+      // Determine best supported mime type
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+        ? 'video/webm;codecs=vp9'
+        : MediaRecorder.isTypeSupported('video/webm')
+          ? 'video/webm'
+          : 'video/mp4';
+      
+      // Use MediaRecorder to encode the stream without audio
+      mediaRecorder = new MediaRecorder(stream, {
+        mimeType,
+        videoBitsPerSecond: 5000000, // 5 Mbps for good quality
+      });
+      
+      const chunks: BlobPart[] = [];
+      
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const extension = mimeType.includes('webm') ? 'webm' : 'mp4';
+        const blob = new Blob(chunks, { type: mimeType });
+        const strippedFile = new File(
+          [blob], 
+          videoFile.name.replace(/\.[^.]+$/, `-silent.${extension}`), 
+          { type: mimeType }
+        );
+        URL.revokeObjectURL(video.src);
+        resolve(strippedFile);
+      };
+      
+      mediaRecorder.onerror = () => {
+        URL.revokeObjectURL(video.src);
+        reject(new Error('MediaRecorder error'));
+      };
+      
+      // Draw video frames to canvas
+      const drawFrame = () => {
+        if (video.ended || video.paused) {
+          if (mediaRecorder?.state === 'recording') {
+            mediaRecorder.stop();
+          }
+          if (animationId) {
+            cancelAnimationFrame(animationId);
+          }
+          return;
+        }
+        
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Report progress
+        if (onProgress && video.duration) {
+          onProgress((video.currentTime / video.duration) * 100);
+        }
+        
+        animationId = requestAnimationFrame(drawFrame);
+      };
+      
+      video.onplay = () => {
+        if (mediaRecorder) {
+          mediaRecorder.start(100); // Collect data every 100ms
+          drawFrame();
+        }
+      };
+      
+      video.onended = () => {
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
+        if (mediaRecorder?.state === 'recording') {
+          mediaRecorder.stop();
+        }
+      };
+      
+      // Increase playback speed to process faster (will still capture all frames)
+      video.playbackRate = 4.0;
+      
+      // Start playback (muted, so no audio processed)
+      video.play().catch((err) => {
+        URL.revokeObjectURL(video.src);
+        reject(err);
+      });
+    };
+    
+    video.onerror = () => {
+      URL.revokeObjectURL(video.src);
+      reject(new Error('Failed to load video'));
+    };
+    
+    // Load the video file
+    video.src = URL.createObjectURL(videoFile);
+  });
+}
+
 export const ActionVideoUpload = ({
   actionId,
   currentVideoUrl,
@@ -18,6 +143,8 @@ export const ActionVideoUpload = ({
   disabled = false,
 }: ActionVideoUploadProps) => {
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,12 +164,22 @@ export const ActionVideoUpload = ({
     }
 
     setUploading(true);
+    setProgress(0);
+    setStatus('Removing audio...');
+    
     try {
-      const fileName = `action-clips/${actionId}-${Date.now()}.${file.name.split('.').pop()}`;
+      // Strip audio from the video before uploading
+      const silentVideo = await stripVideoAudio(file, (p) => setProgress(Math.round(p)));
+      
+      setStatus('Uploading...');
+      setProgress(0);
+      
+      const extension = silentVideo.name.split('.').pop() || 'webm';
+      const fileName = `action-clips/${actionId}-${Date.now()}-silent.${extension}`;
       
       const { error: uploadError } = await supabase.storage
         .from('analysis-files')
-        .upload(fileName, file, {
+        .upload(fileName, silentVideo, {
           cacheControl: '3600',
           upsert: true,
         });
@@ -70,12 +207,14 @@ export const ActionVideoUpload = ({
       }
 
       onVideoUploaded(publicUrl);
-      toast.success('Video clip uploaded');
+      toast.success('Video clip uploaded (audio removed)');
     } catch (error: any) {
       console.error('Error uploading video:', error);
       toast.error('Failed to upload video');
     } finally {
       setUploading(false);
+      setStatus('');
+      setProgress(0);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -115,7 +254,7 @@ export const ActionVideoUpload = ({
       
       {currentVideoUrl ? (
         <div className="flex items-center gap-1">
-          <span className="text-xs text-green-600 flex items-center gap-1">
+          <span className="text-xs text-primary flex items-center gap-1">
             <Video className="h-3 w-3" />
             Clip
           </span>
@@ -140,7 +279,12 @@ export const ActionVideoUpload = ({
           disabled={disabled || uploading}
         >
           {uploading ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
+            <span className="flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span className="text-[10px]">
+                {status} {progress > 0 && `${progress}%`}
+              </span>
+            </span>
           ) : (
             <>
               <Upload className="h-3 w-3 mr-1" />
