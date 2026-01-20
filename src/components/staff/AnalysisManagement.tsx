@@ -1,28 +1,27 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { sharedSupabase as supabase } from "@/integrations/supabase/sharedClient";
+import { supabase as localSupabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus, X, Upload, Sparkles, Database, Copy } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Sparkles, Database, Copy, Settings, Eye, Users } from "lucide-react";
+import { createAnalysisSlug } from "@/lib/urlHelpers";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AnalysisMatchDetails } from "./analysis/AnalysisMatchDetails";
+import { AnalysisSchemeSection } from "./analysis/AnalysisSchemeSection";
+import { AnalysisPointsSection } from "./analysis/AnalysisPointsSection";
+import { AnalysisOverviewSection } from "./analysis/AnalysisOverviewSection";
+import { AnalysisQuickLink } from "./analysis/AnalysisQuickLink";
 
 type AnalysisType = "pre-match" | "post-match" | "concept";
 
@@ -32,6 +31,8 @@ interface Analysis {
   title: string | null;
   home_team?: string | null;
   away_team?: string | null;
+  home_team_bold?: boolean | null;
+  away_team_bold?: boolean | null;
   match_date?: string | null;
   home_team_logo?: string | null;
   away_team_logo?: string | null;
@@ -48,6 +49,10 @@ interface Analysis {
   starting_xi?: any[];
   kit_primary_color?: string | null;
   kit_secondary_color?: string | null;
+  kit_collar_color?: string | null;
+  kit_number_color?: string | null;
+  kit_stripe_style?: string | null;
+  player_team?: string | null;
   scheme_title?: string | null;
   scheme_paragraph_1?: string | null;
   scheme_paragraph_2?: string | null;
@@ -59,6 +64,7 @@ interface Analysis {
   points?: any[];
   video_url?: string | null;
   created_at: string;
+  player_name?: string | null;
 }
 
 interface Point {
@@ -72,6 +78,7 @@ interface Matchup {
   name: string;
   shirt_number: string;
   image_url: string;
+  notes?: string;
 }
 
 interface AIWriterState {
@@ -90,7 +97,9 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
   const navigate = useNavigate();
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [preMatchDialogOpen, setPreMatchDialogOpen] = useState(false);
+  const [postMatchDialogOpen, setPostMatchDialogOpen] = useState(false);
+  const [conceptDialogOpen, setConceptDialogOpen] = useState(false);
   const [editingAnalysis, setEditingAnalysis] = useState<Analysis | null>(null);
   const [analysisType, setAnalysisType] = useState<AnalysisType>("pre-match");
   const [aiGenerating, setAiGenerating] = useState(false);
@@ -127,103 +136,104 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     tweakInstructions: ''
   });
   const [editMode, setEditMode] = useState(false);
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [examplesDialogOpen, setExamplesDialogOpen] = useState(false);
-  const [examplesCategory, setExamplesCategory] = useState<'pre-match' | 'post-match' | 'concept' | 'other' | 'scheme'>('pre-match');
+  const [examplesCategory, setExamplesCategory] = useState('pre-match');
   const [examplesType, setExamplesType] = useState<'point' | 'overview'>('point');
   const [examples, setExamples] = useState<any[]>([]);
   const [editingExample, setEditingExample] = useState<any | null>(null);
   const [exampleFormData, setExampleFormData] = useState({
-    title: '',
     paragraph_1: '',
-    paragraph_2: '',
-    content: '',
-    notes: ''
+    content: ''
   });
+  const [linkedPlayers, setLinkedPlayers] = useState<Record<string, { playerId: string; playerName: string }[]>>({});
 
   // Form states
-  const [formData, setFormData] = useState<Partial<Analysis>>({
+  const [formData, setFormData] = useState<Record<string, any>>({
     points: [],
     matchups: [],
     starting_xi: [],
   });
 
   // Formation templates with position coordinates (x, y as percentages)
-  const formationTemplates: Record<string, Array<{x: number, y: number, position: string}>> = {
-    "4-4-2": [
-      {x: 50, y: 90, position: "GK"}, // GK
-      {x: 15, y: 70, position: "LB"}, {x: 35, y: 70, position: "CB"}, {x: 65, y: 70, position: "CB"}, {x: 85, y: 70, position: "RB"}, // Defense
-      {x: 15, y: 45, position: "LM"}, {x: 35, y: 45, position: "CM"}, {x: 65, y: 45, position: "CM"}, {x: 85, y: 45, position: "RM"}, // Midfield
-      {x: 35, y: 20, position: "ST"}, {x: 65, y: 20, position: "ST"} // Attack
-    ],
+  const formationTemplates: Record<string, { x: number; y: number; position: string }[]> = {
     "4-3-3": [
       {x: 50, y: 90, position: "GK"},
       {x: 15, y: 70, position: "LB"}, {x: 35, y: 70, position: "CB"}, {x: 65, y: 70, position: "CB"}, {x: 85, y: 70, position: "RB"},
       {x: 30, y: 50, position: "CM"}, {x: 50, y: 50, position: "CM"}, {x: 70, y: 50, position: "CM"},
       {x: 15, y: 20, position: "LW"}, {x: 50, y: 20, position: "ST"}, {x: 85, y: 20, position: "RW"}
     ],
-    "4-2-3-1": [
+    "4-2-1-3": [
       {x: 50, y: 90, position: "GK"},
       {x: 15, y: 70, position: "LB"}, {x: 35, y: 70, position: "CB"}, {x: 65, y: 70, position: "CB"}, {x: 85, y: 70, position: "RB"},
       {x: 35, y: 55, position: "CDM"}, {x: 65, y: 55, position: "CDM"},
-      {x: 20, y: 35, position: "LM"}, {x: 50, y: 35, position: "CAM"}, {x: 80, y: 35, position: "RM"},
-      {x: 50, y: 15, position: "ST"}
+      {x: 50, y: 38, position: "CAM"},
+      {x: 15, y: 18, position: "LW"}, {x: 50, y: 15, position: "ST"}, {x: 85, y: 18, position: "RW"}
     ],
-    "3-5-2": [
-      {x: 50, y: 90, position: "GK"},
-      {x: 25, y: 70, position: "CB"}, {x: 50, y: 70, position: "CB"}, {x: 75, y: 70, position: "CB"},
-      {x: 10, y: 50, position: "LM"}, {x: 30, y: 50, position: "CM"}, {x: 50, y: 50, position: "CM"}, {x: 70, y: 50, position: "CM"}, {x: 90, y: 50, position: "RM"},
-      {x: 35, y: 20, position: "ST"}, {x: 65, y: 20, position: "ST"}
-    ],
-    "5-3-2": [
-      {x: 50, y: 90, position: "GK"},
-      {x: 10, y: 70, position: "LWB"}, {x: 30, y: 75, position: "CB"}, {x: 50, y: 75, position: "CB"}, {x: 70, y: 75, position: "CB"}, {x: 90, y: 70, position: "RWB"},
-      {x: 30, y: 45, position: "CM"}, {x: 50, y: 45, position: "CM"}, {x: 70, y: 45, position: "CM"},
-      {x: 35, y: 20, position: "ST"}, {x: 65, y: 20, position: "ST"}
-    ],
-    "4-1-4-1": [
+    "4-2-4": [
       {x: 50, y: 90, position: "GK"},
       {x: 15, y: 70, position: "LB"}, {x: 35, y: 70, position: "CB"}, {x: 65, y: 70, position: "CB"}, {x: 85, y: 70, position: "RB"},
-      {x: 50, y: 55, position: "CDM"},
-      {x: 15, y: 40, position: "LM"}, {x: 35, y: 40, position: "CM"}, {x: 65, y: 40, position: "CM"}, {x: 85, y: 40, position: "RM"},
-      {x: 50, y: 15, position: "ST"}
+      {x: 35, y: 50, position: "CM"}, {x: 65, y: 50, position: "CM"},
+      {x: 15, y: 20, position: "LW"}, {x: 40, y: 18, position: "ST"}, {x: 60, y: 18, position: "ST"}, {x: 85, y: 20, position: "RW"}
+    ],
+    "4-2-2": [
+      {x: 50, y: 90, position: "GK"},
+      {x: 15, y: 70, position: "LB"}, {x: 35, y: 70, position: "CB"}, {x: 65, y: 70, position: "CB"}, {x: 85, y: 70, position: "RB"},
+      {x: 35, y: 50, position: "CM"}, {x: 65, y: 50, position: "CM"},
+      {x: 15, y: 28, position: "LW"}, {x: 40, y: 20, position: "ST"}, {x: 60, y: 20, position: "ST"}, {x: 85, y: 28, position: "RW"}
+    ],
+    "4-3-1-2": [
+      {x: 50, y: 90, position: "GK"},
+      {x: 15, y: 70, position: "LB"}, {x: 35, y: 70, position: "CB"}, {x: 65, y: 70, position: "CB"}, {x: 85, y: 70, position: "RB"},
+      {x: 30, y: 50, position: "CM"}, {x: 50, y: 55, position: "CDM"}, {x: 70, y: 50, position: "CM"},
+      {x: 50, y: 32, position: "CAM"},
+      {x: 35, y: 15, position: "ST"}, {x: 65, y: 15, position: "ST"}
     ],
     "3-4-3": [
       {x: 50, y: 90, position: "GK"},
       {x: 25, y: 70, position: "CB"}, {x: 50, y: 70, position: "CB"}, {x: 75, y: 70, position: "CB"},
       {x: 15, y: 50, position: "LM"}, {x: 40, y: 50, position: "CM"}, {x: 60, y: 50, position: "CM"}, {x: 85, y: 50, position: "RM"},
-      {x: 20, y: 20, position: "LW"}, {x: 50, y: 20, position: "ST"}, {x: 80, y: 20, position: "RW"}
+      {x: 20, y: 20, position: "LW"}, {x: 50, y: 18, position: "ST"}, {x: 80, y: 20, position: "RW"}
     ],
-    "4-5-1": [
+    "3-3-1-3": [
       {x: 50, y: 90, position: "GK"},
-      {x: 15, y: 70, position: "LB"}, {x: 35, y: 70, position: "CB"}, {x: 65, y: 70, position: "CB"}, {x: 85, y: 70, position: "RB"},
-      {x: 15, y: 45, position: "LM"}, {x: 35, y: 50, position: "CM"}, {x: 50, y: 50, position: "CM"}, {x: 65, y: 50, position: "CM"}, {x: 85, y: 45, position: "RM"},
-      {x: 50, y: 15, position: "ST"}
+      {x: 25, y: 70, position: "CB"}, {x: 50, y: 70, position: "CB"}, {x: 75, y: 70, position: "CB"},
+      {x: 30, y: 52, position: "CM"}, {x: 50, y: 55, position: "CDM"}, {x: 70, y: 52, position: "CM"},
+      {x: 50, y: 35, position: "CAM"},
+      {x: 20, y: 18, position: "LW"}, {x: 50, y: 15, position: "ST"}, {x: 80, y: 18, position: "RW"}
     ],
-    "4-1-2-1-2": [
+    "3-3-4": [
       {x: 50, y: 90, position: "GK"},
-      {x: 15, y: 70, position: "LB"}, {x: 35, y: 70, position: "CB"}, {x: 65, y: 70, position: "CB"}, {x: 85, y: 70, position: "RB"},
-      {x: 50, y: 58, position: "CDM"},
-      {x: 35, y: 45, position: "CM"}, {x: 65, y: 45, position: "CM"},
-      {x: 50, y: 30, position: "CAM"},
+      {x: 25, y: 70, position: "CB"}, {x: 50, y: 70, position: "CB"}, {x: 75, y: 70, position: "CB"},
+      {x: 30, y: 48, position: "CM"}, {x: 50, y: 50, position: "CM"}, {x: 70, y: 48, position: "CM"},
+      {x: 15, y: 22, position: "LW"}, {x: 40, y: 18, position: "ST"}, {x: 60, y: 18, position: "ST"}, {x: 85, y: 22, position: "RW"}
+    ],
+    "3-3-2-2": [
+      {x: 50, y: 90, position: "GK"},
+      {x: 25, y: 70, position: "CB"}, {x: 50, y: 70, position: "CB"}, {x: 75, y: 70, position: "CB"},
+      {x: 30, y: 50, position: "CM"}, {x: 50, y: 52, position: "CM"}, {x: 70, y: 50, position: "CM"},
+      {x: 30, y: 30, position: "CAM"}, {x: 70, y: 30, position: "CAM"},
       {x: 35, y: 15, position: "ST"}, {x: 65, y: 15, position: "ST"}
     ],
-    "3-4-2-1": [
+    "3-4-1-2": [
       {x: 50, y: 90, position: "GK"},
       {x: 25, y: 70, position: "CB"}, {x: 50, y: 70, position: "CB"}, {x: 75, y: 70, position: "CB"},
       {x: 15, y: 50, position: "LM"}, {x: 40, y: 50, position: "CM"}, {x: 60, y: 50, position: "CM"}, {x: 85, y: 50, position: "RM"},
-      {x: 35, y: 30, position: "CAM"}, {x: 65, y: 30, position: "CAM"},
-      {x: 50, y: 12, position: "ST"}
+      {x: 50, y: 30, position: "CAM"},
+      {x: 35, y: 15, position: "ST"}, {x: 65, y: 15, position: "ST"}
     ]
   };
+
   const [uploadingImage, setUploadingImage] = useState(false);
   const [players, setPlayers] = useState<any[]>([]);
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string>("none");
+  const [selectedPlayerId, setSelectedPlayerId] = useState("none");
   const [performanceReports, setPerformanceReports] = useState<any[]>([]);
-  const [selectedPerformanceReportId, setSelectedPerformanceReportId] = useState<string>("none");
+  const [selectedPerformanceReportId, setSelectedPerformanceReportId] = useState("none");
 
   useEffect(() => {
     fetchAnalyses();
     fetchPlayers();
+    fetchLinkedPlayers();
   }, []);
 
   useEffect(() => {
@@ -281,19 +291,44 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     }
   };
 
+  const fetchLinkedPlayers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("player_analysis")
+        .select("analysis_writer_id, player_id, players(name)")
+        .not("analysis_writer_id", "is", null);
+
+      if (error) throw error;
+
+      const grouped: Record<string, { playerId: string; playerName: string }[]> = {};
+      (data || []).forEach((item: any) => {
+        const analysisId = item.analysis_writer_id;
+        if (!grouped[analysisId]) {
+          grouped[analysisId] = [];
+        }
+        grouped[analysisId].push({
+          playerId: item.player_id,
+          playerName: item.players?.name || 'Unknown Player'
+        });
+      });
+      setLinkedPlayers(grouped);
+    } catch (error: any) {
+      console.error("Failed to fetch linked players:", error);
+    }
+  };
+
   const handleOpenDialog = async (type: AnalysisType, analysis?: Analysis) => {
     setAnalysisType(type);
     if (analysis) {
       setEditingAnalysis(analysis);
       setFormData(analysis);
-      
-      // Fetch which player_analysis record this is linked to
+
       const { data } = await supabase
         .from("player_analysis")
         .select("player_id, id")
         .eq("analysis_writer_id", analysis.id)
         .maybeSingle();
-      
+
       if (data) {
         setSelectedPlayerId(data.player_id);
         setSelectedPerformanceReportId(data.id);
@@ -304,11 +339,16 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       setSelectedPlayerId("none");
       setSelectedPerformanceReportId("none");
     }
-    setDialogOpen(true);
+
+    if (type === "pre-match") setPreMatchDialogOpen(true);
+    else if (type === "post-match") setPostMatchDialogOpen(true);
+    else if (type === "concept") setConceptDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
-    setDialogOpen(false);
+    setPreMatchDialogOpen(false);
+    setPostMatchDialogOpen(false);
+    setConceptDialogOpen(false);
     setEditingAnalysis(null);
     setFormData({ points: [], matchups: [], starting_xi: [] });
     setSelectedPlayerId("none");
@@ -317,10 +357,12 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
   const handleSchemeChange = (scheme: string) => {
     const template = formationTemplates[scheme];
+    const existingXI = formData.starting_xi || [];
+
     const startingXI = template.map((pos, idx) => ({
       ...pos,
-      surname: "",
-      number: "",
+      surname: existingXI[idx]?.surname || "",
+      number: existingXI[idx]?.number || "",
       id: idx
     }));
     setFormData({ ...formData, selected_scheme: scheme, starting_xi: startingXI });
@@ -359,42 +401,27 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       } = supabase.storage.from("analysis-files").getPublicUrl(filePath);
 
       if (matchupIndex !== undefined) {
-        // Adding image to a matchup
         const updatedMatchups = [...(formData.matchups || [])];
         updatedMatchups[matchupIndex].image_url = publicUrl;
         setFormData({ ...formData, matchups: updatedMatchups });
       } else if (pointIndex !== undefined && isMultiple) {
-        // Adding image to a point's images array
         const updatedPoints = [...(formData.points || [])];
         updatedPoints[pointIndex].images.push(publicUrl);
         setFormData({ ...formData, points: updatedPoints });
       } else {
-        // Single image field
         setFormData({ ...formData, [field]: publicUrl });
       }
 
       toast.success("Image uploaded successfully");
     } catch (error: any) {
-      const errorMessage = error?.message || "Unknown error";
-      const isFileTooLarge = errorMessage.includes("size") || errorMessage.includes("too large");
-      const isInvalidType = errorMessage.includes("type") || errorMessage.includes("mime");
-      
-      if (isFileTooLarge) {
-        toast.error("Image upload failed: File is too large. Maximum size is 50MB.");
-      } else if (isInvalidType) {
-        toast.error("Image upload failed: Invalid file type. Please upload a valid image file.");
-      } else {
-        toast.error(`Image upload failed: ${errorMessage}`);
-      }
-      console.error("Image upload error:", error);
+      toast.error("Failed to upload image");
+      console.error(error);
     } finally {
       setUploadingImage(false);
     }
   };
 
-  const handleVideoUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -417,18 +444,40 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       setFormData({ ...formData, video_url: publicUrl });
       toast.success("Video uploaded successfully");
     } catch (error: any) {
-      const errorMessage = error?.message || "Unknown error";
-      const isFileTooLarge = errorMessage.includes("size") || errorMessage.includes("too large") || errorMessage.includes("Payload");
-      const isInvalidType = errorMessage.includes("type") || errorMessage.includes("mime");
-      
-      if (isFileTooLarge) {
-        toast.error("Video upload failed: File is too large. Maximum size is 50MB.");
-      } else if (isInvalidType) {
-        toast.error("Video upload failed: Invalid file type. Please upload a valid video file.");
-      } else {
-        toast.error(`Video upload failed: ${errorMessage}`);
-      }
-      console.error("Video upload error:", error);
+      toast.error("Failed to upload video");
+      console.error(error);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleVideoUploadForPoint = async (event: React.ChangeEvent<HTMLInputElement>, pointIndex: number) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("analysis-videos")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("analysis-videos").getPublicUrl(filePath);
+
+      const updatedPoints = [...(formData.points || [])];
+      updatedPoints[pointIndex] = { ...updatedPoints[pointIndex], video_url: publicUrl };
+      setFormData({ ...formData, points: updatedPoints });
+      toast.success("Video uploaded successfully");
+    } catch (error: any) {
+      toast.error("Failed to upload video");
+      console.error(error);
     } finally {
       setUploadingImage(false);
     }
@@ -436,34 +485,75 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
   const handleSave = async () => {
     try {
-      const dataToSave = {
-        ...formData,
+      const extendedFormData = formData as any;
+
+      const { 
+        kit_collar_color, 
+        kit_number_color, 
+        kit_stripe_style, 
+        player_team,
+        ...restFormData 
+      } = extendedFormData;
+
+      const dataToSaveWithNewFields: Record<string, any> = {
+        ...restFormData,
+        analysis_type: analysisType,
+      };
+
+      if (kit_collar_color !== undefined) dataToSaveWithNewFields.kit_collar_color = kit_collar_color;
+      if (kit_number_color !== undefined) dataToSaveWithNewFields.kit_number_color = kit_number_color;
+      if (kit_stripe_style !== undefined) dataToSaveWithNewFields.kit_stripe_style = kit_stripe_style;
+      if (player_team !== undefined) dataToSaveWithNewFields.player_team = player_team;
+
+      const dataToSaveWithoutNewFields = {
+        ...restFormData,
         analysis_type: analysisType,
       };
 
       let analysisId = editingAnalysis?.id;
 
       if (editingAnalysis) {
-        const { error } = await supabase
+        let { error } = await supabase
           .from("analyses")
-          .update(dataToSave)
+          .update(dataToSaveWithNewFields)
           .eq("id", editingAnalysis.id);
 
-        if (error) throw error;
-        toast.success("Analysis updated successfully");
+        if (error) {
+          console.warn("Save with new fields failed, retrying without:", error.message);
+          const fallbackResult = await supabase
+            .from("analyses")
+            .update(dataToSaveWithoutNewFields)
+            .eq("id", editingAnalysis.id);
+
+          if (fallbackResult.error) throw fallbackResult.error;
+          toast.success("Analysis updated (some kit options not saved - shared DB needs migration)");
+        } else {
+          toast.success("Analysis updated successfully");
+        }
       } else {
-        const { data, error } = await supabase
+        let { data, error } = await supabase
           .from("analyses")
-          .insert([dataToSave])
+          .insert([dataToSaveWithNewFields])
           .select()
           .single();
 
-        if (error) throw error;
-        analysisId = data.id;
-        toast.success("Analysis created successfully");
+        if (error) {
+          console.warn("Insert with new fields failed, retrying without:", error.message);
+          const fallbackResult = await supabase
+            .from("analyses")
+            .insert([dataToSaveWithoutNewFields])
+            .select()
+            .single();
+
+          if (fallbackResult.error) throw fallbackResult.error;
+          analysisId = fallbackResult.data.id;
+          toast.success("Analysis created (some kit options not saved - shared DB needs migration)");
+        } else {
+          analysisId = data.id;
+          toast.success("Analysis created successfully");
+        }
       }
 
-      // Link to performance report if selected
       if (selectedPerformanceReportId && selectedPerformanceReportId !== "none" && analysisId) {
         const { error: linkError } = await supabase
           .from("player_analysis")
@@ -476,12 +566,21 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
         }
       }
 
-      handleCloseDialog();
+      if (!editingAnalysis) {
+        const { data: newAnalysis } = await supabase
+          .from("analyses")
+          .select("*")
+          .eq("id", analysisId)
+          .single();
+        if (newAnalysis) {
+          setEditingAnalysis(newAnalysis as Analysis);
+        }
+      }
       fetchAnalyses();
+      fetchLinkedPlayers();
     } catch (error: any) {
-      const errorMessage = error?.message || "Unknown error";
-      toast.error(`Failed to save analysis: ${errorMessage}`);
-      console.error("Save analysis error:", error);
+      toast.error("Failed to save analysis");
+      console.error(error);
     }
   };
 
@@ -552,15 +651,29 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
   const fetchExamples = async (category: string, type: 'point' | 'overview' = 'point') => {
     try {
-      const { data, error } = await supabase
-        .from('analysis_point_examples')
-        .select('*')
-        .eq('category', category)
-        .eq('example_type', type)
-        .order('created_at', { ascending: false });
+      const [sharedResult, localResult] = await Promise.all([
+        supabase
+          .from('analysis_point_examples')
+          .select('*')
+          .eq('category', category)
+          .eq('example_type', type)
+          .order('created_at', { ascending: false }),
+        localSupabase
+          .from('analysis_point_examples')
+          .select('*')
+          .eq('category', category)
+          .eq('example_type', type)
+          .order('created_at', { ascending: false })
+      ]);
 
-      if (error) throw error;
-      setExamples(data || []);
+      const sharedData = sharedResult.data || [];
+      const localData = localResult.data || [];
+      const seenIds = new Set(sharedData.map(e => e.id));
+      const mergedData = [...sharedData, ...localData.filter(e => !seenIds.has(e.id))];
+
+      mergedData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setExamples(mergedData);
     } catch (error: any) {
       console.error('Error fetching examples:', error);
       toast.error('Failed to load examples');
@@ -570,31 +683,46 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
   const handleSaveExample = async () => {
     try {
       if (editingExample) {
-        const { error } = await supabase
+        const dataToUpdate = examplesType === 'overview' 
+          ? { content: exampleFormData.content, category: examplesCategory, example_type: examplesType }
+          : { paragraph_1: exampleFormData.paragraph_1, category: examplesCategory, example_type: examplesType };
+
+        let { error } = await supabase
           .from('analysis_point_examples')
-          .update({
-            ...exampleFormData,
-            category: examplesCategory,
-            example_type: examplesType
-          })
+          .update(dataToUpdate)
           .eq('id', editingExample.id);
+
+        if (error?.code === '23514') {
+          const localResult = await localSupabase
+            .from('analysis_point_examples')
+            .update(dataToUpdate)
+            .eq('id', editingExample.id);
+          error = localResult.error;
+        }
 
         if (error) throw error;
         toast.success('Example updated');
       } else {
-        const { error } = await supabase
+        const dataToInsert = examplesType === 'overview'
+          ? { content: exampleFormData.content, category: examplesCategory, example_type: examplesType }
+          : { paragraph_1: exampleFormData.paragraph_1, category: examplesCategory, example_type: examplesType };
+
+        let { error } = await supabase
           .from('analysis_point_examples')
-          .insert({
-            ...exampleFormData,
-            category: examplesCategory,
-            example_type: examplesType
-          });
+          .insert(dataToInsert);
+
+        if (error?.code === '23514') {
+          const localResult = await localSupabase
+            .from('analysis_point_examples')
+            .insert(dataToInsert);
+          error = localResult.error;
+        }
 
         if (error) throw error;
         toast.success('Example added');
       }
 
-      setExampleFormData({ title: '', paragraph_1: '', paragraph_2: '', content: '', notes: '' });
+      setExampleFormData({ paragraph_1: '', content: '' });
       setEditingExample(null);
       fetchExamples(examplesCategory, examplesType);
     } catch (error: any) {
@@ -607,10 +735,18 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     if (!confirm('Delete this example?')) return;
 
     try {
-      const { error } = await supabase
+      let { error } = await supabase
         .from('analysis_point_examples')
         .delete()
         .eq('id', id);
+
+      if (error) {
+        const localResult = await localSupabase
+          .from('analysis_point_examples')
+          .delete()
+          .eq('id', id);
+        error = localResult.error;
+      }
 
       if (error) throw error;
       toast.success('Example deleted');
@@ -618,6 +754,132 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     } catch (error: any) {
       console.error('Error deleting example:', error);
       toast.error('Failed to delete example');
+    }
+  };
+
+  const generateWithAI = async (field: string, pointIndex?: number) => {
+    setAiGenerating(true);
+    try {
+      let prompt = '';
+      let context = '';
+      let type = '';
+
+      if (field === 'scheme_paragraph_1') {
+        const schemeCategory = 'scheme-p1';
+        const { data: styleExamples } = await supabase
+          .from('analysis_point_examples')
+          .select('paragraph_1')
+          .eq('category', schemeCategory)
+          .eq('example_type', 'point')
+          .limit(3);
+
+        const exampleContext = styleExamples && styleExamples.length > 0
+          ? `\n\nExample writing style references for scheme first paragraph:\n${styleExamples.map((ex, i) => 
+              `Example ${i + 1}: ${ex.paragraph_1 || ''}`
+            ).join('\n\n')}`
+          : '';
+
+        context = `Analysis Type: ${analysisType}\nTeams: ${formData.home_team} vs ${formData.away_team}\nTitle: ${formData.scheme_title || 'Not specified'}${exampleContext}`;
+        prompt = `Write a detailed tactical analysis first paragraph for this match scheme. Match the writing style shown in the examples.`;
+        type = 'analysis-paragraph';
+      } else if (field === 'scheme_paragraph_2') {
+        const schemeCategory = 'scheme-p2';
+        const { data: styleExamples } = await supabase
+          .from('analysis_point_examples')
+          .select('paragraph_1')
+          .eq('category', schemeCategory)
+          .eq('example_type', 'point')
+          .limit(3);
+
+        const exampleContext = styleExamples && styleExamples.length > 0
+          ? `\n\nExample writing style references for scheme second paragraph:\n${styleExamples.map((ex, i) => 
+              `Example ${i + 1}: ${ex.paragraph_1 || ''}`
+            ).join('\n\n')}`
+          : '';
+
+        context = `Analysis Type: ${analysisType}\nTeams: ${formData.home_team} vs ${formData.away_team}\nTitle: ${formData.scheme_title || 'Not specified'}\nFirst Paragraph: ${formData.scheme_paragraph_1 || 'Not written yet'}${exampleContext}`;
+        prompt = `Write a detailed tactical analysis second paragraph for this match scheme, building on the first paragraph. Match the writing style shown in the examples.`;
+        type = 'analysis-paragraph';
+      } else if (field === 'point_title') {
+        prompt = `Create a concise, professional title for a match analysis section.`;
+        type = 'analysis-point-title';
+      } else if (field === 'point_paragraph_1') {
+        const point = formData.points?.[pointIndex!];
+        const paragraphCategory = `${analysisType}-p1`;
+
+        const { data: styleExamples } = await supabase
+          .from('analysis_point_examples')
+          .select('paragraph_1')
+          .eq('category', paragraphCategory)
+          .eq('example_type', 'point')
+          .limit(3);
+
+        const exampleContext = styleExamples && styleExamples.length > 0
+          ? `\n\nExample writing style references for first paragraph:\n${styleExamples.map((ex, i) => 
+              `Example ${i + 1}: ${ex.paragraph_1 || ''}`
+            ).join('\n\n')}`
+          : '';
+
+        context = `Section Title: ${point?.title || 'Not specified'}${exampleContext}`;
+        prompt = `Write a detailed analysis first paragraph for this section. Match the writing style shown in the examples.`;
+        type = 'analysis-paragraph';
+      } else if (field === 'point_paragraph_2') {
+        const point = formData.points?.[pointIndex!];
+        const paragraphCategory = `${analysisType}-p2`;
+
+        const { data: styleExamples } = await supabase
+          .from('analysis_point_examples')
+          .select('paragraph_1')
+          .eq('category', paragraphCategory)
+          .eq('example_type', 'point')
+          .limit(3);
+
+        const exampleContext = styleExamples && styleExamples.length > 0
+          ? `\n\nExample writing style references for second paragraph:\n${styleExamples.map((ex, i) => 
+              `Example ${i + 1}: ${ex.paragraph_1 || ''}`
+            ).join('\n\n')}`
+          : '';
+
+        context = `Section Title: ${point?.title || 'Not specified'}\nFirst Paragraph: ${point?.paragraph_1 || 'Not written yet'}${exampleContext}`;
+        prompt = `Write a detailed analysis second paragraph for this section, building on the first paragraph context. Match the writing style shown in the examples.`;
+        type = 'analysis-paragraph';
+      }
+
+      const { data, error } = await localSupabase.functions.invoke('ai-write', {
+        body: { prompt, context, type }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        if (data.error.includes('Rate limit')) {
+          toast.error('AI rate limit reached. Please wait a moment and try again.');
+        } else if (data.error.includes('credits')) {
+          toast.error('AI credits exhausted. Please add credits in Settings > Workspace > Usage.');
+        } else {
+          throw new Error(data.error);
+        }
+        return;
+      }
+
+      if (field === 'scheme_paragraph_1') {
+        setFormData({ ...formData, scheme_paragraph_1: data.text });
+      } else if (field === 'scheme_paragraph_2') {
+        setFormData({ ...formData, scheme_paragraph_2: data.text });
+      } else if (field === 'point_title' && pointIndex !== undefined) {
+        updatePoint(pointIndex, 'title', data.text);
+      } else if (field === 'point_paragraph_1' && pointIndex !== undefined) {
+        updatePoint(pointIndex, 'paragraph_1', data.text);
+      } else if (field === 'point_paragraph_2' && pointIndex !== undefined) {
+        updatePoint(pointIndex, 'paragraph_2', data.text);
+      }
+
+      toast.success('AI content generated!');
+    } catch (error: any) {
+      console.error('AI generation error:', error);
+      toast.error('Failed to generate content with AI');
+    } finally {
+      setAiGenerating(false);
     }
   };
 
@@ -629,7 +891,6 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
     setAiGenerating(true);
     try {
-      // Fetch overview examples for this category
       const { data: styleExamples } = await supabase
         .from('analysis_point_examples')
         .select('content')
@@ -643,7 +904,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           ).join('\n\n')}`
         : '';
 
-      const { data, error } = await supabase.functions.invoke('ai-write', {
+      const { data, error } = await localSupabase.functions.invoke('ai-write', {
         body: {
           prompt: `Write a comprehensive overview paragraph for a ${overviewWriter.category} analysis based on this information: ${overviewWriter.overviewInfo}. Match the writing style, vocabulary level, and level of detail shown in the examples. This should be one cohesive paragraph.`,
           context: `Analysis Type: ${overviewWriter.category}${exampleContext}`,
@@ -653,13 +914,10 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
       if (error) throw error;
 
-      const overview = data.text;
-
-      // Show preview dialog instead of directly applying
       setGeneratedContent({
         open: true,
         type: 'overview',
-        content: overview,
+        content: data.text,
         category: overviewWriter.category
       });
       setOverviewWriter({ open: false, category: 'pre-match', overviewInfo: '' });
@@ -679,34 +937,54 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
     setAiGenerating(true);
     try {
-      // Fetch scheme examples
-      const { data: styleExamples } = await supabase
+      const { data: p1Examples } = await supabase
         .from('analysis_point_examples')
-        .select('paragraph_1, paragraph_2')
-        .eq('category', 'scheme')
+        .select('paragraph_1')
+        .eq('category', 'scheme-p1')
         .eq('example_type', 'point')
         .limit(3);
 
-      const exampleContext = styleExamples && styleExamples.length > 0
-        ? `\n\nExample scheme writing style references:\n${styleExamples.map((ex, i) => 
-            `Example ${i + 1}:\nParagraph 1: ${ex.paragraph_1 || ''}\nParagraph 2: ${ex.paragraph_2 || ''}`
+      const { data: p2Examples } = await supabase
+        .from('analysis_point_examples')
+        .select('paragraph_1')
+        .eq('category', 'scheme-p2')
+        .eq('example_type', 'point')
+        .limit(3);
+
+      const p1Context = p1Examples && p1Examples.length > 0
+        ? `\n\nExample writing style for FIRST paragraph:\n${p1Examples.map((ex, i) => 
+            `Example ${i + 1}: ${ex.paragraph_1 || ''}`
           ).join('\n\n')}`
         : '';
 
-      const { data, error } = await supabase.functions.invoke('ai-write', {
+      const p2Context = p2Examples && p2Examples.length > 0
+        ? `\n\nExample writing style for SECOND paragraph:\n${p2Examples.map((ex, i) => 
+            `Example ${i + 1}: ${ex.paragraph_1 || ''}`
+          ).join('\n\n')}`
+        : '';
+
+      const { data, error } = await localSupabase.functions.invoke('ai-write', {
         body: {
-          prompt: `Write two tactical scheme analysis paragraphs based on this information: ${schemeWriter.schemeInfo}. Match the writing style, vocabulary level, and level of detail shown in the examples. Separate the two paragraphs with a double line break.`,
-          context: `Analysis Type: scheme${exampleContext}`,
-          type: 'analysis-paragraph'
+          prompt: `Write two tactical scheme paragraphs based on this information: ${schemeWriter.schemeInfo}. 
+
+          Return exactly two paragraphs separated by a blank line.
+          - First paragraph should match the style in the FIRST paragraph examples
+          - Second paragraph should match the style in the SECOND paragraph examples
+
+          ${p1Context}
+          ${p2Context}`,
+          context: `Scheme analysis for football match`,
+          type: 'analysis-scheme'
         }
       });
 
       if (error) throw error;
 
-      const text = data.text;
-      const [p1, p2] = text.split('\n\n').filter((p: string) => p.trim());
+      const text = data.text || '';
+      const paragraphs = text.split('\n\n').filter((p: string) => p.trim());
+      const p1 = paragraphs[0] || '';
+      const p2 = paragraphs[1] || paragraphs[0] || '';
 
-      // Show preview dialog
       setGeneratedContent({
         open: true,
         type: 'scheme',
@@ -732,7 +1010,6 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
     setAiGenerating(true);
     try {
-      // Fetch examples for this category to use as style reference
       const { data: styleExamples } = await supabase
         .from('analysis_point_examples')
         .select('paragraph_1, paragraph_2')
@@ -748,9 +1025,8 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       let paragraph1 = '';
       let paragraph2 = '';
 
-      // Generate paragraph 1 if info provided
       if (aiWriter.paragraph1Info.trim()) {
-        const { data: data1, error: error1 } = await supabase.functions.invoke('ai-write', {
+        const { data: data1, error: error1 } = await localSupabase.functions.invoke('ai-write', {
           body: {
             prompt: `Write a professional analysis paragraph based on this information: ${aiWriter.paragraph1Info}. Match the writing style, vocabulary level, and level of detail shown in the examples.`,
             context: `Analysis Type: ${aiWriter.category}${exampleContext}`,
@@ -762,9 +1038,8 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
         paragraph1 = data1.text;
       }
 
-      // Generate paragraph 2 if info provided
       if (aiWriter.paragraph2Info.trim()) {
-        const { data: data2, error: error2 } = await supabase.functions.invoke('ai-write', {
+        const { data: data2, error: error2 } = await localSupabase.functions.invoke('ai-write', {
           body: {
             prompt: `Write a professional analysis paragraph based on this information: ${aiWriter.paragraph2Info}. Match the writing style, vocabulary level, and level of detail shown in the examples.`,
             context: `Analysis Type: ${aiWriter.category}${exampleContext}`,
@@ -776,7 +1051,6 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
         paragraph2 = data2.text;
       }
 
-      // Show preview dialog
       setGeneratedContent({
         open: true,
         type: 'point',
@@ -789,69 +1063,6 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     } catch (error: any) {
       console.error('Error generating with AI:', error);
       toast.error(error.message || "Failed to generate content");
-    } finally {
-      setAiGenerating(false);
-    }
-  };
-
-
-  const generateWithAI = async (field: string, pointIndex?: number) => {
-    setAiGenerating(true);
-    try {
-      let prompt = '';
-      let context = '';
-      let type = '';
-
-      if (field === 'scheme_paragraph_1' || field === 'scheme_paragraph_2') {
-        context = `Analysis Type: ${analysisType}
-Teams: ${formData.home_team} vs ${formData.away_team}
-Title: ${formData.scheme_title || 'Not specified'}`;
-        prompt = `Write a detailed tactical analysis paragraph for this match.`;
-        type = 'analysis-paragraph';
-      } else if (field === 'point_title') {
-        prompt = `Create a concise, professional title for a match analysis section.`;
-        type = 'analysis-point-title';
-      } else if (field === 'point_paragraph') {
-        const point = formData.points?.[pointIndex!];
-        context = `Section Title: ${point?.title || 'Not specified'}`;
-        prompt = `Write a detailed analysis paragraph for this section.`;
-        type = 'analysis-paragraph';
-      }
-
-      const { data, error } = await supabase.functions.invoke('ai-write', {
-        body: { prompt, context, type }
-      });
-
-      if (error) throw error;
-      
-      if (data.error) {
-        if (data.error.includes('Rate limit')) {
-          toast.error('AI rate limit reached. Please wait a moment and try again.');
-        } else if (data.error.includes('credits')) {
-          toast.error('AI credits exhausted. Please add credits in Settings > Workspace > Usage.');
-        } else {
-          throw new Error(data.error);
-        }
-        return;
-      }
-
-      // Update the appropriate field
-      if (field === 'scheme_paragraph_1') {
-        setFormData({ ...formData, scheme_paragraph_1: data.text });
-      } else if (field === 'scheme_paragraph_2') {
-        setFormData({ ...formData, scheme_paragraph_2: data.text });
-      } else if (field === 'point_title' && pointIndex !== undefined) {
-        updatePoint(pointIndex, 'title', data.text);
-      } else if (field === 'point_paragraph_1' && pointIndex !== undefined) {
-        updatePoint(pointIndex, 'paragraph_1', data.text);
-      } else if (field === 'point_paragraph_2' && pointIndex !== undefined) {
-        updatePoint(pointIndex, 'paragraph_2', data.text);
-      }
-
-      toast.success('AI content generated!');
-    } catch (error: any) {
-      console.error('AI generation error:', error);
-      toast.error('Failed to generate content with AI');
     } finally {
       setAiGenerating(false);
     }
@@ -921,34 +1132,34 @@ Title: ${formData.scheme_title || 'Not specified'}`;
   };
 
   const handleTweak = async () => {
-    if (!tweakDialog.tweakInstructions.trim()) {
-      toast.error("Please provide tweak instructions");
-      return;
-    }
+    if (!tweakDialog.tweakInstructions.trim()) return;
 
     setAiGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-write', {
+      const { data, error } = await localSupabase.functions.invoke('ai-write', {
         body: {
-          prompt: `Modify this text according to these instructions: ${tweakDialog.tweakInstructions}\n\nOriginal text:\n${generatedContent.content}`,
-          context: `Keep the same style and structure, just apply the requested modifications.`,
-          type: 'analysis-paragraph'
+          prompt: `Adjust the following content according to these instructions: "${tweakDialog.tweakInstructions}"\n\nOriginal content:\n${generatedContent.content}`,
+          context: `Category: ${generatedContent.category}`,
+          type: 'tweak'
         }
       });
 
       if (error) throw error;
 
-      const tweaked = data.text;
+      const tweakedText = data.text;
 
       if (generatedContent.type === 'overview') {
-        setGeneratedContent({ ...generatedContent, content: tweaked });
-      } else {
-        const [p1, p2] = tweaked.split('\n\n').filter((p: string) => p.trim());
         setGeneratedContent({
           ...generatedContent,
-          content: tweaked,
-          paragraph1: p1 || generatedContent.paragraph1,
-          paragraph2: p2 || generatedContent.paragraph2
+          content: tweakedText
+        });
+      } else {
+        const [p1, p2] = tweakedText.split('\n\n').filter((p: string) => p.trim());
+        setGeneratedContent({
+          ...generatedContent,
+          content: tweakedText,
+          paragraph1: p1 || '',
+          paragraph2: p2 || tweakedText
         });
       }
 
@@ -963,1230 +1174,549 @@ Title: ${formData.scheme_title || 'Not specified'}`;
   };
 
   if (loading) {
-    return <div>Loading analyses...</div>;
+    return <div className="p-4">Loading analyses...</div>;
   }
 
-  return (
-    <div className="space-y-4">
-      <Tabs defaultValue="pre-match" className="space-y-4">
-        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-          <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-3 gap-1 h-auto p-1">
-            <TabsTrigger value="pre-match" className="text-xs md:text-sm px-3 md:px-4 py-2 whitespace-nowrap">Pre-Match</TabsTrigger>
-            <TabsTrigger value="post-match" className="text-xs md:text-sm px-3 md:px-4 py-2 whitespace-nowrap">Post-Match</TabsTrigger>
-            <TabsTrigger value="concepts" className="text-xs md:text-sm px-3 md:px-4 py-2 whitespace-nowrap">Positional</TabsTrigger>
-          </TabsList>
+  const renderAnalysisList = (type: AnalysisType) => {
+    return analyses.filter(a => a.analysis_type === type).map((analysis) => (
+      <Card key={analysis.id} className="p-4">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <h3 className="font-semibold">
+              {analysis.title || `${analysis.home_team} vs ${analysis.away_team}`}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {new Date(analysis.created_at).toLocaleDateString()}
+            </p>
+          </div>
+          {linkedPlayers[analysis.id] && linkedPlayers[analysis.id].length > 0 && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mr-2">
+              <Users className="w-3 h-3" />
+              {linkedPlayers[analysis.id].map(p => p.playerName).join(', ')}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate(createAnalysisSlug(analysis.home_team, analysis.away_team, analysis.id))}>
+              <Eye className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(type, analysis)}>
+              <Pencil className="w-4 h-4" />
+            </Button>
+            {isAdmin && (
+              <Button variant="ghost" size="sm" onClick={() => handleDelete(analysis.id)}>
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </div>
+      </Card>
+    ));
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header with Settings button */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Analysis</h2>
+        <Button variant="outline" size="sm" onClick={() => setSettingsDialogOpen(true)}>
+          <Settings className="w-4 h-4 mr-2" />
+          Settings
+        </Button>
+      </div>
+
+      <Tabs defaultValue="pre-match" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="pre-match">Pre-Match</TabsTrigger>
+          <TabsTrigger value="post-match">Post-Match</TabsTrigger>
+          <TabsTrigger value="concept">Concepts</TabsTrigger>
+          <TabsTrigger value="other">Other</TabsTrigger>
+        </TabsList>
 
         <TabsContent value="pre-match" className="space-y-4">
-          {/* Primary Action Row */}
-          <div className="flex items-center gap-3">
-            <Button 
-              onClick={() => handleOpenDialog("pre-match")}
-              className="bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Pre-Match
-            </Button>
-          </div>
-
-          {/* AI Tools Row */}
-          <div className="flex flex-wrap gap-2">
-            <span className="text-xs font-medium text-muted-foreground self-center mr-1">AI:</span>
-            <Button 
-              onClick={() => setOverviewWriter({ open: true, category: 'pre-match', overviewInfo: '' })}
-              variant="outline"
-              size="sm"
-            >
-              <Sparkles className="w-3 h-3 mr-1.5" />
-              Overview
-            </Button>
-            <Button 
-              onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'pre-match', paragraph1Info: '', paragraph2Info: '' })}
-              variant="outline"
-              size="sm"
-            >
-              <Sparkles className="w-3 h-3 mr-1.5" />
-              Point
-            </Button>
-            <Button 
-              onClick={() => setSchemeWriter({ open: true, schemeInfo: '' })}
-              variant="outline"
-              size="sm"
-            >
-              <Sparkles className="w-3 h-3 mr-1.5" />
-              Scheme
-            </Button>
-            <div className="w-px h-6 bg-border self-center mx-1" />
-            <span className="text-xs font-medium text-muted-foreground self-center mr-1">Examples:</span>
-            <Button 
-              onClick={() => {
-                setExamplesCategory('pre-match');
-                setExamplesType('point');
-                setExamplesDialogOpen(true);
-                fetchExamples('pre-match', 'point');
-              }}
-              variant="ghost"
-              size="sm"
-            >
-              <Database className="w-3 h-3 mr-1.5" />
-              Points
-            </Button>
-            <Button 
-              onClick={() => {
-                setExamplesCategory('pre-match');
-                setExamplesType('overview');
-                setExamplesDialogOpen(true);
-                fetchExamples('pre-match', 'overview');
-              }}
-              variant="ghost"
-              size="sm"
-            >
-              <Database className="w-3 h-3 mr-1.5" />
-              Overview
-            </Button>
-            <Button 
-              onClick={() => {
-                setExamplesCategory('scheme');
-                setExamplesType('point');
-                setExamplesDialogOpen(true);
-                fetchExamples('scheme', 'point');
-              }}
-              variant="ghost"
-              size="sm"
-            >
-              <Database className="w-3 h-3 mr-1.5" />
-              Schemes
-            </Button>
-          </div>
-
-          <div className="grid gap-4">
-            {analyses.filter(a => a.analysis_type === "pre-match").map((analysis) => (
-              <Card key={analysis.id}>
-                <CardHeader>
-                  <CardTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                    <div className="flex-1">
-                      <span className="text-sm text-muted-foreground mr-2">Pre-Match</span>
-                      <span className="text-sm sm:text-base">
-                        {analysis.title || `${analysis.home_team} vs ${analysis.away_team}`}
-                      </span>
-                    </div>
-                    <div className="flex gap-2 w-full sm:w-auto">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/analysis/${analysis.id}`)}
-                        className="flex-1 sm:flex-initial"
-                      >
-                        View Analysis
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenDialog("pre-match", analysis)}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(analysis.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Created: {new Date(analysis.created_at).toLocaleDateString()}
-                  </p>
-                  {analysis.key_details && (
-                    <p className="text-sm mt-2">{analysis.key_details}</p>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Button
+            onClick={() => handleOpenDialog("pre-match")}
+            className="bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Pre-Match Analysis
+          </Button>
+          {renderAnalysisList("pre-match")}
         </TabsContent>
 
         <TabsContent value="post-match" className="space-y-4">
-          {/* Primary Action Row */}
-          <div className="flex items-center gap-3">
-            <Button 
-              onClick={() => handleOpenDialog("post-match")}
-              className="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 hover:from-amber-500 hover:to-yellow-600"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Post-Match
-            </Button>
-          </div>
-
-          {/* AI Tools Row */}
-          <div className="flex flex-wrap gap-2">
-            <span className="text-xs font-medium text-muted-foreground self-center mr-1">AI:</span>
-            <Button 
-              onClick={() => setOverviewWriter({ open: true, category: 'post-match', overviewInfo: '' })}
-              variant="outline"
-              size="sm"
-            >
-              <Sparkles className="w-3 h-3 mr-1.5" />
-              Overview
-            </Button>
-            <Button 
-              onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'post-match', paragraph1Info: '', paragraph2Info: '' })}
-              variant="outline"
-              size="sm"
-            >
-              <Sparkles className="w-3 h-3 mr-1.5" />
-              Point
-            </Button>
-            <div className="w-px h-6 bg-border self-center mx-1" />
-            <span className="text-xs font-medium text-muted-foreground self-center mr-1">Examples:</span>
-            <Button 
-              onClick={() => {
-                setExamplesCategory('post-match');
-                setExamplesType('point');
-                setExamplesDialogOpen(true);
-                fetchExamples('post-match', 'point');
-              }}
-              variant="ghost"
-              size="sm"
-            >
-              <Database className="w-3 h-3 mr-1.5" />
-              Points
-            </Button>
-            <Button 
-              onClick={() => {
-                setExamplesCategory('post-match');
-                setExamplesType('overview');
-                setExamplesDialogOpen(true);
-                fetchExamples('post-match', 'overview');
-              }}
-              variant="ghost"
-              size="sm"
-            >
-              <Database className="w-3 h-3 mr-1.5" />
-              Overview
-            </Button>
-          </div>
-
-          <div className="grid gap-4">
-            {analyses.filter(a => a.analysis_type === "post-match").map((analysis) => (
-              <Card key={analysis.id}>
-                <CardHeader>
-                  <CardTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                    <div className="flex-1">
-                      <span className="text-sm text-muted-foreground mr-2">Post-Match</span>
-                      <span className="text-sm sm:text-base">
-                        {analysis.title || `${analysis.home_team} vs ${analysis.away_team}`}
-                      </span>
-                    </div>
-                    <div className="flex gap-2 w-full sm:w-auto">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/analysis/${analysis.id}`)}
-                        className="flex-1 sm:flex-initial"
-                      >
-                        View Analysis
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenDialog("post-match", analysis)}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(analysis.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Created: {new Date(analysis.created_at).toLocaleDateString()}
-                  </p>
-                  {analysis.key_details && (
-                    <p className="text-sm mt-2">{analysis.key_details}</p>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Button
+            onClick={() => handleOpenDialog("post-match")}
+            className="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 hover:from-amber-500 hover:to-yellow-600"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Post-Match Analysis
+          </Button>
+          {renderAnalysisList("post-match")}
         </TabsContent>
 
-        <TabsContent value="concepts" className="space-y-4">
-          {/* Primary Action Row */}
-          <div className="flex items-center gap-3">
-            <Button 
-              onClick={() => handleOpenDialog("concept")}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Concept
-            </Button>
-          </div>
-
-          {/* AI Tools Row */}
-          <div className="flex flex-wrap gap-2">
-            <span className="text-xs font-medium text-muted-foreground self-center mr-1">AI:</span>
-            <Button 
-              onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'concept', paragraph1Info: '', paragraph2Info: '' })}
-              variant="outline"
-              size="sm"
-            >
-              <Sparkles className="w-3 h-3 mr-1.5" />
-              Writer
-            </Button>
-            <div className="w-px h-6 bg-border self-center mx-1" />
-            <span className="text-xs font-medium text-muted-foreground self-center mr-1">Examples:</span>
-            <Button 
-              onClick={() => {
-                setExamplesCategory('concept');
-                setExamplesType('point');
-                setExamplesDialogOpen(true);
-                fetchExamples('concept', 'point');
-              }}
-              variant="ghost"
-              size="sm"
-            >
-              <Database className="w-3 h-3 mr-1.5" />
-              Concepts
-            </Button>
-          </div>
-
-          <div className="grid gap-4">
-            {analyses.filter(a => a.analysis_type === "concept").map((analysis) => (
-              <Card key={analysis.id}>
-                <CardHeader>
-                  <CardTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                    <div className="flex-1">
-                      <span className="text-sm text-muted-foreground mr-2">Concept</span>
-                      <span className="text-sm sm:text-base">
-                        {analysis.title || "Untitled Concept"}
-                      </span>
-                    </div>
-                    <div className="flex gap-2 w-full sm:w-auto">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/analysis/${analysis.id}`)}
-                        className="flex-1 sm:flex-initial"
-                      >
-                        View Analysis
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenDialog("concept", analysis)}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(analysis.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Created: {new Date(analysis.created_at).toLocaleDateString()}
-                  </p>
-                  {analysis.concept && (
-                    <p className="text-sm mt-2">{analysis.concept}</p>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        <TabsContent value="concept" className="space-y-4">
+          <Button onClick={() => handleOpenDialog("concept")}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Concept
+          </Button>
+          {renderAnalysisList("concept")}
         </TabsContent>
 
+        <TabsContent value="other" className="space-y-4">
+          <Button
+            onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'other', paragraph1Info: '', paragraph2Info: '' })}
+            variant="outline"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            AI Point Writer
+          </Button>
+        </TabsContent>
       </Tabs>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {/* Pre-Match Dialog */}
+      <Dialog open={preMatchDialogOpen} onOpenChange={setPreMatchDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingAnalysis ? "Edit" : "New"} Pre-Match Analysis</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Quick Link - only show when creating new analysis */}
+            {!editingAnalysis && (
+              <AnalysisQuickLink
+                formData={formData}
+                setFormData={setFormData}
+                analysisType="pre-match"
+                defaultOpen={true}
+              />
+            )}
 
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
-            <DialogHeader>
-              <DialogTitle>
-                {editingAnalysis ? "Edit" : "New"}{" "}
-                {analysisType === "pre-match"
-                  ? "Pre-Match"
-                  : analysisType === "post-match"
-                  ? "Post-Match"
-                  : "Concept"}{" "}
-                Analysis
-              </DialogTitle>
-            </DialogHeader>
+            <AnalysisMatchDetails
+              formData={formData}
+              setFormData={setFormData}
+              handleImageUpload={handleImageUpload}
+              handleVideoUpload={handleVideoUpload}
+              uploadingImage={uploadingImage}
+              analysisType="pre-match"
+              players={players}
+              selectedPlayerId={selectedPlayerId}
+              setSelectedPlayerId={setSelectedPlayerId}
+              performanceReports={performanceReports}
+              selectedPerformanceReportId={selectedPerformanceReportId}
+              setSelectedPerformanceReportId={setSelectedPerformanceReportId}
+              defaultOpen={true}
+            />
 
-            <Tabs defaultValue="pre-match" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="pre-match">Pre-Match</TabsTrigger>
-                <TabsTrigger value="post-match">Post-Match</TabsTrigger>
-                <TabsTrigger value="concepts">Positional</TabsTrigger>
-              </TabsList>
+            <AnalysisOverviewSection
+              formData={formData}
+              setFormData={setFormData}
+              handleVideoUpload={handleVideoUpload}
+              handleImageUpload={handleImageUpload}
+              uploadingImage={uploadingImage}
+              players={players}
+              selectedPlayerId={selectedPlayerId}
+              setSelectedPlayerId={setSelectedPlayerId}
+              performanceReports={performanceReports}
+              selectedPerformanceReportId={selectedPerformanceReportId}
+              setSelectedPerformanceReportId={setSelectedPerformanceReportId}
+              analysisType="pre-match"
+              addMatchup={addMatchup}
+              removeMatchup={removeMatchup}
+              updateMatchup={updateMatchup}
+            />
 
-              <TabsContent value="pre-match" className="space-y-4">
-                    <div className="space-y-4">
-                      <h3 className="font-semibold">Overview</h3>
-                    <div>
-                      <Label>Match Date</Label>
-                      <Input
-                        type="date"
-                        value={formData.match_date || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, match_date: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Home Team</Label>
-                        <Input
-                          value={formData.home_team || ""}
-                          onChange={(e) =>
-                            setFormData({ ...formData, home_team: e.target.value })
-                          }
-                        />
-                        <Label className="mt-2">Home Team Logo</Label>
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleImageUpload(e, "home_team_logo")}
-                          disabled={uploadingImage}
-                        />
-                        {formData.home_team_logo && (
-                          <img
-                            src={formData.home_team_logo}
-                            alt="Home team logo"
-                            className="mt-2 w-16 h-16 object-contain"
-                          />
-                        )}
-                      </div>
-                      <div>
-                        <Label>Away Team</Label>
-                        <Input
-                          value={formData.away_team || ""}
-                          onChange={(e) =>
-                            setFormData({ ...formData, away_team: e.target.value })
-                          }
-                        />
-                        <Label className="mt-2">Away Team Logo</Label>
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleImageUpload(e, "away_team_logo")}
-                          disabled={uploadingImage}
-                        />
-                        {formData.away_team_logo && (
-                          <img
-                            src={formData.away_team_logo}
-                            alt="Away team logo"
-                            className="mt-2 w-16 h-16 object-contain"
-                          />
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Home Team Background Color</Label>
-                        <p className="text-xs text-muted-foreground mb-2">
-                          Background color for home team sections (Overview, Matchups, Scheme, Points)
-                        </p>
-                        <Input
-                          type="color"
-                          value={formData.home_team_bg_color || '#1a1a1a'}
-                          onChange={(e) =>
-                            setFormData({ ...formData, home_team_bg_color: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label>Away Team Background Color</Label>
-                        <p className="text-xs text-muted-foreground mb-2">
-                          Background color for opposition sections (Strengths, Weaknesses)
-                        </p>
-                        <Input
-                          type="color"
-                          value={formData.away_team_bg_color || '#8B0000'}
-                          onChange={(e) =>
-                            setFormData({ ...formData, away_team_bg_color: e.target.value })
-                          }
-                        />
-                      </div>
-                    </div>
+            <AnalysisSchemeSection
+              formData={formData}
+              setFormData={setFormData}
+              handleSchemeChange={handleSchemeChange}
+              updateStartingXIPlayer={updateStartingXIPlayer}
+              handleImageUpload={handleImageUpload}
+              uploadingImage={uploadingImage}
+              generateWithAI={generateWithAI}
+              aiGenerating={aiGenerating}
+              formationTemplates={formationTemplates}
+            />
 
-                    <div>
-                      <Label>Match Image (Optional)</Label>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Image displayed between team names and overview section
-                      </p>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, "match_image_url")}
-                        disabled={uploadingImage}
-                      />
-                      {formData.match_image_url && (
-                        <div className="relative mt-2">
-                          <img
-                            src={formData.match_image_url}
-                            alt="Match"
-                            className="w-full max-w-md rounded-lg"
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2"
-                            onClick={() => setFormData({ ...formData, match_image_url: null })}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+            <AnalysisPointsSection
+              formData={formData}
+              setFormData={setFormData}
+              addPoint={addPoint}
+              removePoint={removePoint}
+              updatePoint={updatePoint}
+              handleImageUpload={handleImageUpload}
+              handleVideoUploadForPoint={handleVideoUploadForPoint}
+              removeImageFromPoint={removeImageFromPoint}
+              uploadingImage={uploadingImage}
+              generateWithAI={generateWithAI}
+              aiGenerating={aiGenerating}
+              analysisType="pre-match"
+            />
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
+            <Button onClick={handleSave}>Save Analysis</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-                    <div>
-                      <Label>Analysis Video (Optional)</Label>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Upload a video for this analysis that players can watch
-                      </p>
-                      <Input
-                        type="file"
-                        accept="video/*"
-                        onChange={handleVideoUpload}
-                        disabled={uploadingImage}
-                      />
-                      {formData.video_url && (
-                        <div className="mt-2">
-                          <video
-                            src={formData.video_url}
-                            controls
-                            className="w-full max-w-md rounded-lg"
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => setFormData({ ...formData, video_url: null })}
-                          >
-                            <X className="w-4 h-4 mr-2" />
-                            Remove Video
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <Label>Key Details</Label>
-                      <Textarea
-                        value={formData.key_details || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, key_details: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label>Opposition Strengths</Label>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Use bullet points (one per line)
-                      </p>
-                      <Textarea
-                        value={formData.opposition_strengths || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            opposition_strengths: e.target.value,
-                          })
-                        }
-                        placeholder="• Strong aerial presence&#10;• Quick counter-attacks&#10;• Solid defensive organization"
-                      />
-                    </div>
-                    <div>
-                      <Label>Opposition Weaknesses</Label>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Use bullet points (one per line)
-                      </p>
-                      <Textarea
-                        value={formData.opposition_weaknesses || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            opposition_weaknesses: e.target.value,
-                          })
-                        }
-                        placeholder="• Weak on the left flank&#10;• Slow to transition&#10;• Vulnerable to through balls"
-                      />
-                    </div>
+      {/* Post-Match Dialog */}
+      <Dialog open={postMatchDialogOpen} onOpenChange={setPostMatchDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingAnalysis ? "Edit" : "New"} Post-Match Analysis</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Quick Link - only show when creating new analysis */}
+            {!editingAnalysis && (
+              <AnalysisQuickLink
+                formData={formData}
+                setFormData={setFormData}
+                analysisType="post-match"
+                defaultOpen={true}
+              />
+            )}
 
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <Label>Matchups</Label>
-                        <Button size="sm" onClick={addMatchup}>
-                          <Plus className="w-4 h-4 mr-1" /> Add Matchup
-                        </Button>
-                      </div>
-                      {formData.matchups?.map((matchup, index) => (
-                        <Card key={index} className="p-4 mb-2">
-                          <div className="flex justify-between items-start">
-                            <div className="space-y-2 flex-1">
-                              <Input
-                                placeholder="Player Name"
-                                value={matchup.name}
-                                onChange={(e) =>
-                                  updateMatchup(index, "name", e.target.value)
-                                }
-                              />
-                              <Input
-                                placeholder="Shirt Number"
-                                value={matchup.shirt_number}
-                                onChange={(e) =>
-                                  updateMatchup(index, "shirt_number", e.target.value)
-                                }
-                              />
-                              <div>
-                                <Input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) => handleImageUpload(e, "matchup_image", undefined, false, index)}
-                                  disabled={uploadingImage}
-                                />
-                                {matchup.image_url && (
-                                  <img
-                                    src={matchup.image_url}
-                                    alt="Matchup"
-                                    className="mt-2 w-20 h-20 object-cover rounded"
-                                  />
-                                )}
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeMatchup(index)}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
+            <AnalysisMatchDetails
+              formData={formData}
+              setFormData={setFormData}
+              handleImageUpload={handleImageUpload}
+              handleVideoUpload={handleVideoUpload}
+              uploadingImage={uploadingImage}
+              analysisType="post-match"
+              players={players}
+              selectedPlayerId={selectedPlayerId}
+              setSelectedPlayerId={setSelectedPlayerId}
+              performanceReports={performanceReports}
+              selectedPerformanceReportId={selectedPerformanceReportId}
+              setSelectedPerformanceReportId={setSelectedPerformanceReportId}
+              defaultOpen={true}
+            />
 
-                  <div className="space-y-4">
-                    <h3 className="font-semibold">Scheme</h3>
-                    <div>
-                      <Label>Select Formation</Label>
-                      <Select 
-                        value={formData.selected_scheme || ""} 
-                        onValueChange={handleSchemeChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose a formation" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.keys(formationTemplates).map((formation) => (
-                            <SelectItem key={formation} value={formation}>
-                              {formation}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+            <AnalysisOverviewSection
+              formData={formData}
+              setFormData={setFormData}
+              handleVideoUpload={handleVideoUpload}
+              handleImageUpload={handleImageUpload}
+              uploadingImage={uploadingImage}
+              players={players}
+              selectedPlayerId={selectedPlayerId}
+              setSelectedPlayerId={setSelectedPlayerId}
+              performanceReports={performanceReports}
+              selectedPerformanceReportId={selectedPerformanceReportId}
+              setSelectedPerformanceReportId={setSelectedPerformanceReportId}
+              analysisType="post-match"
+            />
 
-                    {formData.selected_scheme && formData.starting_xi && formData.starting_xi.length > 0 && (
-                      <div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <Label>Kit Primary Color</Label>
-                            <Input
-                              type="color"
-                              value={formData.kit_primary_color || '#FFD700'}
-                              onChange={(e) =>
-                                setFormData({ ...formData, kit_primary_color: e.target.value })
-                              }
-                            />
-                          </div>
-                          <div>
-                            <Label>Kit Secondary Color</Label>
-                            <Input
-                              type="color"
-                              value={formData.kit_secondary_color || '#000000'}
-                              onChange={(e) =>
-                                setFormData({ ...formData, kit_secondary_color: e.target.value })
-                              }
-                            />
-                          </div>
-                        </div>
+            <AnalysisSchemeSection
+              formData={formData}
+              setFormData={setFormData}
+              handleSchemeChange={handleSchemeChange}
+              updateStartingXIPlayer={updateStartingXIPlayer}
+              handleImageUpload={handleImageUpload}
+              uploadingImage={uploadingImage}
+              generateWithAI={generateWithAI}
+              aiGenerating={aiGenerating}
+              formationTemplates={formationTemplates}
+            />
 
-                        <Label className="mb-2 block">Starting XI Preview</Label>
-                        <div className="relative bg-green-700 rounded-lg p-4 sm:p-8 min-h-[300px] sm:min-h-[400px]">
-                          <div className="text-white text-center mb-2 text-lg font-bold">
-                            {formData.selected_scheme}
-                          </div>
-                          {formData.starting_xi.map((player: any, index: number) => (
-                            <div
-                              key={index}
-                              className="absolute"
-                              style={{
-                                left: `${player.x}%`,
-                                top: `${player.y}%`,
-                                transform: 'translate(-50%, -50%)'
-                              }}
-                            >
-                              <svg width="48" height="48" viewBox="0 0 100 100" className="drop-shadow-lg mb-1">
-                                <path d="M30 25 L25 35 L25 65 L30 75 L70 75 L75 65 L75 35 L70 25 Z" fill={formData.kit_primary_color || '#FFD700'} stroke={formData.kit_secondary_color || '#000000'} strokeWidth="3"/>
-                                <rect x="42" y="25" width="16" height="50" fill={formData.kit_secondary_color || '#000000'} opacity="0.8"/>
-                                <circle cx="50" cy="25" r="8" fill={formData.kit_primary_color || '#FFD700'} stroke={formData.kit_secondary_color || '#000000'} strokeWidth="2"/>
-                                <text x="50" y="55" textAnchor="middle" fontSize="24" fontWeight="bold" fill="white" stroke="black" strokeWidth="1.5">
-                                  {player.number || '0'}
-                                </text>
-                              </svg>
-                              <div className="bg-black/80 text-white px-1 py-0.5 rounded text-[8px] font-bold text-center whitespace-nowrap">
-                                {player.surname || player.position}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        
-                        <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
-                          <Label>Enter Player Details</Label>
-                          {formData.starting_xi.map((player: any, index: number) => (
-                            <div key={index} className="flex flex-col sm:grid sm:grid-cols-3 gap-2 items-start sm:items-center bg-muted p-2 rounded">
-                              <span className="text-xs font-medium">{player.position}</span>
-                              <Input
-                                placeholder="Surname"
-                                value={player.surname}
-                                onChange={(e) => updateStartingXIPlayer(index, 'surname', e.target.value)}
-                                className="h-8 text-xs w-full"
-                              />
-                              <Input
-                                placeholder="No."
-                                value={player.number}
-                                onChange={(e) => updateStartingXIPlayer(index, 'number', e.target.value)}
-                                className="h-8 text-xs w-full"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+            <AnalysisPointsSection
+              formData={formData}
+              setFormData={setFormData}
+              addPoint={addPoint}
+              removePoint={removePoint}
+              updatePoint={updatePoint}
+              handleImageUpload={handleImageUpload}
+              handleVideoUploadForPoint={handleVideoUploadForPoint}
+              removeImageFromPoint={removeImageFromPoint}
+              uploadingImage={uploadingImage}
+              generateWithAI={generateWithAI}
+              aiGenerating={aiGenerating}
+              analysisType="post-match"
+            />
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
+            <Button onClick={handleSave}>Save Analysis</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-                    <div>
-                      <Label>Title</Label>
-                      <Input
-                        value={formData.scheme_title || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, scheme_title: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <Label>Paragraph 1</Label>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => generateWithAI('scheme_paragraph_1')}
-                          disabled={aiGenerating}
-                        >
-                          <Sparkles className="w-3 h-3 mr-1" />
-                          {aiGenerating ? 'Generating...' : 'Use AI'}
-                        </Button>
-                      </div>
-                      <Textarea
-                        value={formData.scheme_paragraph_1 || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            scheme_paragraph_1: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <Label>Paragraph 2</Label>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => generateWithAI('scheme_paragraph_2')}
-                          disabled={aiGenerating}
-                        >
-                          <Sparkles className="w-3 h-3 mr-1" />
-                          {aiGenerating ? 'Generating...' : 'Use AI'}
-                        </Button>
-                      </div>
-                      <Textarea
-                        value={formData.scheme_paragraph_2 || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            scheme_paragraph_2: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                      
-                      <Card className="bg-secondary/20">
-                        <CardHeader>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <Sparkles className="w-5 h-5" />
-                            AI Pre-Match Point Writer
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div>
-                            <Label>Paragraph 1 Info</Label>
-                            <Textarea
-                              placeholder="Enter key information for paragraph 1..."
-                              value={aiWriter.paragraph1Info}
-                              onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value, category: 'pre-match' })}
-                            />
-                          </div>
-                          <div>
-                            <Label>Paragraph 2 Info</Label>
-                            <Textarea
-                              placeholder="Enter key information for paragraph 2..."
-                              value={aiWriter.paragraph2Info}
-                              onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value, category: 'pre-match' })}
-                            />
-                          </div>
-                          <Button 
-                            onClick={generateWithAIWriter} 
-                            disabled={aiGenerating}
-                            className="w-full"
-                          >
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            {aiGenerating ? "Generating..." : "Generate Point"}
-                          </Button>
-                        </CardContent>
-                      </Card>
-                  </div>
-              </TabsContent>
+      {/* Concept Dialog */}
+      <Dialog open={conceptDialogOpen} onOpenChange={setConceptDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingAnalysis ? "Edit" : "New"} Concept</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <AnalysisOverviewSection
+              formData={formData}
+              setFormData={setFormData}
+              handleVideoUpload={handleVideoUpload}
+              handleImageUpload={handleImageUpload}
+              uploadingImage={uploadingImage}
+              players={players}
+              selectedPlayerId={selectedPlayerId}
+              setSelectedPlayerId={setSelectedPlayerId}
+              performanceReports={performanceReports}
+              selectedPerformanceReportId={selectedPerformanceReportId}
+              setSelectedPerformanceReportId={setSelectedPerformanceReportId}
+              analysisType="concept"
+              defaultOpen={true}
+            />
 
-              <TabsContent value="post-match" className="space-y-4">
-                    <div className="space-y-4">
-                      <h3 className="font-semibold">Overview</h3>
-                    <div>
-                      <Label>Player Image (Optional)</Label>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, "player_image_url")}
-                        disabled={uploadingImage}
-                      />
-                      {formData.player_image_url && (
-                        <img
-                          src={formData.player_image_url}
-                          alt="Player"
-                          className="mt-2 max-w-xs"
-                        />
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Home Team</Label>
-                        <Input
-                          value={formData.home_team || ""}
-                          onChange={(e) =>
-                            setFormData({ ...formData, home_team: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label>Home Score</Label>
-                        <Input
-                          type="number"
-                          value={formData.home_score || ""}
-                          onChange={(e) =>
-                            setFormData({ ...formData, home_score: parseInt(e.target.value) || undefined })
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Away Team</Label>
-                        <Input
-                          value={formData.away_team || ""}
-                          onChange={(e) =>
-                            setFormData({ ...formData, away_team: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label>Away Score</Label>
-                        <Input
-                          type="number"
-                          value={formData.away_score || ""}
-                          onChange={(e) =>
-                            setFormData({ ...formData, away_score: parseInt(e.target.value) || undefined })
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Key Details</Label>
-                      <Textarea
-                        value={formData.key_details || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, key_details: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label>Strengths & Areas For Improvement</Label>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Format: Green: text | Yellow: text | Red: text (use bullet points with |)
-                      </p>
-                      <Textarea
-                        value={formData.strengths_improvements || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            strengths_improvements: e.target.value,
-                          })
-                        }
-                        placeholder="Green: Great positioning | Yellow: Work on first touch | Red: Needs better decision making"
-                      />
-                    </div>
-                      
-                      <Card className="bg-secondary/20">
-                        <CardHeader>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <Sparkles className="w-5 h-5" />
-                            AI Post-Match Point Writer
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div>
-                            <Label>Paragraph 1 Info</Label>
-                            <Textarea
-                              placeholder="Enter key information for paragraph 1..."
-                              value={aiWriter.paragraph1Info}
-                              onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value, category: 'post-match' })}
-                            />
-                          </div>
-                          <div>
-                            <Label>Paragraph 2 Info</Label>
-                            <Textarea
-                              placeholder="Enter key information for paragraph 2..."
-                              value={aiWriter.paragraph2Info}
-                              onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value, category: 'post-match' })}
-                            />
-                          </div>
-                          <Button 
-                            onClick={generateWithAIWriter} 
-                            disabled={aiGenerating}
-                            className="w-full"
-                          >
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            {aiGenerating ? "Generating..." : "Generate Point"}
-                          </Button>
-                        </CardContent>
-                      </Card>
-                  </div>
-              </TabsContent>
+            <AnalysisPointsSection
+              formData={formData}
+              setFormData={setFormData}
+              addPoint={addPoint}
+              removePoint={removePoint}
+              updatePoint={updatePoint}
+              handleImageUpload={handleImageUpload}
+              handleVideoUploadForPoint={handleVideoUploadForPoint}
+              removeImageFromPoint={removeImageFromPoint}
+              uploadingImage={uploadingImage}
+              generateWithAI={generateWithAI}
+              aiGenerating={aiGenerating}
+              analysisType="concept"
+            />
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
+            <Button onClick={handleSave}>Save Concept</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-              <TabsContent value="concepts" className="space-y-4">
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Title</Label>
-                      <Input
-                        value={formData.title || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, title: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label>Concept</Label>
-                      <Textarea
-                        value={formData.concept || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, concept: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label>Explanation</Label>
-                      <Textarea
-                        value={formData.explanation || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, explanation: e.target.value })
-                        }
-                      />
-                    </div>
-                      
-                      <Card className="bg-secondary/20">
-                        <CardHeader>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <Sparkles className="w-5 h-5" />
-                            AI Concept Writer
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div>
-                            <Label>Paragraph 1 Info</Label>
-                            <Textarea
-                              placeholder="Enter key information for paragraph 1..."
-                              value={aiWriter.paragraph1Info}
-                              onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value, category: 'concept' })}
-                            />
-                          </div>
-                          <div>
-                            <Label>Paragraph 2 Info</Label>
-                            <Textarea
-                              placeholder="Enter key information for paragraph 2..."
-                              value={aiWriter.paragraph2Info}
-                              onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value, category: 'concept' })}
-                            />
-                          </div>
-                          <Button 
-                            onClick={generateWithAIWriter} 
-                            disabled={aiGenerating}
-                            className="w-full"
-                          >
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            {aiGenerating ? "Generating..." : "Generate Point"}
-                          </Button>
-                        </CardContent>
-                      </Card>
-                  </div>
-              </TabsContent>
-            </Tabs>
-
-            <div className="flex justify-end gap-2 pt-4 border-t mt-4">
-              <Button variant="outline" onClick={handleCloseDialog}>
-                Cancel
+      {/* Settings Dialog */}
+      <Dialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Analysis Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Manage the example writing styles used by the AI to generate prose for each analysis type.
+            </p>
+            <div className="grid gap-2">
+              <Button variant="outline" className="justify-start" onClick={() => { setExamplesCategory('pre-match-p1'); setExamplesType('point'); setExamplesDialogOpen(true); fetchExamples('pre-match-p1', 'point'); setSettingsDialogOpen(false); }}>
+                Pre-Match Point First Paragraph
               </Button>
-              <Button onClick={handleSave}>Save Analysis</Button>
+              <Button variant="outline" className="justify-start" onClick={() => { setExamplesCategory('pre-match-p2'); setExamplesType('point'); setExamplesDialogOpen(true); fetchExamples('pre-match-p2', 'point'); setSettingsDialogOpen(false); }}>
+                Pre-Match Point Second Paragraph
+              </Button>
+              <Button variant="outline" className="justify-start" onClick={() => { setExamplesCategory('post-match-p1'); setExamplesType('point'); setExamplesDialogOpen(true); fetchExamples('post-match-p1', 'point'); setSettingsDialogOpen(false); }}>
+                Post-Match Point First Paragraph
+              </Button>
+              <Button variant="outline" className="justify-start" onClick={() => { setExamplesCategory('post-match-p2'); setExamplesType('point'); setExamplesDialogOpen(true); fetchExamples('post-match-p2', 'point'); setSettingsDialogOpen(false); }}>
+                Post-Match Point Second Paragraph
+              </Button>
+              <Button variant="outline" className="justify-start" onClick={() => { setExamplesCategory('scheme-p1'); setExamplesType('point'); setExamplesDialogOpen(true); fetchExamples('scheme-p1', 'point'); setSettingsDialogOpen(false); }}>
+                Schemes First Paragraph
+              </Button>
+              <Button variant="outline" className="justify-start" onClick={() => { setExamplesCategory('scheme-p2'); setExamplesType('point'); setExamplesDialogOpen(true); fetchExamples('scheme-p2', 'point'); setSettingsDialogOpen(false); }}>
+                Schemes Second Paragraph
+              </Button>
+              <Button variant="outline" className="justify-start" onClick={() => { setExamplesCategory('pre-match'); setExamplesType('overview'); setExamplesDialogOpen(true); fetchExamples('pre-match', 'overview'); setSettingsDialogOpen(false); }}>
+                Pre-Match Overview Examples
+              </Button>
+              <Button variant="outline" className="justify-start" onClick={() => { setExamplesCategory('post-match'); setExamplesType('overview'); setExamplesDialogOpen(true); fetchExamples('post-match', 'overview'); setSettingsDialogOpen(false); }}>
+                Post-Match Overview Examples
+              </Button>
             </div>
-          </DialogContent>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Examples Dialog */}
+      <Dialog open={examplesDialogOpen} onOpenChange={setExamplesDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {examplesCategory.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} - {examplesType === 'overview' ? 'Overview' : 'Point'} Examples
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{examplesType === 'overview' ? 'Content' : 'Paragraph'}</Label>
+              <Textarea
+                value={examplesType === 'overview' ? exampleFormData.content : exampleFormData.paragraph_1}
+                onChange={(e) => setExampleFormData(examplesType === 'overview' 
+                  ? { ...exampleFormData, content: e.target.value }
+                  : { ...exampleFormData, paragraph_1: e.target.value }
+                )}
+                placeholder={examplesType === 'overview' ? 'Enter example overview content...' : 'Enter example paragraph...'}
+                rows={4}
+              />
+              <div className="flex gap-2">
+                <Button onClick={handleSaveExample}>
+                  {editingExample ? 'Update' : 'Add'} Example
+                </Button>
+                {editingExample && (
+                  <Button variant="outline" onClick={() => { setEditingExample(null); setExampleFormData({ paragraph_1: '', content: '' }); }}>
+                    Cancel
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Existing Examples</Label>
+              {examples.map((example) => (
+                <Card key={example.id} className="p-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <p className="text-sm flex-1 line-clamp-3">
+                      {examplesType === 'overview' ? example.content : example.paragraph_1}
+                    </p>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        setEditingExample(example);
+                        setExampleFormData({
+                          paragraph_1: example.paragraph_1 || '',
+                          content: example.content || ''
+                        });
+                      }}>
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteExample(example.id)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+              {examples.length === 0 && (
+                <p className="text-sm text-muted-foreground">No examples yet. Add some to help the AI match your writing style.</p>
+              )}
+            </div>
+          </div>
+        </DialogContent>
       </Dialog>
 
       {/* AI Writer Dialog */}
       <Dialog open={aiWriter.open} onOpenChange={(open) => setAiWriter({ ...aiWriter, open })}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>AI {aiWriter.category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Point Writer</DialogTitle>
+            <DialogTitle>AI Point Writer</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Paragraph 1 Information</Label>
-              <p className="text-xs text-muted-foreground mb-2">
-                Enter key details for the first paragraph
-              </p>
               <Textarea
                 value={aiWriter.paragraph1Info}
                 onChange={(e) => setAiWriter({ ...aiWriter, paragraph1Info: e.target.value })}
-                placeholder="Provide specific observations, statistics, tactical details, and technical points. Include concrete examples like player names, numbers, specific actions, positioning details, and measurable outcomes that match the depth and specificity shown in the database examples."
+                placeholder="Describe what you want in the first paragraph..."
                 rows={3}
               />
             </div>
             <div>
               <Label>Paragraph 2 Information</Label>
-              <p className="text-xs text-muted-foreground mb-2">
-                Enter key details for the second paragraph
-              </p>
               <Textarea
                 value={aiWriter.paragraph2Info}
                 onChange={(e) => setAiWriter({ ...aiWriter, paragraph2Info: e.target.value })}
-                placeholder="Add follow-up details, recommendations, specific clip references, technical adjustments, or actionable coaching points. Use the same professional terminology and level of tactical detail as the examples."
+                placeholder="Describe what you want in the second paragraph..."
                 rows={3}
               />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setAiWriter({ open: false, category: 'pre-match', paragraph1Info: '', paragraph2Info: '' })}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={generateWithAIWriter}
-                disabled={aiGenerating || (!aiWriter.paragraph1Info.trim() && !aiWriter.paragraph2Info.trim())}
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                {aiGenerating ? 'Generating...' : 'Generate Point'}
-              </Button>
-            </div>
+            <Button onClick={generateWithAIWriter} disabled={aiGenerating}>
+              <Sparkles className="w-4 h-4 mr-2" />
+              {aiGenerating ? 'Generating...' : 'Generate'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Overview Writer Dialog */}
       <Dialog open={overviewWriter.open} onOpenChange={(open) => setOverviewWriter({ ...overviewWriter, open })}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>AI {overviewWriter.category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Overview Writer</DialogTitle>
+            <DialogTitle>AI Overview Writer</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Overview Information</Label>
-              <p className="text-xs text-muted-foreground mb-2">
-                Enter key details for the overview paragraph
-              </p>
               <Textarea
                 value={overviewWriter.overviewInfo}
                 onChange={(e) => setOverviewWriter({ ...overviewWriter, overviewInfo: e.target.value })}
-                placeholder={overviewWriter.category === 'pre-match' 
-                  ? "Provide comprehensive match/tactical information including: opponent formation and style, key players with shirt numbers, specific tactical weaknesses to exploit, defensive approach, offensive strategies, player matchups, and any injuries/suspensions. Include concrete details that match the depth and technical language of the database examples."
-                  : "Provide comprehensive post-match analysis including: player performance highlights, key moments and turning points, tactical execution (what worked/didn't work), strengths demonstrated, areas for improvement, decision-making quality, physical and mental performance, and specific examples from the match. Include concrete details that match the depth and technical language of the database examples."}
-                rows={5}
+                placeholder="Describe the key points for the overview..."
+                rows={4}
               />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setOverviewWriter({ open: false, category: 'pre-match', overviewInfo: '' })}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={generateOverview}
-                disabled={aiGenerating || !overviewWriter.overviewInfo.trim()}
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                {aiGenerating ? 'Generating...' : 'Generate Overview'}
-              </Button>
-            </div>
+            <Button onClick={generateOverview} disabled={aiGenerating}>
+              <Sparkles className="w-4 h-4 mr-2" />
+              {aiGenerating ? 'Generating...' : 'Generate Overview'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Scheme Writer Dialog */}
       <Dialog open={schemeWriter.open} onOpenChange={(open) => setSchemeWriter({ ...schemeWriter, open })}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>AI Scheme Writer</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Scheme Information</Label>
-              <p className="text-xs text-muted-foreground mb-2">
-                Enter tactical scheme details and strategy
-              </p>
               <Textarea
                 value={schemeWriter.schemeInfo}
                 onChange={(e) => setSchemeWriter({ ...schemeWriter, schemeInfo: e.target.value })}
-                placeholder="Detail the opponent's formation (e.g., 3-4-2-1, 4-3-3), key personnel with names and numbers, their tactical approach in different phases, specific positional weaknesses, spaces to exploit, defensive and offensive patterns, transitions, pressing triggers, and how to counter their system. Match the tactical depth and professional terminology of the database examples."
-                rows={5}
+                placeholder="Describe the tactical scheme..."
+                rows={4}
               />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setSchemeWriter({ open: false, schemeInfo: '' })}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={generateScheme}
-                disabled={aiGenerating || !schemeWriter.schemeInfo.trim()}
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                {aiGenerating ? 'Generating...' : 'Generate Scheme'}
-              </Button>
-            </div>
+            <Button onClick={generateScheme} disabled={aiGenerating}>
+              <Sparkles className="w-4 h-4 mr-2" />
+              {aiGenerating ? 'Generating...' : 'Generate Scheme'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Generated Content Preview Dialog */}
-      <Dialog open={generatedContent.open} onOpenChange={(open) => {
-        if (!open) {
-          setGeneratedContent({ open: false, type: 'point', content: '', category: 'pre-match' });
-          setEditMode(false);
-        }
-      }}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      {/* Generated Content Dialog */}
+      <Dialog open={generatedContent.open} onOpenChange={(open) => setGeneratedContent({ ...generatedContent, open })}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Generated Content Preview</DialogTitle>
+            <DialogTitle>Generated Content</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {editMode ? (
-              generatedContent.type === 'overview' ? (
-                <div>
-                  <Label>Edit Overview</Label>
-                  <Textarea
-                    value={generatedContent.content}
-                    onChange={(e) => setGeneratedContent({ ...generatedContent, content: e.target.value })}
-                    rows={10}
-                  />
-                </div>
-              ) : (
-                <>
-                  <div>
-                    <Label>Edit Paragraph 1</Label>
-                    <Textarea
-                      value={generatedContent.paragraph1 || ''}
-                      onChange={(e) => setGeneratedContent({ 
-                        ...generatedContent, 
-                        paragraph1: e.target.value,
-                        content: `${e.target.value}\n\n${generatedContent.paragraph2 || ''}`
-                      })}
-                      rows={6}
-                    />
-                  </div>
-                  <div>
-                    <Label>Edit Paragraph 2</Label>
-                    <Textarea
-                      value={generatedContent.paragraph2 || ''}
-                      onChange={(e) => setGeneratedContent({ 
-                        ...generatedContent, 
-                        paragraph2: e.target.value,
-                        content: `${generatedContent.paragraph1 || ''}\n\n${e.target.value}`
-                      })}
-                      rows={6}
-                    />
-                  </div>
-                </>
-              )
+              <Textarea
+                value={generatedContent.content}
+                onChange={(e) => {
+                  const text = e.target.value;
+                  const paragraphs = text.split('\n\n').filter(p => p.trim());
+                  setGeneratedContent({
+                    ...generatedContent,
+                    content: text,
+                    paragraph1: paragraphs[0] || '',
+                    paragraph2: paragraphs[1] || ''
+                  });
+                }}
+                rows={10}
+              />
             ) : (
-              <div className="p-4 bg-muted rounded-lg whitespace-pre-wrap">
+              <div className="whitespace-pre-wrap p-4 bg-muted rounded-lg">
                 {generatedContent.content}
               </div>
             )}
-
-            <div className="flex gap-2 flex-wrap">
-              <Button onClick={() => setTweakDialog({ open: true, tweakInstructions: '' })}>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Tweak
-              </Button>
-              <Button variant="outline" onClick={() => setEditMode(!editMode)}>
-                <Pencil className="w-4 h-4 mr-2" />
-                {editMode ? 'Preview' : 'Edit'}
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleApplyGenerated}>
+                Apply to Analysis
               </Button>
               <Button variant="outline" onClick={handleCopyGenerated}>
                 <Copy className="w-4 h-4 mr-2" />
                 Copy
               </Button>
+              <Button variant="outline" onClick={() => setEditMode(!editMode)}>
+                <Pencil className="w-4 h-4 mr-2" />
+                {editMode ? 'Preview' : 'Edit'}
+              </Button>
               <Button variant="outline" onClick={handleSaveToDatabase}>
                 <Database className="w-4 h-4 mr-2" />
-                Save to Database
+                Save as Example
               </Button>
-              <Button onClick={handleApplyGenerated}>
-                Apply
+              <Button variant="outline" onClick={() => setTweakDialog({ open: true, tweakInstructions: '' })}>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Tweak
               </Button>
             </div>
           </div>
@@ -2194,180 +1724,25 @@ Title: ${formData.scheme_title || 'Not specified'}`;
       </Dialog>
 
       {/* Tweak Dialog */}
-      <Dialog open={tweakDialog.open} onOpenChange={(open) => setTweakDialog({ open, tweakInstructions: '' })}>
+      <Dialog open={tweakDialog.open} onOpenChange={(open) => setTweakDialog({ ...tweakDialog, open })}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Tweak Content</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>What would you like to change?</Label>
+              <Label>Instructions</Label>
               <Textarea
                 value={tweakDialog.tweakInstructions}
                 onChange={(e) => setTweakDialog({ ...tweakDialog, tweakInstructions: e.target.value })}
-                placeholder="e.g., Make it more concise, add more technical details, change the tone..."
-                rows={4}
+                placeholder="How would you like to modify the content? e.g., 'Make it more formal' or 'Add more tactical detail'"
+                rows={3}
               />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setTweakDialog({ open: false, tweakInstructions: '' })}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleTweak}
-                disabled={aiGenerating || !tweakDialog.tweakInstructions.trim()}
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                {aiGenerating ? 'Tweaking...' : 'Apply Tweak'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Examples Database Dialog */}
-      <Dialog open={examplesDialogOpen} onOpenChange={setExamplesDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {examplesCategory.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} {examplesType === 'overview' ? 'Overview' : 'Point'} Examples
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">{editingExample ? 'Edit' : 'Add'} Example</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Title (Optional)</Label>
-                  <Input
-                    value={exampleFormData.title}
-                    onChange={(e) => setExampleFormData({ ...exampleFormData, title: e.target.value })}
-                    placeholder="e.g., Defensive Positioning Analysis"
-                  />
-                </div>
-                {examplesType === 'overview' ? (
-                  <div>
-                    <Label>Overview Paragraph</Label>
-                    <Textarea
-                      value={exampleFormData.content}
-                      onChange={(e) => setExampleFormData({ ...exampleFormData, content: e.target.value })}
-                      placeholder="Example overview paragraph showing desired writing style..."
-                      rows={6}
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <div>
-                      <Label>Paragraph 1</Label>
-                      <Textarea
-                        value={exampleFormData.paragraph_1}
-                        onChange={(e) => setExampleFormData({ ...exampleFormData, paragraph_1: e.target.value })}
-                        placeholder="Example paragraph showing desired writing style..."
-                        rows={4}
-                      />
-                    </div>
-                    <div>
-                      <Label>Paragraph 2</Label>
-                      <Textarea
-                        value={exampleFormData.paragraph_2}
-                        onChange={(e) => setExampleFormData({ ...exampleFormData, paragraph_2: e.target.value })}
-                        placeholder="Example paragraph showing desired writing style..."
-                        rows={4}
-                      />
-                    </div>
-                  </>
-                )}
-                <div>
-                  <Label>Notes (Optional)</Label>
-                  <Textarea
-                    value={exampleFormData.notes}
-                    onChange={(e) => setExampleFormData({ ...exampleFormData, notes: e.target.value })}
-                    placeholder="Notes about this example..."
-                    rows={2}
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleSaveExample}>
-                    {editingExample ? 'Update' : 'Add'} Example
-                  </Button>
-                  {editingExample && (
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setEditingExample(null);
-                        setExampleFormData({ title: '', paragraph_1: '', paragraph_2: '', content: '', notes: '' });
-                      }}
-                    >
-                      Cancel Edit
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="space-y-2">
-              <h3 className="font-semibold">Existing Examples</h3>
-              {examples.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No examples yet. Add some to help the AI match your writing style.</p>
-              ) : (
-                examples.map((example) => (
-                  <Card key={example.id}>
-                    <CardHeader>
-                      <CardTitle className="text-sm flex justify-between items-start">
-                        <span>{example.title || 'Untitled Example'}</span>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingExample(example);
-                              setExampleFormData({
-                                title: example.title || '',
-                                paragraph_1: example.paragraph_1 || '',
-                                paragraph_2: example.paragraph_2 || '',
-                                content: example.content || '',
-                                notes: example.notes || ''
-                              });
-                            }}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          {isAdmin && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteExample(example.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      {example.content && (
-                        <p className="text-sm">{example.content}</p>
-                      )}
-                      {example.paragraph_1 && (
-                        <p className="text-sm">{example.paragraph_1}</p>
-                      )}
-                      {example.paragraph_2 && (
-                        <p className="text-sm">{example.paragraph_2}</p>
-                      )}
-                      {example.notes && (
-                        <p className="text-xs text-muted-foreground italic">{example.notes}</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
+            <Button onClick={handleTweak} disabled={aiGenerating}>
+              <Sparkles className="w-4 h-4 mr-2" />
+              {aiGenerating ? 'Tweaking...' : 'Apply Tweak'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
