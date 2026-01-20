@@ -917,37 +917,57 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     }
   };
 
-  // Generate overview from points content using AI
+  // Generate overview from points content or existing key_details using AI
   const generateOverviewFromPoints = async () => {
     const points = formData.points || [];
-    if (points.length === 0) {
-      toast.error("Please add some points first before generating an overview");
+    const existingKeyDetails = formData.key_details || '';
+    
+    // Need at least one source of content
+    if (points.length === 0 && !existingKeyDetails.trim()) {
+      toast.error("Please add some points or write key details before using AI");
       return;
     }
 
     setAiGenerating(true);
     try {
-      // Build content from points
-      const pointsContent = points
-        .map((p: any, i: number) => `Point ${i + 1}: ${p.title || 'Untitled'}\n${p.paragraph_1 || ''}\n${p.paragraph_2 || ''}`)
-        .join('\n\n');
+      // Build source content - combine key_details and points
+      let sourceContent = '';
+      
+      if (existingKeyDetails.trim()) {
+        sourceContent += `EXISTING KEY DETAILS TO RESTYLE:\n${existingKeyDetails}\n\n`;
+      }
+      
+      if (points.length > 0) {
+        const pointsContent = points
+          .map((p: any, i: number) => `Point ${i + 1}: ${p.title || 'Untitled'}\n${p.paragraph_1 || ''}\n${p.paragraph_2 || ''}`)
+          .join('\n\n');
+        sourceContent += `TACTICAL POINTS TO INCLUDE:\n${pointsContent}`;
+      }
 
       // Fetch overview examples for the current analysis type
-      const { data: styleExamples } = await supabase
+      const { data: styleExamples, error: fetchError } = await supabase
         .from('analysis_point_examples')
         .select('content')
         .eq('category', analysisType)
         .eq('example_type', 'overview')
         .limit(3);
 
+      if (fetchError) {
+        console.error('Error fetching examples:', fetchError);
+      }
+
       const styleExamplesText = styleExamples && styleExamples.length > 0
         ? styleExamples.map((ex, i) => `Style Example ${i + 1}:\n${ex.content || ''}`).join('\n\n')
         : '';
 
+      if (!styleExamplesText) {
+        toast.warning("No overview examples found. Add examples via the settings icon for better results.");
+      }
+
       const { data, error } = await localSupabase.functions.invoke('ai-write', {
         body: {
-          prompt: `SOURCE POINTS TO SUMMARIZE (include ALL key observations from these - do NOT add new points):\n${pointsContent}\n\nWrite a single cohesive overview paragraph that captures ALL the key points above. Use the writing style from the examples but keep the exact same observations and tactical insights.`,
-          context: `Analysis Type: ${analysisType}\n\nSTYLE EXAMPLES (copy the tone, vocabulary, and sentence structure from these):\n${styleExamplesText}`,
+          prompt: `SOURCE CONTENT (preserve ALL tactical observations and facts from this - do NOT add new analysis):\n${sourceContent}\n\nRewrite this as a single cohesive overview paragraph. Keep ALL the facts and observations but apply the writing style from the examples.`,
+          context: `Analysis Type: ${analysisType}\n\nSTYLE EXAMPLES (copy the EXACT tone, vocabulary, phrasing patterns, and sentence structure from these):\n${styleExamplesText || 'No examples provided - write in a professional football analysis style.'}`,
           type: 'analysis-overview'
         }
       });
@@ -966,9 +986,9 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       }
 
       setFormData({ ...formData, key_details: data.text });
-      toast.success('Overview generated from points!');
+      toast.success('Overview generated!');
     } catch (error: any) {
-      console.error('Error generating overview from points:', error);
+      console.error('Error generating overview:', error);
       toast.error(error.message || "Failed to generate overview");
     } finally {
       setAiGenerating(false);
