@@ -343,26 +343,13 @@ export const AnalysisMatchDetails = ({
               />
             </div>
 
-            <div>
-              <Label>Player Image (Optional)</Label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageUpload(e, "player_image_url")}
-                disabled={uploadingImage}
-              />
-              {formData.player_image_url && (
-                <img src={formData.player_image_url} alt="Player" className="mt-2 w-32 h-32 object-cover rounded" />
-              )}
-            </div>
-
-            {/* Match Image with crop/position support - limited to 250px height */}
+            {/* Match Image - single unified field */}
             <div>
               <Label className="flex items-center gap-1">
-                Match Image
+                Match / Player Image
                 <Crop className="w-3 h-3" />
               </Label>
-              <p className="text-xs text-muted-foreground mb-1">Wide format (16:9) - limited to 250px height in viewer</p>
+              <p className="text-xs text-muted-foreground mb-1">Square format (1:1) - appears in match header with gold arch</p>
               <Input
                 type="file"
                 accept="image/*"
@@ -371,7 +358,7 @@ export const AnalysisMatchDetails = ({
                 disabled={uploadingImage}
               />
               {formData.match_image_url && (
-                <img src={formData.match_image_url} alt="Match" className="mt-2 w-full max-h-40 object-cover rounded" />
+                <img src={formData.match_image_url} alt="Match" className="mt-2 w-32 h-32 object-cover rounded" />
               )}
             </div>
 
