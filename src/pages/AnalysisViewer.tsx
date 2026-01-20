@@ -404,7 +404,7 @@ const AnalysisHeader = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => window.history.back()}
+          onClick={() => navigate(-1)}
           className="absolute left-4 md:left-8 top-4 bg-black/50 backdrop-blur-sm border-white/30 hover:bg-black/70 text-white hover:text-primary h-8 py-1.5 px-3 text-xs z-20"
         >
           <ArrowLeft className="w-3 h-3 mr-1" />
@@ -777,9 +777,9 @@ const AnalysisViewer = () => {
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'hsl(0 0% 15%)' }}>
-      {/* Gold inset vertical lines */}
-      <div className="fixed top-0 bottom-0 left-[6px] w-[2px] z-10 pointer-events-none bg-primary" />
-      <div className="fixed top-0 bottom-0 right-[6px] w-[2px] z-10 pointer-events-none bg-primary" />
+      {/* Gold inset vertical lines - using inset values for proper positioning */}
+      <div className="fixed inset-y-0 left-[6px] w-[2px] z-50 pointer-events-none bg-primary" />
+      <div className="fixed inset-y-0 right-[6px] w-[2px] z-50 pointer-events-none bg-primary" />
 
       {/* Video Button */}
       {analysis.video_url && (
@@ -1195,11 +1195,32 @@ const AnalysisViewer = () => {
             {/* Improvements - Section 1 (flip) */}
             {analysis.strengths_improvements && (
               <ExpandableSection title="Strengths & Areas for Improvement" id={SECTION_IDS.improvements} flipBackground={true}>
-                <TextReveal>
-                  <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
-                    {analysis.strengths_improvements}
-                  </p>
-                </TextReveal>
+                <div className="space-y-3">
+                  {analysis.strengths_improvements.split('|').map((part: string, idx: number) => {
+                    const trimmedPart = part.trim();
+                    const match = trimmedPart.match(/^(Green|Amber|Red):\s*(.*)$/i);
+                    const color = match ? match[1].toLowerCase() : 'green';
+                    const text = match ? match[2].trim() : trimmedPart;
+                    
+                    const getBulletColor = (c: string) => {
+                      switch (c) {
+                        case 'green': return 'bg-green-500';
+                        case 'amber': return 'bg-amber-500';
+                        case 'red': return 'bg-red-500';
+                        default: return 'bg-green-500';
+                      }
+                    };
+                    
+                    return (
+                      <TextReveal key={idx} delay={idx * 0.1}>
+                        <div className="flex items-start gap-3">
+                          <div className={`rounded-full w-4 h-4 md:w-5 md:h-5 flex-shrink-0 mt-1 ${getBulletColor(color)}`} />
+                          <p className="text-sm md:text-base leading-relaxed italic text-black">{text}</p>
+                        </div>
+                      </TextReveal>
+                    );
+                  })}
+                </div>
               </ExpandableSection>
             )}
 
