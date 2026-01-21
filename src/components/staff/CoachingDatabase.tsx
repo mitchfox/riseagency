@@ -25,7 +25,7 @@ import { downloadFile } from "@/utils/openExternalUrl";
 import { GraduationCap } from "lucide-react";
 
 
-type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides' | 'club_ratings' | 'form_grades';
+type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides' | 'club_ratings' | 'form_grade_configs';
 
 interface Exercise {
   name: string;
@@ -170,7 +170,7 @@ const tableConfigs = {
     icon: Building2,
     color: 'slate',
   },
-  form_grades: {
+  form_grade_configs: {
     label: 'Form Grades',
     singular: 'Form Grade',
     fields: [],
