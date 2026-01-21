@@ -77,9 +77,9 @@ export const ActionVideoPopup = ({
             ref={videoRef}
             src={videoUrl}
             className="w-full max-h-[80vh] object-contain"
-            controls
             autoPlay
             muted
+            loop
             playsInline
           />
         </div>

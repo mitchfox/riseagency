@@ -136,14 +136,14 @@ export const ClippedActionsPlayer = ({
             <p className="text-xs text-white/80 line-clamp-2">{currentClip.action_description}</p>
           </div>
 
-          {/* Video player */}
+          {/* Video player - no controls to prevent unmuting */}
           <video
             ref={videoRef}
             src={currentClip.video_url}
             className="w-full max-h-[70vh] object-contain"
-            controls
             autoPlay
             muted
+            playsInline
             onEnded={handleVideoEnded}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
