@@ -33,6 +33,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
 import { Link } from "react-router-dom";
 
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
+import { useFormGradeConfigs, METRIC_KEY_MAP } from "@/hooks/useFormGradeConfigs";
 import { downloadVideo } from "@/lib/videoDownload";
 import { PlayerPositionalGuides } from "@/components/PlayerPositionalGuides";
 import { ProtectedContracts } from "@/components/player/ProtectedContracts";
@@ -148,6 +149,8 @@ const Dashboard = () => {
   const [savingTestResult, setSavingTestResult] = useState(false);
   const [nutritionPrograms, setNutritionPrograms] = useState<any[]>([]);
 
+  // Initialize form grade configs from database
+  const { getGradeBoundaries: getDynamicGradeBoundaries, getGradeForScore, hasThresholds } = useFormGradeConfigs();
 
   // Initialize push notifications with player ID
   usePushNotifications(playerData?.id);
@@ -2342,8 +2345,17 @@ const Dashboard = () => {
                           ? Math.ceil(Math.max(...chartData.map(d => d.score)) * 1.1) // 10% padding
                           : 4;
 
-                        // Function to get grade boundaries for reference lines
+                        // Function to get grade boundaries for reference lines - uses dynamic database configs
                         const getGradeBoundaries = () => {
+                          // Get the database metric key for this selected metric
+                          const metricKey = METRIC_KEY_MAP[selectedFormMetric];
+                          
+                          // Try to get dynamic boundaries from database first
+                          if (metricKey && hasThresholds(metricKey)) {
+                            return getDynamicGradeBoundaries(metricKey);
+                          }
+                          
+                          // Fallback to hardcoded values for core metrics that may not be in DB yet
                           switch(selectedFormMetric) {
                             case "r90":
                               return [
@@ -2454,7 +2466,7 @@ const Dashboard = () => {
                           }
                         };
 
-                        // Function to get color based on metric and score
+                        // Function to get color based on metric and score - uses dynamic database configs
                         const getMetricColor = (score: number) => {
                           // Striker/Winger xC metrics use grey
                           const strikerMetrics = ["triplethreatxc", "movementtofeetxc", "movementinbehindxc", "movementdownsidexc", "crossingmovementxc"];
@@ -2462,6 +2474,13 @@ const Dashboard = () => {
                             return "hsl(var(--muted-foreground))";
                           }
                           
+                          // Try dynamic config first
+                          const metricKey = METRIC_KEY_MAP[selectedFormMetric];
+                          if (metricKey && hasThresholds(metricKey)) {
+                            return getGradeForScore(metricKey, score).color;
+                          }
+                          
+                          // Fallback to hardcoded
                           switch(selectedFormMetric) {
                             case "r90":
                               return getR90Grade(score).color;
@@ -2480,11 +2499,11 @@ const Dashboard = () => {
                             case "ppturnoversratio":
                               return getPPTurnoversRatioGrade(score).color;
                             default:
-                              return getR90Grade(score).color;
+                              return "hsl(var(--muted-foreground))";
                           }
                         };
 
-                        // Function to get grade based on metric and score
+                        // Function to get grade based on metric and score - uses dynamic database configs
                         const getMetricGrade = (score: number) => {
                           // Striker/Winger xC metrics show the score value, not a grade
                           const strikerMetrics = ["triplethreatxc", "movementtofeetxc", "movementinbehindxc", "movementdownsidexc", "crossingmovementxc"];
@@ -2492,6 +2511,13 @@ const Dashboard = () => {
                             return score.toFixed(3);
                           }
                           
+                          // Try dynamic config first
+                          const metricKey = METRIC_KEY_MAP[selectedFormMetric];
+                          if (metricKey && hasThresholds(metricKey)) {
+                            return getGradeForScore(metricKey, score).grade;
+                          }
+                          
+                          // Fallback to hardcoded
                           switch(selectedFormMetric) {
                             case "r90":
                               return getR90Grade(score).grade;
