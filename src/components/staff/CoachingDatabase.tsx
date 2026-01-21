@@ -1007,7 +1007,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
               <PositionalGuides isAdmin={isAdmin} />
             ) : key === 'club_ratings' ? (
               <ClubRatings />
-            ) : key === 'form_grades' ? (
+            ) : key === 'form_grade_configs' ? (
               <FormGradesManagement />
             ) : (
               <>
