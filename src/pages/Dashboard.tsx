@@ -2204,6 +2204,24 @@ const Dashboard = () => {
                                     Number(a.striker_stats.turnovers_adj_per90) !== 0
                                   );
                                 }
+                                // Special case for touches in box per 90 (needs both touches_in_box and minutes_played)
+                                if (metricKey === "touchesinbox") {
+                                  return analyses.some(a => 
+                                    a.striker_stats && 
+                                    a.striker_stats.touches_in_box != null &&
+                                    a.minutes_played != null &&
+                                    Number(a.minutes_played) > 0
+                                  );
+                                }
+                                // Special case for aerial duel win percentage
+                                if (metricKey === "aerialduelswinpct") {
+                                  return analyses.some(a => 
+                                    a.striker_stats && 
+                                    a.striker_stats.aerial_duels_won != null &&
+                                    a.striker_stats.aerial_duels_attempted != null &&
+                                    Number(a.striker_stats.aerial_duels_attempted) > 0
+                                  );
+                                }
                                 return analyses.some(a => 
                                   a.striker_stats && 
                                   statKey && 
@@ -2214,27 +2232,27 @@ const Dashboard = () => {
 
                               const availableMetrics = [
                                 { value: "r90", label: "R90 Score", statKey: undefined },
-                                { value: "xg", label: "Expected Goals (xG)", statKey: "xG_adj_per90" },
-                                { value: "xa", label: "Expected Assists (xA)", statKey: "xA_adj_per90" },
-                                { value: "regains", label: "Regains", statKey: "regains_adj_per90" },
-                                { value: "interceptions", label: "Interceptions", statKey: "interceptions_per90" },
-                                { value: "xgchain", label: "xG Chain", statKey: "xGChain_per90" },
-                                { value: "xgbuildup", label: "xG Buildup", statKey: "xGBuildup_per90" },
-                                { value: "progressivepasses", label: "Progressive Passes", statKey: "progressive_passes_adj_per90" },
-                                { value: "ppturnoversratio", label: "Progressive Passes/Turnovers Ratio", statKey: "progressive_passes,turnovers" },
+                                { value: "xg", label: "xG (per 90)", statKey: "xG_adj_per90" },
+                                { value: "xa", label: "xA (per 90)", statKey: "xA_adj_per90" },
+                                { value: "regains", label: "Regains (per 90)", statKey: "regains_adj_per90" },
+                                { value: "interceptions", label: "Interceptions (per 90)", statKey: "interceptions_per90" },
+                                { value: "xgchain", label: "xG Chain (per 90)", statKey: "xGChain_per90" },
+                                { value: "xgbuildup", label: "xG Buildup (per 90)", statKey: "xGBuildup_per90" },
+                                { value: "progressivepasses", label: "Progressive Passes (per 90)", statKey: "progressive_passes_adj_per90" },
+                                { value: "ppturnoversratio", label: "PP/Turnovers Ratio", statKey: "progressive_passes,turnovers" },
                                 { value: "shots", label: "Shots", statKey: "shots" },
-                                { value: "shotsontarget", label: "Shots on Target", statKey: "ShotsOnTarget_per90" },
-                                { value: "triplethreatxc", label: "Triple Threat xC", statKey: "triple_threat_xC_per90" },
-                                { value: "movementtofeetxc", label: "Movement to Feet xC", statKey: "movement_to_feet_xC_per90" },
-                                { value: "movementinbehindxc", label: "Movement in Behind xC", statKey: "movement_in_behind_xC_per90" },
-                                { value: "movementdownsidexc", label: "Movement Down Side xC", statKey: "movement_down_side_xC_per90" },
-                                { value: "crossingmovementxc", label: "Crossing Movement xC", statKey: "crossing_movement_xC_per90" },
-                                { value: "dribbles", label: "Dribbles", statKey: "dribbles_per90" },
-                                { value: "dribblesattempted", label: "Dribbles Attempted", statKey: "dribbles_attempted_per90" },
+                                { value: "shotsontarget", label: "Shots on Target (per 90)", statKey: "ShotsOnTarget_per90" },
+                                { value: "triplethreatxc", label: "Triple Threat xC (per 90)", statKey: "triple_threat_xC_per90" },
+                                { value: "movementtofeetxc", label: "Movement to Feet xC (per 90)", statKey: "movement_to_feet_xC_per90" },
+                                { value: "movementinbehindxc", label: "Movement in Behind xC (per 90)", statKey: "movement_in_behind_xC_per90" },
+                                { value: "movementdownsidexc", label: "Movement Down Side xC (per 90)", statKey: "movement_down_side_xC_per90" },
+                                { value: "crossingmovementxc", label: "Crossing Movement xC (per 90)", statKey: "crossing_movement_xC_per90" },
+                                { value: "dribbles", label: "Dribbles (per 90)", statKey: "dribbles_per90" },
+                                { value: "dribblesattempted", label: "Dribbles Attempted (per 90)", statKey: "dribbles_attempted_per90" },
                                 { value: "successfuldribbles", label: "Successful Dribbles", statKey: "successful_dribbles" },
-                                { value: "turnovers", label: "Turnovers", statKey: "turnovers_adj_per90" },
-                                { value: "touchesinbox", label: "Touches in Box", statKey: "touches_in_box" },
-                                { value: "aerialduels", label: "Aerial Duels Won", statKey: "aerial_duels_won" },
+                                { value: "turnovers", label: "Turnovers (per 90)", statKey: "turnovers_adj_per90" },
+                                { value: "touchesinbox", label: "Touches in Box (per 90)", statKey: "touches_in_box,minutes_played" },
+                                { value: "aerialduelswinpct", label: "Aerial Duel Win %", statKey: "aerial_duels_won,aerial_duels_attempted" },
                                 { value: "duelswon", label: "Duels Won", statKey: "duels_won" },
                                 { value: "longpassescompleted", label: "Long Passes Completed", statKey: "long_passes_completed" },
                               ];
@@ -2267,6 +2285,26 @@ const Dashboard = () => {
                             return null;
                           }
                           
+                          // Special case for touches in box per 90 (calculate from total and minutes)
+                          if (selectedFormMetric === "touchesinbox") {
+                            const touches = analysis.striker_stats.touches_in_box;
+                            const minutes = analysis.minutes_played;
+                            if (touches != null && minutes != null && Number(minutes) > 0) {
+                              return (Number(touches) / Number(minutes)) * 90;
+                            }
+                            return null;
+                          }
+                          
+                          // Special case for aerial duel win percentage
+                          if (selectedFormMetric === "aerialduelswinpct") {
+                            const won = analysis.striker_stats.aerial_duels_won;
+                            const attempted = analysis.striker_stats.aerial_duels_attempted;
+                            if (won != null && attempted != null && Number(attempted) > 0) {
+                              return (Number(won) / Number(attempted)) * 100;
+                            }
+                            return null;
+                          }
+                          
                           const statKey = selectedFormMetric === "xg" ? "xG_adj_per90" :
                                           selectedFormMetric === "xa" ? "xA_adj_per90" :
                                           selectedFormMetric === "regains" ? "regains_adj_per90" :
@@ -2285,8 +2323,6 @@ const Dashboard = () => {
                                           selectedFormMetric === "dribblesattempted" ? "dribbles_attempted_per90" :
                                           selectedFormMetric === "successfuldribbles" ? "successful_dribbles" :
                                           selectedFormMetric === "turnovers" ? "turnovers_adj_per90" :
-                                          selectedFormMetric === "touchesinbox" ? "touches_in_box" :
-                                          selectedFormMetric === "aerialduels" ? "aerial_duels_won" :
                                           selectedFormMetric === "duelswon" ? "duels_won" :
                                           selectedFormMetric === "longpassescompleted" ? "long_passes_completed" : null;
                           
@@ -2297,27 +2333,27 @@ const Dashboard = () => {
                         const getMetricLabel = () => {
                           switch(selectedFormMetric) {
                             case "r90": return "R90";
-                            case "xg": return "xG";
-                            case "xa": return "xA";
-                            case "regains": return "Regains";
-                            case "interceptions": return "Interceptions";
-                            case "xgchain": return "xGChain";
-                            case "xgbuildup": return "xGBuildup";
-                            case "progressivepasses": return "Progressive Passes";
+                            case "xg": return "xG (per 90)";
+                            case "xa": return "xA (per 90)";
+                            case "regains": return "Regains (per 90)";
+                            case "interceptions": return "Interceptions (per 90)";
+                            case "xgchain": return "xGChain (per 90)";
+                            case "xgbuildup": return "xGBuildup (per 90)";
+                            case "progressivepasses": return "Progressive Passes (per 90)";
                             case "ppturnoversratio": return "PP/TO Ratio";
                             case "shots": return "Shots";
-                            case "shotsontarget": return "Shots on Target";
-                            case "triplethreatxc": return "Triple Threat xC";
-                            case "movementtofeetxc": return "Movement to Feet xC";
-                            case "movementinbehindxc": return "Movement in Behind xC";
-                            case "movementdownsidexc": return "Movement Down Side xC";
-                            case "crossingmovementxc": return "Crossing Movement xC";
-                            case "dribbles": return "Dribbles";
-                            case "dribblesattempted": return "Dribbles Attempted";
+                            case "shotsontarget": return "Shots on Target (per 90)";
+                            case "triplethreatxc": return "Triple Threat xC (per 90)";
+                            case "movementtofeetxc": return "Movement to Feet xC (per 90)";
+                            case "movementinbehindxc": return "Movement in Behind xC (per 90)";
+                            case "movementdownsidexc": return "Movement Down Side xC (per 90)";
+                            case "crossingmovementxc": return "Crossing Movement xC (per 90)";
+                            case "dribbles": return "Dribbles (per 90)";
+                            case "dribblesattempted": return "Dribbles Attempted (per 90)";
                             case "successfuldribbles": return "Successful Dribbles";
-                            case "turnovers": return "Turnovers";
-                            case "touchesinbox": return "Touches in Box";
-                            case "aerialduels": return "Aerial Duels Won";
+                            case "turnovers": return "Turnovers (per 90)";
+                            case "touchesinbox": return "Touches in Box (per 90)";
+                            case "aerialduelswinpct": return "Aerial Duel Win %";
                             case "duelswon": return "Duels Won";
                             case "longpassescompleted": return "Long Passes";
                             default: return "R90";

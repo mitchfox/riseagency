@@ -164,7 +164,7 @@ export const METRIC_KEY_MAP: Record<string, string> = {
   'successfuldribbles': 'dribbles_completed',
   'turnovers': 'turnovers',
   'touchesinbox': 'touches_in_box',
-  'aerialduels': 'aerial_duels_won',
+  'aerialduelswinpct': 'aerial_duel_win_pct',
   'duelswon': 'duels_won',
   'longpassescompleted': 'long_passes_completed',
 };
