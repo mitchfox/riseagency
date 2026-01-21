@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { HoverText } from "@/components/HoverText";
+import { SequentialLazyVideo } from "@/components/SequentialLazyVideo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -676,6 +677,40 @@ const AnalysisViewer = () => {
   const [loading, setLoading] = useState(true);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [playerName, setPlayerName] = useState<string | null>(null);
+  
+  // Sequential video loading: tracks which point index is currently loading
+  const [currentLoadingPoint, setCurrentLoadingPoint] = useState(0);
+  const pointVideoCountsRef = useRef<Map<number, { total: number; loaded: number }>>(new Map());
+
+  // Callback when a video in a point finishes loading
+  const handleVideoLoaded = useCallback((pointIndex: number) => {
+    const counts = pointVideoCountsRef.current.get(pointIndex);
+    if (counts) {
+      counts.loaded++;
+      // If all videos in this point are loaded, move to next point
+      if (counts.loaded >= counts.total) {
+        setCurrentLoadingPoint(prev => Math.max(prev, pointIndex + 1));
+      }
+    }
+  }, []);
+
+  // Initialize video counts when analysis loads
+  useEffect(() => {
+    if (analysis?.points) {
+      pointVideoCountsRef.current.clear();
+      analysis.points.forEach((point: any, index: number) => {
+        const videoUrls = point.video_urls || (point.video_url ? [point.video_url] : []);
+        const total = videoUrls.length;
+        pointVideoCountsRef.current.set(index, { total, loaded: 0 });
+        // If a point has no videos, mark it as "complete" for sequencing
+        if (total === 0) {
+          setCurrentLoadingPoint(prev => Math.max(prev, index + 1));
+        }
+      });
+      // Start loading first point immediately
+      setCurrentLoadingPoint(0);
+    }
+  }, [analysis?.points]);
 
   // Extract UUID from slug (e.g., "team-vs-team-uuid" -> "uuid")
   const analysisId = rawSlug ? extractAnalysisIdFromSlug(rawSlug) : null;
@@ -1120,9 +1155,12 @@ const AnalysisViewer = () => {
                           <TextReveal delay={0.2}>
                             <div className="flex flex-col items-center gap-4">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
-                                <video
+                                <SequentialLazyVideo
                                   key={vidIndex}
                                   src={url}
+                                  pointIndex={index}
+                                  currentLoadingPoint={currentLoadingPoint}
+                                  onVideoLoaded={() => handleVideoLoaded(index)}
                                   autoPlay
                                   loop
                                   muted
@@ -1418,9 +1456,12 @@ const AnalysisViewer = () => {
                           <TextReveal delay={0.2}>
                             <div className="flex flex-col items-center gap-4">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
-                                <video
+                                <SequentialLazyVideo
                                   key={vidIndex}
                                   src={url}
+                                  pointIndex={index}
+                                  currentLoadingPoint={currentLoadingPoint}
+                                  onVideoLoaded={() => handleVideoLoaded(index)}
                                   autoPlay
                                   loop
                                   muted
@@ -1532,9 +1573,12 @@ const AnalysisViewer = () => {
                           <TextReveal delay={0.2}>
                             <div className="flex flex-col items-center gap-4">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
-                                <video
+                                <SequentialLazyVideo
                                   key={vidIndex}
                                   src={url}
+                                  pointIndex={index}
+                                  currentLoadingPoint={currentLoadingPoint}
+                                  onVideoLoaded={() => handleVideoLoaded(index)}
                                   autoPlay
                                   loop
                                   muted
