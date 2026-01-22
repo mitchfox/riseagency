@@ -516,7 +516,7 @@ export const RadialMenu = () => {
       },
     ],
     business: [
-      { to: "/business", labelKey: "header.packages", fallback: "PACKAGES", Icon: Package, angle: 0 },
+      { to: "/packages", labelKey: "header.packages", fallback: "PACKAGES", Icon: Package, angle: 0 },
       { 
         to: "/stars", 
         labelKey: "header.stars", 

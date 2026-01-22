@@ -38,6 +38,7 @@ const Scouts = lazy(() => import("./pages/Scouts"));
 const Agents = lazy(() => import("./pages/Agents"));
 const Business = lazy(() => import("./pages/Business"));
 const Media = lazy(() => import("./pages/Media"));
+const Packages = lazy(() => import("./pages/Packages"));
 const PerformancePage = lazy(() => import("./pages/PerformancePage"));
 const BetweenTheLines = lazy(() => import("./pages/BetweenTheLines"));
 const OpenAccess = lazy(() => import("./pages/OpenAccess"));
@@ -133,6 +134,7 @@ const App = () => {
                       {createLocalizedRoutes('/scouts', <Scouts />)}
                       {createLocalizedRoutes('/agents', <Agents />)}
                       {createLocalizedRoutes('/business', <Business />)}
+                      {createLocalizedRoutes('/packages', <Packages />)}
                       {createLocalizedRoutes('/media', <Media />)}
                       {createLocalizedRoutes('/performance', <PerformancePage />)}
                       {createLocalizedRoutes('/news', <News />)}

@@ -3,15 +3,94 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
-import { ChevronLeft, ChevronRight, ArrowRight, Sparkles, Briefcase, Users, Target, TrendingUp, Handshake } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight, Sparkles, Briefcase, Users, Target, TrendingUp, Handshake, Video, BarChart3, Globe, Megaphone } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { HoverText } from "@/components/HoverText";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
 import { PartnersSection } from "@/components/business/PartnersSection";
+import { LocalizedLink } from "@/components/LocalizedLink";
 
-// Case study / showcase card data
+// Core 8 packages for public display - aligned with Sales Deck
+interface PackageCard {
+  id: string;
+  category: "core" | "premium" | "support";
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  services: string[];
+  ctaLink: string;
+}
+
+const corePackagesConfig: Omit<PackageCard, 'icon'>[] = [
+  {
+    id: "commercial-strategy",
+    category: "core",
+    title: "Commercial Strategy",
+    description: "Business growth audits, campaign planning, and sponsorship strategy to position your brand in football",
+    services: ["Business Growth Audit", "KPI Definition", "Sponsorship Strategy", "Market Analysis"],
+    ctaLink: "/packages",
+  },
+  {
+    id: "talent-access",
+    category: "core",
+    title: "Talent Access & Management",
+    description: "Direct access to professional footballers for brand campaigns, ambassador deals, and authentic partnerships",
+    services: ["Player Access", "Talent-Brand Matching", "Contract Negotiation", "Ambassador Deals"],
+    ctaLink: "/packages",
+  },
+  {
+    id: "campaign-activation",
+    category: "core",
+    title: "Campaign Activation",
+    description: "End-to-end campaign development from concept to execution, including product launches and event activations",
+    services: ["Concept Development", "Product Launches", "Tournament Campaigns", "Full Campaign Management"],
+    ctaLink: "/packages",
+  },
+  {
+    id: "content-creative",
+    category: "core",
+    title: "Content & Creative",
+    description: "Football content strategy, video production, photography, and branded player content that resonates",
+    services: ["Video Production", "Social Content", "Photography", "Branded Content"],
+    ctaLink: "/packages",
+  },
+  {
+    id: "paid-media",
+    category: "premium",
+    title: "Paid Media & Performance",
+    description: "Managed social campaigns, funnel strategy, and performance optimization for maximum ROI",
+    services: ["Paid Social Management", "Ad Creative", "Retargeting", "Performance Optimization"],
+    ctaLink: "/packages",
+  },
+  {
+    id: "club-connections",
+    category: "premium",
+    title: "Club & Property Connections",
+    description: "Club sponsorship introductions, partnership strategy, and matchday access for authentic brand presence",
+    services: ["Club Introductions", "Rights Assessment", "Matchday Access", "Club Content"],
+    ctaLink: "/packages",
+  },
+  {
+    id: "market-intelligence",
+    category: "support",
+    title: "Market Intelligence",
+    description: "Campaign reporting, ROI analysis, and data-driven insights to optimize your football marketing",
+    services: ["Performance Reporting", "ROI Analysis", "Audience Insights", "Optimization"],
+    ctaLink: "/packages",
+  },
+  {
+    id: "ongoing-support",
+    category: "support",
+    title: "Ongoing Management",
+    description: "Dedicated account management, monthly reviews, and strategic advisory to ensure partnership success",
+    services: ["Account Management", "Monthly Reviews", "Strategy Refinement", "Consultancy"],
+    ctaLink: "/packages",
+  },
+];
+
+// Case study / showcase card data for carousel
 interface ShowcaseCard {
   id: string;
   category: "featured" | "case-study" | "collaboration" | "service";
@@ -33,25 +112,8 @@ const showcaseCardsConfig: Omit<ShowcaseCard, 'icon'>[] = [
     titleKey: "business.player_brand",
     descriptionKey: "business.player_brand_desc",
     bgGradient: "from-primary/40 via-primary/20 to-black/90",
-    ctaTextKey: "business.explore_services",
-  },
-  {
-    id: "sponsorship",
-    category: "case-study",
-    categoryLabelKey: "business.case_study",
-    titleKey: "business.sponsorship",
-    descriptionKey: "business.sponsorship_desc",
-    bgGradient: "from-amber-900/60 via-amber-800/30 to-black/90",
-    ctaTextKey: "business.view_case",
-  },
-  {
-    id: "commercial",
-    category: "collaboration",
-    categoryLabelKey: "business.collaboration",
-    titleKey: "business.partnerships",
-    descriptionKey: "business.partnerships_desc",
-    bgGradient: "from-blue-900/60 via-blue-800/30 to-black/90",
-    ctaTextKey: "business.learn_more",
+    ctaTextKey: "business.build_package",
+    ctaLink: "/packages",
   },
   {
     id: "talent-access",
@@ -64,6 +126,26 @@ const showcaseCardsConfig: Omit<ShowcaseCard, 'icon'>[] = [
     ctaLink: "/stars",
   },
   {
+    id: "campaign-activation",
+    category: "collaboration",
+    categoryLabelKey: "business.collaboration",
+    titleKey: "business.campaign_activation",
+    descriptionKey: "business.campaign_activation_desc",
+    bgGradient: "from-blue-900/60 via-blue-800/30 to-black/90",
+    ctaTextKey: "business.start_campaign",
+    ctaLink: "/packages",
+  },
+  {
+    id: "content-production",
+    category: "service",
+    categoryLabelKey: "business.service",
+    titleKey: "business.content_production",
+    descriptionKey: "business.content_production_desc",
+    bgGradient: "from-amber-900/60 via-amber-800/30 to-black/90",
+    ctaTextKey: "business.explore_content",
+    ctaLink: "/packages",
+  },
+  {
     id: "market-intel",
     category: "service",
     categoryLabelKey: "business.service",
@@ -71,15 +153,17 @@ const showcaseCardsConfig: Omit<ShowcaseCard, 'icon'>[] = [
     descriptionKey: "business.market_intel_desc",
     bgGradient: "from-emerald-900/60 via-emerald-800/30 to-black/90",
     ctaTextKey: "business.discover",
+    ctaLink: "/packages",
   },
   {
-    id: "investment",
+    id: "club-partnerships",
     category: "case-study",
     categoryLabelKey: "business.case_study",
-    titleKey: "business.player_investment",
-    descriptionKey: "business.player_investment_desc",
+    titleKey: "business.club_partnerships",
+    descriptionKey: "business.club_partnerships_desc",
     bgGradient: "from-rose-900/60 via-rose-800/30 to-black/90",
     ctaTextKey: "business.explore",
+    ctaLink: "/packages",
   },
 ];
 
@@ -175,23 +259,23 @@ const Business = () => {
 
   // Fallback content for cards
   const cardFallbacks: Record<string, { category: string; title: string; desc: string; cta: string }> = {
-    "player-brands": { category: "Featured", title: "Athlete Influence Packages", desc: "Leverage our roster's reach to amplify your brand through authentic athlete partnerships and campaigns", cta: "Explore Services" },
-    "sponsorship": { category: "Case Study", title: "Strategic Sponsorship Deals", desc: "Connecting brands with rising talent", cta: "View Case" },
-    "commercial": { category: "Collaboration", title: "Commercial Partnerships", desc: "End-to-end campaign management", cta: "Learn More" },
-    "talent-access": { category: "Service", title: "Exclusive Talent Access", desc: "Connect with our roster of professionals", cta: "View Roster" },
-    "market-intel": { category: "Service", title: "Market Intelligence", desc: "Data-driven insights and analytics", cta: "Discover" },
-    "investment": { category: "Case Study", title: "Player Investment", desc: "Strategic football investment opportunities", cta: "Explore" },
+    "player-brands": { category: "Featured", title: "Build Your Package", desc: "Create a bespoke football marketing package tailored to your brand objectives", cta: "Build Package" },
+    "talent-access": { category: "Service", title: "Exclusive Talent Access", desc: "Direct access to professional footballers for authentic brand partnerships", cta: "View Roster" },
+    "campaign-activation": { category: "Collaboration", title: "Campaign Activation", desc: "End-to-end campaign development and execution", cta: "Start Campaign" },
+    "content-production": { category: "Service", title: "Content & Creative", desc: "Football content strategy, video production, and branded content", cta: "Explore Content" },
+    "market-intel": { category: "Service", title: "Market Intelligence", desc: "Campaign reporting, ROI analysis, and data-driven insights", cta: "Discover" },
+    "club-partnerships": { category: "Case Study", title: "Club Connections", desc: "Strategic club partnerships and matchday activations", cta: "Explore" },
   };
 
   // Build translated showcase cards with icons
   const showcaseCards = showcaseCardsConfig.map((card, index) => {
     const icons = [
       <Sparkles className="w-12 h-12" key="sparkles" />,
-      <Handshake className="w-12 h-12" key="handshake" />,
-      <Briefcase className="w-12 h-12" key="briefcase" />,
       <Users className="w-12 h-12" key="users" />,
-      <Target className="w-12 h-12" key="target" />,
-      <TrendingUp className="w-12 h-12" key="trending" />,
+      <Megaphone className="w-12 h-12" key="megaphone" />,
+      <Video className="w-12 h-12" key="video" />,
+      <BarChart3 className="w-12 h-12" key="barchart" />,
+      <Handshake className="w-12 h-12" key="handshake" />,
     ];
     const fallback = cardFallbacks[card.id];
     return {
@@ -203,6 +287,23 @@ const Business = () => {
       icon: icons[index],
     };
   });
+
+  // Build package cards with icons
+  const packageIcons = [
+    <Target className="w-8 h-8" key="target" />,
+    <Users className="w-8 h-8" key="users" />,
+    <Megaphone className="w-8 h-8" key="megaphone" />,
+    <Video className="w-8 h-8" key="video" />,
+    <BarChart3 className="w-8 h-8" key="barchart" />,
+    <Handshake className="w-8 h-8" key="handshake" />,
+    <TrendingUp className="w-8 h-8" key="trending" />,
+    <Briefcase className="w-8 h-8" key="briefcase" />,
+  ];
+  
+  const corePackages = corePackagesConfig.map((pkg, index) => ({
+    ...pkg,
+    icon: packageIcons[index],
+  }));
 
   // Build translated stats
   const statsFallbacks = ["Active Players", "Countries", "Combined Reach", "Commitment"];
@@ -310,13 +411,15 @@ const Business = () => {
               
               {/* CTA Buttons */}
               <div className="mt-8 flex flex-wrap gap-4">
-                <Button size="lg" className="btn-shine font-bebas uppercase tracking-wider text-lg px-8" hoverEffect>
-                  <a href="mailto:jolon.levene@risefootballagency.com?subject=Business%20Inquiry">
-                    {t('business.start_collaboration', 'Start Collaboration')}
-                  </a>
-                </Button>
+                <LocalizedLink to="/packages">
+                  <Button size="lg" className="btn-shine font-bebas uppercase tracking-wider text-lg px-8" hoverEffect>
+                    {t('business.build_package', 'Build Your Package')}
+                  </Button>
+                </LocalizedLink>
                 <Button variant="outline" size="lg" className="font-bebas uppercase tracking-wider text-lg px-8 border-primary/30 text-primary hover:bg-primary/10" hoverEffect>
-                  {t('business.drop_briefing', 'Drop Your Briefing')}
+                  <a href="mailto:jolon.levene@risefootballagency.com?subject=Business%20Inquiry">
+                    {t('business.drop_briefing', 'Drop Your Briefing')}
+                  </a>
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
