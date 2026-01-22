@@ -124,7 +124,7 @@ const subdomainSubHeaders: Record<string, SubHeaderConfig> = {
   },
   business: {
     left: [
-      { type: 'link', to: '/business', labelKey: 'header.packages', fallback: 'Packages', mobileFallback: 'Packages', icon: Package },
+      { type: 'link', to: '/packages', labelKey: 'header.packages', fallback: 'Packages', mobileFallback: 'Packages', icon: Package },
       { type: 'button', action: 'declareInterest', labelKey: 'header.declare_interest_package', fallback: 'Declare Interest in Package', mobileFallback: 'Interest', icon: Users },
     ],
     right: [
