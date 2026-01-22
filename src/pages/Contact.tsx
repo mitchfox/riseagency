@@ -94,7 +94,7 @@ const Contact = () => {
               <h1 className="text-6xl md:text-7xl font-bebas uppercase text-foreground mb-4 tracking-wider">
                 {t('contact.title', 'Contact Us')}
               </h1>
-              <p className="text-lg text-muted-foreground max-w-2xl">
+              <p className="text-lg text-muted-foreground max-w-2xl italic">
                 {t('contact.subtitle', 'Get in touch with the right team member for your needs')}
               </p>
             </ScrollReveal>

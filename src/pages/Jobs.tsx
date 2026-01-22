@@ -132,7 +132,7 @@ const Jobs = () => {
                   <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-4">
                     {t('jobs.open_positions', 'OPEN')} <span className="text-primary">{t('jobs.positions', 'POSITIONS')}</span>
                   </h2>
-                  <p className="text-lg text-muted-foreground">
+                  <p className="text-lg text-muted-foreground italic">
                     {t('jobs.positions_desc', 'Find your role in helping players realise their potential')}
                   </p>
                 </div>

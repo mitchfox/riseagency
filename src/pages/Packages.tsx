@@ -9,8 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { 
   ChevronRight,
   Check, 
-  Plus, 
-  Minus, 
+  Plus,
   Send, 
   ArrowLeft,
   X,
@@ -44,11 +43,6 @@ interface ServiceOption {
   name: string;
   category: string;
   description: string;
-}
-
-interface SelectedService {
-  service: ServiceOption;
-  quantity: number;
 }
 
 // Service categories aligned with Sales Deck
@@ -241,7 +235,7 @@ const PACKAGE_TEMPLATES = [
 
 const Packages = () => {
   const { t } = useLanguage();
-  const [selectedServices, setSelectedServices] = useState<Map<string, SelectedService>>(new Map());
+  const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSummary, setShowSummary] = useState(false);
@@ -279,55 +273,25 @@ const Packages = () => {
     return filtered;
   }, [servicesByCategory, searchQuery]);
 
-  // Calculate totals
-  const { totalItems, selectedList } = useMemo(() => {
-    let items = 0;
-    const list: { service: ServiceOption; quantity: number }[] = [];
-
-    selectedServices.forEach(({ service, quantity }) => {
-      items += quantity;
-      list.push({ service, quantity });
-    });
-
-    return { totalItems: items, selectedList: list };
+  // Get selected services list
+  const selectedList = useMemo(() => {
+    return SERVICES.filter(s => selectedServices.has(s.id));
   }, [selectedServices]);
 
   const toggleService = (service: ServiceOption) => {
-    const newSelected = new Map(selectedServices);
+    const newSelected = new Set(selectedServices);
     
     if (newSelected.has(service.id)) {
       newSelected.delete(service.id);
     } else {
-      newSelected.set(service.id, { service, quantity: 1 });
-    }
-    
-    setSelectedServices(newSelected);
-  };
-
-  const updateQuantity = (serviceId: string, delta: number) => {
-    const newSelected = new Map(selectedServices);
-    const current = newSelected.get(serviceId);
-    
-    if (current) {
-      const newQty = current.quantity + delta;
-      if (newQty <= 0) {
-        newSelected.delete(serviceId);
-      } else {
-        newSelected.set(serviceId, { ...current, quantity: newQty });
-      }
+      newSelected.add(service.id);
     }
     
     setSelectedServices(newSelected);
   };
 
   const applyTemplate = (template: typeof PACKAGE_TEMPLATES[0]) => {
-    const newSelected = new Map<string, SelectedService>();
-    template.services.forEach(serviceId => {
-      const service = SERVICES.find(s => s.id === serviceId);
-      if (service) {
-        newSelected.set(serviceId, { service, quantity: 1 });
-      }
-    });
+    const newSelected = new Set<string>(template.services);
     setSelectedServices(newSelected);
     toast.success(`${template.name} Package applied`, {
       description: `${template.services.length} services selected`
@@ -347,8 +311,8 @@ const Packages = () => {
     setIsSubmitting(true);
     
     // Build request details
-    const servicesList = Array.from(selectedServices.values())
-      .map(({ service, quantity }) => `• ${service.name}${quantity > 1 ? ` (x${quantity})` : ''}`)
+    const servicesList = selectedList
+      .map((service) => `• ${service.name}`)
       .join('\n');
     
     const emailBody = encodeURIComponent(
@@ -397,8 +361,8 @@ const Packages = () => {
               <h1 className="text-3xl font-bebas uppercase tracking-wider text-foreground">
                 Build Your Package
               </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Select services to create your bespoke partnership proposal
+              <p className="text-sm text-muted-foreground mt-1 italic">
+                Select all services that could benefit your brand or business. Build your ideal partnership and we'll create a tailored proposal.
               </p>
             </div>
 
@@ -486,17 +450,12 @@ const Packages = () => {
 
             {/* Footer - Summary */}
             <div className="p-6 border-t border-border bg-card">
-              <div className="mb-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Services Selected</span>
-                  <span className="text-2xl font-bebas text-primary">{selectedServices.size}</span>
-                </div>
-                {selectedServices.size > 0 && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {totalItems} {totalItems === 1 ? 'item' : 'items'} in your package
-                  </p>
-                )}
+            <div className="mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Services Selected</span>
+                <span className="text-2xl font-bebas text-primary">{selectedServices.size}</span>
               </div>
+            </div>
 
               <Button 
                 onClick={() => setShowSummary(true)}
@@ -552,26 +511,20 @@ const Packages = () => {
                     <div className="grid gap-3">
                       {selectedCategoryServices.map((service) => {
                         const isSelected = selectedServices.has(service.id);
-                        const selectedData = selectedServices.get(service.id);
                         
                         return (
                           <motion.div
                             key={service.id}
                             layout
+                            onClick={() => toggleService(service)}
                             className={cn(
-                              "relative rounded-xl border-2 transition-all duration-300 overflow-hidden",
+                              "relative rounded-xl border-2 transition-all duration-300 overflow-hidden cursor-pointer",
                               isSelected 
                                 ? "border-primary bg-primary/5" 
                                 : "border-border hover:border-primary/30 bg-card"
                             )}
                           >
-                            <div
-                              onClick={() => !isSelected && toggleService(service)}
-                              className={cn(
-                                "p-4 flex items-center justify-between",
-                                !isSelected && "cursor-pointer"
-                              )}
-                            >
+                            <div className="p-4 flex items-center justify-between">
                               <div className="flex-1">
                                 <h3 className="font-medium text-foreground">
                                   {service.name}
@@ -582,28 +535,8 @@ const Packages = () => {
                               </div>
 
                               {isSelected ? (
-                                <div className="flex items-center gap-2 ml-4">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      updateQuantity(service.id, -1);
-                                    }}
-                                    className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center hover:bg-muted transition-all"
-                                  >
-                                    <Minus className="w-4 h-4" />
-                                  </button>
-                                  <span className="text-lg font-bold w-8 text-center">
-                                    {selectedData?.quantity || 1}
-                                  </span>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      updateQuantity(service.id, 1);
-                                    }}
-                                    className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-all"
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                  </button>
+                                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center ml-4">
+                                  <Check className="w-4 h-4" />
                                 </div>
                               ) : (
                                 <div className="w-8 h-8 rounded-full border-2 border-dashed border-border flex items-center justify-center ml-4">
@@ -629,8 +562,8 @@ const Packages = () => {
                       <h2 className="text-2xl font-bebas uppercase tracking-wider mb-3">
                         Select a Category
                       </h2>
-                      <p className="text-muted-foreground">
-                        Choose from our range of football marketing services to build your custom partnership package
+                      <p className="text-muted-foreground italic">
+                        Browse our comprehensive range of football marketing services. Select everything that interests your brand - we'll tailor a proposal to match your needs and budget.
                       </p>
                     </div>
                   </motion.div>
@@ -644,17 +577,16 @@ const Packages = () => {
                 <h3 className="text-lg font-bebas uppercase tracking-wider mb-4">Your Package</h3>
                 
                 {selectedList.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No services selected yet</p>
+                  <p className="text-sm text-muted-foreground italic">No services selected yet. Browse categories on the left to add services to your package.</p>
                 ) : (
                   <div className="space-y-3">
-                    {selectedList.map(({ service, quantity }) => (
+                    {selectedList.map((service) => (
                       <div key={service.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
                         <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{service.name}</p>
                           <p className="text-xs text-muted-foreground">
                             {SERVICE_CATEGORIES.find(c => c.id === service.category)?.label}
-                            {quantity > 1 && ` • x${quantity}`}
                           </p>
                         </div>
                         <button
@@ -733,10 +665,9 @@ const Packages = () => {
                 <div className="mb-6">
                   <h3 className="text-sm font-medium text-foreground mb-3">Selected Services ({selectedServices.size})</h3>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {selectedList.map(({ service, quantity }) => (
+                    {selectedList.map((service) => (
                       <div key={service.id} className="flex items-center justify-between py-2 border-b border-border/50">
                         <span className="text-sm text-foreground">{service.name}</span>
-                        {quantity > 1 && <span className="text-xs text-muted-foreground">x{quantity}</span>}
                       </div>
                     ))}
                   </div>
