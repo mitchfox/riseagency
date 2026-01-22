@@ -143,7 +143,7 @@ const ClubDirection = () => {
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4">
                 {t('club_direction.why_title', 'WHY WORK WITH')} <span className="text-primary">{t('club_direction.why_highlight', 'RISE?')}</span>
               </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto italic">
                 National exclusivity for our club partners means undivided time and resources for your success.
               </p>
             </ScrollReveal>

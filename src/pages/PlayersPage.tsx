@@ -437,7 +437,7 @@ const Index = () => {
                   <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground mb-6">
                     {t("home.skills_that", "SKILLS THAT")} <span className="text-primary">{t("home.level_up", "LEVEL UP")}</span>
                   </h2>
-                  <p className="text-lg text-muted-foreground mb-8">
+                  <p className="text-lg text-muted-foreground mb-8 italic">
                     {t("home.skills_desc", "We develop for where you're going, not just where you are.")}
                   </p>
                   <ScrollRevealContainer className="space-y-4" staggerDelay={0.1}>

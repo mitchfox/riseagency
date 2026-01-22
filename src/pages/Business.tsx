@@ -405,7 +405,7 @@ const Business = () => {
               </div>
               
               {/* Subtitle */}
-              <p className="mt-8 text-xl md:text-2xl text-muted-foreground max-w-2xl">
+              <p className="mt-8 text-xl md:text-2xl text-muted-foreground max-w-2xl italic">
                 {t('business.subtitle', 'Strategic commercial partnerships that connect brands with elite football talent.')}
               </p>
               
@@ -567,48 +567,79 @@ const Business = () => {
           </div>
         </section>
 
-        {/* How We Collaborate Section */}
-        <section className="py-8 md:py-12 bg-muted/20">
+        {/* How We Collaborate Section - Streamlined */}
+        <section className="py-12 md:py-20 bg-muted/20">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto text-center mb-16">
-              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-6">
+            <div className="max-w-4xl mx-auto text-center mb-12">
+              <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4">
                 {t('business.how_we_collaborate', 'How We Collaborate')}
               </h2>
-              <p className="text-lg text-muted-foreground">
-                {t('business.collaborate_desc', 'From initial briefing to campaign execution, we partner with brands to create authentic football-driven marketing campaigns.')}
+              <p className="text-lg text-muted-foreground italic">
+                {t('business.collaborate_desc', 'From initial briefing to campaign execution - a seamless three-step journey.')}
               </p>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  step: "01",
-                  titleKey: "business.discovery",
-                  titleFallback: "Discovery",
-                  descKey: "business.discovery_desc",
-                  descFallback: "Every successful partnership begins with understanding. We take time to learn about your brand identity, marketing objectives, target demographics, and campaign vision. This discovery phase allows us to identify the ideal talent match from our roster, ensuring authentic alignment between your brand values and the athlete's persona."
-                },
-                {
-                  step: "02",
-                  titleKey: "business.strategy",
-                  titleFallback: "Strategy",
-                  descKey: "business.strategy_desc",
-                  descFallback: "With insights from discovery, our team crafts a bespoke partnership strategy tailored to your goals. We define deliverables, content formats, activation timelines, and success metrics. Whether it's social media integration, event appearances, or long-term ambassadorship, we design a framework that maximizes impact and ROI."
-                },
-                {
-                  step: "03",
-                  titleKey: "business.execution",
-                  titleFallback: "Execution",
-                  descKey: "business.execution_desc",
-                  descFallback: "From contract negotiation to final campaign delivery, we manage every detail with precision. Our team coordinates schedules, oversees content production, ensures brand compliance, and handles logistics. We provide regular progress updates and post-campaign analytics, delivering a seamless experience from start to finish."
-                }
-              ].map((item, index) => (
-                <div key={index} className="relative p-8 bg-card/50 border border-border/50 rounded-xl group hover:border-primary/50 transition-colors duration-500">
-                  <div className="text-6xl font-bebas text-primary/20 absolute top-4 right-4">{item.step}</div>
-                  <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground mb-4">{t(item.titleKey, item.titleFallback)}</h3>
-                  <p className="text-muted-foreground">{t(item.descKey, item.descFallback)}</p>
-                </div>
-              ))}
+            {/* Connected pathway design */}
+            <div className="relative max-w-5xl mx-auto">
+              {/* Connecting line */}
+              <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20 -translate-y-1/2" />
+              
+              <div className="grid md:grid-cols-3 gap-6 md:gap-0">
+                {[
+                  {
+                    step: "01",
+                    titleKey: "business.discovery",
+                    titleFallback: "Discovery",
+                    descFallback: "We learn your brand, goals, and vision to find the perfect talent match."
+                  },
+                  {
+                    step: "02",
+                    titleKey: "business.strategy",
+                    titleFallback: "Strategy",
+                    descFallback: "We craft a bespoke partnership framework with clear deliverables and metrics."
+                  },
+                  {
+                    step: "03",
+                    titleKey: "business.execution",
+                    titleFallback: "Execution",
+                    descFallback: "We manage every detail from contracts to content to final delivery."
+                  }
+                ].map((item, index) => (
+                  <div 
+                    key={index} 
+                    className="relative flex flex-col items-center text-center px-6"
+                  >
+                    {/* Step circle */}
+                    <div className="relative z-10 w-16 h-16 rounded-full bg-background border-2 border-primary flex items-center justify-center mb-4">
+                      <span className="text-2xl font-bebas text-primary">{item.step}</span>
+                    </div>
+                    
+                    <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">
+                      {t(item.titleKey, item.titleFallback)}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {item.descFallback}
+                    </p>
+                    
+                    {/* Arrow for mobile */}
+                    {index < 2 && (
+                      <div className="md:hidden my-4 text-primary">
+                        <ChevronRight className="w-6 h-6 rotate-90" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Single CTA */}
+            <div className="text-center mt-10">
+              <LocalizedLink to="/packages">
+                <Button size="lg" className="btn-shine font-bebas uppercase tracking-wider text-lg px-8" hoverEffect>
+                  Start Your Journey
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </LocalizedLink>
             </div>
           </div>
         </section>
@@ -626,19 +657,14 @@ const Business = () => {
               <h2 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider mb-6">
                 {t('business.lets_build', "Let's Build Together")}
               </h2>
-              <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+              <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto italic">
                 {t('business.cta_desc', 'Ready to explore commercial opportunities with RISE? Get in touch with our business development team.')}
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="btn-shine font-bebas uppercase tracking-wider text-lg px-10" hoverEffect>
-                  <a href="mailto:jolon.levene@risefootballagency.com?subject=Business%20Inquiry">
-                    {t('business.contact_team', 'Contact Business Team')}
-                  </a>
-                </Button>
-                <Button variant="outline" size="lg" className="font-bebas uppercase tracking-wider text-lg px-10 border-primary/40" hoverEffect>
-                  {t('business.view_stars', 'View Our Stars')}
-                </Button>
-              </div>
+              <Button size="lg" className="btn-shine font-bebas uppercase tracking-wider text-lg px-10" hoverEffect>
+                <a href="mailto:jolon.levene@risefootballagency.com?subject=Business%20Inquiry">
+                  {t('business.contact_team', 'Contact Business Team')}
+                </a>
+              </Button>
             </div>
           </div>
         </section>

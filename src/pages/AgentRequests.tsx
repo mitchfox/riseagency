@@ -176,7 +176,7 @@ const AgentRequests = () => {
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-4">
                 {t('requests.active_title', 'ACTIVE')} <span className="text-primary">{t('requests.active_highlight', 'SEARCHES')}</span>
               </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto italic">
                 These are players we are actively seeking for club partners. If you represent someone matching these profiles, get in touch.
               </p>
             </ScrollReveal>
