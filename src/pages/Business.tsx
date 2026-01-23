@@ -485,10 +485,11 @@ const Business = () => {
             <div className="flex-shrink-0 w-[calc((100vw-1280px)/2)]" />
             
             {showcaseCards.map((card, index) => (
-              <div
+              <LocalizedLink
                 key={card.id}
+                to={card.ctaLink || "/packages"}
                 className={cn(
-                  "flex-shrink-0 snap-start rounded-2xl overflow-hidden relative group cursor-pointer transition-all duration-500",
+                  "flex-shrink-0 snap-start rounded-2xl overflow-hidden relative group cursor-pointer transition-all duration-500 block",
                   index === activeCardIndex 
                     ? "w-[340px] md:w-[420px] h-[480px] md:h-[520px] scale-100 opacity-100" 
                     : "w-[280px] md:w-[340px] h-[480px] md:h-[520px] scale-95 opacity-70 hover:opacity-90"
@@ -535,17 +536,18 @@ const Business = () => {
                       )}
                     </div>
                     
-                    <button className="group/cta flex items-center gap-2 text-sm font-bebas uppercase tracking-wider text-white/80 hover:text-primary transition-colors">
-                      <span className="border-b border-white/40 group-hover/cta:border-primary pb-0.5">
+                    <span className="group/cta flex items-center gap-2 text-sm font-bebas uppercase tracking-wider text-white/80 group-hover:text-primary transition-colors">
+                      <span className="border-b border-white/40 group-hover:border-primary pb-0.5">
                         <HoverText text={card.ctaText} />
                       </span>
-                    </button>
+                      <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </span>
                   </div>
                 </div>
                 
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              </div>
+              </LocalizedLink>
             ))}
             
             {/* Right spacer */}
