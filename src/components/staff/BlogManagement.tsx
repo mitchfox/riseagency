@@ -59,7 +59,7 @@ const BlogManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       const { data, error } = await supabase
         .from("blog_posts")
         .select("*")
-        .or("category.eq.PLAYER NEWS,category.eq.INSIDE:ACCESS,category.is.null")
+        .eq("category", "PLAYER NEWS")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -259,7 +259,6 @@ const BlogManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="PLAYER NEWS">PLAYER NEWS</SelectItem>
-                    <SelectItem value="INSIDE:ACCESS">INSIDE:ACCESS</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
