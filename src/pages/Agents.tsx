@@ -69,19 +69,19 @@ const Agents = () => {
       questionKey: "agents.faq3_q",
       questionFallback: "Which leagues do you have connections in?",
       answerKey: "agents.faq3_a",
-      answerFallback: "Our primary focus is the English Football League (Championship, League One, League Two), Scottish Premiership, and select European leagues including Netherlands, Belgium, and Scandinavia. We also have growing connections in MLS and the Middle East.",
+      answerFallback: "Our primary focus is the English Football League (Championship, League One, League Two), Scottish Premiership, and select European leagues including the Netherlands, Belgium, and Scandinavia. We also have growing connections in MLS and the Middle East.",
     },
     {
       questionKey: "agents.faq4_q",
       questionFallback: "Can you help with players outside your usual markets?",
       answerKey: "agents.faq4_a",
-      answerFallback: "Absolutely. While we have strongest connections in certain markets, we are always open to exploring opportunities elsewhere. If we do not have direct contacts, we are transparent about it and can often facilitate introductions through our wider network.",
+      answerFallback: "Absolutely. Whilst we have strongest connections in certain markets, we are always open to exploring opportunities elsewhere. If we do not have direct contacts, we are transparent about it and can often facilitate introductions through our wider network.",
     },
     {
       questionKey: "agents.faq5_q",
       questionFallback: "What makes RISE different from other agencies?",
       answerKey: "agents.faq5_a",
-      answerFallback: "We prioritize player development over quick deals. Our performance analysis, coaching connections, and athlete-centric approach means players we work with are better prepared for the next level. This benefits everyone - players perform better, clubs get more value, and agents build stronger reputations.",
+      answerFallback: "We prioritise player development over quick deals. Our performance analysis, coaching connections, and athlete-centric approach means players we work with are better prepared for the next level. This benefits everyone - players perform better, clubs get more value, and agents build stronger reputations.",
     },
     {
       questionKey: "agents.faq6_q",
