@@ -811,27 +811,35 @@ const AnalysisViewer = () => {
   }
 
   return (
-    <div className="min-h-screen relative" style={{ backgroundColor: 'hsl(0 0% 15%)' }}>
+    <div className="min-h-screen relative bg-black">
+      {/* A4 width container - 210mm ≈ 794px */}
+      <div 
+        className="mx-auto min-h-screen relative"
+        style={{ 
+          maxWidth: '794px',
+          backgroundColor: 'hsl(0 0% 15%)'
+        }}
+      >
 
-      {/* Video Button */}
-      {analysis.video_url && (
-        <motion.div
-          className="fixed bottom-4 right-8 z-50"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Button
-            onClick={() => window.open(analysis.video_url!, '_blank')}
-            className="font-bebas uppercase tracking-wider shadow-lg bg-primary text-black hover:bg-primary/90"
+        {/* Video Button */}
+        {analysis.video_url && (
+          <motion.div
+            className="fixed bottom-4 right-8 z-50"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5 }}
           >
-            <Play className="w-4 h-4 mr-2" />
-            Watch Video
-          </Button>
-        </motion.div>
-      )}
+            <Button
+              onClick={() => window.open(analysis.video_url!, '_blank')}
+              className="font-bebas uppercase tracking-wider shadow-lg bg-primary text-black hover:bg-primary/90"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Watch Video
+            </Button>
+          </motion.div>
+        )}
 
-      <main className="w-full mx-auto">
+        <main className="w-full mx-auto">
         {/* Pre-Match Content */}
         {isPreMatch && (
           <div className="w-full">
@@ -1621,6 +1629,7 @@ const AnalysisViewer = () => {
           </Button>
         </motion.div>
       </main>
+      </div>
     </div>
   );
 };
