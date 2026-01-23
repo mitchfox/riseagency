@@ -231,7 +231,7 @@ const Index = () => {
                   article.image_url && (
                     <ScrollRevealItem key={article.id} className={index >= 2 ? 'hidden md:block' : ''}>
                       <Link
-                        to={`/news/${article.id}`}
+                        to={`/news/${article.title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim()}`}
                         className="group relative aspect-[4/5] overflow-hidden rounded-lg block"
                       >
                         <img 
@@ -555,7 +555,7 @@ const Index = () => {
               {translatedNews.map((article) => (
                 <ScrollRevealItem key={article.id}>
                   <Link
-                    to={`/news/${article.id}`}
+                    to={`/news/${article.title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim()}`}
                     className="group relative aspect-[16/10] overflow-hidden rounded-lg block"
                   >
                     {article.image_url && (
