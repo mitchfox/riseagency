@@ -58,7 +58,7 @@ const About = () => {
                 <div className="space-y-6 text-lg text-muted-foreground">
                   <p>{t('about.story_p1', 'We started as players. We understand the journey: the sacrifices, the setbacks, and what it takes to make it.')}</p>
                   <p>{t('about.story_p2', 'RISE was founded on a simple belief: talent needs more than opportunity—it needs the right guidance, structure, and support to truly flourish.')}</p>
-                  <p>{t('about.story_p3', 'We combine data-driven performance analysis with personalized career management to help players reach their full potential.')}</p>
+                  <p>{t('about.story_p3', 'We combine data-driven performance analysis with personalised career management to help players reach their full potential.')}</p>
                   <p className="text-foreground font-medium">{t('about.story_p4', 'We built this into the agency we run today. Every lesson, every insight, every connection. Now focused on helping the next generation realise their potential.')}</p>
                 </div>
               </ScrollReveal>
@@ -206,7 +206,7 @@ const About = () => {
                       </h3>
                     </div>
                     <p className="text-muted-foreground">
-                      {t('about.service_analysis_desc', 'Data-driven insights to optimize player development')}
+                      {t('about.service_analysis_desc', 'Data-driven insights to optimise player development')}
                     </p>
                   </div>
                   <div className="p-8 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">
@@ -219,7 +219,7 @@ const About = () => {
                       </h3>
                     </div>
                     <p className="text-muted-foreground">
-                      {t('about.service_development_desc', 'Tailored training programs and mentorship')}
+                      {t('about.service_development_desc', 'Tailored training programmes and mentorship')}
                     </p>
                   </div>
                   <div className="p-8 border border-border/50 bg-card/30 rounded-lg group hover:border-primary/30 transition-all">

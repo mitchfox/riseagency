@@ -305,7 +305,7 @@ export const PostContent = () => {
                         <div key={p.id} className="flex items-center gap-2 p-2 bg-background/50 rounded-md">
                           {p.image_url_internal && (
                             <div className="w-8 h-8 rounded overflow-hidden border flex-shrink-0">
-                              <img src={p.image_url_internal} alt="" className="w-full h-full object-cover" />
+                              <img src={p.image_url_internal} alt={`${p.title} thumbnail`} className="w-full h-full object-cover" loading="lazy" />
                             </div>
                           )}
                           <span className="text-xs sm:text-sm truncate flex-1">{p.title}</span>
@@ -373,7 +373,7 @@ export const PostContent = () => {
                                   rel="noopener noreferrer"
                                   className="block w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border hover:ring-2 hover:ring-primary"
                                 >
-                                  <img src={post.image_url_internal} alt="" className="w-full h-full object-cover" />
+                                  <img src={post.image_url_internal} alt={`${post.title} preview`} className="w-full h-full object-cover" loading="lazy" />
                                 </a>
                                 <Button
                                   size="icon"

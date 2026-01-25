@@ -49,6 +49,7 @@ interface LanguageRegion {
 }
 
 const getFlagUrl = (flagCode: string) => `https://flagcdn.com/w40/${flagCode}.png`;
+const getFlagAlt = (name: string) => `${name} language flag`;
 
 const languageRegions: LanguageRegion[] = [
   { code: "en", name: "English", nativeName: "English", flagCode: "gb", x: 30, y: 60 },
