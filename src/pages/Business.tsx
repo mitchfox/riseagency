@@ -60,8 +60,8 @@ const corePackagesConfig: Omit<PackageCard, 'icon'>[] = [
     id: "paid-media",
     category: "premium",
     title: "Paid Media & Performance",
-    description: "Managed social campaigns, funnel strategy, and performance optimization for maximum ROI",
-    services: ["Paid Social Management", "Ad Creative", "Retargeting", "Performance Optimization"],
+    description: "Managed social campaigns, funnel strategy, and performance optimisation for maximum ROI",
+    services: ["Paid Social Management", "Ad Creative", "Retargeting", "Performance Optimisation"],
     ctaLink: "/packages",
   },
   {
@@ -76,8 +76,8 @@ const corePackagesConfig: Omit<PackageCard, 'icon'>[] = [
     id: "market-intelligence",
     category: "support",
     title: "Market Intelligence",
-    description: "Campaign reporting, ROI analysis, and data-driven insights to optimize your football marketing",
-    services: ["Performance Reporting", "ROI Analysis", "Audience Insights", "Optimization"],
+    description: "Campaign reporting, ROI analysis, and data-driven insights to optimise your football marketing",
+    services: ["Performance Reporting", "ROI Analysis", "Audience Insights", "Optimisation"],
     ctaLink: "/packages",
   },
   {

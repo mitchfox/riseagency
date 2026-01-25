@@ -16,6 +16,7 @@ import { useRoleSubdomain, pathToRole, RoleSubdomain } from "@/hooks/useRoleSubd
 import { useIsPWA } from "@/hooks/useIsPWA";
 import { usePerformanceCheck } from "@/hooks/usePerformanceCheck";
 import { StaticLandingFallback } from "@/components/StaticLandingFallback";
+import { SEO } from "@/components/SEO";
 import riseLogoWhite from "@/assets/logo.png";
 
 // Inner component that uses the XRay context for full-page tracking
@@ -211,7 +212,12 @@ function LandingContent() {
   // PWA-specific class for additional styling adjustments
   const pwaClass = isPWA ? 'pwa-standalone' : '';
   
-  return <div className={`landing-no-scroll bg-black flex flex-col items-center justify-end relative cursor-none md:cursor-none ${pwaClass}`} style={{
+  return <>
+    <SEO 
+      title="RISE Football Agency - Elite Player Representation"
+      description="Elite football representation. We scout across Europe and guide Premier League players to success through their development."
+    />
+    <div className={`landing-no-scroll bg-black flex flex-col items-center justify-end relative cursor-none md:cursor-none ${pwaClass}`} style={{
     height: '100dvh',
     maxHeight: '100dvh',
     width: '100%',
@@ -413,7 +419,8 @@ function LandingContent() {
       {/* Dialogs */}
       <RepresentationDialog open={showRepresentation} onOpenChange={setShowRepresentation} />
       <DeclareInterestPlayerDialog open={showDeclareInterest} onOpenChange={setShowDeclareInterest} starsOnly />
-    </div>;
+    </div>
+  </>;
 }
 // Role Slider Component for Desktop - Elegant minimal slider with drag-and-drop
 function RoleSlider({

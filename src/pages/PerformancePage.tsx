@@ -217,11 +217,11 @@ const PerformancePage = () => {
                 <ScrollRevealItem key={service.id}>
                   <Card className="h-full group hover:border-primary/40 transition-all duration-300 bg-card/50 backdrop-blur-sm">
                     <CardContent className="p-6 flex flex-col h-full">
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colours">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                         <service.icon className="h-6 w-6 text-primary" />
                       </div>
                       
-                      <h3 className="text-xl font-bebas uppercase tracking-wider mb-3 group-hover:text-primary transition-colours">
+                      <h3 className="text-xl font-bebas uppercase tracking-wider mb-3 group-hover:text-primary transition-colors">
                         {service.title}
                       </h3>
                       
@@ -303,7 +303,7 @@ const PerformancePage = () => {
                     className="p-8 border border-border/50 bg-card/50 rounded-2xl hover:border-primary/30 transition-all group"
                   >
                     <div className="flex items-start gap-4">
-                      <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colours">
+                      <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
                         <service.icon className="h-7 w-7 text-primary" />
                       </div>
                       <div>

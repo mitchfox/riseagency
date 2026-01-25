@@ -55,7 +55,7 @@ export const ScoutReportView = ({ report, open, onOpenChange, onEdit }: ScoutRep
           <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {report.profile_image_url && (
-                <img src={report.profile_image_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                <img src={report.profile_image_url} alt={`${report.player_name} profile`} className="w-12 h-12 rounded-lg object-cover" loading="lazy" />
               )}
               <div>
                 <span className="text-xl">{report.player_name}</span>

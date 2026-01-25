@@ -421,12 +421,12 @@ const AnalysisHeader = ({
       <div className="relative h-10 md:h-14 overflow-visible bg-black">
         {homeLogo && (
           <div className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-[15vw] h-[15vw] min-w-16 max-w-28 md:min-w-20 md:max-w-36 z-20 -mt-2">
-            <img src={homeLogo} alt="" className="w-full h-full object-contain drop-shadow-xl" />
+            <img src={homeLogo} alt={`${homeTeam || 'Home team'} logo`} className="w-full h-full object-contain drop-shadow-xl" loading="lazy" />
           </div>
         )}
         {awayLogo && (
           <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-[15vw] h-[15vw] min-w-16 max-w-28 md:min-w-20 md:max-w-36 z-20 -mt-2">
-            <img src={awayLogo} alt="" className="w-full h-full object-contain drop-shadow-xl" />
+            <img src={awayLogo} alt={`${awayTeam || 'Away team'} logo`} className="w-full h-full object-contain drop-shadow-xl" loading="lazy" />
           </div>
         )}
 
