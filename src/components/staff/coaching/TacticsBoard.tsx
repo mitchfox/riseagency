@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Eraser, Pencil, Circle, X, ArrowRight, Trash2, 
-  Download, Move, Undo, Save, FolderOpen
+  Download, Move, Undo, Save, FolderOpen, LayoutGrid
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -12,6 +12,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -21,6 +24,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DroppedItem {
   id: string;
@@ -54,6 +58,96 @@ interface BoardTemplate {
 }
 
 const TEMPLATES_KEY = "tactics-board-templates";
+
+// Formation schemes matching SchemeEditor
+const FORMATIONS = [
+  "4-3-3", "4-2-1-3", "4-2-4", "4-2-2-2", "4-3-1-2",
+  "3-4-3", "3-3-1-3", "3-3-4", "3-3-2-2", "3-4-1-2",
+];
+
+// Default positions for each formation (scaled for canvas 800x500)
+const getFormationPositions = (formation: string, team: "x" | "o"): { x: number; y: number }[] => {
+  const defaults: Record<string, { x: number; y: number }[]> = {
+    "4-3-3": [
+      { x: 400, y: 475 }, // GK
+      { x: 160, y: 375 }, { x: 280, y: 400 }, { x: 520, y: 400 }, { x: 640, y: 375 }, // Defense
+      { x: 280, y: 275 }, { x: 400, y: 250 }, { x: 520, y: 275 }, // Midfield
+      { x: 160, y: 125 }, { x: 400, y: 100 }, { x: 640, y: 125 }, // Attack
+    ],
+    "4-2-1-3": [
+      { x: 400, y: 475 },
+      { x: 160, y: 375 }, { x: 280, y: 400 }, { x: 520, y: 400 }, { x: 640, y: 375 },
+      { x: 320, y: 300 }, { x: 480, y: 300 },
+      { x: 400, y: 200 },
+      { x: 160, y: 125 }, { x: 400, y: 100 }, { x: 640, y: 125 },
+    ],
+    "4-2-4": [
+      { x: 400, y: 475 },
+      { x: 160, y: 375 }, { x: 280, y: 400 }, { x: 520, y: 400 }, { x: 640, y: 375 },
+      { x: 320, y: 275 }, { x: 480, y: 275 },
+      { x: 120, y: 125 }, { x: 320, y: 100 }, { x: 480, y: 100 }, { x: 680, y: 125 },
+    ],
+    "4-2-2-2": [
+      { x: 400, y: 475 },
+      { x: 160, y: 375 }, { x: 280, y: 400 }, { x: 520, y: 400 }, { x: 640, y: 375 },
+      { x: 320, y: 300 }, { x: 480, y: 300 },
+      { x: 280, y: 175 }, { x: 520, y: 175 },
+      { x: 320, y: 100 }, { x: 480, y: 100 },
+    ],
+    "4-3-1-2": [
+      { x: 400, y: 475 },
+      { x: 160, y: 375 }, { x: 280, y: 400 }, { x: 520, y: 400 }, { x: 640, y: 375 },
+      { x: 280, y: 275 }, { x: 400, y: 275 }, { x: 520, y: 275 },
+      { x: 400, y: 175 },
+      { x: 320, y: 100 }, { x: 480, y: 100 },
+    ],
+    "3-4-3": [
+      { x: 400, y: 475 },
+      { x: 240, y: 400 }, { x: 400, y: 425 }, { x: 560, y: 400 },
+      { x: 120, y: 250 }, { x: 320, y: 275 }, { x: 480, y: 275 }, { x: 680, y: 250 },
+      { x: 160, y: 125 }, { x: 400, y: 100 }, { x: 640, y: 125 },
+    ],
+    "3-3-1-3": [
+      { x: 400, y: 475 },
+      { x: 240, y: 400 }, { x: 400, y: 425 }, { x: 560, y: 400 },
+      { x: 280, y: 275 }, { x: 400, y: 275 }, { x: 520, y: 275 },
+      { x: 400, y: 175 },
+      { x: 160, y: 125 }, { x: 400, y: 100 }, { x: 640, y: 125 },
+    ],
+    "3-3-4": [
+      { x: 400, y: 475 },
+      { x: 240, y: 400 }, { x: 400, y: 425 }, { x: 560, y: 400 },
+      { x: 280, y: 300 }, { x: 400, y: 300 }, { x: 520, y: 300 },
+      { x: 120, y: 125 }, { x: 320, y: 100 }, { x: 480, y: 100 }, { x: 680, y: 125 },
+    ],
+    "3-3-2-2": [
+      { x: 400, y: 475 },
+      { x: 240, y: 400 }, { x: 400, y: 425 }, { x: 560, y: 400 },
+      { x: 280, y: 300 }, { x: 400, y: 300 }, { x: 520, y: 300 },
+      { x: 280, y: 175 }, { x: 520, y: 175 },
+      { x: 320, y: 100 }, { x: 480, y: 100 },
+    ],
+    "3-4-1-2": [
+      { x: 400, y: 475 },
+      { x: 240, y: 400 }, { x: 400, y: 425 }, { x: 560, y: 400 },
+      { x: 120, y: 275 }, { x: 320, y: 300 }, { x: 480, y: 300 }, { x: 680, y: 275 },
+      { x: 400, y: 175 },
+      { x: 320, y: 100 }, { x: 480, y: 100 },
+    ],
+  };
+
+  const positions = defaults[formation] || defaults["4-3-3"];
+  
+  // For team O, mirror positions (opponent side)
+  if (team === "o") {
+    return positions.map(pos => ({
+      x: pos.x,
+      y: 500 - pos.y, // Flip vertically
+    }));
+  }
+  
+  return positions;
+};
 
 export const TacticsBoard = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -150,6 +244,19 @@ export const TacticsBoard = () => {
       y: 150 + Math.random() * 100,
     };
     setItems(prev => [...prev, newItem]);
+  };
+
+  const addFormation = (formation: string, team: "x" | "o") => {
+    saveToHistory();
+    const positions = getFormationPositions(formation, team);
+    const newItems: DroppedItem[] = positions.map((pos, index) => ({
+      id: `${team}-${formation}-${index}-${Date.now()}`,
+      type: team,
+      x: pos.x,
+      y: pos.y,
+    }));
+    setItems(prev => [...prev, ...newItems]);
+    toast.success(`Added ${formation} formation for Team ${team.toUpperCase()}`);
   };
 
   const clearBoard = () => {
@@ -552,6 +659,52 @@ export const TacticsBoard = () => {
               <Circle className="h-4 w-4 mr-1" />
               Player O
             </Button>
+          </div>
+
+          {/* Quick Formation Setup */}
+          <div className="flex items-center gap-1 pl-3 border-l">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <LayoutGrid className="h-4 w-4 mr-1" />
+                  Formations
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="text-red-500">
+                    <X className="h-4 w-4 mr-2" />
+                    Team X
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {FORMATIONS.map((formation) => (
+                      <DropdownMenuItem
+                        key={`x-${formation}`}
+                        onClick={() => addFormation(formation, "x")}
+                      >
+                        {formation}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="text-blue-500">
+                    <Circle className="h-4 w-4 mr-2" />
+                    Team O
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {FORMATIONS.map((formation) => (
+                      <DropdownMenuItem
+                        key={`o-${formation}`}
+                        onClick={() => addFormation(formation, "o")}
+                      >
+                        {formation}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
