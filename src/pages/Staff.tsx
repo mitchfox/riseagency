@@ -59,6 +59,7 @@ import { PaymentsManagement } from "@/components/staff/PaymentsManagement";
 import { AthleteCentre } from "@/components/staff/AthleteCentre";
 import { OpenAccessManagement } from "@/components/staff/OpenAccessManagement";
 import PressReleasesManagement from "@/components/staff/PressReleasesManagement";
+import { PublicContentManagement } from "@/components/staff/PublicContentManagement";
 import { FocusedTasksSection } from "@/components/staff/FocusedTasksSection";
 import { StaffNotificationsDropdown } from "@/components/staff/StaffNotificationsDropdown";
 import { TacticsBoard } from "@/components/staff/coaching/TacticsBoard";
@@ -130,7 +131,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'blog' | 'betweenthelines' | 'pressreleases' | 'openaccess' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'marketingtips' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'marketingtips' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   
@@ -198,7 +199,7 @@ const Staff = () => {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  const handleSectionToggle = (section: 'overview' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'blog' | 'betweenthelines' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal') => {
+  const handleSectionToggle = (section: 'overview' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'publiccontent' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal') => {
     setExpandedSection(expandedSection === section ? null : section);
     // Scroll to top when section changes
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -679,10 +680,7 @@ const Staff = () => {
           sections: [
             { id: 'marketing', title: 'Marketing', icon: Megaphone },
             { id: 'contentcreator', title: 'Content Creator', icon: Film },
-            { id: 'blog', title: 'News Articles', icon: Newspaper },
-            { id: 'betweenthelines', title: 'Between The Lines', icon: FileText },
-            { id: 'pressreleases', title: 'Press Releases', icon: Newspaper },
-            { id: 'openaccess', title: 'Open Access', icon: FileText },
+            { id: 'publiccontent', title: 'Public Content', icon: Megaphone },
             { id: 'visitors', title: 'Site Visitors', icon: Eye },
           ]
         },
@@ -770,10 +768,7 @@ const Staff = () => {
           { id: 'marketingtips', title: 'Tips & Lessons', icon: Lightbulb },
           { id: 'contentcreator', title: 'Content Creator', icon: Film },
           { id: 'salesdeck', title: 'Sales Deck', icon: Briefcase },
-          { id: 'blog', title: 'News Articles', icon: Newspaper },
-          { id: 'betweenthelines', title: 'Between The Lines', icon: FileText },
-          { id: 'pressreleases', title: 'Press Releases', icon: Newspaper },
-          { id: 'openaccess', title: 'Open Access', icon: FileText },
+          { id: 'publiccontent', title: 'Public Content', icon: Megaphone },
           { id: 'visitors', title: 'Site Visitors', icon: Eye },
         ]
       },
@@ -1152,10 +1147,7 @@ const Staff = () => {
                   {expandedSection === 'contentcreator' && <ContentCreator />}
                   {expandedSection === 'salesdeck' && <SalesDeck />}
                   {expandedSection === 'marketingtips' && <MarketingTipsManagement />}
-                  {expandedSection === 'blog' && <BlogManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'betweenthelines' && <BetweenTheLinesManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'pressreleases' && <PressReleasesManagement />}
-                  {expandedSection === 'openaccess' && <OpenAccessManagement />}
+                  {expandedSection === 'publiccontent' && <PublicContentManagement isAdmin={isAdmin} />}
                   {expandedSection === 'submissions' && <FormSubmissionsManagement isAdmin={isAdmin} />}
                   {expandedSection === 'visitors' && <SiteVisitorsManagement isAdmin={isAdmin} />}
                   {expandedSection === 'invoices' && <InvoiceManagement isAdmin={isAdmin} />}
