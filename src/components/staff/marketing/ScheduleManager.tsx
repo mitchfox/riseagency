@@ -524,14 +524,14 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
           <div className="col-span-2">
             <Label>Template (from Series Templates)</Label>
             <Select
-              value={form.template_id}
-              onValueChange={(v) => setForm({ ...form, template_id: v })}
+              value={form.template_id || "none"}
+              onValueChange={(v) => setForm({ ...form, template_id: v === "none" ? "" : v })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a template..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No template</SelectItem>
+                <SelectItem value="none">No template</SelectItem>
                 {templates.map(template => (
                   <SelectItem key={template.id} value={template.id}>
                     {template.title}
@@ -539,7 +539,7 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
                 ))}
               </SelectContent>
             </Select>
-            {selectedTemplate?.url && (
+            {selectedTemplate && selectedTemplate.url && (
               <a
                 href={selectedTemplate.url}
                 target="_blank"
