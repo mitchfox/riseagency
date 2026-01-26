@@ -2980,6 +2980,7 @@ export type Database = {
           current_club: string | null
           id: string
           last_contact_date: string | null
+          linked_player_id: string | null
           name: string
           nationality: string | null
           notes: string | null
@@ -2998,6 +2999,7 @@ export type Database = {
           current_club?: string | null
           id?: string
           last_contact_date?: string | null
+          linked_player_id?: string | null
           name: string
           nationality?: string | null
           notes?: string | null
@@ -3016,6 +3018,7 @@ export type Database = {
           current_club?: string | null
           id?: string
           last_contact_date?: string | null
+          linked_player_id?: string | null
           name?: string
           nationality?: string | null
           notes?: string | null
@@ -3025,7 +3028,22 @@ export type Database = {
           stage?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "prospects_linked_player_id_fkey"
+            columns: ["linked_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospects_linked_player_id_fkey"
+            columns: ["linked_player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       psychological_sessions: {
         Row: {

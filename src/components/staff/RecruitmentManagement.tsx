@@ -31,6 +31,7 @@ interface Prospect {
   notes: string | null;
   last_contact_date: string | null;
   priority: 'low' | 'medium' | 'high' | null;
+  linked_player_id: string | null;
 }
 
 interface MarketingTemplate {
@@ -633,9 +634,9 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
             )}
           </div>
 
-          {/* Prospect Board Grid */}
-          <div className="w-full overflow-x-auto">
-            <div className={isMobile ? "min-w-[500px]" : "min-w-[1200px]"}>
+          {/* Prospect Board Grid - Full visibility without horizontal scroll */}
+          <div className="w-full">
+            <div className="w-full">
               {/* Header Row */}
               <div className={`grid ${isMobile ? 'grid-cols-3' : 'grid-cols-6'} gap-2 mb-2`}>
                 <div className={`${isMobile ? 'p-2' : 'p-3'} text-center font-bebas uppercase ${isMobile ? 'text-xs' : 'text-sm'} rounded-lg`} style={{ backgroundColor: 'hsl(0, 0%, 20%)', color: 'hsl(0, 0%, 100%)' }}>

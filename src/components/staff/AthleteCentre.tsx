@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   User, FileText, Dumbbell, LineChart, Target, Calendar,
   Save, Loader2, ChevronRight, ClipboardList
@@ -132,42 +133,36 @@ export const AthleteCentre = () => {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div className="flex flex-col gap-3 md:gap-4">
-        <p className="text-sm md:text-base text-muted-foreground">
-          Comprehensive player development hub
+    <div className="space-y-4">
+      {/* Player Selector - Dropdown */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex-1">
+          <Select value={selectedPlayer || ""} onValueChange={setSelectedPlayer}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a player..." />
+            </SelectTrigger>
+            <SelectContent>
+              {players.map((player) => (
+                <SelectItem key={player.id} value={player.id}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-muted overflow-hidden flex items-center justify-center">
+                      {player.image_url ? (
+                        <img src={player.image_url} alt={player.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </div>
+                    <span>{player.name}</span>
+                    <span className="text-muted-foreground text-xs">({player.position})</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {players.length} players in database
         </p>
-
-        {/* Player Selector - Horizontal Scroll */}
-        <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex gap-2 pb-4">
-            {players.map((player) => (
-              <Button
-                key={player.id}
-                variant={selectedPlayer === player.id ? "default" : "outline"}
-                className={`flex items-center gap-2 md:gap-3 h-auto py-2 md:py-3 px-3 md:px-4 shrink-0 ${
-                  selectedPlayer === player.id 
-                    ? "bg-primary text-primary-foreground" 
-                    : "hover:bg-muted"
-                }`}
-                onClick={() => setSelectedPlayer(player.id)}
-              >
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-muted overflow-hidden flex items-center justify-center">
-                  {player.image_url ? (
-                    <img src={player.image_url} alt={player.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="text-left">
-                  <div className="font-semibold text-sm md:text-base">{player.name}</div>
-                  <div className="text-[10px] md:text-xs opacity-80">{player.position}</div>
-                </div>
-              </Button>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
       </div>
 
       {selectedPlayer && currentPlayer && (
