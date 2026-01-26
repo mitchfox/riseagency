@@ -130,9 +130,9 @@ export const PDFDocumentViewer = ({
       label: `${addingFieldType.charAt(0).toUpperCase() + addingFieldType.slice(1)} Field`,
       page_number: currentPage,
       x_position: Math.max(0, Math.min(x - 10, 80)),
-      y_position: Math.max(0, Math.min(y - 2, 90)),
-      width: addingFieldType === 'signature' ? 25 : 20,
-      height: addingFieldType === 'signature' ? 8 : 4,
+      y_position: Math.max(0, Math.min(y - 2, 92)),
+      width: addingFieldType === 'signature' ? 20 : 18,
+      height: addingFieldType === 'signature' ? 6 : 3.5,
       signer_party: addingFieldParty,
     };
 
@@ -461,12 +461,8 @@ export const PDFDocumentViewer = ({
                   style={{
                     left: `${field.x_position}%`,
                     top: `${field.y_position}%`,
-                    width: field.field_type === 'text' 
-                      ? `${Math.max(field.width, (fieldValues[field.id]?.length || 0) * 1.2 + 5)}%`
-                      : `${field.width}%`,
-                    minWidth: '120px',
+                    width: `${field.width}%`,
                     height: `${field.height}%`,
-                    minHeight: '30px',
                   }}
                   onMouseDown={(e) => {
                     // Only handle drag in edit mode
