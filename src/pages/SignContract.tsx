@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { FileText, CheckCircle, Loader2, Download, PenTool, Upload, AlertCircle, ExternalLink } from "lucide-react";
+import { FileText, CheckCircle, Loader2, Download, PenTool, Upload, AlertCircle, ExternalLink, Lock } from "lucide-react";
 import { PDFDocumentViewer, FieldPosition } from "@/components/staff/PDFDocumentViewer";
 import { downloadSignedContractPDF } from "@/lib/pdfExport";
 
@@ -18,6 +18,7 @@ interface SignatureContract {
   file_name: string;
   status: string;
   owner_field_values: Record<string, string> | null;
+  view_password: string | null;
 }
 
 const SignContract = () => {
@@ -32,6 +33,11 @@ const SignContract = () => {
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [signerInfo, setSignerInfo] = useState({ name: '', email: '' });
   const [pdfError, setPdfError] = useState(false);
+  
+  // Password protection state
+  const [requiresPassword, setRequiresPassword] = useState(false);
+  const [passwordVerified, setPasswordVerified] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
   
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
   const [currentSignatureField, setCurrentSignatureField] = useState<string | null>(null);
@@ -85,6 +91,11 @@ const SignContract = () => {
         toast.error('Contract not found or is no longer active');
         setLoading(false);
         return;
+      }
+
+      // Check if contract requires password
+      if (contractData.view_password) {
+        setRequiresPassword(true);
       }
 
       setContract(contractData as SignatureContract);
@@ -356,6 +367,23 @@ const SignContract = () => {
     }
   };
 
+  const handleVerifyPassword = () => {
+    if (!contract || !passwordInput.trim()) {
+      toast.error('Please enter a password');
+      return;
+    }
+
+    // Simple hash comparison
+    const inputHash = btoa(passwordInput);
+    if (inputHash === contract.view_password) {
+      setPasswordVerified(true);
+      toast.success('Password verified');
+    } else {
+      toast.error('Incorrect password');
+    }
+    setPasswordInput('');
+  };
+
   if (submitted) {
     return (
       <div className="min-h-screen min-h-[100dvh] flex items-center justify-center bg-background p-4">
@@ -378,6 +406,33 @@ const SignContract = () => {
               </>
             )}
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show password gate if required and not verified
+  if (requiresPassword && !passwordVerified) {
+    return (
+      <div className="min-h-screen min-h-[100dvh] flex items-center justify-center bg-background p-4">
+        <div className="text-center max-w-sm w-full">
+          <Lock className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-muted-foreground mb-4" />
+          <h1 className="text-xl sm:text-2xl font-bold mb-2">Password Protected</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mb-6">
+            This contract requires a password to view
+          </p>
+          <div className="space-y-4">
+            <Input
+              type="password"
+              placeholder="Enter password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleVerifyPassword()}
+            />
+            <Button onClick={handleVerifyPassword} className="w-full">
+              View Contract
+            </Button>
+          </div>
         </div>
       </div>
     );

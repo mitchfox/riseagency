@@ -3814,6 +3814,7 @@ export type Database = {
           status: string
           title: string
           updated_at: string
+          view_password: string | null
         }
         Insert: {
           completed_pdf_url?: string | null
@@ -3829,6 +3830,7 @@ export type Database = {
           status?: string
           title: string
           updated_at?: string
+          view_password?: string | null
         }
         Update: {
           completed_pdf_url?: string | null
@@ -3844,6 +3846,7 @@ export type Database = {
           status?: string
           title?: string
           updated_at?: string
+          view_password?: string | null
         }
         Relationships: []
       }
@@ -4243,6 +4246,30 @@ export type Database = {
           event_type?: string
           id?: string
           role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      staff_section_passwords: {
+        Row: {
+          created_at: string
+          id: string
+          password_hash: string
+          section_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          password_hash: string
+          section_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          password_hash?: string
+          section_name?: string
           updated_at?: string
         }
         Relationships: []
