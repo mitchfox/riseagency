@@ -12,6 +12,7 @@ import PaymentsManagement from "./PaymentsManagement";
 import ContractCrossReference from "./ContractCrossReference";
 import AgentTrainingMaterials from "./AgentTrainingMaterials";
 import ContractSignature from "./ContractSignature";
+import SectionPasswordGate from "./SectionPasswordGate";
 interface LegalDocument {
   id: string;
   title: string;
@@ -363,7 +364,9 @@ const LegalManagement = ({ isAdmin }: LegalManagementProps) => {
         </TabsContent>
 
         <TabsContent value="signature" className="space-y-4">
-          <ContractSignature isAdmin={isAdmin} />
+          <SectionPasswordGate sectionName="signatures" isAdmin={isAdmin}>
+            <ContractSignature isAdmin={isAdmin} />
+          </SectionPasswordGate>
         </TabsContent>
 
         <TabsContent value="payments" className="space-y-4">

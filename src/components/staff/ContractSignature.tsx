@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, FileText, Trash2, Eye, CheckCircle, Save, Loader2, PenTool, Download, Link, Upload, BookMarked, ChevronDown, Users, Copy } from "lucide-react";
+import { Plus, FileText, Trash2, Eye, CheckCircle, Save, Loader2, PenTool, Download, Link, Upload, BookMarked, ChevronDown, Users, Copy, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PDFDocumentViewer, FieldPosition } from "./PDFDocumentViewer";
@@ -25,6 +25,7 @@ interface SignatureContract {
   owner_signed_at: string | null;
   owner_field_values: Record<string, string> | null;
   completed_pdf_url: string | null;
+  view_password: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -88,7 +89,11 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    view_password: '',
   });
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [selectedContractForPassword, setSelectedContractForPassword] = useState<SignatureContract | null>(null);
+  const [contractPassword, setContractPassword] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -274,13 +279,14 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
           file_url: urlData.publicUrl,
           file_name: selectedFile.name,
           created_by: user?.id,
+          view_password: formData.view_password ? btoa(formData.view_password) : null,
         }]);
 
       if (insertError) throw insertError;
 
       toast.success('Contract created successfully');
       setShowCreateDialog(false);
-      setFormData({ title: '', description: '' });
+      setFormData({ title: '', description: '', view_password: '' });
       setSelectedFile(null);
       setPreviewUrl(null);
       fetchContracts();
@@ -853,6 +859,21 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
               Use as Template
             </Button>
             
+            {/* Password button */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setSelectedContractForPassword(contract);
+                setContractPassword('');
+                setShowPasswordDialog(true);
+              }}
+              title={contract.view_password ? "Change password" : "Set password"}
+            >
+              <Lock className="h-4 w-4 mr-1" />
+              {contract.view_password ? 'Password Set' : 'Set Password'}
+            </Button>
+            
             {isAdmin && (
               <>
                 <Select
@@ -1013,6 +1034,19 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
               {selectedFile && (
                 <p className="text-sm text-muted-foreground mt-1">{selectedFile.name}</p>
               )}
+            </div>
+            <div>
+              <Label htmlFor="view_password">View Password (optional)</Label>
+              <Input
+                id="view_password"
+                type="password"
+                placeholder="Leave blank for no password"
+                value={formData.view_password}
+                onChange={(e) => setFormData({ ...formData, view_password: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                If set, recipients will need this password to view the contract
+              </p>
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => {
@@ -1352,6 +1386,83 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
               ))}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Contract Password Dialog */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedContractForPassword?.view_password ? 'Change Contract Password' : 'Set Contract Password'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="contract-password">Password</Label>
+              <Input
+                id="contract-password"
+                type="password"
+                value={contractPassword}
+                onChange={(e) => setContractPassword(e.target.value)}
+                placeholder="Enter password"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Recipients will need to enter this password to view and sign the contract.
+            </p>
+          </div>
+          <DialogFooter className="flex gap-2">
+            {selectedContractForPassword?.view_password && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={async () => {
+                  if (!selectedContractForPassword) return;
+                  const { error } = await supabase
+                    .from('signature_contracts')
+                    .update({ view_password: null })
+                    .eq('id', selectedContractForPassword.id);
+                  if (error) {
+                    toast.error('Failed to remove password');
+                  } else {
+                    toast.success('Password removed');
+                    fetchContracts();
+                    setShowPasswordDialog(false);
+                  }
+                }}
+              >
+                Remove Password
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={async () => {
+              if (!selectedContractForPassword || !contractPassword.trim()) {
+                toast.error('Please enter a password');
+                return;
+              }
+              if (contractPassword.length < 4) {
+                toast.error('Password must be at least 4 characters');
+                return;
+              }
+              const passwordHash = btoa(contractPassword);
+              const { error } = await supabase
+                .from('signature_contracts')
+                .update({ view_password: passwordHash })
+                .eq('id', selectedContractForPassword.id);
+              if (error) {
+                toast.error('Failed to set password');
+              } else {
+                toast.success('Password set successfully');
+                fetchContracts();
+                setShowPasswordDialog(false);
+              }
+            }}>
+              {selectedContractForPassword?.view_password ? 'Update Password' : 'Set Password'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
