@@ -6,11 +6,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Archive, Copy, Image, ExternalLink, Calendar, Download, ChevronDown, Send, Check, CheckCircle, FileText, Instagram, User } from "lucide-react";
+import { Archive, Copy, Image, ExternalLink, Calendar, Download, ChevronDown, Send, Check, CheckCircle, FileText, Instagram, User, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { format } from "date-fns";
+import { ScheduleManager } from "./ScheduleManager";
+import '../marketing-calendar.css';
 
 interface BlogPost {
   id: string;
@@ -254,85 +255,34 @@ export const PostContent = () => {
 
   return (
     <div className="space-y-6">
-      {/* Instagram Schedule Calendar */}
+      {/* Content Schedule Calendar - Using the real ScheduleManager */}
       <Card className="border-pink-500/20">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <Instagram className="w-5 h-5 text-pink-500" />
-            Instagram Schedule
-          </CardTitle>
-          <CardDescription>
-            Plan and schedule your Instagram posts
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-3 sm:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            {/* Calendar */}
-            <div className="flex justify-center overflow-x-auto">
-              <CalendarComponent
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                modifiers={{
-                  scheduled: scheduledDates,
-                }}
-                modifiersStyles={{
-                  scheduled: { 
-                    background: "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)", 
-                    color: "white", 
-                    borderRadius: "50%",
-                    fontWeight: "bold"
-                  },
-                }}
-                className="rounded-md border p-2 sm:p-3"
-              />
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Instagram className="w-5 h-5 text-pink-500" />
+                Content Schedule
+              </CardTitle>
+              <CardDescription>
+                Plan and schedule your content posts
+              </CardDescription>
             </div>
-            
-            {/* Selected Date Details */}
-            <div className="space-y-4">
-              <div className="p-3 sm:p-4 rounded-lg bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20">
-                <div className="flex items-center gap-2 mb-3">
-                  <Calendar className="w-4 h-4 text-pink-500" />
-                  <h4 className="font-medium text-xs sm:text-sm">
-                    {selectedDate ? format(selectedDate, "EEE, MMM d, yyyy") : "Select a date"}
-                  </h4>
-                </div>
-                {selectedDate ? (
-                  <div className="space-y-2">
-                    {readyToPostPosts
-                      .filter(p => p.scheduled_date && new Date(p.scheduled_date).toDateString() === selectedDate.toDateString())
-                      .map(p => (
-                        <div key={p.id} className="flex items-center gap-2 p-2 bg-background/50 rounded-md">
-                          {p.image_url_internal && (
-                            <div className="w-8 h-8 rounded overflow-hidden border flex-shrink-0">
-                              <img src={p.image_url_internal} alt={`${p.title} thumbnail`} className="w-full h-full object-cover" loading="lazy" />
-                            </div>
-                          )}
-                          <span className="text-xs sm:text-sm truncate flex-1">{p.title}</span>
-                        </div>
-                      ))}
-                    {readyToPostPosts.filter(p => p.scheduled_date && new Date(p.scheduled_date).toDateString() === selectedDate.toDateString()).length === 0 && (
-                      <p className="text-xs sm:text-sm text-muted-foreground">No posts scheduled for this date</p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-xs sm:text-sm text-muted-foreground">Click a date to see scheduled posts</p>
-                )}
+            {/* Quick Stats */}
+            <div className="flex gap-3">
+              <div className="p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-center">
+                <p className="text-lg font-bold text-orange-500">{readyToPostPosts.length}</p>
+                <p className="text-[10px] text-muted-foreground">Ready</p>
               </div>
-
-              {/* Quick Stats */}
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                <div className="p-2 sm:p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-center">
-                  <p className="text-xl sm:text-2xl font-bold text-orange-500">{readyToPostPosts.length}</p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">Ready to Post</p>
-                </div>
-                <div className="p-2 sm:p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-center">
-                  <p className="text-xl sm:text-2xl font-bold text-green-500">{postedPosts.length}</p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">Posted</p>
-                </div>
+              <div className="p-2 rounded-lg bg-green-500/10 border border-green-500/20 text-center">
+                <p className="text-lg font-bold text-green-500">{postedPosts.length}</p>
+                <p className="text-[10px] text-muted-foreground">Posted</p>
               </div>
             </div>
           </div>
+        </CardHeader>
+        <CardContent className="px-3 sm:px-6">
+          <ScheduleManager canManage={true} compact={true} />
         </CardContent>
       </Card>
 
