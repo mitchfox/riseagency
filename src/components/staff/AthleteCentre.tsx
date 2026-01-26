@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   User, FileText, Dumbbell, LineChart, Target, Calendar,
@@ -190,49 +189,84 @@ export const AthleteCentre = () => {
           </CardHeader>
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="border-b overflow-hidden">
-                <ScrollArea className="w-full">
-                  <TabsList className="w-max min-w-full justify-start h-auto p-0 bg-transparent rounded-none">
-                    <TabsTrigger 
-                      value="scouting" 
-                      className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm whitespace-nowrap"
-                    >
-                      <ClipboardList className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                      <span className="hidden xs:inline">Scouting</span>
-                      <span className="xs:hidden">Scout</span>
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="programming" 
-                      className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm whitespace-nowrap"
-                    >
-                      <Dumbbell className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                      <span className="hidden sm:inline">Programming</span>
-                      <span className="sm:hidden">Prog</span>
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="analysis" 
-                      className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm whitespace-nowrap"
-                    >
-                      <LineChart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                      Analysis
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="focuses" 
-                      className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm whitespace-nowrap"
-                    >
-                      <Target className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                      <span className="hidden md:inline">Development </span>Focuses
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="longterm" 
-                      className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm whitespace-nowrap"
-                    >
-                      <Calendar className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                      Long-Term Plan
-                    </TabsTrigger>
-                  </TabsList>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
+              {/* Mobile-friendly tab navigation */}
+              <div className="border-b p-2 md:p-3">
+                <Select value={activeTab} onValueChange={setActiveTab}>
+                  <SelectTrigger className="w-full md:hidden">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="scouting">
+                      <div className="flex items-center gap-2">
+                        <ClipboardList className="h-4 w-4" />
+                        Scouting Reports
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="programming">
+                      <div className="flex items-center gap-2">
+                        <Dumbbell className="h-4 w-4" />
+                        Programming
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="analysis">
+                      <div className="flex items-center gap-2">
+                        <LineChart className="h-4 w-4" />
+                        Performance Analysis
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="focuses">
+                      <div className="flex items-center gap-2">
+                        <Target className="h-4 w-4" />
+                        Development Focuses
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="longterm">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Long-Term Plan
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {/* Desktop tabs - hidden on mobile */}
+                <TabsList className="hidden md:flex w-full justify-start h-auto p-0 bg-transparent rounded-none gap-1">
+                  <TabsTrigger 
+                    value="scouting" 
+                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t px-4 py-2 text-sm"
+                  >
+                    <ClipboardList className="h-4 w-4 mr-2" />
+                    Scouting
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="programming" 
+                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t px-4 py-2 text-sm"
+                  >
+                    <Dumbbell className="h-4 w-4 mr-2" />
+                    Programming
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="analysis" 
+                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t px-4 py-2 text-sm"
+                  >
+                    <LineChart className="h-4 w-4 mr-2" />
+                    Analysis
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="focuses" 
+                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t px-4 py-2 text-sm"
+                  >
+                    <Target className="h-4 w-4 mr-2" />
+                    Focuses
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="longterm" 
+                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t px-4 py-2 text-sm"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Long-Term
+                  </TabsTrigger>
+                </TabsList>
               </div>
 
               <div className="p-3 md:p-6">

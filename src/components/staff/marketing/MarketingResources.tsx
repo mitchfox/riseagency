@@ -484,13 +484,12 @@ export const MarketingResources = ({ canManage = false }: MarketingResourcesProp
 
               {dialogMode === 'resource' && form.resource_type === 'link' && (
                 <div className="col-span-2">
-                  <Label htmlFor="url">URL *</Label>
+                  <Label htmlFor="url">URL</Label>
                   <Input
                     id="url"
                     value={form.url}
                     onChange={(e) => setForm({ ...form, url: e.target.value })}
-                    placeholder="https://..."
-                    required
+                    placeholder="https://... (optional - add later)"
                   />
                 </div>
               )}
