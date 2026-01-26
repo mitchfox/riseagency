@@ -364,7 +364,7 @@ export const MarketingResources = ({ canManage = false }: MarketingResourcesProp
                             <h3 className="font-semibold text-sm group-hover:text-primary transition-colors truncate">
                               {item.title}
                             </h3>
-                            {item.resource_type === 'link' && !isFolder && (
+                            {item.resource_type === 'link' && !isFolder && item.url && (
                               <ExternalLink className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
                             )}
                           </div>

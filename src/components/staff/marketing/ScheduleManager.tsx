@@ -28,6 +28,15 @@ const DAYS_OF_WEEK = [
   { id: 'sunday', label: 'Sun' },
 ];
 
+const RECURRING_PATTERNS = [
+  { value: 'none', label: 'No recurrence' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'fortnightly', label: 'Fortnightly (Every 2 weeks)' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'custom', label: 'Custom days' },
+];
+
 interface ScheduledPost {
   id: string;
   title: string;
@@ -53,6 +62,17 @@ interface Template {
   folder_id: string | null;
 }
 
+interface TemplateFolder {
+  id: string;
+  title: string;
+}
+
+interface CompletedPost {
+  id: string;
+  title: string;
+  canva_link: string | null;
+}
+
 interface ScheduleManagerProps {
   canManage: boolean;
   compact?: boolean;
@@ -61,6 +81,10 @@ interface ScheduleManagerProps {
 export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerProps) => {
   const [posts, setPosts] = useState<ScheduledPost[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [templateFolders, setTemplateFolders] = useState<TemplateFolder[]>([]);
+  const [completedPosts, setCompletedPosts] = useState<CompletedPost[]>([]);
+  const [selectedFolderId, setSelectedFolderId] = useState<string>('');
+  const [templateSource, setTemplateSource] = useState<'folder' | 'completed'>('folder');
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -80,8 +104,18 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
 
   useEffect(() => {
     fetchPosts();
-    fetchTemplates();
+    fetchTemplateFolders();
+    fetchCompletedPosts();
   }, []);
+
+  // Fetch templates when selected folder changes
+  useEffect(() => {
+    if (selectedFolderId) {
+      fetchTemplatesFromFolder(selectedFolderId);
+    } else {
+      setTemplates([]);
+    }
+  }, [selectedFolderId]);
 
   const fetchPosts = async () => {
     try {
@@ -99,32 +133,49 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
     }
   };
 
-  const fetchTemplates = async () => {
+  const fetchTemplateFolders = async () => {
     try {
-      // First find the Series Templates folder
       const { data: folders, error: folderError } = await supabase
         .from('custom_marketing_resources')
         .select('id, title')
         .eq('resource_type', 'folder')
-        .ilike('title', '%series template%');
+        .order('title');
 
       if (folderError) throw folderError;
+      setTemplateFolders((folders || []) as TemplateFolder[]);
+    } catch (error) {
+      console.error('Failed to fetch template folders:', error);
+    }
+  };
 
-      // Get templates from Series Templates folder(s)
-      if (folders && folders.length > 0) {
-        const folderIds = folders.map(f => f.id);
-        const { data: templateData, error: templateError } = await supabase
-          .from('custom_marketing_resources')
-          .select('id, title, url, folder_id')
-          .in('folder_id', folderIds)
-          .eq('resource_type', 'link')
-          .order('title');
+  const fetchTemplatesFromFolder = async (folderId: string) => {
+    try {
+      const { data: templateData, error: templateError } = await supabase
+        .from('custom_marketing_resources')
+        .select('id, title, url, folder_id')
+        .eq('folder_id', folderId)
+        .eq('resource_type', 'link')
+        .order('title');
 
-        if (templateError) throw templateError;
-        setTemplates((templateData || []) as Template[]);
-      }
+      if (templateError) throw templateError;
+      setTemplates((templateData || []) as Template[]);
     } catch (error) {
       console.error('Failed to fetch templates:', error);
+    }
+  };
+
+  const fetchCompletedPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('id, title, canva_link')
+        .eq('workflow_status', 'posted')
+        .order('title');
+
+      if (error) throw error;
+      setCompletedPosts((data || []) as CompletedPost[]);
+    } catch (error) {
+      console.error('Failed to fetch completed posts:', error);
     }
   };
 
@@ -136,8 +187,15 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
     try {
       const staffUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
 
-      // Get the template URL if a template is selected
-      const selectedTemplate = templates.find(t => t.id === form.template_id);
+      // Get the template/post URL based on source
+      let canvaLink: string | null = null;
+      if (templateSource === 'folder') {
+        const selectedTemplate = templates.find(t => t.id === form.template_id);
+        canvaLink = selectedTemplate?.url || null;
+      } else {
+        const selectedPost = completedPosts.find(p => p.id === form.template_id);
+        canvaLink = selectedPost?.canva_link || null;
+      }
       
       const { error } = await supabase
         .from('scheduled_posts')
@@ -151,7 +209,7 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
           recurring_pattern: form.recurring_pattern === 'none' ? null : form.recurring_pattern,
           recurring_days: form.recurring_days.length > 0 ? form.recurring_days : null,
           series_count: form.post_type === 'series' ? form.series_count : 1,
-          canva_link: selectedTemplate?.url || null,
+          canva_link: canvaLink,
           notes: form.notes || null,
           created_by: staffUserId,
         });
@@ -161,6 +219,8 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
       toast.success('Post scheduled successfully');
       setShowDialog(false);
       resetForm();
+      setSelectedFolderId('');
+      setTemplateSource('folder');
       fetchPosts();
     } catch (error) {
       console.error('Error scheduling post:', error);
@@ -475,10 +535,11 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No recurrence</SelectItem>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="custom">Custom days</SelectItem>
+                    {RECURRING_PATTERNS.map(pattern => (
+                      <SelectItem key={pattern.value} value={pattern.value}>
+                        {pattern.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -522,40 +583,109 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
           </div>
 
           <div className="col-span-2">
-            <Label>Template (from Series Templates)</Label>
-            <Select
-              value={form.template_id || "none"}
-              onValueChange={(v) => setForm({ ...form, template_id: v === "none" ? "" : v })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a template..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No template</SelectItem>
-                {templates.map(template => (
-                  <SelectItem key={template.id} value={template.id}>
-                    {template.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedTemplate && selectedTemplate.url && (
-              <a
-                href={selectedTemplate.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
+            <Label>Template Source</Label>
+            <div className="flex gap-2 mt-2">
+              <Button
+                type="button"
+                variant={templateSource === 'folder' ? "default" : "outline"}
+                size="sm"
+                onClick={() => { setTemplateSource('folder'); setForm({ ...form, template_id: '' }); }}
               >
-                <ExternalLink className="w-3 h-3" />
-                Open template in Canva
-              </a>
-            )}
-            {templates.length === 0 && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Add templates in Marketing → Resources → Series Templates folder
-              </p>
-            )}
+                From Folder
+              </Button>
+              <Button
+                type="button"
+                variant={templateSource === 'completed' ? "default" : "outline"}
+                size="sm"
+                onClick={() => { setTemplateSource('completed'); setForm({ ...form, template_id: '' }); setSelectedFolderId(''); }}
+              >
+                Completed Posts
+              </Button>
+            </div>
           </div>
+
+          {templateSource === 'folder' && (
+            <>
+              <div>
+                <Label>Select Folder</Label>
+                <Select
+                  value={selectedFolderId || "none"}
+                  onValueChange={(v) => { setSelectedFolderId(v === "none" ? "" : v); setForm({ ...form, template_id: '' }); }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a folder..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Select folder...</SelectItem>
+                    {templateFolders.map(folder => (
+                      <SelectItem key={folder.id} value={folder.id}>
+                        {folder.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Template</Label>
+                <Select
+                  value={form.template_id || "none"}
+                  onValueChange={(v) => setForm({ ...form, template_id: v === "none" ? "" : v })}
+                  disabled={!selectedFolderId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={selectedFolderId ? "Select template..." : "Select folder first..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No template</SelectItem>
+                    {templates.map(template => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedTemplate && selectedTemplate.url && (
+                  <a
+                    href={selectedTemplate.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Open template
+                  </a>
+                )}
+              </div>
+            </>
+          )}
+
+          {templateSource === 'completed' && (
+            <div className="col-span-2">
+              <Label>Completed Post</Label>
+              <Select
+                value={form.template_id || "none"}
+                onValueChange={(v) => setForm({ ...form, template_id: v === "none" ? "" : v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select completed post..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No post selected</SelectItem>
+                  {completedPosts.map(post => (
+                    <SelectItem key={post.id} value={post.id}>
+                      {post.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {completedPosts.length === 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  No completed posts available. Mark posts as "Posted" in Content Creator.
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="col-span-2">
             <Label htmlFor="notes">Notes</Label>
