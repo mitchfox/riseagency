@@ -954,6 +954,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           display_order: number | null
+          folder_id: string | null
           icon: string | null
           id: string
           resource_type: string
@@ -969,6 +970,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           display_order?: number | null
+          folder_id?: string | null
           icon?: string | null
           id?: string
           resource_type?: string
@@ -984,6 +986,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           display_order?: number | null
+          folder_id?: string | null
           icon?: string | null
           id?: string
           resource_type?: string
