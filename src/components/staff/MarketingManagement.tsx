@@ -15,7 +15,6 @@ import { VideoPreviewCard } from "./VideoPreviewCard";
 import { PlaylistManager } from "@/components/PlaylistManager";
 import { HomepageVideoManager } from "./HomepageVideoManager";
 import { MarketingResources } from './marketing/MarketingResources';
-import { CustomResourcesManager } from './marketing/CustomResourcesManager';
 import { ScheduleManager } from './marketing/ScheduleManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -267,18 +266,8 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
               <span className="text-lg font-semibold">RESOURCES</span>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4 space-y-6">
-            {/* Built-in Resources */}
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-3">Quick Links</h3>
-              <MarketingResources />
-            </div>
-            
-            {/* Custom Resources */}
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-3">Custom Resources</h3>
-              <CustomResourcesManager canManage={canManage} />
-            </div>
+          <AccordionContent className="px-4 pb-4">
+            <MarketingResources canManage={canManage} />
           </AccordionContent>
         </AccordionItem>
 
