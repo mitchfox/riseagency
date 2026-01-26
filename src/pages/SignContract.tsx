@@ -275,10 +275,10 @@ const SignContract = () => {
     setSubmitting(true);
 
     try {
-      // Only store counterparty field values
+      // Store counterparty field values by field ID (not label) for accurate PDF export
       const counterpartyValues: Record<string, string> = {};
       counterpartyFields.forEach(f => {
-        counterpartyValues[f.label] = fieldValues[f.id] || '';
+        counterpartyValues[f.id] = fieldValues[f.id] || '';
       });
 
       const { error } = await supabase

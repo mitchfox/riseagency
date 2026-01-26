@@ -693,12 +693,23 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
         });
       }
       
-      // Add submission field values (find field IDs from labels)
+      // Add submission field values
+      // Supports both new format (by field ID) and legacy format (by label)
       if (submission) {
-        Object.entries(submission.field_values).forEach(([label, value]) => {
-          const field = contractFieldsData.find(f => f.label === label);
-          if (field && typeof value === 'string') {
-            allFieldValues[field.id] = value;
+        Object.entries(submission.field_values).forEach(([key, value]) => {
+          if (typeof value === 'string') {
+            // Check if key is a field ID (UUID format) or a label
+            const isFieldId = contractFieldsData.some(f => f.id === key);
+            if (isFieldId) {
+              // New format: key is the field ID
+              allFieldValues[key] = value;
+            } else {
+              // Legacy format: key is the label, find the counterparty field with this label
+              const field = contractFieldsData.find(f => f.label === key && f.signer_party === 'counterparty');
+              if (field) {
+                allFieldValues[field.id] = value;
+              }
+            }
           }
         });
       }
