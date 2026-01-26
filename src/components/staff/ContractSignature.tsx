@@ -672,17 +672,15 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     return !contract.owner_signed_at;
   };
 
-  const handleExportPDF = async (submission?: SignatureSubmission) => {
-    if (!selectedContract) return;
-    
+  const handleExportPDF = async (contract: SignatureContract, contractFieldsData: FieldPosition[], submission?: SignatureSubmission) => {
     setExporting(true);
     try {
       // Combine owner values and submission values
       const allFieldValues: Record<string, string> = {};
       
       // Add owner field values
-      if (selectedContract.owner_field_values) {
-        Object.entries(selectedContract.owner_field_values).forEach(([fieldId, value]) => {
+      if (contract.owner_field_values) {
+        Object.entries(contract.owner_field_values).forEach(([fieldId, value]) => {
           if (typeof value === 'string') {
             allFieldValues[fieldId] = value;
           }
@@ -692,7 +690,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
       // Add submission field values (find field IDs from labels)
       if (submission) {
         Object.entries(submission.field_values).forEach(([label, value]) => {
-          const field = fields.find(f => f.label === label);
+          const field = contractFieldsData.find(f => f.label === label);
           if (field && typeof value === 'string') {
             allFieldValues[field.id] = value;
           }
@@ -700,13 +698,16 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
       }
 
       // Prepare field data for export
-      const fieldData = fields.map(f => ({
+      const fieldData = contractFieldsData.map(f => ({
         ...f,
         value: allFieldValues[f.id] || undefined,
       }));
 
-      const filename = `${selectedContract.title.replace(/[^a-z0-9]/gi, '_')}_signed.pdf`;
-      await downloadSignedContractPDF(selectedContract.file_url, fieldData, filename);
+      console.log('Exporting PDF with fields:', fieldData);
+      console.log('Field values:', allFieldValues);
+
+      const filename = `${contract.title.replace(/[^a-z0-9]/gi, '_')}_signed.pdf`;
+      await downloadSignedContractPDF(contract.file_url, fieldData, filename);
       
       toast.success('PDF exported successfully');
     } catch (error: any) {
@@ -778,21 +779,24 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
                 size="sm"
                 variant="default"
                 className="bg-blue-600 hover:bg-blue-700"
+                disabled={exporting}
                 onClick={async () => {
-                  setSelectedContract(contract);
-                  await fetchFields(contract.id);
+                  // Use the pre-fetched fields from allContractFields
+                  const fieldsForContract = contractFields || allContractFields[contract.id] || [];
+                  if (fieldsForContract.length === 0) {
+                    toast.error('No field data found for this contract');
+                    return;
+                  }
                   // Export with the first submission if exists, otherwise just owner values
                   if (contractSubmissions && contractSubmissions[0]) {
-                    setSubmissions(contractSubmissions);
-                    // Trigger export after state updates
-                    setTimeout(() => handleExportPDF(contractSubmissions[0]), 100);
+                    await handleExportPDF(contract, fieldsForContract, contractSubmissions[0]);
                   } else {
                     // No counterparty submission - export with just owner values
-                    setTimeout(() => handleExportPDF(), 100);
+                    await handleExportPDF(contract, fieldsForContract);
                   }
                 }}
               >
-                <Download className="h-4 w-4 mr-1" />
+                {exporting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
                 Download Signed PDF
               </Button>
             )}
@@ -1312,7 +1316,11 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleExportPDF(sub)}
+                      onClick={() => {
+                        if (selectedContract) {
+                          handleExportPDF(selectedContract, fields, sub);
+                        }
+                      }}
                       disabled={exporting}
                     >
                       {exporting ? (
