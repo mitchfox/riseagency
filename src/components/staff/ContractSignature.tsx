@@ -72,6 +72,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   const [showSubmissionsDialog, setShowSubmissionsDialog] = useState(false);
   const [selectedContract, setSelectedContract] = useState<SignatureContract | null>(null);
   const [fields, setFields] = useState<FieldPosition[]>([]);
+  const [allContractFields, setAllContractFields] = useState<Record<string, FieldPosition[]>>({});
   const [submissions, setSubmissions] = useState<SignatureSubmission[]>([]);
   const [allSubmissions, setAllSubmissions] = useState<SignatureSubmission[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -108,6 +109,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     fetchContracts();
     fetchSavedSignatures();
     fetchAllSubmissions();
+    fetchAllContractFields();
   }, []);
 
   const fetchSavedSignatures = async () => {
@@ -146,8 +148,40 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
       .order('signed_at', { ascending: false });
 
     if (!error && data) {
-      setAllSubmissions(data as SignatureSubmission[]);
+    setAllSubmissions(data as SignatureSubmission[]);
     }
+  };
+
+  const fetchAllContractFields = async () => {
+    const { data, error } = await supabase
+      .from('signature_fields')
+      .select('*')
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching all fields:', error);
+      return;
+    }
+
+    // Group fields by contract_id
+    const fieldsByContract: Record<string, FieldPosition[]> = {};
+    (data as SignatureField[]).forEach(f => {
+      if (!fieldsByContract[f.contract_id]) {
+        fieldsByContract[f.contract_id] = [];
+      }
+      fieldsByContract[f.contract_id].push({
+        id: f.id,
+        field_type: f.field_type,
+        label: f.label,
+        page_number: f.page_number,
+        x_position: f.x_position,
+        y_position: f.y_position,
+        width: f.width,
+        height: f.height,
+        signer_party: f.signer_party || 'counterparty',
+      });
+    });
+    setAllContractFields(fieldsByContract);
   };
 
   const fetchFields = async (contractId: string) => {
@@ -294,6 +328,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
 
       toast.success('Fields saved successfully');
       setShowEditorDialog(false);
+      fetchAllContractFields(); // Refresh all fields cache
     } catch (error: any) {
       console.error('Error saving fields:', error);
       toast.error('Failed to save fields');
@@ -582,6 +617,11 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
       }
     }
 
+    // Check if there are counterparty fields - if not, complete immediately
+    const counterpartyFields = fields.filter(f => f.signer_party === 'counterparty');
+    const hasCounterpartyFields = counterpartyFields.length > 0;
+    const newStatus = hasCounterpartyFields ? 'active' : 'completed';
+
     setSaving(true);
     try {
       const { error } = await supabase
@@ -589,13 +629,17 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
         .update({
           owner_field_values: ownerFieldValues,
           owner_signed_at: new Date().toISOString(),
-          status: 'active', // Make it active so counterparty can sign
+          status: newStatus,
         })
         .eq('id', selectedContract.id);
 
       if (error) throw error;
 
-      toast.success('Your signature saved! Contract is now ready for the other party.');
+      if (hasCounterpartyFields) {
+        toast.success('Your signature saved! Contract is now ready for the other party.');
+      } else {
+        toast.success('Contract signed and completed! You can now download the signed PDF.');
+      }
       setShowOwnerSignDialog(false);
       fetchContracts();
     } catch (error: any) {
@@ -685,8 +729,14 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   const expiredContracts = contracts.filter(c => c.status === 'expired');
 
   // Contract card component
-  const ContractCard = ({ contract, contractSubmissions }: { contract: SignatureContract; contractSubmissions?: SignatureSubmission[] }) => {
-    const signedByBoth = contract.owner_signed_at && contractSubmissions && contractSubmissions.length > 0;
+  const ContractCard = ({ contract, contractSubmissions, contractFields }: { contract: SignatureContract; contractSubmissions?: SignatureSubmission[]; contractFields?: FieldPosition[] }) => {
+    // Check if there are counterparty fields
+    const hasCounterpartyFields = contractFields ? contractFields.some(f => f.signer_party === 'counterparty') : true;
+    // Contract is complete if: (owner signed AND counterparty signed) OR (owner signed AND no counterparty fields)
+    const signedByBoth = contract.owner_signed_at && (
+      (contractSubmissions && contractSubmissions.length > 0) || 
+      !hasCounterpartyFields
+    );
     
     return (
       <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
@@ -707,7 +757,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
               {signedByBoth && (
                 <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
                   <Users className="h-3 w-3 mr-1" />
-                  Signed by both parties
+                  {hasCounterpartyFields ? 'Signed by both parties' : 'Completed'}
                 </Badge>
               )}
             </div>
@@ -728,14 +778,17 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
                 size="sm"
                 variant="default"
                 className="bg-blue-600 hover:bg-blue-700"
-                onClick={() => {
+                onClick={async () => {
                   setSelectedContract(contract);
-                  fetchFields(contract.id);
-                  // Export with the first submission
+                  await fetchFields(contract.id);
+                  // Export with the first submission if exists, otherwise just owner values
                   if (contractSubmissions && contractSubmissions[0]) {
                     setSubmissions(contractSubmissions);
                     // Trigger export after state updates
                     setTimeout(() => handleExportPDF(contractSubmissions[0]), 100);
+                  } else {
+                    // No counterparty submission - export with just owner values
+                    setTimeout(() => handleExportPDF(), 100);
                   }
                 }}
               >
@@ -862,6 +915,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
               key={contract.id} 
               contract={contract} 
               contractSubmissions={allSubmissions.filter(s => s.contract_id === contract.id)}
+              contractFields={allContractFields[contract.id] || []}
             />
           ))}
         </CollapsibleContent>

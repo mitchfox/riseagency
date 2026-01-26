@@ -75,23 +75,21 @@ export async function exportSignedContractPDF(
       const height = (field.height / 100) * pageViewport.height;
 
       if (field.field_type === 'signature' && field.value?.startsWith('data:image')) {
-        // Draw signature image
+        // Draw signature image - fill the field area exactly
         try {
           jspdf.addImage(field.value, 'PNG', x, y, width, height);
         } catch (e) {
           console.error('Error adding signature image:', e);
         }
       } else if (field.value) {
-        // Draw text or date
-        jspdf.setFontSize(12);
+        // Draw text or date - calculate appropriate font size based on field height
+        const fontSize = Math.min(height * 0.6, 14); // Scale font to field, max 14pt
+        jspdf.setFontSize(fontSize);
         jspdf.setTextColor(0, 0, 0);
         
-        // Add a white background for better readability
-        jspdf.setFillColor(255, 255, 255);
-        jspdf.rect(x, y, width, height, 'F');
-        
-        // Draw the text centered in the field
-        jspdf.text(field.value, x + 4, y + height - 6);
+        // Position text vertically centered within the field
+        const textY = y + (height + fontSize * 0.35) / 2;
+        jspdf.text(field.value, x + 4, textY);
       }
     }
 
