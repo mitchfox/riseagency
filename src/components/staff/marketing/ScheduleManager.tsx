@@ -6,9 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Calendar as CalendarIcon, Plus, Trash2, Loader2, Repeat, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Calendar, momentLocalizer } from 'react-big-calendar';
@@ -44,14 +43,24 @@ interface ScheduledPost {
   canva_link: string | null;
   notes: string | null;
   created_at: string;
+  template_id?: string | null;
+}
+
+interface Template {
+  id: string;
+  title: string;
+  url: string | null;
+  folder_id: string | null;
 }
 
 interface ScheduleManagerProps {
   canManage: boolean;
+  compact?: boolean;
 }
 
-export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
+export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerProps) => {
   const [posts, setPosts] = useState<ScheduledPost[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -65,12 +74,13 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
     recurring_pattern: 'none',
     recurring_days: [] as string[],
     series_count: 1,
-    canva_link: '',
+    template_id: '',
     notes: '',
   });
 
   useEffect(() => {
     fetchPosts();
+    fetchTemplates();
   }, []);
 
   const fetchPosts = async () => {
@@ -89,6 +99,35 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
     }
   };
 
+  const fetchTemplates = async () => {
+    try {
+      // First find the Series Templates folder
+      const { data: folders, error: folderError } = await supabase
+        .from('custom_marketing_resources')
+        .select('id, title')
+        .eq('resource_type', 'folder')
+        .ilike('title', '%series template%');
+
+      if (folderError) throw folderError;
+
+      // Get templates from Series Templates folder(s)
+      if (folders && folders.length > 0) {
+        const folderIds = folders.map(f => f.id);
+        const { data: templateData, error: templateError } = await supabase
+          .from('custom_marketing_resources')
+          .select('id, title, url, folder_id')
+          .in('folder_id', folderIds)
+          .eq('resource_type', 'link')
+          .order('title');
+
+        if (templateError) throw templateError;
+        setTemplates((templateData || []) as Template[]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch templates:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canManage) return;
@@ -97,6 +136,9 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
     try {
       const staffUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
 
+      // Get the template URL if a template is selected
+      const selectedTemplate = templates.find(t => t.id === form.template_id);
+      
       const { error } = await supabase
         .from('scheduled_posts')
         .insert({
@@ -109,7 +151,7 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
           recurring_pattern: form.recurring_pattern === 'none' ? null : form.recurring_pattern,
           recurring_days: form.recurring_days.length > 0 ? form.recurring_days : null,
           series_count: form.post_type === 'series' ? form.series_count : 1,
-          canva_link: form.canva_link || null,
+          canva_link: selectedTemplate?.url || null,
           notes: form.notes || null,
           created_by: staffUserId,
         });
@@ -157,7 +199,7 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
       recurring_pattern: 'none',
       recurring_days: [],
       series_count: 1,
-      canva_link: '',
+      template_id: '',
       notes: '',
     });
   };
@@ -217,6 +259,60 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </CardContent>
       </Card>
+    );
+  }
+
+  // Compact mode for embedding in PostContent
+  if (compact) {
+    return (
+      <>
+        <div className="h-[400px] bg-background rounded-lg">
+          <Calendar
+            localizer={localizer}
+            events={calendarEvents}
+            startAccessor="start"
+            endAccessor="end"
+            style={{ height: '100%' }}
+            views={['month', 'week']}
+            defaultView="month"
+            onSelectEvent={onSelectEvent}
+            eventPropGetter={eventPropGetter}
+          />
+        </div>
+        
+        {/* Legend */}
+        <div className="flex flex-wrap gap-3 mt-4 text-xs">
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded bg-blue-500" />
+            <span>Single Post</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded bg-purple-500" />
+            <span>Series</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded bg-green-500" />
+            <span>Posted</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded bg-red-500" />
+            <span>Cancelled</span>
+          </div>
+        </div>
+
+        {/* Schedule Dialog for compact mode */}
+        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Schedule New Post</DialogTitle>
+              <DialogDescription>
+                Schedule a single post or recurring series
+              </DialogDescription>
+            </DialogHeader>
+            {renderScheduleForm()}
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 
@@ -283,171 +379,205 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
               Schedule a single post or recurring series
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="Post title or series name"
-                  required
-                />
-              </div>
+          {renderScheduleForm()}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 
-              <div className="col-span-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="What's this post about?"
-                  rows={2}
-                />
-              </div>
+  function renderScheduleForm() {
+    const selectedTemplate = templates.find(t => t.id === form.template_id);
+    
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2">
+            <Label htmlFor="title">Title *</Label>
+            <Input
+              id="title"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              placeholder="Post title or series name"
+              required
+            />
+          </div>
 
+          <div className="col-span-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="What's this post about?"
+              rows={2}
+            />
+          </div>
+
+          <div>
+            <Label>Post Type</Label>
+            <Select
+              value={form.post_type}
+              onValueChange={(v) => setForm({ ...form, post_type: v as 'single' | 'series' })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="single">Single Post</SelectItem>
+                <SelectItem value="series">Series</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {form.post_type === 'series' && (
+            <div>
+              <Label htmlFor="series_count">Number of Posts</Label>
+              <Input
+                id="series_count"
+                type="number"
+                min={2}
+                value={form.series_count}
+                onChange={(e) => setForm({ ...form, series_count: parseInt(e.target.value) || 1 })}
+              />
+            </div>
+          )}
+
+          <div>
+            <Label htmlFor="scheduled_date">Start Date *</Label>
+            <Input
+              id="scheduled_date"
+              type="date"
+              value={form.scheduled_date}
+              onChange={(e) => setForm({ ...form, scheduled_date: e.target.value })}
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="scheduled_time">Time</Label>
+            <Input
+              id="scheduled_time"
+              type="time"
+              value={form.scheduled_time}
+              onChange={(e) => setForm({ ...form, scheduled_time: e.target.value })}
+            />
+          </div>
+
+          {form.post_type === 'series' && (
+            <>
               <div>
-                <Label>Post Type</Label>
+                <Label>Recurring Pattern</Label>
                 <Select
-                  value={form.post_type}
-                  onValueChange={(v) => setForm({ ...form, post_type: v as 'single' | 'series' })}
+                  value={form.recurring_pattern}
+                  onValueChange={(v) => setForm({ ...form, recurring_pattern: v })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="single">Single Post</SelectItem>
-                    <SelectItem value="series">Series</SelectItem>
+                    <SelectItem value="none">No recurrence</SelectItem>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="custom">Custom days</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {form.post_type === 'series' && (
-                <div>
-                  <Label htmlFor="series_count">Number of Posts</Label>
-                  <Input
-                    id="series_count"
-                    type="number"
-                    min={2}
-                    value={form.series_count}
-                    onChange={(e) => setForm({ ...form, series_count: parseInt(e.target.value) || 1 })}
-                  />
-                </div>
-              )}
-
-              <div>
-                <Label htmlFor="scheduled_date">Start Date *</Label>
-                <Input
-                  id="scheduled_date"
-                  type="date"
-                  value={form.scheduled_date}
-                  onChange={(e) => setForm({ ...form, scheduled_date: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="scheduled_time">Time</Label>
-                <Input
-                  id="scheduled_time"
-                  type="time"
-                  value={form.scheduled_time}
-                  onChange={(e) => setForm({ ...form, scheduled_time: e.target.value })}
-                />
-              </div>
-
-              {form.post_type === 'series' && (
-                <>
-                  <div>
-                    <Label>Recurring Pattern</Label>
-                    <Select
-                      value={form.recurring_pattern}
-                      onValueChange={(v) => setForm({ ...form, recurring_pattern: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No recurrence</SelectItem>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="custom">Custom days</SelectItem>
-                      </SelectContent>
-                    </Select>
+              {form.recurring_pattern === 'custom' && (
+                <div className="col-span-2">
+                  <Label>Post on these days</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {DAYS_OF_WEEK.map(day => (
+                      <Button
+                        key={day.id}
+                        type="button"
+                        variant={form.recurring_days.includes(day.id) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleDay(day.id)}
+                      >
+                        {day.label}
+                      </Button>
+                    ))}
                   </div>
-
-                  {form.recurring_pattern === 'custom' && (
-                    <div className="col-span-2">
-                      <Label>Post on these days</Label>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {DAYS_OF_WEEK.map(day => (
-                          <Button
-                            key={day.id}
-                            type="button"
-                            variant={form.recurring_days.includes(day.id) ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => toggleDay(day.id)}
-                          >
-                            {day.label}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              <div className="col-span-2">
-                <Label>Platforms</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {PLATFORMS.map(platform => (
-                    <Button
-                      key={platform}
-                      type="button"
-                      variant={form.platforms.includes(platform) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => togglePlatform(platform)}
-                    >
-                      {platform}
-                    </Button>
-                  ))}
                 </div>
-              </div>
+              )}
+            </>
+          )}
 
-              <div className="col-span-2">
-                <Label htmlFor="canva_link">Canva Link</Label>
-                <Input
-                  id="canva_link"
-                  value={form.canva_link}
-                  onChange={(e) => setForm({ ...form, canva_link: e.target.value })}
-                  placeholder="https://canva.com/..."
-                />
-              </div>
-
-              <div className="col-span-2">
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  placeholder="Additional notes..."
-                  rows={2}
-                />
-              </div>
+          <div className="col-span-2">
+            <Label>Platforms</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {PLATFORMS.map(platform => (
+                <Button
+                  key={platform}
+                  type="button"
+                  variant={form.platforms.includes(platform) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => togglePlatform(platform)}
+                >
+                  {platform}
+                </Button>
+              ))}
             </div>
+          </div>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => { setShowDialog(false); resetForm(); }}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving ? 'Scheduling...' : 'Schedule'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+          <div className="col-span-2">
+            <Label>Template (from Series Templates)</Label>
+            <Select
+              value={form.template_id}
+              onValueChange={(v) => setForm({ ...form, template_id: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a template..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No template</SelectItem>
+                {templates.map(template => (
+                  <SelectItem key={template.id} value={template.id}>
+                    {template.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedTemplate?.url && (
+              <a
+                href={selectedTemplate.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Open template in Canva
+              </a>
+            )}
+            {templates.length === 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Add templates in Marketing → Resources → Series Templates folder
+              </p>
+            )}
+          </div>
+
+          <div className="col-span-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              placeholder="Additional notes..."
+              rows={2}
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-4">
+          <Button type="button" variant="outline" onClick={() => { setShowDialog(false); resetForm(); }}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={saving}>
+            {saving ? 'Scheduling...' : 'Schedule'}
+          </Button>
+        </div>
+      </form>
+    );
+  }
 };
