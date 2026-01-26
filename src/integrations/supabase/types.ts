@@ -946,6 +946,54 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_marketing_resources: {
+        Row: {
+          color: string | null
+          content: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          resource_type: string
+          table_data: Json | null
+          title: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          color?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          resource_type?: string
+          table_data?: Json | null
+          title: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          color?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          resource_type?: string
+          table_data?: Json | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           created_at: string
@@ -3255,6 +3303,63 @@ export type Database = {
           signature_data?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      scheduled_posts: {
+        Row: {
+          canva_link: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          notes: string | null
+          platforms: string[] | null
+          post_type: string
+          recurring_days: string[] | null
+          recurring_pattern: string | null
+          scheduled_date: string
+          scheduled_time: string | null
+          series_count: number | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          canva_link?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          notes?: string | null
+          platforms?: string[] | null
+          post_type?: string
+          recurring_days?: string[] | null
+          recurring_pattern?: string | null
+          scheduled_date: string
+          scheduled_time?: string | null
+          series_count?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          canva_link?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          notes?: string | null
+          platforms?: string[] | null
+          post_type?: string
+          recurring_days?: string[] | null
+          recurring_pattern?: string | null
+          scheduled_date?: string
+          scheduled_time?: string | null
+          series_count?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
