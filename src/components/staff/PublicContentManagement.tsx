@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Newspaper, FileText, Megaphone, BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Newspaper, FileText, Megaphone, BookOpen, Lightbulb } from "lucide-react";
 import BlogManagement from "./BlogManagement";
 import BetweenTheLinesManagement from "./BetweenTheLinesManagement";
 import PressReleasesManagement from "./PressReleasesManagement";
 import { OpenAccessManagement } from "./OpenAccessManagement";
+import { MarketingTipsManagement } from "./MarketingTipsManagement";
 
 interface PublicContentManagementProps {
   isAdmin: boolean;
@@ -12,12 +15,23 @@ interface PublicContentManagementProps {
 
 export const PublicContentManagement = ({ isAdmin }: PublicContentManagementProps) => {
   const [activeTab, setActiveTab] = useState("news");
+  const [showTipsDialog, setShowTipsDialog] = useState(false);
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Megaphone className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-semibold">Public Content</h2>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Megaphone className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">Public Content</h2>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => setShowTipsDialog(true)}
+        >
+          <Lightbulb className="h-4 w-4 mr-2" />
+          Tips & Lessons
+        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -60,6 +74,19 @@ export const PublicContentManagement = ({ isAdmin }: PublicContentManagementProp
           <OpenAccessManagement />
         </TabsContent>
       </Tabs>
+
+      {/* Tips & Lessons Dialog */}
+      <Dialog open={showTipsDialog} onOpenChange={setShowTipsDialog}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-primary" />
+              Tips, Ideas & Lessons
+            </DialogTitle>
+          </DialogHeader>
+          <MarketingTipsManagement />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
