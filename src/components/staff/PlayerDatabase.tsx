@@ -7,10 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Edit, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Users, UserPlus } from 'lucide-react';
+import { Search, Edit, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Users, UserPlus, ExternalLink } from 'lucide-react';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { LateralFilter } from '@/components/LateralFilter';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface PlayerData {
   id: string;
@@ -55,6 +56,37 @@ const getPositionOrder = (position: string | null): number => {
   return POSITION_ORDER[position] || 100;
 };
 
+// Filter chip button component for unified styling
+const FilterChip = ({ 
+  label, 
+  isActive, 
+  onClick, 
+  count 
+}: { 
+  label: string; 
+  isActive: boolean; 
+  onClick: () => void; 
+  count?: number;
+}) => (
+  <button
+    onClick={onClick}
+    className={`px-2 py-1 font-bebas uppercase tracking-wider text-xs transition-all duration-200 border whitespace-nowrap ${
+      isActive
+        ? "bg-primary text-primary-foreground border-primary"
+        : "bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+    }`}
+  >
+    {label}
+    {count !== undefined && count > 0 && (
+      <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] ${
+        isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary text-primary-foreground"
+      }`}>
+        {count}
+      </span>
+    )}
+  </button>
+);
+
 export const PlayerDatabase = () => {
   const [players, setPlayers] = useState<PlayerData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,8 +101,6 @@ export const PlayerDatabase = () => {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [activeTab, setActiveTab] = useState('database');
-  const [positionFilterExpanded, setPositionFilterExpanded] = useState(false);
-  const [sourceFilterExpanded, setSourceFilterExpanded] = useState(false);
 
   useEffect(() => {
     fetchAllPlayers();
@@ -90,7 +120,6 @@ export const PlayerDatabase = () => {
 
       const playerMap: Record<string, PlayerData> = {};
 
-      // Add scouting reports
       scoutingResult.data?.forEach(report => {
         const name = report.player_name;
         if (!playerMap[name]) {
@@ -109,14 +138,12 @@ export const PlayerDatabase = () => {
           };
         } else {
           playerMap[name].report_count++;
-          // Keep the most recent created_at
           if (report.created_at && (!playerMap[name].created_at || report.created_at > playerMap[name].created_at)) {
             playerMap[name].created_at = report.created_at;
           }
         }
       });
 
-      // Add youth outreach players
       youthResult.data?.forEach(outreach => {
         const name = outreach.player_name;
         if (!playerMap[name]) {
@@ -137,7 +164,6 @@ export const PlayerDatabase = () => {
         }
       });
 
-      // Add pro outreach players
       proResult.data?.forEach(outreach => {
         const name = outreach.player_name;
         if (!playerMap[name]) {
@@ -188,17 +214,6 @@ export const PlayerDatabase = () => {
     return [...new Set(positions)].sort((a, b) => getPositionOrder(a) - getPositionOrder(b));
   }, [players]);
 
-  const positionOptions = useMemo(() => 
-    uniquePositions.map(p => ({ label: p, value: p })), 
-    [uniquePositions]
-  );
-
-  const sourceOptions = [
-    { label: 'Scouting', value: 'scouting' },
-    { label: 'Youth', value: 'youth_outreach' },
-    { label: 'Pro', value: 'pro_outreach' }
-  ];
-
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -217,7 +232,6 @@ export const PlayerDatabase = () => {
 
   const filteredAndSortedPlayers = useMemo(() => {
     let result = players.filter(player => {
-      // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesName = player.player_name.toLowerCase().includes(query);
@@ -226,7 +240,6 @@ export const PlayerDatabase = () => {
         if (!matchesName && !matchesClub && !matchesPosition) return false;
       }
 
-      // Age filter
       if (ageFilter !== 'all' && player.age) {
         const age = player.age;
         switch (ageFilter) {
@@ -238,17 +251,14 @@ export const PlayerDatabase = () => {
         }
       }
 
-      // Nation filter
       if (nationFilter !== 'all') {
         if (player.nationality !== nationFilter) return false;
       }
 
-      // Position filter
       if (positionFilter.length > 0) {
         if (!player.position || !positionFilter.includes(player.position)) return false;
       }
 
-      // Source filter
       if (sourceFilter.length > 0) {
         if (!sourceFilter.includes(player.source)) return false;
       }
@@ -256,7 +266,6 @@ export const PlayerDatabase = () => {
       return true;
     });
 
-    // Sort
     result.sort((a, b) => {
       let comparison = 0;
       
@@ -314,42 +323,92 @@ export const PlayerDatabase = () => {
 
   const hasActiveFilters = searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0;
 
+  const togglePositionFilter = (pos: string) => {
+    setPositionFilter(prev => 
+      prev.includes(pos) ? prev.filter(v => v !== pos) : [...prev, pos]
+    );
+  };
+
+  const toggleSourceFilter = (src: string) => {
+    setSourceFilter(prev => 
+      prev.includes(src) ? prev.filter(v => v !== src) : [...prev, src]
+    );
+  };
+
   if (loading) {
     return <LoadingSpinner size="md" className="py-8" text="Loading player database..." />;
   }
 
   const renderDatabaseTable = () => (
-    <div className="space-y-3 md:space-y-4">
-      {/* Filters */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, club, position..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+    <div className="space-y-3">
+      {/* Unified Filters */}
+      <div className="space-y-2">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, club, position..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
+        {/* Filter chips row */}
+        <div className="flex flex-wrap gap-1.5 items-center">
+          {/* Age filters */}
+          <FilterChip label="All Ages" isActive={ageFilter === 'all'} onClick={() => setAgeFilter('all')} />
+          <FilterChip label="U18" isActive={ageFilter === 'u18'} onClick={() => setAgeFilter('u18')} />
+          <FilterChip label="18-21" isActive={ageFilter === '18-21'} onClick={() => setAgeFilter('18-21')} />
+          <FilterChip label="22-25" isActive={ageFilter === '22-25'} onClick={() => setAgeFilter('22-25')} />
+          <FilterChip label="26-30" isActive={ageFilter === '26-30'} onClick={() => setAgeFilter('26-30')} />
+          <FilterChip label="30+" isActive={ageFilter === '30+'} onClick={() => setAgeFilter('30+')} />
           
-          <div className="flex gap-2">
-            <Select value={ageFilter} onValueChange={setAgeFilter}>
-              <SelectTrigger className="flex-1 sm:w-[120px]">
-                <SelectValue placeholder="Age" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Ages</SelectItem>
-                <SelectItem value="u18">Under 18</SelectItem>
-                <SelectItem value="18-21">18-21</SelectItem>
-                <SelectItem value="22-25">22-25</SelectItem>
-                <SelectItem value="26-30">26-30</SelectItem>
-                <SelectItem value="30+">30+</SelectItem>
-              </SelectContent>
-            </Select>
+          <span className="w-px h-4 bg-border mx-1" />
+          
+          {/* Source filters */}
+          <FilterChip 
+            label="Scouting" 
+            isActive={sourceFilter.includes('scouting')} 
+            onClick={() => toggleSourceFilter('scouting')} 
+          />
+          <FilterChip 
+            label="Youth" 
+            isActive={sourceFilter.includes('youth_outreach')} 
+            onClick={() => toggleSourceFilter('youth_outreach')} 
+          />
+          <FilterChip 
+            label="Pro" 
+            isActive={sourceFilter.includes('pro_outreach')} 
+            onClick={() => toggleSourceFilter('pro_outreach')} 
+          />
+          
+          {hasActiveFilters && (
+            <>
+              <span className="w-px h-4 bg-border mx-1" />
+              <button
+                onClick={clearAllFilters}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Clear
+              </button>
+            </>
+          )}
+        </div>
 
+        {/* Position filters (collapsible on mobile) */}
+        <div className="flex flex-wrap gap-1">
+          {uniquePositions.slice(0, 8).map(pos => (
+            <FilterChip 
+              key={pos}
+              label={pos} 
+              isActive={positionFilter.includes(pos)} 
+              onClick={() => togglePositionFilter(pos)} 
+            />
+          ))}
+          {uniquePositions.length > 8 && (
             <Select value={nationFilter} onValueChange={setNationFilter}>
-              <SelectTrigger className="flex-1 sm:w-[140px]">
+              <SelectTrigger className="h-7 w-[100px] text-xs">
                 <SelectValue placeholder="Nation" />
               </SelectTrigger>
               <SelectContent>
@@ -359,56 +418,54 @@ export const PlayerDatabase = () => {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        </div>
-
-        {/* Lateral Filters */}
-        <div className="flex flex-wrap gap-2 items-center">
-          <LateralFilter
-            label="Position"
-            options={positionOptions}
-            selectedValues={positionFilter}
-            onToggle={(value) => setPositionFilter(prev => 
-              prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
-            )}
-            onClear={() => setPositionFilter([])}
-            isExpanded={positionFilterExpanded}
-            onExpandedChange={setPositionFilterExpanded}
-          />
-          
-          <LateralFilter
-            label="Source"
-            options={sourceOptions}
-            selectedValues={sourceFilter}
-            onToggle={(value) => setSourceFilter(prev => 
-              prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
-            )}
-            onClear={() => setSourceFilter([])}
-            isExpanded={sourceFilterExpanded}
-            onExpandedChange={setSourceFilterExpanded}
-          />
-
-          {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs">
-              Clear All
-            </Button>
           )}
         </div>
       </div>
 
       {/* Results count */}
-      <div className="text-xs md:text-sm text-muted-foreground">
-        Showing {visiblePlayers.length} of {filteredAndSortedPlayers.length} players
+      <div className="text-xs text-muted-foreground">
+        {visiblePlayers.length} of {filteredAndSortedPlayers.length} players
       </div>
 
-      {/* Table */}
-      <div className="border rounded-lg overflow-x-auto -mx-4 md:mx-0">
-        <div className="min-w-[700px] md:min-w-0">
+      {/* Responsive Table - Mobile cards, Desktop table */}
+      <div className="md:hidden space-y-2">
+        {visiblePlayers.map((player) => (
+          <div 
+            key={`${player.source}-${player.id}`} 
+            className="p-3 border rounded-lg bg-card"
+            onClick={() => handleEditClick(player)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                {player.nationality && (
+                  <img 
+                    src={getCountryFlagUrl(player.nationality)} 
+                    alt={player.nationality}
+                    className="w-5 h-auto rounded-sm flex-shrink-0"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                )}
+                <span className="font-medium truncate">{player.player_name}</span>
+              </div>
+              <Badge variant="outline" className="text-[10px] flex-shrink-0">
+                {player.position || '-'}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+              <span>{player.current_club || '-'}</span>
+              <span>{player.age ? `${player.age}y` : '-'}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table */}
+      <div className="hidden md:block border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead 
-                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors"
+                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs"
                 onClick={() => handleSort('player_name')}
               >
                 <div className="flex items-center">
@@ -416,23 +473,23 @@ export const PlayerDatabase = () => {
                 </div>
               </TableHead>
               <TableHead 
-                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors"
+                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-10"
                 onClick={() => handleSort('nationality')}
               >
                 <div className="flex items-center">
-                  NATIONALITY {getSortIcon('nationality')}
+                  NAT {getSortIcon('nationality')}
                 </div>
               </TableHead>
               <TableHead 
-                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors"
+                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs"
                 onClick={() => handleSort('position')}
               >
                 <div className="flex items-center">
-                  POSITION {getSortIcon('position')}
+                  POS {getSortIcon('position')}
                 </div>
               </TableHead>
               <TableHead 
-                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors"
+                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-12"
                 onClick={() => handleSort('age')}
               >
                 <div className="flex items-center">
@@ -440,7 +497,7 @@ export const PlayerDatabase = () => {
                 </div>
               </TableHead>
               <TableHead 
-                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors"
+                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs"
                 onClick={() => handleSort('current_club')}
               >
                 <div className="flex items-center">
@@ -448,70 +505,52 @@ export const PlayerDatabase = () => {
                 </div>
               </TableHead>
               <TableHead 
-                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors"
+                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-20"
                 onClick={() => handleSort('created_at')}
               >
                 <div className="flex items-center">
                   ADDED {getSortIcon('created_at')}
                 </div>
               </TableHead>
-              <TableHead 
-                className="font-semibold text-center cursor-pointer hover:bg-muted/70 transition-colors"
-                onClick={() => handleSort('report_count')}
-              >
-                <div className="flex items-center justify-center">
-                  REPORTS {getSortIcon('report_count')}
-                </div>
-              </TableHead>
-              <TableHead className="font-semibold text-right">ACTIONS</TableHead>
+              <TableHead className="font-semibold text-xs w-8 text-center">#</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {visiblePlayers.map((player) => (
-              <TableRow key={`${player.source}-${player.id}`} className="hover:bg-muted/30">
-                <TableCell className="font-medium">{player.player_name}</TableCell>
-                <TableCell>
+              <TableRow 
+                key={`${player.source}-${player.id}`} 
+                className="hover:bg-muted/30 cursor-pointer"
+                onClick={() => handleEditClick(player)}
+              >
+                <TableCell className="font-medium text-sm py-2">{player.player_name}</TableCell>
+                <TableCell className="py-2">
                   {player.nationality ? (
-                    <div className="flex items-center gap-2">
-                      <img 
-                        src={getCountryFlagUrl(player.nationality)} 
-                        alt={player.nationality}
-                        className="w-5 h-auto rounded-sm"
-                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                      />
-                      <span className="text-sm">{player.nationality}</span>
-                    </div>
+                    <img 
+                      src={getCountryFlagUrl(player.nationality)} 
+                      alt={player.nationality}
+                      className="w-5 h-auto rounded-sm"
+                      title={player.nationality}
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
                   ) : '-'}
                 </TableCell>
-                <TableCell>{player.position || '-'}</TableCell>
-                <TableCell>{player.age || '-'}</TableCell>
-                <TableCell>{player.current_club || '-'}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">
-                  {player.created_at ? new Date(player.created_at).toLocaleDateString() : '-'}
+                <TableCell className="text-sm py-2">{player.position || '-'}</TableCell>
+                <TableCell className="text-sm py-2">{player.age || '-'}</TableCell>
+                <TableCell className="text-sm py-2">{player.current_club || '-'}</TableCell>
+                <TableCell className="text-xs text-muted-foreground py-2">
+                  {player.created_at ? new Date(player.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '-'}
                 </TableCell>
-                <TableCell className="text-center">
-                  <span className={`inline-flex items-center justify-center min-w-[24px] px-2 py-0.5 rounded-full text-xs font-medium ${
-                    player.report_count > 0 ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {player.report_count}
-                  </span>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEditClick(player)}
-                    className="h-8 px-2"
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
-                  </Button>
+                <TableCell className="text-center py-2">
+                  {player.report_count > 0 && (
+                    <span className="inline-flex items-center justify-center min-w-[20px] px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/20 text-primary">
+                      {player.report_count}
+                    </span>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
-            </TableBody>
-          </Table>
-        </div>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Load More */}
@@ -626,7 +665,7 @@ export const PlayerDatabase = () => {
   );
 };
 
-// Embedded outreach component that shows only youth or pro
+// Embedded outreach component with full features
 const PlayerOutreachEmbed = ({ type }: { type: 'youth' | 'pro' }) => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -652,85 +691,130 @@ const PlayerOutreachEmbed = ({ type }: { type: 'youth' | 'pro' }) => {
     fetchData();
   }, [type]);
 
+  const toggleField = async (id: string, field: string, currentValue: boolean) => {
+    const tableName = type === 'youth' ? 'player_outreach_youth' : 'player_outreach_pro';
+    
+    // Optimistic update
+    setData(prev => prev.map(item => 
+      item.id === id ? { ...item, [field]: !currentValue } : item
+    ));
+    
+    try {
+      const { error } = await supabase
+        .from(tableName)
+        .update({ [field]: !currentValue })
+        .eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      // Revert on error
+      setData(prev => prev.map(item => 
+        item.id === id ? { ...item, [field]: currentValue } : item
+      ));
+      toast.error('Failed to save');
+    }
+  };
+
+  const openInstagram = (handle: string | null) => {
+    if (!handle) return;
+    const cleanHandle = handle.replace('@', '').trim();
+    if (!cleanHandle) return;
+    // Open in new tab to avoid iframe blocking
+    window.open(`https://instagram.com/${cleanHandle}`, '_blank', 'noopener,noreferrer');
+  };
+
   if (loading) {
     return <LoadingSpinner size="md" className="py-8" text={`Loading ${type} outreach...`} />;
   }
 
+  // Group by status
+  const notMessaged = data.filter(d => !d.messaged);
+  const noResponse = data.filter(d => d.messaged && !d.response_received);
+  const responded = data.filter(d => d.response_received);
+
+  const renderSection = (items: any[], title: string) => (
+    <div className="border rounded-lg overflow-hidden mb-4">
+      <div className="bg-muted/50 px-3 py-2 font-semibold text-sm">
+        {title} ({items.length})
+      </div>
+      {items.length === 0 ? (
+        <div className="p-4 text-center text-sm text-muted-foreground">No entries</div>
+      ) : (
+        <div className="divide-y">
+          {items.map((item) => (
+            <div key={item.id} className="p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-sm truncate">{item.player_name}</div>
+                  <div className="text-xs text-muted-foreground truncate">{item.current_club || '-'}</div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {item.ig_handle && (
+                    <button
+                      onClick={() => openInstagram(item.ig_handle)}
+                      className="text-primary hover:text-primary/80 p-1"
+                      title={`@${item.ig_handle.replace('@', '')}`}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </button>
+                  )}
+                  <div className="flex items-center gap-1">
+                    <Checkbox
+                      checked={item.messaged}
+                      onCheckedChange={() => toggleField(item.id, 'messaged', item.messaged)}
+                    />
+                    <span className="text-[10px] text-muted-foreground">MSG</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Checkbox
+                      checked={item.response_received}
+                      onCheckedChange={() => toggleField(item.id, 'response_received', item.response_received)}
+                    />
+                    <span className="text-[10px] text-muted-foreground">RSP</span>
+                  </div>
+                  {type === 'youth' && (
+                    <div className="flex items-center gap-1">
+                      <Checkbox
+                        checked={item.parent_approval}
+                        onCheckedChange={() => toggleField(item.id, 'parent_approval', item.parent_approval)}
+                      />
+                      <span className="text-[10px] text-muted-foreground">APR</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {type === 'youth' && item.parents_name && (
+                <div className="mt-2 text-xs text-muted-foreground flex items-center gap-2">
+                  <span>Parent: {item.parents_name}</span>
+                  {item.parent_contact && (
+                    <button
+                      onClick={() => openInstagram(item.parent_contact)}
+                      className="text-primary hover:text-primary/80"
+                      title={`@${item.parent_contact.replace('@', '')}`}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              )}
+              {item.notes && (
+                <div className="mt-1 text-xs text-muted-foreground truncate">{item.notes}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <div className="space-y-4">
-      <div className="text-sm text-muted-foreground">
+    <div className="space-y-2">
+      <div className="text-xs text-muted-foreground mb-2">
         {data.length} {type} outreach entries
       </div>
       
-      <div className="border rounded-lg overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead className="font-semibold">NAME</TableHead>
-              <TableHead className="font-semibold">CLUB</TableHead>
-              <TableHead className="font-semibold">INSTAGRAM</TableHead>
-              <TableHead className="font-semibold text-center">MESSAGED</TableHead>
-              <TableHead className="font-semibold text-center">RESPONSE</TableHead>
-              {type === 'youth' && <TableHead className="font-semibold text-center">PARENT APPROVAL</TableHead>}
-              <TableHead className="font-semibold">NOTES</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={type === 'youth' ? 7 : 6} className="text-center text-muted-foreground py-8">
-                  No {type} outreach entries yet
-                </TableCell>
-              </TableRow>
-            ) : (
-              data.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.player_name}</TableCell>
-                  <TableCell>{item.current_club || '-'}</TableCell>
-                  <TableCell>
-                    {item.ig_handle ? (
-                      <a 
-                        href={`https://instagram.com/${item.ig_handle.replace('@', '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        @{item.ig_handle.replace('@', '')}
-                      </a>
-                    ) : '-'}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs ${
-                      item.messaged ? 'bg-green-500/20 text-green-600' : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {item.messaged ? '✓' : '-'}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs ${
-                      item.response_received ? 'bg-green-500/20 text-green-600' : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {item.response_received ? '✓' : '-'}
-                    </span>
-                  </TableCell>
-                  {type === 'youth' && (
-                    <TableCell className="text-center">
-                      <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs ${
-                        item.parent_approval ? 'bg-green-500/20 text-green-600' : 'bg-muted text-muted-foreground'
-                      }`}>
-                        {item.parent_approval ? '✓' : '-'}
-                      </span>
-                    </TableCell>
-                  )}
-                  <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
-                    {item.notes || '-'}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {renderSection(notMessaged, 'Not Messaged')}
+      {renderSection(noResponse, 'Awaiting Response')}
+      {renderSection(responded, 'Responded')}
     </div>
   );
 };
