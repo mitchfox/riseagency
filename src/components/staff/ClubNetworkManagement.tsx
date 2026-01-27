@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Plus, X, Mail } from 'lucide-react';
+import { Plus, X, Mail, Settings } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import {
   Dialog,
@@ -16,6 +16,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QuickMessageSection } from './QuickMessageSection';
 import MessagePathways from './MessagePathways';
+import { LeagueRulesDialog } from './LeagueRulesDialog';
 
 interface Contact {
   id: string;
@@ -35,6 +36,7 @@ interface Contact {
 const ClubNetworkManagement = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [showDialog, setShowDialog] = useState(false);
+  const [showLeagueRules, setShowLeagueRules] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -56,7 +58,6 @@ const ClubNetworkManagement = () => {
   }, []);
 
   const syncOutreachContacts = async () => {
-    // Fetch club outreach entries with meeting, responded, or interested status
     const { data: outreachData, error: outreachError } = await supabase
       .from('club_outreach')
       .select('club_name, contact_name, contact_role')
@@ -64,7 +65,6 @@ const ClubNetworkManagement = () => {
 
     if (outreachError || !outreachData) return;
 
-    // Fetch existing contacts to avoid duplicates
     const { data: existingContacts } = await supabase
       .from('club_network_contacts')
       .select('name, club_name');
@@ -73,7 +73,6 @@ const ClubNetworkManagement = () => {
       (existingContacts || []).map(c => `${c.name?.toLowerCase()}-${c.club_name?.toLowerCase()}`)
     );
 
-    // Filter out entries without contact_name or already existing
     const newContacts = outreachData
       .filter(o => o.contact_name && !existingSet.has(`${o.contact_name.toLowerCase()}-${o.club_name.toLowerCase()}`))
       .map(o => ({
@@ -98,7 +97,7 @@ const ClubNetworkManagement = () => {
     const { data, error } = await supabase
       .from('club_network_contacts')
       .select('*')
-      .not('position', 'is', null) // Only fetch entries that have a position (actual contacts, not clubs)
+      .not('position', 'is', null)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -106,7 +105,6 @@ const ClubNetworkManagement = () => {
       return;
     }
 
-    // Additional filter: exclude entries where name looks like a club name (no position set means it's a club)
     const filteredContacts = (data || []).filter(contact => 
       contact.position !== null && contact.position !== ''
     );
@@ -229,91 +227,100 @@ const ClubNetworkManagement = () => {
         </TabsList>
 
         <TabsContent value="contacts" className="mt-6">
-
-      <div>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">Club Network Contacts</h2>
-          <Button onClick={openAddDialog}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Contact
-          </Button>
-        </div>
-
-      <div className="space-y-4">
-          {contacts.map((contact) => (
-            <div
-              key={contact.id}
-              className="p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors"
-            >
-              <div className="flex justify-between items-start">
-                <div className="flex gap-4">
-                  {contact.image_url && (
-                    <img
-                      src={contact.image_url}
-                      alt={contact.name}
-                      className="w-16 h-16 object-cover rounded"
-                    />
-                  )}
-                  <div>
-                    <h3 className="font-semibold text-lg">{contact.name}</h3>
-                    {contact.position && (
-                      <p className="text-sm text-muted-foreground">{contact.position}</p>
-                    )}
-                    <div className="mt-2 flex items-center gap-3">
-                      {contact.phone && (
-                        <a
-                          href={`https://wa.me/${contact.phone.replace(/[^0-9]/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-muted-foreground/60 hover:text-green-500 transition-colors"
-                          title={`WhatsApp: ${contact.phone}`}
-                        >
-                          <FaWhatsapp className="h-5 w-5" />
-                        </a>
-                      )}
-                      {contact.email && (
-                        <a
-                          href={`mailto:${contact.email}`}
-                          className="text-muted-foreground/60 hover:text-primary transition-colors"
-                          title={`Email: ${contact.email}`}
-                        >
-                          <Mail className="h-5 w-5" />
-                        </a>
-                      )}
-                    </div>
-                    {contact.city && contact.country && (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {contact.city}, {contact.country}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEditDialog(contact)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(contact.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">Club Network Contacts</h2>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => setShowLeagueRules(true)}
+                  title="League Rules"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+                <Button onClick={openAddDialog}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Contact
+                </Button>
               </div>
-              {contact.notes && (
-                <p className="mt-3 text-sm text-muted-foreground border-t pt-3">
-                  {contact.notes}
-                </p>
-              )}
             </div>
-        ))}
+
+            <div className="space-y-4">
+              {contacts.map((contact) => (
+                <div
+                  key={contact.id}
+                  className="p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex gap-4">
+                      {contact.image_url && (
+                        <img
+                          src={contact.image_url}
+                          alt={contact.name}
+                          className="w-16 h-16 object-cover rounded"
+                        />
+                      )}
+                      <div>
+                        <h3 className="font-semibold text-lg">{contact.name}</h3>
+                        {contact.position && (
+                          <p className="text-sm text-muted-foreground">{contact.position}</p>
+                        )}
+                        <div className="mt-2 flex items-center gap-3">
+                          {contact.phone && (
+                            <a
+                              href={`https://wa.me/${contact.phone.replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-muted-foreground/60 hover:text-emerald-500 transition-colors"
+                              title={`WhatsApp: ${contact.phone}`}
+                            >
+                              <FaWhatsapp className="h-5 w-5" />
+                            </a>
+                          )}
+                          {contact.email && (
+                            <a
+                              href={`mailto:${contact.email}`}
+                              className="text-muted-foreground/60 hover:text-primary transition-colors"
+                              title={`Email: ${contact.email}`}
+                            >
+                              <Mail className="h-5 w-5" />
+                            </a>
+                          )}
+                        </div>
+                        {contact.city && contact.country && (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {contact.city}, {contact.country}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditDialog(contact)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(contact.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  {contact.notes && (
+                    <p className="mt-3 text-sm text-muted-foreground border-t pt-3">
+                      {contact.notes}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
         </TabsContent>
 
         <TabsContent value="templates" className="mt-6">
@@ -325,6 +332,10 @@ const ClubNetworkManagement = () => {
         </TabsContent>
       </Tabs>
 
+      {/* League Rules Dialog */}
+      <LeagueRulesDialog open={showLeagueRules} onOpenChange={setShowLeagueRules} />
+
+      {/* Add/Edit Contact Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-4 md:p-6">
           <DialogHeader>

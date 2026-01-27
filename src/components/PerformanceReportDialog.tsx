@@ -339,22 +339,22 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-y-auto p-0">
-        <div className="sticky top-0 z-10 bg-background border-b p-3 md:p-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <h2 className="text-lg md:text-xl font-bebas uppercase tracking-wider">Performance Report</h2>
-          <div className="flex gap-2 flex-wrap">
-            <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="flex-1 md:flex-none" disabled={savingImage || loading}>
-              <ImageIcon className="mr-2 h-4 w-4" />
-              {savingImage ? 'Saving...' : 'Save as Image'}
+      <DialogContent className="max-w-[98vw] md:max-w-[95vw] w-full max-h-[95vh] overflow-y-auto overflow-x-hidden p-0">
+        <div className="sticky top-0 z-10 bg-background border-b p-2 md:p-4 flex items-center justify-between gap-2">
+          <h2 className="text-base md:text-xl font-bebas uppercase tracking-wider truncate">Performance Report</h2>
+          <div className="flex gap-1 md:gap-2 flex-shrink-0">
+            <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="px-2 md:px-3" disabled={savingImage || loading}>
+              <ImageIcon className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">{savingImage ? 'Saving...' : 'Save'}</span>
             </Button>
-            <Button onClick={() => onOpenChange(false)} variant="outline" size="sm" className="flex-1 md:flex-none">
-              <X className="mr-2 h-4 w-4" />
-              Close
+            <Button onClick={() => onOpenChange(false)} variant="outline" size="sm" className="px-2 md:px-3">
+              <X className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Close</span>
             </Button>
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-3 md:p-6 overflow-x-hidden">
           {loading ? (
             <div className="space-y-6 animate-pulse">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -378,25 +378,25 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
           ) : !analysis ? (
             <div className="text-center py-8 text-muted-foreground">Performance report not found</div>
           ) : (
-            <div ref={contentRef} className="space-y-6 bg-background p-4 rounded-lg">
+            <div ref={contentRef} className="space-y-4 md:space-y-6 bg-background p-2 md:p-4 rounded-lg overflow-x-hidden">
               {/* Player Info with Clipped Actions Button */}
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
+              <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Player</p>
-                    <p className="font-bold">{analysis.player_name}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">Player</p>
+                    <p className="font-bold text-sm md:text-base truncate">{analysis.player_name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Date</p>
-                    <p className="font-bold">{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">Date</p>
+                    <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Opponent</p>
-                    <p className="font-bold">{analysis.opponent || "N/A"}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">Opponent</p>
+                    <p className="font-bold text-sm md:text-base truncate">{analysis.opponent || "N/A"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Result</p>
-                    <p className="font-bold">{analysis.result || "N/A"}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">Result</p>
+                    <p className="font-bold text-sm md:text-base">{analysis.result || "N/A"}</p>
                   </div>
                 </div>
                 
@@ -415,16 +415,16 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
               </div>
 
               {/* Key Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-accent/20 rounded-lg">
-                <div className="text-center">
-                  <p className="text-xs md:text-sm text-muted-foreground mb-1">Raw Score</p>
-                  <p className="text-xl md:text-2xl font-bold">
-                    {actions.length > 0 ? calculateRScore().toFixed(5) : (analysis.r90_score !== null && analysis.minutes_played ? ((analysis.r90_score / 90) * analysis.minutes_played).toFixed(5) : "N/A")}
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4 p-2 md:p-4 bg-accent/20 rounded-lg">
+                <div className="text-center p-2">
+                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Raw Score</p>
+                  <p className="text-base md:text-2xl font-bold">
+                    {actions.length > 0 ? calculateRScore().toFixed(3) : (analysis.r90_score !== null && analysis.minutes_played ? ((analysis.r90_score / 90) * analysis.minutes_played).toFixed(3) : "N/A")}
                   </p>
                 </div>
-                <div className="text-center bg-primary text-primary-foreground rounded-lg p-4">
-                  <p className="text-xs md:text-sm mb-1 opacity-90">R90 Score</p>
-                  <p className="text-2xl md:text-3xl font-bold">
+                <div className="text-center bg-primary text-primary-foreground rounded-lg p-2 md:p-4">
+                  <p className="text-[10px] md:text-sm mb-0.5 md:mb-1 opacity-90">R90</p>
+                  <p className="text-lg md:text-3xl font-bold">
                     {analysis.r90_score !== null 
                       ? analysis.r90_score.toFixed(2)
                       : analysis.minutes_played && actions.length > 0
@@ -433,38 +433,38 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                     }
                   </p>
                 </div>
-                <div className="text-center">
-                  <p className="text-xs md:text-sm text-muted-foreground mb-1">xG Chain</p>
-                  <p className="text-xl md:text-2xl font-bold">{actions.length > 0 ? calculateXGChain().toFixed(3) : "N/A"}</p>
+                <div className="text-center p-2">
+                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">xG Chain</p>
+                  <p className="text-base md:text-2xl font-bold">{actions.length > 0 ? calculateXGChain().toFixed(2) : "N/A"}</p>
                 </div>
-                <div className="text-center">
-                  <p className="text-xs md:text-sm text-muted-foreground mb-1">Minutes Played</p>
-                  <p className="text-xl md:text-2xl font-bold">{analysis.minutes_played ?? "N/A"}</p>
+                <div className="text-center p-2">
+                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Mins</p>
+                  <p className="text-base md:text-2xl font-bold">{analysis.minutes_played ?? "N/A"}</p>
                 </div>
               </div>
 
               {/* Advanced Stats */}
               {advancedStats.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Match Statistics</CardTitle>
+                <Card className="overflow-hidden">
+                  <CardHeader className="py-2 md:py-4">
+                    <CardTitle className="text-sm md:text-lg">Match Statistics</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  <CardContent className="p-2 md:p-6">
+                    <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
                       {advancedStats.map((stat) => (
-                        <div key={stat.key} className="text-center p-3 bg-accent/10 rounded-lg">
-                          <p className="text-xs text-muted-foreground mb-1 capitalize">{formatStatLabel(stat.key)}</p>
+                        <div key={stat.key} className="text-center p-1.5 md:p-3 bg-accent/10 rounded">
+                          <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 capitalize truncate">{formatStatLabel(stat.key)}</p>
                           {stat.isPaired ? (
                             <>
-                              <p className="text-lg font-bold">{stat.percentage}%</p>
-                              <p className="text-xs text-muted-foreground">{stat.successful} / {stat.attempted}</p>
+                              <p className="text-sm md:text-lg font-bold">{stat.percentage}%</p>
+                              <p className="text-[9px] md:text-xs text-muted-foreground">{stat.successful}/{stat.attempted}</p>
                             </>
                           ) : (
-                            <p className="text-lg font-bold">{stat.value}</p>
+                            <p className="text-sm md:text-lg font-bold">{stat.value}</p>
                           )}
                           {stat.per90Value !== undefined && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              per 90: {stat.per90Value}
+                            <p className="text-[8px] md:text-xs text-muted-foreground mt-0.5">
+                              p90: {stat.per90Value}
                             </p>
                           )}
                         </div>
@@ -476,33 +476,33 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
 
               {/* Performance Overview */}
               {analysis.performance_overview && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Performance Overview</CardTitle>
+                <Card className="overflow-hidden">
+                  <CardHeader className="py-2 md:py-4">
+                    <CardTitle className="text-sm md:text-lg">Overview</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground whitespace-pre-wrap text-center text-sm">{analysis.performance_overview}</p>
+                  <CardContent className="p-2 md:p-6">
+                    <p className="text-muted-foreground whitespace-pre-wrap text-center text-xs md:text-sm">{analysis.performance_overview}</p>
                   </CardContent>
                 </Card>
               )}
 
               {/* Performance Actions */}
               {actions.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Performance Actions ({actions.length})</CardTitle>
+                <Card className="overflow-hidden">
+                  <CardHeader className="py-2 md:py-4">
+                    <CardTitle className="text-sm md:text-lg">Actions ({actions.length})</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    {/* Mobile: Card layout */}
-                    <div className="block md:hidden space-y-3">
+                  <CardContent className="p-2 md:p-6">
+                    {/* Mobile: Compact card layout */}
+                    <div className="block md:hidden space-y-2">
                       {actions.map((action) => (
-                        <div key={action.id} className="p-3 bg-muted/30 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex gap-2 items-center flex-wrap">
-                              <span className="font-semibold">#{action.action_number}</span>
-                              <span className="text-sm text-muted-foreground">{formatMinute(action.minute)}'</span>
-                              <span className={`text-sm font-bold ${getActionScoreColor(action.action_score)}`}>
-                                {action.action_score?.toFixed(5)}
+                        <div key={action.id} className="p-2 bg-muted/30 rounded">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="font-semibold text-xs">#{action.action_number}</span>
+                              <span className="text-[10px] text-muted-foreground">{formatMinute(action.minute)}'</span>
+                              <span className={`text-xs font-bold ${getActionScoreColor(action.action_score)}`}>
+                                {action.action_score?.toFixed(3)}
                               </span>
                             </div>
                             {action.video_url && (
@@ -511,16 +511,16 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                                   setSelectedVideoUrl(action.video_url!);
                                   setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
                                 }}
-                                className="text-risegold hover:text-risegold/80 p-1"
+                                className="text-risegold hover:text-risegold/80 p-0.5 flex-shrink-0"
                               >
-                                <Video className="h-4 w-4" />
+                                <Video className="h-3.5 w-3.5" />
                               </button>
                             )}
                           </div>
-                          <div className="font-medium text-sm mb-1">{action.action_type}</div>
-                          <div className="text-sm text-foreground/80">{action.action_description}</div>
+                          <div className="font-medium text-xs mt-1 truncate">{action.action_type}</div>
+                          <div className="text-[10px] text-foreground/80 line-clamp-2">{action.action_description}</div>
                           {action.notes && (
-                            <div className="text-xs text-muted-foreground italic mt-2 pt-2 border-t border-border/50">
+                            <div className="text-[9px] text-muted-foreground italic mt-1 pt-1 border-t border-border/50 truncate">
                               {action.notes}
                             </div>
                           )}
