@@ -7,11 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Edit, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Users, UserPlus, ExternalLink } from 'lucide-react';
+import { Search, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Users, UserPlus } from 'lucide-react';
+import { FaInstagram } from 'react-icons/fa';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface PlayerData {
   id: string;
@@ -26,6 +28,8 @@ interface PlayerData {
   notes?: string | null;
   ig_handle?: string | null;
   created_at?: string;
+  profile_image_url?: string | null;
+  club_logo_url?: string | null;
 }
 
 type SortField = 'player_name' | 'age' | 'position' | 'nationality' | 'current_club' | 'report_count' | 'created_at';
@@ -108,15 +112,29 @@ export const PlayerDatabase = () => {
 
   const fetchAllPlayers = async () => {
     try {
-      const [scoutingResult, youthResult, proResult] = await Promise.all([
+      const [scoutingResult, youthResult, proResult, clubLogosResult] = await Promise.all([
         supabase.from('scouting_reports').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_youth').select('*').order('created_at', { ascending: false }),
-        supabase.from('player_outreach_pro').select('*').order('created_at', { ascending: false })
+        supabase.from('player_outreach_pro').select('*').order('created_at', { ascending: false }),
+        supabase.from('club_map_positions').select('club_name, image_url')
       ]);
 
       if (scoutingResult.error) throw scoutingResult.error;
       if (youthResult.error) throw youthResult.error;
       if (proResult.error) throw proResult.error;
+
+      // Build club logo lookup map
+      const clubLogoMap: Record<string, string> = {};
+      clubLogosResult.data?.forEach(club => {
+        if (club.club_name && club.image_url) {
+          clubLogoMap[club.club_name.toLowerCase()] = club.image_url;
+        }
+      });
+
+      const getClubLogo = (clubName: string | null): string | null => {
+        if (!clubName) return null;
+        return clubLogoMap[clubName.toLowerCase()] || null;
+      };
 
       const playerMap: Record<string, PlayerData> = {};
 
@@ -134,12 +152,18 @@ export const PlayerDatabase = () => {
             report_count: 1,
             source: 'scouting',
             notes: report.notes,
-            created_at: report.created_at
+            created_at: report.created_at,
+            profile_image_url: (report as any).profile_image_url || null,
+            club_logo_url: getClubLogo(report.current_club)
           };
         } else {
           playerMap[name].report_count++;
           if (report.created_at && (!playerMap[name].created_at || report.created_at > playerMap[name].created_at)) {
             playerMap[name].created_at = report.created_at;
+          }
+          // Update profile image if available and not set
+          if ((report as any).profile_image_url && !playerMap[name].profile_image_url) {
+            playerMap[name].profile_image_url = (report as any).profile_image_url;
           }
         }
       });
@@ -159,7 +183,9 @@ export const PlayerDatabase = () => {
             source: 'youth_outreach',
             notes: outreach.notes,
             ig_handle: outreach.ig_handle,
-            created_at: outreach.created_at
+            created_at: outreach.created_at,
+            profile_image_url: null,
+            club_logo_url: getClubLogo((outreach as any).current_club)
           };
         }
       });
@@ -179,7 +205,9 @@ export const PlayerDatabase = () => {
             source: 'pro_outreach',
             notes: outreach.notes,
             ig_handle: outreach.ig_handle,
-            created_at: outreach.created_at
+            created_at: outreach.created_at,
+            profile_image_url: null,
+            club_logo_url: getClubLogo((outreach as any).current_club)
           };
         }
       });
@@ -432,38 +460,53 @@ export const PlayerDatabase = () => {
         {visiblePlayers.map((player) => (
           <div 
             key={`${player.source}-${player.id}`} 
-            className="p-3 border rounded-lg bg-card"
+            className="p-3 border rounded-lg bg-card/80 backdrop-blur-sm hover:bg-card transition-colors"
             onClick={() => handleEditClick(player)}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0">
-                {player.nationality && (
-                  <img 
-                    src={getCountryFlagUrl(player.nationality)} 
-                    alt={player.nationality}
-                    className="w-5 h-auto rounded-sm flex-shrink-0"
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                  />
-                )}
-                <span className="font-medium truncate">{player.player_name}</span>
+            <div className="flex items-center gap-3">
+              {/* Player Avatar */}
+              <Avatar className="h-10 w-10 flex-shrink-0">
+                <AvatarImage src={player.profile_image_url || undefined} alt={player.player_name} />
+                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold text-xs">
+                  {player.player_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  {player.nationality && (
+                    <img 
+                      src={getCountryFlagUrl(player.nationality)} 
+                      alt={player.nationality}
+                      className="w-5 h-auto rounded-sm flex-shrink-0"
+                    />
+                  )}
+                  <span className="font-medium truncate">{player.player_name}</span>
+                  <Badge variant="outline" className="text-[10px] flex-shrink-0 ml-auto">
+                    {player.position || '-'}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    {player.club_logo_url && (
+                      <img src={player.club_logo_url} alt="" className="w-4 h-4 object-contain" />
+                    )}
+                    <span className="truncate">{player.current_club || '-'}</span>
+                  </div>
+                  <span>{player.age ? `${player.age}y` : '-'}</span>
+                </div>
               </div>
-              <Badge variant="outline" className="text-[10px] flex-shrink-0">
-                {player.position || '-'}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-              <span>{player.current_club || '-'}</span>
-              <span>{player.age ? `${player.age}y` : '-'}</span>
             </div>
           </div>
         ))}
       </div>
 
       {/* Desktop Table */}
-      <div className="hidden md:block border rounded-lg overflow-hidden">
+      <div className="hidden md:block border rounded-lg overflow-hidden bg-card/50">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
+              <TableHead className="font-semibold text-xs w-12"></TableHead>
               <TableHead 
                 className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs"
                 onClick={() => handleSort('player_name')}
@@ -473,7 +516,7 @@ export const PlayerDatabase = () => {
                 </div>
               </TableHead>
               <TableHead 
-                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-10"
+                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-12"
                 onClick={() => handleSort('nationality')}
               >
                 <div className="flex items-center">
@@ -481,7 +524,7 @@ export const PlayerDatabase = () => {
                 </div>
               </TableHead>
               <TableHead 
-                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs"
+                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-16"
                 onClick={() => handleSort('position')}
               >
                 <div className="flex items-center">
@@ -512,35 +555,58 @@ export const PlayerDatabase = () => {
                   ADDED {getSortIcon('created_at')}
                 </div>
               </TableHead>
-              <TableHead className="font-semibold text-xs w-8 text-center">#</TableHead>
+              <TableHead className="font-semibold text-xs w-10 text-center">#</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {visiblePlayers.map((player) => (
               <TableRow 
                 key={`${player.source}-${player.id}`} 
-                className="hover:bg-muted/30 cursor-pointer"
+                className="hover:bg-muted/30 cursor-pointer group"
                 onClick={() => handleEditClick(player)}
               >
-                <TableCell className="font-medium text-sm py-2">{player.player_name}</TableCell>
-                <TableCell className="py-2">
+                {/* Player Avatar */}
+                <TableCell className="py-1.5 pr-0">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={player.profile_image_url || undefined} alt={player.player_name} />
+                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold text-[10px]">
+                      {player.player_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </TableCell>
+                <TableCell className="font-medium text-sm py-1.5">{player.player_name}</TableCell>
+                <TableCell className="py-1.5">
                   {player.nationality ? (
                     <img 
                       src={getCountryFlagUrl(player.nationality)} 
                       alt={player.nationality}
-                      className="w-5 h-auto rounded-sm"
+                      className="w-6 h-auto rounded-sm shadow-sm"
                       title={player.nationality}
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
-                  ) : '-'}
+                  ) : <span className="text-muted-foreground">-</span>}
                 </TableCell>
-                <TableCell className="text-sm py-2">{player.position || '-'}</TableCell>
-                <TableCell className="text-sm py-2">{player.age || '-'}</TableCell>
-                <TableCell className="text-sm py-2">{player.current_club || '-'}</TableCell>
-                <TableCell className="text-xs text-muted-foreground py-2">
+                <TableCell className="text-sm py-1.5">
+                  <Badge variant="outline" className="text-[10px] font-medium">
+                    {player.position || '-'}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-sm py-1.5">{player.age || '-'}</TableCell>
+                <TableCell className="text-sm py-1.5">
+                  <div className="flex items-center gap-2">
+                    {player.club_logo_url && (
+                      <img 
+                        src={player.club_logo_url} 
+                        alt="" 
+                        className="w-5 h-5 object-contain flex-shrink-0"
+                      />
+                    )}
+                    <span className="truncate">{player.current_club || '-'}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground py-1.5">
                   {player.created_at ? new Date(player.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '-'}
                 </TableCell>
-                <TableCell className="text-center py-2">
+                <TableCell className="text-center py-1.5">
                   {player.report_count > 0 && (
                     <span className="inline-flex items-center justify-center min-w-[20px] px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/20 text-primary">
                       {player.report_count}
@@ -751,10 +817,10 @@ const PlayerOutreachEmbed = ({ type }: { type: 'youth' | 'pro' }) => {
                   {item.ig_handle && (
                     <button
                       onClick={() => openInstagram(item.ig_handle)}
-                      className="text-primary hover:text-primary/80 p-1"
+                      className="p-1 hover:scale-110 transition-transform"
                       title={`@${item.ig_handle.replace('@', '')}`}
                     >
-                      <ExternalLink className="h-4 w-4" />
+                      <FaInstagram className="h-4 w-4 text-[#E1306C]" />
                     </button>
                   )}
                   <div className="flex items-center gap-1">
@@ -788,10 +854,10 @@ const PlayerOutreachEmbed = ({ type }: { type: 'youth' | 'pro' }) => {
                   {item.parent_contact && (
                     <button
                       onClick={() => openInstagram(item.parent_contact)}
-                      className="text-primary hover:text-primary/80"
+                      className="hover:scale-110 transition-transform"
                       title={`@${item.parent_contact.replace('@', '')}`}
                     >
-                      <ExternalLink className="h-3 w-3" />
+                      <FaInstagram className="h-3 w-3 text-[#E1306C]" />
                     </button>
                   )}
                 </div>
