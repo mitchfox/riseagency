@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image as ImageIcon, X, Download, FileDown } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
-import { PerformanceReportEditorContent } from "./PerformanceReportEditorContent";
+import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
 import { NutritionProgramManagement } from "./NutritionProgramManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
@@ -3219,23 +3219,20 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
       {/* Inline Performance Report Editor */}
       {showReportEditor && (
-        <div className="fixed inset-0 z-50 bg-background overflow-auto">
-          <div className="max-w-6xl mx-auto p-4">
-            <PerformanceReportEditorContent
-              playerId={reportEditorPlayerId}
-              playerName={reportEditorPlayerName}
-              analysisId={reportEditorAnalysisId}
-              onClose={() => {
-                setShowReportEditor(false);
-                setReportEditorAnalysisId(undefined);
-              }}
-              onSuccess={() => {
-                fetchAllAnalyses();
-                fetchTacticalAnalyses();
-              }}
-            />
-          </div>
-        </div>
+        <CreatePerformanceReportDialog
+          inline={true}
+          playerId={reportEditorPlayerId}
+          playerName={reportEditorPlayerName}
+          analysisId={reportEditorAnalysisId}
+          onClose={() => {
+            setShowReportEditor(false);
+            setReportEditorAnalysisId(undefined);
+          }}
+          onSuccess={() => {
+            fetchAllAnalyses();
+            fetchTacticalAnalyses();
+          }}
+        />
       )}
 
       <ProgrammingManagement

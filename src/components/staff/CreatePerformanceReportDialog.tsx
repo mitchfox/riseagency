@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, EyeOff, AlertTriangle, Sparkles, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical } from "lucide-react";
+import { Plus, Trash2, EyeOff, AlertTriangle, Sparkles, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -32,12 +32,14 @@ const formatMinuteForInput = (minute: number | null): string => {
 };
 
 interface CreatePerformanceReportDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   playerId: string;
   playerName: string;
   onSuccess?: () => void;
   analysisId?: string; // For edit mode
+  inline?: boolean; // When true, renders without Dialog wrapper
+  onClose?: () => void; // Required for inline mode
 }
 
 interface Fixture {
@@ -100,12 +102,14 @@ const SortableStatItem = ({ id, children }: SortableStatItemProps) => {
 };
 
 export const CreatePerformanceReportDialog = ({
-  open,
+  open = true,
   onOpenChange,
   playerId,
   playerName,
   onSuccess,
   analysisId,
+  inline = false,
+  onClose,
 }: CreatePerformanceReportDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
@@ -279,7 +283,8 @@ export const CreatePerformanceReportDialog = ({
   };
 
   useEffect(() => {
-    if (open && playerId) {
+    // In inline mode, always load; in dialog mode, only when open
+    if ((inline || open) && playerId) {
       console.log('CreatePerformanceReportDialog opened for player:', playerId);
       fetchActionTypes();
       if (analysisId) {
@@ -294,7 +299,7 @@ export const CreatePerformanceReportDialog = ({
       fetchFixtures();
       fetchPlayerClub();
     }
-  }, [open, analysisId, playerId]);
+  }, [inline, open, analysisId, playerId]);
 
   // Auto-calculate per90 statistics
   useEffect(() => {
@@ -1260,19 +1265,24 @@ export const CreatePerformanceReportDialog = ({
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl lg:max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</DialogTitle>
-        </DialogHeader>
+  // Handler for closing - works for both inline and dialog modes
+  const handleClose = () => {
+    if (inline && onClose) {
+      onClose();
+    } else if (onOpenChange) {
+      onOpenChange(false);
+    }
+  };
 
-        {loadingData ? (
-          <div className="flex items-center justify-center py-8">
-            <LoadingSpinner size="md" />
-          </div>
-        ) : (
-          <div className="space-y-4 sm:space-y-6 pb-20">
+  // The main content (used in both inline and dialog modes)
+  const mainContent = (
+    <>
+      {loadingData ? (
+        <div className="flex items-center justify-center py-8">
+          <LoadingSpinner size="md" />
+        </div>
+      ) : (
+        <div className="space-y-4 sm:space-y-6 pb-20">
           {/* Fixture Selection */}
           <div>
             <Label htmlFor="fixture">Select Fixture *</Label>
@@ -2155,7 +2165,7 @@ export const CreatePerformanceReportDialog = ({
             </div>
             
             {/* Cancel button */}
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading || deleting || isFillingScores} className="w-full sm:w-auto">
+            <Button variant="outline" onClick={handleClose} disabled={loading || deleting || isFillingScores} className="w-full sm:w-auto">
               Cancel
             </Button>
             
@@ -2190,8 +2200,12 @@ export const CreatePerformanceReportDialog = ({
           </div>
         </div>
         )}
-      </DialogContent>
+      </>
+    );
 
+  // Additional dialogs that need to be rendered regardless of mode
+  const additionalDialogs = (
+    <>
       {/* R90 Ratings Viewer */}
       <R90RatingsViewer
         open={isR90ViewerOpen}
@@ -2239,7 +2253,7 @@ export const CreatePerformanceReportDialog = ({
               {(() => {
                 // Build grouped list of available stats so linked metrics (e.g. dribbles attempted/completed)
                 // are added together instead of as separate items.
-                const availableStats = allStats.filter(
+                const availableStatsFiltered = allStats.filter(
                   (stat) => !selectedStatKeys.includes(stat.stat_key)
                 );
 
@@ -2252,9 +2266,9 @@ export const CreatePerformanceReportDialog = ({
                 }> = [];
 
                 const findStatByKey = (key: string) =>
-                  availableStats.find((s) => s.stat_key === key);
+                  availableStatsFiltered.find((s) => s.stat_key === key);
 
-                availableStats.forEach((stat) => {
+                availableStatsFiltered.forEach((stat) => {
                   const key = stat.stat_key;
                   if (processedKeys.has(key)) return;
 
@@ -2282,7 +2296,7 @@ export const CreatePerformanceReportDialog = ({
                     ].filter(Boolean) as string[];
 
                     const foundSuccessKey = candidateSuccessKeys.find((k) =>
-                      availableStats.some((s) => s.stat_key === k)
+                      availableStatsFiltered.some((s) => s.stat_key === k)
                     );
 
                     if (foundSuccessKey) {
@@ -2298,7 +2312,7 @@ export const CreatePerformanceReportDialog = ({
                     ].filter(Boolean) as string[];
 
                     const foundAttemptedKey = candidateAttemptedKeys.find((k) =>
-                      availableStats.some((s) => s.stat_key === k)
+                      availableStatsFiltered.some((s) => s.stat_key === k)
                     );
 
                     if (foundAttemptedKey) {
@@ -2330,8 +2344,8 @@ export const CreatePerformanceReportDialog = ({
 
                 return statGroups.map((group) => {
                   if (group.isPair && group.secondary) {
-                    const successKey = group.primary.stat_key;
-                    const attemptedKey = group.secondary.stat_key;
+                    const successKeyVal = group.primary.stat_key;
+                    const attemptedKeyVal = group.secondary.stat_key;
 
                     // Clean up the base name for display, matching the main grid.
                     let baseName = group.primary.stat_name
@@ -2341,20 +2355,20 @@ export const CreatePerformanceReportDialog = ({
                       .replace(" On Target", "");
 
                     const displayName = `${baseName} (Successful/Attempted)`;
-                    const isHidden = [successKey, attemptedKey].some((k) =>
+                    const isHidden = [successKeyVal, attemptedKeyVal].some((k) =>
                       hiddenStatKeys.includes(k)
                     );
 
                     const addPair = async () => {
                       setSelectedStatKeys((prev) => [
                         ...prev,
-                        successKey,
-                        attemptedKey,
+                        successKeyVal,
+                        attemptedKeyVal,
                       ]);
 
                       if (playerId) {
                         // If re-adding hidden stats, unhide both.
-                        for (const k of [successKey, attemptedKey]) {
+                        for (const k of [successKeyVal, attemptedKeyVal]) {
                           if (hiddenStatKeys.includes(k)) {
                             await supabase
                               .from("player_hidden_stats")
@@ -2364,7 +2378,7 @@ export const CreatePerformanceReportDialog = ({
                           }
                         }
                         setHiddenStatKeys((prev) =>
-                          prev.filter((k) => k !== successKey && k !== attemptedKey)
+                          prev.filter((k) => k !== successKeyVal && k !== attemptedKeyVal)
                         );
                       }
 
@@ -2373,7 +2387,7 @@ export const CreatePerformanceReportDialog = ({
 
                     return (
                       <div
-                        key={`${successKey}-${attemptedKey}`}
+                        key={`${successKeyVal}-${attemptedKeyVal}`}
                         className="flex items-start justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer"
                         onClick={addPair}
                       >
@@ -2467,6 +2481,69 @@ export const CreatePerformanceReportDialog = ({
           </ScrollArea>
         </DialogContent>
       </Dialog>
+    </>
+  );
+
+  // Inline mode: render with a header and full-page layout
+  if (inline) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+        <div className="container max-w-6xl mx-auto py-6 px-4">
+          {/* Header with back button */}
+          <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur z-10 py-4 border-b mb-6">
+            <Button variant="ghost" onClick={handleClose} className="gap-2">
+              <ArrowLeft className="w-4 h-4" /> Back to Player
+            </Button>
+            <div className="flex gap-2">
+              {analysisId && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={deleting}>
+                      {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Performance Report?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete the performance report and all associated actions. This cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+              <Button onClick={handleSave} disabled={loading}>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                {analysisId ? 'Update' : 'Create'} Report
+              </Button>
+            </div>
+          </div>
+
+          <h1 className="text-2xl font-bold mb-6">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</h1>
+          
+          {mainContent}
+        </div>
+        {additionalDialogs}
+      </div>
+    );
+  }
+
+  // Dialog mode: render with Dialog wrapper
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl lg:max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg sm:text-xl">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</DialogTitle>
+        </DialogHeader>
+
+        {mainContent}
+      </DialogContent>
+      {additionalDialogs}
     </Dialog>
   );
 };

@@ -14,7 +14,7 @@ import { Search, User, FileText, Calendar, Target, ChevronLeft, Plus, UserPlus, 
 import { format } from "date-fns";
 import { PlayerScoutingManagement } from "./PlayerScoutingManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
-import { PerformanceReportEditorContent } from "./PerformanceReportEditorContent";
+import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 
@@ -347,22 +347,19 @@ export const ScoutedPlayersSection = () => {
 
             {/* Inline Report Editor */}
             {showReportEditor && (
-              <div className="fixed inset-0 z-50 bg-background overflow-auto">
-                <div className="max-w-6xl mx-auto p-4">
-                  <PerformanceReportEditorContent
-                    playerId={selectedPlayer.id}
-                    playerName={selectedPlayer.name}
-                    analysisId={reportEditorAnalysisId}
-                    onClose={() => {
-                      setShowReportEditor(false);
-                      setReportEditorAnalysisId(undefined);
-                    }}
-                    onSuccess={() => {
-                      fetchPlayerAnalyses(selectedPlayer.id);
-                    }}
-                  />
-                </div>
-              </div>
+              <CreatePerformanceReportDialog
+                inline={true}
+                playerId={selectedPlayer.id}
+                playerName={selectedPlayer.name}
+                analysisId={reportEditorAnalysisId}
+                onClose={() => {
+                  setShowReportEditor(false);
+                  setReportEditorAnalysisId(undefined);
+                }}
+                onSuccess={() => {
+                  fetchPlayerAnalyses(selectedPlayer.id);
+                }}
+              />
             )}
 
           </TabsContent>
