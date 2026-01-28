@@ -39,7 +39,7 @@ interface PerformanceAction {
   zone?: number | null;
   is_successful?: boolean;
   video_url?: string | null;
-  recorded_stat?: RecordedStat | null;
+  recorded_stat?: RecordedStat | RecordedStat[] | null;
 }
 
 interface PerformanceActionsDialogProps {
@@ -208,10 +208,10 @@ export const PerformanceActionsDialog = ({
         .order("action_number", { ascending: true });
 
       if (error) throw error;
-      // Map data to ensure recorded_stat is properly typed
+      // Map data to ensure recorded_stat is properly typed (supports single or array)
       const mappedActions = (data || []).map(action => ({
         ...action,
-        recorded_stat: action.recorded_stat as unknown as RecordedStat | null,
+        recorded_stat: action.recorded_stat as unknown as RecordedStat | RecordedStat[] | null,
       }));
       setActions(mappedActions);
       
@@ -433,7 +433,7 @@ export const PerformanceActionsDialog = ({
     }
   };
 
-  const handleUpdateRecordedStat = async (actionId: string, stat: RecordedStat | null) => {
+  const handleUpdateRecordedStat = async (actionId: string, stat: RecordedStat | RecordedStat[] | null) => {
     try {
       const { error } = await supabase
         .from("performance_report_actions")
@@ -446,7 +446,8 @@ export const PerformanceActionsDialog = ({
       setActions(prev => prev.map(a => 
         a.id === actionId ? { ...a, recorded_stat: stat } : a
       ));
-      toast.success(stat ? `Stat recorded: ${stat.stat_type}` : 'Stat cleared');
+      const statCount = Array.isArray(stat) ? stat.length : (stat ? 1 : 0);
+      toast.success(statCount > 0 ? `${statCount} stat(s) recorded` : 'Stats cleared');
     } catch (error: any) {
       console.error("Error updating recorded stat:", error);
       toast.error("Failed to update stat");

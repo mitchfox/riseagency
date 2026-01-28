@@ -61,7 +61,7 @@ interface PerformanceAction {
   action_description: string;
   notes: string;
   video_url?: string | null;
-  recorded_stat?: RecordedStat | null;
+  recorded_stat?: RecordedStat | RecordedStat[] | null;
 }
 
 interface SortableStatItemProps {
@@ -544,10 +544,52 @@ export const CreatePerformanceReportDialog = ({
       // Populate form
       setR90Score(analysisData.r90_score?.toString() || "");
       setMinutesPlayed(analysisData.minutes_played?.toString() || "");
-      setOpponent(analysisData.opponent || "");
-      setResult(analysisData.result || "");
       setSelectedFixtureId(analysisData.fixture_id || "");
       setPerformanceOverview(analysisData.performance_overview || "");
+      
+      // Re-derive opponent from fixture data to reflect any changes to fixture
+      // (fixture team names may have been edited since report was saved)
+      if (analysisData.fixture_id) {
+        // Fetch the fixture directly to get latest data
+        const { data: fixtureData } = await supabase
+          .from("fixtures")
+          .select("*")
+          .eq("id", analysisData.fixture_id)
+          .single();
+        
+        if (fixtureData) {
+          // Intelligently determine opponent based on player's club or "For" placeholder
+          let opponentTeam = fixtureData.away_team;
+          const homeIsFor = fixtureData.home_team.toLowerCase() === "for" || fixtureData.home_team.toLowerCase().includes("for ");
+          const awayIsFor = fixtureData.away_team.toLowerCase() === "for" || fixtureData.away_team.toLowerCase().includes("for ");
+          
+          if (homeIsFor) {
+            opponentTeam = fixtureData.away_team;
+          } else if (awayIsFor) {
+            opponentTeam = fixtureData.home_team;
+          } else if (playerClub) {
+            if (fixtureData.home_team === playerClub) {
+              opponentTeam = fixtureData.away_team;
+            } else if (fixtureData.away_team === playerClub) {
+              opponentTeam = fixtureData.home_team;
+            }
+          }
+          setOpponent(opponentTeam);
+          if (fixtureData.home_score !== null && fixtureData.away_score !== null) {
+            setResult(`${fixtureData.home_score}-${fixtureData.away_score}`);
+          } else {
+            setResult(analysisData.result || "");
+          }
+        } else {
+          // Fixture not found, use stored values
+          setOpponent(analysisData.opponent || "");
+          setResult(analysisData.result || "");
+        }
+      } else {
+        // No fixture_id, use stored values
+        setOpponent(analysisData.opponent || "");
+        setResult(analysisData.result || "");
+      }
 
       // Populate striker stats if they exist
       if (analysisData.striker_stats) {
@@ -808,7 +850,7 @@ export const CreatePerformanceReportDialog = ({
     setActions(newActions);
   };
 
-  const updateAction = async (index: number, field: keyof PerformanceAction, value: string | RecordedStat | null) => {
+  const updateAction = async (index: number, field: keyof PerformanceAction, value: string | RecordedStat | RecordedStat[] | null) => {
     const newActions = [...actions];
     newActions[index] = { ...newActions[index], [field]: value };
     setActions(newActions);
@@ -1099,12 +1141,16 @@ export const CreatePerformanceReportDialog = ({
       const rawScore = actions.reduce((sum, a) => sum + (parseFloat(a.action_score) || 0), 0);
       const calculatedR90 = (rawScore / parseInt(minutesPlayed)) * 90;
       
-      // Prepare striker stats JSONB - merge legacy and new stats
+      // Prepare striker stats JSONB - merge legacy, additional stats, and action-recorded stats
       const hasStrikerStats = Object.values(strikerStats).some(v => v !== "");
       const hasAdditionalStats = Object.values(additionalStats).some(v => v !== "");
       
+      // Aggregate recorded stats from actions
+      const actionRecordedStats = aggregateRecordedStats(actions);
+      const hasActionRecordedStats = Object.keys(actionRecordedStats).length > 0;
+      
       let strikerStatsJson: Record<string, any> | null = null;
-      if (hasStrikerStats || hasAdditionalStats || originalStrikerStats) {
+      if (hasStrikerStats || hasAdditionalStats || originalStrikerStats || hasActionRecordedStats) {
         // Start with original stats to preserve any fields not in the form
         strikerStatsJson = originalStrikerStats ? { ...originalStrikerStats } : {};
         
@@ -1124,6 +1170,18 @@ export const CreatePerformanceReportDialog = ({
             .forEach(([key, value]) => {
               strikerStatsJson[key] = parseFloat(value);
             });
+        }
+        
+        // Merge action-recorded stats into striker_stats
+        // These are stats recorded from individual actions and aggregated
+        if (hasActionRecordedStats) {
+          Object.entries(actionRecordedStats).forEach(([statType, counts]) => {
+            // Create keys for successful and total counts
+            // e.g., "Dribble" becomes "dribbles_successful" and "dribbles_total"
+            const baseKey = statType.toLowerCase().replace(/\s+/g, '_');
+            strikerStatsJson[`${baseKey}_successful`] = counts.successful;
+            strikerStatsJson[`${baseKey}_total`] = counts.total;
+          });
         }
         
         // Save the stats order so display knows which stats to show and in what order
