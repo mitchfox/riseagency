@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
 import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
+import { STAT_TYPE_CONFIGS, StatTypeConfig } from "@/components/staff/ActionStatRecorder";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -224,8 +225,18 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
     }
   };
 
-  // Format stat key to readable label
+  // Format stat key to readable label using config lookup
   const formatStatLabel = (key: string): string => {
+    // Try exact match first
+    let config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) => c.key === key);
+    if (config) return config.name;
+    
+    // Try lowercase match
+    const keyLower = key.toLowerCase();
+    config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) => c.key.toLowerCase() === keyLower);
+    if (config) return config.name;
+    
+    // Fallback to formatted key
     return key
       .replace(/_/g, ' ')
       .replace(/([A-Z])/g, ' $1')

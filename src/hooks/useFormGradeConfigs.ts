@@ -142,6 +142,7 @@ export function useFormGradeConfigs() {
 }
 
 // Mapping from Dashboard selectedFormMetric values to database metric_keys
+// Also handles case-insensitive lookups for saved striker_stats keys
 export const METRIC_KEY_MAP: Record<string, string> = {
   // Core scores
   'r90': 'r90',
@@ -153,6 +154,18 @@ export const METRIC_KEY_MAP: Record<string, string> = {
   'xgpershot': 'xg_per_shot',
   'npxg': 'npxg',
   'xc': 'xc',
+  
+  // Adjusted stats (zone-weighted)
+  'xg_adj': 'xg',
+  'xa_adj': 'xa',
+  'xgadj': 'xg',
+  'xaadj': 'xa',
+  'regains_adj': 'regains',
+  'regainsadj': 'regains',
+  'turnovers_adj': 'turnovers',
+  'turnoversadj': 'turnovers',
+  'progressive_passes_adj': 'progressive_passes',
+  'progressivepassesadj': 'progressive_passes',
   
   // Passing
   'progressivepasses': 'progressive_passes',
@@ -222,4 +235,21 @@ export const METRIC_KEY_MAP: Record<string, string> = {
   'touches': 'touches',
   'goals': 'goals',
   'assists': 'assists',
+};
+
+// Helper to normalize a stat key for lookups
+export const normalizeStatKey = (key: string): string => {
+  // First check exact match
+  if (METRIC_KEY_MAP[key]) return METRIC_KEY_MAP[key];
+  
+  // Try lowercase
+  const keyLower = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (METRIC_KEY_MAP[keyLower]) return METRIC_KEY_MAP[keyLower];
+  
+  // Try with underscores preserved but lowercase
+  const keyWithUnderscores = key.toLowerCase();
+  if (METRIC_KEY_MAP[keyWithUnderscores]) return METRIC_KEY_MAP[keyWithUnderscores];
+  
+  // Return original key if no mapping found
+  return key;
 };
