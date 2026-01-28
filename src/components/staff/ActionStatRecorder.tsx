@@ -89,7 +89,7 @@ export const ActionStatRecorder = ({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64" align="start">
+      <PopoverContent className="w-64 z-[100]" align="start">
         <div className="space-y-4">
           <div className="font-semibold text-sm">Record Stat</div>
           
