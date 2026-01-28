@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, EyeOff, AlertTriangle, LineChart, Sparkles, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical } from "lucide-react";
+import { Plus, Trash2, EyeOff, AlertTriangle, Sparkles, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -1731,29 +1731,6 @@ export const CreatePerformanceReportDialog = ({
                         onStatRecorded={(stat) => updateAction(index, 'recorded_stat', stat)}
                       />
                       <Button
-                        onClick={() => openSmartR90Viewer(index)}
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8"
-                        title="Smart Link to R90 Ratings"
-                      >
-                        <LineChart className="h-4 w-4 text-primary" />
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setR90ViewerCategory(undefined);
-                          setR90ViewerSearch(undefined);
-                          setAiSearchAction(null);
-                          setIsR90ViewerOpen(true);
-                        }}
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8"
-                        title="View All R90 Ratings"
-                      >
-                        <LineChart className="h-4 w-4 text-indigo-600" />
-                      </Button>
-                      <Button
                         onClick={() => fillSingleActionScore(index)}
                         size="icon"
                         variant="ghost"
@@ -1988,29 +1965,6 @@ export const CreatePerformanceReportDialog = ({
                             currentStat={action.recorded_stat || null}
                             onStatRecorded={(stat) => updateAction(index, 'recorded_stat', stat)}
                           />
-                          <Button
-                            onClick={() => openSmartR90Viewer(index)}
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            title="Smart Link to R90 Ratings"
-                          >
-                            <LineChart className="h-4 w-4 text-primary" />
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              setR90ViewerCategory(undefined);
-                              setR90ViewerSearch(undefined);
-                              setAiSearchAction(null);
-                              setIsR90ViewerOpen(true);
-                            }}
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            title="View All R90 Ratings"
-                          >
-                            <LineChart className="h-4 w-4 text-indigo-600" />
-                          </Button>
                           <Button
                             onClick={() => fillSingleActionScore(index)}
                             size="icon"
