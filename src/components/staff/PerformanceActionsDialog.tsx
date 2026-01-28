@@ -511,138 +511,173 @@ export const PerformanceActionsDialog = ({
               </CardContent>
             </Card>
 
-            <Card className="bg-accent/50">
-              <CardContent className="pt-6">
-                <div className="text-sm space-y-2">
-                  <p className="font-semibold text-foreground mb-3">Match Statistics</p>
-                  {strikerStats && (() => {
-                    // Helper to format stats
-                    const formatStatValue = (key: string, value: any) => {
-                      if (value === undefined || value === null) return null;
+          </div>
+
+          {/* Match Statistics - Card Grid */}
+          <div className="space-y-3">
+            <p className="font-semibold text-sm uppercase tracking-wide text-foreground">Match Statistics</p>
+            {strikerStats && (() => {
+              // Helper to process stats for card display
+              const processStats = () => {
+                const stats: Array<{
+                  key: string;
+                  displayName: string;
+                  mainValue: string;
+                  per90?: string;
+                  percentage?: string;
+                }> = [];
+
+                // Rate-based stats that need per90 display
+                const rateStats = ['xg', 'xa', 'xgchain', 'xc'];
+                
+                // Get stat order if it exists
+                const statOrder = strikerStats.stats_order as string[] | undefined;
+                
+                // Process each stat
+                Object.entries(strikerStats).forEach(([key, value]) => {
+                  if (!value || value === '' || key === 'stats_order' || key.endsWith('_per90')) return;
+                  
+                  const keyLower = key.toLowerCase();
+                  const isRateStat = rateStats.some(rs => keyLower.includes(rs));
+                  
+                  // Check for paired stats (successful/total)
+                  if (key.endsWith('_successful')) {
+                    const totalKey = key.replace('_successful', '_total');
+                    const total = strikerStats[totalKey];
+                    if (total !== undefined && total !== null) {
+                      const successful = value as number;
+                      const totalNum = total as number;
+                      const pct = totalNum > 0 ? ((successful / totalNum) * 100).toFixed(1) : '0.0';
                       
-                      // Rate-based stats that need per90 display
-                      const rateStats = ['xg', 'xa', 'xgchain', 'xc'];
-                      const isRateStat = rateStats.some(rs => key.toLowerCase().includes(rs));
+                      const displayName = key
+                        .replace(/_successful$/, '')
+                        .replace(/_/g, ' ')
+                        .replace(/\b\w/g, l => l.toUpperCase())
+                        .replace('Xg', 'xG')
+                        .replace('Xa', 'xA')
+                        .replace('Xc', 'xC');
                       
-                      // Check for paired stats (successful/total)
-                      const totalKey = key.replace('_successful', '_total');
-                      const successfulKey = key.replace('_total', '_successful');
-                      
-                      if (key.endsWith('_successful') && strikerStats[totalKey] !== undefined) {
-                        const successful = value;
-                        const total = strikerStats[totalKey];
-                        const pct = total > 0 ? ((successful / total) * 100).toFixed(1) : '0.0';
-                        return { 
-                          displayValue: `${successful}/${total}`, 
-                          percentage: `${pct}%`,
-                          isPair: true 
-                        };
-                      }
-                      
-                      // Skip total if we have successful (already rendered as pair)
-                      if (key.endsWith('_total') && strikerStats[successfulKey] !== undefined) {
-                        return null;
-                      }
-                      
-                      // Per90 display for rate stats
-                      const per90Key = `${key}_per90`;
-                      const per90Value = strikerStats[per90Key];
-                      
-                      if (isRateStat && per90Value !== undefined) {
-                        return {
-                          displayValue: typeof value === 'number' ? value.toFixed(2) : value,
-                          per90: typeof per90Value === 'number' ? per90Value.toFixed(3) : per90Value,
-                          isPair: false
-                        };
-                      }
-                      
-                      return {
-                        displayValue: typeof value === 'number' ? 
-                          (Number.isInteger(value) ? value.toString() : value.toFixed(2)) : value,
-                        isPair: false
-                      };
-                    };
-                    
-                    // Get display-ready stats, filtering out per90 keys and system keys
-                    const displayStats = Object.entries(strikerStats)
-                      .filter(([key]) => 
-                        !key.endsWith('_per90') && 
-                        key !== 'stats_order' &&
-                        strikerStats[key] !== undefined && 
-                        strikerStats[key] !== null &&
-                        strikerStats[key] !== ''
-                      )
-                      .map(([key, value]) => {
-                        const formatted = formatStatValue(key, value);
-                        if (!formatted) return null;
-                        
-                        // Clean up key for display
-                        const displayName = key
-                          .replace(/_successful$/, '')
-                          .replace(/_/g, ' ')
-                          .replace(/\b\w/g, l => l.toUpperCase())
-                          .replace('Xg', 'xG')
-                          .replace('Xa', 'xA')
-                          .replace('Xc', 'xC');
-                        
-                        return { key, displayName, ...formatted };
-                      })
-                      .filter(Boolean);
-                    
-                    if (displayStats.length === 0) {
-                      return <p className="text-muted-foreground text-xs">No stats recorded</p>;
+                      stats.push({
+                        key,
+                        displayName,
+                        mainValue: `${successful}/${totalNum}`,
+                        percentage: `${pct}%`
+                      });
                     }
-                    
-                    return (
-                      <div className="grid grid-cols-1 gap-1.5">
-                        {displayStats.map((stat: any) => (
-                          <div key={stat.key} className="flex justify-between items-center">
-                            <span className="text-muted-foreground">{stat.displayName}:</span>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">
-                                {stat.displayValue}
-                                {stat.percentage && (
-                                  <span className="text-primary ml-1">({stat.percentage})</span>
-                                )}
-                              </span>
-                              {stat.per90 && (
-                                <span className="text-xs text-muted-foreground">
-                                  ({stat.per90}/90)
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
+                    return;
+                  }
+                  
+                  // Skip total keys if we have successful
+                  if (key.endsWith('_total')) {
+                    const successfulKey = key.replace('_total', '_successful');
+                    if (strikerStats[successfulKey] !== undefined) return;
+                  }
+                  
+                  // Clean up key for display
+                  let displayName = key
+                    .replace(/_adj$/, ' Adj')
+                    .replace(/_/g, ' ')
+                    .replace(/\b\w/g, l => l.toUpperCase())
+                    .replace('Xg', 'xG')
+                    .replace('Xa', 'xA')
+                    .replace('Xc', 'xC')
+                    .replace('Xgchain', 'xG Chain');
+                  
+                  // Format value
+                  const numValue = typeof value === 'number' ? value : parseFloat(value as string);
+                  const mainValue = isNaN(numValue) 
+                    ? String(value) 
+                    : (isRateStat ? numValue.toFixed(4) : (Number.isInteger(numValue) ? numValue.toString() : numValue.toFixed(2)));
+                  
+                  // Get per90 for rate stats
+                  const per90Key = `${key}_per90`;
+                  const per90Val = strikerStats[per90Key];
+                  const per90 = isRateStat && per90Val !== undefined && per90Val !== null && per90Val !== ''
+                    ? (typeof per90Val === 'number' ? per90Val.toFixed(3) : per90Val)
+                    : undefined;
+                  
+                  stats.push({ key, displayName, mainValue, per90 });
+                });
+                
+                // Sort by stats_order if available
+                if (statOrder && statOrder.length > 0) {
+                  stats.sort((a, b) => {
+                    const aIdx = statOrder.indexOf(a.key);
+                    const bIdx = statOrder.indexOf(b.key);
+                    if (aIdx === -1 && bIdx === -1) return 0;
+                    if (aIdx === -1) return 1;
+                    if (bIdx === -1) return -1;
+                    return aIdx - bIdx;
+                  });
+                }
+                
+                return stats;
+              };
+              
+              const displayStats = processStats();
+              
+              if (displayStats.length === 0) {
+                return <p className="text-muted-foreground text-xs">No stats recorded</p>;
+              }
+              
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {displayStats.map((stat) => (
+                    <Card key={stat.key} className="bg-accent/50 border-border/50">
+                      <CardContent className="p-3 text-center">
+                        <p className="text-xs text-muted-foreground mb-1 truncate" title={stat.displayName}>
+                          {stat.displayName}
+                        </p>
+                        <p className="text-xl font-bold text-primary">
+                          {stat.mainValue}
+                        </p>
+                        {stat.percentage && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {stat.percentage}
+                          </p>
+                        )}
+                        {stat.per90 && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            p90: {stat.per90}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
+              );
+            })()}
           </div>
 
           {/* Action Stats Summary (auto-calculated from recorded stats) */}
           {Object.keys(aggregateRecordedStats(actions)).length > 0 && (
-            <div className="bg-accent/30 p-4 rounded-lg">
-              <p className="font-semibold text-sm mb-3">Action Stats Summary</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div className="space-y-3">
+              <p className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">From Recorded Actions</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {Object.entries(aggregateRecordedStats(actions)).map(([statType, stat]) => (
-                  <div key={statType} className="flex justify-between items-center bg-background/50 px-3 py-2 rounded">
-                    <span className="text-sm text-muted-foreground">{statType}:</span>
-                    <span className="font-semibold text-sm">
-                      {stat.type === 'success_fail' ? (
-                        <>
-                          <span className="text-primary">{stat.successful}</span>
-                          <span className="text-muted-foreground"> / </span>
-                          <span>{stat.total}</span>
-                        </>
-                      ) : stat.type === 'count' ? (
-                        <span className="text-primary">{stat.count}</span>
-                      ) : stat.type === 'score' ? (
-                        <span className="text-primary">{stat.totalScore.toFixed(2)}</span>
-                      ) : null}
-                    </span>
-                  </div>
+                  <Card key={statType} className="bg-accent/30 border-border/50">
+                    <CardContent className="p-3 text-center">
+                      <p className="text-xs text-muted-foreground mb-1 truncate" title={statType}>
+                        {statType}
+                      </p>
+                      <p className="text-xl font-bold text-primary">
+                        {stat.type === 'success_fail' ? (
+                          <>
+                            {stat.successful}/{stat.total}
+                          </>
+                        ) : stat.type === 'count' ? (
+                          stat.count
+                        ) : stat.type === 'score' ? (
+                          stat.totalScore.toFixed(2)
+                        ) : null}
+                      </p>
+                      {stat.type === 'success_fail' && stat.total > 0 && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {((stat.successful / stat.total) * 100).toFixed(1)}%
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             </div>
