@@ -11,130 +11,14 @@ interface ActionVideoUploadProps {
   disabled?: boolean;
 }
 
-/**
- * Strips audio from a video file by re-encoding it without an audio track.
- * This ensures downloaded videos have no audio data at all.
- */
-async function stripVideoAudio(videoFile: File, onProgress?: (progress: number) => void): Promise<File> {
-  return new Promise((resolve, reject) => {
-    const video = document.createElement('video');
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = 'auto';
-    
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    if (!ctx) {
-      reject(new Error('Could not get canvas context'));
-      return;
-    }
-
-    let mediaRecorder: MediaRecorder | null = null;
-    let animationId: number | null = null;
-
-    video.onloadedmetadata = () => {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      // Create a MediaStream from the canvas (video only, no audio)
-      const stream = canvas.captureStream(30); // 30 fps
-      
-      // Determine best supported mime type
-      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-        ? 'video/webm;codecs=vp9'
-        : MediaRecorder.isTypeSupported('video/webm')
-          ? 'video/webm'
-          : 'video/mp4';
-      
-      // Use MediaRecorder to encode the stream without audio
-      mediaRecorder = new MediaRecorder(stream, {
-        mimeType,
-        videoBitsPerSecond: 5000000, // 5 Mbps for good quality
-      });
-      
-      const chunks: BlobPart[] = [];
-      
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunks.push(e.data);
-        }
-      };
-      
-      mediaRecorder.onstop = () => {
-        const extension = mimeType.includes('webm') ? 'webm' : 'mp4';
-        const blob = new Blob(chunks, { type: mimeType });
-        const strippedFile = new File(
-          [blob], 
-          videoFile.name.replace(/\.[^.]+$/, `-silent.${extension}`), 
-          { type: mimeType }
-        );
-        URL.revokeObjectURL(video.src);
-        resolve(strippedFile);
-      };
-      
-      mediaRecorder.onerror = () => {
-        URL.revokeObjectURL(video.src);
-        reject(new Error('MediaRecorder error'));
-      };
-      
-      // Draw video frames to canvas
-      const drawFrame = () => {
-        if (video.ended || video.paused) {
-          if (mediaRecorder?.state === 'recording') {
-            mediaRecorder.stop();
-          }
-          if (animationId) {
-            cancelAnimationFrame(animationId);
-          }
-          return;
-        }
-        
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        // Report progress
-        if (onProgress && video.duration) {
-          onProgress((video.currentTime / video.duration) * 100);
-        }
-        
-        animationId = requestAnimationFrame(drawFrame);
-      };
-      
-      video.onplay = () => {
-        if (mediaRecorder) {
-          mediaRecorder.start(100); // Collect data every 100ms
-          drawFrame();
-        }
-      };
-      
-      video.onended = () => {
-        if (animationId) {
-          cancelAnimationFrame(animationId);
-        }
-        if (mediaRecorder?.state === 'recording') {
-          mediaRecorder.stop();
-        }
-      };
-      
-      // Increase playback speed to process faster (will still capture all frames)
-      video.playbackRate = 4.0;
-      
-      // Start playback (muted, so no audio processed)
-      video.play().catch((err) => {
-        URL.revokeObjectURL(video.src);
-        reject(err);
-      });
-    };
-    
-    video.onerror = () => {
-      URL.revokeObjectURL(video.src);
-      reject(new Error('Failed to load video'));
-    };
-    
-    // Load the video file
-    video.src = URL.createObjectURL(videoFile);
-  });
-}
+// NOTE: Audio stripping via Canvas re-encoding was removed because it caused:
+// 1. Significant quality degradation (re-encoding at lower bitrate)
+// 2. Frame rate issues and visual lag
+// 3. Longer upload times due to processing
+// 
+// Instead, we now upload the original video and rely on UI-level muting
+// (muted attribute, no controls) to prevent audio playback. This maintains
+// original video quality while still preventing users from hearing audio.
 
 export const ActionVideoUpload = ({
   actionId,
@@ -143,7 +27,6 @@ export const ActionVideoUpload = ({
   disabled = false,
 }: ActionVideoUploadProps) => {
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -160,22 +43,16 @@ export const ActionVideoUpload = ({
     // No file size limit - large videos are supported
 
     setUploading(true);
-    setProgress(0);
-    setStatus('Removing audio...');
+    setStatus('Uploading...');
     
     try {
-      // Strip audio from the video before uploading
-      const silentVideo = await stripVideoAudio(file, (p) => setProgress(Math.round(p)));
-      
-      setStatus('Uploading...');
-      setProgress(0);
-      
-      const extension = silentVideo.name.split('.').pop() || 'webm';
-      const fileName = `action-clips/${actionId}-${Date.now()}-silent.${extension}`;
+      // Upload the original video directly (UI muting handles audio)
+      const extension = file.name.split('.').pop() || 'mp4';
+      const fileName = `action-clips/${actionId}-${Date.now()}.${extension}`;
       
       const { error: uploadError } = await supabase.storage
         .from('analysis-files')
-        .upload(fileName, silentVideo, {
+        .upload(fileName, file, {
           cacheControl: '3600',
           upsert: true,
         });
@@ -203,14 +80,13 @@ export const ActionVideoUpload = ({
       }
 
       onVideoUploaded(publicUrl);
-      toast.success('Video clip uploaded (audio removed)');
+      toast.success('Video clip uploaded');
     } catch (error: any) {
       console.error('Error uploading video:', error);
       toast.error('Failed to upload video');
     } finally {
       setUploading(false);
       setStatus('');
-      setProgress(0);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -277,9 +153,7 @@ export const ActionVideoUpload = ({
           {uploading ? (
             <span className="flex items-center gap-1">
               <Loader2 className="h-3 w-3 animate-spin" />
-              <span className="text-[10px]">
-                {status} {progress > 0 && `${progress}%`}
-              </span>
+              <span className="text-[10px]">{status}</span>
             </span>
           ) : (
             <>

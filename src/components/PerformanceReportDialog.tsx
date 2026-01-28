@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, X, ImageIcon, Video, Play } from "lucide-react";
+import { Download, X, ImageIcon, Video, Play, Calculator } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
@@ -335,7 +335,118 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
     return stats;
   };
 
+  // Calculate derived stats from the base stats
+  const getCalculatedStats = () => {
+    if (!analysis?.striker_stats) return [];
+    
+    const strikerStats = analysis.striker_stats;
+    const calculated: { key: string; displayName: string; value: number; description: string }[] = [];
+    
+    // Helper to get a numeric value from striker_stats
+    const getVal = (key: string): number | null => {
+      const val = strikerStats[key];
+      if (val === null || val === undefined) return null;
+      return typeof val === 'number' ? val : null;
+    };
+    
+    const getSuccessVal = (baseKey: string): number | null => {
+      return getVal(`${baseKey}_successful`) ?? getVal(baseKey);
+    };
+    
+    const getTotalVal = (baseKey: string): number | null => {
+      return getVal(`${baseKey}_total`) ?? getVal(`${baseKey}_attempted`);
+    };
+    
+    // Recovery to Turnover Ratio
+    const recoveries = getVal('recoveries');
+    const turnovers = getVal('turnovers');
+    if (recoveries !== null && turnovers !== null) {
+      const ratio = turnovers === 0 ? (recoveries > 0 ? recoveries : 0) : recoveries / turnovers;
+      calculated.push({
+        key: 'recovery_turnover_ratio',
+        displayName: 'Recovery/Turnover',
+        value: ratio,
+        description: 'Recoveries ÷ Turnovers'
+      });
+    }
+    
+    // PP to Turnovers Ratio
+    const ppSuccess = getSuccessVal('progressive_passes');
+    if (ppSuccess !== null && turnovers !== null) {
+      const ratio = turnovers === 0 ? (ppSuccess > 0 ? ppSuccess : 0) : ppSuccess / turnovers;
+      calculated.push({
+        key: 'pp_turnovers_ratio',
+        displayName: 'PP/Turnovers',
+        value: ratio,
+        description: 'Progressive Passes ÷ Turnovers'
+      });
+    }
+    
+    // Aerial Duel Win %
+    const aerialSuccess = getSuccessVal('aerial_duels');
+    const aerialTotal = getTotalVal('aerial_duels');
+    if (aerialSuccess !== null && aerialTotal !== null && aerialTotal > 0) {
+      calculated.push({
+        key: 'aerial_duel_win_pct',
+        displayName: 'Aerial Duel Win %',
+        value: (aerialSuccess / aerialTotal) * 100,
+        description: 'Aerial Duels Won ÷ Total'
+      });
+    }
+    
+    // Pass Completion %
+    const passSuccess = getSuccessVal('passes');
+    const passTotal = getTotalVal('passes');
+    if (passSuccess !== null && passTotal !== null && passTotal > 0) {
+      calculated.push({
+        key: 'pass_completion',
+        displayName: 'Pass Completion %',
+        value: (passSuccess / passTotal) * 100,
+        description: 'Passes Completed ÷ Total'
+      });
+    }
+    
+    // Dribble Success %
+    const dribbleSuccess = getSuccessVal('dribbles');
+    const dribbleTotal = getTotalVal('dribbles');
+    if (dribbleSuccess !== null && dribbleTotal !== null && dribbleTotal > 0) {
+      calculated.push({
+        key: 'dribble_success_pct',
+        displayName: 'Dribble Success %',
+        value: (dribbleSuccess / dribbleTotal) * 100,
+        description: 'Dribbles Completed ÷ Total'
+      });
+    }
+    
+    // Tackle Success %
+    const tackleSuccess = getSuccessVal('tackles');
+    const tackleTotal = getTotalVal('tackles');
+    if (tackleSuccess !== null && tackleTotal !== null && tackleTotal > 0) {
+      calculated.push({
+        key: 'tackle_success_pct',
+        displayName: 'Tackle Success %',
+        value: (tackleSuccess / tackleTotal) * 100,
+        description: 'Tackles Won ÷ Total'
+      });
+    }
+    
+    // xG per Shot
+    const xg = getVal('xg');
+    const shotsTotal = getTotalVal('shots') ?? getVal('shots');
+    if (xg !== null && shotsTotal !== null && shotsTotal > 0) {
+      calculated.push({
+        key: 'xg_per_shot',
+        displayName: 'xG per Shot',
+        value: xg / shotsTotal,
+        description: 'xG ÷ Total Shots'
+      });
+    }
+    
+    return calculated;
+  };
+
   const advancedStats = getAdvancedStats();
+  const calculatedStats = getCalculatedStats();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -467,6 +578,37 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                               p90: {stat.per90Value}
                             </p>
                           )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Auto-Calculated Ratios */}
+              {calculatedStats.length > 0 && (
+                <Card className="overflow-hidden border-primary/20">
+                  <CardHeader className="py-2 md:py-4 bg-primary/5">
+                    <CardTitle className="text-sm md:text-lg flex items-center gap-2">
+                      <Calculator className="h-4 w-4 text-primary" />
+                      <span className="text-primary">Calculated Ratios</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-2 md:p-6">
+                    <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
+                      {calculatedStats.map((stat) => (
+                        <div key={stat.key} className="text-center p-1.5 md:p-3 bg-primary/5 rounded border border-primary/10">
+                          <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 truncate" title={stat.description}>
+                            {stat.displayName}
+                          </p>
+                          <p className="text-sm md:text-lg font-bold text-primary">
+                            {stat.key.includes('pct') || stat.key.includes('completion') || stat.key.includes('success')
+                              ? `${stat.value.toFixed(1)}%`
+                              : stat.value.toFixed(2)}
+                          </p>
+                          <p className="text-[8px] md:text-[10px] text-muted-foreground mt-0.5">
+                            {stat.description}
+                          </p>
                         </div>
                       ))}
                     </div>
