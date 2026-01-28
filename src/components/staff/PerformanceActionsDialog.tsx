@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Plus, LineChart, Search, Loader2, Sparkles, ChevronDown, ChevronUp, List, Video } from "lucide-react";
+import { Trash2, Plus, Search, Loader2, Sparkles, ChevronDown, ChevronUp, List, Video } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { R90RatingsViewer } from "./R90RatingsViewer";
 import { ActionStatRecorder, aggregateRecordedStats, RecordedStat } from "./ActionStatRecorder";
@@ -842,27 +842,6 @@ export const PerformanceActionsDialog = ({
                             onStatRecorded={(stat) => handleUpdateRecordedStat(action.id!, stat)}
                           />
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openSmartR90Viewer(action)}
-                          title="Smart Link to R90 Ratings"
-                        >
-                          <LineChart className="w-4 h-4 text-primary" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setR90ViewerCategory(undefined);
-                            setR90ViewerSearch(undefined);
-                            setAiSearchAction(null);
-                            setIsR90ViewerOpen(true);
-                          }}
-                          title="View All R90 Ratings"
-                        >
-                          <LineChart className="w-4 h-4 text-indigo-600" />
-                        </Button>
                         {isAdmin && (
                           <>
                             <Button
