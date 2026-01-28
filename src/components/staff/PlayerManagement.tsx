@@ -7,8 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image as ImageIcon, X, Download, FileDown } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
-import { PerformanceActionsDialog } from "./PerformanceActionsDialog";
-import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
+import { PerformanceReportEditorContent } from "./PerformanceReportEditorContent";
 import { ProgrammingManagement } from "./ProgrammingManagement";
 import { NutritionProgramManagement } from "./NutritionProgramManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
@@ -79,13 +78,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [activeTab, setActiveTab] = useState<string>("analysis");
   const [playerAnalyses, setPlayerAnalyses] = useState<Record<string, any[]>>({});
   const [playerInvoices, setPlayerInvoices] = useState<Record<string, any[]>>({});
-  const [isPerformanceActionsDialogOpen, setIsPerformanceActionsDialogOpen] = useState(false);
   const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(null);
   const [selectedPlayerName, setSelectedPlayerName] = useState<string>("");
-  const [isCreateReportDialogOpen, setIsCreateReportDialogOpen] = useState(false);
-  const [createReportPlayerId, setCreateReportPlayerId] = useState<string>("");
-  const [createReportPlayerName, setCreateReportPlayerName] = useState<string>("");
-  const [editReportAnalysisId, setEditReportAnalysisId] = useState<string | undefined>(undefined);
+  // Inline report editor state (replaces dialog)
+  const [showReportEditor, setShowReportEditor] = useState(false);
+  const [reportEditorPlayerId, setReportEditorPlayerId] = useState<string>("");
+  const [reportEditorPlayerName, setReportEditorPlayerName] = useState<string>("");
+  const [reportEditorAnalysisId, setReportEditorAnalysisId] = useState<string | undefined>(undefined);
   const [isProgrammingDialogOpen, setIsProgrammingDialogOpen] = useState(false);
   const [selectedProgrammingPlayerId, setSelectedProgrammingPlayerId] = useState<string>("");
   const [selectedProgrammingPlayerName, setSelectedProgrammingPlayerName] = useState<string>("");
@@ -1957,9 +1956,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             size="sm"
                             className="w-full sm:w-auto"
                             onClick={() => {
-                              setCreateReportPlayerId(selectedPlayerId!);
-                              setCreateReportPlayerName(selectedPlayer!.name);
-                              setIsCreateReportDialogOpen(true);
+                              setReportEditorPlayerId(selectedPlayerId!);
+                              setReportEditorPlayerName(selectedPlayer!.name);
+                              setReportEditorAnalysisId(undefined);
+                              setShowReportEditor(true);
                             }}
                           >
                             <Plus className="w-4 h-4 mr-2" />
@@ -2072,10 +2072,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           variant="outline"
                                           size="sm"
                                           onClick={() => {
-                                            setEditReportAnalysisId(analysis.id);
-                                            setCreateReportPlayerId(selectedPlayerId!);
-                                            setCreateReportPlayerName(selectedPlayer!.name);
-                                            setIsCreateReportDialogOpen(true);
+                                            setReportEditorAnalysisId(analysis.id);
+                                            setReportEditorPlayerId(selectedPlayerId!);
+                                            setReportEditorPlayerName(selectedPlayer!.name);
+                                            setShowReportEditor(true);
                                           }}
                                           className="h-8 px-2 md:px-3"
                                         >
@@ -3217,33 +3217,26 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         )}
       </div>
 
-      {/* Dialogs */}
-      <PerformanceActionsDialog
-        open={isPerformanceActionsDialogOpen}
-        onOpenChange={setIsPerformanceActionsDialogOpen}
-        analysisId={selectedAnalysisId || ""}
-        playerName={selectedPlayerName}
-        isAdmin={isAdmin}
-      />
-
-      <CreatePerformanceReportDialog
-        open={isCreateReportDialogOpen}
-        onOpenChange={(open) => {
-          setIsCreateReportDialogOpen(open);
-          if (!open) {
-            setEditReportAnalysisId(undefined);
-          }
-        }}
-        playerId={createReportPlayerId}
-        playerName={createReportPlayerName}
-        analysisId={editReportAnalysisId}
-        onSuccess={() => {
-          fetchAllAnalyses();
-          fetchTacticalAnalyses();
-          toast.success(`Performance report ${editReportAnalysisId ? 'updated' : 'created'} successfully`);
-          setEditReportAnalysisId(undefined);
-        }}
-      />
+      {/* Inline Performance Report Editor */}
+      {showReportEditor && (
+        <div className="fixed inset-0 z-50 bg-background overflow-auto">
+          <div className="max-w-6xl mx-auto p-4">
+            <PerformanceReportEditorContent
+              playerId={reportEditorPlayerId}
+              playerName={reportEditorPlayerName}
+              analysisId={reportEditorAnalysisId}
+              onClose={() => {
+                setShowReportEditor(false);
+                setReportEditorAnalysisId(undefined);
+              }}
+              onSuccess={() => {
+                fetchAllAnalyses();
+                fetchTacticalAnalyses();
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       <ProgrammingManagement
         isOpen={isProgrammingDialogOpen}
