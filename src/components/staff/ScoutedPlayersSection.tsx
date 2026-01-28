@@ -14,7 +14,7 @@ import { Search, User, FileText, Calendar, Target, ChevronLeft, Plus, UserPlus, 
 import { format } from "date-fns";
 import { PlayerScoutingManagement } from "./PlayerScoutingManagement";
 import { PlayerFixtures } from "./PlayerFixtures";
-import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
+import { PerformanceReportEditorContent } from "./PerformanceReportEditorContent";
 
 import { createPerformanceReportSlug } from "@/lib/urlHelpers";
 
@@ -51,8 +51,8 @@ export const ScoutedPlayersSection = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<ScoutedPlayer | null>(null);
   const [activeTab, setActiveTab] = useState<"info" | "reports" | "fixtures" | "scouting">("info");
   const [playerAnalyses, setPlayerAnalyses] = useState<PlayerAnalysis[]>([]);
-  const [isCreateReportOpen, setIsCreateReportOpen] = useState(false);
-  const [editingReportId, setEditingReportId] = useState<string | null>(null);
+  const [showReportEditor, setShowReportEditor] = useState(false);
+  const [reportEditorAnalysisId, setReportEditorAnalysisId] = useState<string | undefined>(undefined);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const [addingPlayer, setAddingPlayer] = useState(false);
   const [newPlayerForm, setNewPlayerForm] = useState({
@@ -256,7 +256,7 @@ export const ScoutedPlayersSection = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Performance Reports</h3>
-                <Button size="sm" onClick={() => setIsCreateReportOpen(true)}>
+                <Button size="sm" onClick={() => { setReportEditorAnalysisId(undefined); setShowReportEditor(true); }}>
                   <Plus className="h-4 w-4 mr-1" />
                   Add Report
                 </Button>
@@ -322,7 +322,7 @@ export const ScoutedPlayersSection = () => {
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => setEditingReportId(analysis.id)}
+                                onClick={() => { setReportEditorAnalysisId(analysis.id); setShowReportEditor(true); }}
                               >
                                 <Pencil className="h-4 w-4 mr-1" />
                                 Edit
@@ -345,31 +345,24 @@ export const ScoutedPlayersSection = () => {
               )}
             </div>
 
-            {/* Create Report Dialog */}
-            <CreatePerformanceReportDialog
-              open={isCreateReportOpen}
-              onOpenChange={setIsCreateReportOpen}
-              playerId={selectedPlayer.id}
-              playerName={selectedPlayer.name}
-              onSuccess={() => {
-                fetchPlayerAnalyses(selectedPlayer.id);
-                setIsCreateReportOpen(false);
-              }}
-            />
-
-            {/* Edit Report Dialog */}
-            {editingReportId && (
-              <CreatePerformanceReportDialog
-                open={!!editingReportId}
-                onOpenChange={(open) => !open && setEditingReportId(null)}
-                playerId={selectedPlayer.id}
-                playerName={selectedPlayer.name}
-                analysisId={editingReportId}
-                onSuccess={() => {
-                  fetchPlayerAnalyses(selectedPlayer.id);
-                  setEditingReportId(null);
-                }}
-              />
+            {/* Inline Report Editor */}
+            {showReportEditor && (
+              <div className="fixed inset-0 z-50 bg-background overflow-auto">
+                <div className="max-w-6xl mx-auto p-4">
+                  <PerformanceReportEditorContent
+                    playerId={selectedPlayer.id}
+                    playerName={selectedPlayer.name}
+                    analysisId={reportEditorAnalysisId}
+                    onClose={() => {
+                      setShowReportEditor(false);
+                      setReportEditorAnalysisId(undefined);
+                    }}
+                    onSuccess={() => {
+                      fetchPlayerAnalyses(selectedPlayer.id);
+                    }}
+                  />
+                </div>
+              </div>
             )}
 
           </TabsContent>
