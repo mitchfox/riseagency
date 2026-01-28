@@ -1888,6 +1888,7 @@ export type Database = {
           is_successful: boolean | null
           minute: number | null
           notes: string | null
+          recorded_stat: Json | null
           updated_at: string | null
           video_url: string | null
           zone: number | null
@@ -1903,6 +1904,7 @@ export type Database = {
           is_successful?: boolean | null
           minute?: number | null
           notes?: string | null
+          recorded_stat?: Json | null
           updated_at?: string | null
           video_url?: string | null
           zone?: number | null
@@ -1918,6 +1920,7 @@ export type Database = {
           is_successful?: boolean | null
           minute?: number | null
           notes?: string | null
+          recorded_stat?: Json | null
           updated_at?: string | null
           video_url?: string | null
           zone?: number | null

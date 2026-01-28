@@ -21,6 +21,7 @@ import { R90RatingsViewer } from "./R90RatingsViewer";
 import { formatScoreWithFrequency } from "@/lib/utils";
 import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
 import { ActionVideoUpload } from "./ActionVideoUpload";
+import { ActionStatRecorder, aggregateRecordedStats, RecordedStat } from "./ActionStatRecorder";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -58,6 +59,7 @@ interface PerformanceAction {
   action_description: string;
   notes: string;
   video_url?: string | null;
+  recorded_stat?: RecordedStat | null;
 }
 
 interface SortableStatItemProps {
@@ -640,6 +642,7 @@ export const CreatePerformanceReportDialog = ({
             action_description: action.action_description || "",
             notes: action.notes || "",
             video_url: action.video_url || null,
+            recorded_stat: action.recorded_stat as unknown as RecordedStat | null,
           }))
         );
         
@@ -800,13 +803,13 @@ export const CreatePerformanceReportDialog = ({
     setActions(newActions);
   };
 
-  const updateAction = async (index: number, field: keyof PerformanceAction, value: string | null) => {
+  const updateAction = async (index: number, field: keyof PerformanceAction, value: string | RecordedStat | null) => {
     const newActions = [...actions];
     newActions[index] = { ...newActions[index], [field]: value };
     setActions(newActions);
 
     // If action_type changed, fetch category scores and mapping
-    if (field === "action_type" && value) {
+    if (field === "action_type" && typeof value === 'string' && value) {
       const trimmedValue = value.trim();
       console.log(`Action type changed to: "${trimmedValue}" for action index ${index}`);
       
@@ -1227,6 +1230,7 @@ export const CreatePerformanceReportDialog = ({
           notes: a.notes || null,
           // Preserve video_url: use the one from the action state, or fall back to preserved from DB
           video_url: a.video_url || preservedVideoUrls?.get(a.action_number) || null,
+          recorded_stat: (a.recorded_stat || null) as any,
         }));
       
       // Clean up the temporary storage
@@ -1686,7 +1690,25 @@ export const CreatePerformanceReportDialog = ({
             <div className="mb-4">
               <Label className="text-base sm:text-lg font-semibold">Performance Actions *</Label>
             </div>
-
+            
+            {/* Action Stats Summary (auto-calculated from recorded stats) */}
+            {Object.keys(aggregateRecordedStats(actions)).length > 0 && (
+              <div className="bg-accent/30 p-4 rounded-lg mb-4">
+                <p className="font-semibold text-sm mb-3">Action Stats Summary</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {Object.entries(aggregateRecordedStats(actions)).map(([statType, counts]) => (
+                    <div key={statType} className="flex justify-between items-center bg-background/50 px-3 py-2 rounded">
+                      <span className="text-sm text-muted-foreground">{statType}:</span>
+                      <span className="font-semibold text-sm">
+                        <span className="text-green-600">{counts.successful}</span>
+                        <span className="text-muted-foreground"> / </span>
+                        <span>{counts.total}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {/* Mobile Card View */}
             <div className="space-y-4 sm:hidden">
               {actions.map((action, index) => (
@@ -1703,6 +1725,11 @@ export const CreatePerformanceReportDialog = ({
                       >
                         <Search className="h-4 w-4 text-purple-600" />
                       </Button>
+                      {/* Record Stat button - mobile */}
+                      <ActionStatRecorder
+                        currentStat={action.recorded_stat || null}
+                        onStatRecorded={(stat) => updateAction(index, 'recorded_stat', stat)}
+                      />
                       <Button
                         onClick={() => openSmartR90Viewer(index)}
                         size="icon"
@@ -1710,7 +1737,7 @@ export const CreatePerformanceReportDialog = ({
                         className="h-8 w-8"
                         title="Smart Link to R90 Ratings"
                       >
-                        <LineChart className="h-4 w-4 text-green-600" />
+                        <LineChart className="h-4 w-4 text-primary" />
                       </Button>
                       <Button
                         onClick={() => {
@@ -1956,6 +1983,11 @@ export const CreatePerformanceReportDialog = ({
                           >
                             <Search className="h-4 w-4 text-purple-600" />
                           </Button>
+                          {/* Record Stat button */}
+                          <ActionStatRecorder
+                            currentStat={action.recorded_stat || null}
+                            onStatRecorded={(stat) => updateAction(index, 'recorded_stat', stat)}
+                          />
                           <Button
                             onClick={() => openSmartR90Viewer(index)}
                             size="icon"
@@ -1963,7 +1995,7 @@ export const CreatePerformanceReportDialog = ({
                             className="h-8 w-8"
                             title="Smart Link to R90 Ratings"
                           >
-                            <LineChart className="h-4 w-4 text-green-600" />
+                            <LineChart className="h-4 w-4 text-primary" />
                           </Button>
                           <Button
                             onClick={() => {

@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Trash2, Plus, LineChart, Search, Loader2, Sparkles, ChevronDown, ChevronUp, List, Video } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { R90RatingsViewer } from "./R90RatingsViewer";
+import { ActionStatRecorder, aggregateRecordedStats, RecordedStat } from "./ActionStatRecorder";
 import { Card, CardContent } from "@/components/ui/card";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade } from "@/lib/gradeCalculations";
 import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
@@ -38,6 +39,7 @@ interface PerformanceAction {
   zone?: number | null;
   is_successful?: boolean;
   video_url?: string | null;
+  recorded_stat?: RecordedStat | null;
 }
 
 interface PerformanceActionsDialogProps {
@@ -206,7 +208,12 @@ export const PerformanceActionsDialog = ({
         .order("action_number", { ascending: true });
 
       if (error) throw error;
-      setActions(data || []);
+      // Map data to ensure recorded_stat is properly typed
+      const mappedActions = (data || []).map(action => ({
+        ...action,
+        recorded_stat: action.recorded_stat as unknown as RecordedStat | null,
+      }));
+      setActions(mappedActions);
       
       // Set next action number
       if (data && data.length > 0) {
@@ -426,6 +433,26 @@ export const PerformanceActionsDialog = ({
     }
   };
 
+  const handleUpdateRecordedStat = async (actionId: string, stat: RecordedStat | null) => {
+    try {
+      const { error } = await supabase
+        .from("performance_report_actions")
+        .update({ recorded_stat: stat as any })
+        .eq("id", actionId);
+
+      if (error) throw error;
+      
+      // Update local state
+      setActions(prev => prev.map(a => 
+        a.id === actionId ? { ...a, recorded_stat: stat } : a
+      ));
+      toast.success(stat ? `Stat recorded: ${stat.stat_type}` : 'Stat cleared');
+    } catch (error: any) {
+      console.error("Error updating recorded stat:", error);
+      toast.error("Failed to update stat");
+    }
+  };
+
   const getActionScoreColor = (score: number) => {
     if (score >= 0.1) return "text-green-600 font-bold";
     if (score > 0) return "text-green-500";
@@ -559,6 +586,25 @@ export const PerformanceActionsDialog = ({
               </CardContent>
             </Card>
           </div>
+
+          {/* Action Stats Summary (auto-calculated from recorded stats) */}
+          {Object.keys(aggregateRecordedStats(actions)).length > 0 && (
+            <div className="bg-accent/30 p-4 rounded-lg">
+              <p className="font-semibold text-sm mb-3">Action Stats Summary</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {Object.entries(aggregateRecordedStats(actions)).map(([statType, counts]) => (
+                  <div key={statType} className="flex justify-between items-center bg-background/50 px-3 py-2 rounded">
+                    <span className="text-sm text-muted-foreground">{statType}:</span>
+                    <span className="font-semibold text-sm">
+                      <span className="text-green-600">{counts.successful}</span>
+                      <span className="text-muted-foreground"> / </span>
+                      <span>{counts.total}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Current R Score from Actions */}
           <div className="bg-accent/20 p-4 rounded-lg">
@@ -789,13 +835,20 @@ export const PerformanceActionsDialog = ({
                         >
                           <Search className="w-4 h-4 text-purple-600" />
                         </Button>
+                        {/* Record Stat button - admin only */}
+                        {isAdmin && action.id && (
+                          <ActionStatRecorder
+                            currentStat={action.recorded_stat || null}
+                            onStatRecorded={(stat) => handleUpdateRecordedStat(action.id!, stat)}
+                          />
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => openSmartR90Viewer(action)}
                           title="Smart Link to R90 Ratings"
                         >
-                          <LineChart className="w-4 h-4 text-green-600" />
+                          <LineChart className="w-4 h-4 text-primary" />
                         </Button>
                         <Button
                           variant="ghost"

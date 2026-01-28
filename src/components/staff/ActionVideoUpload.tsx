@@ -157,11 +157,7 @@ export const ActionVideoUpload = ({
       return;
     }
 
-    // Validate file size (100MB max)
-    if (file.size > 100 * 1024 * 1024) {
-      toast.error('Video must be under 100MB');
-      return;
-    }
+    // No file size limit - large videos are supported
 
     setUploading(true);
     setProgress(0);
