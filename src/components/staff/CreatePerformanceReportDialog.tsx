@@ -1175,12 +1175,19 @@ export const CreatePerformanceReportDialog = ({
         // Merge action-recorded stats into striker_stats
         // These are stats recorded from individual actions and aggregated
         if (hasActionRecordedStats) {
-          Object.entries(actionRecordedStats).forEach(([statType, counts]) => {
-            // Create keys for successful and total counts
-            // e.g., "Dribble" becomes "dribbles_successful" and "dribbles_total"
+          Object.entries(actionRecordedStats).forEach(([statType, stat]) => {
+            // Create keys based on stat type
+            // e.g., "Dribble" becomes "dribble_successful" and "dribble_total"
             const baseKey = statType.toLowerCase().replace(/\s+/g, '_');
-            strikerStatsJson[`${baseKey}_successful`] = counts.successful;
-            strikerStatsJson[`${baseKey}_total`] = counts.total;
+            
+            if (stat.type === 'success_fail') {
+              strikerStatsJson[`${baseKey}_successful`] = stat.successful;
+              strikerStatsJson[`${baseKey}_total`] = stat.total;
+            } else if (stat.type === 'count') {
+              strikerStatsJson[baseKey] = stat.count;
+            } else if (stat.type === 'score') {
+              strikerStatsJson[baseKey] = stat.totalScore;
+            }
           });
         }
         
@@ -1474,19 +1481,31 @@ export const CreatePerformanceReportDialog = ({
                 <div className="mb-4">
                   <Label className="text-xs text-muted-foreground mb-2 block">From Recorded Actions:</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {Object.entries(aggregateRecordedStats(actions)).map(([statType, counts]) => (
+                    {Object.entries(aggregateRecordedStats(actions)).map(([statType, stat]) => (
                       <div key={statType} className="p-2 border rounded-lg bg-accent/30">
                         <div className="flex items-center justify-between">
                           <Label className="text-xs font-semibold">{statType}</Label>
                         </div>
-                        <div className="flex items-center justify-center gap-1 mt-1">
-                          <span className="text-lg font-bold text-primary">{counts.successful}</span>
-                          <span className="text-muted-foreground">/</span>
-                          <span className="text-lg font-bold">{counts.total}</span>
-                        </div>
-                        <div className="text-[10px] text-center text-muted-foreground">
-                          {counts.total > 0 ? ((counts.successful / counts.total) * 100).toFixed(1) : "0.0"}% success
-                        </div>
+                        {stat.type === 'success_fail' ? (
+                          <>
+                            <div className="flex items-center justify-center gap-1 mt-1">
+                              <span className="text-lg font-bold text-primary">{stat.successful}</span>
+                              <span className="text-muted-foreground">/</span>
+                              <span className="text-lg font-bold">{stat.total}</span>
+                            </div>
+                            <div className="text-[10px] text-center text-muted-foreground">
+                              {stat.total > 0 ? ((stat.successful / stat.total) * 100).toFixed(1) : "0.0"}% success
+                            </div>
+                          </>
+                        ) : stat.type === 'count' ? (
+                          <div className="text-center mt-1">
+                            <span className="text-lg font-bold text-primary">{stat.count}</span>
+                          </div>
+                        ) : stat.type === 'score' ? (
+                          <div className="text-center mt-1">
+                            <span className="text-lg font-bold text-primary">{stat.totalScore.toFixed(2)}</span>
+                          </div>
+                        ) : null}
                       </div>
                     ))}
                   </div>

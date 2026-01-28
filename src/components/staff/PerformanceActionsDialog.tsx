@@ -593,13 +593,21 @@ export const PerformanceActionsDialog = ({
             <div className="bg-accent/30 p-4 rounded-lg">
               <p className="font-semibold text-sm mb-3">Action Stats Summary</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {Object.entries(aggregateRecordedStats(actions)).map(([statType, counts]) => (
+                {Object.entries(aggregateRecordedStats(actions)).map(([statType, stat]) => (
                   <div key={statType} className="flex justify-between items-center bg-background/50 px-3 py-2 rounded">
                     <span className="text-sm text-muted-foreground">{statType}:</span>
                     <span className="font-semibold text-sm">
-                      <span className="text-green-600">{counts.successful}</span>
-                      <span className="text-muted-foreground"> / </span>
-                      <span>{counts.total}</span>
+                      {stat.type === 'success_fail' ? (
+                        <>
+                          <span className="text-primary">{stat.successful}</span>
+                          <span className="text-muted-foreground"> / </span>
+                          <span>{stat.total}</span>
+                        </>
+                      ) : stat.type === 'count' ? (
+                        <span className="text-primary">{stat.count}</span>
+                      ) : stat.type === 'score' ? (
+                        <span className="text-primary">{stat.totalScore.toFixed(2)}</span>
+                      ) : null}
                     </span>
                   </div>
                 ))}
