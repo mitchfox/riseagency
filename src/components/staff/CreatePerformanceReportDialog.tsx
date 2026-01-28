@@ -1307,11 +1307,23 @@ export const CreatePerformanceReportDialog = ({
       delete (window as any).__preservedVideoUrls;
 
       if (actionsToInsert.length > 0) {
-        const { error: actionsError } = await supabase
+        const { data: insertedActions, error: actionsError } = await supabase
           .from("performance_report_actions")
-          .insert(actionsToInsert);
+          .insert(actionsToInsert)
+          .select('id, action_number');
 
         if (actionsError) throw actionsError;
+        
+        // Update local actions with real database IDs so video uploads work immediately
+        if (insertedActions) {
+          const idMap = new Map(insertedActions.map(a => [a.action_number, a.id]));
+          setActions(prevActions => 
+            prevActions.map(action => ({
+              ...action,
+              id: idMap.get(action.action_number) || action.id
+            }))
+          );
+        }
       }
 
       toast.success(`Performance report ${analysisId ? 'updated' : 'created'} successfully`);

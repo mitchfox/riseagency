@@ -514,75 +514,108 @@ export const PerformanceActionsDialog = ({
             <Card className="bg-accent/50">
               <CardContent className="pt-6">
                 <div className="text-sm space-y-2">
-                  <p className="font-semibold text-foreground mb-3">Advanced Stats</p>
-                  {strikerStats?.xG !== undefined && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">xG:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{strikerStats.xG.toFixed(2)}</span>
-                        <span 
-                          className="text-xs font-bold px-2 py-0.5 rounded"
-                          style={{ 
-                            color: getXGGrade(strikerStats.xG).color,
-                            backgroundColor: `${getXGGrade(strikerStats.xG).color}15`
-                          }}
-                        >
-                          {getXGGrade(strikerStats.xG).grade}
-                        </span>
+                  <p className="font-semibold text-foreground mb-3">Match Statistics</p>
+                  {strikerStats && (() => {
+                    // Helper to format stats
+                    const formatStatValue = (key: string, value: any) => {
+                      if (value === undefined || value === null) return null;
+                      
+                      // Rate-based stats that need per90 display
+                      const rateStats = ['xg', 'xa', 'xgchain', 'xc'];
+                      const isRateStat = rateStats.some(rs => key.toLowerCase().includes(rs));
+                      
+                      // Check for paired stats (successful/total)
+                      const totalKey = key.replace('_successful', '_total');
+                      const successfulKey = key.replace('_total', '_successful');
+                      
+                      if (key.endsWith('_successful') && strikerStats[totalKey] !== undefined) {
+                        const successful = value;
+                        const total = strikerStats[totalKey];
+                        const pct = total > 0 ? ((successful / total) * 100).toFixed(1) : '0.0';
+                        return { 
+                          displayValue: `${successful}/${total}`, 
+                          percentage: `${pct}%`,
+                          isPair: true 
+                        };
+                      }
+                      
+                      // Skip total if we have successful (already rendered as pair)
+                      if (key.endsWith('_total') && strikerStats[successfulKey] !== undefined) {
+                        return null;
+                      }
+                      
+                      // Per90 display for rate stats
+                      const per90Key = `${key}_per90`;
+                      const per90Value = strikerStats[per90Key];
+                      
+                      if (isRateStat && per90Value !== undefined) {
+                        return {
+                          displayValue: typeof value === 'number' ? value.toFixed(2) : value,
+                          per90: typeof per90Value === 'number' ? per90Value.toFixed(3) : per90Value,
+                          isPair: false
+                        };
+                      }
+                      
+                      return {
+                        displayValue: typeof value === 'number' ? 
+                          (Number.isInteger(value) ? value.toString() : value.toFixed(2)) : value,
+                        isPair: false
+                      };
+                    };
+                    
+                    // Get display-ready stats, filtering out per90 keys and system keys
+                    const displayStats = Object.entries(strikerStats)
+                      .filter(([key]) => 
+                        !key.endsWith('_per90') && 
+                        key !== 'stats_order' &&
+                        strikerStats[key] !== undefined && 
+                        strikerStats[key] !== null &&
+                        strikerStats[key] !== ''
+                      )
+                      .map(([key, value]) => {
+                        const formatted = formatStatValue(key, value);
+                        if (!formatted) return null;
+                        
+                        // Clean up key for display
+                        const displayName = key
+                          .replace(/_successful$/, '')
+                          .replace(/_/g, ' ')
+                          .replace(/\b\w/g, l => l.toUpperCase())
+                          .replace('Xg', 'xG')
+                          .replace('Xa', 'xA')
+                          .replace('Xc', 'xC');
+                        
+                        return { key, displayName, ...formatted };
+                      })
+                      .filter(Boolean);
+                    
+                    if (displayStats.length === 0) {
+                      return <p className="text-muted-foreground text-xs">No stats recorded</p>;
+                    }
+                    
+                    return (
+                      <div className="grid grid-cols-1 gap-1.5">
+                        {displayStats.map((stat: any) => (
+                          <div key={stat.key} className="flex justify-between items-center">
+                            <span className="text-muted-foreground">{stat.displayName}:</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {stat.displayValue}
+                                {stat.percentage && (
+                                  <span className="text-primary ml-1">({stat.percentage})</span>
+                                )}
+                              </span>
+                              {stat.per90 && (
+                                <span className="text-xs text-muted-foreground">
+                                  ({stat.per90}/90)
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  )}
-                  {strikerStats?.xA !== undefined && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">xA:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{strikerStats.xA.toFixed(2)}</span>
-                        <span 
-                          className="text-xs font-bold px-2 py-0.5 rounded"
-                          style={{ 
-                            color: getXAGrade(strikerStats.xA).color,
-                            backgroundColor: `${getXAGrade(strikerStats.xA).color}15`
-                          }}
-                        >
-                          {getXAGrade(strikerStats.xA).grade}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  {strikerStats?.regains !== undefined && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Regains:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{strikerStats.regains}</span>
-                        <span 
-                          className="text-xs font-bold px-2 py-0.5 rounded"
-                          style={{ 
-                            color: getRegainsGrade(strikerStats.regains).color,
-                            backgroundColor: `${getRegainsGrade(strikerStats.regains).color}15`
-                          }}
-                        >
-                          {getRegainsGrade(strikerStats.regains).grade}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  {strikerStats?.interceptions !== undefined && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Interceptions:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{strikerStats.interceptions}</span>
-                        <span 
-                          className="text-xs font-bold px-2 py-0.5 rounded"
-                          style={{ 
-                            color: getInterceptionsGrade(strikerStats.interceptions).color,
-                            backgroundColor: `${getInterceptionsGrade(strikerStats.interceptions).color}15`
-                          }}
-                        >
-                          {getInterceptionsGrade(strikerStats.interceptions).grade}
-                        </span>
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>
