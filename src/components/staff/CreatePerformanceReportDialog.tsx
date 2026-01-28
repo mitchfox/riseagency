@@ -21,7 +21,7 @@ import { R90RatingsViewer } from "./R90RatingsViewer";
 import { formatScoreWithFrequency } from "@/lib/utils";
 import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
 import { ActionVideoUpload } from "./ActionVideoUpload";
-import { ActionStatRecorder, aggregateRecordedStats, RecordedStat } from "./ActionStatRecorder";
+import { ActionStatRecorder, aggregateRecordedStats, RecordedStat, STAT_TYPE_CONFIGS, StatTypeConfig } from "./ActionStatRecorder";
 import { UnifiedStatsEditor, UnifiedStat, mergeStatsForEditor, unifiedStatsToStrikerStats } from "./UnifiedStatsEditor";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
@@ -395,12 +395,20 @@ export const CreatePerformanceReportDialog = ({
       
       // Add action-recorded stats
       Object.entries(actionRecordedStats).forEach(([statType, stat]) => {
-        const key = statType.toLowerCase().replace(/\s+/g, '_');
+        // Try to find matching config for proper key
+        const config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) => 
+          c.name.toLowerCase() === statType.toLowerCase() ||
+          c.key === statType.toLowerCase().replace(/\s+/g, '_')
+        );
+        
+        const key = config?.key || statType.toLowerCase().replace(/\s+/g, '_');
+        const displayName = config?.name || statType;
+        
         actionStatKeys.add(key);
         
         const unified: UnifiedStat = {
           key,
-          displayName: statType,
+          displayName,
           type: stat.type,
           isFromActions: true,
         };
@@ -413,7 +421,7 @@ export const CreatePerformanceReportDialog = ({
         } else if (stat.type === 'score') {
           unified.score = stat.totalScore;
           const keyLower = key.toLowerCase();
-          if (['xg', 'xa', 'xc', 'xgchain'].some(p => keyLower.includes(p)) && minutes > 0) {
+          if (['xg', 'xa', 'xc', 'xgchain', 'npxg'].some(p => keyLower.includes(p)) && minutes > 0) {
             unified.per90 = ((stat.totalScore / minutes) * 90).toFixed(3);
           }
         }

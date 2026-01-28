@@ -5,12 +5,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Trash2, Edit2, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { 
+  STAT_TYPE_CONFIGS,
+  StatTypeConfig,
   AggregatedStat, 
-  AggregatedSuccessFailStat, 
-  AggregatedCountStat, 
-  AggregatedScoreStat,
   StatInputMode 
 } from './ActionStatRecorder';
 
@@ -37,7 +36,7 @@ interface UnifiedStatsEditorProps {
 }
 
 // Stat types that should show per90
-const PER90_STAT_KEYS = ['xg', 'xa', 'xgchain', 'xc', 'xgc'];
+const PER90_STAT_KEYS = ['xg', 'xa', 'xgchain', 'xc', 'xgc', 'npxg'];
 
 const shouldShowPer90 = (key: string): boolean => {
   const keyLower = key.toLowerCase();
@@ -53,43 +52,81 @@ export const UnifiedStatsEditor = ({
   const [editingStatKey, setEditingStatKey] = useState<string | null>(null);
   
   // New stat form state
-  const [newStatName, setNewStatName] = useState('');
+  const [selectedStatKey, setSelectedStatKey] = useState('');
+  const [customStatName, setCustomStatName] = useState('');
   const [newStatType, setNewStatType] = useState<StatInputMode>('count');
   const [newStatValue1, setNewStatValue1] = useState(''); // successful or count or score
   const [newStatValue2, setNewStatValue2] = useState(''); // total (for success_fail)
 
+  // Get available stats (not already added)
+  const availableStats = STAT_TYPE_CONFIGS.filter(
+    config => !stats.some(s => s.key === config.key)
+  );
+
+  // Group stats by mode for display
+  const successFailStats = availableStats.filter(c => c.mode === 'success_fail');
+  const countStats = availableStats.filter(c => c.mode === 'count');
+  const scoreStats = availableStats.filter(c => c.mode === 'score');
+
   const resetNewStatForm = () => {
-    setNewStatName('');
+    setSelectedStatKey('');
+    setCustomStatName('');
     setNewStatType('count');
     setNewStatValue1('');
     setNewStatValue2('');
   };
 
-  const handleAddStat = () => {
-    if (!newStatName) return;
+  const handleStatKeyChange = (key: string) => {
+    setSelectedStatKey(key);
+    if (key === 'custom') {
+      setNewStatType('count');
+      setCustomStatName('');
+    } else {
+      const config = STAT_TYPE_CONFIGS.find(c => c.key === key);
+      if (config) {
+        setNewStatType(config.mode);
+      }
+    }
+  };
 
-    const key = newStatName.toLowerCase().replace(/\s+/g, '_');
+  const handleAddStat = () => {
+    if (!selectedStatKey) return;
+
+    let key: string;
+    let displayName: string;
+    let type: StatInputMode;
+
+    if (selectedStatKey === 'custom') {
+      if (!customStatName) return;
+      key = customStatName.toLowerCase().replace(/\s+/g, '_');
+      displayName = customStatName;
+      type = newStatType;
+    } else {
+      const config = STAT_TYPE_CONFIGS.find(c => c.key === selectedStatKey);
+      if (!config) return;
+      key = config.key;
+      displayName = config.name;
+      type = config.mode;
+    }
     
     // Check if stat already exists
     if (stats.find(s => s.key === key)) {
-      // Update existing stat instead
-      handleUpdateStat(key);
       return;
     }
 
     const newStat: UnifiedStat = {
       key,
-      displayName: newStatName,
-      type: newStatType,
+      displayName,
+      type,
       isFromActions: false,
     };
 
-    if (newStatType === 'success_fail') {
+    if (type === 'success_fail') {
       newStat.successful = parseInt(newStatValue1) || 0;
       newStat.total = parseInt(newStatValue2) || 0;
-    } else if (newStatType === 'count') {
+    } else if (type === 'count') {
       newStat.count = parseInt(newStatValue1) || 0;
-    } else if (newStatType === 'score') {
+    } else if (type === 'score') {
       newStat.score = parseFloat(newStatValue1) || 0;
       if (shouldShowPer90(key) && minutesPlayed > 0) {
         newStat.per90 = ((newStat.score / minutesPlayed) * 90).toFixed(3);
@@ -101,28 +138,42 @@ export const UnifiedStatsEditor = ({
     setIsAddDialogOpen(false);
   };
 
-  const handleUpdateStat = (key: string) => {
+  const handleUpdateStatType = (key: string, newType: StatInputMode) => {
     const updatedStats = stats.map(stat => {
       if (stat.key === key) {
-        const updated = { ...stat };
-        if (stat.type === 'success_fail') {
-          updated.successful = parseInt(newStatValue1) || 0;
-          updated.total = parseInt(newStatValue2) || 0;
-        } else if (stat.type === 'count') {
-          updated.count = parseInt(newStatValue1) || 0;
-        } else if (stat.type === 'score') {
-          updated.score = parseFloat(newStatValue1) || 0;
+        const updated: UnifiedStat = { 
+          ...stat, 
+          type: newType,
+          // Reset values when type changes
+          successful: undefined,
+          total: undefined,
+          count: undefined,
+          score: undefined,
+          per90: undefined,
+        };
+        
+        // Convert existing values if possible
+        if (newType === 'count') {
+          if (stat.type === 'success_fail') {
+            updated.count = stat.total || 0;
+          } else if (stat.type === 'score') {
+            updated.count = Math.round(stat.score || 0);
+          }
+        } else if (newType === 'success_fail') {
+          updated.successful = 0;
+          updated.total = stat.count || 0;
+        } else if (newType === 'score') {
+          updated.score = stat.count || 0;
           if (shouldShowPer90(key) && minutesPlayed > 0) {
             updated.per90 = ((updated.score / minutesPlayed) * 90).toFixed(3);
           }
         }
+        
         return updated;
       }
       return stat;
     });
     onStatsChange(updatedStats);
-    setEditingStatKey(null);
-    resetNewStatForm();
   };
 
   const handleDeleteStat = (key: string) => {
@@ -149,21 +200,6 @@ export const UnifiedStatsEditor = ({
     onStatsChange(updatedStats);
   };
 
-  const openEditDialog = (stat: UnifiedStat) => {
-    setEditingStatKey(stat.key);
-    setNewStatName(stat.displayName);
-    setNewStatType(stat.type);
-    if (stat.type === 'success_fail') {
-      setNewStatValue1(String(stat.successful || 0));
-      setNewStatValue2(String(stat.total || 0));
-    } else if (stat.type === 'count') {
-      setNewStatValue1(String(stat.count || 0));
-    } else if (stat.type === 'score') {
-      setNewStatValue1(String(stat.score || 0));
-    }
-    setIsAddDialogOpen(true);
-  };
-
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -183,85 +219,149 @@ export const UnifiedStatsEditor = ({
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingStatKey ? 'Edit Stat' : 'Add New Stat'}</DialogTitle>
+              <DialogTitle>Add New Stat</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div>
-                <Label>Stat Name</Label>
-                <Input
-                  value={newStatName}
-                  onChange={(e) => setNewStatName(e.target.value)}
-                  placeholder="e.g. Dribbles, xG, Turnovers"
-                  disabled={!!editingStatKey}
-                />
-              </div>
-              <div>
-                <Label>Stat Type</Label>
-                <Select 
-                  value={newStatType} 
-                  onValueChange={(v) => setNewStatType(v as StatInputMode)}
-                  disabled={!!editingStatKey}
-                >
+                <Label>Select Stat</Label>
+                <Select value={selectedStatKey} onValueChange={handleStatKeyChange}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Choose a stat..." />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="success_fail">Success/Fail (e.g. Dribbles 2/5)</SelectItem>
-                    <SelectItem value="count">Count Only (e.g. Turnovers, Goals)</SelectItem>
-                    <SelectItem value="score">Score Value (e.g. xG 0.45)</SelectItem>
+                  <SelectContent className="max-h-[300px]">
+                    {successFailStats.length > 0 && (
+                      <>
+                        <SelectItem value="header-success" disabled className="font-semibold text-xs text-muted-foreground">
+                          — Success/Fail Stats —
+                        </SelectItem>
+                        {successFailStats.map((config) => (
+                          <SelectItem key={config.key} value={config.key}>{config.name}</SelectItem>
+                        ))}
+                      </>
+                    )}
+                    {countStats.length > 0 && (
+                      <>
+                        <SelectItem value="header-count" disabled className="font-semibold text-xs text-muted-foreground mt-2">
+                          — Count Stats —
+                        </SelectItem>
+                        {countStats.map((config) => (
+                          <SelectItem key={config.key} value={config.key}>{config.name}</SelectItem>
+                        ))}
+                      </>
+                    )}
+                    {scoreStats.length > 0 && (
+                      <>
+                        <SelectItem value="header-score" disabled className="font-semibold text-xs text-muted-foreground mt-2">
+                          — Score Stats —
+                        </SelectItem>
+                        {scoreStats.map((config) => (
+                          <SelectItem key={config.key} value={config.key}>
+                            {config.name}
+                            {config.description && <span className="text-muted-foreground ml-1">({config.description})</span>}
+                          </SelectItem>
+                        ))}
+                      </>
+                    )}
+                    <SelectItem value="custom" className="mt-2 font-medium">Custom...</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              {newStatType === 'success_fail' && (
-                <div className="grid grid-cols-2 gap-3">
+
+              {selectedStatKey === 'custom' && (
+                <div className="space-y-3">
                   <div>
-                    <Label>Successful</Label>
+                    <Label>Custom Stat Name</Label>
                     <Input
-                      type="number"
-                      value={newStatValue1}
-                      onChange={(e) => setNewStatValue1(e.target.value)}
-                      placeholder="0"
+                      value={customStatName}
+                      onChange={(e) => setCustomStatName(e.target.value)}
+                      placeholder="e.g. Progressive Runs"
                     />
                   </div>
                   <div>
-                    <Label>Total</Label>
-                    <Input
-                      type="number"
-                      value={newStatValue2}
-                      onChange={(e) => setNewStatValue2(e.target.value)}
-                      placeholder="0"
-                    />
+                    <Label>Stat Type</Label>
+                    <Select value={newStatType} onValueChange={(v) => setNewStatType(v as StatInputMode)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="success_fail">Success/Fail (e.g. 2/5)</SelectItem>
+                        <SelectItem value="count">Count Only (e.g. 3)</SelectItem>
+                        <SelectItem value="score">Score Value (e.g. 0.45)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               )}
-              {newStatType === 'count' && (
-                <div>
-                  <Label>Count</Label>
-                  <Input
-                    type="number"
-                    value={newStatValue1}
-                    onChange={(e) => setNewStatValue1(e.target.value)}
-                    placeholder="0"
-                  />
+
+              {selectedStatKey && selectedStatKey !== 'custom' && (
+                <div className="bg-accent/30 rounded-lg p-2">
+                  <span className="text-xs text-muted-foreground">
+                    Type: {STAT_TYPE_CONFIGS.find(c => c.key === selectedStatKey)?.mode === 'success_fail' 
+                      ? 'Success/Fail' 
+                      : STAT_TYPE_CONFIGS.find(c => c.key === selectedStatKey)?.mode === 'count'
+                        ? 'Count'
+                        : 'Score'}
+                  </span>
                 </div>
               )}
-              {newStatType === 'score' && (
-                <div>
-                  <Label>Score Value</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={newStatValue1}
-                    onChange={(e) => setNewStatValue1(e.target.value)}
-                    placeholder="0.00"
-                  />
-                </div>
+
+              {selectedStatKey && (
+                <>
+                  {(selectedStatKey === 'custom' ? newStatType : STAT_TYPE_CONFIGS.find(c => c.key === selectedStatKey)?.mode) === 'success_fail' && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Successful</Label>
+                        <Input
+                          type="number"
+                          value={newStatValue1}
+                          onChange={(e) => setNewStatValue1(e.target.value)}
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <Label>Total</Label>
+                        <Input
+                          type="number"
+                          value={newStatValue2}
+                          onChange={(e) => setNewStatValue2(e.target.value)}
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {(selectedStatKey === 'custom' ? newStatType : STAT_TYPE_CONFIGS.find(c => c.key === selectedStatKey)?.mode) === 'count' && (
+                    <div>
+                      <Label>Count</Label>
+                      <Input
+                        type="number"
+                        value={newStatValue1}
+                        onChange={(e) => setNewStatValue1(e.target.value)}
+                        placeholder="0"
+                      />
+                    </div>
+                  )}
+                  {(selectedStatKey === 'custom' ? newStatType : STAT_TYPE_CONFIGS.find(c => c.key === selectedStatKey)?.mode) === 'score' && (
+                    <div>
+                      <Label>Score Value</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={newStatValue1}
+                        onChange={(e) => setNewStatValue1(e.target.value)}
+                        placeholder="0.00"
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-              <Button onClick={editingStatKey ? () => handleUpdateStat(editingStatKey) : handleAddStat}>
-                {editingStatKey ? 'Update' : 'Add Stat'}
+              <Button 
+                onClick={handleAddStat}
+                disabled={!selectedStatKey || (selectedStatKey === 'custom' && !customStatName)}
+              >
+                Add Stat
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -287,7 +387,20 @@ export const UnifiedStatsEditor = ({
                   <X className="h-3 w-3 text-destructive" />
                 </button>
 
-                <Label className="text-xs font-semibold block mb-2 pr-5">{stat.displayName}</Label>
+                <div className="flex items-center gap-1 mb-2 pr-5">
+                  <Label className="text-xs font-semibold block truncate">{stat.displayName}</Label>
+                  {/* Type change dropdown */}
+                  <Select value={stat.type} onValueChange={(v) => handleUpdateStatType(stat.key, v as StatInputMode)}>
+                    <SelectTrigger className="h-5 w-5 p-0 border-0 opacity-0 group-hover:opacity-100 transition-opacity [&>svg]:h-3 [&>svg]:w-3">
+                      <span className="sr-only">Change type</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="success_fail">Success/Fail</SelectItem>
+                      <SelectItem value="count">Count</SelectItem>
+                      <SelectItem value="score">Score</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 
                 {stat.type === 'success_fail' && (
                   <div>
@@ -367,12 +480,20 @@ export const mergeStatsForEditor = (
 
   // First, add action-recorded stats
   Object.entries(actionRecordedStats).forEach(([statType, stat]) => {
-    const key = statType.toLowerCase().replace(/\s+/g, '_');
+    // Try to find matching config for proper key
+    const config = STAT_TYPE_CONFIGS.find(c => 
+      c.name.toLowerCase() === statType.toLowerCase() ||
+      c.key === statType.toLowerCase().replace(/\s+/g, '_')
+    );
+    
+    const key = config?.key || statType.toLowerCase().replace(/\s+/g, '_');
+    const displayName = config?.name || statType;
+    
     processedKeys.add(key);
     
     const unified: UnifiedStat = {
       key,
-      displayName: statType,
+      displayName,
       type: stat.type,
       isFromActions: true,
     };
@@ -421,7 +542,9 @@ export const mergeStatsForEditor = (
     processedKeys.add(`${baseKey}_successful`);
     processedKeys.add(`${baseKey}_total`);
 
-    const displayName = baseKey
+    // Try to find matching config for display name
+    const config = STAT_TYPE_CONFIGS.find(c => c.key === baseKey);
+    const displayName = config?.name || baseKey
       .split('_')
       .map(w => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
@@ -444,12 +567,14 @@ export const mergeStatsForEditor = (
     processedKeys.add(key);
     const value = manualStats[key];
     
-    const displayName = key
+    // Try to find matching config
+    const config = STAT_TYPE_CONFIGS.find(c => c.key === key);
+    const displayName = config?.name || key
       .split('_')
       .map(w => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
 
-    // Determine type based on key patterns
+    // Determine type based on config or key patterns
     const isScoreType = shouldShowPer90(key);
     
     if (isScoreType) {
@@ -462,13 +587,26 @@ export const mergeStatsForEditor = (
         isFromActions: false,
       });
     } else {
-      result.push({
-        key,
-        displayName,
-        type: 'count',
-        count: value,
-        isFromActions: false,
-      });
+      // Use config mode if available
+      const type = config?.mode || 'count';
+      if (type === 'success_fail') {
+        result.push({
+          key,
+          displayName,
+          type: 'success_fail',
+          successful: value,
+          total: value,
+          isFromActions: false,
+        });
+      } else {
+        result.push({
+          key,
+          displayName,
+          type: 'count',
+          count: value,
+          isFromActions: false,
+        });
+      }
     }
   });
 
