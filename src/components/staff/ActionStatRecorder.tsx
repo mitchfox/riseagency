@@ -79,10 +79,18 @@ export const STAT_TYPE_CONFIGS: StatTypeConfig[] = [
   { name: 'xG', key: 'xg', mode: 'score', description: 'Expected Goals value' },
   { name: 'xA', key: 'xa', mode: 'score', description: 'Expected Assists value' },
   { name: 'xG Chain', key: 'xg_chain', mode: 'score', description: 'Expected Goals Chain value' },
+  { name: 'xGChain', key: 'xGChain', mode: 'score', description: 'Expected Goals Chain value (legacy)' },
   { name: 'xC', key: 'xc', mode: 'score', description: 'Expected Contribution value' },
   { name: 'npxG', key: 'npxg', mode: 'score', description: 'Non-penalty Expected Goals' },
   { name: 'xGOT', key: 'xgot', mode: 'score', description: 'Expected Goals on Target' },
   { name: 'xG per Shot', key: 'xg_per_shot', mode: 'score', description: 'xG per shot taken' },
+  
+  // Adjusted stats (zone-adjusted values)
+  { name: 'xG Adj', key: 'xG_adj', mode: 'score', description: 'Zone-adjusted Expected Goals' },
+  { name: 'xA Adj', key: 'xA_adj', mode: 'score', description: 'Zone-adjusted Expected Assists' },
+  { name: 'Regains Adj', key: 'regains_adj', mode: 'count', description: 'Zone-adjusted Regains' },
+  { name: 'Turnovers Adj', key: 'turnovers_adj', mode: 'count', description: 'Zone-adjusted Turnovers' },
+  { name: 'Progressive Passes Adj', key: 'progressive_passes_adj', mode: 'count', description: 'Zone-adjusted Progressive Passes' },
   
   // Percentage stats (0-100 values)
   { name: 'Aerial Duel Win %', key: 'aerial_duel_win_pct', mode: 'score', description: 'Aerial duel success rate' },

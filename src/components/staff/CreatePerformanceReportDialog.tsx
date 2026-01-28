@@ -730,6 +730,25 @@ export const CreatePerformanceReportDialog = ({
         const minutes = analysisData.minutes_played || 0;
         const loadedUnifiedStats: UnifiedStat[] = [];
         
+        // Helper to find config by key (case-insensitive with fallbacks)
+        const findStatConfig = (key: string): StatTypeConfig | undefined => {
+          // Try exact match first
+          let config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) => c.key === key);
+          if (config) return config;
+          
+          // Try lowercase match
+          const keyLower = key.toLowerCase();
+          config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) => c.key.toLowerCase() === keyLower);
+          if (config) return config;
+          
+          // Try normalized key (replace special chars, lowercase)
+          const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, '_');
+          config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) => 
+            c.key.toLowerCase().replace(/[^a-z0-9]/g, '_') === normalizedKey
+          );
+          return config;
+        };
+        
         // Look for paired stats (successful/total) and single stats
         const processedKeys = new Set<string>();
         const pairedStats = new Map<string, { successful?: number; total?: number }>();
@@ -753,13 +772,14 @@ export const CreatePerformanceReportDialog = ({
           processedKeys.add(`${baseKey}_successful`);
           processedKeys.add(`${baseKey}_total`);
           
-          const displayName = baseKey
+          const config = findStatConfig(baseKey);
+          const displayName = config?.name || baseKey
             .split('_')
             .map(w => w.charAt(0).toUpperCase() + w.slice(1))
             .join(' ');
           
           loadedUnifiedStats.push({
-            key: baseKey,
+            key: config?.key || baseKey,
             displayName,
             type: 'success_fail',
             successful: values.successful ?? 0,
@@ -776,18 +796,31 @@ export const CreatePerformanceReportDialog = ({
           const value = stats[key];
           if (typeof value !== 'number') return;
           
-          const displayName = key
+          // Find the config for this stat
+          const config = findStatConfig(key);
+          const displayName = config?.name || key
             .split('_')
             .map(w => w.charAt(0).toUpperCase() + w.slice(1))
             .join(' ');
           
-          // Determine type based on key patterns
+          // Determine type from config or patterns
           const keyLower = key.toLowerCase();
-          const isScoreType = ['xg', 'xa', 'xc', 'xgchain'].some(p => keyLower.includes(p));
+          let statType: 'score' | 'count' = 'count';
           
-          if (isScoreType) {
+          if (config) {
+            statType = config.mode === 'score' ? 'score' : (config.mode === 'count' ? 'count' : 'count');
+          } else {
+            // Fallback pattern matching for unlisted stats
+            const isScoreType = ['xg', 'xa', 'xc', 'xgchain', 'ratio'].some(p => keyLower.includes(p));
+            statType = isScoreType ? 'score' : 'count';
+          }
+          
+          // Use the config key if available to ensure consistency
+          const statKey = config?.key || key;
+          
+          if (statType === 'score') {
             loadedUnifiedStats.push({
-              key,
+              key: statKey,
               displayName,
               type: 'score',
               score: value,
@@ -796,7 +829,7 @@ export const CreatePerformanceReportDialog = ({
             });
           } else {
             loadedUnifiedStats.push({
-              key,
+              key: statKey,
               displayName,
               type: 'count',
               count: value,

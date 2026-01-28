@@ -36,11 +36,12 @@ interface UnifiedStatsEditorProps {
   minutesPlayed: number;
 }
 
-// Stat types that should show per90
-const PER90_STAT_KEYS = ['xg', 'xa', 'xg_chain', 'xc', 'npxg', 'xgot', 'xg_per_shot', 'r90'];
+// Stat types that should show per90 (score-based stats)
+const PER90_STAT_KEYS = ['xg', 'xa', 'xg_chain', 'xgchain', 'xc', 'npxg', 'xgot', 'xg_per_shot', 'r90', 'ratio'];
 
 const shouldShowPer90 = (key: string): boolean => {
   const keyLower = key.toLowerCase();
+  // Check for score-type patterns
   return PER90_STAT_KEYS.some(p => keyLower.includes(p.replace('_', '')));
 };
 
@@ -644,6 +645,25 @@ const CalculatedStatsSection = ({ stats, minutesPlayed }: { stats: UnifiedStat[]
   );
 };
 
+// Helper to find config by key (case-insensitive with fallbacks)
+const findStatConfig = (key: string): StatTypeConfig | undefined => {
+  // Try exact match first
+  let config = STAT_TYPE_CONFIGS.find(c => c.key === key);
+  if (config) return config;
+  
+  // Try lowercase match
+  const keyLower = key.toLowerCase();
+  config = STAT_TYPE_CONFIGS.find(c => c.key.toLowerCase() === keyLower);
+  if (config) return config;
+  
+  // Try normalized key (replace special chars, lowercase)
+  const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  config = STAT_TYPE_CONFIGS.find(c => 
+    c.key.toLowerCase().replace(/[^a-z0-9]/g, '_') === normalizedKey
+  );
+  return config;
+};
+
 // Helper to merge action-recorded stats with manual stats
 export const mergeStatsForEditor = (
   actionRecordedStats: Record<string, AggregatedStat>,
@@ -697,7 +717,7 @@ export const mergeStatsForEditor = (
   );
 
   const pairedStats = new Map<string, { successful?: number; total?: number }>();
-  
+
   manualKeys.forEach(key => {
     if (key.endsWith('_successful')) {
       const baseKey = key.replace('_successful', '');
@@ -717,15 +737,15 @@ export const mergeStatsForEditor = (
     processedKeys.add(`${baseKey}_successful`);
     processedKeys.add(`${baseKey}_total`);
 
-    // Try to find matching config for display name
-    const config = STAT_TYPE_CONFIGS.find(c => c.key === baseKey);
+    // Try to find matching config for display name (case-insensitive)
+    const config = findStatConfig(baseKey);
     const displayName = config?.name || baseKey
       .split('_')
       .map(w => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
 
     result.push({
-      key: baseKey,
+      key: config?.key || baseKey,
       displayName,
       type: 'success_fail',
       successful: values.successful ?? 0,
@@ -742,19 +762,22 @@ export const mergeStatsForEditor = (
     processedKeys.add(key);
     const value = manualStats[key];
     
-    // Try to find matching config
-    const config = STAT_TYPE_CONFIGS.find(c => c.key === key);
+    // Try to find matching config (case-insensitive)
+    const config = findStatConfig(key);
     const displayName = config?.name || key
       .split('_')
       .map(w => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
 
+    // Use config key if available for consistency
+    const statKey = config?.key || key;
+
     // Determine type based on config or key patterns
-    const isScoreType = shouldShowPer90(key);
+    const isScoreType = config?.mode === 'score' || shouldShowPer90(statKey);
     
     if (isScoreType) {
       result.push({
-        key,
+        key: statKey,
         displayName,
         type: 'score',
         score: value,
@@ -766,7 +789,7 @@ export const mergeStatsForEditor = (
       const type = config?.mode || 'count';
       if (type === 'success_fail') {
         result.push({
-          key,
+          key: statKey,
           displayName,
           type: 'success_fail',
           successful: value,
@@ -775,7 +798,7 @@ export const mergeStatsForEditor = (
         });
       } else {
         result.push({
-          key,
+          key: statKey,
           displayName,
           type: 'count',
           count: value,
