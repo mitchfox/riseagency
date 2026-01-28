@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Calculator } from 'lucide-react';
 import { 
   STAT_TYPE_CONFIGS,
   StatTypeConfig,
@@ -27,6 +27,7 @@ export interface UnifiedStat {
   // Display helpers
   per90?: string;
   isFromActions?: boolean; // Whether this came from action recording
+  isCalculated?: boolean; // Whether this is auto-calculated from other stats
 }
 
 interface UnifiedStatsEditorProps {
@@ -42,6 +43,129 @@ const shouldShowPer90 = (key: string): boolean => {
   const keyLower = key.toLowerCase();
   return PER90_STAT_KEYS.some(p => keyLower.includes(p.replace('_', '')));
 };
+
+// Calculated stat definitions
+interface CalculatedStatDef {
+  key: string;
+  displayName: string;
+  type: 'score';
+  calculate: (stats: UnifiedStat[]) => number | null;
+  description: string;
+}
+
+const getStatValue = (stats: UnifiedStat[], key: string): number | null => {
+  const stat = stats.find(s => s.key === key);
+  if (!stat) return null;
+  if (stat.type === 'count') return stat.count ?? null;
+  if (stat.type === 'score') return stat.score ?? null;
+  if (stat.type === 'success_fail') return stat.total ?? null;
+  return null;
+};
+
+const getSuccessValue = (stats: UnifiedStat[], key: string): number | null => {
+  const stat = stats.find(s => s.key === key);
+  if (!stat || stat.type !== 'success_fail') return null;
+  return stat.successful ?? null;
+};
+
+const CALCULATED_STATS: CalculatedStatDef[] = [
+  {
+    key: 'recovery_turnover_ratio',
+    displayName: 'Recovery/Turnover Ratio',
+    type: 'score',
+    calculate: (stats) => {
+      const recoveries = getStatValue(stats, 'recoveries');
+      const turnovers = getStatValue(stats, 'turnovers');
+      if (recoveries === null || turnovers === null) return null;
+      if (turnovers === 0) return recoveries > 0 ? recoveries : null;
+      return recoveries / turnovers;
+    },
+    description: 'Recoveries ÷ Turnovers'
+  },
+  {
+    key: 'pp_turnovers_ratio',
+    displayName: 'PP/Turnovers Ratio',
+    type: 'score',
+    calculate: (stats) => {
+      const ppSuccess = getSuccessValue(stats, 'progressive_passes');
+      const turnovers = getStatValue(stats, 'turnovers');
+      if (ppSuccess === null || turnovers === null) return null;
+      if (turnovers === 0) return ppSuccess > 0 ? ppSuccess : null;
+      return ppSuccess / turnovers;
+    },
+    description: 'Successful Progressive Passes ÷ Turnovers'
+  },
+  {
+    key: 'aerial_duel_win_pct',
+    displayName: 'Aerial Duel Win %',
+    type: 'score',
+    calculate: (stats) => {
+      const stat = stats.find(s => s.key === 'aerial_duels');
+      if (!stat || stat.type !== 'success_fail') return null;
+      const total = stat.total ?? 0;
+      const successful = stat.successful ?? 0;
+      if (total === 0) return null;
+      return (successful / total) * 100;
+    },
+    description: 'Aerial Duels Won ÷ Total × 100'
+  },
+  {
+    key: 'pass_completion',
+    displayName: 'Pass Completion %',
+    type: 'score',
+    calculate: (stats) => {
+      const stat = stats.find(s => s.key === 'passes');
+      if (!stat || stat.type !== 'success_fail') return null;
+      const total = stat.total ?? 0;
+      const successful = stat.successful ?? 0;
+      if (total === 0) return null;
+      return (successful / total) * 100;
+    },
+    description: 'Passes Completed ÷ Total × 100'
+  },
+  {
+    key: 'dribble_success_pct',
+    displayName: 'Dribble Success %',
+    type: 'score',
+    calculate: (stats) => {
+      const stat = stats.find(s => s.key === 'dribbles');
+      if (!stat || stat.type !== 'success_fail') return null;
+      const total = stat.total ?? 0;
+      const successful = stat.successful ?? 0;
+      if (total === 0) return null;
+      return (successful / total) * 100;
+    },
+    description: 'Dribbles Completed ÷ Total × 100'
+  },
+  {
+    key: 'tackle_success_pct',
+    displayName: 'Tackle Success %',
+    type: 'score',
+    calculate: (stats) => {
+      const stat = stats.find(s => s.key === 'tackles');
+      if (!stat || stat.type !== 'success_fail') return null;
+      const total = stat.total ?? 0;
+      const successful = stat.successful ?? 0;
+      if (total === 0) return null;
+      return (successful / total) * 100;
+    },
+    description: 'Tackles Won ÷ Total × 100'
+  },
+  {
+    key: 'xg_per_shot',
+    displayName: 'xG per Shot',
+    type: 'score',
+    calculate: (stats) => {
+      const xg = getStatValue(stats, 'xg');
+      const shotsStat = stats.find(s => s.key === 'shots');
+      if (xg === null || !shotsStat) return null;
+      const shots = shotsStat.type === 'success_fail' ? (shotsStat.total ?? 0) : (shotsStat.count ?? 0);
+      if (shots === 0) return null;
+      return xg / shots;
+    },
+    description: 'xG ÷ Total Shots'
+  },
+];
 
 export const UnifiedStatsEditor = ({
   stats,
@@ -465,6 +589,57 @@ export const UnifiedStatsEditor = ({
           ))}
         </div>
       )}
+
+      {/* Auto-Calculated Stats Section */}
+      {stats.length > 0 && (
+        <CalculatedStatsSection stats={stats} minutesPlayed={minutesPlayed} />
+      )}
+    </div>
+  );
+};
+
+// Component to display auto-calculated stats
+const CalculatedStatsSection = ({ stats, minutesPlayed }: { stats: UnifiedStat[], minutesPlayed: number }) => {
+  const calculatedStats = CALCULATED_STATS
+    .map(def => {
+      const value = def.calculate(stats);
+      if (value === null) return null;
+      return {
+        key: def.key,
+        displayName: def.displayName,
+        value,
+        description: def.description
+      };
+    })
+    .filter((s): s is NonNullable<typeof s> => s !== null);
+
+  if (calculatedStats.length === 0) return null;
+
+  return (
+    <div className="mt-4 pt-4 border-t">
+      <div className="flex items-center gap-2 mb-3">
+        <Calculator className="h-4 w-4 text-primary" />
+        <Label className="text-sm font-semibold text-primary">Auto-Calculated Ratios</Label>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        {calculatedStats.map(stat => (
+          <Card key={stat.key} className="bg-primary/5 border-primary/20">
+            <CardContent className="p-3 text-center">
+              <Label className="text-xs font-semibold block truncate mb-1" title={stat.description}>
+                {stat.displayName}
+              </Label>
+              <div className="text-lg font-bold text-primary">
+                {stat.key.includes('pct') || stat.key.includes('completion') || stat.key.includes('success')
+                  ? `${stat.value.toFixed(1)}%`
+                  : stat.value.toFixed(2)}
+              </div>
+              <div className="text-[9px] text-muted-foreground mt-1">
+                {stat.description}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };
