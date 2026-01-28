@@ -37,6 +37,7 @@ export const STAT_TYPE_CONFIGS: StatTypeConfig[] = [
   { name: 'Take-Ons', key: 'take_ons', mode: 'success_fail' },
   { name: '1v1s', key: '1v1s', mode: 'success_fail' },
   { name: 'Presses', key: 'presses', mode: 'success_fail' },
+  { name: 'Pressing Actions', key: 'pressing_actions', mode: 'success_fail' },
   { name: 'Defensive Duels', key: 'defensive_duels', mode: 'success_fail' },
   { name: 'Hold Up Play', key: 'hold_up_play', mode: 'success_fail' },
   { name: 'Cut Insides', key: 'cut_insides', mode: 'success_fail' },
@@ -49,25 +50,48 @@ export const STAT_TYPE_CONFIGS: StatTypeConfig[] = [
   { name: 'Recoveries', key: 'recoveries', mode: 'count' },
   { name: 'Regains', key: 'regains', mode: 'count' },
   { name: 'Touches in Box', key: 'touches_in_box', mode: 'count' },
+  { name: 'Box Entries', key: 'box_entries', mode: 'count' },
   { name: 'Final Third Entries', key: 'final_third_entries', mode: 'count' },
   { name: 'Fouls Won', key: 'fouls_won', mode: 'count' },
   { name: 'Fouls Committed', key: 'fouls_committed', mode: 'count' },
   { name: 'Turnovers', key: 'turnovers', mode: 'count' },
+  { name: 'Dispossessed', key: 'dispossessed', mode: 'count' },
+  { name: 'Miscontrols', key: 'miscontrols', mode: 'count' },
   { name: 'Goals', key: 'goals', mode: 'count' },
   { name: 'Assists', key: 'assists', mode: 'count' },
   { name: 'Progressive Carries', key: 'progressive_carries', mode: 'count' },
+  { name: 'Progressive Passes Received', key: 'progressive_passes_received', mode: 'count' },
   { name: 'Carries into Final Third', key: 'carries_into_final_third', mode: 'count' },
   { name: 'Carries into Box', key: 'carries_into_box', mode: 'count' },
   { name: 'Touches', key: 'touches', mode: 'count' },
   { name: 'Ground Duels Won', key: 'ground_duels_won', mode: 'count' },
+  { name: 'Duels Won', key: 'duels_won', mode: 'count' },
   { name: 'Aerial Duels Won', key: 'aerial_duels_won', mode: 'count' },
+  { name: 'Tackles Won', key: 'tackles_won', mode: 'count' },
+  { name: 'Dribbles Completed', key: 'dribbles_completed', mode: 'count' },
+  { name: 'Crosses Completed', key: 'crosses_completed', mode: 'count' },
+  { name: 'Long Passes Completed', key: 'long_passes_completed', mode: 'count' },
+  { name: 'Shots on Target', key: 'shots_on_target', mode: 'count' },
+  { name: 'Shot Creating Actions', key: 'shot_creating_actions', mode: 'count' },
+  { name: 'Goal Creating Actions', key: 'goal_creating_actions', mode: 'count' },
   
   // Score stats (decimal values like xG, xA)
   { name: 'xG', key: 'xg', mode: 'score', description: 'Expected Goals value' },
   { name: 'xA', key: 'xa', mode: 'score', description: 'Expected Assists value' },
-  { name: 'xGChain', key: 'xgchain', mode: 'score', description: 'Expected Goals Chain value' },
+  { name: 'xG Chain', key: 'xg_chain', mode: 'score', description: 'Expected Goals Chain value' },
   { name: 'xC', key: 'xc', mode: 'score', description: 'Expected Contribution value' },
   { name: 'npxG', key: 'npxg', mode: 'score', description: 'Non-penalty Expected Goals' },
+  { name: 'xGOT', key: 'xgot', mode: 'score', description: 'Expected Goals on Target' },
+  { name: 'xG per Shot', key: 'xg_per_shot', mode: 'score', description: 'xG per shot taken' },
+  
+  // Percentage stats (0-100 values)
+  { name: 'Aerial Duel Win %', key: 'aerial_duel_win_pct', mode: 'score', description: 'Aerial duel success rate' },
+  { name: 'Pass Completion %', key: 'pass_completion', mode: 'score', description: 'Pass completion rate' },
+  
+  // Ratio stats (calculated from other stats)
+  { name: 'PP/Turnovers Ratio', key: 'pp_turnovers_ratio', mode: 'score', description: 'Progressive passes to turnovers ratio' },
+  { name: 'Recovery/Turnover Ratio', key: 'recovery_turnover_ratio', mode: 'score', description: 'Recoveries to turnovers ratio' },
+  { name: 'R90 Score', key: 'r90', mode: 'score', description: 'R90 performance score' },
 ];
 
 export interface RecordedStat {

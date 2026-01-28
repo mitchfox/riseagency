@@ -36,11 +36,11 @@ interface UnifiedStatsEditorProps {
 }
 
 // Stat types that should show per90
-const PER90_STAT_KEYS = ['xg', 'xa', 'xgchain', 'xc', 'xgc', 'npxg'];
+const PER90_STAT_KEYS = ['xg', 'xa', 'xg_chain', 'xc', 'npxg', 'xgot', 'xg_per_shot', 'r90'];
 
 const shouldShowPer90 = (key: string): boolean => {
   const keyLower = key.toLowerCase();
-  return PER90_STAT_KEYS.some(p => keyLower.includes(p));
+  return PER90_STAT_KEYS.some(p => keyLower.includes(p.replace('_', '')));
 };
 
 export const UnifiedStatsEditor = ({

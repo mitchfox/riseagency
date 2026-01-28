@@ -143,28 +143,83 @@ export function useFormGradeConfigs() {
 
 // Mapping from Dashboard selectedFormMetric values to database metric_keys
 export const METRIC_KEY_MAP: Record<string, string> = {
+  // Core scores
   'r90': 'r90',
   'xg': 'xg',
   'xa': 'xa',
-  'regains': 'regains',
-  'interceptions': 'interceptions',
   'xgchain': 'xg_chain',
   'xgbuildup': 'xg_buildup',
+  'xgot': 'xgot',
+  'xgpershot': 'xg_per_shot',
+  'npxg': 'npxg',
+  'xc': 'xc',
+  
+  // Passing
   'progressivepasses': 'progressive_passes',
-  'ppturnoversratio': 'pp_turnovers_ratio',
+  'progressivepassesreceived': 'progressive_passes_received',
+  'keypasses': 'key_passes',
+  'longpasses': 'long_passes',
+  'longpassescompleted': 'long_passes_completed',
+  'throughballs': 'through_balls',
+  'passcompletion': 'pass_completion',
+  
+  // Attacking
   'shots': 'shots',
   'shotsontarget': 'shots_on_target',
+  'dribbles': 'dribbles',
+  'dribblescompleted': 'dribbles_completed',
+  'dribblesattempted': 'dribbles_attempted',
+  'successfuldribbles': 'dribbles_completed',
+  'crosses': 'crosses',
+  'crossescompleted': 'crosses_completed',
+  'touchesinbox': 'touches_in_box',
+  'boxentries': 'box_entries',
+  'finalthirdentries': 'final_third_entries',
+  'carries_into_box': 'carries_into_box',
+  'carries_into_final_third': 'carries_into_final_third',
+  'progressivecarries': 'progressive_carries',
+  'shotcreatingactions': 'shot_creating_actions',
+  'goalcreatingactions': 'goal_creating_actions',
+  
+  // Defensive
+  'regains': 'regains',
+  'interceptions': 'interceptions',
+  'tackles': 'tackles',
+  'tackleswon': 'tackles_won',
+  'clearances': 'clearances',
+  'blocks': 'blocks',
+  'recoveries': 'recoveries',
+  'pressingactions': 'pressing_actions',
+  
+  // Duels
+  'duels': 'duels',
+  'duelswon': 'duels_won',
+  'aerialduels': 'aerial_duels',
+  'aerialduelswinpct': 'aerial_duel_win_pct',
+  'aerialduelswon': 'aerial_duels_won',
+  
+  // Turnovers
+  'turnovers': 'turnovers',
+  'dispossessed': 'dispossessed',
+  'miscontrols': 'miscontrols',
+  
+  // Ratios
+  'ppturnoversratio': 'pp_turnovers_ratio',
+  'recoveryturnoverratio': 'recovery_turnover_ratio',
+  
+  // Fouls
+  'foulswon': 'fouls_won',
+  'foulscommitted': 'fouls_committed',
+  
+  // Movement xC values
   'triplethreatxc': 'triple_threat_xC',
   'movementtofeetxc': 'movement_to_feet_xC',
   'movementinbehindxc': 'movement_in_behind_xC',
   'movementdownsidexc': 'movement_downside_xC',
   'crossingmovementxc': 'crossing_movement_xC',
-  'dribbles': 'dribbles',
-  'dribblesattempted': 'dribbles_attempted',
-  'successfuldribbles': 'dribbles_completed',
-  'turnovers': 'turnovers',
-  'touchesinbox': 'touches_in_box',
-  'aerialduelswinpct': 'aerial_duel_win_pct',
-  'duelswon': 'duels_won',
-  'longpassescompleted': 'long_passes_completed',
+  
+  // General
+  'touches': 'touches',
+  'goals': 'goals',
+  'assists': 'assists',
 };
