@@ -22,6 +22,7 @@ import { formatScoreWithFrequency } from "@/lib/utils";
 import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
 import { ActionVideoUpload } from "./ActionVideoUpload";
 import { ActionStatRecorder, aggregateRecordedStats, RecordedStat } from "./ActionStatRecorder";
+import { UnifiedStatsEditor, UnifiedStat, mergeStatsForEditor, unifiedStatsToStrikerStats } from "./UnifiedStatsEditor";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -135,6 +136,7 @@ export const CreatePerformanceReportDialog = ({
   const [isFillingScores, setIsFillingScores] = useState(false);
   const [aiSearchAction, setAiSearchAction] = useState<{ type: string; context: string } | null>(null);
   const [isByActionDialogOpen, setIsByActionDialogOpen] = useState(false);
+  const [unifiedStats, setUnifiedStats] = useState<UnifiedStat[]>([]);
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -377,6 +379,56 @@ export const CreatePerformanceReportDialog = ({
       }
 
       return updated;
+    });
+  }, [actions, minutesPlayed]);
+
+  // Sync unified stats when actions change (from recorded stats)
+  useEffect(() => {
+    const actionRecordedStats = aggregateRecordedStats(actions);
+    const minutes = parseInt(minutesPlayed) || 0;
+    
+    // Merge action-recorded stats with existing manual stats
+    // Preserve manual stats that don't have a corresponding action-recorded stat
+    setUnifiedStats(prevStats => {
+      const actionStatKeys = new Set<string>();
+      const newStats: UnifiedStat[] = [];
+      
+      // Add action-recorded stats
+      Object.entries(actionRecordedStats).forEach(([statType, stat]) => {
+        const key = statType.toLowerCase().replace(/\s+/g, '_');
+        actionStatKeys.add(key);
+        
+        const unified: UnifiedStat = {
+          key,
+          displayName: statType,
+          type: stat.type,
+          isFromActions: true,
+        };
+
+        if (stat.type === 'success_fail') {
+          unified.successful = stat.successful;
+          unified.total = stat.total;
+        } else if (stat.type === 'count') {
+          unified.count = stat.count;
+        } else if (stat.type === 'score') {
+          unified.score = stat.totalScore;
+          const keyLower = key.toLowerCase();
+          if (['xg', 'xa', 'xc', 'xgchain'].some(p => keyLower.includes(p)) && minutes > 0) {
+            unified.per90 = ((stat.totalScore / minutes) * 90).toFixed(3);
+          }
+        }
+
+        newStats.push(unified);
+      });
+      
+      // Keep manual stats that aren't from actions
+      prevStats.forEach(stat => {
+        if (!stat.isFromActions && !actionStatKeys.has(stat.key)) {
+          newStats.push(stat);
+        }
+      });
+      
+      return newStats;
     });
   }, [actions, minutesPlayed]);
 
@@ -664,6 +716,89 @@ export const CreatePerformanceReportDialog = ({
         if (Object.keys(newStats).length > 0) {
           setAdditionalStats(newStats);
           setSelectedStatKeys(statsKeys);
+        }
+        
+        // Load unified stats from saved striker_stats
+        const minutes = analysisData.minutes_played || 0;
+        const loadedUnifiedStats: UnifiedStat[] = [];
+        
+        // Look for paired stats (successful/total) and single stats
+        const processedKeys = new Set<string>();
+        const pairedStats = new Map<string, { successful?: number; total?: number }>();
+        
+        Object.keys(stats).forEach(key => {
+          if (key === 'stats_order' || legacyKeys.has(key)) return;
+          if (key.endsWith('_successful')) {
+            const baseKey = key.replace('_successful', '');
+            if (!pairedStats.has(baseKey)) pairedStats.set(baseKey, {});
+            pairedStats.get(baseKey)!.successful = stats[key];
+          } else if (key.endsWith('_total')) {
+            const baseKey = key.replace('_total', '');
+            if (!pairedStats.has(baseKey)) pairedStats.set(baseKey, {});
+            pairedStats.get(baseKey)!.total = stats[key];
+          }
+        });
+        
+        // Add paired stats as success_fail type
+        pairedStats.forEach((values, baseKey) => {
+          processedKeys.add(baseKey);
+          processedKeys.add(`${baseKey}_successful`);
+          processedKeys.add(`${baseKey}_total`);
+          
+          const displayName = baseKey
+            .split('_')
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+          
+          loadedUnifiedStats.push({
+            key: baseKey,
+            displayName,
+            type: 'success_fail',
+            successful: values.successful ?? 0,
+            total: values.total ?? 0,
+            isFromActions: false,
+          });
+        });
+        
+        // Add remaining single stats
+        Object.keys(stats).forEach(key => {
+          if (processedKeys.has(key) || legacyKeys.has(key) || key === 'stats_order') return;
+          if (key.endsWith('_per90') || key.endsWith('_successful') || key.endsWith('_total')) return;
+          
+          const value = stats[key];
+          if (typeof value !== 'number') return;
+          
+          const displayName = key
+            .split('_')
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+          
+          // Determine type based on key patterns
+          const keyLower = key.toLowerCase();
+          const isScoreType = ['xg', 'xa', 'xc', 'xgchain'].some(p => keyLower.includes(p));
+          
+          if (isScoreType) {
+            loadedUnifiedStats.push({
+              key,
+              displayName,
+              type: 'score',
+              score: value,
+              per90: minutes > 0 ? ((value / minutes) * 90).toFixed(3) : undefined,
+              isFromActions: false,
+            });
+          } else {
+            loadedUnifiedStats.push({
+              key,
+              displayName,
+              type: 'count',
+              count: value,
+              isFromActions: false,
+            });
+          }
+        });
+        
+        if (loadedUnifiedStats.length > 0) {
+          setUnifiedStats(loadedUnifiedStats);
         }
         
         setShowStrikerStats(true);
@@ -1141,62 +1276,32 @@ export const CreatePerformanceReportDialog = ({
       const rawScore = actions.reduce((sum, a) => sum + (parseFloat(a.action_score) || 0), 0);
       const calculatedR90 = (rawScore / parseInt(minutesPlayed)) * 90;
       
-      // Prepare striker stats JSONB - merge legacy, additional stats, and action-recorded stats
-      const hasStrikerStats = Object.values(strikerStats).some(v => v !== "");
-      const hasAdditionalStats = Object.values(additionalStats).some(v => v !== "");
-      
-      // Aggregate recorded stats from actions
-      const actionRecordedStats = aggregateRecordedStats(actions);
-      const hasActionRecordedStats = Object.keys(actionRecordedStats).length > 0;
-      
+      // Prepare striker stats JSONB - from unified stats editor
       let strikerStatsJson: Record<string, any> | null = null;
-      if (hasStrikerStats || hasAdditionalStats || originalStrikerStats || hasActionRecordedStats) {
+      
+      // Include legacy striker stats if any have values
+      const hasLegacyStrikerStats = Object.values(strikerStats).some(v => v !== "");
+      const hasUnifiedStats = unifiedStats.length > 0;
+      
+      if (hasLegacyStrikerStats || hasUnifiedStats || originalStrikerStats) {
         // Start with original stats to preserve any fields not in the form
         strikerStatsJson = originalStrikerStats ? { ...originalStrikerStats } : {};
         
         // Add legacy striker stats
-        if (hasStrikerStats) {
+        if (hasLegacyStrikerStats) {
           Object.entries(strikerStats)
             .filter(([_, value]) => value !== "")
             .forEach(([key, value]) => {
-              strikerStatsJson[key] = parseFloat(value);
+              strikerStatsJson![key] = parseFloat(value);
             });
         }
         
-        // Add new position-based additional stats
-        if (hasAdditionalStats) {
-          Object.entries(additionalStats)
-            .filter(([_, value]) => value !== "")
-            .forEach(([key, value]) => {
-              strikerStatsJson[key] = parseFloat(value);
-            });
-        }
-        
-        // Merge action-recorded stats into striker_stats
-        // These are stats recorded from individual actions and aggregated
-        if (hasActionRecordedStats) {
-          Object.entries(actionRecordedStats).forEach(([statType, stat]) => {
-            // Create keys based on stat type
-            // e.g., "Dribble" becomes "dribble_successful" and "dribble_total"
-            const baseKey = statType.toLowerCase().replace(/\s+/g, '_');
-            
-            if (stat.type === 'success_fail') {
-              strikerStatsJson[`${baseKey}_successful`] = stat.successful;
-              strikerStatsJson[`${baseKey}_total`] = stat.total;
-            } else if (stat.type === 'count') {
-              strikerStatsJson[baseKey] = stat.count;
-            } else if (stat.type === 'score') {
-              strikerStatsJson[baseKey] = stat.totalScore;
-            }
+        // Merge unified stats into striker_stats
+        if (hasUnifiedStats) {
+          const unifiedData = unifiedStatsToStrikerStats(unifiedStats);
+          Object.entries(unifiedData).forEach(([key, value]) => {
+            strikerStatsJson![key] = value;
           });
-        }
-        
-        // Save the stats order so display knows which stats to show and in what order
-        const statsToSave = selectedStatKeys.filter(key => 
-          additionalStats[key] !== undefined && additionalStats[key] !== ""
-        );
-        if (statsToSave.length > 0) {
-          strikerStatsJson.stats_order = statsToSave;
         }
       }
 
@@ -1488,324 +1593,12 @@ export const CreatePerformanceReportDialog = ({
                 </div>
               </div>
 
-              {/* Action-Recorded Stats (auto-calculated from performance actions) */}
-              {Object.keys(aggregateRecordedStats(actions)).length > 0 && (
-                <div className="mb-4">
-                  <Label className="text-xs text-muted-foreground mb-2 block">From Recorded Actions:</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {Object.entries(aggregateRecordedStats(actions)).map(([statType, stat]) => (
-                      <div key={statType} className="p-2 border rounded-lg bg-accent/30">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-xs font-semibold">{statType}</Label>
-                        </div>
-                        {stat.type === 'success_fail' ? (
-                          <>
-                            <div className="flex items-center justify-center gap-1 mt-1">
-                              <span className="text-lg font-bold text-primary">{stat.successful}</span>
-                              <span className="text-muted-foreground">/</span>
-                              <span className="text-lg font-bold">{stat.total}</span>
-                            </div>
-                            <div className="text-[10px] text-center text-muted-foreground">
-                              {stat.total > 0 ? ((stat.successful / stat.total) * 100).toFixed(1) : "0.0"}% success
-                            </div>
-                          </>
-                        ) : stat.type === 'count' ? (
-                          <div className="text-center mt-1">
-                            <span className="text-lg font-bold text-primary">{stat.count}</span>
-                          </div>
-                        ) : stat.type === 'score' ? (
-                          <div className="text-center mt-1">
-                            <span className="text-lg font-bold text-primary">{stat.totalScore.toFixed(2)}</span>
-                          </div>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {selectedStatKeys.length > 0 ? (
-                <>
-                  {Object.keys(aggregateRecordedStats(actions)).length > 0 && (
-                    <Label className="text-xs text-muted-foreground mb-2 block">Manually Added Stats:</Label>
-                  )}
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext items={selectedStatKeys} strategy={verticalListSortingStrategy}>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {(() => {
-                        // Group stats into pairs (attempted/successful) and singles
-                        const processedKeys = new Set<string>();
-                        const statGroups: Array<{ id: string, keys: string[], isPair: boolean }> = [];
-                      
-                      selectedStatKeys.forEach(statKey => {
-                        if (processedKeys.has(statKey)) return;
-                        
-                        // Check if this is an attempted stat
-                        if (statKey.endsWith('_attempted') || statKey === 'shots_attempted' || statKey === 'one_v_one_attempts') {
-                          const baseKey = statKey.replace('_attempted', '').replace('_attempts', '');
-                          const successKeys = [
-                            baseKey,
-                            `${baseKey}_completed`,
-                            `${baseKey}_won`,
-                            baseKey === 'shots' ? 'shots_on_target' : null,
-                            baseKey === 'one_v_one' ? 'one_v_one_won' : null
-                          ].filter(Boolean) as string[];
-                          
-                          const matchingSuccessKey = successKeys.find(k => selectedStatKeys.includes(k));
-                          
-                            if (matchingSuccessKey) {
-                              statGroups.push({ id: statKey, keys: [matchingSuccessKey, statKey], isPair: true });
-                              processedKeys.add(statKey);
-                              processedKeys.add(matchingSuccessKey);
-                            } else {
-                              statGroups.push({ id: statKey, keys: [statKey], isPair: false });
-                              processedKeys.add(statKey);
-                            }
-                        } else {
-                          // Check if there's a matching attempted stat
-                          const attemptedKeys = [
-                            `${statKey}_attempted`,
-                            statKey === 'shots_on_target' ? 'shots_attempted' : null,
-                            statKey === 'one_v_one_won' ? 'one_v_one_attempts' : null
-                          ].filter(Boolean) as string[];
-                          
-                          const matchingAttemptedKey = attemptedKeys.find(k => selectedStatKeys.includes(k));
-                          
-                            if (matchingAttemptedKey && !processedKeys.has(matchingAttemptedKey)) {
-                              statGroups.push({ id: statKey, keys: [statKey, matchingAttemptedKey], isPair: true });
-                              processedKeys.add(statKey);
-                              processedKeys.add(matchingAttemptedKey);
-                            } else if (!processedKeys.has(statKey)) {
-                              statGroups.push({ id: statKey, keys: [statKey], isPair: false });
-                              processedKeys.add(statKey);
-                            }
-                        }
-                      });
-                      
-                      return statGroups.map((group, groupIndex) => {
-                        if (group.isPair) {
-                          const [successKey, attemptedKey] = group.keys;
-                          const successStat = allStats.find(s => s.stat_key === successKey);
-                          const attemptedStat = allStats.find(s => s.stat_key === attemptedKey);
-                          if (!successStat || !attemptedStat) return null;
-                          
-                          const successValue = parseFloat(additionalStats[successKey] || "0");
-                          const attemptedValue = parseFloat(additionalStats[attemptedKey] || "0");
-                          const percentage = attemptedValue > 0 ? ((successValue / attemptedValue) * 100).toFixed(1) : "0.0";
-                          
-                          const per90SuccessKey = `${successKey}_per90`;
-                          const per90AttemptedKey = `${attemptedKey}_per90`;
-                          const per90SuccessValue = additionalStats[per90SuccessKey];
-                          const per90AttemptedValue = additionalStats[per90AttemptedKey];
-                          
-                          // Fix stat names and create combined display name
-                          let baseName = successStat.stat_name
-                            .replace('Aerials Won', 'Aerial Duels')
-                            .replace(' Completed', '')
-                            .replace(' Won', '')
-                            .replace(' On Target', '');
-                          
-                          const displayName = `${baseName} (Successful/Attempted)`;
-                          
-                          return (
-                            <SortableStatItem key={group.id} id={group.id}>
-                              <div className="p-2 border rounded-lg bg-muted/20">
-                              <div className="flex items-center justify-between mb-1.5">
-                                <Label className="text-xs font-semibold">{displayName}</Label>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={async () => {
-                                    if (playerId) {
-                                      await supabase.from("player_hidden_stats").insert([
-                                        { player_id: playerId, stat_key: successKey },
-                                        { player_id: playerId, stat_key: attemptedKey }
-                                      ]);
-                                      setHiddenStatKeys(prev => [...prev, successKey, attemptedKey]);
-                                    }
-                                    setSelectedStatKeys(prev => prev.filter(k => k !== successKey && k !== attemptedKey));
-                                    const newStats = {...additionalStats};
-                                    delete newStats[successKey];
-                                    delete newStats[attemptedKey];
-                                    delete newStats[per90SuccessKey];
-                                    delete newStats[per90AttemptedKey];
-                                    setAdditionalStats(newStats);
-                                  }}
-                                  className="h-6 w-6 p-0"
-                                >
-                                  <EyeOff className="h-3 w-3" />
-                                </Button>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2 mb-1">
-                                <div>
-                                  <div className="text-[10px] text-muted-foreground mb-0.5">Successful</div>
-                                  <div className="flex gap-1">
-                                    <Input
-                                      type="number"
-                                      value={additionalStats[successKey] || ""}
-                                      onChange={(e) => {
-                                        const newStats = {...additionalStats};
-                                        newStats[successKey] = e.target.value;
-                                        setAdditionalStats(newStats);
-                                      }}
-                                      placeholder="0"
-                                      className="h-7 text-xs"
-                                    />
-                                    <Input
-                                      type="number"
-                                      value={per90SuccessValue || ""}
-                                      readOnly
-                                      className="h-7 text-xs bg-muted w-14"
-                                    />
-                                  </div>
-                                </div>
-                                <div>
-                                  <div className="text-[10px] text-muted-foreground mb-0.5">Attempted</div>
-                                  <div className="flex gap-1">
-                                    <Input
-                                      type="number"
-                                      value={additionalStats[attemptedKey] || ""}
-                                      onChange={(e) => {
-                                        const newStats = {...additionalStats};
-                                        newStats[attemptedKey] = e.target.value;
-                                        setAdditionalStats(newStats);
-                                      }}
-                                      placeholder="0"
-                                      className="h-7 text-xs"
-                                    />
-                                    <Input
-                                      type="number"
-                                      value={per90AttemptedValue || ""}
-                                      readOnly
-                                      className="h-7 text-xs bg-muted w-14"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="text-[10px] text-center text-muted-foreground">
-                                {percentage}% success
-                              </div>
-                              </div>
-                            </SortableStatItem>
-                          );
-                        } else {
-                          const statKey = group.keys[0];
-                          const stat = allStats.find(s => s.stat_key === statKey);
-                          if (!stat) return null;
-                          const per90Key = `${statKey}_per90`;
-                          const per90Value = additionalStats[per90Key];
-                          
-                          return (
-                            <SortableStatItem key={group.id} id={group.id}>
-                              <div className="p-2 border rounded-lg bg-muted/20">
-                              <div className="flex items-center justify-between mb-1.5">
-                                <Label className="text-xs">
-                                  {stat.stat_name}
-                                  {stat.description && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span className="ml-1 text-muted-foreground cursor-help text-[10px]">ⓘ</span>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p className="text-xs">{stat.description}</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  )}
-                                </Label>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={async () => {
-                                    if (playerId) {
-                                      await supabase.from("player_hidden_stats").insert({
-                                        player_id: playerId,
-                                        stat_key: statKey
-                                      });
-                                      setHiddenStatKeys(prev => [...prev, statKey]);
-                                    }
-                                    setSelectedStatKeys(prev => prev.filter(k => k !== statKey));
-                                    const newStats = {...additionalStats};
-                                    delete newStats[statKey];
-                                    delete newStats[per90Key];
-                                    setAdditionalStats(newStats);
-                                  }}
-                                  className="h-6 w-6 p-0"
-                                >
-                                  <EyeOff className="h-3 w-3" />
-                                </Button>
-                              </div>
-                              <div className="flex gap-1">
-                                <Input
-                                  type="number"
-                                  step="1"
-                                  value={additionalStats[statKey] || ""}
-                                  onChange={(e) => setAdditionalStats({
-                                    ...additionalStats,
-                                    [statKey]: e.target.value
-                                  })}
-                                  placeholder="0"
-                                  className="flex-1 h-7 text-xs"
-                                />
-                                <Input
-                                  type="number"
-                                  value={per90Value || ""}
-                                  readOnly
-                                  className="w-14 h-7 text-xs bg-muted"
-                                />
-                              </div>
-                              </div>
-                            </SortableStatItem>
-                          );
-                        }
-                      });
-                      })()}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsAddStatDialogOpen(true)}
-                    className="w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Another Stat
-                  </Button>
-                </>
-              ) : Object.keys(aggregateRecordedStats(actions)).length === 0 ? (
-                <div className="text-center py-4">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    No statistics added yet.
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsAddStatDialogOpen(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Stat
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsAddStatDialogOpen(true)}
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Manual Stat
-                </Button>
-              )}
+              {/* Unified Statistics Editor */}
+              <UnifiedStatsEditor
+                stats={unifiedStats}
+                onStatsChange={setUnifiedStats}
+                minutesPlayed={parseInt(minutesPlayed) || 0}
+              />
             </CollapsibleContent>
           </Collapsible>
 
