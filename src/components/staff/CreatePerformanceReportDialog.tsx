@@ -1469,8 +1469,35 @@ export const CreatePerformanceReportDialog = ({
                 </div>
               </div>
 
+              {/* Action-Recorded Stats (auto-calculated from performance actions) */}
+              {Object.keys(aggregateRecordedStats(actions)).length > 0 && (
+                <div className="mb-4">
+                  <Label className="text-xs text-muted-foreground mb-2 block">From Recorded Actions:</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {Object.entries(aggregateRecordedStats(actions)).map(([statType, counts]) => (
+                      <div key={statType} className="p-2 border rounded-lg bg-accent/30">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-semibold">{statType}</Label>
+                        </div>
+                        <div className="flex items-center justify-center gap-1 mt-1">
+                          <span className="text-lg font-bold text-primary">{counts.successful}</span>
+                          <span className="text-muted-foreground">/</span>
+                          <span className="text-lg font-bold">{counts.total}</span>
+                        </div>
+                        <div className="text-[10px] text-center text-muted-foreground">
+                          {counts.total > 0 ? ((counts.successful / counts.total) * 100).toFixed(1) : "0.0"}% success
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {selectedStatKeys.length > 0 ? (
                 <>
+                  {Object.keys(aggregateRecordedStats(actions)).length > 0 && (
+                    <Label className="text-xs text-muted-foreground mb-2 block">Manually Added Stats:</Label>
+                  )}
                   <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}
@@ -1721,7 +1748,7 @@ export const CreatePerformanceReportDialog = ({
                     Add Another Stat
                   </Button>
                 </>
-              ) : (
+              ) : Object.keys(aggregateRecordedStats(actions)).length === 0 ? (
                 <div className="text-center py-4">
                   <p className="text-sm text-muted-foreground mb-4">
                     No statistics added yet.
@@ -1736,6 +1763,17 @@ export const CreatePerformanceReportDialog = ({
                     Add Stat
                   </Button>
                 </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddStatDialogOpen(true)}
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Manual Stat
+                </Button>
               )}
             </CollapsibleContent>
           </Collapsible>
@@ -1759,24 +1797,7 @@ export const CreatePerformanceReportDialog = ({
               <Label className="text-base sm:text-lg font-semibold">Performance Actions *</Label>
             </div>
             
-            {/* Action Stats Summary (auto-calculated from recorded stats) */}
-            {Object.keys(aggregateRecordedStats(actions)).length > 0 && (
-              <div className="bg-accent/30 p-4 rounded-lg mb-4">
-                <p className="font-semibold text-sm mb-3">Action Stats Summary</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {Object.entries(aggregateRecordedStats(actions)).map(([statType, counts]) => (
-                    <div key={statType} className="flex justify-between items-center bg-background/50 px-3 py-2 rounded">
-                      <span className="text-sm text-muted-foreground">{statType}:</span>
-                      <span className="font-semibold text-sm">
-                        <span className="text-green-600">{counts.successful}</span>
-                        <span className="text-muted-foreground"> / </span>
-                        <span>{counts.total}</span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Action Stats Summary removed - now integrated into Additional Statistics section */}
             {/* Mobile Card View */}
             <div className="space-y-4 sm:hidden">
               {actions.map((action, index) => (
