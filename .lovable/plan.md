@@ -1,152 +1,195 @@
 
-# Performance Report Statistics Recording Enhancement
+# Plan: Fix Unified Stats Editor with Predefined Stat List and Proper Type Handling
 
-## Overview
-This plan addresses three key requests for the Performance Report system:
-1. Replace the "Smart Link to R90" button with a "Record Stat" feature for tracking statistics per action
-2. Remove the 100MB video upload limit
-3. Fix the video upload bug affecting multiple clips
+## Problem Summary
+
+The current `UnifiedStatsEditor` component requires users to manually type stat names, which causes:
+
+1. **No consistent stat naming** - Users could type "Dribbles", "dribble", "Dribbling" etc., breaking form chart matching
+2. **Form charts won't work** - The `form_grade_configs` table expects specific `metric_key` values (e.g., `dribbles`, `turnovers`, `xg`) that must match exactly
+3. **Missing dropdown** - No predefined list of stats to select from
+4. **Stat type issues** - Turnovers showing as "0/1 (0% success)" when they should just be a count
+5. **Missing ability to change stat type** - Cannot fix incorrectly categorized stats
+
+## Solution Overview
+
+Refactor the `UnifiedStatsEditor` to use the same predefined stat list (`STAT_TYPE_CONFIGS`) that already exists in `ActionStatRecorder.tsx`, ensuring consistent naming and proper type handling.
 
 ---
 
-## 1. Record Stat Button (Replacing Smart Link to R90)
+## Technical Implementation
 
-### Current Behaviour
-- The green LineChart button opens R90RatingsViewer to link actions to existing R90 scores
-- Advanced Stats at the top (xG, xA, Regains, Interceptions) are entered manually
+### 1. Export STAT_TYPE_CONFIGS from ActionStatRecorder.tsx
 
-### New Behaviour
-- Replace the green LineChart button with a "Record Stat" button (clipboard/tally icon)
-- Clicking opens a popover/dropdown to select:
-  - **Stat Type**: Dribble, Pass, Shot, Tackle, Aerial Duel, Cross, etc. (customisable list)
-  - **Outcome**: Successful / Unsuccessful
-- Selected stats are stored per action and auto-calculated at the top as `successful / attempted` (e.g., "Dribbles: 2/5")
+Move the stat configuration to be exported so it can be shared:
 
-### Implementation
-
-**New Component**: `ActionStatRecorder.tsx`
-- Popover with stat type selector (dropdown with common types + custom input)
-- Success/Unsuccessful toggle
-- Stores stat data in the action object
-
-**Data Structure Changes**:
 ```typescript
-interface PerformanceAction {
-  // ... existing fields
-  recorded_stat?: {
-    stat_type: string;
-    is_successful: boolean;
-  };
+// In ActionStatRecorder.tsx
+export interface StatTypeConfig {
+  name: string;
+  key: string;  // Add normalized key for database matching (e.g., "dribbles", "xg")
+  mode: StatInputMode;
+  description?: string;
 }
+
+export const STAT_TYPE_CONFIGS: StatTypeConfig[] = [
+  // Success/Fail stats
+  { name: 'Dribbles', key: 'dribbles', mode: 'success_fail' },
+  { name: 'Passes', key: 'passes', mode: 'success_fail' },
+  { name: 'Shots', key: 'shots', mode: 'success_fail' },
+  { name: 'Tackles', key: 'tackles', mode: 'success_fail' },
+  { name: 'Aerial Duels', key: 'aerial_duels', mode: 'success_fail' },
+  { name: 'Crosses', key: 'crosses', mode: 'success_fail' },
+  { name: 'Through Balls', key: 'through_balls', mode: 'success_fail' },
+  { name: 'Long Passes', key: 'long_passes', mode: 'success_fail' },
+  { name: 'Progressive Passes', key: 'progressive_passes', mode: 'success_fail' },
+  { name: 'Key Passes', key: 'key_passes', mode: 'success_fail' },
+  { name: 'Duels', key: 'duels', mode: 'success_fail' },
+  // ... more stats
+  
+  // Count stats
+  { name: 'Turnovers', key: 'turnovers', mode: 'count' },
+  { name: 'Goals', key: 'goals', mode: 'count' },
+  { name: 'Assists', key: 'assists', mode: 'count' },
+  { name: 'Interceptions', key: 'interceptions', mode: 'count' },
+  { name: 'Clearances', key: 'clearances', mode: 'count' },
+  { name: 'Blocks', key: 'blocks', mode: 'count' },
+  { name: 'Recoveries', key: 'recoveries', mode: 'count' },
+  { name: 'Regains', key: 'regains', mode: 'count' },
+  { name: 'Touches in Box', key: 'touches_in_box', mode: 'count' },
+  { name: 'Fouls Won', key: 'fouls_won', mode: 'count' },
+  { name: 'Fouls Committed', key: 'fouls_committed', mode: 'count' },
+  { name: 'Progressive Carries', key: 'progressive_carries', mode: 'count' },
+  { name: 'Carries into Box', key: 'carries_into_box', mode: 'count' },
+  { name: 'Final Third Entries', key: 'final_third_entries', mode: 'count' },
+  // ... more stats
+  
+  // Score stats
+  { name: 'xG', key: 'xg', mode: 'score' },
+  { name: 'xA', key: 'xa', mode: 'score' },
+  { name: 'xGChain', key: 'xg_chain', mode: 'score' },
+  { name: 'xC', key: 'xc', mode: 'score' },
+  { name: 'npxG', key: 'npxg', mode: 'score' },
+  // ... more stats
+];
 ```
 
-**Auto-Calculation Logic**:
-- Compute totals by grouping actions by `recorded_stat.stat_type`
-- Display format: `{stat_type}: {successful} / {total}`
+The keys will match `form_grade_configs.metric_key` values exactly.
 
-**Files to Modify**:
-| File | Changes |
-|------|---------|
-| `src/components/staff/PerformanceActionsDialog.tsx` | Replace LineChart button with RecordStat, add aggregation display |
-| `src/components/staff/CreatePerformanceReportDialog.tsx` | Same changes for the report creation dialog |
-| New: `src/components/staff/ActionStatRecorder.tsx` | New component for stat recording popover |
+### 2. Update UnifiedStatsEditor.tsx
 
-**Database Consideration**:
-- The `performance_report_actions` table already stores action data
-- Adding `recorded_stat` to the existing action or as a JSONB field would allow storing the stat type and outcome
+Replace the text input for stat name with a dropdown selector:
+
+**Key Changes:**
+
+A. **Add stat dropdown in "Add Stat" dialog:**
+```typescript
+// Replace Input for stat name with Select dropdown
+<Select value={selectedStatKey} onValueChange={handleStatKeyChange}>
+  <SelectTrigger>
+    <SelectValue placeholder="Select a stat" />
+  </SelectTrigger>
+  <SelectContent className="max-h-[300px]">
+    <SelectItem value="header-success" disabled>-- Success/Fail Stats --</SelectItem>
+    {STAT_TYPE_CONFIGS.filter(c => c.mode === 'success_fail').map((config) => (
+      <SelectItem key={config.key} value={config.key}>{config.name}</SelectItem>
+    ))}
+    <SelectItem value="header-count" disabled>-- Count Stats --</SelectItem>
+    {STAT_TYPE_CONFIGS.filter(c => c.mode === 'count').map((config) => (
+      <SelectItem key={config.key} value={config.key}>{config.name}</SelectItem>
+    ))}
+    <SelectItem value="header-score" disabled>-- Score Stats --</SelectItem>
+    {STAT_TYPE_CONFIGS.filter(c => c.mode === 'score').map((config) => (
+      <SelectItem key={config.key} value={config.key}>{config.name}</SelectItem>
+    ))}
+    <SelectItem value="custom">Custom...</SelectItem>
+  </SelectContent>
+</Select>
+```
+
+B. **Auto-set stat type when selecting from dropdown:**
+```typescript
+const handleStatKeyChange = (key: string) => {
+  setSelectedStatKey(key);
+  const config = STAT_TYPE_CONFIGS.find(c => c.key === key);
+  if (config) {
+    setNewStatType(config.mode);
+    setNewStatName(config.name);
+  }
+};
+```
+
+C. **Allow type override for existing stats:**
+```typescript
+// In edit mode, allow changing the stat type
+<Select 
+  value={newStatType} 
+  onValueChange={(v) => setNewStatType(v as StatInputMode)}
+>
+  <SelectTrigger>
+    <SelectValue />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="success_fail">Success/Fail (e.g. 2/5)</SelectItem>
+    <SelectItem value="count">Count Only (e.g. 3)</SelectItem>
+    <SelectItem value="score">Score Value (e.g. 0.45)</SelectItem>
+  </SelectContent>
+</Select>
+```
+
+D. **Filter already-added stats from dropdown:**
+```typescript
+const availableStatsToAdd = STAT_TYPE_CONFIGS.filter(
+  config => !stats.some(s => s.key === config.key)
+);
+```
+
+### 3. Update ActionStatRecorder to Use Same Config Keys
+
+Ensure the stat recorder uses the same normalized keys so action-recorded stats merge correctly with manual stats.
+
+### 4. Database Key Matching
+
+The `key` field in `STAT_TYPE_CONFIGS` will match the `metric_key` in `form_grade_configs`:
+
+| Stat Name | Config Key | form_grade_configs.metric_key |
+|-----------|------------|-------------------------------|
+| Dribbles | dribbles | dribbles |
+| Turnovers | turnovers | turnovers |
+| xG | xg | xg |
+| Aerial Duels | aerial_duels | aerial_duels |
 
 ---
 
-## 2. Remove 100MB Video Upload Limit
+## Files to Modify
 
-### Current Behaviour
-- `ActionVideoUpload.tsx` lines 160-163 reject files over 100MB
-- This limitation is client-side validation only
+1. **src/components/staff/ActionStatRecorder.tsx**
+   - Add `key` field to `StatTypeConfig` interface
+   - Export `STAT_TYPE_CONFIGS` and `StatTypeConfig`
+   - Update all stat entries with database-compatible keys
+   - Align stat names with form_grade_configs entries
 
-### Changes
-- Remove the file size validation check entirely
-- Keep the video type validation (must be video/*)
+2. **src/components/staff/UnifiedStatsEditor.tsx**
+   - Import `STAT_TYPE_CONFIGS` and `StatTypeConfig` from ActionStatRecorder
+   - Replace text input with dropdown selector for stat selection
+   - Auto-populate stat type based on selection
+   - Allow type override for incorrectly categorized stats
+   - Filter out already-added stats from dropdown
+   - Use config `key` for database storage, `name` for display
 
-**File**: `src/components/staff/ActionVideoUpload.tsx`
-- Remove lines 160-164 (the size check)
-
----
-
-## 3. Fix Multiple Video Upload Bug
-
-### Current Issue
-After uploading one video clip, the upload button on other actions changes to something that does not work.
-
-### Root Cause Analysis
-The `ActionVideoUpload` component uses a shared `fileInputRef` pattern. When multiple instances exist:
-- Each instance has its own ref and state
-- However, the parent's `updateAction` callback may cause all action rows to re-render
-- The `uploading` state or `currentVideoUrl` prop may incorrectly affect other instances
-
-### Solution
-1. **Isolate state per instance**: Ensure each `ActionVideoUpload` renders independently
-2. **Use unique keys**: The map key should be the action's unique ID (not just index)
-3. **Optimise callback**: Ensure `onVideoUploaded` only updates the specific action
-
-**Files to Modify**:
-| File | Changes |
-|------|---------|
-| `src/components/staff/CreatePerformanceReportDialog.tsx` | Use action.id as key, verify updateAction only targets specific action |
-| `src/components/staff/ActionVideoUpload.tsx` | Add a unique key prop to file input ref pattern if needed |
+3. **src/components/staff/CreatePerformanceReportDialog.tsx**
+   - Update `mergeStatsForEditor` call to use new key-based matching
+   - Ensure action-recorded stats use same keys
 
 ---
 
-## Summary of File Changes
+## Expected Outcome
 
-| File | Action |
-|------|--------|
-| `src/components/staff/ActionVideoUpload.tsx` | Remove 100MB limit |
-| `src/components/staff/ActionStatRecorder.tsx` | **NEW** - Stat recording popover component |
-| `src/components/staff/PerformanceActionsDialog.tsx` | Replace R90 button with stat recorder, add aggregated stats display |
-| `src/components/staff/CreatePerformanceReportDialog.tsx` | Same stat recorder changes, fix video upload key issue |
+After implementation:
 
----
-
-## Technical Details
-
-### ActionStatRecorder Component Structure
-```text
-+---------------------------+
-| Record Stat               |
-+---------------------------+
-| Stat Type: [Dropdown v]   |
-|  - Dribble                |
-|  - Pass                   |
-|  - Shot                   |
-|  - Tackle                 |
-|  - Aerial Duel            |
-|  - Cross                  |
-|  - Custom...              |
-+---------------------------+
-| Outcome:                  |
-|  [x] Successful           |
-|  [ ] Unsuccessful         |
-+---------------------------+
-| [Save]                    |
-+---------------------------+
-```
-
-### Aggregated Stats Display
-At the top of the dialog, below "Advanced Stats":
-```text
-Action Stats Summary
---------------------
-Dribbles: 2 / 5
-Passes: 8 / 10
-Shots: 1 / 2
-Aerial Duels: 3 / 4
-```
-
-### Database Migration (Optional Enhancement)
-If desired, add a dedicated column for recorded stats:
-```sql
-ALTER TABLE performance_report_actions 
-ADD COLUMN recorded_stat JSONB;
-```
-
-Alternatively, store within the existing `notes` or create a new JSONB column in `player_analysis.striker_stats`.
+1. Users select stats from a categorized dropdown (same list shown in action recorder)
+2. Stat names and keys are consistent and match form chart configurations
+3. Turnovers correctly show as count (e.g., "3") not success/fail
+4. Users can override stat types if auto-detection was wrong
+5. Form charts on player portal will match stats correctly using consistent `metric_key` values
+6. Stats already added are hidden from the dropdown to prevent duplicates
