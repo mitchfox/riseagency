@@ -11,59 +11,63 @@ import { ClipboardList, Check, X, Plus, Trash2 } from 'lucide-react';
 // Stat type configurations with input modes
 export type StatInputMode = 'success_fail' | 'count' | 'score';
 
-interface StatTypeConfig {
+export interface StatTypeConfig {
   name: string;
+  key: string;  // Normalized key for database matching (e.g., "dribbles", "xg")
   mode: StatInputMode;
   description?: string;
 }
 
-// Comprehensive stat types with proper input modes
-const STAT_TYPE_CONFIGS: StatTypeConfig[] = [
+// Comprehensive stat types with proper input modes and database-compatible keys
+// Keys match form_grade_configs.metric_key for chart consistency
+export const STAT_TYPE_CONFIGS: StatTypeConfig[] = [
   // Success/Fail stats (attempted with outcome)
-  { name: 'Dribble', mode: 'success_fail' },
-  { name: 'Pass', mode: 'success_fail' },
-  { name: 'Shot', mode: 'success_fail' },
-  { name: 'Tackle', mode: 'success_fail' },
-  { name: 'Aerial Duel', mode: 'success_fail' },
-  { name: 'Cross', mode: 'success_fail' },
-  { name: 'Through Ball', mode: 'success_fail' },
-  { name: 'Long Ball', mode: 'success_fail' },
-  { name: 'Long Pass', mode: 'success_fail' },
-  { name: 'Progressive Pass', mode: 'success_fail' },
-  { name: 'Key Pass', mode: 'success_fail' },
-  { name: 'Chance Created', mode: 'success_fail' },
-  { name: 'Take-On', mode: 'success_fail' },
-  { name: '1v1', mode: 'success_fail' },
-  { name: 'Press', mode: 'success_fail' },
-  { name: 'Defensive Duel', mode: 'success_fail' },
-  { name: 'Hold Up Play', mode: 'success_fail' },
-  { name: 'Cut Inside', mode: 'success_fail' },
+  { name: 'Dribbles', key: 'dribbles', mode: 'success_fail' },
+  { name: 'Passes', key: 'passes', mode: 'success_fail' },
+  { name: 'Shots', key: 'shots', mode: 'success_fail' },
+  { name: 'Tackles', key: 'tackles', mode: 'success_fail' },
+  { name: 'Aerial Duels', key: 'aerial_duels', mode: 'success_fail' },
+  { name: 'Crosses', key: 'crosses', mode: 'success_fail' },
+  { name: 'Through Balls', key: 'through_balls', mode: 'success_fail' },
+  { name: 'Long Balls', key: 'long_balls', mode: 'success_fail' },
+  { name: 'Long Passes', key: 'long_passes', mode: 'success_fail' },
+  { name: 'Progressive Passes', key: 'progressive_passes', mode: 'success_fail' },
+  { name: 'Key Passes', key: 'key_passes', mode: 'success_fail' },
+  { name: 'Chances Created', key: 'chances_created', mode: 'success_fail' },
+  { name: 'Take-Ons', key: 'take_ons', mode: 'success_fail' },
+  { name: '1v1s', key: '1v1s', mode: 'success_fail' },
+  { name: 'Presses', key: 'presses', mode: 'success_fail' },
+  { name: 'Defensive Duels', key: 'defensive_duels', mode: 'success_fail' },
+  { name: 'Hold Up Play', key: 'hold_up_play', mode: 'success_fail' },
+  { name: 'Cut Insides', key: 'cut_insides', mode: 'success_fail' },
+  { name: 'Duels', key: 'duels', mode: 'success_fail' },
   
   // Count-only stats (just occurrences, no success/fail)
-  { name: 'Interception', mode: 'count' },
-  { name: 'Clearance', mode: 'count' },
-  { name: 'Block', mode: 'count' },
-  { name: 'Recovery', mode: 'count' },
-  { name: 'Regain', mode: 'count' },
-  { name: 'Touch in Box', mode: 'count' },
-  { name: 'Touches in Box', mode: 'count' },
-  { name: 'Final Third Entry', mode: 'count' },
-  { name: 'Foul Won', mode: 'count' },
-  { name: 'Foul Committed', mode: 'count' },
-  { name: 'Turnover', mode: 'count' },
-  { name: 'Turnovers', mode: 'count' },
-  { name: 'Goal', mode: 'count' },
-  { name: 'Goals', mode: 'count' },
-  { name: 'Assist', mode: 'count' },
-  { name: 'Assists', mode: 'count' },
-  { name: 'Progressive Carries', mode: 'count' },
-  { name: 'Carries into Final Third', mode: 'count' },
-  { name: 'Carries into Box', mode: 'count' },
+  { name: 'Interceptions', key: 'interceptions', mode: 'count' },
+  { name: 'Clearances', key: 'clearances', mode: 'count' },
+  { name: 'Blocks', key: 'blocks', mode: 'count' },
+  { name: 'Recoveries', key: 'recoveries', mode: 'count' },
+  { name: 'Regains', key: 'regains', mode: 'count' },
+  { name: 'Touches in Box', key: 'touches_in_box', mode: 'count' },
+  { name: 'Final Third Entries', key: 'final_third_entries', mode: 'count' },
+  { name: 'Fouls Won', key: 'fouls_won', mode: 'count' },
+  { name: 'Fouls Committed', key: 'fouls_committed', mode: 'count' },
+  { name: 'Turnovers', key: 'turnovers', mode: 'count' },
+  { name: 'Goals', key: 'goals', mode: 'count' },
+  { name: 'Assists', key: 'assists', mode: 'count' },
+  { name: 'Progressive Carries', key: 'progressive_carries', mode: 'count' },
+  { name: 'Carries into Final Third', key: 'carries_into_final_third', mode: 'count' },
+  { name: 'Carries into Box', key: 'carries_into_box', mode: 'count' },
+  { name: 'Touches', key: 'touches', mode: 'count' },
+  { name: 'Ground Duels Won', key: 'ground_duels_won', mode: 'count' },
+  { name: 'Aerial Duels Won', key: 'aerial_duels_won', mode: 'count' },
   
   // Score stats (decimal values like xG, xA)
-  { name: 'xG', mode: 'score', description: 'Expected Goals value' },
-  { name: 'xA', mode: 'score', description: 'Expected Assists value' },
-  { name: 'xGChain', mode: 'score', description: 'Expected Goals Chain value' },
+  { name: 'xG', key: 'xg', mode: 'score', description: 'Expected Goals value' },
+  { name: 'xA', key: 'xa', mode: 'score', description: 'Expected Assists value' },
+  { name: 'xGChain', key: 'xgchain', mode: 'score', description: 'Expected Goals Chain value' },
+  { name: 'xC', key: 'xc', mode: 'score', description: 'Expected Contribution value' },
+  { name: 'npxG', key: 'npxg', mode: 'score', description: 'Non-penalty Expected Goals' },
 ];
 
 export interface RecordedStat {
@@ -114,7 +118,8 @@ export const ActionStatRecorder = ({
   }, [open, currentStat]);
 
   const getStatConfig = (typeName: string): StatTypeConfig | undefined => {
-    return STAT_TYPE_CONFIGS.find(c => c.name === typeName);
+    // Support both name and key lookups for backwards compatibility
+    return STAT_TYPE_CONFIGS.find(c => c.name === typeName || c.key === typeName);
   };
 
   const getCurrentMode = (): StatInputMode => {
