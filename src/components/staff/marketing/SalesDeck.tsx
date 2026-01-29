@@ -381,10 +381,10 @@ export const SalesDeck = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="builder">Service Builder</TabsTrigger>
-              <TabsTrigger value="templates">Package Templates</TabsTrigger>
-              <TabsTrigger value="preview">Preview & Export</TabsTrigger>
+            <TabsList className="w-full h-auto flex-wrap p-1">
+              <TabsTrigger value="builder" className="flex-1 text-xs sm:text-sm">Builder</TabsTrigger>
+              <TabsTrigger value="templates" className="flex-1 text-xs sm:text-sm">Templates</TabsTrigger>
+              <TabsTrigger value="preview" className="flex-1 text-xs sm:text-sm">Preview</TabsTrigger>
             </TabsList>
 
             {/* Service Builder Tab */}

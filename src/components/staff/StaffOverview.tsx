@@ -486,7 +486,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
   };
 
   const navigateToGoalsTasks = () => {
-    navigate('/staff?section=goalstasks');
+    navigate('/staff?section=visionboard');
   };
 
   const handleQuickAddTask = async () => {
@@ -790,7 +790,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "marketing":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'campaigns' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'marketing' })}>
             {marketingData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : marketingData.data ? (
@@ -817,7 +817,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "prospects":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'prospects' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'recruitment' })}>
             {prospectsData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : prospectsData.data ? (
@@ -848,7 +848,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "analytics":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'analytics' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'analysis' })}>
             <div className="grid grid-cols-2 gap-2">
               <div className="p-2 bg-primary/10 rounded text-center">
                 <div className="text-lg font-bold text-primary">{reportsData.data?.total || 0}</div>
@@ -944,7 +944,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "notifications":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'notifications' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'overview' })}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
               No new notifications
@@ -1079,7 +1079,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "deadlines":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Track upcoming deadlines
@@ -1089,7 +1089,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "projects":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Briefcase className="h-8 w-8 mx-auto mb-2 opacity-50" />
               View active projects
@@ -1108,7 +1108,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "milestones":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Milestone className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Track key milestones
@@ -1118,7 +1118,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "workflows":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Workflow className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Manage active workflows
@@ -1131,7 +1131,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "sprints":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <GitBranch className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Track sprint progress
@@ -1141,7 +1141,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "velocity":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Gauge className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Monitor team velocity
@@ -1157,7 +1157,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "backlog":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <ListTodo className="h-8 w-8 mx-auto mb-2 opacity-50" />
               View task backlog
@@ -1167,7 +1167,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "automations":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Zap className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Manage automations
@@ -1177,7 +1177,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "achievements":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'goalstasks' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Trophy className="h-8 w-8 mx-auto mb-2 opacity-50" />
               View achievements and wins
