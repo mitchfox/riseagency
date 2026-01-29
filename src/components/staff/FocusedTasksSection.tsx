@@ -121,22 +121,25 @@ export const FocusedTasksSection = () => {
       {/* Content Creation */}
       {activeTask === "content-creation" && (
         <Tabs value={contentSubTab} onValueChange={setContentSubTab} className="w-full">
-          <TabsList className="w-full h-10 p-1 grid grid-cols-4">
-            <TabsTrigger value="review" className="gap-1 text-xs">
+          <TabsList className="w-full h-auto p-1 grid grid-cols-2 sm:grid-cols-4 gap-1">
+            <TabsTrigger value="review" className="gap-1 text-[10px] sm:text-xs py-2">
               <Lightbulb className="h-3 w-3" />
-              Review
+              <span className="hidden sm:inline">Review</span>
+              <span className="sm:hidden">Rev</span>
             </TabsTrigger>
-            <TabsTrigger value="btl" className="gap-1 text-xs">
+            <TabsTrigger value="btl" className="gap-1 text-[10px] sm:text-xs py-2">
               <PenLine className="h-3 w-3" />
               BTL
             </TabsTrigger>
-            <TabsTrigger value="image" className="gap-1 text-xs">
+            <TabsTrigger value="image" className="gap-1 text-[10px] sm:text-xs py-2">
               <ImagePlus className="h-3 w-3" />
-              Image
+              <span className="hidden sm:inline">Image</span>
+              <span className="sm:hidden">Img</span>
             </TabsTrigger>
-            <TabsTrigger value="posted" className="gap-1 text-xs">
+            <TabsTrigger value="posted" className="gap-1 text-[10px] sm:text-xs py-2">
               <FileText className="h-3 w-3" />
-              Schedule
+              <span className="hidden sm:inline">Schedule</span>
+              <span className="sm:hidden">Sch</span>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="review" className="mt-3">

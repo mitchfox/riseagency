@@ -1531,11 +1531,11 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       </div>
 
       <Tabs value={activeListTab} onValueChange={setActiveListTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="pre-match">Pre-Match</TabsTrigger>
-          <TabsTrigger value="post-match">Post-Match</TabsTrigger>
-          <TabsTrigger value="concept">Concepts</TabsTrigger>
-          <TabsTrigger value="other">Other</TabsTrigger>
+        <TabsList className="w-full h-auto flex-wrap p-1">
+          <TabsTrigger value="pre-match" className="flex-1 min-w-[80px] text-xs sm:text-sm">Pre-Match</TabsTrigger>
+          <TabsTrigger value="post-match" className="flex-1 min-w-[80px] text-xs sm:text-sm">Post-Match</TabsTrigger>
+          <TabsTrigger value="concept" className="flex-1 min-w-[80px] text-xs sm:text-sm">Concepts</TabsTrigger>
+          <TabsTrigger value="other" className="flex-1 min-w-[80px] text-xs sm:text-sm">Other</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pre-match" className="space-y-4">

@@ -450,7 +450,7 @@ export const RadialMenu = () => {
     ],
     media: [
       { 
-        to: "/between-the-lines", 
+        to: "/press-releases", 
         labelKey: "header.press_release", 
         fallback: "PRESS", 
         Icon: Newspaper, 

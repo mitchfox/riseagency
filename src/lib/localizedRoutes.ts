@@ -146,6 +146,18 @@ export const routeTranslations: Record<string, Record<string, string>> = {
     ru: '/mezhdu-strok',
     tr: '/satirlar-arasi',
   },
+  '/press-releases': {
+    en: '/press-releases',
+    es: '/comunicados-prensa',
+    pt: '/comunicados-imprensa',
+    fr: '/communiques-presse',
+    de: '/pressemitteilungen',
+    it: '/comunicati-stampa',
+    pl: '/komunikaty-prasowe',
+    cs: '/tiskove-zpravy',
+    ru: '/press-relizy',
+    tr: '/basin-bultenleri',
+  },
   '/login': {
     en: '/login',
     es: '/acceso',

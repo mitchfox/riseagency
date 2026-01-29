@@ -114,7 +114,7 @@ const subdomainSubHeaders: Record<string, SubHeaderConfig> = {
   },
   media: {
     left: [
-      { type: 'link', to: '/between-the-lines', labelKey: 'header.press_release', fallback: 'Press Release', mobileFallback: 'Press', icon: Newspaper },
+      { type: 'link', to: '/press-releases', labelKey: 'header.press_release', fallback: 'Press Releases', mobileFallback: 'Press', icon: Newspaper },
       { type: 'link', to: '/contact', labelKey: 'header.collaboration', fallback: 'Collaboration', mobileFallback: 'Collab', icon: Heart },
     ],
     right: [
