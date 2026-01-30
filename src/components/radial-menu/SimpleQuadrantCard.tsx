@@ -112,9 +112,19 @@ export const ContactQuadrantCard = (props: QuadrantCardProps) => (
 export const YouthQuadrantCard = (props: QuadrantCardProps) => (
   <SimpleQuadrantCard
     icon={<TrendingUp className="w-4 h-4" />}
-    title="For Youth"
+    title="Youth Players"
     description="Pathways and support designed specifically for ambitious young players."
     position="bottom-right"
+    {...props}
+  />
+);
+
+export const HowWeRiseQuadrantCard = (props: QuadrantCardProps) => (
+  <SimpleQuadrantCard
+    icon={<TrendingUp className="w-4 h-4" />}
+    title="How We Rise"
+    description="Comprehensive player development and career support to realise your potential."
+    position="bottom-left"
     {...props}
   />
 );

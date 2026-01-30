@@ -9,28 +9,15 @@ import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
 import { useState } from "react";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { Marquee } from "@/components/Marquee";
-
-import { 
-  Target, 
-  Users, 
-  TrendingUp, 
-  Globe, 
-  BarChart3, 
-  Handshake,
-  ChevronRight,
-  ArrowRight,
-  CheckCircle2,
-  Shield,
-  Zap,
-  Play,
-  FileText
-} from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, Target, Users, TrendingUp, Globe, BarChart3, Handshake, ArrowRight, CheckCircle2, Shield, Zap } from "lucide-react";
 import omotoyeCelebrating from "@/assets/omotoye-celebrating.png";
 import whiteMarble from "@/assets/white-marble.png";
 import realisePotentialReport from "@/assets/realise-potential-report.png";
 import realisePotentialAnalysis from "@/assets/realise-potential-analysis.png";
 import realisePotentialSessions from "@/assets/realise-potential-sessions.png";
 import realisePotentialPaos from "@/assets/realise-potential-paos.png";
+import blackMarble from "@/assets/black-marble-smudged.png";
 
 const Clubs = () => {
   const { t } = useLanguage();
@@ -38,35 +25,34 @@ const Clubs = () => {
   const [declareInterestOpen, setDeclareInterestOpen] = useState(false);
   const [activeApproachImage, setActiveApproachImage] = useState(0);
 
-  const services = [
+  const clubServices = [
     {
+      id: "strategise",
       icon: Target,
-      title: t('clubs.strategise', 'STRATEGISE'),
-      description: t('clubs.strategise_desc', 'Bespoke strategic consultation for domestic success'),
-      details: [
-        'National exclusivity arrangements available',
-        'Individualised approach to each organisation',
-        'Stay ahead of key developments in the footballing landscape'
+      title: "STRATEGISE",
+      teaser: "Using our expertise, apply both tried and trusted principles alongside innovative methods to gain an advantage over competing clubs.",
+      fullContent: [
+        "In order to beat the competition, effective and innovative strategies must be employed. We work to build winning sides both in the short and long term through our bespoke approach. National exclusivity guarantees undivided time and resources for greater domestic success.",
+        "Our strategy-building is rooted in fully understanding organisational culture, decision-makers, and football philosophy. This enables truly tailored solutions and sustainable success."
       ]
     },
     {
+      id: "recruit",
       icon: Users,
-      title: t('clubs.recruit', 'RECRUIT'),
-      description: t('clubs.recruit_desc', 'Access our extensive network of talent across Europe'),
-      details: [
-        'Analysis across the entirety of European professional football',
-        'Undervalued player identification',
-        'Technical and tactical fit assessment'
+      title: "RECRUIT",
+      teaser: "Call on our knowledge in scouting and data analysis to recruit undervalued talent that will take your team to a higher level.",
+      fullContent: [
+        "In a competitive market, greater finances, superior scouting and networking determine success. Our work impacts all three to ensure expert squad-building and intelligent recruitment decisions.",
+        "Our Europe-wide analysis identifies players others miss, prioritising technical and tactical fit alongside potential and value."
       ]
     },
     {
+      id: "optimise",
       icon: TrendingUp,
-      title: t('clubs.optimise', 'OPTIMISE'),
-      description: t('clubs.optimise_desc', 'Performance consultation to develop your personnel'),
-      details: [
-        'Player development programmes',
-        'Coach development and alignment',
-        'Unique perspective and timely insights'
+      title: "OPTIMISE",
+      teaser: "Improve the provision of performance services across the club to maximise match-day results.",
+      fullContent: [
+        "Our unique performance expertise allows clubs to develop personnel, align staff, and improve on-pitch results. We break down silos, support coach development, and provide timely, actionable insights."
       ]
     }
   ];
@@ -161,57 +147,46 @@ const Clubs = () => {
         {/* Marquee */}
         <Marquee />
 
-        {/* Services Section */}
-        <ScrollReveal>
-          <section className="py-16 md:py-24 bg-background">
-            <div className="container mx-auto px-4">
-              <div className="text-center mb-16">
-                <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4">
-                  {t('clubs.how_we_help', 'HOW WE')} <span className="text-primary">{t('clubs.help', 'HELP')}</span>
-                </h2>
-                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                  <em>{t('clubs.services_desc', 'Comprehensive support across strategy, recruitment, and performance.')}</em>
-                </p>
-              </div>
-
-              <div className="max-w-6xl mx-auto">
-                <div className="grid md:grid-cols-3 gap-8">
-                  {services.map((service, index) => (
-                    <div key={index} className="group relative bg-card border border-border/50 rounded-xl p-8 hover:border-primary/50 hover:shadow-xl transition-all duration-300">
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-[100px] -z-10" />
-                      
-                      <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 border border-primary/20 group-hover:bg-primary/20 transition-colors mx-auto">
-                        <service.icon className="w-8 h-8 text-primary" />
-                      </div>
-                      
-                      <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3 text-center">
+        {/* Club Services with Collapsible */}
+        {clubServices.map((service, index) => (
+          <ScrollReveal key={service.id}>
+            <section className={`py-12 md:py-16 ${index % 2 === 0 ? 'bg-muted/30' : 'bg-background'}`}>
+              <div className="container mx-auto px-4 max-w-5xl">
+                <div className="border border-border/50 bg-card/50 rounded-2xl p-8 md:p-12">
+                  <div className="flex items-start gap-6 mb-6">
+                    <div className="p-4 rounded-2xl bg-primary/10 border border-primary/30">
+                      <service.icon className="w-8 h-8 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider text-primary mb-4">
                         {service.title}
                       </h3>
-                      
-                      <p className="text-muted-foreground mb-6 text-center">
-                        {service.description}
+                      <p className="text-lg text-foreground/90 leading-relaxed">
+                        {service.teaser}
                       </p>
-                      
-                      <ul className="space-y-3">
-                        {service.details.map((detail, idx) => (
-                          <li key={idx} className="flex items-start gap-3">
-                            <CheckCircle2 className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
-                            <span className="text-sm text-muted-foreground">{detail}</span>
-                          </li>
-                        ))}
-                      </ul>
                     </div>
-                  ))}
+                  </div>
+                  
+                  <Collapsible>
+                    <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all">
+                      <span className="text-sm uppercase tracking-wider text-primary font-medium">Read More</span>
+                      <ChevronDown className="h-4 w-4 text-primary transition-transform group-data-[state=open]:rotate-180" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-6 space-y-4 text-muted-foreground leading-relaxed">
+                      {service.fullContent.map((paragraph, idx) => (
+                        <p key={idx}>{paragraph}</p>
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
                 </div>
               </div>
-            </div>
-          </section>
-        </ScrollReveal>
+            </section>
+          </ScrollReveal>
+        ))}
 
-        {/* Our Approach Section - Enhanced with visuals */}
+        {/* Our Approach Section */}
         <ScrollReveal>
           <section className="py-16 md:py-24 bg-muted/30 relative overflow-hidden">
-            {/* Faded background images */}
             <div className="absolute inset-0 opacity-5 pointer-events-none">
               <div 
                 className="absolute top-0 right-0 w-1/2 h-full bg-cover bg-center grayscale"
@@ -278,7 +253,6 @@ const Clubs = () => {
                       </div>
                     </div>
                     
-                    {/* Thumbnail selectors */}
                     <div className="grid grid-cols-4 gap-2">
                       {approachImages.map((img, index) => (
                         <button
@@ -291,7 +265,6 @@ const Clubs = () => {
                       ))}
                     </div>
                     
-                    {/* Quick stats grid */}
                     <div className="grid grid-cols-2 gap-3 mt-6">
                       <div className="p-4 border border-border/50 bg-card/30 rounded-lg text-center">
                         <Globe className="w-8 h-8 text-primary mx-auto mb-2" />
@@ -314,7 +287,6 @@ const Clubs = () => {
         {/* CTA Section */}
         <ScrollReveal>
           <section className="py-16 md:py-24 relative overflow-hidden border-t-2 border-b-2 border-primary">
-            {/* White marble background */}
             <div 
               className="absolute inset-0 bg-cover bg-center"
               style={{ backgroundImage: `url(${whiteMarble})` }}
