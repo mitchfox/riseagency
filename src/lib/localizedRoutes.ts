@@ -26,6 +26,18 @@ export const routeTranslations: Record<string, Record<string, string>> = {
     ru: '/uznat-bolshe',
     tr: '/daha-fazla-bilgi',
   },
+  '/how-we-rise': {
+    en: '/how-we-rise',
+    es: '/como-ascendemos',
+    pt: '/como-subimos',
+    fr: '/comment-nous-evoluons',
+    de: '/wie-wir-aufsteigen',
+    it: '/come-cresciamo',
+    pl: '/jak-sie-rozwijamy',
+    cs: '/jak-stoupame',
+    ru: '/kak-my-rastem',
+    tr: '/nasil-yukseliyoruz',
+  },
   '/stars': {
     en: '/stars',
     es: '/estrellas',

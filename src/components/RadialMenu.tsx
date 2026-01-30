@@ -14,7 +14,7 @@ import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Tro
 import { useState, useMemo, useRef, useEffect } from "react";
 import { StarsQuadrantCard } from "@/components/radial-menu/StarsQuadrantCard";
 import { NewsQuadrantCard } from "@/components/radial-menu/NewsQuadrantCard";
-import { PerformanceQuadrantCard, InsightsQuadrantCard, ContactQuadrantCard, YouthQuadrantCard, JourneyQuadrantCard, WhatWeLookForQuadrantCard } from "@/components/radial-menu/SimpleQuadrantCard";
+import { PerformanceQuadrantCard, InsightsQuadrantCard, ContactQuadrantCard, YouthQuadrantCard, JourneyQuadrantCard, WhatWeLookForQuadrantCard, HowWeRiseQuadrantCard } from "@/components/radial-menu/SimpleQuadrantCard";
 import { calculateContentPlacement } from "@/lib/wedgeGeometry";
 
 export type QuadrantPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
@@ -178,21 +178,21 @@ export const RadialMenu = () => {
         },
       },
       { 
-        to: "/learnmore", 
-        labelKey: "header.what_we_look_for", 
-        fallback: "WHAT WE SEEK", 
-        Icon: Search, 
+        to: "/how-we-rise", 
+        labelKey: "header.how_we_rise", 
+        fallback: "HOW WE RISE", 
+        Icon: TrendingUp, 
         angle: 309, // Lower right
         quadrantCard: {
           position: getQuadrantPositionForAngle(309),
-          component: WhatWeLookForQuadrantCard,
+          component: HowWeRiseQuadrantCard,
         },
       },
       // Simpler items on TOP and BOTTOM (less vertical space)
       { 
         to: "/youth-players", 
         labelKey: "header.youth_players", 
-        fallback: "FOR YOUTH", 
+        fallback: "YOUTH PLAYERS", 
         Icon: Sparkles, 
         angle: 103, // Bottom
         quadrantCard: {
@@ -212,14 +212,14 @@ export const RadialMenu = () => {
         },
       },
       { 
-        to: "/contact", 
-        labelKey: "header.contact", 
-        fallback: "REPRESENT ME", 
-        Icon: Handshake, 
+        to: "/learnmore", 
+        labelKey: "header.what_we_look_for", 
+        fallback: "WHAT WE SEEK", 
+        Icon: Search, 
         angle: 154, // Lower left
         quadrantCard: {
           position: getQuadrantPositionForAngle(154),
-          component: ContactQuadrantCard,
+          component: WhatWeLookForQuadrantCard,
         },
       },
     ],
