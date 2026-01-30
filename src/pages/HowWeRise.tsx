@@ -74,9 +74,9 @@ const HowWeRise = () => {
       <Header />
       
       <main className="pt-16">
-        {/* Hero Section with Football Icon Background */}
+        {/* Hero Section with Football Icon Background - Restored players-draft style */}
         <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
-          {/* Football icon background pattern */}
+          {/* Football icon background pattern - using the new uploaded icon */}
           <div className="absolute inset-0 pointer-events-none opacity-5">
             <div className="absolute top-1/4 left-1/4 w-48 h-48 animate-pulse">
               <img src={footballIcon} alt="" className="w-full h-full object-contain" />
