@@ -30,7 +30,7 @@ export const StarsQuadrantCard = ({ maxWidth, maxHeight }: QuadrantCardProps) =>
         .from('players')
         .select('*')
         .eq('visible_on_stars_page', true)
-        .in('representation_status', ['mandated', 'represented', 'previously_mandated'])
+        .eq('representation_status', 'represented')
         .limit(3);
       
       if (data && !error && data.length > 0) {
