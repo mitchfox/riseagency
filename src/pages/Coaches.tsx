@@ -310,7 +310,7 @@ const Coaches = () => {
                   variant="outline" 
                   size="lg" 
                   onClick={() => setArrangeMeetingOpen(true)}
-                  className="font-bebas uppercase tracking-wider border-black text-black hover:bg-black/10"
+                  className="font-bebas uppercase tracking-wider border-black text-black hover:bg-black hover:text-white"
                 >
                   {t('coaches.arrange_meeting', 'Arrange Meeting')}
                 </Button>

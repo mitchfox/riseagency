@@ -45,7 +45,7 @@ const PlayersDraft = () => {
       subtitleKey: "players.represent_subtitle",
       subtitleFallback: "Partnership & Protection",
       contentKey: "players.represent_desc",
-      contentFallback: "When we identify the right fit, we build a genuine partnership. Our experienced intermediaries negotiate contracts that protect your interests and maximize your earning potential, ensuring you're valued fairly at every stage of your career.",
+      contentFallback: "When we identify the right fit, we build a genuine partnership. Our experienced intermediaries negotiate contracts that protect your interests and maximise your earning potential, ensuring you're valued fairly at every stage of your career.",
       detailsKey: "players.represent_details",
       detailsFallback: "• Expert contract negotiation and review\n• Legal protection and compliance guidance\n• Transfer market positioning\n• Career pathway planning",
       position: { x: 30, y: 45 }
@@ -514,14 +514,11 @@ const PlayersDraft = () => {
               {t('players.cta_title', 'Ready to Rise?')}
             </h2>
             <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed">
-              {t('players.cta_desc', 'Join a select group of players who are committed to maximizing their potential. Let us guide your path to footballing excellence.')}
+              {t('players.cta_desc', 'Join a select group of players who are committed to maximising their potential. Let us guide your path to footballing excellence.')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex justify-center">
               <Button asChild size="lg" className="btn-shine font-bebas uppercase tracking-wider text-lg px-8">
                 <Link to="/contact">{t('players.get_started', 'Start Your Journey')}</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="font-bebas uppercase tracking-wider text-lg px-8 border-white/30 hover:bg-white/10">
-                <Link to="/stars">{t('players.view_roster', 'View Our Players')}</Link>
               </Button>
             </div>
           </div>
