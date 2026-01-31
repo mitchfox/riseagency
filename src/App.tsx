@@ -51,7 +51,6 @@ const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const AnalysisViewer = lazy(() => import("./pages/AnalysisViewer"));
 const Intro = lazy(() => import("./pages/Intro"));
 const PlayersList = lazy(() => import("./pages/PlayersList"));
-const PlayersDraft = lazy(() => import("./pages/PlayersDraft"));
 const HowWeRise = lazy(() => import("./pages/HowWeRise"));
 // ClubNetwork is accessed only through Staff page, not as a standalone route
 const PDFViewer = lazy(() => import("./pages/PDFViewer"));
@@ -154,7 +153,6 @@ const App = () => {
                       {createLocalizedRoutes('/learnmore', <LearnMorePage />)}
                       {createLocalizedRoutes('/how-we-rise', <HowWeRise />)}
                       <Route path="/players-list" element={<PlayersList />} />
-                      <Route path="/players-draft" element={<PlayersDraft />} />
                       {/* Club Network is now only accessible via Staff page */}
                       <Route path="/staff" element={<ErrorBoundary><Staff /></ErrorBoundary>} />
                       <Route path="/scout-portal" element={<ScoutPortal />} />
