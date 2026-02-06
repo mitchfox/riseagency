@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, EyeOff, AlertTriangle, Sparkles, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save } from "lucide-react";
+import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -133,7 +133,7 @@ export const CreatePerformanceReportDialog = ({
   const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
   const [r90ViewerCategory, setR90ViewerCategory] = useState<string | undefined>(undefined);
   const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
-  const [isFillingScores, setIsFillingScores] = useState(false);
+  
   const [actionSearchFilters, setActionSearchFilters] = useState<Record<number, string>>({});
   const [isByActionDialogOpen, setIsByActionDialogOpen] = useState(false);
   const [unifiedStats, setUnifiedStats] = useState<UnifiedStat[]>([]);
@@ -1199,109 +1199,9 @@ export const CreatePerformanceReportDialog = ({
     }
   };
 
-  const fillSingleActionScore = async (index: number) => {
-    const action = actions[index];
-    
-    if (!action.action_type || !action.action_description) {
-      toast.error("Action needs type and description to fill score");
-      return;
-    }
+  // AI score filling function removed - users should use R90 Ratings Viewer for manual lookup
 
-    setIsFillingScores(true);
-    try {
-      // Call the fill-action-scores edge function with single action
-      const { data, error } = await supabase.functions.invoke('fill-action-scores', {
-        body: { actions: [{ ...action, index: 0 }] }
-      });
-
-      if (error) {
-        console.error('Edge function error:', error);
-        throw error;
-      }
-
-      if (!data?.scores || data.scores.length === 0) {
-        throw new Error("No score returned from function");
-      }
-
-      const score = data.scores[0]?.score || 0;
-      
-      // Update the action with the filled score
-      const updatedActions = [...actions];
-      updatedActions[index] = {
-        ...updatedActions[index],
-        action_score: score.toString()
-      };
-      setActions(updatedActions);
-      
-      toast.success(`Score filled: ${score.toFixed(5)}`);
-      
-    } catch (error: any) {
-      console.error('Error filling score:', error);
-      toast.error("Failed to fill score");
-    } finally {
-      setIsFillingScores(false);
-    }
-  };
-
-  const handleFillEmptyScores = async () => {
-    // Get actions that have empty scores
-    const actionsToFill = actions
-      .map((action, index) => ({ ...action, index }))
-      .filter(action => !action.action_score || action.action_score === "");
-
-    if (actionsToFill.length === 0) {
-      toast.info("All actions already have scores");
-      return;
-    }
-
-    if (!actionsToFill.every(a => a.action_type && a.action_description)) {
-      toast.error("Please fill in action type and description for all actions before auto-filling scores");
-      return;
-    }
-
-    setIsFillingScores(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('fill-action-scores', {
-        body: {
-          actions: actionsToFill.map(a => ({
-            action_type: a.action_type,
-            action_description: a.action_description
-          }))
-        }
-      });
-
-      if (error) {
-        console.error('Error filling scores:', error);
-        toast.error("Failed to fill scores: " + error.message);
-        return;
-      }
-
-      if (!data?.scores || !Array.isArray(data.scores)) {
-        toast.error("Invalid response from AI service");
-        return;
-      }
-
-      // Update actions with AI-generated scores
-      const updatedActions = [...actions];
-      actionsToFill.forEach((action, i) => {
-        const score = data.scores[i]?.score || 0;
-        updatedActions[action.index] = {
-          ...updatedActions[action.index],
-          action_score: score.toString()
-        };
-      });
-
-      setActions(updatedActions);
-      toast.success(`Successfully filled ${actionsToFill.length} empty score${actionsToFill.length > 1 ? 's' : ''}`);
-      
-    } catch (error: any) {
-      console.error('Error in handleFillEmptyScores:', error);
-      toast.error("Failed to auto-fill scores");
-    } finally {
-      setIsFillingScores(false);
-    }
-  };
+  // Bulk AI score filling function removed - users should use R90 Ratings Viewer for manual lookup
 
   const handleSave = async () => {
     // Validation
@@ -1694,20 +1594,6 @@ export const CreatePerformanceReportDialog = ({
                         currentStat={action.recorded_stat || null}
                         onStatRecorded={(stat) => updateAction(index, 'recorded_stat', stat)}
                       />
-                      <Button
-                        onClick={() => fillSingleActionScore(index)}
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8"
-                        title="Fill Score with AI"
-                        disabled={isFillingScores}
-                      >
-                        {isFillingScores ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                        ) : (
-                          <Sparkles className="h-4 w-4 text-primary" />
-                        )}
-                      </Button>
                       {action.id ? (
                         <ActionVideoUpload
                           actionId={action.id}
@@ -1789,7 +1675,7 @@ export const CreatePerformanceReportDialog = ({
                     {previousScores[index] && previousScores[index].length > 0 && (
                       <Collapsible defaultOpen={false}>
                         <CollapsibleTrigger className="text-[9px] mt-1 p-1.5 rounded bg-muted/50 font-medium w-full text-left flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors text-muted-foreground">
-                          <span>R90 scores ({previousScores[index].length})</span>
+                          <span>Suggested R90 Scores ({previousScores[index].length})</span>
                           <ChevronDown className="h-3 w-3" />
                         </CollapsibleTrigger>
                         <CollapsibleContent className="text-[10px] p-2 rounded bg-muted/50 mt-1 space-y-2">
@@ -1920,20 +1806,6 @@ export const CreatePerformanceReportDialog = ({
                             currentStat={action.recorded_stat || null}
                             onStatRecorded={(stat) => updateAction(index, 'recorded_stat', stat)}
                           />
-                          <Button
-                            onClick={() => fillSingleActionScore(index)}
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            title="Fill Score with AI"
-                            disabled={isFillingScores}
-                          >
-                            {isFillingScores ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                            ) : (
-                              <Sparkles className="h-4 w-4 text-primary" />
-                            )}
-                          </Button>
                           {action.id ? (
                             <ActionVideoUpload
                               actionId={action.id}
@@ -1969,7 +1841,7 @@ export const CreatePerformanceReportDialog = ({
                         <td colSpan={7} className="p-0">
                           <Collapsible defaultOpen={false}>
                             <CollapsibleTrigger className="text-[10px] w-full px-2 py-1.5 bg-muted/30 text-left flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors text-muted-foreground">
-                              <span>R90 scores ({previousScores[index].length})</span>
+                              <span>Suggested R90 Scores ({previousScores[index].length})</span>
                               <ChevronDown className="h-3 w-3" />
                             </CollapsibleTrigger>
                             <CollapsibleContent className="p-2 bg-muted/20 space-y-2">
@@ -2048,7 +1920,7 @@ export const CreatePerformanceReportDialog = ({
                             size="sm"
                             variant="outline"
                             className="h-7 text-xs flex-1"
-                            disabled={loading || deleting || isFillingScores}
+                            disabled={loading || deleting}
                           >
                             {loading ? "Saving..." : "Update Report"}
                           </Button>
@@ -2078,23 +1950,14 @@ export const CreatePerformanceReportDialog = ({
                 <Plus className="h-4 w-4 mr-2" />
                 Add Action
               </Button>
-              <Button onClick={handleSave} disabled={loading || deleting || isFillingScores} className="w-full sm:w-auto">
+              <Button onClick={handleSave} disabled={loading || deleting} className="w-full sm:w-auto">
                 {loading ? (analysisId ? "Updating..." : "Creating...") : (analysisId ? "Update Report" : "Create Report")}
-              </Button>
-              <Button 
-                variant="secondary" 
-                onClick={handleFillEmptyScores} 
-                disabled={loading || deleting || isFillingScores || actions.length === 0}
-                className="w-full sm:w-auto"
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                {isFillingScores ? "Filling Scores..." : "Fill Empty Scores"}
               </Button>
               {analysisId && (
                 <Button
                   variant="outline"
                   onClick={() => setIsByActionDialogOpen(true)}
-                  disabled={loading || deleting || isFillingScores}
+                  disabled={loading || deleting}
                   className="w-full sm:w-auto"
                 >
                   <List className="h-4 w-4 mr-2" />
@@ -2104,7 +1967,7 @@ export const CreatePerformanceReportDialog = ({
             </div>
             
             {/* Cancel button */}
-            <Button variant="outline" onClick={handleClose} disabled={loading || deleting || isFillingScores} className="w-full sm:w-auto">
+            <Button variant="outline" onClick={handleClose} disabled={loading || deleting} className="w-full sm:w-auto">
               Cancel
             </Button>
             
