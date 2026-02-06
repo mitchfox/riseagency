@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save } from "lucide-react";
+import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -1722,73 +1722,65 @@ export const CreatePerformanceReportDialog = ({
                         </div>
                       </td>
                     </tr>
-                    {/* Suggested R90 Scores - search based */}
+                    {/* Suggested R90 Scores - inline search next to label */}
                     <tr>
                       <td colSpan={7} className="p-0">
-                        <Collapsible defaultOpen={false}>
-                          <CollapsibleTrigger className="text-[10px] w-full px-2 py-1.5 bg-muted/30 text-left flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors text-muted-foreground">
-                            <span>Suggested R90 Scores</span>
-                            <ChevronDown className="h-3 w-3" />
-                          </CollapsibleTrigger>
-                          <CollapsibleContent className="p-2 bg-muted/20 space-y-2">
-                            {/* Search input for R90 scores */}
-                            <Input
-                              value={actionSearchFilters[index] || ''}
-                              onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
-                              placeholder="Search R90 scores by action name..."
-                              className="h-7 text-xs max-w-xs"
-                            />
-                            {actionSearchFilters[index]?.trim() ? (
-                              <div className="space-y-1 max-h-40 overflow-y-auto">
-                                {getFilteredScores(index).map((item, scoreIdx) => {
-                                  const isSelected = selectedScores[index]?.has(scoreIdx) ?? false;
-                                  const filteredScores = getFilteredScores(index);
-                                  return (
-                                    <div key={scoreIdx} className="flex items-start gap-2">
-                                      <Checkbox
-                                        checked={isSelected}
-                                        onCheckedChange={(checked) => {
-                                          const newSelected = { ...selectedScores };
-                                          if (!newSelected[index]) {
-                                            newSelected[index] = new Set();
-                                          }
-                                          if (checked) {
-                                            newSelected[index].add(scoreIdx);
-                                          } else {
-                                            newSelected[index].delete(scoreIdx);
-                                          }
-                                          setSelectedScores(newSelected);
-                                          
-                                          // Calculate sum of selected scores and update action
-                                          const selectedIndices = checked 
-                                            ? [...Array.from(newSelected[index] || []), scoreIdx]
-                                            : Array.from(newSelected[index] || []).filter(i => i !== scoreIdx);
-                                          
-                                          const totalScore = selectedIndices.reduce((sum, idx) => {
-                                            const score = filteredScores[idx]?.score;
-                                            const numScore = typeof score === 'number' ? score : (typeof score === 'string' && !isNaN(parseFloat(score)) ? parseFloat(score) : 0);
-                                            return sum + numScore;
-                                          }, 0);
-                                          
-                                          updateAction(index, "action_score", totalScore.toString());
-                                        }}
-                                        className="mt-0.5"
-                                      />
-                                      <label className="font-mono flex-1 cursor-pointer text-xs text-muted-foreground">
-                                        {item.title} {formatScoreWithFrequency(item.score)}
-                                      </label>
-                                    </div>
-                                  );
-                                })}
-                                {getFilteredScores(index).length === 0 && (
-                                  <p className="text-muted-foreground text-center py-1 text-xs">No matching scores</p>
-                                )}
-                              </div>
-                            ) : (
-                              <p className="text-muted-foreground text-center py-1 text-[9px]">Type to search R90 scores</p>
+                        <div className="px-2 py-1.5 bg-muted/30 flex items-center gap-2">
+                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">Suggested R90 Scores</span>
+                          <Input
+                            value={actionSearchFilters[index] || ''}
+                            onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
+                            placeholder="Search action..."
+                            className="h-6 text-[10px] flex-1 max-w-[200px] px-2"
+                          />
+                        </div>
+                        {actionSearchFilters[index]?.trim() && (
+                          <div className="p-2 bg-muted/20 space-y-1 max-h-40 overflow-y-auto">
+                            {getFilteredScores(index).map((item, scoreIdx) => {
+                              const isSelected = selectedScores[index]?.has(scoreIdx) ?? false;
+                              const filteredScores = getFilteredScores(index);
+                              return (
+                                <div key={scoreIdx} className="flex items-start gap-2">
+                                  <Checkbox
+                                    checked={isSelected}
+                                    onCheckedChange={(checked) => {
+                                      const newSelected = { ...selectedScores };
+                                      if (!newSelected[index]) {
+                                        newSelected[index] = new Set();
+                                      }
+                                      if (checked) {
+                                        newSelected[index].add(scoreIdx);
+                                      } else {
+                                        newSelected[index].delete(scoreIdx);
+                                      }
+                                      setSelectedScores(newSelected);
+                                      
+                                      // Calculate sum of selected scores and update action
+                                      const selectedIndices = checked 
+                                        ? [...Array.from(newSelected[index] || []), scoreIdx]
+                                        : Array.from(newSelected[index] || []).filter(i => i !== scoreIdx);
+                                      
+                                      const totalScore = selectedIndices.reduce((sum, idx) => {
+                                        const score = filteredScores[idx]?.score;
+                                        const numScore = typeof score === 'number' ? score : (typeof score === 'string' && !isNaN(parseFloat(score)) ? parseFloat(score) : 0);
+                                        return sum + numScore;
+                                      }, 0);
+                                      
+                                      updateAction(index, "action_score", totalScore.toString());
+                                    }}
+                                    className="mt-0.5"
+                                  />
+                                  <label className="font-mono flex-1 cursor-pointer text-xs text-muted-foreground">
+                                    {item.title} {formatScoreWithFrequency(item.score)}
+                                  </label>
+                                </div>
+                              );
+                            })}
+                            {getFilteredScores(index).length === 0 && (
+                              <p className="text-muted-foreground text-center py-1 text-xs">No matching scores</p>
                             )}
-                          </CollapsibleContent>
-                        </Collapsible>
+                          </div>
+                        )}
                       </td>
                     </tr>
                     
@@ -2178,19 +2170,27 @@ export const CreatePerformanceReportDialog = ({
   if (inline) {
     return (
       <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
-        <div className="container max-w-6xl mx-auto py-6 px-4">
+        {/* X close button in top right corner */}
+        <button 
+          onClick={handleClose}
+          className="fixed top-4 right-4 z-50 p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        
+        <div className="container max-w-6xl mx-auto pt-16 pb-6 px-4">
           {/* Header with back button */}
           <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur z-10 py-4 border-b mb-6">
             <Button variant="ghost" onClick={handleClose} className="gap-2">
               <ArrowLeft className="w-4 h-4" /> Back to Player
             </Button>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               {analysisId && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={deleting}>
-                      {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
-                      Delete
+                    <Button variant="ghost" size="sm" disabled={deleting} className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 px-2 text-xs">
+                      {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
@@ -2207,7 +2207,7 @@ export const CreatePerformanceReportDialog = ({
                   </AlertDialogContent>
                 </AlertDialog>
               )}
-              <Button onClick={handleSave} disabled={loading}>
+              <Button onClick={handleSave} disabled={loading} size="sm">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                 {analysisId ? 'Update' : 'Create'} Report
               </Button>

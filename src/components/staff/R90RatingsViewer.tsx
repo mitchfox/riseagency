@@ -54,19 +54,19 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
   const [expandedSubcategories, setExpandedSubcategories] = useState<Set<string>>(new Set());
   const [searchFilter, setSearchFilter] = useState('');
 
-  // Update category when initialCategory changes
+  // Update category when initialCategory changes - NO auto-search
   useEffect(() => {
     if (initialCategory && open) {
       setSelectedCategory(initialCategory);
     }
   }, [initialCategory, open]);
 
-  // Pre-fill search filter when searchTerm prop provided
+  // Reset search filter when dialog opens - NO auto-fill from searchTerm
   useEffect(() => {
-    if (searchTerm && open) {
-      setSearchFilter(searchTerm);
+    if (open) {
+      setSearchFilter(''); // Always start with empty search
     }
-  }, [searchTerm, open]);
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -100,22 +100,6 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
       if (error) throw error;
       
       let filteredData = data || [];
-      
-      // Filter by search term if provided (legacy support for prop)
-      if (searchTerm && searchTerm.trim()) {
-        const searchWords = searchTerm.toLowerCase().split(/\s+/).filter(w => w.length > 0);
-        filteredData = filteredData.filter(rating => {
-          const searchableText = [
-            rating.title || '',
-            rating.description || '',
-            rating.content || '',
-            rating.category || '',
-            rating.subcategory || ''
-          ].join(' ').toLowerCase();
-          
-          return searchWords.some(word => searchableText.includes(word));
-        });
-      }
       
       // Apply live search filter
       if (searchFilter && searchFilter.trim()) {
@@ -224,7 +208,7 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
       <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
-            <LineChart className="w-5 h-5 text-indigo-600" />
+            <LineChart className="w-5 h-5 text-primary" />
             R90 Ratings Reference
           </DialogTitle>
         </DialogHeader>
