@@ -22,6 +22,7 @@ import { AnalysisSchemeSection } from "./analysis/AnalysisSchemeSection";
 import { AnalysisPointsSection } from "./analysis/AnalysisPointsSection";
 import { AnalysisOverviewSection } from "./analysis/AnalysisOverviewSection";
 import { AnalysisQuickLink } from "./analysis/AnalysisQuickLink";
+import { ActionReportsList } from "./analysis/ActionReportsList";
 
 type AnalysisType = "pre-match" | "post-match" | "concept";
 
@@ -1535,7 +1536,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           <TabsTrigger value="pre-match" className="flex-1 min-w-[80px] text-xs sm:text-sm">Pre-Match</TabsTrigger>
           <TabsTrigger value="post-match" className="flex-1 min-w-[80px] text-xs sm:text-sm">Post-Match</TabsTrigger>
           <TabsTrigger value="concept" className="flex-1 min-w-[80px] text-xs sm:text-sm">Concepts</TabsTrigger>
-          <TabsTrigger value="other" className="flex-1 min-w-[80px] text-xs sm:text-sm">Other</TabsTrigger>
+          <TabsTrigger value="action-reports" className="flex-1 min-w-[80px] text-xs sm:text-sm">Action Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pre-match" className="space-y-4">
@@ -1568,14 +1569,8 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           {renderConceptsList()}
         </TabsContent>
 
-        <TabsContent value="other" className="space-y-4">
-          <Button
-            onClick={() => setAiWriter({ ...aiWriter, open: true, category: 'other', paragraph1Info: '', paragraph2Info: '' })}
-            variant="outline"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            AI Point Writer
-          </Button>
+        <TabsContent value="action-reports" className="space-y-4">
+          <ActionReportsList />
         </TabsContent>
       </Tabs>
 
