@@ -4525,6 +4525,49 @@ export type Database = {
           },
         ]
       }
+      video_player_tags: {
+        Row: {
+          created_at: string
+          id: string
+          player_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          player_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          player_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_player_tags_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_player_tags_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_player_tags_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_gallery"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vision_board: {
         Row: {
           actionable_plans: string[] | null

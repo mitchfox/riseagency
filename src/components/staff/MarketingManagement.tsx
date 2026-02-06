@@ -5,10 +5,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Calendar as CalendarIcon, Image, Upload, Trash2, Play, List, Folder, ChevronDown } from "lucide-react";
+import { Calendar as CalendarIcon, Image, Upload, Trash2, Play, List, Folder, ChevronDown, Plus, Users, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { VideoPreviewCard } from "./VideoPreviewCard";
@@ -28,6 +29,7 @@ interface GalleryItem {
   category: 'brand' | 'players' | 'other';
   player_id: string | null;
   created_at: string;
+  tagged_player_ids?: string[];
 }
 
 export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean; isMarketeer?: boolean }) => {
@@ -55,6 +57,13 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   const [selectedVideoForPlaylist, setSelectedVideoForPlaylist] = useState<GalleryItem | null>(null);
   const [playlistPlayerData, setPlaylistPlayerData] = useState<any>(null);
   const [showHomepageVideos, setShowHomepageVideos] = useState(false);
+  const [showTagPlayerDialog, setShowTagPlayerDialog] = useState(false);
+  const [selectedVideoForTagging, setSelectedVideoForTagging] = useState<GalleryItem | null>(null);
+  const [selectedTagPlayerIds, setSelectedTagPlayerIds] = useState<string[]>([]);
+  const [videoPlayerTags, setVideoPlayerTags] = useState<Record<string, string[]>>({});
+  const [showCreatePlaylistDialog, setShowCreatePlaylistDialog] = useState(false);
+  const [newPlaylistName, setNewPlaylistName] = useState('');
+  const [newPlaylistPlayerId, setNewPlaylistPlayerId] = useState<string>('');
 
   // Collapsible section states
   const [openSections, setOpenSections] = useState<string[]>(["schedule"]);
@@ -62,6 +71,7 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   useEffect(() => {
     fetchGalleryItems();
     fetchPlayers();
+    fetchVideoTags();
   }, []);
 
   const fetchPlayers = async () => {
@@ -85,6 +95,120 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
     }
 
     setGalleryItems((data || []) as GalleryItem[]);
+  };
+
+  const fetchVideoTags = async () => {
+    const { data, error } = await supabase
+      .from('video_player_tags')
+      .select('video_id, player_id');
+
+    if (error) {
+      console.error('Failed to fetch video tags:', error);
+      return;
+    }
+
+    // Group tags by video_id
+    const tagsMap: Record<string, string[]> = {};
+    (data || []).forEach((tag: any) => {
+      if (!tagsMap[tag.video_id]) {
+        tagsMap[tag.video_id] = [];
+      }
+      tagsMap[tag.video_id].push(tag.player_id);
+    });
+    setVideoPlayerTags(tagsMap);
+  };
+
+  const handleSaveVideoTags = async () => {
+    if (!selectedVideoForTagging) return;
+
+    try {
+      // Delete existing tags for this video
+      await supabase
+        .from('video_player_tags')
+        .delete()
+        .eq('video_id', selectedVideoForTagging.id);
+
+      // Insert new tags
+      if (selectedTagPlayerIds.length > 0) {
+        const tagsToInsert = selectedTagPlayerIds.map(playerId => ({
+          video_id: selectedVideoForTagging.id,
+          player_id: playerId,
+        }));
+
+        const { error } = await supabase
+          .from('video_player_tags')
+          .insert(tagsToInsert);
+
+        if (error) throw error;
+      }
+
+      toast.success('Player tags updated');
+      setShowTagPlayerDialog(false);
+      setSelectedVideoForTagging(null);
+      setSelectedTagPlayerIds([]);
+      fetchVideoTags();
+    } catch (error) {
+      console.error('Failed to save video tags:', error);
+      toast.error('Failed to save player tags');
+    }
+  };
+
+  const openTagPlayerDialog = (item: GalleryItem) => {
+    setSelectedVideoForTagging(item);
+    setSelectedTagPlayerIds(videoPlayerTags[item.id] || []);
+    setShowTagPlayerDialog(true);
+  };
+
+  const handleCreatePlaylist = async () => {
+    if (!newPlaylistName.trim() || !newPlaylistPlayerId) {
+      toast.error('Please enter a name and select a player');
+      return;
+    }
+
+    try {
+      const { data: player, error: playerError } = await supabase
+        .from('players')
+        .select('id, name, highlights')
+        .eq('id', newPlaylistPlayerId)
+        .single();
+
+      if (playerError) throw playerError;
+
+      // Parse existing highlights
+      let highlights: any = player.highlights;
+      if (typeof highlights === 'string') {
+        try {
+          highlights = JSON.parse(highlights);
+        } catch (e) {
+          highlights = {};
+        }
+      }
+      if (!highlights || typeof highlights !== 'object') highlights = {};
+
+      // Add new empty playlist
+      if (!highlights.playlists) highlights.playlists = [];
+      highlights.playlists.push({
+        name: newPlaylistName.trim(),
+        clips: [],
+        createdAt: new Date().toISOString(),
+      });
+
+      // Save back to player
+      const { error: updateError } = await supabase
+        .from('players')
+        .update({ highlights: JSON.stringify(highlights) })
+        .eq('id', newPlaylistPlayerId);
+
+      if (updateError) throw updateError;
+
+      toast.success('Playlist created');
+      setShowCreatePlaylistDialog(false);
+      setNewPlaylistName('');
+      setNewPlaylistPlayerId('');
+    } catch (error) {
+      console.error('Failed to create playlist:', error);
+      toast.error('Failed to create playlist');
+    }
   };
 
   const handleFileUpload = async (e: React.FormEvent) => {
@@ -433,6 +557,14 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                               Import from Clips
                             </Button>
                             <Button 
+                              onClick={() => setShowCreatePlaylistDialog(true)} 
+                              size="sm" 
+                              variant="outline"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              New Playlist
+                            </Button>
+                            <Button 
                               onClick={() => setShowHomepageVideos(true)} 
                               size="sm" 
                               variant="outline"
@@ -446,8 +578,15 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                     </div>
 
                     {(() => {
+                      // Filter videos - include those with player_id OR tagged with the selected player
                       const filtered = videoPlayerFilter !== 'all'
-                        ? galleryItems.filter(item => item.file_type === 'video' && item.player_id === videoPlayerFilter)
+                        ? galleryItems.filter(item => {
+                            if (item.file_type !== 'video') return false;
+                            // Match by player_id OR by tag
+                            const matchesPlayerId = item.player_id === videoPlayerFilter;
+                            const matchesTags = videoPlayerTags[item.id]?.includes(videoPlayerFilter);
+                            return matchesPlayerId || matchesTags;
+                          })
                         : galleryItems.filter(item => item.file_type === 'video');
                       
                       return filtered.length === 0 ? (
@@ -458,52 +597,78 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {filtered.map((item) => (
-                            <Card key={item.id} className="overflow-hidden">
-                              <div className="relative aspect-video bg-muted">
-                                <video
-                                  src={item.file_url}
-                                  className="w-full h-full object-cover"
-                                  controls
-                                />
-                              </div>
-                              <CardContent className="p-4">
-                                <h3 className="font-semibold mb-1">{item.title}</h3>
-                                {item.description && (
-                                  <p className="text-sm text-muted-foreground mb-3">{item.description}</p>
-                                )}
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="flex-1"
-                                    onClick={() => window.open(item.file_url, '_blank')}
-                                  >
-                                    View Full
-                                  </Button>
-                                  {item.player_id && (
+                          {filtered.map((item) => {
+                            const taggedPlayerIds = videoPlayerTags[item.id] || [];
+                            const taggedPlayerNames = taggedPlayerIds
+                              .map(id => players.find(p => p.id === id)?.name)
+                              .filter(Boolean);
+                            
+                            return (
+                              <Card key={item.id} className="overflow-hidden">
+                                <div className="relative aspect-video bg-muted">
+                                  <video
+                                    src={item.file_url}
+                                    className="w-full h-full object-cover"
+                                    controls
+                                  />
+                                </div>
+                                <CardContent className="p-4">
+                                  <h3 className="font-semibold mb-1">{item.title}</h3>
+                                  {item.description && (
+                                    <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
+                                  )}
+                                  {taggedPlayerNames.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mb-2">
+                                      {taggedPlayerNames.map((name, idx) => (
+                                        <span key={idx} className="text-[10px] px-1.5 py-0.5 bg-primary/20 text-primary rounded">
+                                          {name}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                  <div className="flex flex-wrap gap-2">
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      onClick={() => openPlaylistForVideo(item)}
-                                      title="Add to Playlist"
+                                      className="flex-1"
+                                      onClick={() => window.open(item.file_url, '_blank')}
                                     >
-                                      <List className="w-4 h-4" />
+                                      View Full
                                     </Button>
-                                  )}
-                                  {canManage && (
-                                    <Button
-                                      size="sm"
-                                      variant="destructive"
-                                      onClick={() => handleDelete(item)}
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  )}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
+                                    {canManage && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => openTagPlayerDialog(item)}
+                                        title="Tag Players"
+                                      >
+                                        <Tag className="w-4 h-4" />
+                                      </Button>
+                                    )}
+                                    {item.player_id && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => openPlaylistForVideo(item)}
+                                        title="Add to Playlist"
+                                      >
+                                        <List className="w-4 h-4" />
+                                      </Button>
+                                    )}
+                                    {canManage && (
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => handleDelete(item)}
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
                         </div>
                       );
                     })()}
@@ -813,6 +978,99 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
             </DialogDescription>
           </DialogHeader>
           <HomepageVideoManager canManage={canManage} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Tag Players Dialog */}
+      <Dialog open={showTagPlayerDialog} onOpenChange={setShowTagPlayerDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Tag Players</DialogTitle>
+            <DialogDescription>
+              Select which players should see this video in their portal
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm font-medium">Video: {selectedVideoForTagging?.title}</p>
+            <div className="max-h-[300px] overflow-y-auto space-y-2">
+              {players.map((player) => (
+                <div key={player.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`tag-${player.id}`}
+                    checked={selectedTagPlayerIds.includes(player.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedTagPlayerIds([...selectedTagPlayerIds, player.id]);
+                      } else {
+                        setSelectedTagPlayerIds(selectedTagPlayerIds.filter(id => id !== player.id));
+                      }
+                    }}
+                  />
+                  <label htmlFor={`tag-${player.id}`} className="text-sm cursor-pointer">
+                    {player.name}
+                  </label>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowTagPlayerDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveVideoTags}>
+                Save Tags
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Playlist Dialog */}
+      <Dialog open={showCreatePlaylistDialog} onOpenChange={setShowCreatePlaylistDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New Playlist</DialogTitle>
+            <DialogDescription>
+              Create a new video playlist for a player
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="playlist-player">Player *</Label>
+              <Select value={newPlaylistPlayerId} onValueChange={setNewPlaylistPlayerId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a player" />
+                </SelectTrigger>
+                <SelectContent>
+                  {players.map((player) => (
+                    <SelectItem key={player.id} value={player.id}>
+                      {player.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="playlist-name">Playlist Name *</Label>
+              <Input
+                id="playlist-name"
+                value={newPlaylistName}
+                onChange={(e) => setNewPlaylistName(e.target.value)}
+                placeholder="e.g., Best Goals 2024"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => {
+                setShowCreatePlaylistDialog(false);
+                setNewPlaylistName('');
+                setNewPlaylistPlayerId('');
+              }}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreatePlaylist}>
+                Create Playlist
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
