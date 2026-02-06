@@ -50,7 +50,7 @@ export const ActionsByTypeDialog = ({
   const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
   const [r90ViewerCategory, setR90ViewerCategory] = useState<string | undefined>(undefined);
   const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
-  const [aiSearchAction, setAiSearchAction] = useState<{ type: string; context: string } | null>(null);
+  
   const [updatingR90, setUpdatingR90] = useState(false);
   const [previousScores, setPreviousScores] = useState<Record<string, Array<{score: string | number | null, title: string, description: string}>>>({});
   const [expandedScores, setExpandedScores] = useState<Set<string>>(new Set());
@@ -323,7 +323,6 @@ export const ActionsByTypeDialog = ({
     if (!action.action_type) {
       setR90ViewerCategory(undefined);
       setR90ViewerSearch(undefined);
-      setAiSearchAction(null);
       setIsR90ViewerOpen(true);
       return;
     }
@@ -340,7 +339,6 @@ export const ActionsByTypeDialog = ({
       if (mapping?.r90_category) {
         setR90ViewerCategory(mapping.r90_category);
         setR90ViewerSearch(action.action_type);
-        setAiSearchAction(null);
         setIsR90ViewerOpen(true);
         return;
       }
@@ -352,15 +350,10 @@ export const ActionsByTypeDialog = ({
     const category = getR90CategoryFromAction(action.action_type, action.action_description);
     setR90ViewerCategory(category);
     setR90ViewerSearch(action.action_type);
-    setAiSearchAction(null);
     setIsR90ViewerOpen(true);
   };
 
-  const openAiSearch = (action: PerformanceAction) => {
-    setAiSearchAction({
-      type: action.action_type || '',
-      context: action.action_description || ''
-    });
+  const openR90Viewer = () => {
     setR90ViewerCategory(undefined);
     setR90ViewerSearch(undefined);
     setIsR90ViewerOpen(true);
@@ -669,20 +662,15 @@ export const ActionsByTypeDialog = ({
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => openAiSearch(edited)}
+                                    onClick={() => openSmartR90Viewer(edited)}
                                   >
-                                    <Sparkles className="w-4 h-4 mr-2" />
-                                    AI Search
+                                    <Search className="w-4 h-4 mr-2" />
+                                    R90 Search
                                   </Button>
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => {
-                                      setR90ViewerCategory(undefined);
-                                      setR90ViewerSearch(undefined);
-                                      setAiSearchAction(null);
-                                      setIsR90ViewerOpen(true);
-                                    }}
+                                    onClick={() => openR90Viewer()}
                                   >
                                     <Search className="w-4 h-4 mr-2" />
                                     R90 Ratings
@@ -730,7 +718,6 @@ export const ActionsByTypeDialog = ({
       onOpenChange={setIsR90ViewerOpen}
       initialCategory={r90ViewerCategory}
       searchTerm={r90ViewerSearch}
-      prefilledSearch={aiSearchAction}
     />
     </>
   );

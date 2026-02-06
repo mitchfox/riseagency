@@ -68,7 +68,7 @@ export const PerformanceActionsDialog = ({
   const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
   const [r90ViewerCategory, setR90ViewerCategory] = useState<string | undefined>(undefined);
   const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
-  const [aiSearchAction, setAiSearchAction] = useState<{ type: string; context: string } | null>(null);
+  
   const [fillingScores, setFillingScores] = useState(false);
   const [isByActionDialogOpen, setIsByActionDialogOpen] = useState(false);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
@@ -154,11 +154,9 @@ export const PerformanceActionsDialog = ({
     setIsR90ViewerOpen(true);
   };
 
-  const openAiSearch = (action: PerformanceAction) => {
-    setAiSearchAction({
-      type: action.action_type || '',
-      context: action.action_description || ''
-    });
+  const openR90Viewer = () => {
+    setR90ViewerCategory(undefined);
+    setR90ViewerSearch(undefined);
     setIsR90ViewerOpen(true);
   };
 
@@ -907,10 +905,10 @@ export const PerformanceActionsDialog = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => openAiSearch(action)}
-                          title="AI Search for Rating"
+                          onClick={() => openR90Viewer()}
+                          title="R90 Ratings Reference"
                         >
-                          <Search className="w-4 h-4 text-purple-600" />
+                          <Search className="w-4 h-4 text-primary" />
                         </Button>
                         {/* Record Stat button - admin only */}
                         {isAdmin && action.id && (
@@ -985,14 +983,12 @@ export const PerformanceActionsDialog = ({
         onOpenChange={(open) => {
           setIsR90ViewerOpen(open);
           if (!open) {
-            setAiSearchAction(null);
             setR90ViewerCategory(undefined);
             setR90ViewerSearch(undefined);
           }
         }}
         initialCategory={r90ViewerCategory}
         searchTerm={r90ViewerSearch}
-        prefilledSearch={aiSearchAction}
       />
 
       {/* Actions By Type Dialog */}
