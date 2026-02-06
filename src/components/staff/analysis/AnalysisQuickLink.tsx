@@ -74,6 +74,14 @@ export const AnalysisQuickLink = ({
     fetchPlayers();
   }, []);
 
+  // Auto-apply when fixture is selected
+  useEffect(() => {
+    if (selectedPlayerId && selectedPlayerId !== "none" && 
+        selectedFixtureId && selectedFixtureId !== "none") {
+      handleApplyFixture();
+    }
+  }, [selectedFixtureId]);
+
   useEffect(() => {
     if (selectedPlayerId && selectedPlayerId !== "none") {
       fetchPlayerFixtures(selectedPlayerId);
@@ -171,74 +179,57 @@ export const AnalysisQuickLink = ({
   };
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="mb-4">
-      <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-risegold/20 rounded-lg hover:bg-risegold/30 transition-colors">
-        <div className="flex items-center gap-2">
-          <Link2 className="w-4 h-4" />
-          <h3 className="font-semibold">QUICK LINK</h3>
-          <span className="text-sm text-muted-foreground">(Import from fixture)</span>
+    <div className="mb-4 p-3 bg-risegold/10 border border-risegold/30 rounded-lg">
+      <div className="flex items-center gap-2 mb-3">
+        <Link2 className="w-4 h-4 text-primary" />
+        <h3 className="font-semibold text-sm">QUICK LINK TO FIXTURE</h3>
+      </div>
+      <p className="text-xs text-muted-foreground mb-3">
+        Select a player and fixture to automatically import match details.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <Label className="text-xs">Player</Label>
+          <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId} disabled={loadingPlayers}>
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder="Select a player" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Select a player</SelectItem>
+              {players.map((player) => (
+                <SelectItem key={player.id} value={player.id}>
+                  {player.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <ChevronDown className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="pt-4 space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Select a player and their fixture to automatically import match details.
+
+        <div>
+          <Label className="text-xs">Fixture</Label>
+          <Select value={selectedFixtureId} onValueChange={setSelectedFixtureId} disabled={loadingFixtures || playerFixtures.length === 0}>
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder={loadingFixtures ? "Loading..." : playerFixtures.length === 0 ? "No fixtures" : "Select a fixture"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Select a fixture</SelectItem>
+              {playerFixtures.map((fixture) => (
+                <SelectItem key={fixture.id} value={fixture.id}>
+                  {formatFixtureLabel(fixture)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {selectedFixtureId !== "none" && (
+        <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+          <Link2 className="w-3 h-3" />
+          Match details imported automatically
         </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label>Player</Label>
-            <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId} disabled={loadingPlayers}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a player" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Select a player</SelectItem>
-                {players.map((player) => (
-                  <SelectItem key={player.id} value={player.id}>
-                    {player.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Fixture</Label>
-            <Select value={selectedFixtureId} onValueChange={setSelectedFixtureId} disabled={loadingFixtures || playerFixtures.length === 0}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a fixture" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Select a fixture</SelectItem>
-                {playerFixtures.map((fixture) => (
-                  <SelectItem key={fixture.id} value={fixture.id}>
-                    {formatFixtureLabel(fixture)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <Button 
-          onClick={handleApplyFixture} 
-          disabled={selectedFixtureId === "none" || loadingFixtures}
-          className="w-full"
-        >
-          {loadingFixtures ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Loading...
-            </>
-          ) : (
-            <>
-              <Link2 className="w-4 h-4 mr-2" />
-              Import Match Details
-            </>
-          )}
-        </Button>
-      </CollapsibleContent>
-    </Collapsible>
+      )}
+    </div>
   );
 };

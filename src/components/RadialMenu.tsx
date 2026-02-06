@@ -931,7 +931,7 @@ export const RadialMenu = () => {
             <img
               src={riseLogoBlack}
               alt="RISE"
-              className="object-contain"
+              className="object-contain light:scale-[0.8]"
               style={{ width: '180%', height: '180%' }}
             />
           </div>

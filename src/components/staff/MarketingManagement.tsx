@@ -237,63 +237,63 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Collapsible Sections */}
       <Accordion 
         type="multiple" 
         value={openSections} 
         onValueChange={setOpenSections}
-        className="space-y-4"
+        className="space-y-3 sm:space-y-4"
       >
         {/* SCHEDULE Section */}
         <AccordionItem value="schedule" className="border rounded-lg">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
+          <AccordionTrigger className="px-3 sm:px-4 py-2 sm:py-3 hover:no-underline">
             <div className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-primary" />
-              <span className="text-lg font-semibold">SCHEDULE</span>
+              <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              <span className="text-base sm:text-lg font-semibold">SCHEDULE</span>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
+          <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4">
             <ScheduleManager canManage={canManage} />
           </AccordionContent>
         </AccordionItem>
 
         {/* RESOURCES Section */}
         <AccordionItem value="resources" className="border rounded-lg">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
+          <AccordionTrigger className="px-3 sm:px-4 py-2 sm:py-3 hover:no-underline">
             <div className="flex items-center gap-2">
-              <Folder className="w-5 h-5 text-primary" />
-              <span className="text-lg font-semibold">RESOURCES</span>
+              <Folder className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              <span className="text-base sm:text-lg font-semibold">RESOURCES</span>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
+          <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4">
             <MarketingResources canManage={canManage} />
           </AccordionContent>
         </AccordionItem>
 
         {/* GALLERY Section */}
         <AccordionItem value="gallery" className="border rounded-lg">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
+          <AccordionTrigger className="px-3 sm:px-4 py-2 sm:py-3 hover:no-underline">
             <div className="flex items-center gap-2">
-              <Image className="w-5 h-5 text-primary" />
-              <span className="text-lg font-semibold">GALLERY</span>
+              <Image className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              <span className="text-base sm:text-lg font-semibold">GALLERY</span>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
+          <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Marketing Gallery</CardTitle>
-                <CardDescription>Upload and manage images and videos for marketing</CardDescription>
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-lg sm:text-xl">Marketing Gallery</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Upload and manage images and videos for marketing</CardDescription>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="videos" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
-                    <TabsTrigger value="images">
-                      <Image className="w-4 h-4 mr-2" />
+                  <TabsList className="grid w-full grid-cols-2 mb-3 sm:mb-4">
+                    <TabsTrigger value="images" className="text-xs sm:text-sm">
+                      <Image className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                       Images
                     </TabsTrigger>
-                    <TabsTrigger value="videos">
-                      <Play className="w-4 h-4 mr-2" />
+                    <TabsTrigger value="videos" className="text-xs sm:text-sm">
+                      <Play className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                       Videos
                     </TabsTrigger>
                   </TabsList>

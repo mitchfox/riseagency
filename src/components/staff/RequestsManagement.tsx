@@ -182,16 +182,17 @@ export const RequestsManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bebas uppercase tracking-wider">Player Requests</h2>
-          <p className="text-sm text-muted-foreground">Manage player search criteria displayed on the Agent Requests page</p>
+          <h2 className="text-xl sm:text-2xl font-bebas uppercase tracking-wider">Player Requests</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">Manage player search criteria</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button asChild variant="outline" size="sm">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Button asChild variant="outline" size="sm" className="text-xs sm:text-sm">
             <Link to="/agent-requests" target="_blank">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              View Public Page
+              <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">View Public Page</span>
+              <span className="sm:hidden">View</span>
             </Link>
           </Button>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
@@ -300,7 +301,7 @@ export const RequestsManagement = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
           {requests.map((request) => (
             <Card key={request.id} className={`${!request.is_visible ? 'opacity-60' : ''}`}>
               <CardHeader className="pb-3">
