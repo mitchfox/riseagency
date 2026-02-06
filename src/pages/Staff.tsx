@@ -847,7 +847,7 @@ const Staff = () => {
             <img 
               src={theme === 'light' ? '/RISEBlack.png' : '/RISEWhite.png'}
               alt="RISE"
-              className={theme === 'light' ? "h-20 w-auto" : "h-10 w-auto"}
+              className={theme === 'light' ? "h-16 w-auto" : "h-10 w-auto"}
             />
             <div className="flex items-center gap-2">
               {user && <StaffNotificationsDropdown userId={user.id} />}

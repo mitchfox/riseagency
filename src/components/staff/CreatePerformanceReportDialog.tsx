@@ -134,7 +134,7 @@ export const CreatePerformanceReportDialog = ({
   const [r90ViewerCategory, setR90ViewerCategory] = useState<string | undefined>(undefined);
   const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
   const [isFillingScores, setIsFillingScores] = useState(false);
-  const [aiSearchAction, setAiSearchAction] = useState<{ type: string; context: string } | null>(null);
+  const [actionSearchFilters, setActionSearchFilters] = useState<Record<number, string>>({});
   const [isByActionDialogOpen, setIsByActionDialogOpen] = useState(false);
   const [unifiedStats, setUnifiedStats] = useState<UnifiedStat[]>([]);
 
@@ -215,13 +215,23 @@ export const CreatePerformanceReportDialog = ({
     setIsR90ViewerOpen(true);
   };
 
-  const openAiSearch = (actionIndex: number) => {
+  const openR90Viewer = (actionIndex: number) => {
     const action = actions[actionIndex];
-    setAiSearchAction({
-      type: action.action_type || '',
-      context: action.action_description || ''
-    });
+    const category = getR90CategoryFromAction(action.action_type || '', action.action_description || '');
+    setR90ViewerCategory(category);
+    setR90ViewerSearch(action.action_type || '');
     setIsR90ViewerOpen(true);
+  };
+
+  // Filter suggested scores based on action-level search
+  const getFilteredScores = (index: number) => {
+    const scores = previousScores[index] || [];
+    const filter = actionSearchFilters[index]?.toLowerCase().trim();
+    if (!filter) return scores;
+    return scores.filter(s => 
+      s.title?.toLowerCase().includes(filter) || 
+      s.description?.toLowerCase().includes(filter)
+    );
   };
 
   // Dynamic stats based on position
@@ -1671,13 +1681,13 @@ export const CreatePerformanceReportDialog = ({
                     <span className="font-semibold text-sm">Action #{action.action_number}</span>
                     <div className="flex gap-1">
                       <Button
-                        onClick={() => openAiSearch(index)}
+                        onClick={() => openR90Viewer(index)}
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8"
-                        title="AI Search for Rating"
+                        title="R90 Ratings Reference"
                       >
-                        <Search className="h-4 w-4 text-purple-600" />
+                        <Search className="h-4 w-4 text-primary" />
                       </Button>
                       {/* Record Stat button - mobile */}
                       <ActionStatRecorder
@@ -1693,9 +1703,9 @@ export const CreatePerformanceReportDialog = ({
                         disabled={isFillingScores}
                       >
                         {isFillingScores ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
                         ) : (
-                          <Sparkles className="h-4 w-4 text-blue-600" />
+                          <Sparkles className="h-4 w-4 text-primary" />
                         )}
                       </Button>
                       {action.id ? (
@@ -1778,13 +1788,20 @@ export const CreatePerformanceReportDialog = ({
                     />
                     {previousScores[index] && previousScores[index].length > 0 && (
                       <Collapsible defaultOpen={false}>
-                        <CollapsibleTrigger className="text-[10px] mt-1 p-2 rounded bg-muted/50 font-medium w-full text-left flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                          <span className="text-[9px]">Suggested scores from R90 ({previousScores[index].length})</span>
+                        <CollapsibleTrigger className="text-[9px] mt-1 p-1.5 rounded bg-muted/50 font-medium w-full text-left flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors text-muted-foreground">
+                          <span>R90 scores ({previousScores[index].length})</span>
                           <ChevronDown className="h-3 w-3" />
                         </CollapsibleTrigger>
-                        <CollapsibleContent className="text-[10px] p-2 rounded bg-muted/50 font-medium mt-1" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                          <div className="space-y-1">
-                            {previousScores[index].map((item, scoreIdx) => {
+                        <CollapsibleContent className="text-[10px] p-2 rounded bg-muted/50 mt-1 space-y-2">
+                          {/* Quick search for this action's scores */}
+                          <Input
+                            value={actionSearchFilters[index] || ''}
+                            onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
+                            placeholder="Filter scores..."
+                            className="h-7 text-xs"
+                          />
+                          <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {getFilteredScores(index).map((item, scoreIdx) => {
                               const isSelected = selectedScores[index]?.has(scoreIdx) ?? false;
                               return (
                                 <div key={scoreIdx} className="flex items-start gap-2">
@@ -1804,12 +1821,15 @@ export const CreatePerformanceReportDialog = ({
                                     }}
                                     className="mt-0.5"
                                   />
-                                  <label className="font-mono flex-1 cursor-pointer">
+                                  <label className="font-mono flex-1 cursor-pointer text-muted-foreground">
                                     {item.description} {typeof item.score === 'number' ? item.score.toFixed(4) : item.score}
                                   </label>
                                 </div>
                               );
                             })}
+                            {getFilteredScores(index).length === 0 && (
+                              <p className="text-muted-foreground text-center py-1">No matching scores</p>
+                            )}
                           </div>
                         </CollapsibleContent>
                       </Collapsible>
@@ -1887,13 +1907,13 @@ export const CreatePerformanceReportDialog = ({
                       <td className="p-2">
                         <div className="flex gap-1">
                           <Button
-                            onClick={() => openAiSearch(index)}
+                            onClick={() => openR90Viewer(index)}
                             size="icon"
                             variant="ghost"
                             className="h-8 w-8"
-                            title="AI Search for Rating"
+                            title="R90 Ratings Reference"
                           >
-                            <Search className="h-4 w-4 text-purple-600" />
+                            <Search className="h-4 w-4 text-primary" />
                           </Button>
                           {/* Record Stat button */}
                           <ActionStatRecorder
@@ -1909,9 +1929,9 @@ export const CreatePerformanceReportDialog = ({
                             disabled={isFillingScores}
                           >
                             {isFillingScores ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                              <Loader2 className="h-4 w-4 animate-spin text-primary" />
                             ) : (
-                              <Sparkles className="h-4 w-4 text-blue-600" />
+                              <Sparkles className="h-4 w-4 text-primary" />
                             )}
                           </Button>
                           {action.id ? (
@@ -1946,72 +1966,66 @@ export const CreatePerformanceReportDialog = ({
                     </tr>
                     {previousScores[index] && previousScores[index].length > 0 && (
                       <tr>
-                        <td colSpan={7} className="p-2 bg-muted/30">
-                          <div className="flex justify-between items-center mb-1">
-                            <Label className="text-xs text-muted-foreground">Suggested Scores from R90</Label>
-                            {previousScores[index].length > 1 && (
-                              <button
-                                onClick={() => {
-                                  const newExpanded = new Set(expandedScores);
-                                  if (expandedScores.has(index)) {
-                                    newExpanded.delete(index);
-                                  } else {
-                                    newExpanded.add(index);
-                                  }
-                                  setExpandedScores(newExpanded);
-                                }}
-                                className="text-primary hover:underline flex items-center gap-1"
-                              >
-                                {expandedScores.has(index) ? (
-                                  <>Collapse <ChevronUp className="h-3 w-3" /></>
-                                ) : (
-                                  <>See all ({previousScores[index].length}) <ChevronDown className="h-3 w-3" /></>
+                        <td colSpan={7} className="p-0">
+                          <Collapsible defaultOpen={false}>
+                            <CollapsibleTrigger className="text-[10px] w-full px-2 py-1.5 bg-muted/30 text-left flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors text-muted-foreground">
+                              <span>R90 scores ({previousScores[index].length})</span>
+                              <ChevronDown className="h-3 w-3" />
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="p-2 bg-muted/20 space-y-2">
+                              {/* Quick search for this action's scores */}
+                              <Input
+                                value={actionSearchFilters[index] || ''}
+                                onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
+                                placeholder="Filter scores..."
+                                className="h-7 text-xs max-w-xs"
+                              />
+                              <div className="space-y-1 max-h-40 overflow-y-auto">
+                                {getFilteredScores(index).map((item, scoreIdx) => {
+                                  const isSelected = selectedScores[index]?.has(scoreIdx) ?? false;
+                                  return (
+                                    <div key={scoreIdx} className="flex items-start gap-2">
+                                      <Checkbox
+                                        checked={isSelected}
+                                        onCheckedChange={(checked) => {
+                                          const newSelected = { ...selectedScores };
+                                          if (!newSelected[index]) {
+                                            newSelected[index] = new Set();
+                                          }
+                                          if (checked) {
+                                            newSelected[index].add(scoreIdx);
+                                          } else {
+                                            newSelected[index].delete(scoreIdx);
+                                          }
+                                          setSelectedScores(newSelected);
+                                          
+                                          // Calculate sum of selected scores and update action
+                                          const selectedIndices = checked 
+                                            ? [...Array.from(newSelected[index] || []), scoreIdx]
+                                            : Array.from(newSelected[index] || []).filter(i => i !== scoreIdx);
+                                          
+                                          const totalScore = selectedIndices.reduce((sum, idx) => {
+                                            const score = previousScores[index][idx]?.score;
+                                            const numScore = typeof score === 'number' ? score : (typeof score === 'string' && !isNaN(parseFloat(score)) ? parseFloat(score) : 0);
+                                            return sum + numScore;
+                                          }, 0);
+                                          
+                                          updateAction(index, "action_score", totalScore.toString());
+                                        }}
+                                        className="mt-0.5"
+                                      />
+                                      <label className="font-mono flex-1 cursor-pointer text-xs text-muted-foreground">
+                                        {item.title} {formatScoreWithFrequency(item.score)}
+                                      </label>
+                                    </div>
+                                  );
+                                })}
+                                {getFilteredScores(index).length === 0 && (
+                                  <p className="text-muted-foreground text-center py-1 text-xs">No matching scores</p>
                                 )}
-                              </button>
-                            )}
-                          </div>
-                          <div className="space-y-1">
-                            {(expandedScores.has(index) ? previousScores[index] : previousScores[index].slice(0, 1)).map((item, scoreIdx) => {
-                              const actualIdx = expandedScores.has(index) ? scoreIdx : 0;
-                              const isSelected = selectedScores[index]?.has(actualIdx) ?? false;
-                              return (
-                                <div key={scoreIdx} className="flex items-start gap-2">
-                                  <Checkbox
-                                    checked={isSelected}
-                                    onCheckedChange={(checked) => {
-                                      const newSelected = { ...selectedScores };
-                                      if (!newSelected[index]) {
-                                        newSelected[index] = new Set();
-                                      }
-                                      if (checked) {
-                                        newSelected[index].add(actualIdx);
-                                      } else {
-                                        newSelected[index].delete(actualIdx);
-                                      }
-                                      setSelectedScores(newSelected);
-                                      
-                                      // Calculate sum of selected scores and update action
-                                      const selectedIndices = checked 
-                                        ? [...Array.from(newSelected[index] || []), actualIdx]
-                                        : Array.from(newSelected[index] || []).filter(i => i !== actualIdx);
-                                      
-                                      const totalScore = selectedIndices.reduce((sum, idx) => {
-                                        const score = previousScores[index][idx]?.score;
-                                        const numScore = typeof score === 'number' ? score : (typeof score === 'string' && !isNaN(parseFloat(score)) ? parseFloat(score) : 0);
-                                        return sum + numScore;
-                                      }, 0);
-                                      
-                                      updateAction(index, "action_score", totalScore.toString());
-                                    }}
-                                    className="mt-0.5"
-                                  />
-                                  <label className="font-mono flex-1 cursor-pointer">
-                                    {item.title} {formatScoreWithFrequency(item.score)}
-                                  </label>
-                                </div>
-                              );
-                            })}
-                          </div>
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
                         </td>
                       </tr>
                     )}
@@ -2137,14 +2151,12 @@ export const CreatePerformanceReportDialog = ({
         onOpenChange={(open) => {
           setIsR90ViewerOpen(open);
           if (!open) {
-            setAiSearchAction(null);
             setR90ViewerCategory(undefined);
             setR90ViewerSearch(undefined);
           }
         }}
         initialCategory={r90ViewerCategory}
         searchTerm={r90ViewerSearch}
-        prefilledSearch={aiSearchAction}
       />
 
       {/* Actions By Type Dialog */}

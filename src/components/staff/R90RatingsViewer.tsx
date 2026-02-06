@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, LineChart, Search, Sparkles, ChevronDown } from "lucide-react";
+import { LineChart, Search, ChevronDown } from "lucide-react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,6 @@ interface R90RatingsViewerProps {
   onOpenChange: (open: boolean) => void;
   initialCategory?: string;
   searchTerm?: string;
-  prefilledSearch?: { type: string; context: string } | null;
 }
 
 const R90_CATEGORIES = [
@@ -46,14 +45,10 @@ const R90_CATEGORIES = [
   'Shots'
 ];
 
-export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTerm, prefilledSearch }: R90RatingsViewerProps) => {
+export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTerm }: R90RatingsViewerProps) => {
   const [ratings, setRatings] = useState<R90Rating[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [aiSearching, setAiSearching] = useState(false);
-  const [actionType, setActionType] = useState('');
-  const [actionContext, setActionContext] = useState('');
-  const [showAiSearch, setShowAiSearch] = useState(false);
   const [expandedRatings, setExpandedRatings] = useState<Set<string>>(new Set());
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expandedSubcategories, setExpandedSubcategories] = useState<Set<string>>(new Set());
@@ -66,14 +61,12 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
     }
   }, [initialCategory, open]);
 
-  // Prefill search and auto-expand when prefilledSearch is provided
+  // Pre-fill search filter when searchTerm prop provided
   useEffect(() => {
-    if (prefilledSearch && open) {
-      setActionType(prefilledSearch.type);
-      setActionContext(prefilledSearch.context);
-      setShowAiSearch(true);
+    if (searchTerm && open) {
+      setSearchFilter(searchTerm);
     }
-  }, [prefilledSearch, open]);
+  }, [searchTerm, open]);
 
   useEffect(() => {
     if (open) {
@@ -160,58 +153,6 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
       console.error('Error fetching R90 ratings:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleAiSearch = async () => {
-    if (!actionType.trim()) {
-      toast.error("Please enter an action type");
-      return;
-    }
-
-    setAiSearching(true);
-    try {
-      // Fetch all ratings to pass to AI
-      const { data: allRatings, error: ratingsError } = await supabase
-        .from('r90_ratings')
-        .select('*');
-
-      if (ratingsError) throw ratingsError;
-
-      // Use AI to find the most relevant rating
-      const { data, error } = await supabase.functions.invoke('find-r90-rating', {
-        body: {
-          actionType,
-          actionContext,
-          ratings: allRatings?.map(r => ({
-            id: r.id,
-            title: r.title,
-            description: r.description,
-            category: r.category,
-            content: r.content
-          }))
-        }
-      });
-
-      if (error) {
-        console.error('AI search error:', error);
-        toast.error("Failed to search ratings: " + error.message);
-        return;
-      }
-
-      if (data?.matchedRatings && data.matchedRatings.length > 0) {
-        const matchedIds = data.matchedRatings.map((r: any) => r.id);
-        const matchedRatings = allRatings?.filter(r => matchedIds.includes(r.id)) || [];
-        setRatings(matchedRatings);
-        toast.success(`Found ${matchedRatings.length} relevant rating${matchedRatings.length > 1 ? 's' : ''}`);
-      } else {
-        toast.info("No matching ratings found. Try different terms.");
-      }
-    } catch (error: any) {
-      console.error('Error in AI search:', error);
-      toast.error("Failed to search ratings");
-    } finally {
-      setAiSearching(false);
     }
   };
 
