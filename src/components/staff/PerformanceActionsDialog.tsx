@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Plus, Search, Loader2, Sparkles, ChevronDown, ChevronUp, List, Video } from "lucide-react";
+import { Trash2, Plus, Search, Loader2, ChevronDown, ChevronUp, List, Video } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { R90RatingsViewer } from "./R90RatingsViewer";
 import { ActionStatRecorder, aggregateRecordedStats, RecordedStat } from "./ActionStatRecorder";
@@ -69,7 +69,7 @@ export const PerformanceActionsDialog = ({
   const [r90ViewerCategory, setR90ViewerCategory] = useState<string | undefined>(undefined);
   const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
   
-  const [fillingScores, setFillingScores] = useState(false);
+  
   const [isByActionDialogOpen, setIsByActionDialogOpen] = useState(false);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>("");
@@ -369,50 +369,7 @@ export const PerformanceActionsDialog = ({
     }
   };
 
-  const fillSingleActionScore = async (action: PerformanceAction) => {
-    if (!action.action_type || !action.action_description) {
-      toast.error("Action needs type and description to fill score");
-      return;
-    }
-
-    setFillingScores(true);
-    try {
-      // Call the fill-action-scores edge function with single action
-      const { data, error } = await supabase.functions.invoke('fill-action-scores', {
-        body: { actions: [{ ...action, index: 0 }] }
-      });
-
-      if (error) {
-        console.error('Edge function error:', error);
-        throw error;
-      }
-
-      if (!data?.scores || data.scores.length === 0) {
-        throw new Error("No score returned from function");
-      }
-
-      const score = data.scores[0]?.score || 0;
-      
-      // Update the action in database
-      if (!action.id) return;
-      
-      const { error: updateError } = await supabase
-        .from("performance_report_actions")
-        .update({ action_score: score })
-        .eq("id", action.id);
-
-      if (updateError) throw updateError;
-      
-      toast.success(`Score filled: ${score.toFixed(5)}`);
-      await fetchActions();
-      
-    } catch (error: any) {
-      console.error('Error filling score:', error);
-      toast.error("Failed to fill score");
-    } finally {
-      setFillingScores(false);
-    }
-  };
+  // AI fill score functionality removed - users search R90 ratings manually
 
   const handleDeleteAction = async (actionId: string) => {
     try {
@@ -919,19 +876,6 @@ export const PerformanceActionsDialog = ({
                         )}
                         {isAdmin && (
                           <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => fillSingleActionScore(action)}
-                              title="Fill Score with AI"
-                              disabled={fillingScores}
-                            >
-                              {fillingScores ? (
-                                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                              ) : (
-                                <Sparkles className="w-4 h-4 text-blue-600" />
-                              )}
-                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
