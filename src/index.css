@@ -68,40 +68,40 @@ All colors MUST be HSL.
   }
 
   .light {
-    --background: 40 6% 94%; /* Slightly darker cream for better contrast */
+    --background: 40 6% 92%; /* Cream background */
     --foreground: 0 0% 10%; /* Near black for text */
-    --card: 0 0% 100%; /* White cards for contrast against cream background */
-    --card-foreground: 0 0% 10%;
+    --card: 0 0% 8%; /* Dark cards for contrast - main sections have black bg */
+    --card-foreground: 0 0% 95%; /* Light text on dark cards */
 
     --popover: 0 0% 8%; /* Dark popover for contrast */
     --popover-foreground: 0 0% 95%;
 
-    --primary: 43 55% 42%; /* Rise gold as primary - darker for better visibility */
-    --primary-foreground: 0 0% 100%; /* White text on gold */
+    --primary: 43 55% 50%; /* Rise gold as primary */
+    --primary-foreground: 0 0% 0%; /* Black text on gold */
 
-    --secondary: 0 0% 12%; /* Dark secondary */
+    --secondary: 0 0% 15%; /* Dark secondary */
     --secondary-foreground: 0 0% 95%;
 
-    --muted: 40 6% 90%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 0 0% 15%; /* Dark muted for visibility */
+    --muted-foreground: 43 40% 70%; /* Gold-tinted muted text */
 
-    --accent: 43 60% 45%; /* Saturated gold accent */
+    --accent: 43 55% 50%; /* Saturated gold accent */
     --accent-foreground: 0 0% 0%;
 
     --destructive: 0 84% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 78%; /* Visible grey border for clear separation */
-    --input: 0 0% 92%; /* Light grey input background */
-    --ring: 43 55% 42%; /* Gold ring for focus */
+    --border: 43 40% 45%; /* Gold-tinted border for visibility */
+    --input: 0 0% 15%; /* Dark input background */
+    --ring: 43 55% 50%; /* Gold ring for focus */
 
     /* Custom design tokens for light mode */
-    --gold: 43 60% 45%;
-    --gold-muted: 43 45% 50%;
-    --text-primary: 0 0% 10%;
-    --text-secondary: 0 0% 40%; /* Grey secondary text */
+    --gold: 43 55% 50%;
+    --gold-muted: 43 45% 60%;
+    --text-primary: 0 0% 95%;
+    --text-secondary: 43 40% 70%; /* Gold secondary text */
     --bg-dark: 0 0% 5%; /* Black for headers */
-    --bg-card: 0 0% 100%; /* White cards */
+    --bg-card: 0 0% 8%; /* Dark cards */
   }
 }
 
