@@ -127,7 +127,7 @@ export const CreatePerformanceReportDialog = ({
   const [isAddStatDialogOpen, setIsAddStatDialogOpen] = useState(false);
   const [hiddenStatKeys, setHiddenStatKeys] = useState<string[]>([]);
   const [actionTypes, setActionTypes] = useState<string[]>([]);
-  const [previousScores, setPreviousScores] = useState<Record<number, Array<{score: string | number | null, title: string, description: string}>>>({});
+  const [allR90Ratings, setAllR90Ratings] = useState<Array<{score: string | number | null, title: string, description: string}>>([]);
   const [expandedScores, setExpandedScores] = useState<Set<number>>(new Set());
   const [selectedScores, setSelectedScores] = useState<Record<number, Set<number>>>({}); // actionIndex -> Set of score indices
   const [isR90ViewerOpen, setIsR90ViewerOpen] = useState(false);
@@ -223,15 +223,36 @@ export const CreatePerformanceReportDialog = ({
     setIsR90ViewerOpen(true);
   };
 
-  // Filter suggested scores based on action-level search
+  // Filter R90 ratings based on action-level search - requires search term
   const getFilteredScores = (index: number) => {
-    const scores = previousScores[index] || [];
     const filter = actionSearchFilters[index]?.toLowerCase().trim();
-    if (!filter) return scores;
-    return scores.filter(s => 
+    if (!filter) return []; // Don't show anything until user types a search
+    return allR90Ratings.filter(s => 
       s.title?.toLowerCase().includes(filter) || 
       s.description?.toLowerCase().includes(filter)
     );
+  };
+  
+  // Fetch all R90 ratings once for local filtering
+  const fetchAllR90Ratings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("r90_ratings")
+        .select("score, description, title")
+        .not("score", "is", null);
+      
+      if (error) throw error;
+      
+      if (data) {
+        setAllR90Ratings(data.map(item => ({
+          score: item.score,
+          title: item.title || "",
+          description: item.description || ""
+        })));
+      }
+    } catch (error) {
+      console.error("Error fetching R90 ratings:", error);
+    }
   };
 
   // Dynamic stats based on position
@@ -299,6 +320,7 @@ export const CreatePerformanceReportDialog = ({
     if ((inline || open) && playerId) {
       console.log('CreatePerformanceReportDialog opened for player:', playerId);
       fetchActionTypes();
+      fetchAllR90Ratings(); // Fetch all R90 ratings once for local filtering
       if (analysisId) {
         // Edit mode
         setIsEditMode(true);
@@ -879,34 +901,7 @@ export const CreatePerformanceReportDialog = ({
           }))
         );
         
-        // Fetch category scores for each action based on mapping
-        actionsData.forEach(async (action, index) => {
-          if (action.action_type) {
-            try {
-              const { data: mappings } = await supabase
-                .from('action_r90_category_mappings')
-                .select('r90_category, r90_subcategory, selected_rating_ids')
-                .eq('action_type', action.action_type);
-              
-              // Prioritize most specific mapping (with selected ratings, then subcategory, then category-only)
-              const mapping = mappings?.find(m => m.selected_rating_ids && m.selected_rating_ids.length > 0) || 
-                             mappings?.find(m => m.r90_subcategory !== null) || 
-                             mappings?.[0];
-              
-              if (mapping?.r90_category) {
-                await fetchCategoryScores(index, mapping.r90_category, mapping.r90_subcategory, mapping.selected_rating_ids || null);
-              } else {
-                // Fallback to keyword-based detection
-                const category = getR90CategoryFromAction(action.action_type, action.action_description || '');
-                if (category && category !== 'all') {
-                  await fetchCategoryScores(index, category);
-                }
-              }
-            } catch (error) {
-              console.error('Error fetching scores for action:', error);
-            }
-          }
-        });
+        // R90 scores are now fetched once and filtered locally - no per-action fetching needed
       }
     } catch (error: any) {
       console.error("Error fetching existing data:", error);
@@ -1041,44 +1036,7 @@ export const CreatePerformanceReportDialog = ({
     newActions[index] = { ...newActions[index], [field]: value };
     setActions(newActions);
 
-    // If action_type changed, fetch category scores and mapping
-    if (field === "action_type" && typeof value === 'string' && value) {
-      const trimmedValue = value.trim();
-      console.log(`Action type changed to: "${trimmedValue}" for action index ${index}`);
-      
-      // Fetch R90 category mapping for this action type
-      try {
-        const { data: mappings } = await supabase
-          .from('action_r90_category_mappings')
-          .select('r90_category, r90_subcategory, selected_rating_ids')
-          .eq('action_type', trimmedValue);
-        
-        // Prioritize most specific mapping (with selected ratings, then subcategory, then category-only)
-        const mapping = mappings?.find(m => m.selected_rating_ids && m.selected_rating_ids.length > 0) || 
-                       mappings?.find(m => m.r90_subcategory !== null) || 
-                       mappings?.[0];
-        
-        if (mapping?.r90_category) {
-          const mappingPath = `${mapping.r90_category}${mapping.r90_subcategory ? ' > ' + mapping.r90_subcategory : ''}${mapping.selected_rating_ids?.length ? ` (${mapping.selected_rating_ids.length} ratings)` : ''}`;
-          console.log(`Found category mapping: ${trimmedValue} -> ${mappingPath}`);
-          
-          // Fetch all scores for this R90 category hierarchy
-          await fetchCategoryScores(index, mapping.r90_category, mapping.r90_subcategory, mapping.selected_rating_ids || null);
-          
-          toast.success(`Suggested R90 category: ${mappingPath}`, {
-            description: 'Scores filtered by this category hierarchy'
-          });
-        } else {
-          // No mapping found, try keyword-based detection
-          const category = getR90CategoryFromAction(trimmedValue, '');
-          if (category && category !== 'all') {
-            await fetchCategoryScores(index, category);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching category mapping:', error);
-      }
-    }
+    // No longer auto-fetch category scores on action type change - user searches manually
   };
 
   // Extract keywords from description for better matching
@@ -1090,82 +1048,7 @@ export const CreatePerformanceReportDialog = ({
       .filter(word => word.length > 3 && !commonWords.includes(word));
   };
 
-  const fetchCategoryScores = async (actionIndex: number, category: string, subcategory: string | null = null, selectedRatingIds: string[] | null = null) => {
-    try {
-      // If specific rating IDs are selected, fetch only those
-      if (selectedRatingIds && selectedRatingIds.length > 0) {
-        const { data: r90Data, error: r90Error } = await supabase
-          .from("r90_ratings")
-          .select("score, description, title, category, subcategory")
-          .in("id", selectedRatingIds)
-          .not("score", "is", null);
-
-        if (r90Error) {
-          console.error("Error fetching R90 scores:", r90Error);
-          throw r90Error;
-        }
-
-        if (r90Data && r90Data.length > 0) {
-          const scores = r90Data.map(item => ({
-            score: item.score,
-            title: item.title || "",
-            description: item.description || ""
-          }));
-          
-          setPreviousScores(prev => ({
-            ...prev,
-            [actionIndex]: scores
-          }));
-        } else {
-          setPreviousScores(prev => ({
-            ...prev,
-            [actionIndex]: []
-          }));
-        }
-        return;
-      }
-
-      // Otherwise, build query based on mapping specificity
-      let query = supabase
-        .from("r90_ratings")
-        .select("score, description, title, category, subcategory")
-        .eq("category", category)
-        .not("score", "is", null);
-
-      // If subcategory is specified in mapping, filter by it
-      if (subcategory) {
-        query = query.eq("subcategory", subcategory);
-      }
-
-      const { data: r90Data, error: r90Error } = await query;
-
-      if (r90Error) {
-        console.error("Error fetching R90 scores:", r90Error);
-        throw r90Error;
-      }
-
-      if (r90Data && r90Data.length > 0) {
-        // Map R90 ratings to the format expected by the UI
-        const scores = r90Data.map(item => ({
-          score: item.score,
-          title: item.title || "",
-          description: item.description || ""
-        }));
-        
-        setPreviousScores(prev => ({
-          ...prev,
-          [actionIndex]: scores
-        }));
-      } else {
-        setPreviousScores(prev => ({
-          ...prev,
-          [actionIndex]: []
-        }));
-      }
-    } catch (error: any) {
-      console.error("Error fetching category scores:", error);
-    }
-  };
+  // fetchCategoryScores is no longer used - we fetch all R90 ratings once and filter locally
 
   const handleDelete = async () => {
     if (!analysisId) return;
@@ -1672,20 +1555,21 @@ export const CreatePerformanceReportDialog = ({
                       className="text-sm min-h-[60px]"
                       rows={2}
                     />
-                    {previousScores[index] && previousScores[index].length > 0 && (
-                      <Collapsible defaultOpen={false}>
-                        <CollapsibleTrigger className="text-[9px] mt-1 p-1.5 rounded bg-muted/50 font-medium w-full text-left flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors text-muted-foreground">
-                          <span>Suggested R90 Scores ({previousScores[index].length})</span>
-                          <ChevronDown className="h-3 w-3" />
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="text-[10px] p-2 rounded bg-muted/50 mt-1 space-y-2">
-                          {/* Quick search for this action's scores */}
-                          <Input
-                            value={actionSearchFilters[index] || ''}
-                            onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
-                            placeholder="Filter scores..."
-                            className="h-7 text-xs"
-                          />
+                    {/* Suggested R90 Scores - search based */}
+                    <Collapsible defaultOpen={false}>
+                      <CollapsibleTrigger className="text-[9px] mt-1 p-1.5 rounded bg-muted/50 font-medium w-full text-left flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors text-muted-foreground">
+                        <span>Suggested R90 Scores</span>
+                        <ChevronDown className="h-3 w-3" />
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="text-[10px] p-2 rounded bg-muted/50 mt-1 space-y-2">
+                        {/* Search input for R90 scores */}
+                        <Input
+                          value={actionSearchFilters[index] || ''}
+                          onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
+                          placeholder="Search R90 scores by action name..."
+                          className="h-7 text-xs"
+                        />
+                        {actionSearchFilters[index]?.trim() ? (
                           <div className="space-y-1 max-h-32 overflow-y-auto">
                             {getFilteredScores(index).map((item, scoreIdx) => {
                               const isSelected = selectedScores[index]?.has(scoreIdx) ?? false;
@@ -1708,7 +1592,7 @@ export const CreatePerformanceReportDialog = ({
                                     className="mt-0.5"
                                   />
                                   <label className="font-mono flex-1 cursor-pointer text-muted-foreground">
-                                    {item.description} {typeof item.score === 'number' ? item.score.toFixed(4) : item.score}
+                                    {item.title} {typeof item.score === 'number' ? item.score.toFixed(4) : item.score}
                                   </label>
                                 </div>
                               );
@@ -1717,9 +1601,11 @@ export const CreatePerformanceReportDialog = ({
                               <p className="text-muted-foreground text-center py-1">No matching scores</p>
                             )}
                           </div>
-                        </CollapsibleContent>
-                      </Collapsible>
-                    )}
+                        ) : (
+                          <p className="text-muted-foreground text-center py-1 text-[9px]">Type to search R90 scores</p>
+                        )}
+                      </CollapsibleContent>
+                    </Collapsible>
                   </div>
                 </div>
               ))}
@@ -1836,25 +1722,27 @@ export const CreatePerformanceReportDialog = ({
                         </div>
                       </td>
                     </tr>
-                    {previousScores[index] && previousScores[index].length > 0 && (
-                      <tr>
-                        <td colSpan={7} className="p-0">
-                          <Collapsible defaultOpen={false}>
-                            <CollapsibleTrigger className="text-[10px] w-full px-2 py-1.5 bg-muted/30 text-left flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors text-muted-foreground">
-                              <span>Suggested R90 Scores ({previousScores[index].length})</span>
-                              <ChevronDown className="h-3 w-3" />
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="p-2 bg-muted/20 space-y-2">
-                              {/* Quick search for this action's scores */}
-                              <Input
-                                value={actionSearchFilters[index] || ''}
-                                onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
-                                placeholder="Filter scores..."
-                                className="h-7 text-xs max-w-xs"
-                              />
+                    {/* Suggested R90 Scores - search based */}
+                    <tr>
+                      <td colSpan={7} className="p-0">
+                        <Collapsible defaultOpen={false}>
+                          <CollapsibleTrigger className="text-[10px] w-full px-2 py-1.5 bg-muted/30 text-left flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors text-muted-foreground">
+                            <span>Suggested R90 Scores</span>
+                            <ChevronDown className="h-3 w-3" />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="p-2 bg-muted/20 space-y-2">
+                            {/* Search input for R90 scores */}
+                            <Input
+                              value={actionSearchFilters[index] || ''}
+                              onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
+                              placeholder="Search R90 scores by action name..."
+                              className="h-7 text-xs max-w-xs"
+                            />
+                            {actionSearchFilters[index]?.trim() ? (
                               <div className="space-y-1 max-h-40 overflow-y-auto">
                                 {getFilteredScores(index).map((item, scoreIdx) => {
                                   const isSelected = selectedScores[index]?.has(scoreIdx) ?? false;
+                                  const filteredScores = getFilteredScores(index);
                                   return (
                                     <div key={scoreIdx} className="flex items-start gap-2">
                                       <Checkbox
@@ -1877,7 +1765,7 @@ export const CreatePerformanceReportDialog = ({
                                             : Array.from(newSelected[index] || []).filter(i => i !== scoreIdx);
                                           
                                           const totalScore = selectedIndices.reduce((sum, idx) => {
-                                            const score = previousScores[index][idx]?.score;
+                                            const score = filteredScores[idx]?.score;
                                             const numScore = typeof score === 'number' ? score : (typeof score === 'string' && !isNaN(parseFloat(score)) ? parseFloat(score) : 0);
                                             return sum + numScore;
                                           }, 0);
@@ -1896,11 +1784,13 @@ export const CreatePerformanceReportDialog = ({
                                   <p className="text-muted-foreground text-center py-1 text-xs">No matching scores</p>
                                 )}
                               </div>
-                            </CollapsibleContent>
-                          </Collapsible>
-                        </td>
-                      </tr>
-                    )}
+                            ) : (
+                              <p className="text-muted-foreground text-center py-1 text-[9px]">Type to search R90 scores</p>
+                            )}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      </td>
+                    </tr>
                     
                     {/* Insert Action & Update Row (Desktop) */}
                     <tr className="border-t border-dashed hover:bg-accent/50 transition-colors">
