@@ -267,20 +267,22 @@ export const VisionBoardSection = () => {
             return (
               <div 
                 key={item.id} 
-                className={`flex items-center gap-4 p-3 rounded-lg ${colors.bg} border ${colors.border}`}
+                className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 rounded-lg ${colors.bg} border ${colors.border}`}
               >
-                <div className={`p-2 rounded-md ${colors.bg} ${colors.text}`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className={`font-bold uppercase tracking-wide ${colors.text}`}>{item.category}</span>
-                  <span className="text-muted-foreground mx-2">→</span>
-                  <span className="text-foreground">{item.vision_statement}</span>
+                <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                  <div className={`p-2 rounded-md ${colors.bg} ${colors.text} shrink-0`}>
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className={`font-bold uppercase tracking-wide text-sm ${colors.text}`}>{item.category}</span>
+                    <span className="text-muted-foreground mx-1 sm:mx-2 hidden sm:inline">→</span>
+                    <p className="text-foreground text-sm sm:inline truncate sm:text-clip">{item.vision_statement}</p>
+                  </div>
                 </div>
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="shrink-0"
+                  className="shrink-0 self-end sm:self-auto"
                   onClick={() => {
                     setEditingVision(item);
                     setEditDialogOpen(true);
@@ -313,8 +315,8 @@ export const VisionBoardSection = () => {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CardContent className="pt-4 sm:pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {visionItems.map((item) => {
               const Icon = CATEGORY_ICONS[item.category] || Target;
               const colors = CATEGORY_COLORS[item.category] || { bg: "bg-muted", text: "text-muted-foreground", border: "border-border", gradient: "from-muted/20" };

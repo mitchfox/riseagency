@@ -1650,7 +1650,7 @@ export const CreatePerformanceReportDialog = ({
               id="performance-overview"
               value={performanceOverview}
               onChange={(e) => setPerformanceOverview(e.target.value)}
-              placeholder="Briefly summarize what improved, what to continue working on, key focus areas, etc."
+              placeholder="Briefly summarise what improved, what to continue working on, key focus areas, etc."
               rows={4}
               className="mt-2"
             />
@@ -1777,61 +1777,42 @@ export const CreatePerformanceReportDialog = ({
                       rows={2}
                     />
                     {previousScores[index] && previousScores[index].length > 0 && (
-                      <div className="text-[10px] mt-1 p-2 rounded bg-muted/50 font-medium" style={{ color: 'hsl(43, 49%, 61%)' }}>
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="font-semibold">R90 ratings for this action:</div>
-                          {previousScores[index].length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newExpanded = new Set(expandedScores);
-                                if (newExpanded.has(index)) {
-                                  newExpanded.delete(index);
-                                } else {
-                                  newExpanded.add(index);
-                                }
-                                setExpandedScores(newExpanded);
-                              }}
-                              className="text-primary hover:underline flex items-center gap-1"
-                            >
-                              {expandedScores.has(index) ? (
-                                <>Collapse <ChevronUp className="h-3 w-3" /></>
-                              ) : (
-                                <>See all ({previousScores[index].length}) <ChevronDown className="h-3 w-3" /></>
-                              )}
-                            </button>
-                          )}
-                        </div>
-                        <div className="space-y-1">
-                          {(expandedScores.has(index) ? previousScores[index] : previousScores[index].slice(0, 1)).map((item, scoreIdx) => {
-                            const actualIdx = expandedScores.has(index) ? scoreIdx : 0;
-                            const isSelected = selectedScores[index]?.has(actualIdx) ?? false;
-                            return (
-                              <div key={scoreIdx} className="flex items-start gap-2">
-                                <Checkbox
-                                  checked={isSelected}
-                                  onCheckedChange={(checked) => {
-                                    const newSelected = { ...selectedScores };
-                                    if (!newSelected[index]) {
-                                      newSelected[index] = new Set();
-                                    }
-                                    if (checked) {
-                                      newSelected[index].add(actualIdx);
-                                    } else {
-                                      newSelected[index].delete(actualIdx);
-                                    }
-                                    setSelectedScores(newSelected);
-                                  }}
-                                  className="mt-0.5"
-                                />
-                                <label className="font-mono flex-1 cursor-pointer">
-                                  {item.description} {typeof item.score === 'number' ? item.score.toFixed(4) : item.score}
-                                </label>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
+                      <Collapsible defaultOpen={false}>
+                        <CollapsibleTrigger className="text-[10px] mt-1 p-2 rounded bg-muted/50 font-medium w-full text-left flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors" style={{ color: 'hsl(43, 49%, 61%)' }}>
+                          <span className="text-[9px]">Suggested scores from R90 ({previousScores[index].length})</span>
+                          <ChevronDown className="h-3 w-3" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="text-[10px] p-2 rounded bg-muted/50 font-medium mt-1" style={{ color: 'hsl(43, 49%, 61%)' }}>
+                          <div className="space-y-1">
+                            {previousScores[index].map((item, scoreIdx) => {
+                              const isSelected = selectedScores[index]?.has(scoreIdx) ?? false;
+                              return (
+                                <div key={scoreIdx} className="flex items-start gap-2">
+                                  <Checkbox
+                                    checked={isSelected}
+                                    onCheckedChange={(checked) => {
+                                      const newSelected = { ...selectedScores };
+                                      if (!newSelected[index]) {
+                                        newSelected[index] = new Set();
+                                      }
+                                      if (checked) {
+                                        newSelected[index].add(scoreIdx);
+                                      } else {
+                                        newSelected[index].delete(scoreIdx);
+                                      }
+                                      setSelectedScores(newSelected);
+                                    }}
+                                    className="mt-0.5"
+                                  />
+                                  <label className="font-mono flex-1 cursor-pointer">
+                                    {item.description} {typeof item.score === 'number' ? item.score.toFixed(4) : item.score}
+                                  </label>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
                     )}
                   </div>
                 </div>

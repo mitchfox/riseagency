@@ -289,84 +289,23 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
         </DialogHeader>
 
         <div className="flex-1 flex flex-col space-y-4 min-h-0">
-          {/* AI-Powered Search - Collapsible */}
-          <Card className="border-2 border-purple-200 bg-purple-50/50 flex-shrink-0">
-            <CardHeader 
-              className="pb-3 cursor-pointer hover:bg-purple-100/30 transition-colors"
-              onClick={() => setShowAiSearch(!showAiSearch)}
-            >
-              <CardTitle className="text-sm flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-purple-600" />
-                  AI-Powered Search
-                </span>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                  {showAiSearch ? '−' : '+'}
-                </Button>
-              </CardTitle>
-              {!showAiSearch && (
-                <CardDescription className="text-xs">
-                  Click to search by action and context
-                </CardDescription>
-              )}
-            </CardHeader>
-            {showAiSearch && (
-              <CardContent className="space-y-3">
-                <div>
-                  <Label htmlFor="action-type" className="text-xs">Action Type *</Label>
-                  <Input
-                    id="action-type"
-                    value={actionType}
-                    onChange={(e) => setActionType(e.target.value)}
-                    placeholder="e.g., pass, tackle, dribble"
-                    className="text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="action-context" className="text-xs">Context & Details</Label>
-                  <Input
-                    id="action-context"
-                    value={actionContext}
-                    onChange={(e) => setActionContext(e.target.value)}
-                    placeholder="e.g., under pressure, in space, forward, backwards"
-                    className="text-sm"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={handleAiSearch} 
-                    disabled={aiSearching}
-                    className="flex-1"
-                    size="sm"
-                  >
-                    {aiSearching ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Searching...
-                      </>
-                    ) : (
-                      <>
-                        <Search className="w-4 h-4 mr-2" />
-                        Find Ratings
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setActionType('');
-                      setActionContext('');
-                      setShowAiSearch(false);
-                      fetchRatings();
-                    }}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Clear
-                  </Button>
-                </div>
-              </CardContent>
+          {/* Quick Search Filter - Primary search method */}
+          <div className="space-y-2 flex-shrink-0">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                placeholder="Quick search ratings by action name..."
+                className="pl-9 w-full"
+              />
+            </div>
+            {searchFilter && (
+              <p className="text-xs text-muted-foreground">
+                Showing ratings containing "{searchFilter}"
+              </p>
             )}
-          </Card>
+          </div>
 
           {/* Category Filter */}
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -381,25 +320,6 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
               ))}
             </SelectContent>
           </Select>
-
-          {/* Live Search Filter */}
-          <div className="space-y-2 flex-shrink-0">
-            <Label htmlFor="search-filter" className="text-sm font-medium">
-              Search Ratings
-            </Label>
-            <Input
-              id="search-filter"
-              value={searchFilter}
-              onChange={(e) => setSearchFilter(e.target.value)}
-              placeholder="Type to filter ratings..."
-              className="w-full"
-            />
-            {searchFilter && (
-              <p className="text-xs text-muted-foreground">
-                Showing ratings containing "{searchFilter}"
-              </p>
-            )}
-          </div>
 
           {/* Ratings List */}
           <div className="flex-1 min-h-0">

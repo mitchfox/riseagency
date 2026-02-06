@@ -451,25 +451,22 @@ export const ClubOutreachManagement = () => {
                   No outreach records yet. Click "Add Outreach" to create one.
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Club</TableHead>
-                      <TableHead>Players</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Latest Update</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <>
+                  {/* Mobile Card View */}
+                  <div className="block md:hidden space-y-3">
                     {filteredGroups.map(group => (
-                      <TableRow
+                      <Card 
                         key={group.clubName}
                         className="cursor-pointer hover:bg-muted/50"
                         onClick={() => handleOpenClubDetail(group)}
                       >
-                        <TableCell className="font-medium">{group.clubName}</TableCell>
-                        <TableCell>
+                        <CardContent className="p-4 space-y-2">
+                          <div className="flex items-start justify-between">
+                            <h4 className="font-semibold">{group.clubName}</h4>
+                            <Badge className={statusConfig[group.records[0]?.status]?.color || "bg-muted"}>
+                              {statusConfig[group.records[0]?.status]?.label || group.records[0]?.status}
+                            </Badge>
+                          </div>
                           <div className="flex flex-wrap gap-1">
                             {group.records.map(r => (
                               <Badge key={r.id} variant="outline" className="text-xs">
@@ -477,27 +474,73 @@ export const ClubOutreachManagement = () => {
                               </Badge>
                             ))}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          {group.contactName ? (
-                            <span>
+                          {group.contactName && (
+                            <p className="text-sm text-muted-foreground">
                               {group.contactName}
-                              {group.contactRole && <span className="text-muted-foreground"> ({group.contactRole})</span>}
-                            </span>
-                          ) : "-"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={statusConfig[group.records[0]?.status]?.color || "bg-muted"}>
-                            {statusConfig[group.records[0]?.status]?.label || group.records[0]?.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="max-w-[300px] truncate">
-                          {group.records[0]?.latest_update || "-"}
-                        </TableCell>
-                      </TableRow>
+                              {group.contactRole && ` (${group.contactRole})`}
+                            </p>
+                          )}
+                          {group.records[0]?.latest_update && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {group.records[0]?.latest_update}
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
                     ))}
-                  </TableBody>
-                </Table>
+                  </div>
+
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Club</TableHead>
+                          <TableHead>Players</TableHead>
+                          <TableHead>Contact</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Latest Update</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredGroups.map(group => (
+                          <TableRow
+                            key={group.clubName}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => handleOpenClubDetail(group)}
+                          >
+                            <TableCell className="font-medium">{group.clubName}</TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {group.records.map(r => (
+                                  <Badge key={r.id} variant="outline" className="text-xs">
+                                    {r.player?.name || "Unknown"}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {group.contactName ? (
+                                <span>
+                                  {group.contactName}
+                                  {group.contactRole && <span className="text-muted-foreground"> ({group.contactRole})</span>}
+                                </span>
+                              ) : "-"}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={statusConfig[group.records[0]?.status]?.color || "bg-muted"}>
+                                {statusConfig[group.records[0]?.status]?.label || group.records[0]?.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="max-w-[300px] truncate">
+                              {group.records[0]?.latest_update || "-"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
               )}
             </TabsContent>
 
