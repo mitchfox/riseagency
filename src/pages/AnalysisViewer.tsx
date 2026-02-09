@@ -83,6 +83,7 @@ interface KitProps {
 }
 
 const PlayerKit = ({ primaryColor, secondaryColor, numberColor = 'white', stripeStyle = 'thick', number }: KitProps) => {
+  const showNumber = number && number !== '0' && number.trim() !== '';
   return (
     <svg width="50" height="60" viewBox="0 0 100 120" className="drop-shadow-lg">
       <defs>
@@ -121,20 +122,22 @@ const PlayerKit = ({ primaryColor, secondaryColor, numberColor = 'white', stripe
       <path d="M42 28 L50 40 L58 28" fill="none" stroke={secondaryColor} strokeWidth="3" strokeLinecap="round"/>
       <ellipse cx="50" cy="25" rx="10" ry="3" fill={secondaryColor} />
 
-      {/* Number */}
-      <text
-        x="50"
-        y="72"
-        textAnchor="middle"
-        fontSize="26"
-        fontWeight="bold"
-        fill={numberColor}
-        stroke={numberColor === 'white' || numberColor === '#ffffff' || numberColor === '#FFFFFF' ? 'black' : 'rgba(0,0,0,0.3)'}
-        strokeWidth="0.8"
-        fontFamily="Arial Black, sans-serif"
-      >
-        {number}
-      </text>
+      {/* Number - only show if provided */}
+      {showNumber && (
+        <text
+          x="50"
+          y="72"
+          textAnchor="middle"
+          fontSize="26"
+          fontWeight="bold"
+          fill={numberColor}
+          stroke={numberColor === 'white' || numberColor === '#ffffff' || numberColor === '#FFFFFF' ? 'black' : 'rgba(0,0,0,0.3)'}
+          strokeWidth="0.8"
+          fontFamily="Arial Black, sans-serif"
+        >
+          {number}
+        </text>
+      )}
 
       {/* Shading */}
       <path d="M30 28 L25 38 L25 95 L35 100 L38 95 L38 35 Z" fill="rgba(0,0,0,0.12)" />
@@ -228,6 +231,7 @@ const ExpandableSection = ({
   const [wasManuallyToggled, setWasManuallyToggled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isAutoOpening, setIsAutoOpening] = useState(false);
+  const [autoOpenTimer, setAutoOpenTimer] = useState<NodeJS.Timeout | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { margin: "-10% 0px -30% 0px" });
 
@@ -244,6 +248,25 @@ const ExpandableSection = ({
 
       if (!wasManuallyToggled) {
         if (isInView && isScrollingDown && !isOpen) {
+          // Check if the previous expandable section is still mostly visible
+          // If so, don't auto-open this one yet to avoid scrolling past small sections
+          const allExpandable = document.querySelectorAll('[data-expandable]');
+          const currentEl = sectionRef.current;
+          let prevSection: Element | null = null;
+          allExpandable.forEach((el, i) => {
+            if (el === currentEl && i > 0) {
+              prevSection = allExpandable[i - 1];
+            }
+          });
+
+          if (prevSection) {
+            const prevRect = (prevSection as HTMLElement).getBoundingClientRect();
+            // If previous section bottom is still well within viewport, delay opening
+            if (prevRect.bottom > window.innerHeight * 0.3) {
+              return; // Don't auto-open yet, previous section still visible
+            }
+          }
+
           setIsAutoOpening(true);
           setIsOpen(true);
         } else if (!isInView && isOpen) {
@@ -687,8 +710,10 @@ const AnalysisViewer = () => {
   const [playerName, setPlayerName] = useState<string | null>(null);
   
   // Sequential video loading: tracks which point index is currently loading
-  const [currentLoadingPoint, setCurrentLoadingPoint] = useState(0);
+  // Start by loading first 2 points immediately, then continue all in background
+  const [currentLoadingPoint, setCurrentLoadingPoint] = useState(1); // Start at 1 to load points 0 and 1 immediately
   const pointVideoCountsRef = useRef<Map<number, { total: number; loaded: number }>>(new Map());
+  const backgroundLoadTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Callback when a video in a point finishes loading
   const handleVideoLoaded = useCallback((pointIndex: number) => {
@@ -706,6 +731,8 @@ const AnalysisViewer = () => {
   useEffect(() => {
     if (analysis?.points) {
       pointVideoCountsRef.current.clear();
+      const totalPoints = analysis.points.length;
+      
       analysis.points.forEach((point: any, index: number) => {
         const videoUrls = point.video_urls || (point.video_url ? [point.video_url] : []);
         const total = videoUrls.length;
@@ -715,9 +742,21 @@ const AnalysisViewer = () => {
           setCurrentLoadingPoint(prev => Math.max(prev, index + 1));
         }
       });
-      // Start loading first point immediately
-      setCurrentLoadingPoint(0);
+      
+      // Load first 2 points immediately
+      setCurrentLoadingPoint(Math.min(1, totalPoints - 1));
+      
+      // After 3 seconds, start loading ALL remaining videos in background
+      // so by the time the user scrolls to them they're ready
+      if (backgroundLoadTimerRef.current) clearTimeout(backgroundLoadTimerRef.current);
+      backgroundLoadTimerRef.current = setTimeout(() => {
+        setCurrentLoadingPoint(totalPoints);
+      }, 3000);
     }
+    
+    return () => {
+      if (backgroundLoadTimerRef.current) clearTimeout(backgroundLoadTimerRef.current);
+    };
   }, [analysis?.points]);
 
   // Extract UUID from slug (e.g., "team-vs-team-uuid" -> "uuid")
@@ -1112,7 +1151,7 @@ const AnalysisViewer = () => {
                                 <PlayerKit
                                   primaryColor={analysis.kit_primary_color || '#FFD700'}
                                   secondaryColor={analysis.kit_secondary_color || '#000000'}
-                                  number={player.number || '0'}
+                                  number={player.shirt_number || player.number || ''}
                                 />
                                 <div className="bg-black/80 text-white px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap">
                                   {player.surname || player.position}
