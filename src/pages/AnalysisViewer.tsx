@@ -1,14 +1,14 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { ArrowLeft, ChevronDown, Play, Plus, Minus, Download } from "lucide-react";
 import { toast } from "sonner";
-import { motion, AnimatePresence, useInView } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { HoverText } from "@/components/HoverText";
-import { SequentialLazyVideo } from "@/components/SequentialLazyVideo";
+import { LazyVideo } from "@/components/LazyVideo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -204,10 +204,7 @@ const ContentCard = ({ children, className = "", transparent = false }: { childr
   </div>
 );
 
-// Global flag to prevent auto-open during navigation
-let navigationUsed = false;
-
-// Expandable section with auto-open on scroll
+// Expandable section - manual toggle, auto-close on scroll away, open via quick nav
 const ExpandableSection = ({
   title,
   children,
@@ -228,64 +225,48 @@ const ExpandableSection = ({
   flipBackground?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen || forceOpen);
-  const [wasManuallyToggled, setWasManuallyToggled] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [isAutoOpening, setIsAutoOpening] = useState(false);
-  const [autoOpenTimer, setAutoOpenTimer] = useState<NodeJS.Timeout | null>(null);
+  const [openedByNav, setOpenedByNav] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(sectionRef, { margin: "-10% 0px -30% 0px" });
 
   useEffect(() => {
     if (forceOpen) setIsOpen(true);
   }, [forceOpen]);
 
+  // Listen for navigation events from QuickNavDropdown
   useEffect(() => {
+    if (!id) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.sectionId === id) {
+        setIsOpen(true);
+        setOpenedByNav(true);
+      }
+    };
+    window.addEventListener('analysis-nav', handler);
+    return () => window.removeEventListener('analysis-nav', handler);
+  }, [id]);
+
+  // Auto-close when scrolled out of view (only if not forceOpen/defaultOpen)
+  useEffect(() => {
+    if (forceOpen || !sectionRef.current) return;
+
     const handleScroll = () => {
-      if (navigationUsed) return;
-      const currentScrollY = window.scrollY;
-      const isScrollingDown = currentScrollY > lastScrollY;
-      setLastScrollY(currentScrollY);
-
-      if (!wasManuallyToggled) {
-        if (isInView && isScrollingDown && !isOpen) {
-          // Check if the previous expandable section is still mostly visible
-          // If so, don't auto-open this one yet to avoid scrolling past small sections
-          const allExpandable = document.querySelectorAll('[data-expandable]');
-          const currentEl = sectionRef.current;
-          let prevSection: Element | null = null;
-          allExpandable.forEach((el, i) => {
-            if (el === currentEl && i > 0) {
-              prevSection = allExpandable[i - 1];
-            }
-          });
-
-          if (prevSection) {
-            const prevRect = (prevSection as HTMLElement).getBoundingClientRect();
-            // If previous section bottom is still well within viewport, delay opening
-            if (prevRect.bottom > window.innerHeight * 0.3) {
-              return; // Don't auto-open yet, previous section still visible
-            }
-          }
-
-          setIsAutoOpening(true);
-          setIsOpen(true);
-        } else if (!isInView && isOpen) {
-          setIsOpen(false);
-        }
+      if (!isOpen || !sectionRef.current) return;
+      const rect = sectionRef.current.getBoundingClientRect();
+      // Close if the section has scrolled completely above or below the viewport
+      if (rect.bottom < -100 || rect.top > window.innerHeight + 100) {
+        setIsOpen(false);
+        setOpenedByNav(false);
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isInView, isOpen, lastScrollY, wasManuallyToggled]);
-
-  useEffect(() => {
-    if (!isInView) setWasManuallyToggled(false);
-  }, [isInView]);
+  }, [isOpen, forceOpen]);
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
-    setWasManuallyToggled(true);
+    setOpenedByNav(false);
   };
 
   const backgroundStyle = {
@@ -354,8 +335,7 @@ const ExpandableSection = ({
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: isAutoOpening ? 0 : 0.4, ease: "easeInOut" }}
-                  onAnimationComplete={() => setIsAutoOpening(false)}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
                 >
                   <ContentCard transparent={transparentContent}>{children}</ContentCard>
                 </motion.div>
@@ -575,19 +555,18 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
 
   const handleNavigate = (sectionId: string) => {
     setIsOpen(false);
-    navigationUsed = true;
+
+    // Dispatch custom event to open the target section
+    window.dispatchEvent(new CustomEvent('analysis-nav', { detail: { sectionId } }));
 
     requestAnimationFrame(() => {
-      const el = document.getElementById(sectionId);
-      if (el) {
-        const sectionButton = el.querySelector('button');
-        if (sectionButton) sectionButton.click();
-
-        setTimeout(() => {
+      setTimeout(() => {
+        const el = document.getElementById(sectionId);
+        if (el) {
           const finalY = el.getBoundingClientRect().top + window.scrollY - 80;
           window.scrollTo({ top: Math.max(0, finalY), behavior: 'instant' as ScrollBehavior });
-        }, 200);
-      }
+        }
+      }, 100);
     });
   };
 
@@ -709,55 +688,7 @@ const AnalysisViewer = () => {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [playerName, setPlayerName] = useState<string | null>(null);
   
-  // Sequential video loading: tracks which point index is currently loading
-  // Start by loading first 2 points immediately, then continue all in background
-  const [currentLoadingPoint, setCurrentLoadingPoint] = useState(1); // Start at 1 to load points 0 and 1 immediately
-  const pointVideoCountsRef = useRef<Map<number, { total: number; loaded: number }>>(new Map());
-  const backgroundLoadTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Callback when a video in a point finishes loading
-  const handleVideoLoaded = useCallback((pointIndex: number) => {
-    const counts = pointVideoCountsRef.current.get(pointIndex);
-    if (counts) {
-      counts.loaded++;
-      // If all videos in this point are loaded, move to next point
-      if (counts.loaded >= counts.total) {
-        setCurrentLoadingPoint(prev => Math.max(prev, pointIndex + 1));
-      }
-    }
-  }, []);
-
-  // Initialize video counts when analysis loads
-  useEffect(() => {
-    if (analysis?.points) {
-      pointVideoCountsRef.current.clear();
-      const totalPoints = analysis.points.length;
-      
-      analysis.points.forEach((point: any, index: number) => {
-        const videoUrls = point.video_urls || (point.video_url ? [point.video_url] : []);
-        const total = videoUrls.length;
-        pointVideoCountsRef.current.set(index, { total, loaded: 0 });
-        // If a point has no videos, mark it as "complete" for sequencing
-        if (total === 0) {
-          setCurrentLoadingPoint(prev => Math.max(prev, index + 1));
-        }
-      });
-      
-      // Load first 2 points immediately
-      setCurrentLoadingPoint(Math.min(1, totalPoints - 1));
-      
-      // After 3 seconds, start loading ALL remaining videos in background
-      // so by the time the user scrolls to them they're ready
-      if (backgroundLoadTimerRef.current) clearTimeout(backgroundLoadTimerRef.current);
-      backgroundLoadTimerRef.current = setTimeout(() => {
-        setCurrentLoadingPoint(totalPoints);
-      }, 3000);
-    }
-    
-    return () => {
-      if (backgroundLoadTimerRef.current) clearTimeout(backgroundLoadTimerRef.current);
-    };
-  }, [analysis?.points]);
+  // No sequential loading - all videos load immediately via LazyVideo with loadImmediately
 
   // Extract UUID from slug (e.g., "team-vs-team-uuid" -> "uuid")
   const analysisId = rawSlug ? extractAnalysisIdFromSlug(rawSlug) : null;
@@ -1023,7 +954,7 @@ const AnalysisViewer = () => {
 
             {/* Overview - Section 0 (no flip) */}
             {analysis.key_details && (
-              <ExpandableSection title="Overview" id={SECTION_IDS.overview} flipBackground={false}>
+              <ExpandableSection title="Overview" id={SECTION_IDS.overview} defaultOpen flipBackground={false}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-base md:text-lg text-black">
                     {analysis.key_details}
@@ -1210,12 +1141,10 @@ const AnalysisViewer = () => {
                           <TextReveal delay={0.2}>
                             <div className="flex flex-col items-center gap-4">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
-                                <SequentialLazyVideo
+                                <LazyVideo
                                   key={vidIndex}
                                   src={url}
-                                  pointIndex={index}
-                                  currentLoadingPoint={currentLoadingPoint}
-                                  onVideoLoaded={() => handleVideoLoaded(index)}
+                                  loadImmediately
                                   autoPlay
                                   loop
                                   muted
@@ -1381,7 +1310,7 @@ const AnalysisViewer = () => {
 
             {/* Overview - Section 0 (no flip) */}
             {analysis.key_details && (
-              <ExpandableSection title="Overview" id={SECTION_IDS.overview} flipBackground={false}>
+              <ExpandableSection title="Overview" id={SECTION_IDS.overview} defaultOpen flipBackground={false}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                     {analysis.key_details}
@@ -1511,12 +1440,10 @@ const AnalysisViewer = () => {
                           <TextReveal delay={0.2}>
                             <div className="flex flex-col items-center gap-4">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
-                                <SequentialLazyVideo
+                                <LazyVideo
                                   key={vidIndex}
                                   src={url}
-                                  pointIndex={index}
-                                  currentLoadingPoint={currentLoadingPoint}
-                                  onVideoLoaded={() => handleVideoLoaded(index)}
+                                  loadImmediately
                                   autoPlay
                                   loop
                                   muted
@@ -1628,12 +1555,10 @@ const AnalysisViewer = () => {
                           <TextReveal delay={0.2}>
                             <div className="flex flex-col items-center gap-4">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
-                                <SequentialLazyVideo
+                                <LazyVideo
                                   key={vidIndex}
                                   src={url}
-                                  pointIndex={index}
-                                  currentLoadingPoint={currentLoadingPoint}
-                                  onVideoLoaded={() => handleVideoLoaded(index)}
+                                  loadImmediately
                                   autoPlay
                                   loop
                                   muted
