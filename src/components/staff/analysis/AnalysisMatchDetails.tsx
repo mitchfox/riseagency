@@ -40,6 +40,8 @@ interface MatchDetailsProps {
   setSelectedPerformanceReportId: (id: string) => void;
   defaultOpen?: boolean;
   showPlayerLinking?: boolean;
+  taggedPlayerIds: string[];
+  setTaggedPlayerIds: (ids: string[]) => void;
 }
 
 export const AnalysisMatchDetails = ({
@@ -57,6 +59,8 @@ export const AnalysisMatchDetails = ({
   setSelectedPerformanceReportId,
   defaultOpen = false,
   showPlayerLinking = false,
+  taggedPlayerIds,
+  setTaggedPlayerIds,
 }: MatchDetailsProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -214,6 +218,51 @@ export const AnalysisMatchDetails = ({
             )}
           </>
         )}
+
+        {/* Tag Players */}
+        <div>
+          <Label>Tag Players (visible on their portal)</Label>
+          <Select
+            value=""
+            onValueChange={(playerId) => {
+              if (!taggedPlayerIds.includes(playerId)) {
+                setTaggedPlayerIds([...taggedPlayerIds, playerId]);
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select players to tag..." />
+            </SelectTrigger>
+            <SelectContent>
+              {players
+                .filter(p => !taggedPlayerIds.includes(p.id))
+                .map((player) => (
+                  <SelectItem key={player.id} value={player.id}>
+                    {player.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+          {taggedPlayerIds.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {taggedPlayerIds.map(id => {
+                const player = players.find(p => p.id === id);
+                return (
+                  <span key={id} className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-primary/10 text-primary border border-primary/20">
+                    {player?.name || 'Unknown'}
+                    <button
+                      type="button"
+                      onClick={() => setTaggedPlayerIds(taggedPlayerIds.filter(pid => pid !== id))}
+                      className="hover:text-destructive"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* Title - shared for both types */}
         <div>

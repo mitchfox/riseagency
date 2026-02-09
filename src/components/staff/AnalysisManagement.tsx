@@ -17,7 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -350,7 +350,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
       // Also fetch manually tagged players
       const { data: tagData } = await supabase
-        .from("player_other_analysis")
+        .from("analysis_player_tags")
         .select("analysis_id, player_id");
 
       if (tagData && tagData.length > 0) {
@@ -419,7 +419,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
       // Load tagged players
       const { data: tags } = await supabase
-        .from("player_other_analysis")
+        .from("analysis_player_tags")
         .select("player_id")
         .eq("analysis_id", analysis.id);
       setTaggedPlayerIds((tags || []).map(t => t.player_id));
@@ -634,7 +634,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       if (analysisId) {
         // Remove existing tags
         await supabase
-          .from("player_other_analysis")
+          .from("analysis_player_tags")
           .delete()
           .eq("analysis_id", analysisId);
 
@@ -645,7 +645,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
             analysis_id: analysisId,
           }));
           const { error: tagError } = await supabase
-            .from("player_other_analysis")
+            .from("analysis_player_tags")
             .insert(tagsToInsert);
           if (tagError) {
             console.error("Failed to save player tags:", tagError);
@@ -1415,6 +1415,8 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
             setSelectedPerformanceReportId={setSelectedPerformanceReportId}
             defaultOpen={false}
             showPlayerLinking={isPostMatch}
+            taggedPlayerIds={taggedPlayerIds}
+            setTaggedPlayerIds={setTaggedPlayerIds}
           />
         )}
 
@@ -1497,49 +1499,6 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           />
         )}
 
-        {/* Player Tagging Section */}
-        <Collapsible>
-          <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
-            <h3 className="font-semibold text-lg">TAGGED PLAYERS</h3>
-            <div className="flex items-center gap-2">
-              {taggedPlayerIds.length > 0 && (
-                <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                  {taggedPlayerIds.length}
-                </span>
-              )}
-              <ChevronDown className="w-5 h-5 transition-transform" />
-            </div>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pt-4">
-            <p className="text-sm text-muted-foreground mb-3">
-              Select which players should see this analysis on their dashboard.
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {players.map(player => (
-                <label
-                  key={player.id}
-                  className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
-                    taggedPlayerIds.includes(player.id)
-                      ? 'bg-primary/10 border-primary'
-                      : 'hover:bg-muted'
-                  }`}
-                >
-                  <Checkbox
-                    checked={taggedPlayerIds.includes(player.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setTaggedPlayerIds([...taggedPlayerIds, player.id]);
-                      } else {
-                        setTaggedPlayerIds(taggedPlayerIds.filter(id => id !== player.id));
-                      }
-                    }}
-                  />
-                  <span className="text-sm">{player.name}</span>
-                </label>
-              ))}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
