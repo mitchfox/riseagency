@@ -1079,7 +1079,7 @@ const Dashboard = () => {
         const validTagged = taggedData.filter((item: any) => item.analyses);
         setOtherAnalyses(validTagged);
 
-        // Also merge tagged analyses into the performance analysis rows
+        // Merge tagged analyses into performance report rows
         // so pre/post-match buttons appear on matching fixtures
         const updatedAnalyses = [...latestAnalyses] as Analysis[];
 
@@ -1087,43 +1087,32 @@ const Dashboard = () => {
           const taggedAnalysis = tag.analyses;
           if (!taggedAnalysis) return;
 
-          // Try to match to an existing performance report row by opponent/date
           const matchDate = taggedAnalysis.match_date;
-          const homeTeam = taggedAnalysis.home_team?.toLowerCase();
-          const awayTeam = taggedAnalysis.away_team?.toLowerCase();
+          const homeTeam = taggedAnalysis.home_team?.toLowerCase()?.trim();
+          const awayTeam = taggedAnalysis.away_team?.toLowerCase()?.trim();
 
-          let matched = false;
           updatedAnalyses.forEach((pa, idx) => {
-            const paOpponent = pa.opponent?.toLowerCase();
+            const paOpponent = pa.opponent?.toLowerCase()?.trim();
             const paDate = pa.analysis_date;
-            // Check if the tagged analysis matches this performance report
+            
             const dateMatch = matchDate && paDate && matchDate === paDate;
             const opponentMatch = paOpponent && (paOpponent === homeTeam || paOpponent === awayTeam);
 
             if (dateMatch && opponentMatch) {
-              // Already has analysis_writer_data? Only override if type differs
-              if (!updatedAnalyses[idx].analysis_writer_data ||
-                  updatedAnalyses[idx].analysis_writer_data.analysis_type !== taggedAnalysis.analysis_type) {
-                // Add as tagged_analyses array for multiple buttons
-                if (!updatedAnalyses[idx].tagged_analyses) {
-                  updatedAnalyses[idx].tagged_analyses = [];
-                  // Keep existing analysis_writer_data as first entry if present
-                  if (updatedAnalyses[idx].analysis_writer_data) {
-                    updatedAnalyses[idx].tagged_analyses.push(updatedAnalyses[idx].analysis_writer_data);
-                  }
-                }
-                updatedAnalyses[idx].tagged_analyses.push(taggedAnalysis);
-              } else if (!updatedAnalyses[idx].analysis_writer_data) {
-                // No existing link - set it directly
+              // If no analysis_writer_data yet, set it directly
+              if (!updatedAnalyses[idx].analysis_writer_data) {
                 updatedAnalyses[idx].analysis_writer_data = taggedAnalysis;
                 updatedAnalyses[idx].analysis_writer_id = taggedAnalysis.id;
+              } else if (updatedAnalyses[idx].analysis_writer_data.analysis_type !== taggedAnalysis.analysis_type) {
+                // Different type (e.g. already has post-match, adding pre-match)
+                if (!updatedAnalyses[idx].tagged_analyses) {
+                  updatedAnalyses[idx].tagged_analyses = [];
+                }
+                updatedAnalyses[idx].tagged_analyses.push(taggedAnalysis);
               }
-              matched = true;
+              // Skip if same type already linked (avoid duplicates)
             }
           });
-
-          // If no matching performance report, add as standalone entry in otherAnalyses only
-          // (already handled by setOtherAnalyses above)
         });
 
         setAnalyses(updatedAnalyses);
