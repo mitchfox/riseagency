@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Sparkles, ChevronDown, Film, GripVertical } from "lucide-react";
+import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { VideoTrimmerDialog } from "./VideoTrimmerDialog";
 import {
   DndContext,
   closestCenter,
@@ -102,6 +103,57 @@ const getActionScoreBgColor = (score: number | undefined | null): string => {
   if (score > -0.04) return "bg-red-400";
   if (score > -0.06) return "bg-red-500";
   return "bg-red-700";
+};
+
+// Individual video item with trim support
+const VideoItem = ({
+  url,
+  onRemove,
+  onTrimComplete,
+}: {
+  url: string;
+  onRemove: () => void;
+  onTrimComplete: (newUrl: string) => void;
+}) => {
+  const [trimOpen, setTrimOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <video
+        src={url}
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="max-w-xs rounded"
+      />
+      <div className="absolute top-1 right-1 flex gap-1">
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-6 w-6 p-0"
+          onClick={() => setTrimOpen(true)}
+          title="Trim video"
+        >
+          <Scissors className="w-3 h-3" />
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          className="h-6 w-6 p-0"
+          onClick={onRemove}
+        >
+          <X className="w-3 h-3" />
+        </Button>
+      </div>
+      <VideoTrimmerDialog
+        open={trimOpen}
+        onOpenChange={setTrimOpen}
+        videoUrl={url}
+        onTrimComplete={onTrimComplete}
+      />
+    </div>
+  );
 };
 
 // Sortable Point Card Component
@@ -328,27 +380,19 @@ const SortablePointCard = ({
           {(point.video_urls?.length || point.video_url) && (
             <div className="mt-2 space-y-2">
               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url, vidIndex) => (
-                <div key={vidIndex} className="relative">
-                  <video 
-                    src={url} 
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="max-w-xs rounded"
-                  />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-1 right-1 h-6 w-6 p-0"
-                    onClick={() => {
-                      const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
-                      updatePoint(index, "video_urls", currentVideos.filter((_, i) => i !== vidIndex));
-                    }}
-                  >
-                    <X className="w-3 h-3" />
-                  </Button>
-                </div>
+                <VideoItem
+                  key={vidIndex}
+                  url={url}
+                  onRemove={() => {
+                    const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
+                    updatePoint(index, "video_urls", currentVideos.filter((_, i) => i !== vidIndex));
+                  }}
+                  onTrimComplete={(newUrl) => {
+                    const currentVideos = [...(point.video_urls || (point.video_url ? [point.video_url] : []))];
+                    currentVideos[vidIndex] = newUrl;
+                    updatePoint(index, "video_urls", currentVideos);
+                  }}
+                />
               ))}
             </div>
           )}
