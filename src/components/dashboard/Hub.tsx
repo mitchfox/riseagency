@@ -29,6 +29,9 @@ interface PlayerAnalysis {
   minutes_played?: number;
   striker_stats?: any;
   fixture_id?: string;
+  analysis_writer_id?: string | null;
+  analysis_writer_data?: any;
+  tagged_analyses?: any[];
 }
 
 interface HubProps {
@@ -761,25 +764,70 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {/* Post-match analysis icon - check if there's an analysis linked to this fixture */}
-                        {postMatchAnalyses.has((analysis as any).fixture_id) && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="p-1 h-8 w-8 bg-risegold/20 hover:bg-risegold/40"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const postMatch = postMatchAnalyses.get((analysis as any).fixture_id);
-                              if (postMatch) {
-                                const slug = createAnalysisSlug(postMatch.homeTeam, postMatch.awayTeam, postMatch.id);
+                        {/* Pre-match analysis button from tagged data */}
+                        {(() => {
+                          const preMatch = (analysis as any).analysis_writer_data?.analysis_type === 'pre-match' 
+                            ? (analysis as any).analysis_writer_data 
+                            : (analysis as any).tagged_analyses?.find((ta: any) => ta.analysis_type === 'pre-match');
+                          if (!preMatch) return null;
+                          return (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="p-1 h-8 w-8 bg-slate-300/30 hover:bg-slate-300/50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const slug = createAnalysisSlug(preMatch.home_team || '', preMatch.away_team || '', preMatch.id);
                                 navigate(slug);
-                              }
-                            }}
-                            title="View Post-Match Analysis"
-                          >
-                            <FileText className="h-4 w-4 text-risegold" />
-                          </Button>
-                        )}
+                              }}
+                              title="View Pre-Match Analysis"
+                            >
+                              <FileText className="h-4 w-4 text-slate-600" />
+                            </Button>
+                          );
+                        })()}
+                        {/* Post-match analysis button - from fixture link or tagged data */}
+                        {(() => {
+                          // Check fixture-linked post-match first
+                          if (postMatchAnalyses.has((analysis as any).fixture_id)) {
+                            const postMatch = postMatchAnalyses.get((analysis as any).fixture_id)!;
+                            return (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-1 h-8 w-8 bg-risegold/20 hover:bg-risegold/40"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const slug = createAnalysisSlug(postMatch.homeTeam, postMatch.awayTeam, postMatch.id);
+                                  navigate(slug);
+                                }}
+                                title="View Post-Match Analysis"
+                              >
+                                <FileText className="h-4 w-4 text-risegold" />
+                              </Button>
+                            );
+                          }
+                          // Check tagged post-match
+                          const postMatch = (analysis as any).analysis_writer_data?.analysis_type === 'post-match'
+                            ? (analysis as any).analysis_writer_data
+                            : (analysis as any).tagged_analyses?.find((ta: any) => ta.analysis_type === 'post-match');
+                          if (!postMatch) return null;
+                          return (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="p-1 h-8 w-8 bg-risegold/20 hover:bg-risegold/40"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const slug = createAnalysisSlug(postMatch.home_team || '', postMatch.away_team || '', postMatch.id);
+                                navigate(slug);
+                              }}
+                              title="View Post-Match Analysis"
+                            >
+                              <FileText className="h-4 w-4 text-risegold" />
+                            </Button>
+                          );
+                        })()}
                         {analysis.r90_score != null && (
                           <div 
                             className="px-3 py-1 rounded text-white text-sm font-bold border-2 border-transparent hover:border-[hsl(var(--gold))] transition-colors duration-200"
