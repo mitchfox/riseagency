@@ -707,6 +707,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
         if (formData.description) dataToSubmit.description = formData.description;
         if (formData.content) dataToSubmit.content = formData.content;
         if (formData.category) dataToSubmit.category = formData.category;
+        if (formData.attachments) dataToSubmit.attachments = formData.attachments;
         dataToSubmit.analysis_type = 'concept';
       } else {
         // For other tables, include all fields
@@ -1243,6 +1244,61 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                               placeholder="Full concept content..."
                               rows={4}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Media (Images / Videos)</Label>
+                            <div className="flex flex-wrap gap-2">
+                              {(Array.isArray(formData.attachments) ? formData.attachments : []).map((url: string, idx: number) => (
+                                <div key={idx} className="relative group">
+                                  {url.match(/\.(mp4|webm|mov)$/i) ? (
+                                    <video src={url} className="w-24 h-24 object-cover rounded border" />
+                                  ) : (
+                                    <img src={url} alt={`Media ${idx + 1}`} className="w-24 h-24 object-cover rounded border" />
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = [...(formData.attachments || [])];
+                                      updated.splice(idx, 1);
+                                      setFormData({ ...formData, attachments: updated });
+                                    }}
+                                    className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                            <Input
+                              type="file"
+                              accept="image/*,video/*"
+                              multiple
+                              onChange={async (e) => {
+                                const files = e.target.files;
+                                if (!files) return;
+                                const urls: string[] = [];
+                                for (const file of Array.from(files)) {
+                                  const fileName = `concepts/${Date.now()}-${file.name}`;
+                                  const { data, error } = await supabase.storage
+                                    .from('coaching-database')
+                                    .upload(fileName, file);
+                                  if (!error && data) {
+                                    const { data: urlData } = supabase.storage
+                                      .from('coaching-database')
+                                      .getPublicUrl(data.path);
+                                    urls.push(urlData.publicUrl);
+                                  }
+                                }
+                                if (urls.length > 0) {
+                                  setFormData({
+                                    ...formData,
+                                    attachments: [...(formData.attachments || []), ...urls]
+                                  });
+                                  toast.success(`${urls.length} file(s) uploaded`);
+                                }
+                                e.target.value = '';
+                              }}
                             />
                           </div>
                         </>
