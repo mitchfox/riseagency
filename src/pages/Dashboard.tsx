@@ -56,6 +56,7 @@ interface Analysis {
   analysis_writer_id?: string | null;
   analysis_writer_data?: any;
   striker_stats?: any;
+  tagged_analyses?: any[];
 }
 
 interface PlayerProgram {
@@ -1020,6 +1021,7 @@ const Dashboard = () => {
       }
 
       // Fetch all analyses (pre-match, post-match) linked to this player
+      let latestAnalyses = [...(analysesWithXGChain || analysisData || [])] as Analysis[];
       const linkedAnalysisIds = (analysisData || [])
         .filter(a => a.analysis_writer_id)
         .map(a => a.analysis_writer_id);
@@ -1031,34 +1033,29 @@ const Dashboard = () => {
           .in("id", linkedAnalysisIds);
 
         if (!allAnalysesError && allAnalysesData) {
-          // Add pre-match and post-match analyses to the analyses array
           const matchAnalyses = allAnalysesData.filter(a => 
             a.analysis_type === "pre-match" || a.analysis_type === "post-match"
           );
           
-          // Merge with existing player_analysis data
-          const mergedAnalyses = [...(analysisData || [])] as Analysis[];
           matchAnalyses.forEach(matchAnalysis => {
             const playerAnalysis = (analysisData || []).find(
               pa => pa.analysis_writer_id === matchAnalysis.id
             );
             if (playerAnalysis) {
-              // Update the existing analysis with details from analyses table
-              const index = mergedAnalyses.findIndex(a => a.id === playerAnalysis.id);
+              const index = latestAnalyses.findIndex(a => a.id === playerAnalysis.id);
               if (index !== -1) {
-                mergedAnalyses[index] = {
-                  ...mergedAnalyses[index],
+                latestAnalyses[index] = {
+                  ...latestAnalyses[index],
                   analysis_writer_data: matchAnalysis
                 } as Analysis;
               }
             }
           });
-          setAnalyses(mergedAnalyses);
         }
       }
 
-      // Fetch other analyses tagged to this player
-      const { data: otherAnalysesData, error: otherAnalysesError } = await supabase
+      // Fetch tagged analyses for this player (via analysis_player_tags)
+      const { data: taggedData, error: taggedError } = await supabase
         .from("analysis_player_tags")
         .select(`
           id,
@@ -1070,14 +1067,66 @@ const Dashboard = () => {
             analysis_type,
             match_date,
             home_team,
-            away_team
+            away_team,
+            home_score,
+            away_score
           )
         `)
         .eq("player_id", playerData.id)
         .order("created_at", { ascending: false });
 
-      if (!otherAnalysesError && otherAnalysesData) {
-        setOtherAnalyses(otherAnalysesData.filter((item: any) => item.analyses));
+      if (!taggedError && taggedData) {
+        const validTagged = taggedData.filter((item: any) => item.analyses);
+        setOtherAnalyses(validTagged);
+
+        // Also merge tagged analyses into the performance analysis rows
+        // so pre/post-match buttons appear on matching fixtures
+        const updatedAnalyses = [...latestAnalyses] as Analysis[];
+
+        validTagged.forEach((tag: any) => {
+          const taggedAnalysis = tag.analyses;
+          if (!taggedAnalysis) return;
+
+          // Try to match to an existing performance report row by opponent/date
+          const matchDate = taggedAnalysis.match_date;
+          const homeTeam = taggedAnalysis.home_team?.toLowerCase();
+          const awayTeam = taggedAnalysis.away_team?.toLowerCase();
+
+          let matched = false;
+          updatedAnalyses.forEach((pa, idx) => {
+            const paOpponent = pa.opponent?.toLowerCase();
+            const paDate = pa.analysis_date;
+            // Check if the tagged analysis matches this performance report
+            const dateMatch = matchDate && paDate && matchDate === paDate;
+            const opponentMatch = paOpponent && (paOpponent === homeTeam || paOpponent === awayTeam);
+
+            if (dateMatch && opponentMatch) {
+              // Already has analysis_writer_data? Only override if type differs
+              if (!updatedAnalyses[idx].analysis_writer_data ||
+                  updatedAnalyses[idx].analysis_writer_data.analysis_type !== taggedAnalysis.analysis_type) {
+                // Add as tagged_analyses array for multiple buttons
+                if (!updatedAnalyses[idx].tagged_analyses) {
+                  updatedAnalyses[idx].tagged_analyses = [];
+                  // Keep existing analysis_writer_data as first entry if present
+                  if (updatedAnalyses[idx].analysis_writer_data) {
+                    updatedAnalyses[idx].tagged_analyses.push(updatedAnalyses[idx].analysis_writer_data);
+                  }
+                }
+                updatedAnalyses[idx].tagged_analyses.push(taggedAnalysis);
+              } else if (!updatedAnalyses[idx].analysis_writer_data) {
+                // No existing link - set it directly
+                updatedAnalyses[idx].analysis_writer_data = taggedAnalysis;
+                updatedAnalyses[idx].analysis_writer_id = taggedAnalysis.id;
+              }
+              matched = true;
+            }
+          });
+
+          // If no matching performance report, add as standalone entry in otherAnalyses only
+          // (already handled by setOtherAnalyses above)
+        });
+
+        setAnalyses(updatedAnalyses);
       }
     } catch (error: any) {
       console.error("Error fetching analyses:", error);
@@ -1838,6 +1887,24 @@ const Dashboard = () => {
                                     {analysis.analysis_writer_data.analysis_type === "pre-match" ? "Pre-Match" : "Post-Match"} Analysis
                                   </Button>
                                 )}
+
+                                {/* Tagged analyses buttons */}
+                                {analysis.tagged_analyses?.map((ta: any, taIdx: number) => (
+                                  <Button 
+                                    key={`tagged-${taIdx}`}
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => navigate(`/analysis/${ta.id}`)}
+                                    className={`text-xs border-0 ${
+                                      ta.analysis_type === "pre-match" 
+                                        ? "bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500" 
+                                        : "bg-[hsl(43,49%,61%)] text-black hover:bg-[hsl(43,49%,71%)]"
+                                    }`}
+                                  >
+                                    <FileText className="w-3 h-3 mr-1" />
+                                    {ta.analysis_type === "pre-match" ? "Pre-Match" : "Post-Match"} Analysis
+                                  </Button>
+                                ))}
                                 
                                 {analysis.pdf_url && (
                                   <Button 

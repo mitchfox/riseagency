@@ -250,22 +250,41 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
     }
   }, []);
 
-  // Fetch pre-match analyses
+  // Fetch pre-match analyses (from both player_analysis links and analysis_player_tags)
   const fetchPreMatchAnalyses = useCallback(async () => {
+    const allPreMatchIds: string[] = [];
+
+    // 1. From player_analysis (linked via analysis_writer_id)
     const { data: analysisData } = await supabase
       .from("player_analysis")
       .select("analysis_writer_id")
       .eq("player_id", playerId);
     
-    if (!analysisData || analysisData.length === 0) return;
+    if (analysisData) {
+      const linkedIds = analysisData.filter(a => a.analysis_writer_id).map(a => a.analysis_writer_id!);
+      allPreMatchIds.push(...linkedIds);
+    }
+
+    // 2. From analysis_player_tags (tagged analyses)
+    const { data: taggedData } = await supabase
+      .from("analysis_player_tags")
+      .select("analysis_id")
+      .eq("player_id", playerId);
     
-    const linkedIds = analysisData.filter(a => a.analysis_writer_id).map(a => a.analysis_writer_id);
-    if (linkedIds.length === 0) return;
+    if (taggedData) {
+      taggedData.forEach(t => {
+        if (!allPreMatchIds.includes(t.analysis_id)) {
+          allPreMatchIds.push(t.analysis_id);
+        }
+      });
+    }
+
+    if (allPreMatchIds.length === 0) return;
     
     const { data: preMatchData } = await supabase
       .from("analyses")
       .select("*")
-      .in("id", linkedIds)
+      .in("id", allPreMatchIds)
       .eq("analysis_type", "pre-match");
     
     if (preMatchData) {
