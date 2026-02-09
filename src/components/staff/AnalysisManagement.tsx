@@ -534,7 +534,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
         'concept', 'explanation', 'points', 'home_score', 'away_score', 'fixture_id',
         'match_date', 'home_team_logo', 'away_team_logo', 'selected_scheme', 'starting_xi',
         'kit_primary_color', 'kit_secondary_color', 'match_image_url', 'home_team_bg_color',
-        'away_team_bg_color', 'video_url', 'player_team', 'player_name'
+        'away_team_bg_color', 'video_url', 'player_name'
       ];
 
       const dataToSave: Record<string, any> = {

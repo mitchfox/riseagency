@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -18,6 +19,11 @@ const Performance = () => {
   
   return (
     <div className="min-h-screen bg-background overflow-x-hidden" key="players-page">
+      <SEO 
+        title="Player Development & Career Support - RISE Football Agency"
+        description="We develop our players on and off the pitch. From tactical coaching to career management, discover how RISE helps footballers reach the top."
+        url="/learnmore"
+      />
       <Header />
       
       <main className="pt-32 md:pt-24">

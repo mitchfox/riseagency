@@ -49,6 +49,7 @@ interface ConceptData {
   title: string;
   points: any[];
   explanation?: string;
+  media?: string[];
 }
 
 interface PreMatchData {
@@ -234,12 +235,18 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
       .eq("analysis_type", "concept");
     
     if (!error && conceptsData) {
-      setConcepts(conceptsData.map(c => ({
-        id: c.id,
-        title: c.title || "Untitled Concept",
-        points: Array.isArray(c.attachments) ? c.attachments : [],
-        explanation: c.content || c.description || undefined
-      })));
+      setConcepts(conceptsData.map(c => {
+        const attachments = Array.isArray(c.attachments) ? c.attachments : [];
+        const mediaUrls = attachments.filter((a: any) => typeof a === 'string');
+        const structuredPoints = attachments.filter((a: any) => typeof a === 'object' && a !== null);
+        return {
+          id: c.id,
+          title: c.title || "Untitled Concept",
+          points: structuredPoints,
+          explanation: c.content || c.description || undefined,
+          media: mediaUrls
+        };
+      }));
     }
   }, []);
 

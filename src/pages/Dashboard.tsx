@@ -1001,14 +1001,21 @@ const Dashboard = () => {
         .eq("analysis_type", "concept");
 
       if (!conceptsError && conceptsData) {
-        const normalizedConcepts = conceptsData.map(concept => ({
-          id: concept.id,
-          title: concept.title || "Untitled Concept",
-          concept: concept.content || concept.description || null,
-          explanation: concept.content || concept.description || null,
-          points: Array.isArray(concept.attachments) ? concept.attachments : [],
-          created_at: concept.created_at
-        }));
+        const normalizedConcepts = conceptsData.map(concept => {
+          const attachments = Array.isArray(concept.attachments) ? concept.attachments : [];
+          // Separate media URLs (strings) from structured point objects
+          const mediaUrls = attachments.filter((a: any) => typeof a === 'string');
+          const structuredPoints = attachments.filter((a: any) => typeof a === 'object' && a !== null);
+          return {
+            id: concept.id,
+            title: concept.title || "Untitled Concept",
+            concept: concept.content || concept.description || null,
+            explanation: concept.content || concept.description || null,
+            points: structuredPoints,
+            media: mediaUrls,
+            created_at: concept.created_at
+          };
+        });
         setConcepts(normalizedConcepts);
       }
 
@@ -1926,6 +1933,17 @@ const Dashboard = () => {
                                     <div className="text-muted-foreground">
                                       <MarkdownContent content={concept.explanation} />
                                     </div>
+                                  </div>
+                                )}
+                                {concept.media && concept.media.length > 0 && (
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    {concept.media.map((url: string, idx: number) => (
+                                      url.match(/\.(mp4|webm|mov)$/i) ? (
+                                        <video key={idx} src={url} controls className="w-full rounded-lg" />
+                                      ) : (
+                                        <img key={idx} src={url} alt={`Concept media ${idx + 1}`} className="w-full h-48 object-cover rounded-lg" />
+                                      )
+                                    ))}
                                   </div>
                                 )}
                               </AccordionContent>
