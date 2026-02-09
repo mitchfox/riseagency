@@ -329,18 +329,18 @@ const ExpandableSection = ({
                 <ChevronDown className="w-5 h-5 text-primary" />
               </motion.div>
             </button>
-            <AnimatePresence initial={false}>
-              {isOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
-                >
-                  <ContentCard transparent={transparentContent}>{children}</ContentCard>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Always render children so videos preload, animate visibility */}
+            <motion.div
+              initial={false}
+              animate={{
+                height: isOpen ? "auto" : 0,
+                opacity: isOpen ? 1 : 0,
+              }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              style={{ overflow: "hidden" }}
+            >
+              <ContentCard transparent={transparentContent}>{children}</ContentCard>
+            </motion.div>
           </motion.div>
         </div>
       </div>
