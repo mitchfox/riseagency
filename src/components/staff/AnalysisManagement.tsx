@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus, X, Sparkles, Database, Copy, Settings, Eye, Users } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Sparkles, Database, Copy, Settings, Eye, Users, ChevronDown } from "lucide-react";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
 import {
   Dialog,
@@ -17,6 +17,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { AnalysisMatchDetails } from "./analysis/AnalysisMatchDetails";
 import { AnalysisSchemeSection } from "./analysis/AnalysisSchemeSection";
 import { AnalysisPointsSection } from "./analysis/AnalysisPointsSection";
@@ -148,6 +154,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
   });
   const [linkedPlayers, setLinkedPlayers] = useState<Record<string, { playerId: string; playerName: string }[]>>({});
   const [concepts, setConcepts] = useState<any[]>([]);
+  const [taggedPlayerIds, setTaggedPlayerIds] = useState<string[]>([]);
 
   // Form states
   const [formData, setFormData] = useState<Record<string, any>>({
@@ -340,6 +347,37 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
           playerName: item.players?.name || 'Unknown Player'
         });
       });
+
+      // Also fetch manually tagged players
+      const { data: tagData } = await supabase
+        .from("player_other_analysis")
+        .select("analysis_id, player_id");
+
+      if (tagData && tagData.length > 0) {
+        // Get unique player IDs to look up names
+        const tagPlayerIds = [...new Set(tagData.map(t => t.player_id))];
+        const { data: tagPlayers } = await supabase
+          .from("players")
+          .select("id, name")
+          .in("id", tagPlayerIds);
+        const playerNameMap: Record<string, string> = {};
+        (tagPlayers || []).forEach(p => { playerNameMap[p.id] = p.name; });
+
+        tagData.forEach((item: any) => {
+          const analysisId = item.analysis_id;
+          if (!grouped[analysisId]) {
+            grouped[analysisId] = [];
+          }
+          const exists = grouped[analysisId].some(p => p.playerId === item.player_id);
+          if (!exists) {
+            grouped[analysisId].push({
+              playerId: item.player_id,
+              playerName: playerNameMap[item.player_id] || 'Unknown Player'
+            });
+          }
+        });
+      }
+
       setLinkedPlayers(grouped);
     } catch (error: any) {
       console.error("Failed to fetch linked players:", error);
@@ -378,11 +416,19 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
         setSelectedPlayerId(data.player_id);
         setSelectedPerformanceReportId(data.id);
       }
+
+      // Load tagged players
+      const { data: tags } = await supabase
+        .from("player_other_analysis")
+        .select("player_id")
+        .eq("analysis_id", analysis.id);
+      setTaggedPlayerIds((tags || []).map(t => t.player_id));
     } else {
       setEditingAnalysis(null);
       setFormData({ analysis_type: type, points: [], matchups: [], starting_xi: [] });
       setSelectedPlayerId("none");
       setSelectedPerformanceReportId("none");
+      setTaggedPlayerIds([]);
     }
 
     setActiveView(type);
@@ -394,6 +440,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     setFormData({ points: [], matchups: [], starting_xi: [] });
     setSelectedPlayerId("none");
     setSelectedPerformanceReportId("none");
+    setTaggedPlayerIds([]);
   };
 
   const handleSchemeChange = (scheme: string) => {
@@ -580,6 +627,29 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
         if (linkError) {
           console.error("Failed to link analysis:", linkError);
           toast.error("Analysis saved but failed to link to performance report");
+        }
+      }
+
+      // Save tagged players
+      if (analysisId) {
+        // Remove existing tags
+        await supabase
+          .from("player_other_analysis")
+          .delete()
+          .eq("analysis_id", analysisId);
+
+        // Insert new tags
+        if (taggedPlayerIds.length > 0) {
+          const tagsToInsert = taggedPlayerIds.map(playerId => ({
+            player_id: playerId,
+            analysis_id: analysisId,
+          }));
+          const { error: tagError } = await supabase
+            .from("player_other_analysis")
+            .insert(tagsToInsert);
+          if (tagError) {
+            console.error("Failed to save player tags:", tagError);
+          }
         }
       }
 
@@ -1426,6 +1496,50 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
             onOpenSettings={handleOpenOverviewSettings}
           />
         )}
+
+        {/* Player Tagging Section */}
+        <Collapsible>
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+            <h3 className="font-semibold text-lg">TAGGED PLAYERS</h3>
+            <div className="flex items-center gap-2">
+              {taggedPlayerIds.length > 0 && (
+                <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                  {taggedPlayerIds.length}
+                </span>
+              )}
+              <ChevronDown className="w-5 h-5 transition-transform" />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-4">
+            <p className="text-sm text-muted-foreground mb-3">
+              Select which players should see this analysis on their dashboard.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {players.map(player => (
+                <label
+                  key={player.id}
+                  className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
+                    taggedPlayerIds.includes(player.id)
+                      ? 'bg-primary/10 border-primary'
+                      : 'hover:bg-muted'
+                  }`}
+                >
+                  <Checkbox
+                    checked={taggedPlayerIds.includes(player.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setTaggedPlayerIds([...taggedPlayerIds, player.id]);
+                      } else {
+                        setTaggedPlayerIds(taggedPlayerIds.filter(id => id !== player.id));
+                      }
+                    }}
+                  />
+                  <span className="text-sm">{player.name}</span>
+                </label>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
