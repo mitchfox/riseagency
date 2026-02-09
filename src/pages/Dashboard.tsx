@@ -1057,25 +1057,27 @@ const Dashboard = () => {
         }
       }
 
-      // Fetch other analyses assigned to this player
+      // Fetch other analyses tagged to this player
       const { data: otherAnalysesData, error: otherAnalysesError } = await supabase
-        .from("player_other_analysis")
+        .from("analysis_player_tags")
         .select(`
           id,
-          assigned_at,
-          analysis:coaching_analysis (
+          created_at,
+          analysis_id,
+          analyses (
             id,
             title,
-            description,
-            content,
-            category
+            analysis_type,
+            match_date,
+            home_team,
+            away_team
           )
         `)
         .eq("player_id", playerData.id)
-        .order("assigned_at", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (!otherAnalysesError && otherAnalysesData) {
-        setOtherAnalyses(otherAnalysesData);
+        setOtherAnalyses(otherAnalysesData.filter((item: any) => item.analyses));
       }
     } catch (error: any) {
       console.error("Error fetching analyses:", error);
@@ -2815,51 +2817,47 @@ const Dashboard = () => {
                         </div>
                       ) : (
                         <div className="space-y-3">
-                          {otherAnalyses.map((item: any) => (
-                            <div 
-                              key={item.id} 
-                              className="border rounded-lg p-3 md:p-4 hover:border-primary transition-colors bg-card"
-                            >
-                              <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
-                                <div className="flex-1 w-full">
-                                  <h3 className="font-semibold text-base md:text-lg mb-2">{item.analysis.title}</h3>
-                                  {item.analysis.category && (
-                                    <span className="inline-block px-2 py-1 text-xs rounded bg-primary/10 text-primary">
-                                      {item.analysis.category}
-                                    </span>
-                                  )}
-                                </div>
-                                {item.analysis.content && (
+                          {otherAnalyses.map((item: any) => {
+                            const analysis = item.analyses;
+                            if (!analysis) return null;
+                            return (
+                              <div 
+                                key={item.id} 
+                                className="border rounded-lg p-3 md:p-4 hover:border-primary transition-colors bg-card cursor-pointer"
+                                onClick={() => navigate(`/analysis/${analysis.id}`)}
+                              >
+                                <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
+                                  <div className="flex-1 w-full">
+                                    <h3 className="font-semibold text-base md:text-lg mb-1">
+                                      {analysis.title || `${analysis.home_team || ''} vs ${analysis.away_team || ''}`}
+                                    </h3>
+                                    <div className="flex items-center gap-2">
+                                      <span className={`inline-block px-2 py-0.5 text-xs rounded ${
+                                        analysis.analysis_type === "pre-match" 
+                                          ? "bg-slate-300 text-slate-900" 
+                                          : "bg-[hsl(43,49%,61%)] text-black"
+                                      }`}>
+                                        {analysis.analysis_type === "pre-match" ? "Pre-Match" : "Post-Match"}
+                                      </span>
+                                      {analysis.match_date && (
+                                        <span className="text-xs text-muted-foreground">
+                                          {new Date(analysis.match_date).toLocaleDateString()}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
                                   <Button 
                                     variant="outline" 
                                     size="sm"
-                                    onClick={async () => {
-                                      try {
-                                        const response = await fetch(item.analysis.content);
-                                        const blob = await response.blob();
-                                        const url = window.URL.createObjectURL(blob);
-                                        const link = document.createElement('a');
-                                        link.href = url;
-                                        link.download = `${item.analysis.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
-                                        document.body.appendChild(link);
-                                        link.click();
-                                        document.body.removeChild(link);
-                                        window.URL.revokeObjectURL(url);
-                                        toast.success("PDF downloaded");
-                                      } catch (error) {
-                                        console.error('Error downloading PDF:', error);
-                                        toast.error("Failed to download PDF");
-                                      }
-                                    }}
                                     className="w-full sm:w-auto flex-shrink-0"
                                   >
                                     <FileText className="w-4 h-4 mr-2" />
-                                    <span className="text-xs md:text-sm">Download PDF</span>
+                                    <span className="text-xs md:text-sm">View Analysis</span>
                                   </Button>
-                                )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </CardContent>
