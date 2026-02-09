@@ -268,9 +268,11 @@ export const AnalysisSchemeSection = ({
                   className="w-8 h-10 rounded-t-lg border-2 border-white shadow-lg flex items-center justify-center"
                   style={backgroundStyle}
                 >
-                  <span className="text-xs font-bold text-white drop-shadow-lg">
-                    {player.shirt_number || index + 1}
-                  </span>
+                  {player.shirt_number && (
+                    <span className="text-xs font-bold text-white drop-shadow-lg">
+                      {player.shirt_number}
+                    </span>
+                  )}
                 </div>
                 <div className="text-[10px] text-white text-center mt-0.5 font-medium drop-shadow-lg truncate max-w-16">
                   {player.name || player.position}
