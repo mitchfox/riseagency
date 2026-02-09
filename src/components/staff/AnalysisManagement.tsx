@@ -513,7 +513,8 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       } = supabase.storage.from("analysis-videos").getPublicUrl(filePath);
 
       const updatedPoints = [...(formData.points || [])];
-      updatedPoints[pointIndex] = { ...updatedPoints[pointIndex], video_url: publicUrl };
+      const currentVideos = updatedPoints[pointIndex].video_urls || (updatedPoints[pointIndex].video_url ? [updatedPoints[pointIndex].video_url] : []);
+      updatedPoints[pointIndex] = { ...updatedPoints[pointIndex], video_urls: [...currentVideos, publicUrl], video_url: undefined };
       setFormData({ ...formData, points: updatedPoints });
       toast.success("Video uploaded successfully");
     } catch (error: any) {
