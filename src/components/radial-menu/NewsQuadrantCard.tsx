@@ -20,14 +20,18 @@ export const NewsQuadrantCard = ({ maxWidth, maxHeight }: QuadrantCardProps) => 
     const fetchNews = async () => {
       const { data, error } = await supabase
         .from('blog_posts')
-        .select('id, title, image_url')
+        .select('id, title, image_url, image_url_internal')
         .eq('published', true)
         .eq('category', 'PLAYER NEWS')
         .order('created_at', { ascending: false })
         .limit(3);
       
       if (data && !error && data.length > 0) {
-        setNewsItems(data as NewsItem[]);
+        const resolved = data.map((item: any) => ({
+          ...item,
+          image_url: item.image_url || item.image_url_internal || null,
+        }));
+        setNewsItems(resolved as NewsItem[]);
       }
     };
 

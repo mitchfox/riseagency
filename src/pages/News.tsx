@@ -17,9 +17,14 @@ interface NewsArticle {
   excerpt: string;
   content: string;
   image_url: string;
+  image_url_internal?: string | null;
   category: string;
   created_at: string;
 }
+
+const getArticleImage = (article: NewsArticle): string | null => {
+  return article.image_url || article.image_url_internal || null;
+};
 
 const createSlug = (title: string): string => {
   return title
@@ -80,7 +85,7 @@ const ArticleView = ({ article }: { article: NewsArticle }) => {
     "@type": "NewsArticle",
     "headline": article.title,
     "description": article.excerpt,
-    "image": article.image_url,
+    "image": getArticleImage(article),
     "datePublished": article.created_at,
     "dateModified": article.created_at,
     "author": {
@@ -106,7 +111,7 @@ const ArticleView = ({ article }: { article: NewsArticle }) => {
       <SEO 
         title={`${article.title} | RISE Football Agency News`}
         description={article.excerpt || article.title}
-        image={article.image_url || "/og-preview-news.png"}
+        image={getArticleImage(article) || "/og-preview-news.png"}
         url={isBTL ? `/between-the-lines/${createSlug(article.title)}` : `/news/${createSlug(article.title)}`}
         type="article"
         article={{
@@ -124,10 +129,10 @@ const ArticleView = ({ article }: { article: NewsArticle }) => {
       </Link>
       
       <article>
-        {article.image_url && (
+        {getArticleImage(article) && (
           <div className="w-full mb-8">
             <img 
-              src={article.image_url} 
+              src={getArticleImage(article)!} 
               alt={translatedContent.title}
               className="w-full h-auto rounded-lg"
             />
@@ -255,10 +260,10 @@ const SimilarArticles = ({ currentArticleId, category }: { currentArticleId: str
             className="group"
           >
             <div className="overflow-hidden rounded-lg border border-border hover:border-primary/50 transition-all">
-              {article.image_url && (
+              {getArticleImage(article) && (
                 <div className="aspect-[16/9] overflow-hidden">
                   <img 
-                    src={article.image_url} 
+                    src={getArticleImage(article)!}
                     alt={article.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
@@ -342,7 +347,7 @@ const News = () => {
       <SEO 
         title={currentArticle ? currentArticle.title : "Latest News | RISE Football Agency"}
         description={currentArticle ? currentArticle.excerpt : "Stay updated with the latest news from RISE Football Agency and our talented roster of players."}
-        image={currentArticle?.image_url || "/og-preview-news.png"}
+        image={(currentArticle && getArticleImage(currentArticle)) || "/og-preview-news.png"}
         url={articleId ? `/news/${articleId}` : "/news"}
       />
       <Header />
@@ -393,10 +398,10 @@ const News = () => {
                       .map((item) => (
                       <Link key={item.id} to={`/news/${createSlug(item.title)}`}>
                         <div className="group cursor-pointer overflow-hidden rounded-lg border border-border hover:border-primary/50 transition-all hover:shadow-lg">
-                          {item.image_url && (
+                          {getArticleImage(item) && (
                             <div className="relative aspect-[4/3] overflow-hidden bg-black">
                               <img 
-                                src={item.image_url} 
+                                src={getArticleImage(item)!} 
                                 alt={item.title}
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                 loading="lazy"
