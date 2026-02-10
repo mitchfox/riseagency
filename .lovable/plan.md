@@ -1,50 +1,38 @@
 
 
-## Fixing Analysis Editor and Viewer Issues
+## Fixing Club Name Text Sizing and Investigating Lost Data
 
-### Issue 1: Text disappearing from points after saving (CRITICAL BUG)
+### Issue 1: Club name text shrinks too much on smaller screens
 
-**Root cause found:** In `AnalysisPointsSection.tsx`, the drag-and-drop `pointId` is generated using the point's title content:
+**Root cause:** The team name font size uses `clamp(0.5rem, 1.8vw, 1.2rem)`. The `1.8vw` value is relative to the full viewport width, so on a 375px phone screen it resolves to about 6.75px, which is barely readable. The minimum of `0.5rem` (8px) is also far too small.
 
-```
-const contentHash = `${p.title || ''}-${(p.video_urls?.[0] || p.video_url || '')}-${index}`;
-return `point-${contentHash}`;
-```
+**Fix:** Replace the viewport-relative sizing with a fixed font size that matches the desktop appearance. Since the Analysis Viewer is constrained to 794px width, the text should use a fixed size (or a much more generous clamp) so it stays legible at all screen widths. The bar height (`h-10 md:h-14`) also constrains what fits, so the mobile size needs to stay within that.
 
-Every time you type a character in the title, the key changes, which causes React to **unmount and remount** the entire point card. This destroys focus, can lose in-progress text, and makes it nearly impossible to type. The paragraphs likely never got saved because the constant remounting disrupted input.
+**Change:** Update `fontSize` from `clamp(0.5rem, 1.8vw, 1.2rem)` to `clamp(0.7rem, 3.5vw, 1.2rem)` for both home and away team name spans. This ensures:
+- On a 375px screen: ~13px (readable)
+- On 794px (A4 viewer): ~1.2rem (matches current desktop look)
+- The 2-line clamp and `break-word` remain to handle long names
 
-**Fix:** Replace the content-based ID with a stable identifier. Generate a random ID once when a point is added and store it on the point object (e.g. `_id`). Use that as the sortable key instead.
+### Issue 2: Viliam Horka vs Sigma Olomouc - text missing from all 7 points
 
-### Issue 2: Title input closing on each keystroke
+**Investigation results:** The database shows the analysis has 7 points with titles (GEGENPRESSING, DEFENSIVE POSITIONING, PROTECTING INSIDE, etc.) but every `paragraph_1` and `paragraph_2` field has length 0 - they are empty strings, not null.
 
-**Same root cause as Issue 1.** The key/remount problem. Fixed by the same stable ID solution above.
+**Root cause:** This was caused by the content-hash key bug that was just fixed. When the user typed into the title field, the React key changed on every keystroke, causing the entire point card to remount. This likely meant:
+1. The user typed titles first (they survived because each keystroke re-created the component with the new title in state)
+2. When they then typed paragraphs, the constant remounting from any further title edits (or video loading) wiped the paragraph content before it could be committed to state
+3. The save succeeded, but it saved the empty paragraph values that were in state
 
-### Issue 3: Sections auto-closing when scrolled off screen
+**This data cannot be recovered** as it was never persisted. The stable `_id` fix from the previous change prevents this from happening again. The user will need to re-enter the text for this analysis.
 
-**Root cause:** `ExpandableSection` in `AnalysisViewer.tsx` has a scroll listener (lines 253-264) that closes sections when they scroll out of view.
-
-**Fix:** Remove the entire auto-close-on-scroll `useEffect` block from `ExpandableSection`. Sections will stay open until manually closed.
-
-### Issue 4: Mobile text going tiny or not showing
-
-**Root cause:** `TextReveal` uses `whileInView` with `initial={{ opacity: 0, y: 15 }}`. When a section is closed, the content sits inside an `overflow: hidden` container with `height: 0`. The IntersectionObserver never fires because the elements are invisible, so text stays at `opacity: 0` permanently - even after the section opens.
-
-**Fix:** Replace `whileInView` animation with a simpler approach. Use `animate` directly so text always renders visibly. Alternatively, wrap with `viewport={{ once: true, amount: 0 }}` and remove the initial hidden state so content is always visible once the section opens.
+**No code change needed** for this issue, but the user should be informed.
 
 ---
 
 ### Technical Changes
 
-**File: `src/components/staff/analysis/AnalysisPointsSection.tsx`**
-- In `addPoint` (called from parent), add a stable `_id` field using `crypto.randomUUID()` to each new point
-- Change `pointIds` generation to use `point._id || index` instead of content hash
-- Handle existing points without `_id` by falling back to index-based IDs
-
-**File: `src/components/staff/AnalysisManagement.tsx`**
-- Update `addPoint` to include `_id: crypto.randomUUID()` on new points
-- When loading existing points in `handleOpenDialog`, assign `_id` to any points that don't have one
-
 **File: `src/pages/AnalysisViewer.tsx`**
-- Remove the auto-close-on-scroll `useEffect` from `ExpandableSection` (lines 249-265)
-- Replace `TextReveal` component: change from `whileInView` to a simple fade-in that triggers immediately, not dependent on intersection observer
+- Line 429: Change `fontSize: 'clamp(0.5rem, 1.8vw, 1.2rem)'` to `fontSize: 'clamp(0.7rem, 3.5vw, 1.2rem)'` (home team name)
+- Line 453: Same change for the away team name span
 
+### Data Loss Note
+The Viliam Horka vs Sigma Olomouc analysis paragraph text was never saved to the database due to the key-remounting bug. The fix deployed in the last change (stable `_id` on points) prevents this from recurring. The 7 point titles are intact but the paragraphs will need to be rewritten.
