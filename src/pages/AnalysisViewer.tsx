@@ -426,7 +426,7 @@ const AnalysisHeader = ({
           <span
             className="font-bebas text-white tracking-wide uppercase text-center leading-tight ml-[18vw] mr-[10vw] max-w-[25vw] overflow-hidden"
             style={{
-              fontSize: 'clamp(0.5rem, 1.8vw, 1.2rem)',
+              fontSize: 'clamp(0.7rem, 3.5vw, 1.2rem)',
               textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
               lineHeight: 1.1,
               display: '-webkit-box',
@@ -450,7 +450,7 @@ const AnalysisHeader = ({
           <span
             className="font-bebas text-white tracking-wide uppercase text-center leading-tight ml-[10vw] mr-[18vw] max-w-[25vw] overflow-hidden"
             style={{
-              fontSize: 'clamp(0.5rem, 1.8vw, 1.2rem)',
+              fontSize: 'clamp(0.7rem, 3.5vw, 1.2rem)',
               textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
               lineHeight: 1.1,
               display: '-webkit-box',
