@@ -108,6 +108,7 @@ const BlogManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             excerpt: formData.excerpt,
             published: formData.published,
             image_url: imageUrl,
+            image_url_internal: imageUrl,
             category: formData.category || null,
           })
           .eq("id", editingPost.id);
@@ -123,6 +124,7 @@ const BlogManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             excerpt: formData.excerpt,
             published: formData.published,
             image_url: imageUrl,
+            image_url_internal: imageUrl,
             category: formData.category || null,
             author_id: userId,
           });

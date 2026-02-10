@@ -53,7 +53,12 @@ export const IntroModal = ({ open, onOpenChange }: IntroModalProps) => {
         .limit(3);
       
       if (data && !error && data.length > 0) {
-        setNewsItems(data);
+        // Resolve image_url fallback
+        const resolved = data.map((item: any) => ({
+          ...item,
+          image_url: item.image_url || item.image_url_internal || null,
+        }));
+        setNewsItems(resolved);
       }
     };
 

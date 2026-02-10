@@ -25,9 +25,14 @@ interface Article {
   title: string;
   excerpt: string;
   image_url: string;
+  image_url_internal?: string | null;
   category: string;
   created_at: string;
 }
+
+const getArticleImage = (article: Article): string | null => {
+  return article.image_url || article.image_url_internal || null;
+};
 
 const createSlug = (title: string): string => {
   return title
@@ -278,10 +283,10 @@ export default function BetweenTheLines() {
                       className="group cursor-pointer overflow-hidden rounded-lg border border-border hover:border-primary/50 transition-all hover:shadow-lg block h-full"
                     >
                       <div className="relative aspect-[4/3] overflow-hidden bg-black">
-                        {article.image_url ? (
+                        {getArticleImage(article) ? (
                           <>
                             <img
-                              src={article.image_url}
+                              src={getArticleImage(article)!}
                               alt={article.title}
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             />
