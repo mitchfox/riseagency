@@ -427,12 +427,10 @@ export const AnalysisPointsSection = ({
     })
   );
 
-  // Generate stable IDs for points based on content to survive reordering
-  const pointIds = (formData.points || []).map((p: Point, index: number) => {
-    // Use title + first video URL as a stable identifier, falling back to index
-    const contentHash = `${p.title || ''}-${(p.video_urls?.[0] || p.video_url || '')}-${index}`;
-    return `point-${contentHash}`;
-  });
+  // Use stable _id from each point, falling back to index
+  const pointIds = (formData.points || []).map((p: any, index: number) => 
+    p._id || `point-fallback-${index}`
+  );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;

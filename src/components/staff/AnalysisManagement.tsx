@@ -404,7 +404,12 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
     setAnalysisType(type);
     if (analysis) {
       setEditingAnalysis(analysis);
-      setFormData(analysis);
+      // Assign stable _id to any points that don't have one
+      const pointsWithIds = (analysis.points || []).map((p: any) => ({
+        ...p,
+        _id: p._id || crypto.randomUUID(),
+      }));
+      setFormData({ ...analysis, points: pointsWithIds });
 
       const { data } = await supabase
         .from("player_analysis")
@@ -691,7 +696,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       ...formData,
       points: [
         ...(formData.points || []),
-        { title: "", paragraph_1: "", paragraph_2: "", images: [] },
+        { _id: crypto.randomUUID(), title: "", paragraph_1: "", paragraph_2: "", images: [] },
       ],
     });
   };

@@ -246,23 +246,6 @@ const ExpandableSection = ({
     return () => window.removeEventListener('analysis-nav', handler);
   }, [id]);
 
-  // Auto-close when scrolled out of view (only if not forceOpen/defaultOpen)
-  useEffect(() => {
-    if (forceOpen || !sectionRef.current) return;
-
-    const handleScroll = () => {
-      if (!isOpen || !sectionRef.current) return;
-      const rect = sectionRef.current.getBoundingClientRect();
-      // Close if the section has scrolled completely above or below the viewport
-      if (rect.bottom < -100 || rect.top > window.innerHeight + 100) {
-        setIsOpen(false);
-        setOpenedByNav(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [isOpen, forceOpen]);
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
@@ -348,13 +331,12 @@ const ExpandableSection = ({
   );
 };
 
-// Text reveal animation
+// Text reveal animation - uses animate directly to avoid whileInView issues inside collapsed sections
 const TextReveal = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => (
   <motion.div
-    initial={{ opacity: 0, y: 15 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6, delay, ease: "easeOut" }}
-    viewport={{ once: true }}
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5, delay, ease: "easeOut" }}
   >
     {children}
   </motion.div>
