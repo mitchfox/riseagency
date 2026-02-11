@@ -9,12 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, MessageSquare, Plus, Trash2, Edit, Sparkles, Copy, UserPlus, MapPin, Mail, Route } from "lucide-react";
+import { Users, MessageSquare, Plus, Trash2, Edit, Sparkles, Copy, UserPlus, MapPin, Mail, Route, Scale } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PlayerOutreach } from "./PlayerOutreach";
 import MessagePathways from "./MessagePathways";
+import { RecruitmentRulesTab } from "./RecruitmentRulesTab";
 
 interface Prospect {
   id: string;
@@ -438,26 +439,31 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
   return (
     <div className="space-y-4 sm:space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 h-auto sm:h-10">
-          <TabsTrigger value="prospects" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
+        <TabsList className="grid w-full grid-cols-5 h-auto sm:h-10">
+          <TabsTrigger value="prospects" className="flex-1 text-xs sm:text-sm px-1 sm:px-2 py-2.5">
             <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Prospect Board</span>
             <span className="sm:hidden">Prospects</span>
           </TabsTrigger>
-          <TabsTrigger value="outreach" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
+          <TabsTrigger value="outreach" className="flex-1 text-xs sm:text-sm px-1 sm:px-2 py-2.5">
             <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Player Outreach</span>
             <span className="sm:hidden">Outreach</span>
           </TabsTrigger>
-          <TabsTrigger value="templates" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
+          <TabsTrigger value="templates" className="flex-1 text-xs sm:text-sm px-1 sm:px-2 py-2.5">
             <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Message Templates</span>
             <span className="sm:hidden">Templates</span>
           </TabsTrigger>
-          <TabsTrigger value="pathways" className="flex-1 text-xs sm:text-sm px-2 py-2.5">
+          <TabsTrigger value="pathways" className="flex-1 text-xs sm:text-sm px-1 sm:px-2 py-2.5">
             <Route className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Message Pathways</span>
             <span className="sm:hidden">Pathways</span>
+          </TabsTrigger>
+          <TabsTrigger value="rules" className="flex-1 text-xs sm:text-sm px-1 sm:px-2 py-2.5">
+            <Scale className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Rules</span>
+            <span className="sm:hidden">Rules</span>
           </TabsTrigger>
         </TabsList>
 
@@ -883,6 +889,10 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
 
         <TabsContent value="pathways" className="space-y-4">
           <MessagePathways />
+        </TabsContent>
+
+        <TabsContent value="rules" className="space-y-4">
+          <RecruitmentRulesTab isAdmin={isAdmin} />
         </TabsContent>
       </Tabs>
 

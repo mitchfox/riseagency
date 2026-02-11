@@ -3286,6 +3286,39 @@ export type Database = {
         }
         Relationships: []
       }
+      recruitment_age_rules: {
+        Row: {
+          country: string
+          country_code: string
+          created_at: string
+          id: string
+          min_contact_age: number | null
+          min_sign_age: number | null
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          country: string
+          country_code: string
+          created_at?: string
+          id?: string
+          min_contact_age?: number | null
+          min_sign_age?: number | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          country?: string
+          country_code?: string
+          created_at?: string
+          id?: string
+          min_contact_age?: number | null
+          min_sign_age?: number | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       role_permissions: {
         Row: {
           can_edit: boolean
