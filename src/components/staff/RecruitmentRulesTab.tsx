@@ -69,7 +69,7 @@ export const RecruitmentRulesTab = ({ isAdmin }: { isAdmin: boolean }) => {
     if (field === 'notes') {
       value = editValue.trim() || null;
     } else {
-      value = editValue.trim() ? parseInt(editValue) : null;
+      value = editValue.trim() ? parseFloat(editValue) : null;
       if (value !== null && isNaN(value)) {
         toast.error("Please enter a valid number");
         return;
@@ -172,6 +172,7 @@ export const RecruitmentRulesTab = ({ isAdmin }: { isAdmin: boolean }) => {
                     {editingCell?.id === rule.id && editingCell.field === 'min_contact_age' ? (
                       <Input
                         type="number"
+                        step="0.5"
                         value={editValue}
                         onChange={e => setEditValue(e.target.value)}
                         onBlur={handleSave}
@@ -200,6 +201,7 @@ export const RecruitmentRulesTab = ({ isAdmin }: { isAdmin: boolean }) => {
                     {editingCell?.id === rule.id && editingCell.field === 'min_sign_age' ? (
                       <Input
                         type="number"
+                        step="0.5"
                         value={editValue}
                         onChange={e => setEditValue(e.target.value)}
                         onBlur={handleSave}
