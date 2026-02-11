@@ -17,17 +17,23 @@ interface AgeRule {
   notes: string | null;
 }
 
-const FLAG_EMOJI: Record<string, string> = {
-  AL: '🇦🇱', AD: '🇦🇩', AM: '🇦🇲', AT: '🇦🇹', AZ: '🇦🇿', BY: '🇧🇾', BE: '🇧🇪',
-  BA: '🇧🇦', BG: '🇧🇬', HR: '🇭🇷', CY: '🇨🇾', CZ: '🇨🇿', DK: '🇩🇰',
-  'GB-ENG': '🏴󠁧󠁢󠁥󠁮󠁧󠁿', EE: '🇪🇪', FO: '🇫🇴', FI: '🇫🇮', FR: '🇫🇷',
-  GE: '🇬🇪', DE: '🇩🇪', GI: '🇬🇮', GR: '🇬🇷', HU: '🇭🇺', IS: '🇮🇸',
-  IE: '🇮🇪', IL: '🇮🇱', IT: '🇮🇹', KZ: '🇰🇿', XK: '🇽🇰', LV: '🇱🇻',
-  LI: '🇱🇮', LT: '🇱🇹', LU: '🇱🇺', MT: '🇲🇹', MD: '🇲🇩', MC: '🇲🇨',
-  ME: '🇲🇪', NL: '🇳🇱', MK: '🇲🇰', 'GB-NIR': '🇬🇧', NO: '🇳🇴', PL: '🇵🇱',
-  PT: '🇵🇹', RO: '🇷🇴', RU: '🇷🇺', SM: '🇸🇲', 'GB-SCT': '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
-  RS: '🇷🇸', SK: '🇸🇰', SI: '🇸🇮', ES: '🇪🇸', SE: '🇸🇪', CH: '🇨🇭',
-  TR: '🇹🇷', UA: '🇺🇦', 'GB-WLS': '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+// Convert ISO 3166-1 alpha-2 code to flag emoji
+const countryCodeToFlag = (code: string): string => {
+  // Handle UK nations specially
+  const SPECIAL: Record<string, string> = {
+    'GB-ENG': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+    'GB-SCT': '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+    'GB-WLS': '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+    'GB-NIR': '🇬🇧',
+    'XK': '🇽🇰',
+  };
+  if (SPECIAL[code]) return SPECIAL[code];
+  
+  // Standard: convert two-letter code to regional indicator symbols
+  const codePoints = [...code.toUpperCase()].map(
+    char => 0x1F1E6 + char.charCodeAt(0) - 65
+  );
+  return String.fromCodePoint(...codePoints);
 };
 
 export const RecruitmentRulesTab = ({ isAdmin }: { isAdmin: boolean }) => {
@@ -97,7 +103,7 @@ export const RecruitmentRulesTab = ({ isAdmin }: { isAdmin: boolean }) => {
     r.country.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getFlag = (code: string) => FLAG_EMOJI[code] || '🏳️';
+  const getFlag = (code: string) => countryCodeToFlag(code);
 
   if (loading) {
     return (
