@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Scale, Search, Loader2 } from "lucide-react";
+import { Scale, Search, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -17,23 +18,18 @@ interface AgeRule {
   notes: string | null;
 }
 
-// Convert ISO 3166-1 alpha-2 code to flag emoji
-const countryCodeToFlag = (code: string): string => {
-  // Handle UK nations specially
-  const SPECIAL: Record<string, string> = {
-    'GB-ENG': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-    'GB-SCT': '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
-    'GB-WLS': '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
-    'GB-NIR': '🇬🇧',
-    'XK': '🇽🇰',
-  };
-  if (SPECIAL[code]) return SPECIAL[code];
-  
-  // Standard: convert two-letter code to regional indicator symbols
-  const codePoints = [...code.toUpperCase()].map(
-    char => 0x1F1E6 + char.charCodeAt(0) - 65
-  );
-  return String.fromCodePoint(...codePoints);
+// Map country codes to flagcdn-compatible lowercase codes
+const FLAG_CODE_MAP: Record<string, string> = {
+  'GB-ENG': 'gb-eng',
+  'GB-SCT': 'gb-sct',
+  'GB-WLS': 'gb-wls',
+  'GB-NIR': 'gb-nir',
+  'XK': 'xk',
+};
+
+const getFlagUrl = (code: string): string => {
+  const mapped = FLAG_CODE_MAP[code] || code.toLowerCase();
+  return `https://flagcdn.com/w40/${mapped}.png`;
 };
 
 export const RecruitmentRulesTab = ({ isAdmin }: { isAdmin: boolean }) => {
@@ -103,7 +99,7 @@ export const RecruitmentRulesTab = ({ isAdmin }: { isAdmin: boolean }) => {
     r.country.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getFlag = (code: string) => countryCodeToFlag(code);
+  const getFlag = (code: string) => getFlagUrl(code);
 
   if (loading) {
     return (
@@ -114,7 +110,18 @@ export const RecruitmentRulesTab = ({ isAdmin }: { isAdmin: boolean }) => {
   }
 
   return (
-    <Card>
+    <div className="space-y-4">
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full sm:w-auto"
+        onClick={() => window.open('https://inside.fifa.com/transfer-system/agents/national-football-agent-regulations', '_blank')}
+      >
+        <ExternalLink className="w-3.5 h-3.5 mr-2" />
+        National Football Agent Regulations (FIFA)
+      </Button>
+
+      <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <Scale className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -154,8 +161,10 @@ export const RecruitmentRulesTab = ({ isAdmin }: { isAdmin: boolean }) => {
               {filtered.map(rule => (
                 <TableRow key={rule.id}>
                   <TableCell className="font-medium text-xs sm:text-sm">
-                    <span className="mr-1.5 text-base sm:text-lg">{getFlag(rule.country_code)}</span>
-                    {rule.country}
+                    <span className="inline-flex items-center gap-1.5">
+                      <img src={getFlag(rule.country_code)} alt={rule.country} className="w-5 h-auto rounded-sm" />
+                      {rule.country}
+                    </span>
                   </TableCell>
 
                   {/* Min Contact Age */}
@@ -251,5 +260,6 @@ export const RecruitmentRulesTab = ({ isAdmin }: { isAdmin: boolean }) => {
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 };
