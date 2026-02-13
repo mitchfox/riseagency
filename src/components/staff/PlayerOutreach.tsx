@@ -7,100 +7,59 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Edit, Users, Save, MessageCircle, Star } from "lucide-react";
+import { Plus, Edit, Users, Save, Star, CheckCircle2, HelpCircle, Clock, Search, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { FaInstagram } from 'react-icons/fa';
+import { getCountryFlagUrl } from '@/lib/countryFlags';
+import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
 
-// Helper to format Instagram handle
-const formatIgHandle = (handle: string | null) => {
-  if (!handle) return null;
-  const cleanHandle = handle.replace(/^@/, '').trim();
-  if (!cleanHandle) return null;
-  return cleanHandle;
-};
-
-// Icon-only Instagram link for tables
+// Instagram link
 const InstagramIconLink = ({ handle }: { handle: string | null }) => {
-  const cleanHandle = formatIgHandle(handle);
-  if (!cleanHandle) return <span className="text-muted-foreground">-</span>;
-  
+  if (!handle) return <span className="text-muted-foreground">-</span>;
+  const clean = handle.replace(/^@/, '').trim();
+  if (!clean) return <span className="text-muted-foreground">-</span>;
   return (
-    <a
-      href={`https://instagram.com/${cleanHandle}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center justify-center text-primary hover:text-primary/80"
-      title={`@${cleanHandle}`}
+    <button
+      onClick={(e) => { e.stopPropagation(); window.open(`https://instagram.com/${clean}`, '_blank', 'noopener,noreferrer'); }}
+      className="p-0.5 hover:scale-110 transition-transform"
+      title={`@${clean}`}
     >
-      <MessageCircle className="h-4 w-4" />
-    </a>
+      <FaInstagram className="h-4 w-4 text-[#E1306C]" />
+    </button>
   );
 };
 
-// Club rating interface
+// Club rating
 interface ClubRating {
   club_name: string;
   first_team_rating: string;
   academy_rating: string;
 }
 
-// Normalize club name for matching
 const normalizeClubName = (name: string): string => {
-  return name
-    .toLowerCase()
-    .replace(/[''`]/g, '')
-    .replace(/\s+/g, ' ')
-    .replace(/^(fc|sc|ac|as|ss|us|usl|afc|rfc|fk|nk|sk|bv|sv|tsv|vfb|vfl|1\.|)\s+/i, '')
-    .replace(/\s+(fc|sc|ac|cf|city|united|athletic|athletico|atletico|rovers|wanderers|town|utd|1861|1892|1893|1899|1904|1906|1907|1909|1911|1919|1920|1948|1961|1991|1995|04|05|09)$/i, '')
-    .replace(/[^a-z0-9]/g, '')
-    .trim();
+  return name.toLowerCase().replace(/[''`]/g, '').replace(/\s+/g, ' ').replace(/[^a-z0-9 ]/g, '').trim();
 };
 
-// Find matching club rating with fuzzy matching
 const findClubRating = (clubName: string | null, ratings: ClubRating[], isYouth: boolean): string | null => {
   if (!clubName || ratings.length === 0) return null;
-  
-  const normalizedSearch = normalizeClubName(clubName);
-  if (!normalizedSearch) return null;
-  
-  // First try exact normalized match
+  const normalized = normalizeClubName(clubName);
+  if (!normalized) return null;
   for (const rating of ratings) {
-    const normalizedClub = normalizeClubName(rating.club_name);
-    if (normalizedClub === normalizedSearch) {
+    const normClub = normalizeClubName(rating.club_name);
+    if (normClub === normalized || normClub.includes(normalized) || normalized.includes(normClub)) {
       return isYouth ? rating.academy_rating : rating.first_team_rating;
     }
   }
-  
-  // Then try contains match (either direction)
-  for (const rating of ratings) {
-    const normalizedClub = normalizeClubName(rating.club_name);
-    if (normalizedClub.includes(normalizedSearch) || normalizedSearch.includes(normalizedClub)) {
-      return isYouth ? rating.academy_rating : rating.first_team_rating;
-    }
-  }
-  
-  // Try matching by significant words (at least 4 chars)
-  const searchWords = normalizedSearch.match(/[a-z]{4,}/g) || [];
-  for (const rating of ratings) {
-    const normalizedClub = normalizeClubName(rating.club_name);
-    for (const word of searchWords) {
-      if (normalizedClub.includes(word)) {
-        return isYouth ? rating.academy_rating : rating.first_team_rating;
-      }
-    }
-  }
-  
   return null;
 };
 
-// Rating badge component
 const ClubRatingBadge = ({ rating }: { rating: string | null }) => {
   if (!rating) return null;
-  
   const colorMap: Record<string, string> = {
     'R1': 'bg-emerald-500/20 text-emerald-600 border-emerald-500/30',
     'R2': 'bg-green-500/20 text-green-600 border-green-500/30',
@@ -108,20 +67,113 @@ const ClubRatingBadge = ({ rating }: { rating: string | null }) => {
     'R4': 'bg-orange-500/20 text-orange-600 border-orange-500/30',
     'R5': 'bg-red-500/20 text-red-600 border-red-500/30',
   };
-  
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Badge variant="outline" className={`text-[10px] px-1 py-0 ml-1 ${colorMap[rating] || ''}`}>
-            {rating}
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Club Rating: {rating}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Badge variant="outline" className={`text-[10px] px-1 py-0 ml-1 ${colorMap[rating] || ''}`}>
+      {rating}
+    </Badge>
+  );
+};
+
+// Find club country
+const findClubCountry = (clubName: string | null, clubCountryMap: Record<string, string>): string | null => {
+  if (!clubName) return null;
+  const lower = clubName.toLowerCase();
+  if (clubCountryMap[lower]) return clubCountryMap[lower];
+  const normalized = normalizeClubName(clubName);
+  for (const [key, country] of Object.entries(clubCountryMap)) {
+    const normKey = normalizeClubName(key);
+    if (normKey.includes(normalized) || normalized.includes(normKey)) return country;
+  }
+  return null;
+};
+
+interface AgeRule {
+  country: string;
+  country_code: string;
+  min_contact_age: number | null;
+}
+
+// Eligibility badge
+const EligibilityBadge = ({ item, type, clubCountryMap, ageRules }: {
+  item: any; type: 'youth' | 'pro'; clubCountryMap: Record<string, string>; ageRules: AgeRule[];
+}) => {
+  if (type === 'pro') {
+    return (
+      <TooltipProvider><Tooltip><TooltipTrigger asChild>
+        <span className="inline-flex"><Star className="h-4 w-4 text-amber-500 fill-amber-500" /></span>
+      </TooltipTrigger><TooltipContent><p>Pro player, can be contacted directly</p></TooltipContent></Tooltip></TooltipProvider>
+    );
+  }
+
+  if (!item.date_of_birth) {
+    return (
+      <TooltipProvider><Tooltip><TooltipTrigger asChild>
+        <span className="inline-flex"><HelpCircle className="h-4 w-4 text-muted-foreground" /></span>
+      </TooltipTrigger><TooltipContent><p>No date of birth set</p></TooltipContent></Tooltip></TooltipProvider>
+    );
+  }
+
+  const clubCountry = findClubCountry(item.current_club, clubCountryMap);
+  if (!clubCountry) {
+    return (
+      <TooltipProvider><Tooltip><TooltipTrigger asChild>
+        <span className="inline-flex"><HelpCircle className="h-4 w-4 text-muted-foreground" /></span>
+      </TooltipTrigger><TooltipContent><p>Club country unknown</p></TooltipContent></Tooltip></TooltipProvider>
+    );
+  }
+
+  const rule = ageRules.find(r => r.country.toLowerCase() === clubCountry.toLowerCase());
+  if (!rule || rule.min_contact_age === null) {
+    return (
+      <TooltipProvider><Tooltip><TooltipTrigger asChild>
+        <span className="inline-flex"><HelpCircle className="h-4 w-4 text-muted-foreground" /></span>
+      </TooltipTrigger><TooltipContent><p>No age rules for {clubCountry}</p></TooltipContent></Tooltip></TooltipProvider>
+    );
+  }
+
+  const preciseAge = calculatePreciseAge(item.date_of_birth);
+  if (preciseAge === null) return <HelpCircle className="h-4 w-4 text-muted-foreground" />;
+
+  if (preciseAge >= rule.min_contact_age) {
+    return (
+      <TooltipProvider><Tooltip><TooltipTrigger asChild>
+        <span className="inline-flex"><CheckCircle2 className="h-4 w-4 text-emerald-500" /></span>
+      </TooltipTrigger><TooltipContent><p>Eligible to contact (parent) in {clubCountry}</p></TooltipContent></Tooltip></TooltipProvider>
+    );
+  }
+
+  const eligibleDate = getEligibleDate(item.date_of_birth, rule.min_contact_age);
+  return (
+    <TooltipProvider><Tooltip><TooltipTrigger asChild>
+      <span className="inline-flex items-center gap-1 text-[10px] text-amber-600">
+        <Clock className="h-3.5 w-3.5" />
+        {eligibleDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
+      </span>
+    </TooltipTrigger><TooltipContent>
+      <p>Can contact parent from {eligibleDate.toLocaleDateString('en-GB')} ({clubCountry}: min age {rule.min_contact_age})</p>
+    </TooltipContent></Tooltip></TooltipProvider>
+  );
+};
+
+// Club display with country flag and contact age
+const ClubDisplay = ({ clubName, clubCountryMap, ageRules, clubRatings, isYouth }: {
+  clubName: string | null; clubCountryMap: Record<string, string>; ageRules: AgeRule[]; clubRatings: ClubRating[]; isYouth: boolean;
+}) => {
+  if (!clubName) return <span className="text-muted-foreground">-</span>;
+  const clubCountry = findClubCountry(clubName, clubCountryMap);
+  const rule = clubCountry ? ageRules.find(r => r.country.toLowerCase() === clubCountry.toLowerCase()) : null;
+
+  return (
+    <span className="inline-flex items-center gap-1.5 flex-wrap">
+      {clubCountry && (
+        <img src={getCountryFlagUrl(clubCountry)} alt={clubCountry} className="w-4 h-3 object-cover rounded-sm" title={clubCountry} />
+      )}
+      <span className="truncate">{clubName}</span>
+      <ClubRatingBadge rating={findClubRating(clubName, clubRatings, isYouth)} />
+      {rule?.min_contact_age != null && isYouth && (
+        <Badge variant="secondary" className="text-[10px] px-1 py-0">{rule.min_contact_age}</Badge>
+      )}
+    </span>
   );
 };
 
@@ -131,6 +183,8 @@ interface YouthOutreach {
   ig_handle: string | null;
   current_club: string | null;
   date_of_birth: string | null;
+  position?: string | null;
+  nationality?: string | null;
   messaged: boolean;
   response_received: boolean;
   parents_name: string | null;
@@ -138,6 +192,7 @@ interface YouthOutreach {
   parent_approval: boolean;
   initial_message: string | null;
   notes: string | null;
+  created_at?: string;
 }
 
 interface ProOutreach {
@@ -146,65 +201,101 @@ interface ProOutreach {
   ig_handle: string | null;
   current_club: string | null;
   date_of_birth: string | null;
+  position?: string | null;
+  nationality?: string | null;
   messaged: boolean;
   response_received: boolean;
   initial_message: string | null;
   notes: string | null;
+  created_at?: string;
 }
+
+type SortField = 'player_name' | 'age' | 'current_club' | 'nationality' | 'date_of_birth';
+type SortDir = 'asc' | 'desc';
 
 export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   const [activeTab, setActiveTab] = useState("youth");
   const [youthData, setYouthData] = useState<YouthOutreach[]>([]);
   const [proData, setProData] = useState<ProOutreach[]>([]);
   const [clubRatings, setClubRatings] = useState<ClubRating[]>([]);
+  const [ageRules, setAgeRules] = useState<AgeRule[]>([]);
+  const [clubCountryMap, setClubCountryMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<YouthOutreach | ProOutreach | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortField, setSortField] = useState<SortField>('player_name');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
   const [youthFormData, setYouthFormData] = useState({
-    player_name: "",
-    ig_handle: "",
-    current_club: "",
-    date_of_birth: "",
-    messaged: false,
-    response_received: false,
-    parents_name: "",
-    parent_contact: "",
-    parent_approval: false,
-    initial_message: "",
-    notes: ""
+    player_name: "", ig_handle: "", current_club: "", date_of_birth: "",
+    position: "", nationality: "",
+    messaged: false, response_received: false, parents_name: "", parent_contact: "",
+    parent_approval: false, initial_message: "", notes: ""
   });
   const [proFormData, setProFormData] = useState({
-    player_name: "",
-    ig_handle: "",
-    current_club: "",
-    date_of_birth: "",
-    messaged: false,
-    response_received: false,
-    initial_message: "",
-    notes: ""
+    player_name: "", ig_handle: "", current_club: "", date_of_birth: "",
+    position: "", nationality: "",
+    messaged: false, response_received: false, initial_message: "", notes: ""
   });
 
   const canEdit = true;
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
-      const [youthResult, proResult, ratingsResult] = await Promise.all([
+      const [youthResult, proResult, ratingsResult, rulesResult, clubsResult] = await Promise.all([
         supabase.from("player_outreach_youth").select("*").order("created_at", { ascending: false }),
         supabase.from("player_outreach_pro").select("*").order("created_at", { ascending: false }),
-        supabase.from("club_ratings").select("club_name, first_team_rating, academy_rating")
+        supabase.from("club_ratings").select("club_name, first_team_rating, academy_rating"),
+        supabase.from('recruitment_age_rules').select('country, country_code, min_contact_age'),
+        supabase.from('club_map_positions').select('club_name, country'),
       ]);
 
       if (youthResult.error) throw youthResult.error;
       if (proResult.error) throw proResult.error;
 
-      setYouthData(youthResult.data || []);
-      setProData(proResult.data || []);
+      const countryMap: Record<string, string> = {};
+      clubsResult.data?.forEach(c => { if (c.club_name && c.country) countryMap[c.club_name.toLowerCase()] = c.country; });
+
+      // Auto-move 18+ youth to pro
+      let youthFiltered = youthResult.data || [];
+      const toMove = youthFiltered.filter(item => {
+        if (!item.date_of_birth) return false;
+        const age = calculateAge(item.date_of_birth);
+        return age !== null && age >= 18;
+      });
+
+      if (toMove.length > 0) {
+        for (const item of toMove) {
+          await supabase.from('player_outreach_pro').insert({
+            player_name: item.player_name,
+            ig_handle: item.ig_handle,
+            current_club: (item as any).current_club,
+            date_of_birth: item.date_of_birth,
+            messaged: item.messaged,
+            response_received: item.response_received,
+            initial_message: item.initial_message,
+            notes: item.notes,
+            position: (item as any).position,
+            nationality: (item as any).nationality,
+          });
+          await supabase.from('player_outreach_youth').delete().eq('id', item.id);
+        }
+        toast.info(`${toMove.length} player(s) auto-moved to Pro (turned 18)`);
+        const { data: refreshed } = await supabase.from('player_outreach_youth').select('*').order('created_at', { ascending: false });
+        youthFiltered = refreshed || [];
+        const { data: refreshedPro } = await supabase.from('player_outreach_pro').select('*').order('created_at', { ascending: false });
+        setProData(refreshedPro || []);
+      } else {
+        setProData(proResult.data || []);
+      }
+
+      setYouthData(youthFiltered);
       setClubRatings(ratingsResult.data || []);
+      setAgeRules(rulesResult.data || []);
+      setClubCountryMap(countryMap);
     } catch (error: any) {
       console.error("Error fetching outreach data:", error);
       toast.error("Failed to load data");
@@ -213,139 +304,116 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-50" />;
+    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
+
+  const sortAndFilter = <T extends { player_name: string; current_club?: string | null; date_of_birth?: string | null; nationality?: string | null }>(data: T[]): T[] => {
+    let result = data;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(d =>
+        d.player_name.toLowerCase().includes(q) ||
+        d.current_club?.toLowerCase().includes(q) ||
+        (d as any).nationality?.toLowerCase().includes(q) ||
+        (d as any).position?.toLowerCase().includes(q)
+      );
+    }
+    result = [...result].sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case 'player_name': cmp = a.player_name.localeCompare(b.player_name); break;
+        case 'age': {
+          const ageA = calculateAge(a.date_of_birth || null) ?? 999;
+          const ageB = calculateAge(b.date_of_birth || null) ?? 999;
+          cmp = ageA - ageB; break;
+        }
+        case 'current_club': cmp = (a.current_club || 'ZZZ').localeCompare(b.current_club || 'ZZZ'); break;
+        case 'nationality': cmp = ((a as any).nationality || 'ZZZ').localeCompare((b as any).nationality || 'ZZZ'); break;
+        case 'date_of_birth': cmp = (a.date_of_birth || '9999').localeCompare(b.date_of_birth || '9999'); break;
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return result;
+  };
+
   const handleYouthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const submitData = { ...youthFormData, age: youthFormData.date_of_birth ? calculateAge(youthFormData.date_of_birth) : null };
       if (editingItem && 'parents_name' in editingItem) {
-        const { error } = await supabase
-          .from("player_outreach_youth")
-          .update(youthFormData)
-          .eq("id", editingItem.id);
+        const { error } = await supabase.from("player_outreach_youth").update(submitData).eq("id", editingItem.id);
         if (error) throw error;
         toast.success("Youth outreach updated");
       } else {
-        const { error: outreachError } = await supabase
-          .from("player_outreach_youth")
-          .insert([youthFormData]);
-        if (outreachError) throw outreachError;
+        const { error } = await supabase.from("player_outreach_youth").insert([submitData]);
+        if (error) throw error;
         toast.success("Youth outreach added");
       }
       setDialogOpen(false);
       resetForms();
       fetchData();
     } catch (error: any) {
-      console.error("Error saving youth outreach:", error);
-      toast.error(error.message || "Failed to save youth outreach");
+      toast.error(error.message || "Failed to save");
     }
   };
 
   const handleProSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const submitData = { ...proFormData, age: proFormData.date_of_birth ? calculateAge(proFormData.date_of_birth) : null };
       if (editingItem && !('parents_name' in editingItem)) {
-        const { error } = await supabase
-          .from("player_outreach_pro")
-          .update(proFormData)
-          .eq("id", editingItem.id);
+        const { error } = await supabase.from("player_outreach_pro").update(submitData).eq("id", editingItem.id);
         if (error) throw error;
         toast.success("Pro outreach updated");
       } else {
-        const { error: outreachError } = await supabase
-          .from("player_outreach_pro")
-          .insert([proFormData]);
-        if (outreachError) throw outreachError;
+        const { error } = await supabase.from("player_outreach_pro").insert([submitData]);
+        if (error) throw error;
         toast.success("Pro outreach added");
       }
       setDialogOpen(false);
       resetForms();
       fetchData();
     } catch (error: any) {
-      console.error("Error saving pro outreach:", error);
-      toast.error(error.message || "Failed to save pro outreach");
-    }
-  };
-
-  const handleSaveAll = async () => {
-    try {
-      for (const item of youthData) {
-        const { error } = await supabase
-          .from("player_outreach_youth")
-          .update({
-            messaged: item.messaged,
-            response_received: item.response_received,
-            parent_approval: item.parent_approval
-          })
-          .eq("id", item.id);
-        if (error) throw error;
-      }
-
-      for (const item of proData) {
-        const { error } = await supabase
-          .from("player_outreach_pro")
-          .update({
-            messaged: item.messaged,
-            response_received: item.response_received
-          })
-          .eq("id", item.id);
-        if (error) throw error;
-      }
-
-      toast.success("All changes saved successfully");
-      setHasUnsavedChanges(false);
-      fetchData();
-    } catch (error: any) {
-      console.error("Error saving changes:", error);
-      toast.error("Failed to save changes");
+      toast.error(error.message || "Failed to save");
     }
   };
 
   const toggleYouthField = async (id: string, field: keyof Pick<YouthOutreach, 'messaged' | 'response_received' | 'parent_approval'>) => {
     const item = youthData.find(i => i.id === id);
     if (!item) return;
-    
     const newValue = !item[field];
-    
-    setYouthData(prev => prev.map(i => 
-      i.id === id ? { ...i, [field]: newValue } : i
-    ));
-    
+    setYouthData(prev => prev.map(i => i.id === id ? { ...i, [field]: newValue } : i));
     try {
-      const { error } = await supabase
-        .from("player_outreach_youth")
-        .update({ [field]: newValue })
-        .eq("id", id);
+      const { error } = await supabase.from("player_outreach_youth").update({ [field]: newValue }).eq("id", id);
       if (error) throw error;
-    } catch (error: any) {
-      console.error("Error saving:", error);
+    } catch {
+      setYouthData(prev => prev.map(i => i.id === id ? { ...i, [field]: !newValue } : i));
       toast.error("Failed to save");
-      setYouthData(prev => prev.map(i => 
-        i.id === id ? { ...i, [field]: !newValue } : i
-      ));
     }
   };
 
   const toggleProField = async (id: string, field: keyof Pick<ProOutreach, 'messaged' | 'response_received'>) => {
     const item = proData.find(i => i.id === id);
     if (!item) return;
-    
     const newValue = !item[field];
-    
-    setProData(prev => prev.map(i => 
-      i.id === id ? { ...i, [field]: newValue } : i
-    ));
-    
+    setProData(prev => prev.map(i => i.id === id ? { ...i, [field]: newValue } : i));
     try {
-      const { error } = await supabase
-        .from("player_outreach_pro")
-        .update({ [field]: newValue })
-        .eq("id", id);
+      const { error } = await supabase.from("player_outreach_pro").update({ [field]: newValue }).eq("id", id);
       if (error) throw error;
-    } catch (error: any) {
-      console.error("Error saving:", error);
+    } catch {
+      setProData(prev => prev.map(i => i.id === id ? { ...i, [field]: !newValue } : i));
       toast.error("Failed to save");
-      setProData(prev => prev.map(i => 
-        i.id === id ? { ...i, [field]: !newValue } : i
-      ));
     }
   };
 
@@ -353,28 +421,18 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
     setEditingItem(item);
     if (type === 'youth' && 'parents_name' in item) {
       setYouthFormData({
-        player_name: item.player_name,
-        ig_handle: item.ig_handle || "",
-        current_club: item.current_club || "",
-        date_of_birth: item.date_of_birth || "",
-        messaged: item.messaged,
-        response_received: item.response_received,
-        parents_name: item.parents_name || "",
-        parent_contact: item.parent_contact || "",
-        parent_approval: item.parent_approval,
-        initial_message: item.initial_message || "",
-        notes: item.notes || ""
+        player_name: item.player_name, ig_handle: item.ig_handle || "", current_club: item.current_club || "",
+        date_of_birth: item.date_of_birth || "", position: (item as any).position || "", nationality: (item as any).nationality || "",
+        messaged: item.messaged, response_received: item.response_received,
+        parents_name: item.parents_name || "", parent_contact: item.parent_contact || "",
+        parent_approval: item.parent_approval, initial_message: item.initial_message || "", notes: item.notes || ""
       });
     } else {
       setProFormData({
-        player_name: item.player_name,
-        ig_handle: item.ig_handle || "",
-        current_club: item.current_club || "",
-        date_of_birth: item.date_of_birth || "",
-        messaged: item.messaged,
-        response_received: item.response_received,
-        initial_message: item.initial_message || "",
-        notes: item.notes || ""
+        player_name: item.player_name, ig_handle: item.ig_handle || "", current_club: item.current_club || "",
+        date_of_birth: item.date_of_birth || "", position: (item as any).position || "", nationality: (item as any).nationality || "",
+        messaged: item.messaged, response_received: item.response_received,
+        initial_message: item.initial_message || "", notes: item.notes || ""
       });
     }
     setDialogOpen(true);
@@ -382,132 +440,100 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const resetForms = () => {
     setEditingItem(null);
-    setYouthFormData({
-      player_name: "",
-      ig_handle: "",
-      current_club: "",
-      date_of_birth: "",
-      messaged: false,
-      response_received: false,
-      parents_name: "",
-      parent_contact: "",
-      parent_approval: false,
-      initial_message: "",
-      notes: ""
-    });
-    setProFormData({
-      player_name: "",
-      ig_handle: "",
-      current_club: "",
-      date_of_birth: "",
-      messaged: false,
-      response_received: false,
-      initial_message: "",
-      notes: ""
-    });
+    setYouthFormData({ player_name: "", ig_handle: "", current_club: "", date_of_birth: "", position: "", nationality: "", messaged: false, response_received: false, parents_name: "", parent_contact: "", parent_approval: false, initial_message: "", notes: "" });
+    setProFormData({ player_name: "", ig_handle: "", current_club: "", date_of_birth: "", position: "", nationality: "", messaged: false, response_received: false, initial_message: "", notes: "" });
   };
 
-  const getYouthStatusGroups = (data: YouthOutreach[]) => {
-    return {
-      notMessaged: data.filter(d => !d.messaged),
-      noResponse: data.filter(d => d.messaged && !d.response_received),
-      responded: data.filter(d => d.response_received)
-    };
-  };
+  const getStatusGroups = <T extends { messaged: boolean; response_received: boolean }>(data: T[]) => ({
+    notMessaged: data.filter(d => !d.messaged),
+    noResponse: data.filter(d => d.messaged && !d.response_received),
+    responded: data.filter(d => d.response_received)
+  });
 
-  const getProStatusGroups = (data: ProOutreach[]) => {
-    return {
-      notMessaged: data.filter(d => !d.messaged),
-      noResponse: data.filter(d => d.messaged && !d.response_received),
-      responded: data.filter(d => d.response_received)
-    };
-  };
+  if (loading) return <div className="text-center p-8 text-muted-foreground">Loading outreach data...</div>;
 
-  const youthGroups = getYouthStatusGroups(youthData);
-  const proGroups = getProStatusGroups(proData);
+  const filteredYouth = sortAndFilter(youthData);
+  const filteredPro = sortAndFilter(proData);
+  const youthGroups = getStatusGroups(filteredYouth);
+  const proGroups = getStatusGroups(filteredPro);
 
   const renderYouthTable = (data: YouthOutreach[], title: string) => (
     <Card className="mb-4">
-      <CardHeader>
-        <CardTitle className="text-base sm:text-lg">{title} ({data.length})</CardTitle>
-      </CardHeader>
+      <CardHeader><CardTitle className="text-base sm:text-lg">{title} ({data.length})</CardTitle></CardHeader>
       <CardContent>
         {/* Desktop Table */}
         <div className="hidden lg:block overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Player Name</TableHead>
+                <TableHead className="w-10"></TableHead>
+                <TableHead className="cursor-pointer" onClick={() => handleSort('player_name')}>
+                  <div className="flex items-center">Name {getSortIcon('player_name')}</div>
+                </TableHead>
                 <TableHead className="w-12 text-center">IG</TableHead>
-                <TableHead>Club</TableHead>
-                <TableHead>Parents Name</TableHead>
-                <TableHead className="w-12 text-center">Parent IG</TableHead>
-                <TableHead className="text-center">Approval</TableHead>
-                <TableHead className="text-center">Messaged</TableHead>
-                <TableHead className="text-center">Response</TableHead>
-                {canEdit && <TableHead>Actions</TableHead>}
+                <TableHead className="cursor-pointer" onClick={() => handleSort('nationality')}>
+                  <div className="flex items-center">Nat {getSortIcon('nationality')}</div>
+                </TableHead>
+                <TableHead className="cursor-pointer" onClick={() => handleSort('age')}>
+                  <div className="flex items-center">Age {getSortIcon('age')}</div>
+                </TableHead>
+                <TableHead className="cursor-pointer" onClick={() => handleSort('date_of_birth')}>
+                  <div className="flex items-center">DOB {getSortIcon('date_of_birth')}</div>
+                </TableHead>
+                <TableHead className="cursor-pointer" onClick={() => handleSort('current_club')}>
+                  <div className="flex items-center">Club {getSortIcon('current_club')}</div>
+                </TableHead>
+                <TableHead>Parent</TableHead>
+                <TableHead className="w-10 text-center">P.IG</TableHead>
+                <TableHead className="text-center">Apr</TableHead>
+                <TableHead className="text-center">MSG</TableHead>
+                <TableHead className="text-center">RSP</TableHead>
+                {canEdit && <TableHead className="w-10"></TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={canEdit ? 9 : 8} className="text-center text-muted-foreground">
-                    No entries
-                  </TableCell>
-                </TableRow>
-              ) : (
-                data.map((item) => (
+                <TableRow><TableCell colSpan={13} className="text-center text-muted-foreground">No entries</TableCell></TableRow>
+              ) : data.map((item) => {
+                const age = calculateAge(item.date_of_birth);
+                return (
                   <TableRow key={item.id}>
-                    <TableCell className="bg-muted/30 font-bold">{item.player_name}</TableCell>
-                    <TableCell className="text-center"><InstagramIconLink handle={item.ig_handle} /></TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center">
-                        {item.current_club || "-"}
-                        <ClubRatingBadge rating={findClubRating(item.current_club, clubRatings, true)} />
-                      </span>
+                    <TableCell className="py-1.5">
+                      <EligibilityBadge item={item} type="youth" clubCountryMap={clubCountryMap} ageRules={ageRules} />
                     </TableCell>
-                    <TableCell>{item.parents_name || "-"}</TableCell>
-                    <TableCell className="text-center"><InstagramIconLink handle={item.parent_contact} /></TableCell>
-                    <TableCell className="text-center">
-                      {canEdit ? (
-                        <Checkbox
-                          checked={item.parent_approval}
-                          onCheckedChange={() => toggleYouthField(item.id, 'parent_approval')}
-                        />
-                      ) : (
-                        item.parent_approval ? "✓" : "-"
-                      )}
+                    <TableCell className="bg-muted/30 font-bold py-1.5">{item.player_name}</TableCell>
+                    <TableCell className="text-center py-1.5"><InstagramIconLink handle={item.ig_handle} /></TableCell>
+                    <TableCell className="py-1.5">
+                      {(item as any).nationality ? (
+                        <img src={getCountryFlagUrl((item as any).nationality)} alt={(item as any).nationality} className="w-5 h-auto rounded-sm" title={(item as any).nationality} />
+                      ) : '-'}
                     </TableCell>
-                    <TableCell className="text-center">
-                      {canEdit ? (
-                        <Checkbox
-                          checked={item.messaged}
-                          onCheckedChange={() => toggleYouthField(item.id, 'messaged')}
-                        />
-                      ) : (
-                        item.messaged ? "✓" : "-"
-                      )}
+                    <TableCell className="py-1.5 text-sm">{age ?? '-'}</TableCell>
+                    <TableCell className="py-1.5 text-xs text-muted-foreground">
+                      {item.date_of_birth ? new Date(item.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
                     </TableCell>
-                    <TableCell className="text-center">
-                      {canEdit ? (
-                        <Checkbox
-                          checked={item.response_received}
-                          onCheckedChange={() => toggleYouthField(item.id, 'response_received')}
-                        />
-                      ) : (
-                        item.response_received ? "✓" : "-"
-                      )}
+                    <TableCell className="py-1.5">
+                      <ClubDisplay clubName={item.current_club} clubCountryMap={clubCountryMap} ageRules={ageRules} clubRatings={clubRatings} isYouth={true} />
+                    </TableCell>
+                    <TableCell className="py-1.5 text-sm">{item.parents_name || "-"}</TableCell>
+                    <TableCell className="text-center py-1.5"><InstagramIconLink handle={item.parent_contact} /></TableCell>
+                    <TableCell className="text-center py-1.5">
+                      <Checkbox checked={item.parent_approval} onCheckedChange={() => toggleYouthField(item.id, 'parent_approval')} />
+                    </TableCell>
+                    <TableCell className="text-center py-1.5">
+                      <Checkbox checked={item.messaged} onCheckedChange={() => toggleYouthField(item.id, 'messaged')} />
+                    </TableCell>
+                    <TableCell className="text-center py-1.5">
+                      <Checkbox checked={item.response_received} onCheckedChange={() => toggleYouthField(item.id, 'response_received')} />
                     </TableCell>
                     {canEdit && (
-                      <TableCell>
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                      <TableCell className="py-1.5">
+                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}><Edit className="h-4 w-4" /></Button>
                       </TableCell>
                     )}
                   </TableRow>
-                ))
-              )}
+                );
+              })}
             </TableBody>
           </Table>
         </div>
@@ -516,67 +542,42 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
         <div className="lg:hidden space-y-3">
           {data.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No entries</p>
-          ) : (
-            data.map((item) => (
-              <Card key={item.id} className="p-4 space-y-3">
-                <div className="flex justify-between items-start">
-                  <div className="bg-muted/30 px-2 py-1 rounded">
-                    <h3 className="font-bold text-base">{item.player_name}</h3>
-                    {item.current_club && (
-                      <p className="text-xs text-muted-foreground inline-flex items-center">
-                        {item.current_club}
-                        <ClubRatingBadge rating={findClubRating(item.current_club, clubRatings, true)} />
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {item.ig_handle && <InstagramIconLink handle={item.ig_handle} />}
-                    {canEdit && (
-                      <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    )}
+          ) : data.map((item) => {
+            const age = calculateAge(item.date_of_birth);
+            return (
+              <Card key={item.id} className="p-3 space-y-2">
+                <div className="flex items-start gap-2">
+                  <EligibilityBadge item={item} type="youth" clubCountryMap={clubCountryMap} ageRules={ageRules} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold truncate">{item.player_name}</span>
+                      {age !== null && <span className="text-xs text-muted-foreground">{age}y</span>}
+                      <InstagramIconLink handle={item.ig_handle} />
+                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 ml-auto" onClick={() => handleEdit(item, 'youth')}><Edit className="h-3 w-3" /></Button>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      <ClubDisplay clubName={item.current_club} clubCountryMap={clubCountryMap} ageRules={ageRules} clubRatings={clubRatings} isYouth={true} />
+                    </div>
+                    {item.parents_name && <div className="text-xs text-muted-foreground mt-0.5">Parent: {item.parents_name}</div>}
                   </div>
                 </div>
-                <div className="space-y-1.5 text-sm">
-                  {item.parents_name && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Parent:</span>
-                      <div className="flex items-center gap-2">
-                        <span>{item.parents_name}</span>
-                        {item.parent_contact && <InstagramIconLink handle={item.parent_contact} />}
-                      </div>
-                    </div>
-                  )}
+                <div className="flex items-center gap-3 pt-1 border-t">
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <Checkbox checked={item.parent_approval} onCheckedChange={() => toggleYouthField(item.id, 'parent_approval')} />
+                    <span className="text-[10px] text-muted-foreground">APR</span>
+                  </label>
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <Checkbox checked={item.messaged} onCheckedChange={() => toggleYouthField(item.id, 'messaged')} />
+                    <span className="text-[10px] text-muted-foreground">MSG</span>
+                  </label>
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <Checkbox checked={item.response_received} onCheckedChange={() => toggleYouthField(item.id, 'response_received')} />
+                    <span className="text-[10px] text-muted-foreground">RSP</span>
+                  </label>
                 </div>
-                {canEdit && (
-                  <div className="space-y-2 pt-2 border-t">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Parent Approval</span>
-                      <Checkbox
-                        checked={item.parent_approval}
-                        onCheckedChange={() => toggleYouthField(item.id, 'parent_approval')}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Messaged</span>
-                      <Checkbox
-                        checked={item.messaged}
-                        onCheckedChange={() => toggleYouthField(item.id, 'messaged')}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Response Received</span>
-                      <Checkbox
-                        checked={item.response_received}
-                        onCheckedChange={() => toggleYouthField(item.id, 'response_received')}
-                      />
-                    </div>
-                  </div>
-                )}
               </Card>
-            ))
-          )}
+            );
+          })}
         </div>
       </CardContent>
     </Card>
@@ -584,122 +585,110 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const renderProTable = (data: ProOutreach[], title: string) => (
     <Card className="mb-4">
-      <CardHeader>
-        <CardTitle className="text-base sm:text-lg">{title} ({data.length})</CardTitle>
-      </CardHeader>
+      <CardHeader><CardTitle className="text-base sm:text-lg">{title} ({data.length})</CardTitle></CardHeader>
       <CardContent>
-        {/* Desktop Table */}
         <div className="hidden lg:block overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Player Name</TableHead>
+                <TableHead className="w-10"></TableHead>
+                <TableHead className="cursor-pointer" onClick={() => handleSort('player_name')}>
+                  <div className="flex items-center">Name {getSortIcon('player_name')}</div>
+                </TableHead>
                 <TableHead className="w-12 text-center">IG</TableHead>
-                <TableHead>Club</TableHead>
-                <TableHead className="text-center">Messaged</TableHead>
-                <TableHead className="text-center">Response</TableHead>
-                {canEdit && <TableHead>Actions</TableHead>}
+                <TableHead className="cursor-pointer" onClick={() => handleSort('nationality')}>
+                  <div className="flex items-center">Nat {getSortIcon('nationality')}</div>
+                </TableHead>
+                <TableHead className="cursor-pointer" onClick={() => handleSort('age')}>
+                  <div className="flex items-center">Age {getSortIcon('age')}</div>
+                </TableHead>
+                <TableHead className="cursor-pointer" onClick={() => handleSort('date_of_birth')}>
+                  <div className="flex items-center">DOB {getSortIcon('date_of_birth')}</div>
+                </TableHead>
+                <TableHead className="cursor-pointer" onClick={() => handleSort('current_club')}>
+                  <div className="flex items-center">Club {getSortIcon('current_club')}</div>
+                </TableHead>
+                <TableHead className="text-center">MSG</TableHead>
+                <TableHead className="text-center">RSP</TableHead>
+                {canEdit && <TableHead className="w-10"></TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={canEdit ? 6 : 5} className="text-center text-muted-foreground">
-                    No entries
-                  </TableCell>
-                </TableRow>
-              ) : (
-                data.map((item) => (
+                <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground">No entries</TableCell></TableRow>
+              ) : data.map((item) => {
+                const age = calculateAge(item.date_of_birth);
+                return (
                   <TableRow key={item.id}>
-                    <TableCell className="bg-muted/30 font-bold">{item.player_name}</TableCell>
-                    <TableCell className="text-center"><InstagramIconLink handle={item.ig_handle} /></TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center">
-                        {item.current_club || "-"}
-                        <ClubRatingBadge rating={findClubRating(item.current_club, clubRatings, false)} />
-                      </span>
+                    <TableCell className="py-1.5">
+                      <EligibilityBadge item={item} type="pro" clubCountryMap={clubCountryMap} ageRules={ageRules} />
                     </TableCell>
-                    <TableCell className="text-center">
-                      {canEdit ? (
-                        <Checkbox
-                          checked={item.messaged}
-                          onCheckedChange={() => toggleProField(item.id, 'messaged')}
-                        />
-                      ) : (
-                        item.messaged ? "✓" : "-"
-                      )}
+                    <TableCell className="bg-muted/30 font-bold py-1.5">{item.player_name}</TableCell>
+                    <TableCell className="text-center py-1.5"><InstagramIconLink handle={item.ig_handle} /></TableCell>
+                    <TableCell className="py-1.5">
+                      {(item as any).nationality ? (
+                        <img src={getCountryFlagUrl((item as any).nationality)} alt={(item as any).nationality} className="w-5 h-auto rounded-sm" title={(item as any).nationality} />
+                      ) : '-'}
                     </TableCell>
-                    <TableCell className="text-center">
-                      {canEdit ? (
-                        <Checkbox
-                          checked={item.response_received}
-                          onCheckedChange={() => toggleProField(item.id, 'response_received')}
-                        />
-                      ) : (
-                        item.response_received ? "✓" : "-"
-                      )}
+                    <TableCell className="py-1.5 text-sm">{age ?? '-'}</TableCell>
+                    <TableCell className="py-1.5 text-xs text-muted-foreground">
+                      {item.date_of_birth ? new Date(item.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
+                    </TableCell>
+                    <TableCell className="py-1.5">
+                      <ClubDisplay clubName={item.current_club} clubCountryMap={clubCountryMap} ageRules={ageRules} clubRatings={clubRatings} isYouth={false} />
+                    </TableCell>
+                    <TableCell className="text-center py-1.5">
+                      <Checkbox checked={item.messaged} onCheckedChange={() => toggleProField(item.id, 'messaged')} />
+                    </TableCell>
+                    <TableCell className="text-center py-1.5">
+                      <Checkbox checked={item.response_received} onCheckedChange={() => toggleProField(item.id, 'response_received')} />
                     </TableCell>
                     {canEdit && (
-                      <TableCell>
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                      <TableCell className="py-1.5">
+                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}><Edit className="h-4 w-4" /></Button>
                       </TableCell>
                     )}
                   </TableRow>
-                ))
-              )}
+                );
+              })}
             </TableBody>
           </Table>
         </div>
 
-        {/* Mobile Cards */}
         <div className="lg:hidden space-y-3">
           {data.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No entries</p>
-          ) : (
-            data.map((item) => (
-              <Card key={item.id} className="p-4 space-y-3">
-                <div className="flex justify-between items-start">
-                  <div className="bg-muted/30 px-2 py-1 rounded">
-                    <h3 className="font-bold text-base">{item.player_name}</h3>
-                    {item.current_club && (
-                      <p className="text-xs text-muted-foreground inline-flex items-center">
-                        {item.current_club}
-                        <ClubRatingBadge rating={findClubRating(item.current_club, clubRatings, false)} />
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {item.ig_handle && <InstagramIconLink handle={item.ig_handle} />}
-                    {canEdit && (
-                      <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    )}
+          ) : data.map((item) => {
+            const age = calculateAge(item.date_of_birth);
+            return (
+              <Card key={item.id} className="p-3 space-y-2">
+                <div className="flex items-start gap-2">
+                  <EligibilityBadge item={item} type="pro" clubCountryMap={clubCountryMap} ageRules={ageRules} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold truncate">{item.player_name}</span>
+                      {age !== null && <span className="text-xs text-muted-foreground">{age}y</span>}
+                      <InstagramIconLink handle={item.ig_handle} />
+                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 ml-auto" onClick={() => handleEdit(item, 'pro')}><Edit className="h-3 w-3" /></Button>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      <ClubDisplay clubName={item.current_club} clubCountryMap={clubCountryMap} ageRules={ageRules} clubRatings={clubRatings} isYouth={false} />
+                    </div>
                   </div>
                 </div>
-                {canEdit && (
-                  <div className="space-y-2 pt-2 border-t">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Messaged</span>
-                      <Checkbox
-                        checked={item.messaged}
-                        onCheckedChange={() => toggleProField(item.id, 'messaged')}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Response Received</span>
-                      <Checkbox
-                        checked={item.response_received}
-                        onCheckedChange={() => toggleProField(item.id, 'response_received')}
-                      />
-                    </div>
-                  </div>
-                )}
+                <div className="flex items-center gap-3 pt-1 border-t">
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <Checkbox checked={item.messaged} onCheckedChange={() => toggleProField(item.id, 'messaged')} />
+                    <span className="text-[10px] text-muted-foreground">MSG</span>
+                  </label>
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <Checkbox checked={item.response_received} onCheckedChange={() => toggleProField(item.id, 'response_received')} />
+                    <span className="text-[10px] text-muted-foreground">RSP</span>
+                  </label>
+                </div>
               </Card>
-            ))
-          )}
+            );
+          })}
         </div>
       </CardContent>
     </Card>
@@ -713,220 +702,84 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
           Player Outreach
         </h2>
         {canEdit && (
-          <div className="flex gap-2 w-full sm:w-auto">
-            {hasUnsavedChanges && (
-              <Button size="sm" onClick={handleSaveAll} className="w-full sm:w-auto">
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForms(); }}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Entry
               </Button>
-            )}
-            <Dialog open={dialogOpen} onOpenChange={(open) => {
-              setDialogOpen(open);
-              if (!open) resetForms();
-            }}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="w-full sm:w-auto">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Entry
-                </Button>
-              </DialogTrigger>
+            </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
               <DialogHeader>
-                <DialogTitle>
-                  {editingItem ? "Edit Entry" : `Add ${activeTab === 'youth' ? 'Youth' : 'Pro'} Outreach`}
-                </DialogTitle>
+                <DialogTitle>{editingItem ? "Edit Entry" : `Add ${activeTab === 'youth' ? 'Youth' : 'Pro'} Outreach`}</DialogTitle>
               </DialogHeader>
               {activeTab === 'youth' ? (
                 <form onSubmit={handleYouthSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="player_name">Player Name *</Label>
-                      <Input
-                        id="player_name"
-                        value={youthFormData.player_name}
-                        onChange={(e) => setYouthFormData({ ...youthFormData, player_name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="ig_handle">IG Handle</Label>
-                      <Input
-                        id="ig_handle"
-                        value={youthFormData.ig_handle}
-                        onChange={(e) => setYouthFormData({ ...youthFormData, ig_handle: e.target.value })}
-                      />
-                    </div>
+                    <div className="space-y-2"><Label>Player Name *</Label><Input value={youthFormData.player_name} onChange={e => setYouthFormData({ ...youthFormData, player_name: e.target.value })} required /></div>
+                    <div className="space-y-2"><Label>IG Handle</Label><Input value={youthFormData.ig_handle} onChange={e => setYouthFormData({ ...youthFormData, ig_handle: e.target.value })} /></div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="current_club">Current Club</Label>
-                      <Input
-                        id="current_club"
-                        value={youthFormData.current_club}
-                        onChange={(e) => setYouthFormData({ ...youthFormData, current_club: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="date_of_birth">Date of Birth</Label>
-                      <Input
-                        id="date_of_birth"
-                        type="date"
-                        value={youthFormData.date_of_birth}
-                        onChange={(e) => setYouthFormData({ ...youthFormData, date_of_birth: e.target.value })}
-                      />
-                    </div>
+                    <div className="space-y-2"><Label>Current Club</Label><Input value={youthFormData.current_club} onChange={e => setYouthFormData({ ...youthFormData, current_club: e.target.value })} /></div>
+                    <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={youthFormData.date_of_birth} onChange={e => setYouthFormData({ ...youthFormData, date_of_birth: e.target.value })} /></div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="parents_name">Parents Name</Label>
-                      <Input
-                        id="parents_name"
-                        value={youthFormData.parents_name}
-                        onChange={(e) => setYouthFormData({ ...youthFormData, parents_name: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="parent_contact">Parent Contact (IG)</Label>
-                      <Input
-                        id="parent_contact"
-                        value={youthFormData.parent_contact}
-                        onChange={(e) => setYouthFormData({ ...youthFormData, parent_contact: e.target.value })}
-                      />
-                    </div>
+                    <div className="space-y-2"><Label>Position</Label><Input value={youthFormData.position} onChange={e => setYouthFormData({ ...youthFormData, position: e.target.value })} /></div>
+                    <div className="space-y-2"><Label>Nationality</Label><Input value={youthFormData.nationality} onChange={e => setYouthFormData({ ...youthFormData, nationality: e.target.value })} /></div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="initial_message">Initial Message</Label>
-                    <Textarea
-                      id="initial_message"
-                      value={youthFormData.initial_message}
-                      onChange={(e) => setYouthFormData({ ...youthFormData, initial_message: e.target.value })}
-                      rows={4}
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Parents Name</Label><Input value={youthFormData.parents_name} onChange={e => setYouthFormData({ ...youthFormData, parents_name: e.target.value })} /></div>
+                    <div className="space-y-2"><Label>Parent Contact (IG)</Label><Input value={youthFormData.parent_contact} onChange={e => setYouthFormData({ ...youthFormData, parent_contact: e.target.value })} /></div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Notes</Label>
-                    <Textarea
-                      id="notes"
-                      value={youthFormData.notes}
-                      onChange={(e) => setYouthFormData({ ...youthFormData, notes: e.target.value })}
-                      rows={3}
-                    />
+                  <div className="space-y-2"><Label>Initial Message</Label><Textarea value={youthFormData.initial_message} onChange={e => setYouthFormData({ ...youthFormData, initial_message: e.target.value })} rows={3} /></div>
+                  <div className="space-y-2"><Label>Notes</Label><Textarea value={youthFormData.notes} onChange={e => setYouthFormData({ ...youthFormData, notes: e.target.value })} rows={2} /></div>
+                  <div className="flex flex-wrap gap-4">
+                    <div className="flex items-center space-x-2"><Switch checked={youthFormData.messaged} onCheckedChange={v => setYouthFormData({ ...youthFormData, messaged: v })} /><Label>Messaged</Label></div>
+                    <div className="flex items-center space-x-2"><Switch checked={youthFormData.response_received} onCheckedChange={v => setYouthFormData({ ...youthFormData, response_received: v })} /><Label>Response</Label></div>
+                    <div className="flex items-center space-x-2"><Switch checked={youthFormData.parent_approval} onCheckedChange={v => setYouthFormData({ ...youthFormData, parent_approval: v })} /><Label>Parent Approval</Label></div>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="messaged"
-                        checked={youthFormData.messaged}
-                        onCheckedChange={(checked) => setYouthFormData({ ...youthFormData, messaged: checked })}
-                      />
-                      <Label htmlFor="messaged">Messaged</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="response_received"
-                        checked={youthFormData.response_received}
-                        onCheckedChange={(checked) => setYouthFormData({ ...youthFormData, response_received: checked })}
-                      />
-                      <Label htmlFor="response_received">Response Received</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="parent_approval"
-                        checked={youthFormData.parent_approval}
-                        onCheckedChange={(checked) => setYouthFormData({ ...youthFormData, parent_approval: checked })}
-                      />
-                      <Label htmlFor="parent_approval">Parent Approval</Label>
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full">
-                    {editingItem ? "Update" : "Add"} Youth Outreach
-                  </Button>
+                  <Button type="submit" className="w-full">{editingItem ? "Update" : "Add"} Youth Outreach</Button>
                 </form>
               ) : (
                 <form onSubmit={handleProSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="player_name">Player Name *</Label>
-                      <Input
-                        id="player_name"
-                        value={proFormData.player_name}
-                        onChange={(e) => setProFormData({ ...proFormData, player_name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="ig_handle">IG Handle</Label>
-                      <Input
-                        id="ig_handle"
-                        value={proFormData.ig_handle}
-                        onChange={(e) => setProFormData({ ...proFormData, ig_handle: e.target.value })}
-                      />
-                    </div>
+                    <div className="space-y-2"><Label>Player Name *</Label><Input value={proFormData.player_name} onChange={e => setProFormData({ ...proFormData, player_name: e.target.value })} required /></div>
+                    <div className="space-y-2"><Label>IG Handle</Label><Input value={proFormData.ig_handle} onChange={e => setProFormData({ ...proFormData, ig_handle: e.target.value })} /></div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="current_club_pro">Current Club</Label>
-                      <Input
-                        id="current_club_pro"
-                        value={proFormData.current_club}
-                        onChange={(e) => setProFormData({ ...proFormData, current_club: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="date_of_birth_pro">Date of Birth</Label>
-                      <Input
-                        id="date_of_birth_pro"
-                        type="date"
-                        value={proFormData.date_of_birth}
-                        onChange={(e) => setProFormData({ ...proFormData, date_of_birth: e.target.value })}
-                      />
-                    </div>
+                    <div className="space-y-2"><Label>Current Club</Label><Input value={proFormData.current_club} onChange={e => setProFormData({ ...proFormData, current_club: e.target.value })} /></div>
+                    <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={proFormData.date_of_birth} onChange={e => setProFormData({ ...proFormData, date_of_birth: e.target.value })} /></div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="initial_message">Initial Message</Label>
-                    <Textarea
-                      id="initial_message"
-                      value={proFormData.initial_message}
-                      onChange={(e) => setProFormData({ ...proFormData, initial_message: e.target.value })}
-                      rows={4}
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Position</Label><Input value={proFormData.position} onChange={e => setProFormData({ ...proFormData, position: e.target.value })} /></div>
+                    <div className="space-y-2"><Label>Nationality</Label><Input value={proFormData.nationality} onChange={e => setProFormData({ ...proFormData, nationality: e.target.value })} /></div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Notes</Label>
-                    <Textarea
-                      id="notes"
-                      value={proFormData.notes}
-                      onChange={(e) => setProFormData({ ...proFormData, notes: e.target.value })}
-                      rows={3}
-                    />
+                  <div className="space-y-2"><Label>Initial Message</Label><Textarea value={proFormData.initial_message} onChange={e => setProFormData({ ...proFormData, initial_message: e.target.value })} rows={3} /></div>
+                  <div className="space-y-2"><Label>Notes</Label><Textarea value={proFormData.notes} onChange={e => setProFormData({ ...proFormData, notes: e.target.value })} rows={2} /></div>
+                  <div className="flex flex-wrap gap-4">
+                    <div className="flex items-center space-x-2"><Switch checked={proFormData.messaged} onCheckedChange={v => setProFormData({ ...proFormData, messaged: v })} /><Label>Messaged</Label></div>
+                    <div className="flex items-center space-x-2"><Switch checked={proFormData.response_received} onCheckedChange={v => setProFormData({ ...proFormData, response_received: v })} /><Label>Response</Label></div>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="messaged"
-                        checked={proFormData.messaged}
-                        onCheckedChange={(checked) => setProFormData({ ...proFormData, messaged: checked })}
-                      />
-                      <Label htmlFor="messaged">Messaged</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="response_received"
-                        checked={proFormData.response_received}
-                        onCheckedChange={(checked) => setProFormData({ ...proFormData, response_received: checked })}
-                      />
-                      <Label htmlFor="response_received">Response Received</Label>
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full">
-                    {editingItem ? "Update" : "Add"} Pro Outreach
-                  </Button>
+                  <Button type="submit" className="w-full">{editingItem ? "Update" : "Add"} Pro Outreach</Button>
                 </form>
               )}
             </DialogContent>
           </Dialog>
-          </div>
         )}
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Search name, club, nationality..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+        <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Can contact</span>
+        <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" /> Pro</span>
+        <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-amber-600" /> Date from which contact allowed</span>
+        <span className="flex items-center gap-1"><HelpCircle className="h-3.5 w-3.5 text-muted-foreground" /> No DOB/rules</span>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

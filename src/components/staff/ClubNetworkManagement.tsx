@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Plus, X, Mail, Settings } from 'lucide-react';
+import { Plus, X, Settings, Search } from 'lucide-react';
+import { openExternalUrl, openMailto } from '@/utils/openExternalUrl';
 import { FaWhatsapp } from 'react-icons/fa';
+import { Mail } from 'lucide-react';
+import { getCountryFlagUrl } from '@/lib/countryFlags';
 import {
   Dialog,
   DialogContent,
@@ -33,11 +37,18 @@ interface Contact {
   notes: string | null;
 }
 
+type SortField = 'name' | 'club_name' | 'country';
+type SortDir = 'asc' | 'desc';
+
 const ClubNetworkManagement = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [showLeagueRules, setShowLeagueRules] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [countryFilter, setCountryFilter] = useState('all');
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [formData, setFormData] = useState({
     name: '',
     club_name: '',
@@ -217,6 +228,50 @@ const ClubNetworkManagement = () => {
     setShowDialog(true);
   };
 
+  // Derived data
+  const uniqueCountries = useMemo(() => {
+    const countries = contacts
+      .map(c => c.country)
+      .filter((c): c is string => !!c);
+    return [...new Set(countries)].sort();
+  }, [contacts]);
+
+  const filteredContacts = useMemo(() => {
+    let result = contacts;
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(c =>
+        c.name.toLowerCase().includes(q) ||
+        c.club_name?.toLowerCase().includes(q) ||
+        c.country?.toLowerCase().includes(q) ||
+        c.position?.toLowerCase().includes(q)
+      );
+    }
+
+    if (countryFilter !== 'all') {
+      result = result.filter(c => c.country === countryFilter);
+    }
+
+    result.sort((a, b) => {
+      const aVal = (a[sortField] || '').toLowerCase();
+      const bVal = (b[sortField] || '').toLowerCase();
+      const cmp = aVal.localeCompare(bVal);
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+
+    return result;
+  }, [contacts, searchQuery, countryFilter, sortField, sortDir]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="contacts" className="w-full">
@@ -228,7 +283,7 @@ const ClubNetworkManagement = () => {
 
         <TabsContent value="contacts" className="mt-6">
           <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Club Network Contacts</h2>
               <div className="flex gap-2">
                 <Button 
@@ -246,8 +301,50 @@ const ClubNetworkManagement = () => {
               </div>
             </div>
 
+            {/* Search + Filters */}
+            <div className="flex flex-col sm:flex-row gap-2 mb-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search name, club, country..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={countryFilter} onValueChange={setCountryFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="All Countries" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Countries</SelectItem>
+                  {uniqueCountries.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex gap-1">
+                {(['name', 'club_name', 'country'] as SortField[]).map(f => (
+                  <Button
+                    key={f}
+                    variant={sortField === f ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleSort(f)}
+                    className="text-xs"
+                  >
+                    {f === 'club_name' ? 'Club' : f.charAt(0).toUpperCase() + f.slice(1)}
+                    {sortField === f && (sortDir === 'asc' ? ' ↑' : ' ↓')}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="text-xs text-muted-foreground mb-2">
+              {filteredContacts.length} contact{filteredContacts.length !== 1 ? 's' : ''}
+            </div>
+
             <div className="space-y-4">
-              {contacts.map((contact) => (
+              {filteredContacts.map((contact) => (
                 <div
                   key={contact.id}
                   className="p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors"
@@ -266,32 +363,46 @@ const ClubNetworkManagement = () => {
                         {contact.position && (
                           <p className="text-sm text-muted-foreground">{contact.position}</p>
                         )}
+                        {contact.club_name && (
+                          <p className="text-sm text-muted-foreground mt-0.5 font-medium">{contact.club_name}</p>
+                        )}
                         <div className="mt-2 flex items-center gap-3">
                           {contact.phone && (
-                            <a
-                              href={`https://wa.me/${contact.phone.replace(/[^0-9]/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openExternalUrl(`https://wa.me/${contact.phone!.replace(/[^0-9]/g, '')}`);
+                              }}
                               className="text-muted-foreground/60 hover:text-emerald-500 transition-colors"
                               title={`WhatsApp: ${contact.phone}`}
                             >
                               <FaWhatsapp className="h-5 w-5" />
-                            </a>
+                            </button>
                           )}
                           {contact.email && (
-                            <a
-                              href={`mailto:${contact.email}`}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openMailto(contact.email!);
+                              }}
                               className="text-muted-foreground/60 hover:text-primary transition-colors"
                               title={`Email: ${contact.email}`}
                             >
                               <Mail className="h-5 w-5" />
-                            </a>
+                            </button>
                           )}
                         </div>
-                        {contact.city && contact.country && (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {contact.city}, {contact.country}
-                          </p>
+                        {contact.country && (
+                          <div className="mt-1 flex items-center gap-1.5">
+                            <img
+                              src={getCountryFlagUrl(contact.country)}
+                              alt={contact.country}
+                              className="w-4 h-3 object-cover rounded-sm"
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              {contact.city ? `${contact.city}, ` : ''}{contact.country}
+                            </span>
+                          </div>
                         )}
                       </div>
                     </div>
