@@ -18,6 +18,8 @@ import { FaInstagram } from 'react-icons/fa';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
 import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
+import { normalizeClubName, findClubCountry, findClubRating as findClubRatingShared } from '@/lib/clubNameUtils';
+import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
 
 // Instagram link
 const InstagramIconLink = ({ handle }: { handle: string | null }) => {
@@ -42,21 +44,8 @@ interface ClubRating {
   academy_rating: string;
 }
 
-const normalizeClubName = (name: string): string => {
-  return name.toLowerCase().replace(/[''`]/g, '').replace(/\s+/g, ' ').replace(/[^a-z0-9 ]/g, '').trim();
-};
-
 const findClubRating = (clubName: string | null, ratings: ClubRating[], isYouth: boolean): string | null => {
-  if (!clubName || ratings.length === 0) return null;
-  const normalized = normalizeClubName(clubName);
-  if (!normalized) return null;
-  for (const rating of ratings) {
-    const normClub = normalizeClubName(rating.club_name);
-    if (normClub === normalized || normClub.includes(normalized) || normalized.includes(normClub)) {
-      return isYouth ? rating.academy_rating : rating.first_team_rating;
-    }
-  }
-  return null;
+  return findClubRatingShared(clubName, ratings, isYouth);
 };
 
 const ClubRatingBadge = ({ rating }: { rating: string | null }) => {
@@ -75,18 +64,7 @@ const ClubRatingBadge = ({ rating }: { rating: string | null }) => {
   );
 };
 
-// Find club country
-const findClubCountry = (clubName: string | null, clubCountryMap: Record<string, string>): string | null => {
-  if (!clubName) return null;
-  const lower = clubName.toLowerCase();
-  if (clubCountryMap[lower]) return clubCountryMap[lower];
-  const normalized = normalizeClubName(clubName);
-  for (const [key, country] of Object.entries(clubCountryMap)) {
-    const normKey = normalizeClubName(key);
-    if (normKey.includes(normalized) || normalized.includes(normKey)) return country;
-  }
-  return null;
-};
+// findClubCountry now imported from @/lib/clubNameUtils
 
 interface AgeRule {
   country: string;
@@ -257,6 +235,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const youthSettings = useTableSettings('outreach-youth', OUTREACH_YOUTH_COLS);
   const proSettings = useTableSettings('outreach-pro', OUTREACH_PRO_COLS);
+  const dragScrollRef = useHorizontalDragScroll();
 
   const [youthFormData, setYouthFormData] = useState({
     player_name: "", ig_handle: "", current_club: "", date_of_birth: "",
@@ -493,7 +472,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
       <CardHeader><CardTitle className="text-base sm:text-lg">{title} ({data.length})</CardTitle></CardHeader>
       <CardContent>
         {/* Desktop Table */}
-        <div className="hidden lg:block overflow-x-auto">
+        <div ref={dragScrollRef} className="hidden lg:block overflow-x-auto cursor-grab active:cursor-grabbing">
           <Table>
             <TableHeader>
               <TableRow>
@@ -642,7 +621,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
     <Card className="mb-4">
       <CardHeader><CardTitle className="text-base sm:text-lg">{title} ({data.length})</CardTitle></CardHeader>
       <CardContent>
-        <div className="hidden lg:block overflow-x-auto">
+        <div ref={dragScrollRef} className="hidden lg:block overflow-x-auto cursor-grab active:cursor-grabbing">
           <Table>
             <TableHeader>
               <TableRow>
