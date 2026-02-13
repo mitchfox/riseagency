@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export interface ColumnConfig {
   key: string;
@@ -20,6 +21,7 @@ interface Props {
   viewMode?: 'table' | 'cards';
   onViewModeChange?: (mode: 'table' | 'cards') => void;
   showViewToggle?: boolean;
+  filters?: ReactNode;
 }
 
 export const useTableSettings = (storageKey: string, columns: ColumnConfig[]) => {
@@ -65,6 +67,7 @@ export const TableSettingsPopover = ({
   viewMode,
   onViewModeChange,
   showViewToggle = true,
+  filters,
 }: Props) => {
   return (
     <Popover>
@@ -73,43 +76,52 @@ export const TableSettingsPopover = ({
           <Settings className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-56" align="end">
-        <div className="space-y-3">
-          <p className="text-sm font-medium">Table Settings</p>
+      <PopoverContent className="w-60" align="end">
+        <ScrollArea className="max-h-[70vh]">
+          <div className="space-y-3">
+            <p className="text-sm font-medium">Table Settings</p>
 
-          {showViewToggle && onViewModeChange && (
-            <>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => onViewModeChange('table')}
-                  className={`text-xs px-2 py-1 border rounded ${viewMode === 'table' ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
-                >
-                  Table
-                </button>
-                <button
-                  onClick={() => onViewModeChange('cards')}
-                  className={`text-xs px-2 py-1 border rounded ${viewMode === 'cards' ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
-                >
-                  Cards
-                </button>
-              </div>
-              <Separator />
-            </>
-          )}
+            {showViewToggle && onViewModeChange && (
+              <>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onViewModeChange('table')}
+                    className={`text-xs px-2 py-1 border rounded ${viewMode === 'table' ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
+                  >
+                    Table
+                  </button>
+                  <button
+                    onClick={() => onViewModeChange('cards')}
+                    className={`text-xs px-2 py-1 border rounded ${viewMode === 'cards' ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
+                  >
+                    Cards
+                  </button>
+                </div>
+                <Separator />
+              </>
+            )}
 
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">Visible Columns</p>
-            {columns.map(col => (
-              <div key={col.key} className="flex items-center justify-between">
-                <Label className="text-xs">{col.label}</Label>
-                <Switch
-                  checked={visibleColumns[col.key] !== false}
-                  onCheckedChange={() => onToggleColumn(col.key)}
-                />
-              </div>
-            ))}
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">Visible Columns</p>
+              {columns.map(col => (
+                <div key={col.key} className="flex items-center justify-between">
+                  <Label className="text-xs">{col.label}</Label>
+                  <Switch
+                    checked={visibleColumns[col.key] !== false}
+                    onCheckedChange={() => onToggleColumn(col.key)}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {filters && (
+              <>
+                <Separator />
+                {filters}
+              </>
+            )}
           </div>
-        </div>
+        </ScrollArea>
       </PopoverContent>
     </Popover>
   );

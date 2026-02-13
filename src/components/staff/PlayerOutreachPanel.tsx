@@ -8,18 +8,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { FaInstagram } from 'react-icons/fa';
-import { Plus, Edit, CheckCircle2, HelpCircle, Clock, Star, Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Edit, CheckCircle2, HelpCircle, Clock, Star, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronRight } from 'lucide-react';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
 import { normalizeClubName, findClubCountry, findClubRating as findClubRatingUtil } from '@/lib/clubNameUtils';
 import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface Props {
   type: 'youth' | 'pro';
@@ -37,10 +38,6 @@ interface ClubRating {
   academy_rating: string;
 }
 
-const findClubRating = (clubName: string | null, ratings: ClubRating[], isYouth: boolean): string | null => {
-  return findClubRatingUtil(clubName, ratings, isYouth);
-};
-
 const ClubRatingBadge = ({ rating }: { rating: string | null }) => {
   if (!rating) return null;
   const colorMap: Record<string, string> = {
@@ -57,18 +54,19 @@ const ClubRatingBadge = ({ rating }: { rating: string | null }) => {
   );
 };
 
-const IgLink = ({ handle }: { handle: string | null }) => {
+const IgTooltipIcon = ({ handle }: { handle: string | null }) => {
   if (!handle) return null;
   const clean = handle.replace(/^@/, '').trim();
   if (!clean) return null;
   return (
-    <button
-      onClick={(e) => { e.stopPropagation(); window.open(`https://instagram.com/${clean}`, '_blank', 'noopener,noreferrer'); }}
-      className="p-0.5 hover:scale-110 transition-transform"
-      title={`@${clean}`}
-    >
-      <FaInstagram className="h-4 w-4 text-[#E1306C]" />
-    </button>
+    <TooltipProvider><Tooltip><TooltipTrigger asChild>
+      <button
+        onClick={(e) => { e.stopPropagation(); window.open(`https://instagram.com/${clean}`, '_blank', 'noopener,noreferrer'); }}
+        className="p-0.5 hover:scale-110 transition-transform"
+      >
+        <FaInstagram className="h-4 w-4 text-[#E1306C]" />
+      </button>
+    </TooltipTrigger><TooltipContent><p>@{clean}</p></TooltipContent></Tooltip></TooltipProvider>
   );
 };
 
@@ -79,16 +77,16 @@ const ClubDisplay = ({ clubName, clubCountryMap, ageRules, clubRatings, isYouth 
   const clubCountry = findClubCountry(clubName, clubCountryMap);
   const rule = clubCountry ? ageRules.find(r => r.country.toLowerCase() === clubCountry.toLowerCase()) : null;
   return (
-    <span className="inline-flex items-center gap-1.5 flex-wrap">
-      {clubCountry && (
-        <img src={getCountryFlagUrl(clubCountry)} alt={clubCountry} className="w-4 h-3 object-cover rounded-sm" title={clubCountry} />
-      )}
-      <span className="truncate">{clubName}</span>
-      <ClubRatingBadge rating={findClubRating(clubName, clubRatings, isYouth)} />
-      {rule?.min_contact_age != null && isYouth && (
-        <Badge variant="secondary" className="text-[10px] px-1 py-0">{rule.min_contact_age}</Badge>
-      )}
-    </span>
+    <TooltipProvider><Tooltip><TooltipTrigger asChild>
+      <span className="inline-flex items-center gap-1.5 flex-wrap">
+        {clubCountry && <img src={getCountryFlagUrl(clubCountry)} alt={clubCountry} className="w-4 h-3 object-cover rounded-sm" />}
+        <span className="truncate">{clubName}</span>
+        <ClubRatingBadge rating={findClubRatingUtil(clubName, clubRatings, isYouth)} />
+        {rule?.min_contact_age != null && isYouth && (
+          <Badge variant="secondary" className="text-[10px] px-1 py-0">{rule.min_contact_age}</Badge>
+        )}
+      </span>
+    </TooltipTrigger><TooltipContent><p>{clubName}{clubCountry ? ` (${clubCountry})` : ''}</p></TooltipContent></Tooltip></TooltipProvider>
   );
 };
 
@@ -189,13 +187,20 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const [clubRatings, setClubRatings] = useState<ClubRating[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailItem, setDetailItem] = useState<any>(null);
+  const [detailEditMode, setDetailEditMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>('player_name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    notMessaged: true, noResponse: true, responded: true
+  });
 
   const columns = type === 'youth' ? YOUTH_COLUMNS : PRO_COLUMNS;
   const settings = useTableSettings(`outreach-panel-${type}`, columns);
   const dragScrollRef = useHorizontalDragScroll();
+  const isYouth = type === 'youth';
 
   const emptyYouthForm = {
     player_name: '', ig_handle: '', current_club: '', date_of_birth: '',
@@ -209,14 +214,14 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
     messaged: false, response_received: false, initial_message: '', notes: ''
   };
 
-  const [formData, setFormData] = useState<any>(type === 'youth' ? emptyYouthForm : emptyProForm);
+  const [formData, setFormData] = useState<any>(isYouth ? emptyYouthForm : emptyProForm);
 
   useEffect(() => { fetchData(); }, [type]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const tableName = type === 'youth' ? 'player_outreach_youth' : 'player_outreach_pro';
+      const tableName = isYouth ? 'player_outreach_youth' : 'player_outreach_pro';
       const [dataResult, rulesResult, clubsResult, ratingsResult] = await Promise.all([
         supabase.from(tableName).select('*').order('created_at', { ascending: false }),
         supabase.from('recruitment_age_rules').select('country, country_code, min_contact_age'),
@@ -235,8 +240,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       setClubCountryMap(countryMap);
       setClubRatings(ratingsResult.data || []);
 
-      // Auto-move 18+ youth to pro
-      if (type === 'youth') {
+      if (isYouth) {
         const toMove = outreachData.filter(item => {
           if (!item.date_of_birth) return false;
           const age = calculateAge(item.date_of_birth);
@@ -269,7 +273,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   };
 
   const toggleField = async (id: string, field: string, currentValue: boolean) => {
-    const tableName = type === 'youth' ? 'player_outreach_youth' : 'player_outreach_pro';
+    const tableName = isYouth ? 'player_outreach_youth' : 'player_outreach_pro';
     setData(prev => prev.map(item => item.id === id ? { ...item, [field]: !currentValue } : item));
     try {
       const { error } = await supabase.from(tableName).update({ [field]: !currentValue }).eq('id', id);
@@ -282,7 +286,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
 
   const handleEdit = (item: any) => {
     setEditingItem(item);
-    if (type === 'youth') {
+    if (isYouth) {
       setFormData({
         player_name: item.player_name || '', ig_handle: item.ig_handle || '',
         current_club: item.current_club || '', date_of_birth: item.date_of_birth || '',
@@ -304,9 +308,30 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
     setDialogOpen(true);
   };
 
+  const openDetail = (item: any) => {
+    setDetailItem(item);
+    setDetailEditMode(false);
+    setFormData(isYouth ? {
+      player_name: item.player_name || '', ig_handle: item.ig_handle || '',
+      current_club: item.current_club || '', date_of_birth: item.date_of_birth || '',
+      position: item.position || '', nationality: item.nationality || '',
+      parents_name: item.parents_name || '', parent_contact: item.parent_contact || '',
+      parent_approval: item.parent_approval || false,
+      messaged: item.messaged || false, response_received: item.response_received || false,
+      initial_message: item.initial_message || '', notes: item.notes || ''
+    } : {
+      player_name: item.player_name || '', ig_handle: item.ig_handle || '',
+      current_club: item.current_club || '', date_of_birth: item.date_of_birth || '',
+      position: item.position || '', nationality: item.nationality || '',
+      messaged: item.messaged || false, response_received: item.response_received || false,
+      initial_message: item.initial_message || '', notes: item.notes || ''
+    });
+    setDetailOpen(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const tableName = type === 'youth' ? 'player_outreach_youth' : 'player_outreach_pro';
+    const tableName = isYouth ? 'player_outreach_youth' : 'player_outreach_pro';
     const submitData = { ...formData };
     if (submitData.date_of_birth) submitData.age = calculateAge(submitData.date_of_birth);
     try {
@@ -321,7 +346,23 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       }
       setDialogOpen(false);
       setEditingItem(null);
-      setFormData(type === 'youth' ? emptyYouthForm : emptyProForm);
+      setFormData(isYouth ? emptyYouthForm : emptyProForm);
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save');
+    }
+  };
+
+  const handleDetailSave = async () => {
+    if (!detailItem) return;
+    const tableName = isYouth ? 'player_outreach_youth' : 'player_outreach_pro';
+    const submitData = { ...formData };
+    if (submitData.date_of_birth) submitData.age = calculateAge(submitData.date_of_birth);
+    try {
+      const { error } = await supabase.from(tableName).update(submitData).eq('id', detailItem.id);
+      if (error) throw error;
+      toast.success('Updated');
+      setDetailOpen(false);
       fetchData();
     } catch (error: any) {
       toast.error(error.message || 'Failed to save');
@@ -330,7 +371,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this entry?')) return;
-    const tableName = type === 'youth' ? 'player_outreach_youth' : 'player_outreach_pro';
+    const tableName = isYouth ? 'player_outreach_youth' : 'player_outreach_pro';
     try {
       const { error } = await supabase.from(tableName).delete().eq('id', id);
       if (error) throw error;
@@ -378,6 +419,10 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
     return result;
   };
 
+  const toggleSection = (key: string) => {
+    setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
   if (loading) {
     return <LoadingSpinner size="md" className="py-8" text={`Loading ${type} outreach...`} />;
   }
@@ -385,197 +430,215 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const notMessaged = data.filter(d => !d.messaged);
   const noResponse = data.filter(d => d.messaged && !d.response_received);
   const responded = data.filter(d => d.response_received);
-  const isYouth = type === 'youth';
 
-  const renderTableSection = (items: any[], title: string) => {
+  const renderTableSection = (items: any[], title: string, sectionKey: string) => {
     const sorted = sortAndFilter(items);
+    const isOpen = expandedSections[sectionKey] !== false;
     return (
-      <div className="border rounded-lg overflow-hidden mb-4">
-        <div className="bg-muted/50 px-3 py-2 font-semibold text-sm">
-          {title} ({sorted.length})
-        </div>
-        {sorted.length === 0 ? (
-          <div className="p-4 text-center text-sm text-muted-foreground">No entries</div>
-        ) : (
-          <>
-            {/* Desktop Table */}
-            <div ref={dragScrollRef} className="hidden lg:block overflow-x-auto cursor-grab active:cursor-grabbing">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {settings.isVisible('eligibility') && <TableHead className="w-10"></TableHead>}
-                    {settings.isVisible('name') && (
-                      <TableHead className="cursor-pointer" onClick={() => handleSort('player_name')}>
-                        <div className="flex items-center">Name {getSortIcon('player_name')}</div>
-                      </TableHead>
-                    )}
-                    {settings.isVisible('ig') && <TableHead className="w-12 text-center">IG</TableHead>}
-                    {settings.isVisible('nationality') && (
-                      <TableHead className="cursor-pointer" onClick={() => handleSort('nationality')}>
-                        <div className="flex items-center">Nat {getSortIcon('nationality')}</div>
-                      </TableHead>
-                    )}
-                    {settings.isVisible('position') && <TableHead>Pos</TableHead>}
-                    {settings.isVisible('age') && (
-                      <TableHead className="cursor-pointer" onClick={() => handleSort('age')}>
-                        <div className="flex items-center">Age {getSortIcon('age')}</div>
-                      </TableHead>
-                    )}
-                    {settings.isVisible('dob') && (
-                      <TableHead className="cursor-pointer" onClick={() => handleSort('date_of_birth')}>
-                        <div className="flex items-center">DOB {getSortIcon('date_of_birth')}</div>
-                      </TableHead>
-                    )}
-                    {settings.isVisible('club') && (
-                      <TableHead className="cursor-pointer" onClick={() => handleSort('current_club')}>
-                        <div className="flex items-center">Club {getSortIcon('current_club')}</div>
-                      </TableHead>
-                    )}
-                    {isYouth && settings.isVisible('parent') && <TableHead>Parent</TableHead>}
-                    {isYouth && settings.isVisible('parent_ig') && <TableHead className="w-10 text-center">P.IG</TableHead>}
-                    {isYouth && settings.isVisible('approval') && <TableHead className="text-center">Apr</TableHead>}
-                    {settings.isVisible('messaged') && <TableHead className="text-center">MSG</TableHead>}
-                    {settings.isVisible('response') && <TableHead className="text-center">RSP</TableHead>}
-                    {settings.isVisible('notes') && <TableHead>Notes</TableHead>}
-                    <TableHead className="w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+      <Collapsible open={isOpen} onOpenChange={() => toggleSection(sectionKey)}>
+        <div className="border rounded-lg overflow-hidden mb-4">
+          <CollapsibleTrigger asChild>
+            <button className="w-full bg-muted/50 px-3 py-2 font-semibold text-sm flex items-center justify-between hover:bg-muted/70 transition-colors">
+              <span>{title} ({sorted.length})</span>
+              {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            {sorted.length === 0 ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">No entries</div>
+            ) : (
+              <>
+                {/* Desktop Table */}
+                <div ref={dragScrollRef} className="hidden lg:block overflow-x-auto cursor-grab active:cursor-grabbing">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        {settings.isVisible('eligibility') && <TableHead className="w-10"></TableHead>}
+                        {settings.isVisible('name') && (
+                          <TableHead className="cursor-pointer" onClick={() => handleSort('player_name')}>
+                            <div className="flex items-center">Name {getSortIcon('player_name')}</div>
+                          </TableHead>
+                        )}
+                        {settings.isVisible('ig') && <TableHead className="w-12 text-center">IG</TableHead>}
+                        {settings.isVisible('nationality') && (
+                          <TableHead className="cursor-pointer" onClick={() => handleSort('nationality')}>
+                            <div className="flex items-center">Nat {getSortIcon('nationality')}</div>
+                          </TableHead>
+                        )}
+                        {settings.isVisible('position') && <TableHead>Pos</TableHead>}
+                        {settings.isVisible('age') && (
+                          <TableHead className="cursor-pointer" onClick={() => handleSort('age')}>
+                            <div className="flex items-center">Age {getSortIcon('age')}</div>
+                          </TableHead>
+                        )}
+                        {settings.isVisible('dob') && (
+                          <TableHead className="cursor-pointer" onClick={() => handleSort('date_of_birth')}>
+                            <div className="flex items-center">DOB {getSortIcon('date_of_birth')}</div>
+                          </TableHead>
+                        )}
+                        {settings.isVisible('club') && (
+                          <TableHead className="cursor-pointer" onClick={() => handleSort('current_club')}>
+                            <div className="flex items-center">Club {getSortIcon('current_club')}</div>
+                          </TableHead>
+                        )}
+                        {isYouth && settings.isVisible('parent') && <TableHead>Parent</TableHead>}
+                        {isYouth && settings.isVisible('parent_ig') && <TableHead className="w-10 text-center">P.IG</TableHead>}
+                        {isYouth && settings.isVisible('approval') && <TableHead className="text-center">Apr</TableHead>}
+                        {settings.isVisible('messaged') && <TableHead className="text-center">MSG</TableHead>}
+                        {settings.isVisible('response') && <TableHead className="text-center">RSP</TableHead>}
+                        {settings.isVisible('notes') && <TableHead>Notes</TableHead>}
+                        <TableHead className="w-10"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sorted.map(item => {
+                        const age = calculateAge(item.date_of_birth);
+                        return (
+                          <TableRow key={item.id} className="cursor-pointer hover:bg-muted/30" onClick={() => openDetail(item)}>
+                            {settings.isVisible('eligibility') && (
+                              <TableCell className="py-1.5" onClick={e => e.stopPropagation()}>
+                                <EligibilityBadge item={item} type={type} clubCountryMap={clubCountryMap} ageRules={ageRules} />
+                              </TableCell>
+                            )}
+                            {settings.isVisible('name') && (
+                              <TableCell className="bg-muted/30 font-bold py-1.5">{item.player_name}</TableCell>
+                            )}
+                            {settings.isVisible('ig') && (
+                              <TableCell className="text-center py-1.5" onClick={e => e.stopPropagation()}>
+                                <IgTooltipIcon handle={item.ig_handle} />
+                              </TableCell>
+                            )}
+                            {settings.isVisible('nationality') && (
+                              <TableCell className="py-1.5">
+                                {item.nationality ? (
+                                  <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                                    <img src={getCountryFlagUrl(item.nationality)} alt={item.nationality} className="w-5 h-auto rounded-sm" />
+                                  </TooltipTrigger><TooltipContent><p>{item.nationality}</p></TooltipContent></Tooltip></TooltipProvider>
+                                ) : '-'}
+                              </TableCell>
+                            )}
+                            {settings.isVisible('position') && (
+                              <TableCell className="py-1.5">
+                                {item.position ? <Badge variant="outline" className="text-[10px] px-1 py-0">{item.position}</Badge> : '-'}
+                              </TableCell>
+                            )}
+                            {settings.isVisible('age') && (
+                              <TableCell className="py-1.5 text-sm">{age ?? '-'}</TableCell>
+                            )}
+                            {settings.isVisible('dob') && (
+                              <TableCell className="py-1.5 text-xs text-muted-foreground">
+                                {item.date_of_birth ? new Date(item.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
+                              </TableCell>
+                            )}
+                            {settings.isVisible('club') && (
+                              <TableCell className="py-1.5" onClick={e => e.stopPropagation()}>
+                                <ClubDisplay clubName={item.current_club} clubCountryMap={clubCountryMap} ageRules={ageRules} clubRatings={clubRatings} isYouth={isYouth} />
+                              </TableCell>
+                            )}
+                            {isYouth && settings.isVisible('parent') && (
+                              <TableCell className="py-1.5 text-sm">{item.parents_name || '-'}</TableCell>
+                            )}
+                            {isYouth && settings.isVisible('parent_ig') && (
+                              <TableCell className="text-center py-1.5" onClick={e => e.stopPropagation()}>
+                                <IgTooltipIcon handle={item.parent_contact} />
+                              </TableCell>
+                            )}
+                            {isYouth && settings.isVisible('approval') && (
+                              <TableCell className="text-center py-1.5" onClick={e => e.stopPropagation()}>
+                                <Checkbox checked={item.parent_approval} onCheckedChange={() => toggleField(item.id, 'parent_approval', item.parent_approval)} />
+                              </TableCell>
+                            )}
+                            {settings.isVisible('messaged') && (
+                              <TableCell className="text-center py-1.5" onClick={e => e.stopPropagation()}>
+                                <Checkbox checked={item.messaged} onCheckedChange={() => toggleField(item.id, 'messaged', item.messaged)} />
+                              </TableCell>
+                            )}
+                            {settings.isVisible('response') && (
+                              <TableCell className="text-center py-1.5" onClick={e => e.stopPropagation()}>
+                                <Checkbox checked={item.response_received} onCheckedChange={() => toggleField(item.id, 'response_received', item.response_received)} />
+                              </TableCell>
+                            )}
+                            {settings.isVisible('notes') && (
+                              <TableCell className="py-1.5 text-xs text-muted-foreground max-w-[150px] truncate">
+                                {item.notes ? (
+                                  <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                                    <span className="truncate block">{item.notes}</span>
+                                  </TooltipTrigger><TooltipContent className="max-w-xs"><p>{item.notes}</p></TooltipContent></Tooltip></TooltipProvider>
+                                ) : '-'}
+                              </TableCell>
+                            )}
+                            <TableCell className="py-1.5" onClick={e => e.stopPropagation()}>
+                              <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleEdit(item)}>
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="lg:hidden">
                   {sorted.map(item => {
                     const age = calculateAge(item.date_of_birth);
                     return (
-                      <TableRow key={item.id}>
-                        {settings.isVisible('eligibility') && (
-                          <TableCell className="py-1.5">
+                      <div key={item.id} className="p-3 border-b last:border-b-0 cursor-pointer hover:bg-muted/20" onClick={() => openDetail(item)}>
+                        <div className="flex items-start gap-2">
+                          <div className="flex-shrink-0 mt-0.5">
                             <EligibilityBadge item={item} type={type} clubCountryMap={clubCountryMap} ageRules={ageRules} />
-                          </TableCell>
-                        )}
-                        {settings.isVisible('name') && (
-                          <TableCell className="bg-muted/30 font-bold py-1.5">{item.player_name}</TableCell>
-                        )}
-                        {settings.isVisible('ig') && (
-                          <TableCell className="text-center py-1.5"><IgLink handle={item.ig_handle} /></TableCell>
-                        )}
-                        {settings.isVisible('nationality') && (
-                          <TableCell className="py-1.5">
-                            {item.nationality ? (
-                              <img src={getCountryFlagUrl(item.nationality)} alt={item.nationality} className="w-5 h-auto rounded-sm" title={item.nationality} />
-                            ) : '-'}
-                          </TableCell>
-                        )}
-                        {settings.isVisible('position') && (
-                          <TableCell className="py-1.5">
-                            {item.position ? <Badge variant="outline" className="text-[10px] px-1 py-0">{item.position}</Badge> : '-'}
-                          </TableCell>
-                        )}
-                        {settings.isVisible('age') && (
-                          <TableCell className="py-1.5 text-sm">{age ?? '-'}</TableCell>
-                        )}
-                        {settings.isVisible('dob') && (
-                          <TableCell className="py-1.5 text-xs text-muted-foreground">
-                            {item.date_of_birth ? new Date(item.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
-                          </TableCell>
-                        )}
-                        {settings.isVisible('club') && (
-                          <TableCell className="py-1.5">
-                            <ClubDisplay clubName={item.current_club} clubCountryMap={clubCountryMap} ageRules={ageRules} clubRatings={clubRatings} isYouth={isYouth} />
-                          </TableCell>
-                        )}
-                        {isYouth && settings.isVisible('parent') && (
-                          <TableCell className="py-1.5 text-sm">{item.parents_name || '-'}</TableCell>
-                        )}
-                        {isYouth && settings.isVisible('parent_ig') && (
-                          <TableCell className="text-center py-1.5"><IgLink handle={item.parent_contact} /></TableCell>
-                        )}
-                        {isYouth && settings.isVisible('approval') && (
-                          <TableCell className="text-center py-1.5">
-                            <Checkbox checked={item.parent_approval} onCheckedChange={() => toggleField(item.id, 'parent_approval', item.parent_approval)} />
-                          </TableCell>
-                        )}
-                        {settings.isVisible('messaged') && (
-                          <TableCell className="text-center py-1.5">
-                            <Checkbox checked={item.messaged} onCheckedChange={() => toggleField(item.id, 'messaged', item.messaged)} />
-                          </TableCell>
-                        )}
-                        {settings.isVisible('response') && (
-                          <TableCell className="text-center py-1.5">
-                            <Checkbox checked={item.response_received} onCheckedChange={() => toggleField(item.id, 'response_received', item.response_received)} />
-                          </TableCell>
-                        )}
-                        {settings.isVisible('notes') && (
-                          <TableCell className="py-1.5 text-xs text-muted-foreground max-w-[150px] truncate">{item.notes || '-'}</TableCell>
-                        )}
-                        <TableCell className="py-1.5">
-                          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleEdit(item)}>
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-sm truncate">{item.player_name}</span>
+                              {age !== null && <span className="text-xs text-muted-foreground flex-shrink-0">{age}y</span>}
+                              {item.position && <Badge variant="outline" className="text-[10px] px-1 py-0 flex-shrink-0">{item.position}</Badge>}
+                              <div className="ml-auto flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                                <IgTooltipIcon handle={item.ig_handle} />
+                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleEdit(item)}>
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                            {item.current_club && (
+                              <div className="text-xs text-muted-foreground flex items-center mt-0.5">
+                                <ClubDisplay clubName={item.current_club} clubCountryMap={clubCountryMap} ageRules={ageRules} clubRatings={clubRatings} isYouth={isYouth} />
+                              </div>
+                            )}
+                            {isYouth && item.parents_name && (
+                              <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                <span>Parent: {item.parents_name}</span>
+                                <span onClick={e => e.stopPropagation()}><IgTooltipIcon handle={item.parent_contact} /></span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-3 mt-1.5" onClick={e => e.stopPropagation()}>
+                              <label className="flex items-center gap-1 cursor-pointer">
+                                <Checkbox checked={item.messaged} onCheckedChange={() => toggleField(item.id, 'messaged', item.messaged)} />
+                                <span className="text-[10px] text-muted-foreground">MSG</span>
+                              </label>
+                              <label className="flex items-center gap-1 cursor-pointer">
+                                <Checkbox checked={item.response_received} onCheckedChange={() => toggleField(item.id, 'response_received', item.response_received)} />
+                                <span className="text-[10px] text-muted-foreground">RSP</span>
+                              </label>
+                              {isYouth && (
+                                <label className="flex items-center gap-1 cursor-pointer">
+                                  <Checkbox checked={item.parent_approval} onCheckedChange={() => toggleField(item.id, 'parent_approval', item.parent_approval)} />
+                                  <span className="text-[10px] text-muted-foreground">APR</span>
+                                </label>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     );
                   })}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Mobile Cards */}
-            <div className="lg:hidden">
-              {sorted.map(item => {
-                const age = calculateAge(item.date_of_birth);
-                return (
-                  <div key={item.id} className="p-3 border-b last:border-b-0">
-                    <div className="flex items-start gap-2">
-                      <div className="flex-shrink-0 mt-0.5">
-                        <EligibilityBadge item={item} type={type} clubCountryMap={clubCountryMap} ageRules={ageRules} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm truncate">{item.player_name}</span>
-                          {age !== null && <span className="text-xs text-muted-foreground flex-shrink-0">{age}y</span>}
-                          {item.position && <Badge variant="outline" className="text-[10px] px-1 py-0 flex-shrink-0">{item.position}</Badge>}
-                          <div className="ml-auto flex items-center gap-1 flex-shrink-0">
-                            <IgLink handle={item.ig_handle} />
-                            <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleEdit(item)}>
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                        {item.current_club && (
-                          <div className="text-xs text-muted-foreground flex items-center mt-0.5">
-                            <ClubDisplay clubName={item.current_club} clubCountryMap={clubCountryMap} ageRules={ageRules} clubRatings={clubRatings} isYouth={isYouth} />
-                          </div>
-                        )}
-                        {isYouth && item.parents_name && (
-                          <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                            <span>Parent: {item.parents_name}</span>
-                            <IgLink handle={item.parent_contact} />
-                          </div>
-                        )}
-                        <div className="flex items-center gap-3 mt-1.5">
-                          <label className="flex items-center gap-1 cursor-pointer">
-                            <Checkbox checked={item.messaged} onCheckedChange={() => toggleField(item.id, 'messaged', item.messaged)} />
-                            <span className="text-[10px] text-muted-foreground">MSG</span>
-                          </label>
-                          <label className="flex items-center gap-1 cursor-pointer">
-                            <Checkbox checked={item.response_received} onCheckedChange={() => toggleField(item.id, 'response_received', item.response_received)} />
-                            <span className="text-[10px] text-muted-foreground">RSP</span>
-                          </label>
-                          {isYouth && (
-                            <label className="flex items-center gap-1 cursor-pointer">
-                              <Checkbox checked={item.parent_approval} onCheckedChange={() => toggleField(item.id, 'parent_approval', item.parent_approval)} />
-                              <span className="text-[10px] text-muted-foreground">APR</span>
-                            </label>
-                          )}
-                        </div>
-                        {item.notes && <p className="text-[11px] text-muted-foreground mt-1 truncate">{item.notes}</p>}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
+                </div>
+              </>
+            )}
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
     );
   };
 
@@ -595,7 +658,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
           />
           <Button size="sm" variant="outline" onClick={() => {
             setEditingItem(null);
-            setFormData(type === 'youth' ? emptyYouthForm : emptyProForm);
+            setFormData(isYouth ? emptyYouthForm : emptyProForm);
             setDialogOpen(true);
           }}>
             <Plus className="w-3.5 h-3.5 mr-1" /> Add
@@ -611,7 +674,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground mb-2 px-1">
-        {type === 'youth' ? (
+        {isYouth ? (
           <>
             <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Can contact</span>
             <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-amber-600" /> Date from which contact allowed</span>
@@ -622,18 +685,18 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         )}
       </div>
 
-      {renderTableSection(notMessaged, 'Not Messaged')}
-      {renderTableSection(noResponse, 'Awaiting Response')}
-      {renderTableSection(responded, 'Responded')}
+      {renderTableSection(notMessaged, 'Not Messaged', 'notMessaged')}
+      {renderTableSection(noResponse, 'Awaiting Response', 'noResponse')}
+      {renderTableSection(responded, 'Responded', 'responded')}
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={(open) => {
         setDialogOpen(open);
-        if (!open) { setEditingItem(null); setFormData(type === 'youth' ? emptyYouthForm : emptyProForm); }
+        if (!open) { setEditingItem(null); setFormData(isYouth ? emptyYouthForm : emptyProForm); }
       }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw]">
           <DialogHeader>
-            <DialogTitle>{editingItem ? 'Edit' : 'Add'} {type === 'youth' ? 'Youth' : 'Pro'} Outreach</DialogTitle>
+            <DialogTitle>{editingItem ? 'Edit' : 'Add'} {isYouth ? 'Youth' : 'Pro'} Outreach</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -648,7 +711,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
               <div className="space-y-2"><Label>Position</Label><Input value={formData.position} onChange={e => setFormData({ ...formData, position: e.target.value })} /></div>
               <div className="space-y-2"><Label>Nationality</Label><Input value={formData.nationality} onChange={e => setFormData({ ...formData, nationality: e.target.value })} /></div>
             </div>
-            {type === 'youth' && (
+            {isYouth && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>Parent's Name</Label><Input value={formData.parents_name} onChange={e => setFormData({ ...formData, parents_name: e.target.value })} /></div>
                 <div className="space-y-2"><Label>Parent Contact (IG)</Label><Input value={formData.parent_contact} onChange={e => setFormData({ ...formData, parent_contact: e.target.value })} /></div>
@@ -659,7 +722,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center space-x-2"><Switch checked={formData.messaged} onCheckedChange={v => setFormData({ ...formData, messaged: v })} /><Label>Messaged</Label></div>
               <div className="flex items-center space-x-2"><Switch checked={formData.response_received} onCheckedChange={v => setFormData({ ...formData, response_received: v })} /><Label>Response</Label></div>
-              {type === 'youth' && (
+              {isYouth && (
                 <div className="flex items-center space-x-2"><Switch checked={formData.parent_approval} onCheckedChange={v => setFormData({ ...formData, parent_approval: v })} /><Label>Parent Approval</Label></div>
               )}
             </div>
@@ -670,6 +733,82 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
               )}
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Player Detail Dialog */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{detailEditMode ? 'Edit Player' : 'Player Details'}</span>
+              {!detailEditMode && (
+                <Button size="sm" variant="outline" onClick={() => setDetailEditMode(true)} className="gap-1">
+                  <Edit className="h-3 w-3" /> Edit
+                </Button>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {detailItem && !detailEditMode && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <EligibilityBadge item={detailItem} type={type} clubCountryMap={clubCountryMap} ageRules={ageRules} />
+                <div>
+                  <h3 className="font-bold text-lg">{detailItem.player_name}</h3>
+                  <p className="text-xs text-muted-foreground">{isYouth ? 'Youth' : 'Pro'} Outreach</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-muted-foreground text-xs">Position</span><p className="font-medium">{detailItem.position || '-'}</p></div>
+                <div><span className="text-muted-foreground text-xs">Age</span><p className="font-medium">{calculateAge(detailItem.date_of_birth) ?? '-'}</p></div>
+                <div><span className="text-muted-foreground text-xs">DOB</span><p className="font-medium">{detailItem.date_of_birth ? new Date(detailItem.date_of_birth).toLocaleDateString('en-GB') : '-'}</p></div>
+                <div><span className="text-muted-foreground text-xs">Nationality</span><p className="font-medium">{detailItem.nationality || '-'}</p></div>
+                <div className="col-span-2"><span className="text-muted-foreground text-xs">Club</span><p className="font-medium">{detailItem.current_club || '-'}</p></div>
+                {detailItem.ig_handle && <div className="col-span-2"><span className="text-muted-foreground text-xs">Instagram</span><p className="font-medium">@{detailItem.ig_handle.replace(/^@/, '')}</p></div>}
+                {isYouth && detailItem.parents_name && <div><span className="text-muted-foreground text-xs">Parent Name</span><p className="font-medium">{detailItem.parents_name}</p></div>}
+                {isYouth && detailItem.parent_contact && <div><span className="text-muted-foreground text-xs">Parent IG</span><p className="font-medium">@{detailItem.parent_contact.replace(/^@/, '')}</p></div>}
+                <div><span className="text-muted-foreground text-xs">Messaged</span><p className="font-medium">{detailItem.messaged ? 'Yes' : 'No'}</p></div>
+                <div><span className="text-muted-foreground text-xs">Response</span><p className="font-medium">{detailItem.response_received ? 'Yes' : 'No'}</p></div>
+                {isYouth && <div><span className="text-muted-foreground text-xs">Parent Approval</span><p className="font-medium">{detailItem.parent_approval ? 'Yes' : 'No'}</p></div>}
+                {detailItem.notes && <div className="col-span-2"><span className="text-muted-foreground text-xs">Notes</span><p className="text-muted-foreground text-sm">{detailItem.notes}</p></div>}
+                {detailItem.initial_message && <div className="col-span-2"><span className="text-muted-foreground text-xs">Initial Message</span><p className="text-muted-foreground text-sm">{detailItem.initial_message}</p></div>}
+              </div>
+            </div>
+          )}
+          {detailItem && detailEditMode && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1"><Label className="text-xs">Name</Label><Input value={formData.player_name} onChange={e => setFormData({ ...formData, player_name: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Position</Label><Input value={formData.position} onChange={e => setFormData({ ...formData, position: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1"><Label className="text-xs">Nationality</Label><Input value={formData.nationality} onChange={e => setFormData({ ...formData, nationality: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Club</Label><Input value={formData.current_club} onChange={e => setFormData({ ...formData, current_club: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1"><Label className="text-xs">DOB</Label><Input type="date" value={formData.date_of_birth} onChange={e => setFormData({ ...formData, date_of_birth: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Instagram</Label><Input value={formData.ig_handle} onChange={e => setFormData({ ...formData, ig_handle: e.target.value })} /></div>
+              </div>
+              {isYouth && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1"><Label className="text-xs">Parent Name</Label><Input value={formData.parents_name} onChange={e => setFormData({ ...formData, parents_name: e.target.value })} /></div>
+                  <div className="space-y-1"><Label className="text-xs">Parent IG</Label><Input value={formData.parent_contact} onChange={e => setFormData({ ...formData, parent_contact: e.target.value })} /></div>
+                </div>
+              )}
+              <div className="space-y-1"><Label className="text-xs">Notes</Label><Textarea value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} rows={2} /></div>
+              <div className="space-y-1"><Label className="text-xs">Initial Message</Label><Textarea value={formData.initial_message} onChange={e => setFormData({ ...formData, initial_message: e.target.value })} rows={2} /></div>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center space-x-2"><Switch checked={formData.messaged} onCheckedChange={v => setFormData({ ...formData, messaged: v })} /><Label className="text-xs">Messaged</Label></div>
+                <div className="flex items-center space-x-2"><Switch checked={formData.response_received} onCheckedChange={v => setFormData({ ...formData, response_received: v })} /><Label className="text-xs">Response</Label></div>
+                {isYouth && <div className="flex items-center space-x-2"><Switch checked={formData.parent_approval} onCheckedChange={v => setFormData({ ...formData, parent_approval: v })} /><Label className="text-xs">Parent Approval</Label></div>}
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleDetailSave} className="flex-1">Save</Button>
+                <Button variant="outline" onClick={() => setDetailEditMode(false)}>Cancel</Button>
+                <Button variant="destructive" onClick={() => { handleDelete(detailItem.id); setDetailOpen(false); }}>Delete</Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
