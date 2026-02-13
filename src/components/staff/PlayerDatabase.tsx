@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { normalizeClubName, findClubCountry, findClubRating } from '@/lib/clubNameUtils';
 import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
+import { useResizableColumns } from '@/hooks/useResizableColumns';
 import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
 import { Switch } from '@/components/ui/switch';
 
@@ -200,6 +201,7 @@ export const PlayerDatabase = () => {
 
   const settings = useTableSettings('player-database', DB_COLUMNS);
   const dragScrollRef = useHorizontalDragScroll();
+  const { getHeaderProps, ResizeHandle } = useResizableColumns('player-database');
 
   useEffect(() => { fetchAllPlayers(); }, []);
 
@@ -573,51 +575,58 @@ export const PlayerDatabase = () => {
 
       {/* Desktop Table */}
       <div ref={dragScrollRef} className="hidden md:block border rounded-lg overflow-x-auto bg-card/50 cursor-grab active:cursor-grabbing">
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
-            <TableRow className="bg-muted/50">
-              {settings.isVisible('avatar') && <TableHead className="font-semibold text-xs w-12"></TableHead>}
-              {settings.isVisible('eligibility') && <TableHead className="font-semibold text-xs w-10"></TableHead>}
+           <TableRow className="bg-muted/50">
+              {settings.isVisible('avatar') && <TableHead className="font-semibold text-xs w-12 relative" {...getHeaderProps('avatar')}><ResizeHandle columnKey="avatar" /></TableHead>}
+              {settings.isVisible('eligibility') && <TableHead className="font-semibold text-xs w-10 relative" {...getHeaderProps('eligibility')}><ResizeHandle columnKey="eligibility" /></TableHead>}
               {settings.isVisible('name') && (
-                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs" onClick={() => handleSort('player_name')}>
+                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs relative" onClick={() => handleSort('player_name')} {...getHeaderProps('name')}>
                   <div className="flex items-center">NAME {getSortIcon('player_name')}</div>
+                  <ResizeHandle columnKey="name" />
                 </TableHead>
               )}
               {settings.isVisible('nationality') && (
-                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-12" onClick={() => handleSort('nationality')}>
+                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-12 relative" onClick={() => handleSort('nationality')} {...getHeaderProps('nationality')}>
                   <div className="flex items-center">NAT {getSortIcon('nationality')}</div>
+                  <ResizeHandle columnKey="nationality" />
                 </TableHead>
               )}
               {settings.isVisible('position') && (
-                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-16" onClick={() => handleSort('position')}>
+                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-16 relative" onClick={() => handleSort('position')} {...getHeaderProps('position')}>
                   <div className="flex items-center">POS {getSortIcon('position')}</div>
+                  <ResizeHandle columnKey="position" />
                 </TableHead>
               )}
               {settings.isVisible('age') && (
-                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-12" onClick={() => handleSort('age')}>
+                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-12 relative" onClick={() => handleSort('age')} {...getHeaderProps('age')}>
                   <div className="flex items-center">AGE {getSortIcon('age')}</div>
+                  <ResizeHandle columnKey="age" />
                 </TableHead>
               )}
               {settings.isVisible('club') && (
-                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs" onClick={() => handleSort('current_club')}>
+                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs relative" onClick={() => handleSort('current_club')} {...getHeaderProps('club')}>
                   <div className="flex items-center">CLUB {getSortIcon('current_club')}</div>
+                  <ResizeHandle columnKey="club" />
                 </TableHead>
               )}
               {settings.isVisible('dob') && (
-                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-20" onClick={() => handleSort('date_of_birth')}>
+                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-20 relative" onClick={() => handleSort('date_of_birth')} {...getHeaderProps('dob')}>
                   <div className="flex items-center">DOB {getSortIcon('date_of_birth')}</div>
+                  <ResizeHandle columnKey="dob" />
                 </TableHead>
               )}
-              {settings.isVisible('parent') && <TableHead className="font-semibold text-xs">PARENT</TableHead>}
-              {settings.isVisible('parent_ig') && <TableHead className="font-semibold text-xs w-10 text-center">P.IG</TableHead>}
-              {settings.isVisible('source') && <TableHead className="font-semibold text-xs w-16">SRC</TableHead>}
+              {settings.isVisible('parent') && <TableHead className="font-semibold text-xs relative" {...getHeaderProps('parent')}>PARENT<ResizeHandle columnKey="parent" /></TableHead>}
+              {settings.isVisible('parent_ig') && <TableHead className="font-semibold text-xs w-10 text-center relative" {...getHeaderProps('parent_ig')}>P.IG<ResizeHandle columnKey="parent_ig" /></TableHead>}
+              {settings.isVisible('source') && <TableHead className="font-semibold text-xs w-16 relative" {...getHeaderProps('source')}>SRC<ResizeHandle columnKey="source" /></TableHead>}
               {settings.isVisible('added') && (
-                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-20" onClick={() => handleSort('created_at')}>
+                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-20 relative" onClick={() => handleSort('created_at')} {...getHeaderProps('added')}>
                   <div className="flex items-center">ADDED {getSortIcon('created_at')}</div>
+                  <ResizeHandle columnKey="added" />
                 </TableHead>
               )}
-              {settings.isVisible('ig') && <TableHead className="font-semibold text-xs w-10 text-center">IG</TableHead>}
-              {settings.isVisible('reports') && <TableHead className="font-semibold text-xs w-10 text-center">#</TableHead>}
+              {settings.isVisible('ig') && <TableHead className="font-semibold text-xs w-10 text-center relative" {...getHeaderProps('ig')}>IG<ResizeHandle columnKey="ig" /></TableHead>}
+              {settings.isVisible('reports') && <TableHead className="font-semibold text-xs w-10 text-center relative" {...getHeaderProps('reports')}>#<ResizeHandle columnKey="reports" /></TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
