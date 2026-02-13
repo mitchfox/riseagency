@@ -20,6 +20,7 @@ import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
 import { normalizeClubName, findClubCountry, findClubRating as findClubRatingUtil } from '@/lib/clubNameUtils';
 import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
+import { useResizableColumns } from '@/hooks/useResizableColumns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface Props {
@@ -200,6 +201,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const columns = type === 'youth' ? YOUTH_COLUMNS : PRO_COLUMNS;
   const settings = useTableSettings(`outreach-panel-${type}`, columns);
   const dragScrollRef = useHorizontalDragScroll();
+  const { getHeaderProps, ResizeHandle } = useResizableColumns(`outreach-panel-${type}`);
   const isYouth = type === 'youth';
 
   const emptyYouthForm = {
@@ -453,40 +455,45 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        {settings.isVisible('eligibility') && <TableHead className="w-10"></TableHead>}
+                        {settings.isVisible('eligibility') && <TableHead className="w-10 relative" {...getHeaderProps('eligibility')}><ResizeHandle columnKey="eligibility" /></TableHead>}
                         {settings.isVisible('name') && (
-                          <TableHead className="cursor-pointer" onClick={() => handleSort('player_name')}>
+                          <TableHead className="cursor-pointer relative" onClick={() => handleSort('player_name')} {...getHeaderProps('name')}>
                             <div className="flex items-center">Name {getSortIcon('player_name')}</div>
+                            <ResizeHandle columnKey="name" />
                           </TableHead>
                         )}
-                        {settings.isVisible('ig') && <TableHead className="w-12 text-center">IG</TableHead>}
+                        {settings.isVisible('ig') && <TableHead className="w-12 text-center relative" {...getHeaderProps('ig')}>IG<ResizeHandle columnKey="ig" /></TableHead>}
                         {settings.isVisible('nationality') && (
-                          <TableHead className="cursor-pointer" onClick={() => handleSort('nationality')}>
+                          <TableHead className="cursor-pointer relative" onClick={() => handleSort('nationality')} {...getHeaderProps('nationality')}>
                             <div className="flex items-center">Nat {getSortIcon('nationality')}</div>
+                            <ResizeHandle columnKey="nationality" />
                           </TableHead>
                         )}
-                        {settings.isVisible('position') && <TableHead>Pos</TableHead>}
+                        {settings.isVisible('position') && <TableHead className="relative" {...getHeaderProps('position')}>Pos<ResizeHandle columnKey="position" /></TableHead>}
                         {settings.isVisible('age') && (
-                          <TableHead className="cursor-pointer" onClick={() => handleSort('age')}>
+                          <TableHead className="cursor-pointer relative" onClick={() => handleSort('age')} {...getHeaderProps('age')}>
                             <div className="flex items-center">Age {getSortIcon('age')}</div>
+                            <ResizeHandle columnKey="age" />
                           </TableHead>
                         )}
                         {settings.isVisible('dob') && (
-                          <TableHead className="cursor-pointer" onClick={() => handleSort('date_of_birth')}>
+                          <TableHead className="cursor-pointer relative" onClick={() => handleSort('date_of_birth')} {...getHeaderProps('dob')}>
                             <div className="flex items-center">DOB {getSortIcon('date_of_birth')}</div>
+                            <ResizeHandle columnKey="dob" />
                           </TableHead>
                         )}
                         {settings.isVisible('club') && (
-                          <TableHead className="cursor-pointer" onClick={() => handleSort('current_club')}>
+                          <TableHead className="cursor-pointer relative" onClick={() => handleSort('current_club')} {...getHeaderProps('club')}>
                             <div className="flex items-center">Club {getSortIcon('current_club')}</div>
+                            <ResizeHandle columnKey="club" />
                           </TableHead>
                         )}
-                        {isYouth && settings.isVisible('parent') && <TableHead>Parent</TableHead>}
-                        {isYouth && settings.isVisible('parent_ig') && <TableHead className="w-10 text-center">P.IG</TableHead>}
-                        {isYouth && settings.isVisible('approval') && <TableHead className="text-center">Apr</TableHead>}
-                        {settings.isVisible('messaged') && <TableHead className="text-center">MSG</TableHead>}
-                        {settings.isVisible('response') && <TableHead className="text-center">RSP</TableHead>}
-                        {settings.isVisible('notes') && <TableHead>Notes</TableHead>}
+                        {isYouth && settings.isVisible('parent') && <TableHead className="relative" {...getHeaderProps('parent')}>Parent<ResizeHandle columnKey="parent" /></TableHead>}
+                        {isYouth && settings.isVisible('parent_ig') && <TableHead className="w-10 text-center relative" {...getHeaderProps('parent_ig')}>P.IG<ResizeHandle columnKey="parent_ig" /></TableHead>}
+                        {isYouth && settings.isVisible('approval') && <TableHead className="text-center relative" {...getHeaderProps('approval')}>Apr<ResizeHandle columnKey="approval" /></TableHead>}
+                        {settings.isVisible('messaged') && <TableHead className="text-center relative" {...getHeaderProps('messaged')}>MSG<ResizeHandle columnKey="messaged" /></TableHead>}
+                        {settings.isVisible('response') && <TableHead className="text-center relative" {...getHeaderProps('response')}>RSP<ResizeHandle columnKey="response" /></TableHead>}
+                        {settings.isVisible('notes') && <TableHead className="relative" {...getHeaderProps('notes')}>Notes<ResizeHandle columnKey="notes" /></TableHead>}
                         <TableHead className="w-10"></TableHead>
                       </TableRow>
                     </TableHeader>
