@@ -13,7 +13,6 @@ export const openExternalUrl = (url: string) => {
   
   // For PDF files, use download attribute as fallback
   if (url.includes('.pdf')) {
-    // Extract filename from URL if possible
     const filename = url.split('/').pop()?.split('?')[0] || 'document.pdf';
     link.download = filename;
   }
@@ -22,6 +21,24 @@ export const openExternalUrl = (url: string) => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+};
+
+/**
+ * Opens a mailto link safely for Firefox/Edge compatibility.
+ * Uses window.location.href instead of anchor with target=_blank.
+ */
+export const openMailto = (email: string) => {
+  if (!email) return;
+  window.location.href = `mailto:${email}`;
+};
+
+/**
+ * Opens a WhatsApp link safely for Firefox/Edge compatibility.
+ */
+export const openWhatsApp = (phone: string) => {
+  if (!phone) return;
+  const cleaned = phone.replace(/[^0-9]/g, '');
+  openExternalUrl(`https://wa.me/${cleaned}`);
 };
 
 /**

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -79,6 +80,7 @@ interface ScheduleManagerProps {
 }
 
 export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerProps) => {
+  const isMobile = useIsMobile();
   const [posts, setPosts] = useState<ScheduledPost[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [templateFolders, setTemplateFolders] = useState<TemplateFolder[]>([]);
@@ -394,7 +396,7 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[500px] bg-background rounded-lg">
+          <div className={`${isMobile ? 'h-[350px]' : 'h-[500px]'} bg-background rounded-lg`}>
             <Calendar
               localizer={localizer}
               events={calendarEvents}
@@ -402,7 +404,7 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
               endAccessor="end"
               style={{ height: '100%' }}
               views={['month', 'week', 'agenda']}
-              defaultView="month"
+              defaultView={isMobile ? "agenda" : "month"}
               onSelectEvent={onSelectEvent}
               eventPropGetter={eventPropGetter}
             />

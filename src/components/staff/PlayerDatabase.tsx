@@ -34,7 +34,7 @@ interface PlayerData {
   club_logo_url?: string | null;
 }
 
-type SortField = 'player_name' | 'age' | 'position' | 'nationality' | 'current_club' | 'report_count' | 'created_at';
+type SortField = 'player_name' | 'age' | 'position' | 'nationality' | 'current_club' | 'report_count' | 'created_at' | 'date_of_birth';
 type SortDirection = 'asc' | 'desc';
 
 const ITEMS_PER_PAGE = 50;
@@ -116,11 +116,12 @@ export const PlayerDatabase = () => {
 
   const fetchAllPlayers = async () => {
     try {
-      const [scoutingResult, youthResult, proResult, clubLogosResult] = await Promise.all([
+      const [scoutingResult, youthResult, proResult, clubLogosResult, clubCountryResult] = await Promise.all([
         supabase.from('scouting_reports').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_youth').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_pro').select('*').order('created_at', { ascending: false }),
-        supabase.from('club_map_positions').select('club_name, image_url')
+        supabase.from('club_map_positions').select('club_name, image_url'),
+        supabase.from('club_map_positions').select('club_name, country')
       ]);
 
       if (scoutingResult.error) throw scoutingResult.error;
@@ -328,6 +329,9 @@ export const PlayerDatabase = () => {
           break;
         case 'report_count':
           comparison = a.report_count - b.report_count;
+          break;
+        case 'date_of_birth':
+          comparison = (a.date_of_birth || '9999').localeCompare(b.date_of_birth || '9999');
           break;
         case 'created_at':
           const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -595,6 +599,14 @@ export const PlayerDatabase = () => {
                   ADDED {getSortIcon('created_at')}
                 </div>
               </TableHead>
+              <TableHead 
+                className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-20"
+                onClick={() => handleSort('date_of_birth')}
+              >
+                <div className="flex items-center">
+                  DOB {getSortIcon('date_of_birth')}
+                </div>
+              </TableHead>
               <TableHead className="font-semibold text-xs w-10 text-center">#</TableHead>
             </TableRow>
           </TableHeader>
@@ -645,6 +657,9 @@ export const PlayerDatabase = () => {
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground py-1.5">
                   {player.created_at ? new Date(player.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '-'}
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground py-1.5">
+                  {player.date_of_birth ? new Date(player.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
                 </TableCell>
                 <TableCell className="text-center py-1.5">
                   {player.report_count > 0 && (

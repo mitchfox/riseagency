@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Mail, Users, MessageSquare, Calendar, Send, MessageCircle } from "lucide-react";
 import { EmailResponseDialog } from "./EmailResponseDialog";
+import { openExternalUrl, openMailto } from "@/utils/openExternalUrl";
 
 interface FormSubmission {
   id: string;
@@ -53,25 +54,20 @@ const clubCountryCodes: Record<string, string> = {
 
 // Format phone number for WhatsApp link
 const formatPhoneForWhatsApp = (phone: string, currentClub?: string): string => {
-  // Remove all non-digit characters except +
-  let cleaned = phone.replace(/[^\d+]/g, "");
+  let cleaned = phone.replace(/[^\\d+]/g, "");
   
-  // If already has country code (starts with +), use as-is
   if (cleaned.startsWith("+")) {
     return cleaned.replace("+", "");
   }
   
-  // If starts with 00, replace with +
   if (cleaned.startsWith("00")) {
     return cleaned.substring(2);
   }
   
-  // Try to infer country code from club
   if (currentClub) {
     const clubLower = currentClub.toLowerCase();
     for (const [clubName, countryCode] of Object.entries(clubCountryCodes)) {
       if (clubLower.includes(clubName)) {
-        // Remove leading 0 if present (common in UK numbers)
         if (cleaned.startsWith("0")) {
           cleaned = cleaned.substring(1);
         }
@@ -80,7 +76,6 @@ const formatPhoneForWhatsApp = (phone: string, currentClub?: string): string => 
     }
   }
   
-  // Default: assume UK if starts with 0
   if (cleaned.startsWith("0")) {
     return "44" + cleaned.substring(1);
   }
@@ -88,22 +83,21 @@ const formatPhoneForWhatsApp = (phone: string, currentClub?: string): string => 
   return cleaned;
 };
 
-// Render clickable WhatsApp phone link
+// Render clickable WhatsApp phone link - Firefox/Edge safe
 const PhoneWhatsAppLink = ({ phone, currentClub }: { phone: string; currentClub?: string }) => {
   const formattedPhone = formatPhoneForWhatsApp(phone, currentClub);
-  const whatsappUrl = `https://wa.me/${formattedPhone}`;
   
   return (
-    <a 
-      href={whatsappUrl}
-      target="_blank"
-      rel="noopener noreferrer"
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        openExternalUrl(`https://wa.me/${formattedPhone}`);
+      }}
       className="inline-flex items-center gap-1.5 text-green-600 hover:text-green-700 hover:underline transition-colors"
-      onClick={(e) => e.stopPropagation()}
     >
       <MessageCircle className="w-3.5 h-3.5" />
       {phone}
-    </a>
+    </button>
   );
 };
 
