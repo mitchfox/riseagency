@@ -17,6 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { FaInstagram } from 'react-icons/fa';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
+import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
 
 // Instagram link
 const InstagramIconLink = ({ handle }: { handle: string | null }) => {
@@ -213,6 +214,33 @@ interface ProOutreach {
 type SortField = 'player_name' | 'age' | 'current_club' | 'nationality' | 'date_of_birth';
 type SortDir = 'asc' | 'desc';
 
+const OUTREACH_YOUTH_COLS: ColumnConfig[] = [
+  { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
+  { key: 'name', label: 'Name', defaultVisible: true },
+  { key: 'ig', label: 'Instagram', defaultVisible: true },
+  { key: 'nationality', label: 'Nationality', defaultVisible: true },
+  { key: 'age', label: 'Age', defaultVisible: true },
+  { key: 'dob', label: 'DOB', defaultVisible: true },
+  { key: 'club', label: 'Club', defaultVisible: true },
+  { key: 'parent', label: 'Parent', defaultVisible: true },
+  { key: 'parent_ig', label: 'Parent IG', defaultVisible: true },
+  { key: 'approval', label: 'Approval', defaultVisible: true },
+  { key: 'messaged', label: 'Messaged', defaultVisible: true },
+  { key: 'response', label: 'Response', defaultVisible: true },
+];
+
+const OUTREACH_PRO_COLS: ColumnConfig[] = [
+  { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
+  { key: 'name', label: 'Name', defaultVisible: true },
+  { key: 'ig', label: 'Instagram', defaultVisible: true },
+  { key: 'nationality', label: 'Nationality', defaultVisible: true },
+  { key: 'age', label: 'Age', defaultVisible: true },
+  { key: 'dob', label: 'DOB', defaultVisible: true },
+  { key: 'club', label: 'Club', defaultVisible: true },
+  { key: 'messaged', label: 'Messaged', defaultVisible: true },
+  { key: 'response', label: 'Response', defaultVisible: true },
+];
+
 export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   const [activeTab, setActiveTab] = useState("youth");
   const [youthData, setYouthData] = useState<YouthOutreach[]>([]);
@@ -226,6 +254,9 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>('player_name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const youthSettings = useTableSettings('outreach-youth', OUTREACH_YOUTH_COLS);
+  const proSettings = useTableSettings('outreach-pro', OUTREACH_PRO_COLS);
 
   const [youthFormData, setYouthFormData] = useState({
     player_name: "", ig_handle: "", current_club: "", date_of_birth: "",
@@ -466,28 +497,38 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-10"></TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort('player_name')}>
-                  <div className="flex items-center">Name {getSortIcon('player_name')}</div>
-                </TableHead>
-                <TableHead className="w-12 text-center">IG</TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort('nationality')}>
-                  <div className="flex items-center">Nat {getSortIcon('nationality')}</div>
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort('age')}>
-                  <div className="flex items-center">Age {getSortIcon('age')}</div>
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort('date_of_birth')}>
-                  <div className="flex items-center">DOB {getSortIcon('date_of_birth')}</div>
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort('current_club')}>
-                  <div className="flex items-center">Club {getSortIcon('current_club')}</div>
-                </TableHead>
-                <TableHead>Parent</TableHead>
-                <TableHead className="w-10 text-center">P.IG</TableHead>
-                <TableHead className="text-center">Apr</TableHead>
-                <TableHead className="text-center">MSG</TableHead>
-                <TableHead className="text-center">RSP</TableHead>
+                {youthSettings.isVisible('eligibility') && <TableHead className="w-10"></TableHead>}
+                {youthSettings.isVisible('name') && (
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('player_name')}>
+                    <div className="flex items-center">Name {getSortIcon('player_name')}</div>
+                  </TableHead>
+                )}
+                {youthSettings.isVisible('ig') && <TableHead className="w-12 text-center">IG</TableHead>}
+                {youthSettings.isVisible('nationality') && (
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('nationality')}>
+                    <div className="flex items-center">Nat {getSortIcon('nationality')}</div>
+                  </TableHead>
+                )}
+                {youthSettings.isVisible('age') && (
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('age')}>
+                    <div className="flex items-center">Age {getSortIcon('age')}</div>
+                  </TableHead>
+                )}
+                {youthSettings.isVisible('dob') && (
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('date_of_birth')}>
+                    <div className="flex items-center">DOB {getSortIcon('date_of_birth')}</div>
+                  </TableHead>
+                )}
+                {youthSettings.isVisible('club') && (
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('current_club')}>
+                    <div className="flex items-center">Club {getSortIcon('current_club')}</div>
+                  </TableHead>
+                )}
+                {youthSettings.isVisible('parent') && <TableHead>Parent</TableHead>}
+                {youthSettings.isVisible('parent_ig') && <TableHead className="w-10 text-center">P.IG</TableHead>}
+                {youthSettings.isVisible('approval') && <TableHead className="text-center">Apr</TableHead>}
+                {youthSettings.isVisible('messaged') && <TableHead className="text-center">MSG</TableHead>}
+                {youthSettings.isVisible('response') && <TableHead className="text-center">RSP</TableHead>}
                 {canEdit && <TableHead className="w-10"></TableHead>}
               </TableRow>
             </TableHeader>
@@ -498,34 +539,48 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                 const age = calculateAge(item.date_of_birth);
                 return (
                   <TableRow key={item.id}>
-                    <TableCell className="py-1.5">
-                      <EligibilityBadge item={item} type="youth" clubCountryMap={clubCountryMap} ageRules={ageRules} />
-                    </TableCell>
-                    <TableCell className="bg-muted/30 font-bold py-1.5">{item.player_name}</TableCell>
-                    <TableCell className="text-center py-1.5"><InstagramIconLink handle={item.ig_handle} /></TableCell>
-                    <TableCell className="py-1.5">
-                      {(item as any).nationality ? (
-                        <img src={getCountryFlagUrl((item as any).nationality)} alt={(item as any).nationality} className="w-5 h-auto rounded-sm" title={(item as any).nationality} />
-                      ) : '-'}
-                    </TableCell>
-                    <TableCell className="py-1.5 text-sm">{age ?? '-'}</TableCell>
-                    <TableCell className="py-1.5 text-xs text-muted-foreground">
-                      {item.date_of_birth ? new Date(item.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
-                    </TableCell>
-                    <TableCell className="py-1.5">
-                      <ClubDisplay clubName={item.current_club} clubCountryMap={clubCountryMap} ageRules={ageRules} clubRatings={clubRatings} isYouth={true} />
-                    </TableCell>
-                    <TableCell className="py-1.5 text-sm">{item.parents_name || "-"}</TableCell>
-                    <TableCell className="text-center py-1.5"><InstagramIconLink handle={item.parent_contact} /></TableCell>
-                    <TableCell className="text-center py-1.5">
-                      <Checkbox checked={item.parent_approval} onCheckedChange={() => toggleYouthField(item.id, 'parent_approval')} />
-                    </TableCell>
-                    <TableCell className="text-center py-1.5">
-                      <Checkbox checked={item.messaged} onCheckedChange={() => toggleYouthField(item.id, 'messaged')} />
-                    </TableCell>
-                    <TableCell className="text-center py-1.5">
-                      <Checkbox checked={item.response_received} onCheckedChange={() => toggleYouthField(item.id, 'response_received')} />
-                    </TableCell>
+                    {youthSettings.isVisible('eligibility') && (
+                      <TableCell className="py-1.5">
+                        <EligibilityBadge item={item} type="youth" clubCountryMap={clubCountryMap} ageRules={ageRules} />
+                      </TableCell>
+                    )}
+                    {youthSettings.isVisible('name') && <TableCell className="bg-muted/30 font-bold py-1.5">{item.player_name}</TableCell>}
+                    {youthSettings.isVisible('ig') && <TableCell className="text-center py-1.5"><InstagramIconLink handle={item.ig_handle} /></TableCell>}
+                    {youthSettings.isVisible('nationality') && (
+                      <TableCell className="py-1.5">
+                        {(item as any).nationality ? (
+                          <img src={getCountryFlagUrl((item as any).nationality)} alt={(item as any).nationality} className="w-5 h-auto rounded-sm" title={(item as any).nationality} />
+                        ) : '-'}
+                      </TableCell>
+                    )}
+                    {youthSettings.isVisible('age') && <TableCell className="py-1.5 text-sm">{age ?? '-'}</TableCell>}
+                    {youthSettings.isVisible('dob') && (
+                      <TableCell className="py-1.5 text-xs text-muted-foreground">
+                        {item.date_of_birth ? new Date(item.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
+                      </TableCell>
+                    )}
+                    {youthSettings.isVisible('club') && (
+                      <TableCell className="py-1.5">
+                        <ClubDisplay clubName={item.current_club} clubCountryMap={clubCountryMap} ageRules={ageRules} clubRatings={clubRatings} isYouth={true} />
+                      </TableCell>
+                    )}
+                    {youthSettings.isVisible('parent') && <TableCell className="py-1.5 text-sm">{item.parents_name || "-"}</TableCell>}
+                    {youthSettings.isVisible('parent_ig') && <TableCell className="text-center py-1.5"><InstagramIconLink handle={item.parent_contact} /></TableCell>}
+                    {youthSettings.isVisible('approval') && (
+                      <TableCell className="text-center py-1.5">
+                        <Checkbox checked={item.parent_approval} onCheckedChange={() => toggleYouthField(item.id, 'parent_approval')} />
+                      </TableCell>
+                    )}
+                    {youthSettings.isVisible('messaged') && (
+                      <TableCell className="text-center py-1.5">
+                        <Checkbox checked={item.messaged} onCheckedChange={() => toggleYouthField(item.id, 'messaged')} />
+                      </TableCell>
+                    )}
+                    {youthSettings.isVisible('response') && (
+                      <TableCell className="text-center py-1.5">
+                        <Checkbox checked={item.response_received} onCheckedChange={() => toggleYouthField(item.id, 'response_received')} />
+                      </TableCell>
+                    )}
                     {canEdit && (
                       <TableCell className="py-1.5">
                         <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'youth')}><Edit className="h-4 w-4" /></Button>
@@ -591,25 +646,35 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-10"></TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort('player_name')}>
-                  <div className="flex items-center">Name {getSortIcon('player_name')}</div>
-                </TableHead>
-                <TableHead className="w-12 text-center">IG</TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort('nationality')}>
-                  <div className="flex items-center">Nat {getSortIcon('nationality')}</div>
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort('age')}>
-                  <div className="flex items-center">Age {getSortIcon('age')}</div>
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort('date_of_birth')}>
-                  <div className="flex items-center">DOB {getSortIcon('date_of_birth')}</div>
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort('current_club')}>
-                  <div className="flex items-center">Club {getSortIcon('current_club')}</div>
-                </TableHead>
-                <TableHead className="text-center">MSG</TableHead>
-                <TableHead className="text-center">RSP</TableHead>
+                {proSettings.isVisible('eligibility') && <TableHead className="w-10"></TableHead>}
+                {proSettings.isVisible('name') && (
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('player_name')}>
+                    <div className="flex items-center">Name {getSortIcon('player_name')}</div>
+                  </TableHead>
+                )}
+                {proSettings.isVisible('ig') && <TableHead className="w-12 text-center">IG</TableHead>}
+                {proSettings.isVisible('nationality') && (
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('nationality')}>
+                    <div className="flex items-center">Nat {getSortIcon('nationality')}</div>
+                  </TableHead>
+                )}
+                {proSettings.isVisible('age') && (
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('age')}>
+                    <div className="flex items-center">Age {getSortIcon('age')}</div>
+                  </TableHead>
+                )}
+                {proSettings.isVisible('dob') && (
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('date_of_birth')}>
+                    <div className="flex items-center">DOB {getSortIcon('date_of_birth')}</div>
+                  </TableHead>
+                )}
+                {proSettings.isVisible('club') && (
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('current_club')}>
+                    <div className="flex items-center">Club {getSortIcon('current_club')}</div>
+                  </TableHead>
+                )}
+                {proSettings.isVisible('messaged') && <TableHead className="text-center">MSG</TableHead>}
+                {proSettings.isVisible('response') && <TableHead className="text-center">RSP</TableHead>}
                 {canEdit && <TableHead className="w-10"></TableHead>}
               </TableRow>
             </TableHeader>
@@ -620,29 +685,41 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
                 const age = calculateAge(item.date_of_birth);
                 return (
                   <TableRow key={item.id}>
-                    <TableCell className="py-1.5">
-                      <EligibilityBadge item={item} type="pro" clubCountryMap={clubCountryMap} ageRules={ageRules} />
-                    </TableCell>
-                    <TableCell className="bg-muted/30 font-bold py-1.5">{item.player_name}</TableCell>
-                    <TableCell className="text-center py-1.5"><InstagramIconLink handle={item.ig_handle} /></TableCell>
-                    <TableCell className="py-1.5">
-                      {(item as any).nationality ? (
-                        <img src={getCountryFlagUrl((item as any).nationality)} alt={(item as any).nationality} className="w-5 h-auto rounded-sm" title={(item as any).nationality} />
-                      ) : '-'}
-                    </TableCell>
-                    <TableCell className="py-1.5 text-sm">{age ?? '-'}</TableCell>
-                    <TableCell className="py-1.5 text-xs text-muted-foreground">
-                      {item.date_of_birth ? new Date(item.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
-                    </TableCell>
-                    <TableCell className="py-1.5">
-                      <ClubDisplay clubName={item.current_club} clubCountryMap={clubCountryMap} ageRules={ageRules} clubRatings={clubRatings} isYouth={false} />
-                    </TableCell>
-                    <TableCell className="text-center py-1.5">
-                      <Checkbox checked={item.messaged} onCheckedChange={() => toggleProField(item.id, 'messaged')} />
-                    </TableCell>
-                    <TableCell className="text-center py-1.5">
-                      <Checkbox checked={item.response_received} onCheckedChange={() => toggleProField(item.id, 'response_received')} />
-                    </TableCell>
+                    {proSettings.isVisible('eligibility') && (
+                      <TableCell className="py-1.5">
+                        <EligibilityBadge item={item} type="pro" clubCountryMap={clubCountryMap} ageRules={ageRules} />
+                      </TableCell>
+                    )}
+                    {proSettings.isVisible('name') && <TableCell className="bg-muted/30 font-bold py-1.5">{item.player_name}</TableCell>}
+                    {proSettings.isVisible('ig') && <TableCell className="text-center py-1.5"><InstagramIconLink handle={item.ig_handle} /></TableCell>}
+                    {proSettings.isVisible('nationality') && (
+                      <TableCell className="py-1.5">
+                        {(item as any).nationality ? (
+                          <img src={getCountryFlagUrl((item as any).nationality)} alt={(item as any).nationality} className="w-5 h-auto rounded-sm" title={(item as any).nationality} />
+                        ) : '-'}
+                      </TableCell>
+                    )}
+                    {proSettings.isVisible('age') && <TableCell className="py-1.5 text-sm">{age ?? '-'}</TableCell>}
+                    {proSettings.isVisible('dob') && (
+                      <TableCell className="py-1.5 text-xs text-muted-foreground">
+                        {item.date_of_birth ? new Date(item.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
+                      </TableCell>
+                    )}
+                    {proSettings.isVisible('club') && (
+                      <TableCell className="py-1.5">
+                        <ClubDisplay clubName={item.current_club} clubCountryMap={clubCountryMap} ageRules={ageRules} clubRatings={clubRatings} isYouth={false} />
+                      </TableCell>
+                    )}
+                    {proSettings.isVisible('messaged') && (
+                      <TableCell className="text-center py-1.5">
+                        <Checkbox checked={item.messaged} onCheckedChange={() => toggleProField(item.id, 'messaged')} />
+                      </TableCell>
+                    )}
+                    {proSettings.isVisible('response') && (
+                      <TableCell className="text-center py-1.5">
+                        <Checkbox checked={item.response_received} onCheckedChange={() => toggleProField(item.id, 'response_received')} />
+                      </TableCell>
+                    )}
                     {canEdit && (
                       <TableCell className="py-1.5">
                         <Button size="sm" variant="ghost" onClick={() => handleEdit(item, 'pro')}><Edit className="h-4 w-4" /></Button>
@@ -697,10 +774,19 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-          <Users className="h-5 w-5 sm:h-6 sm:w-6" />
-          Player Outreach
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <Users className="h-5 w-5 sm:h-6 sm:w-6" />
+            Player Outreach
+          </h2>
+          <TableSettingsPopover
+            storageKey={activeTab === 'youth' ? 'outreach-youth' : 'outreach-pro'}
+            columns={activeTab === 'youth' ? OUTREACH_YOUTH_COLS : OUTREACH_PRO_COLS}
+            visibleColumns={activeTab === 'youth' ? youthSettings.visibleColumns : proSettings.visibleColumns}
+            onToggleColumn={activeTab === 'youth' ? youthSettings.toggleColumn : proSettings.toggleColumn}
+            showViewToggle={false}
+          />
+        </div>
         {canEdit && (
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForms(); }}>
             <DialogTrigger asChild>
