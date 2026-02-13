@@ -456,6 +456,8 @@ export const PlayerDatabase = () => {
           columns={DB_COLUMNS}
           visibleColumns={settings.visibleColumns}
           onToggleColumn={settings.toggleColumn}
+          columnOrder={settings.columnOrder}
+          onReorderColumns={settings.setColumnOrder}
           showViewToggle={false}
           filters={
             <div className="space-y-3 pt-2 border-t">
@@ -735,7 +737,7 @@ export const PlayerDatabase = () => {
 
       {/* Player Detail/Edit Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <span>{editMode ? 'Edit Player' : 'Player Details'}</span>

@@ -661,6 +661,8 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
             columns={columns}
             visibleColumns={settings.visibleColumns}
             onToggleColumn={settings.toggleColumn}
+            columnOrder={settings.columnOrder}
+            onReorderColumns={settings.setColumnOrder}
             showViewToggle={false}
           />
           <Button size="sm" variant="outline" onClick={() => {
@@ -745,7 +747,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
 
       {/* Player Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <span>{detailEditMode ? 'Edit Player' : 'Player Details'}</span>
