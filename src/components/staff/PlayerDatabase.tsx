@@ -10,10 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Users, UserPlus } from 'lucide-react';
 import { FaInstagram } from 'react-icons/fa';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
+import { calculateAge } from '@/lib/ageUtils';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { PlayerOutreachPanel } from '@/components/staff/PlayerOutreachPanel';
 
 interface PlayerData {
   id: string;
@@ -99,6 +101,8 @@ export const PlayerDatabase = () => {
   const [nationFilter, setNationFilter] = useState<string>('all');
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [sourceFilter, setSourceFilter] = useState<string[]>([]);
+  const [dobFrom, setDobFrom] = useState('');
+  const [dobTo, setDobTo] = useState('');
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerData | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -145,7 +149,7 @@ export const PlayerDatabase = () => {
             id: report.id,
             player_name: name,
             position: report.position,
-            age: report.age,
+            age: calculateAge(report.date_of_birth) ?? report.age,
             current_club: report.current_club,
             nationality: report.nationality,
             date_of_birth: report.date_of_birth,
@@ -175,7 +179,7 @@ export const PlayerDatabase = () => {
             id: outreach.id,
             player_name: name,
             position: (outreach as any).position || null,
-            age: (outreach as any).age || null,
+            age: calculateAge((outreach as any).date_of_birth) ?? (outreach as any).age ?? null,
             current_club: (outreach as any).current_club || null,
             nationality: (outreach as any).nationality || null,
             date_of_birth: (outreach as any).date_of_birth || null,
@@ -197,7 +201,7 @@ export const PlayerDatabase = () => {
             id: outreach.id,
             player_name: name,
             position: (outreach as any).position || null,
-            age: (outreach as any).age || null,
+            age: calculateAge((outreach as any).date_of_birth) ?? (outreach as any).age ?? null,
             current_club: (outreach as any).current_club || null,
             nationality: (outreach as any).nationality || null,
             date_of_birth: (outreach as any).date_of_birth || null,
@@ -268,8 +272,9 @@ export const PlayerDatabase = () => {
         if (!matchesName && !matchesClub && !matchesPosition) return false;
       }
 
-      if (ageFilter !== 'all' && player.age) {
-        const age = player.age;
+      if (ageFilter !== 'all') {
+        const age = player.date_of_birth ? calculateAge(player.date_of_birth) : player.age;
+        if (!age) return false;
         switch (ageFilter) {
           case 'u18': if (age >= 18) return false; break;
           case '18-21': if (age < 18 || age > 21) return false; break;
@@ -278,6 +283,14 @@ export const PlayerDatabase = () => {
           case '30+': if (age < 30) return false; break;
         }
       }
+
+      if (dobFrom && player.date_of_birth) {
+        if (player.date_of_birth < dobFrom) return false;
+      }
+      if (dobTo && player.date_of_birth) {
+        if (player.date_of_birth > dobTo) return false;
+      }
+      if ((dobFrom || dobTo) && !player.date_of_birth) return false;
 
       if (nationFilter !== 'all') {
         if (player.nationality !== nationFilter) return false;
@@ -327,7 +340,7 @@ export const PlayerDatabase = () => {
     });
 
     return result;
-  }, [players, searchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, sortField, sortDirection]);
+  }, [players, searchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, sortField, sortDirection]);
 
   const visiblePlayers = filteredAndSortedPlayers.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAndSortedPlayers.length;
@@ -347,9 +360,11 @@ export const PlayerDatabase = () => {
     setNationFilter('all');
     setPositionFilter([]);
     setSourceFilter([]);
+    setDobFrom('');
+    setDobTo('');
   };
 
-  const hasActiveFilters = searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0;
+  const hasActiveFilters = searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || dobFrom || dobTo;
 
   const togglePositionFilter = (pos: string) => {
     setPositionFilter(prev => 
@@ -424,7 +439,7 @@ export const PlayerDatabase = () => {
           )}
         </div>
 
-        {/* Position filters (collapsible on mobile) */}
+        {/* Position filters */}
         <div className="flex flex-wrap gap-1">
           {uniquePositions.slice(0, 8).map(pos => (
             <FilterChip 
@@ -446,6 +461,31 @@ export const PlayerDatabase = () => {
                 ))}
               </SelectContent>
             </Select>
+          )}
+        </div>
+
+        {/* DOB filter */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-xs text-muted-foreground font-bebas uppercase tracking-wider">DOB:</span>
+          <Input
+            type="date"
+            value={dobFrom}
+            onChange={e => setDobFrom(e.target.value)}
+            className="h-7 w-[140px] text-xs"
+            placeholder="From"
+          />
+          <span className="text-xs text-muted-foreground">to</span>
+          <Input
+            type="date"
+            value={dobTo}
+            onChange={e => setDobTo(e.target.value)}
+            className="h-7 w-[140px] text-xs"
+            placeholder="To"
+          />
+          {(dobFrom || dobTo) && (
+            <button onClick={() => { setDobFrom(''); setDobTo(''); }} className="text-xs text-muted-foreground hover:text-foreground">
+              Clear
+            </button>
           )}
         </div>
       </div>
@@ -721,166 +761,14 @@ export const PlayerDatabase = () => {
       </TabsContent>
 
       <TabsContent value="youth" className="mt-0">
-        <PlayerOutreachEmbed type="youth" />
+        <PlayerOutreachPanel type="youth" />
       </TabsContent>
 
       <TabsContent value="pro" className="mt-0">
-        <PlayerOutreachEmbed type="pro" />
+        <PlayerOutreachPanel type="pro" />
       </TabsContent>
     </Tabs>
   );
 };
 
-// Embedded outreach component with full features
-const PlayerOutreachEmbed = ({ type }: { type: 'youth' | 'pro' }) => {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const tableName = type === 'youth' ? 'player_outreach_youth' : 'player_outreach_pro';
-        const { data: result, error } = await supabase
-          .from(tableName)
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        setData(result || []);
-      } catch (error) {
-        console.error(`Error fetching ${type} outreach:`, error);
-        toast.error(`Failed to load ${type} outreach data`);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [type]);
-
-  const toggleField = async (id: string, field: string, currentValue: boolean) => {
-    const tableName = type === 'youth' ? 'player_outreach_youth' : 'player_outreach_pro';
-    
-    // Optimistic update
-    setData(prev => prev.map(item => 
-      item.id === id ? { ...item, [field]: !currentValue } : item
-    ));
-    
-    try {
-      const { error } = await supabase
-        .from(tableName)
-        .update({ [field]: !currentValue })
-        .eq('id', id);
-      if (error) throw error;
-    } catch (error) {
-      // Revert on error
-      setData(prev => prev.map(item => 
-        item.id === id ? { ...item, [field]: currentValue } : item
-      ));
-      toast.error('Failed to save');
-    }
-  };
-
-  const openInstagram = (handle: string | null) => {
-    if (!handle) return;
-    const cleanHandle = handle.replace('@', '').trim();
-    if (!cleanHandle) return;
-    // Open in new tab to avoid iframe blocking
-    window.open(`https://instagram.com/${cleanHandle}`, '_blank', 'noopener,noreferrer');
-  };
-
-  if (loading) {
-    return <LoadingSpinner size="md" className="py-8" text={`Loading ${type} outreach...`} />;
-  }
-
-  // Group by status
-  const notMessaged = data.filter(d => !d.messaged);
-  const noResponse = data.filter(d => d.messaged && !d.response_received);
-  const responded = data.filter(d => d.response_received);
-
-  const renderSection = (items: any[], title: string) => (
-    <div className="border rounded-lg overflow-hidden mb-4">
-      <div className="bg-muted/50 px-3 py-2 font-semibold text-sm">
-        {title} ({items.length})
-      </div>
-      {items.length === 0 ? (
-        <div className="p-4 text-center text-sm text-muted-foreground">No entries</div>
-      ) : (
-        <div className="divide-y">
-          {items.map((item) => (
-            <div key={item.id} className="p-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="font-medium text-sm truncate">{item.player_name}</div>
-                  <div className="text-xs text-muted-foreground truncate">{item.current_club || '-'}</div>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {item.ig_handle && (
-                    <button
-                      onClick={() => openInstagram(item.ig_handle)}
-                      className="p-1 hover:scale-110 transition-transform"
-                      title={`@${item.ig_handle.replace('@', '')}`}
-                    >
-                      <FaInstagram className="h-4 w-4 text-[#E1306C]" />
-                    </button>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <Checkbox
-                      checked={item.messaged}
-                      onCheckedChange={() => toggleField(item.id, 'messaged', item.messaged)}
-                    />
-                    <span className="text-[10px] text-muted-foreground">MSG</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Checkbox
-                      checked={item.response_received}
-                      onCheckedChange={() => toggleField(item.id, 'response_received', item.response_received)}
-                    />
-                    <span className="text-[10px] text-muted-foreground">RSP</span>
-                  </div>
-                  {type === 'youth' && (
-                    <div className="flex items-center gap-1">
-                      <Checkbox
-                        checked={item.parent_approval}
-                        onCheckedChange={() => toggleField(item.id, 'parent_approval', item.parent_approval)}
-                      />
-                      <span className="text-[10px] text-muted-foreground">APR</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              {type === 'youth' && item.parents_name && (
-                <div className="mt-2 text-xs text-muted-foreground flex items-center gap-2">
-                  <span>Parent: {item.parents_name}</span>
-                  {item.parent_contact && (
-                    <button
-                      onClick={() => openInstagram(item.parent_contact)}
-                      className="hover:scale-110 transition-transform"
-                      title={`@${item.parent_contact.replace('@', '')}`}
-                    >
-                      <FaInstagram className="h-3 w-3 text-[#E1306C]" />
-                    </button>
-                  )}
-                </div>
-              )}
-              {item.notes && (
-                <div className="mt-1 text-xs text-muted-foreground truncate">{item.notes}</div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  return (
-    <div className="space-y-2">
-      <div className="text-xs text-muted-foreground mb-2">
-        {data.length} {type} outreach entries
-      </div>
-      
-      {renderSection(notMessaged, 'Not Messaged')}
-      {renderSection(noResponse, 'Awaiting Response')}
-      {renderSection(responded, 'Responded')}
-    </div>
-  );
-};
+// PlayerOutreachEmbed removed - now using PlayerOutreachPanel component
