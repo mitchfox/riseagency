@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
@@ -198,6 +198,13 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
     notMessaged: true, noResponse: true, responded: true
   });
 
+  // Filters
+  const [ageFilter, setAgeFilter] = useState<string>('all');
+  const [nationFilter, setNationFilter] = useState<string>('all');
+  const [positionFilter, setPositionFilter] = useState<string[]>([]);
+  const [dobFrom, setDobFrom] = useState('');
+  const [dobTo, setDobTo] = useState('');
+
   const columns = type === 'youth' ? YOUTH_COLUMNS : PRO_COLUMNS;
   const settings = useTableSettings(`outreach-panel-${type}`, columns);
   const dragScrollRef = useHorizontalDragScroll();
@@ -273,6 +280,14 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       setLoading(false);
     }
   };
+
+  const uniqueNations = useMemo(() => {
+    return [...new Set(data.map(d => d.nationality).filter((n): n is string => !!n))].sort();
+  }, [data]);
+
+  const uniquePositions = useMemo(() => {
+    return [...new Set(data.map(d => d.position).filter((p): p is string => !!p))].sort();
+  }, [data]);
 
   const toggleField = async (id: string, field: string, currentValue: boolean) => {
     const tableName = isYouth ? 'player_outreach_youth' : 'player_outreach_pro';
@@ -407,6 +422,34 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         d.position?.toLowerCase().includes(q)
       );
     }
+    // Apply filters
+    if (ageFilter !== 'all') {
+      result = result.filter(d => {
+        const age = d.date_of_birth ? calculateAge(d.date_of_birth) : null;
+        if (!age) return false;
+        switch (ageFilter) {
+          case 'u18': return age < 18;
+          case '18-21': return age >= 18 && age <= 21;
+          case '22-25': return age >= 22 && age <= 25;
+          case '26-30': return age >= 26 && age <= 30;
+          case '30+': return age >= 30;
+          default: return true;
+        }
+      });
+    }
+    if (nationFilter !== 'all') {
+      result = result.filter(d => d.nationality === nationFilter);
+    }
+    if (positionFilter.length > 0) {
+      result = result.filter(d => d.position && positionFilter.includes(d.position));
+    }
+    if (dobFrom) {
+      result = result.filter(d => d.date_of_birth && d.date_of_birth >= dobFrom);
+    }
+    if (dobTo) {
+      result = result.filter(d => d.date_of_birth && d.date_of_birth <= dobTo);
+    }
+
     result = [...result].sort((a, b) => {
       let cmp = 0;
       switch (sortField) {
@@ -423,6 +466,132 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
 
   const toggleSection = (key: string) => {
     setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const hasActiveFilters = ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || dobFrom || dobTo;
+  const clearAllFilters = () => {
+    setAgeFilter('all'); setNationFilter('all'); setPositionFilter([]); setDobFrom(''); setDobTo('');
+  };
+
+  // Dynamic column rendering based on settings order
+  const orderedVisibleKeys = settings.columnOrder.filter(k => settings.isVisible(k));
+
+  const renderHeader = (key: string): ReactNode => {
+    const sortableHeader = (label: string, field: SortField, extraClass = '') => (
+      <TableHead key={key} className={`cursor-pointer relative ${extraClass}`} onClick={() => handleSort(field)} {...getHeaderProps(key)}>
+        <div className="flex items-center">{label} {getSortIcon(field)}</div>
+        <ResizeHandle columnKey={key} />
+      </TableHead>
+    );
+    const plainHeader = (label: string, extraClass = '') => (
+      <TableHead key={key} className={`relative ${extraClass}`} {...getHeaderProps(key)}>
+        {label}<ResizeHandle columnKey={key} />
+      </TableHead>
+    );
+    switch (key) {
+      case 'eligibility': return plainHeader('', 'w-10');
+      case 'name': return sortableHeader('Name', 'player_name');
+      case 'ig': return plainHeader('IG', 'w-12 text-center');
+      case 'nationality': return sortableHeader('Nat', 'nationality');
+      case 'position': return plainHeader('Pos');
+      case 'age': return sortableHeader('Age', 'age');
+      case 'dob': return sortableHeader('DOB', 'date_of_birth');
+      case 'club': return sortableHeader('Club', 'current_club');
+      case 'parent': return plainHeader('Parent');
+      case 'parent_ig': return plainHeader('P.IG', 'w-10 text-center');
+      case 'approval': return plainHeader('Apr', 'text-center');
+      case 'messaged': return plainHeader('MSG', 'text-center');
+      case 'response': return plainHeader('RSP', 'text-center');
+      case 'notes': return plainHeader('Notes');
+      default: return null;
+    }
+  };
+
+  const renderCell = (key: string, item: any): ReactNode => {
+    const age = calculateAge(item.date_of_birth);
+    switch (key) {
+      case 'eligibility':
+        return (
+          <TableCell key={key} className="py-1.5" onClick={e => e.stopPropagation()}>
+            <EligibilityBadge item={item} type={type} clubCountryMap={clubCountryMap} ageRules={ageRules} />
+          </TableCell>
+        );
+      case 'name':
+        return <TableCell key={key} className="bg-muted/30 font-bold py-1.5">{item.player_name}</TableCell>;
+      case 'ig':
+        return (
+          <TableCell key={key} className="text-center py-1.5" onClick={e => e.stopPropagation()}>
+            <IgTooltipIcon handle={item.ig_handle} />
+          </TableCell>
+        );
+      case 'nationality':
+        return (
+          <TableCell key={key} className="py-1.5">
+            {item.nationality ? (
+              <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                <img src={getCountryFlagUrl(item.nationality)} alt={item.nationality} className="w-5 h-auto rounded-sm" />
+              </TooltipTrigger><TooltipContent><p>{item.nationality}</p></TooltipContent></Tooltip></TooltipProvider>
+            ) : '-'}
+          </TableCell>
+        );
+      case 'position':
+        return (
+          <TableCell key={key} className="py-1.5">
+            {item.position ? <Badge variant="outline" className="text-[10px] px-1 py-0">{item.position}</Badge> : '-'}
+          </TableCell>
+        );
+      case 'age':
+        return <TableCell key={key} className="py-1.5 text-sm">{age ?? '-'}</TableCell>;
+      case 'dob':
+        return (
+          <TableCell key={key} className="py-1.5 text-xs text-muted-foreground">
+            {item.date_of_birth ? new Date(item.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
+          </TableCell>
+        );
+      case 'club':
+        return (
+          <TableCell key={key} className="py-1.5" onClick={e => e.stopPropagation()}>
+            <ClubDisplay clubName={item.current_club} clubCountryMap={clubCountryMap} ageRules={ageRules} clubRatings={clubRatings} isYouth={isYouth} />
+          </TableCell>
+        );
+      case 'parent':
+        return <TableCell key={key} className="py-1.5 text-sm">{item.parents_name || '-'}</TableCell>;
+      case 'parent_ig':
+        return (
+          <TableCell key={key} className="text-center py-1.5" onClick={e => e.stopPropagation()}>
+            <IgTooltipIcon handle={item.parent_contact} />
+          </TableCell>
+        );
+      case 'approval':
+        return (
+          <TableCell key={key} className="text-center py-1.5" onClick={e => e.stopPropagation()}>
+            <Checkbox checked={item.parent_approval} onCheckedChange={() => toggleField(item.id, 'parent_approval', item.parent_approval)} />
+          </TableCell>
+        );
+      case 'messaged':
+        return (
+          <TableCell key={key} className="text-center py-1.5" onClick={e => e.stopPropagation()}>
+            <Checkbox checked={item.messaged} onCheckedChange={() => toggleField(item.id, 'messaged', item.messaged)} />
+          </TableCell>
+        );
+      case 'response':
+        return (
+          <TableCell key={key} className="text-center py-1.5" onClick={e => e.stopPropagation()}>
+            <Checkbox checked={item.response_received} onCheckedChange={() => toggleField(item.id, 'response_received', item.response_received)} />
+          </TableCell>
+        );
+      case 'notes':
+        return (
+          <TableCell key={key} className="py-1.5 text-xs text-muted-foreground max-w-[150px] truncate">
+            {item.notes ? (
+              <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                <span className="truncate block">{item.notes}</span>
+              </TooltipTrigger><TooltipContent className="max-w-xs"><p>{item.notes}</p></TooltipContent></Tooltip></TooltipProvider>
+            ) : '-'}
+          </TableCell>
+        );
+      default: return null;
+    }
   };
 
   if (loading) {
@@ -450,138 +619,26 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
               <div className="p-4 text-center text-sm text-muted-foreground">No entries</div>
             ) : (
               <>
-                {/* Desktop Table */}
+                {/* Desktop Table - columns in settings order */}
                 <div ref={dragScrollRef} className="hidden lg:block overflow-x-auto cursor-grab active:cursor-grabbing">
-                  <Table>
+                  <Table className="table-fixed">
                     <TableHeader>
                       <TableRow>
-                        {settings.isVisible('eligibility') && <TableHead className="w-10 relative" {...getHeaderProps('eligibility')}><ResizeHandle columnKey="eligibility" /></TableHead>}
-                        {settings.isVisible('name') && (
-                          <TableHead className="cursor-pointer relative" onClick={() => handleSort('player_name')} {...getHeaderProps('name')}>
-                            <div className="flex items-center">Name {getSortIcon('player_name')}</div>
-                            <ResizeHandle columnKey="name" />
-                          </TableHead>
-                        )}
-                        {settings.isVisible('ig') && <TableHead className="w-12 text-center relative" {...getHeaderProps('ig')}>IG<ResizeHandle columnKey="ig" /></TableHead>}
-                        {settings.isVisible('nationality') && (
-                          <TableHead className="cursor-pointer relative" onClick={() => handleSort('nationality')} {...getHeaderProps('nationality')}>
-                            <div className="flex items-center">Nat {getSortIcon('nationality')}</div>
-                            <ResizeHandle columnKey="nationality" />
-                          </TableHead>
-                        )}
-                        {settings.isVisible('position') && <TableHead className="relative" {...getHeaderProps('position')}>Pos<ResizeHandle columnKey="position" /></TableHead>}
-                        {settings.isVisible('age') && (
-                          <TableHead className="cursor-pointer relative" onClick={() => handleSort('age')} {...getHeaderProps('age')}>
-                            <div className="flex items-center">Age {getSortIcon('age')}</div>
-                            <ResizeHandle columnKey="age" />
-                          </TableHead>
-                        )}
-                        {settings.isVisible('dob') && (
-                          <TableHead className="cursor-pointer relative" onClick={() => handleSort('date_of_birth')} {...getHeaderProps('dob')}>
-                            <div className="flex items-center">DOB {getSortIcon('date_of_birth')}</div>
-                            <ResizeHandle columnKey="dob" />
-                          </TableHead>
-                        )}
-                        {settings.isVisible('club') && (
-                          <TableHead className="cursor-pointer relative" onClick={() => handleSort('current_club')} {...getHeaderProps('club')}>
-                            <div className="flex items-center">Club {getSortIcon('current_club')}</div>
-                            <ResizeHandle columnKey="club" />
-                          </TableHead>
-                        )}
-                        {isYouth && settings.isVisible('parent') && <TableHead className="relative" {...getHeaderProps('parent')}>Parent<ResizeHandle columnKey="parent" /></TableHead>}
-                        {isYouth && settings.isVisible('parent_ig') && <TableHead className="w-10 text-center relative" {...getHeaderProps('parent_ig')}>P.IG<ResizeHandle columnKey="parent_ig" /></TableHead>}
-                        {isYouth && settings.isVisible('approval') && <TableHead className="text-center relative" {...getHeaderProps('approval')}>Apr<ResizeHandle columnKey="approval" /></TableHead>}
-                        {settings.isVisible('messaged') && <TableHead className="text-center relative" {...getHeaderProps('messaged')}>MSG<ResizeHandle columnKey="messaged" /></TableHead>}
-                        {settings.isVisible('response') && <TableHead className="text-center relative" {...getHeaderProps('response')}>RSP<ResizeHandle columnKey="response" /></TableHead>}
-                        {settings.isVisible('notes') && <TableHead className="relative" {...getHeaderProps('notes')}>Notes<ResizeHandle columnKey="notes" /></TableHead>}
+                        {orderedVisibleKeys.map(key => renderHeader(key))}
                         <TableHead className="w-10"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sorted.map(item => {
-                        const age = calculateAge(item.date_of_birth);
-                        return (
-                          <TableRow key={item.id} className="cursor-pointer hover:bg-muted/30" onClick={() => openDetail(item)}>
-                            {settings.isVisible('eligibility') && (
-                              <TableCell className="py-1.5" onClick={e => e.stopPropagation()}>
-                                <EligibilityBadge item={item} type={type} clubCountryMap={clubCountryMap} ageRules={ageRules} />
-                              </TableCell>
-                            )}
-                            {settings.isVisible('name') && (
-                              <TableCell className="bg-muted/30 font-bold py-1.5">{item.player_name}</TableCell>
-                            )}
-                            {settings.isVisible('ig') && (
-                              <TableCell className="text-center py-1.5" onClick={e => e.stopPropagation()}>
-                                <IgTooltipIcon handle={item.ig_handle} />
-                              </TableCell>
-                            )}
-                            {settings.isVisible('nationality') && (
-                              <TableCell className="py-1.5">
-                                {item.nationality ? (
-                                  <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                                    <img src={getCountryFlagUrl(item.nationality)} alt={item.nationality} className="w-5 h-auto rounded-sm" />
-                                  </TooltipTrigger><TooltipContent><p>{item.nationality}</p></TooltipContent></Tooltip></TooltipProvider>
-                                ) : '-'}
-                              </TableCell>
-                            )}
-                            {settings.isVisible('position') && (
-                              <TableCell className="py-1.5">
-                                {item.position ? <Badge variant="outline" className="text-[10px] px-1 py-0">{item.position}</Badge> : '-'}
-                              </TableCell>
-                            )}
-                            {settings.isVisible('age') && (
-                              <TableCell className="py-1.5 text-sm">{age ?? '-'}</TableCell>
-                            )}
-                            {settings.isVisible('dob') && (
-                              <TableCell className="py-1.5 text-xs text-muted-foreground">
-                                {item.date_of_birth ? new Date(item.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
-                              </TableCell>
-                            )}
-                            {settings.isVisible('club') && (
-                              <TableCell className="py-1.5" onClick={e => e.stopPropagation()}>
-                                <ClubDisplay clubName={item.current_club} clubCountryMap={clubCountryMap} ageRules={ageRules} clubRatings={clubRatings} isYouth={isYouth} />
-                              </TableCell>
-                            )}
-                            {isYouth && settings.isVisible('parent') && (
-                              <TableCell className="py-1.5 text-sm">{item.parents_name || '-'}</TableCell>
-                            )}
-                            {isYouth && settings.isVisible('parent_ig') && (
-                              <TableCell className="text-center py-1.5" onClick={e => e.stopPropagation()}>
-                                <IgTooltipIcon handle={item.parent_contact} />
-                              </TableCell>
-                            )}
-                            {isYouth && settings.isVisible('approval') && (
-                              <TableCell className="text-center py-1.5" onClick={e => e.stopPropagation()}>
-                                <Checkbox checked={item.parent_approval} onCheckedChange={() => toggleField(item.id, 'parent_approval', item.parent_approval)} />
-                              </TableCell>
-                            )}
-                            {settings.isVisible('messaged') && (
-                              <TableCell className="text-center py-1.5" onClick={e => e.stopPropagation()}>
-                                <Checkbox checked={item.messaged} onCheckedChange={() => toggleField(item.id, 'messaged', item.messaged)} />
-                              </TableCell>
-                            )}
-                            {settings.isVisible('response') && (
-                              <TableCell className="text-center py-1.5" onClick={e => e.stopPropagation()}>
-                                <Checkbox checked={item.response_received} onCheckedChange={() => toggleField(item.id, 'response_received', item.response_received)} />
-                              </TableCell>
-                            )}
-                            {settings.isVisible('notes') && (
-                              <TableCell className="py-1.5 text-xs text-muted-foreground max-w-[150px] truncate">
-                                {item.notes ? (
-                                  <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                                    <span className="truncate block">{item.notes}</span>
-                                  </TooltipTrigger><TooltipContent className="max-w-xs"><p>{item.notes}</p></TooltipContent></Tooltip></TooltipProvider>
-                                ) : '-'}
-                              </TableCell>
-                            )}
-                            <TableCell className="py-1.5" onClick={e => e.stopPropagation()}>
-                              <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleEdit(item)}>
-                                <Edit className="h-3 w-3" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                      {sorted.map(item => (
+                        <TableRow key={item.id} className="cursor-pointer hover:bg-muted/30" onClick={() => openDetail(item)}>
+                          {orderedVisibleKeys.map(key => renderCell(key, item))}
+                          <TableCell className="py-1.5" onClick={e => e.stopPropagation()}>
+                            <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleEdit(item)}>
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                 </div>
@@ -664,6 +721,50 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
             columnOrder={settings.columnOrder}
             onReorderColumns={settings.setColumnOrder}
             showViewToggle={false}
+            filters={
+              <div className="space-y-3 pt-2 border-t">
+                <p className="text-xs text-muted-foreground font-medium">Filters</p>
+                <div className="space-y-2">
+                  <Label className="text-xs">Age Group</Label>
+                  <select value={ageFilter} onChange={e => setAgeFilter(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">
+                    <option value="all">All Ages</option>
+                    <option value="u18">U18</option>
+                    <option value="18-21">18-21</option>
+                    <option value="22-25">22-25</option>
+                    <option value="26-30">26-30</option>
+                    <option value="30+">30+</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Nationality</Label>
+                  <select value={nationFilter} onChange={e => setNationFilter(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">
+                    <option value="all">All Nations</option>
+                    {uniqueNations.map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Position</Label>
+                  <div className="flex flex-wrap gap-1">
+                    {uniquePositions.map(pos => (
+                      <button key={pos} onClick={() => setPositionFilter(prev => prev.includes(pos) ? prev.filter(v => v !== pos) : [...prev, pos])}
+                        className={`text-[10px] px-1.5 py-0.5 border rounded ${positionFilter.includes(pos) ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
+                      >{pos}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">DOB Range</Label>
+                  <div className="flex gap-1 items-center">
+                    <Input type="date" value={dobFrom} onChange={e => setDobFrom(e.target.value)} className="h-7 text-xs flex-1" />
+                    <span className="text-[10px] text-muted-foreground">to</span>
+                    <Input type="date" value={dobTo} onChange={e => setDobTo(e.target.value)} className="h-7 text-xs flex-1" />
+                  </div>
+                </div>
+                {hasActiveFilters && (
+                  <button onClick={clearAllFilters} className="text-xs text-muted-foreground hover:text-foreground w-full text-center py-1 border rounded">Clear All Filters</button>
+                )}
+              </div>
+            }
           />
           <Button size="sm" variant="outline" onClick={() => {
             setEditingItem(null);
@@ -680,6 +781,17 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Search name, club, nationality..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 h-9" />
       </div>
+
+      {/* Active filter indicators */}
+      {hasActiveFilters && (
+        <div className="flex flex-wrap gap-1 items-center">
+          {ageFilter !== 'all' && <Badge variant="secondary" className="text-[10px]">{ageFilter}</Badge>}
+          {nationFilter !== 'all' && <Badge variant="secondary" className="text-[10px]">{nationFilter}</Badge>}
+          {positionFilter.map(p => <Badge key={p} variant="secondary" className="text-[10px]">{p}</Badge>)}
+          {(dobFrom || dobTo) && <Badge variant="secondary" className="text-[10px]">DOB filtered</Badge>}
+          <button onClick={clearAllFilters} className="text-[10px] text-muted-foreground hover:text-foreground ml-1">Clear</button>
+        </div>
+      )}
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground mb-2 px-1">
@@ -703,7 +815,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         setDialogOpen(open);
         if (!open) { setEditingItem(null); setFormData(isYouth ? emptyYouthForm : emptyProForm); }
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw]">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw]">
           <DialogHeader>
             <DialogTitle>{editingItem ? 'Edit' : 'Add'} {isYouth ? 'Youth' : 'Pro'} Outreach</DialogTitle>
           </DialogHeader>

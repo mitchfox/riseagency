@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
@@ -100,7 +100,6 @@ const DB_COLUMNS: ColumnConfig[] = [
   { key: 'ig', label: 'Instagram', defaultVisible: true },
 ];
 
-// Eligibility badge component
 const EligibilityBadge = ({ player, clubCountryMap, ageRules }: {
   player: PlayerData; clubCountryMap: Record<string, string>; ageRules: AgeRule[];
 }) => {
@@ -111,7 +110,6 @@ const EligibilityBadge = ({ player, clubCountryMap, ageRules }: {
       </TooltipTrigger><TooltipContent><p>Pro player, can be contacted directly</p></TooltipContent></Tooltip></TooltipProvider>
     );
   }
-
   if (!player.date_of_birth) {
     return (
       <TooltipProvider><Tooltip><TooltipTrigger asChild>
@@ -119,7 +117,6 @@ const EligibilityBadge = ({ player, clubCountryMap, ageRules }: {
       </TooltipTrigger><TooltipContent><p>No date of birth set</p></TooltipContent></Tooltip></TooltipProvider>
     );
   }
-
   const clubCountry = findClubCountry(player.current_club, clubCountryMap);
   if (!clubCountry) {
     return (
@@ -128,7 +125,6 @@ const EligibilityBadge = ({ player, clubCountryMap, ageRules }: {
       </TooltipTrigger><TooltipContent><p>Club country unknown</p></TooltipContent></Tooltip></TooltipProvider>
     );
   }
-
   const rule = ageRules.find(r => r.country.toLowerCase() === clubCountry.toLowerCase());
   if (!rule || rule.min_contact_age === null) {
     return (
@@ -137,10 +133,8 @@ const EligibilityBadge = ({ player, clubCountryMap, ageRules }: {
       </TooltipTrigger><TooltipContent><p>No age rules for {clubCountry}</p></TooltipContent></Tooltip></TooltipProvider>
     );
   }
-
   const preciseAge = calculatePreciseAge(player.date_of_birth);
   if (preciseAge === null) return <HelpCircle className="h-4 w-4 text-muted-foreground" />;
-
   if (preciseAge >= rule.min_contact_age) {
     return (
       <TooltipProvider><Tooltip><TooltipTrigger asChild>
@@ -148,7 +142,6 @@ const EligibilityBadge = ({ player, clubCountryMap, ageRules }: {
       </TooltipTrigger><TooltipContent><p>Eligible to contact (parent) in {clubCountry}</p></TooltipContent></Tooltip></TooltipProvider>
     );
   }
-
   const eligibleDate = getEligibleDate(player.date_of_birth, rule.min_contact_age);
   return (
     <TooltipProvider><Tooltip><TooltipTrigger asChild>
@@ -284,7 +277,6 @@ export const PlayerDatabase = () => {
             response_received: outreach.response_received,
           };
         } else {
-          // Merge parent info if not already set
           if (!playerMap[name].parents_name && outreach.parents_name) playerMap[name].parents_name = outreach.parents_name;
           if (!playerMap[name].parent_contact && outreach.parent_contact) playerMap[name].parent_contact = outreach.parent_contact;
           if (!playerMap[name].ig_handle && outreach.ig_handle) playerMap[name].ig_handle = outreach.ig_handle;
@@ -441,6 +433,122 @@ export const PlayerDatabase = () => {
     }
   };
 
+  // Dynamic column renderers
+  const orderedVisibleKeys = settings.columnOrder.filter(k => settings.isVisible(k));
+
+  const renderHeader = (key: string): ReactNode => {
+    const sortableHeader = (label: string, field: SortField, extraClass = '') => (
+      <TableHead key={key} className={`font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs relative ${extraClass}`} onClick={() => handleSort(field)} {...getHeaderProps(key)}>
+        <div className="flex items-center">{label} {getSortIcon(field)}</div>
+        <ResizeHandle columnKey={key} />
+      </TableHead>
+    );
+    const plainHeader = (label: string, extraClass = '') => (
+      <TableHead key={key} className={`font-semibold text-xs relative ${extraClass}`} {...getHeaderProps(key)}>
+        {label}<ResizeHandle columnKey={key} />
+      </TableHead>
+    );
+    switch (key) {
+      case 'avatar': return plainHeader('', 'w-12');
+      case 'eligibility': return plainHeader('', 'w-10');
+      case 'name': return sortableHeader('NAME', 'player_name');
+      case 'nationality': return sortableHeader('NAT', 'nationality', 'w-12');
+      case 'position': return sortableHeader('POS', 'position', 'w-16');
+      case 'age': return sortableHeader('AGE', 'age', 'w-12');
+      case 'club': return sortableHeader('CLUB', 'current_club');
+      case 'dob': return sortableHeader('DOB', 'date_of_birth', 'w-20');
+      case 'parent': return plainHeader('PARENT');
+      case 'parent_ig': return plainHeader('P.IG', 'w-10 text-center');
+      case 'source': return plainHeader('SRC', 'w-16');
+      case 'added': return sortableHeader('ADDED', 'created_at', 'w-20');
+      case 'ig': return plainHeader('IG', 'w-10 text-center');
+      case 'reports': return plainHeader('#', 'w-10 text-center');
+      default: return null;
+    }
+  };
+
+  const renderCell = (key: string, player: PlayerData): ReactNode => {
+    const clubCountry = findClubCountry(player.current_club, clubCountryMap);
+    const clubRatingVal = findClubRating(player.current_club, clubRatings, player.source === 'youth_outreach');
+    switch (key) {
+      case 'avatar':
+        return (
+          <TableCell key={key} className="py-1.5 pr-0">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={player.profile_image_url || undefined} alt={player.player_name} />
+              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold text-[10px]">
+                {player.player_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </TableCell>
+        );
+      case 'eligibility':
+        return <TableCell key={key} className="py-1.5"><EligibilityBadge player={player} clubCountryMap={clubCountryMap} ageRules={ageRules} /></TableCell>;
+      case 'name':
+        return <TableCell key={key} className="font-medium text-sm py-1.5">{player.player_name}</TableCell>;
+      case 'nationality':
+        return (
+          <TableCell key={key} className="py-1.5">
+            {player.nationality ? (
+              <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                <img src={getCountryFlagUrl(player.nationality)} alt={player.nationality} className="w-6 h-auto rounded-sm shadow-sm" />
+              </TooltipTrigger><TooltipContent><p>{player.nationality}</p></TooltipContent></Tooltip></TooltipProvider>
+            ) : <span className="text-muted-foreground">-</span>}
+          </TableCell>
+        );
+      case 'position':
+        return <TableCell key={key} className="text-sm py-1.5"><Badge variant="outline" className="text-[10px] font-medium">{player.position || '-'}</Badge></TableCell>;
+      case 'age':
+        return <TableCell key={key} className="text-sm py-1.5">{player.age || '-'}</TableCell>;
+      case 'club':
+        return (
+          <TableCell key={key} className="text-sm py-1.5">
+            <TooltipProvider><Tooltip><TooltipTrigger asChild>
+              <div className="flex items-center gap-2">
+                {clubCountry && <img src={getCountryFlagUrl(clubCountry)} alt={clubCountry} className="w-4 h-3 object-cover rounded-sm" />}
+                {player.club_logo_url && <img src={player.club_logo_url} alt="" className="w-5 h-5 object-contain flex-shrink-0" />}
+                <span className="truncate">{player.current_club || '-'}</span>
+                {clubRatingVal && <Badge variant="outline" className="text-[10px] px-1 py-0 ml-1">{clubRatingVal}</Badge>}
+              </div>
+            </TooltipTrigger><TooltipContent><p>{player.current_club}{clubCountry ? ` (${clubCountry})` : ''}{clubRatingVal ? ` - ${clubRatingVal}` : ''}</p></TooltipContent></Tooltip></TooltipProvider>
+          </TableCell>
+        );
+      case 'dob':
+        return (
+          <TableCell key={key} className="text-xs text-muted-foreground py-1.5">
+            {player.date_of_birth ? new Date(player.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
+          </TableCell>
+        );
+      case 'parent':
+        return <TableCell key={key} className="text-sm py-1.5">{player.parents_name || '-'}</TableCell>;
+      case 'parent_ig':
+        return <TableCell key={key} className="text-center py-1.5"><IgTooltipIcon handle={player.parent_contact} /></TableCell>;
+      case 'source':
+        return (
+          <TableCell key={key} className="text-xs py-1.5">
+            <Badge variant="secondary" className="text-[9px]">{player.source === 'scouting' ? 'Scout' : player.source === 'youth_outreach' ? 'Youth' : 'Pro'}</Badge>
+          </TableCell>
+        );
+      case 'added':
+        return (
+          <TableCell key={key} className="text-xs text-muted-foreground py-1.5">
+            {player.created_at ? new Date(player.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '-'}
+          </TableCell>
+        );
+      case 'ig':
+        return <TableCell key={key} className="text-center py-1.5"><IgTooltipIcon handle={player.ig_handle} /></TableCell>;
+      case 'reports':
+        return (
+          <TableCell key={key} className="text-center py-1.5">
+            {player.report_count > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[20px] px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/20 text-primary">{player.report_count}</span>
+            )}
+          </TableCell>
+        );
+      default: return null;
+    }
+  };
+
   if (loading) return <LoadingSpinner size="md" className="py-8" text="Loading player database..." />;
 
   return (
@@ -516,7 +624,7 @@ export const PlayerDatabase = () => {
         />
       </div>
 
-      {/* Search only */}
+      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Search by name, club, position..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
@@ -575,149 +683,20 @@ export const PlayerDatabase = () => {
         ))}
       </div>
 
-      {/* Desktop Table */}
+      {/* Desktop Table - columns rendered in settings order */}
       <div ref={dragScrollRef} className="hidden md:block border rounded-lg overflow-x-auto bg-card/50 cursor-grab active:cursor-grabbing">
         <Table className="table-fixed">
           <TableHeader>
-           <TableRow className="bg-muted/50">
-              {settings.isVisible('avatar') && <TableHead className="font-semibold text-xs w-12 relative" {...getHeaderProps('avatar')}><ResizeHandle columnKey="avatar" /></TableHead>}
-              {settings.isVisible('eligibility') && <TableHead className="font-semibold text-xs w-10 relative" {...getHeaderProps('eligibility')}><ResizeHandle columnKey="eligibility" /></TableHead>}
-              {settings.isVisible('name') && (
-                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs relative" onClick={() => handleSort('player_name')} {...getHeaderProps('name')}>
-                  <div className="flex items-center">NAME {getSortIcon('player_name')}</div>
-                  <ResizeHandle columnKey="name" />
-                </TableHead>
-              )}
-              {settings.isVisible('nationality') && (
-                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-12 relative" onClick={() => handleSort('nationality')} {...getHeaderProps('nationality')}>
-                  <div className="flex items-center">NAT {getSortIcon('nationality')}</div>
-                  <ResizeHandle columnKey="nationality" />
-                </TableHead>
-              )}
-              {settings.isVisible('position') && (
-                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-16 relative" onClick={() => handleSort('position')} {...getHeaderProps('position')}>
-                  <div className="flex items-center">POS {getSortIcon('position')}</div>
-                  <ResizeHandle columnKey="position" />
-                </TableHead>
-              )}
-              {settings.isVisible('age') && (
-                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-12 relative" onClick={() => handleSort('age')} {...getHeaderProps('age')}>
-                  <div className="flex items-center">AGE {getSortIcon('age')}</div>
-                  <ResizeHandle columnKey="age" />
-                </TableHead>
-              )}
-              {settings.isVisible('club') && (
-                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs relative" onClick={() => handleSort('current_club')} {...getHeaderProps('club')}>
-                  <div className="flex items-center">CLUB {getSortIcon('current_club')}</div>
-                  <ResizeHandle columnKey="club" />
-                </TableHead>
-              )}
-              {settings.isVisible('dob') && (
-                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-20 relative" onClick={() => handleSort('date_of_birth')} {...getHeaderProps('dob')}>
-                  <div className="flex items-center">DOB {getSortIcon('date_of_birth')}</div>
-                  <ResizeHandle columnKey="dob" />
-                </TableHead>
-              )}
-              {settings.isVisible('parent') && <TableHead className="font-semibold text-xs relative" {...getHeaderProps('parent')}>PARENT<ResizeHandle columnKey="parent" /></TableHead>}
-              {settings.isVisible('parent_ig') && <TableHead className="font-semibold text-xs w-10 text-center relative" {...getHeaderProps('parent_ig')}>P.IG<ResizeHandle columnKey="parent_ig" /></TableHead>}
-              {settings.isVisible('source') && <TableHead className="font-semibold text-xs w-16 relative" {...getHeaderProps('source')}>SRC<ResizeHandle columnKey="source" /></TableHead>}
-              {settings.isVisible('added') && (
-                <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-20 relative" onClick={() => handleSort('created_at')} {...getHeaderProps('added')}>
-                  <div className="flex items-center">ADDED {getSortIcon('created_at')}</div>
-                  <ResizeHandle columnKey="added" />
-                </TableHead>
-              )}
-              {settings.isVisible('ig') && <TableHead className="font-semibold text-xs w-10 text-center relative" {...getHeaderProps('ig')}>IG<ResizeHandle columnKey="ig" /></TableHead>}
-              {settings.isVisible('reports') && <TableHead className="font-semibold text-xs w-10 text-center relative" {...getHeaderProps('reports')}>#<ResizeHandle columnKey="reports" /></TableHead>}
+            <TableRow className="bg-muted/50">
+              {orderedVisibleKeys.map(key => renderHeader(key))}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {visiblePlayers.map((player) => {
-              const clubCountry = findClubCountry(player.current_club, clubCountryMap);
-              const clubRating = findClubRating(player.current_club, clubRatings, player.source === 'youth_outreach');
-              return (
-                <TableRow key={`${player.source}-${player.id}`} className="hover:bg-muted/30 cursor-pointer group" onClick={() => openPlayerDetail(player)}>
-                  {settings.isVisible('avatar') && (
-                    <TableCell className="py-1.5 pr-0">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={player.profile_image_url || undefined} alt={player.player_name} />
-                        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold text-[10px]">
-                          {player.player_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    </TableCell>
-                  )}
-                  {settings.isVisible('eligibility') && (
-                    <TableCell className="py-1.5">
-                      <EligibilityBadge player={player} clubCountryMap={clubCountryMap} ageRules={ageRules} />
-                    </TableCell>
-                  )}
-                  {settings.isVisible('name') && <TableCell className="font-medium text-sm py-1.5">{player.player_name}</TableCell>}
-                  {settings.isVisible('nationality') && (
-                    <TableCell className="py-1.5">
-                      {player.nationality ? (
-                        <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                          <img src={getCountryFlagUrl(player.nationality)} alt={player.nationality} className="w-6 h-auto rounded-sm shadow-sm" />
-                        </TooltipTrigger><TooltipContent><p>{player.nationality}</p></TooltipContent></Tooltip></TooltipProvider>
-                      ) : <span className="text-muted-foreground">-</span>}
-                    </TableCell>
-                  )}
-                  {settings.isVisible('position') && (
-                    <TableCell className="text-sm py-1.5"><Badge variant="outline" className="text-[10px] font-medium">{player.position || '-'}</Badge></TableCell>
-                  )}
-                  {settings.isVisible('age') && <TableCell className="text-sm py-1.5">{player.age || '-'}</TableCell>}
-                  {settings.isVisible('club') && (
-                    <TableCell className="text-sm py-1.5">
-                      <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                        <div className="flex items-center gap-2">
-                          {clubCountry && <img src={getCountryFlagUrl(clubCountry)} alt={clubCountry} className="w-4 h-3 object-cover rounded-sm" />}
-                          {player.club_logo_url && <img src={player.club_logo_url} alt="" className="w-5 h-5 object-contain flex-shrink-0" />}
-                          <span className="truncate">{player.current_club || '-'}</span>
-                          {clubRating && (
-                            <Badge variant="outline" className="text-[10px] px-1 py-0 ml-1">{clubRating}</Badge>
-                          )}
-                        </div>
-                      </TooltipTrigger><TooltipContent><p>{player.current_club}{clubCountry ? ` (${clubCountry})` : ''}{clubRating ? ` - ${clubRating}` : ''}</p></TooltipContent></Tooltip></TooltipProvider>
-                    </TableCell>
-                  )}
-                  {settings.isVisible('dob') && (
-                    <TableCell className="text-xs text-muted-foreground py-1.5">
-                      {player.date_of_birth ? new Date(player.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
-                    </TableCell>
-                  )}
-                  {settings.isVisible('parent') && (
-                    <TableCell className="text-sm py-1.5">{player.parents_name || '-'}</TableCell>
-                  )}
-                  {settings.isVisible('parent_ig') && (
-                    <TableCell className="text-center py-1.5">
-                      <IgTooltipIcon handle={player.parent_contact} />
-                    </TableCell>
-                  )}
-                  {settings.isVisible('source') && (
-                    <TableCell className="text-xs py-1.5">
-                      <Badge variant="secondary" className="text-[9px]">{player.source === 'scouting' ? 'Scout' : player.source === 'youth_outreach' ? 'Youth' : 'Pro'}</Badge>
-                    </TableCell>
-                  )}
-                  {settings.isVisible('added') && (
-                    <TableCell className="text-xs text-muted-foreground py-1.5">
-                      {player.created_at ? new Date(player.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '-'}
-                    </TableCell>
-                  )}
-                  {settings.isVisible('ig') && (
-                    <TableCell className="text-center py-1.5">
-                      <IgTooltipIcon handle={player.ig_handle} />
-                    </TableCell>
-                  )}
-                  {settings.isVisible('reports') && (
-                    <TableCell className="text-center py-1.5">
-                      {player.report_count > 0 && (
-                        <span className="inline-flex items-center justify-center min-w-[20px] px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/20 text-primary">{player.report_count}</span>
-                      )}
-                    </TableCell>
-                  )}
-                </TableRow>
-              );
-            })}
+            {visiblePlayers.map((player) => (
+              <TableRow key={`${player.source}-${player.id}`} className="hover:bg-muted/30 cursor-pointer group" onClick={() => openPlayerDetail(player)}>
+                {orderedVisibleKeys.map(key => renderCell(key, player))}
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
