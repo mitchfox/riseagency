@@ -18,6 +18,8 @@ import { FaInstagram } from 'react-icons/fa';
 import { Plus, Edit, CheckCircle2, HelpCircle, Clock, Star, Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
+import { normalizeClubName, findClubCountry, findClubRating as findClubRatingUtil } from '@/lib/clubNameUtils';
+import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
 
 interface Props {
   type: 'youth' | 'pro';
@@ -29,22 +31,6 @@ interface AgeRule {
   min_contact_age: number | null;
 }
 
-const normalizeClubName = (name: string): string => {
-  return name.toLowerCase().replace(/[''`]/g, '').replace(/\s+/g, ' ').replace(/[^a-z0-9 ]/g, '').trim();
-};
-
-const findClubCountry = (clubName: string | null, clubCountryMap: Record<string, string>): string | null => {
-  if (!clubName) return null;
-  const lower = clubName.toLowerCase();
-  if (clubCountryMap[lower]) return clubCountryMap[lower];
-  const normalized = normalizeClubName(clubName);
-  for (const [key, country] of Object.entries(clubCountryMap)) {
-    const normKey = normalizeClubName(key);
-    if (normKey.includes(normalized) || normalized.includes(normKey)) return country;
-  }
-  return null;
-};
-
 interface ClubRating {
   club_name: string;
   first_team_rating: string;
@@ -52,15 +38,7 @@ interface ClubRating {
 }
 
 const findClubRating = (clubName: string | null, ratings: ClubRating[], isYouth: boolean): string | null => {
-  if (!clubName || ratings.length === 0) return null;
-  const normalized = normalizeClubName(clubName);
-  for (const rating of ratings) {
-    const normRating = normalizeClubName(rating.club_name);
-    if (normRating === normalized || normRating.includes(normalized) || normalized.includes(normRating)) {
-      return isYouth ? rating.academy_rating : rating.first_team_rating;
-    }
-  }
-  return null;
+  return findClubRatingUtil(clubName, ratings, isYouth);
 };
 
 const ClubRatingBadge = ({ rating }: { rating: string | null }) => {
@@ -217,6 +195,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
 
   const columns = type === 'youth' ? YOUTH_COLUMNS : PRO_COLUMNS;
   const settings = useTableSettings(`outreach-panel-${type}`, columns);
+  const dragScrollRef = useHorizontalDragScroll();
 
   const emptyYouthForm = {
     player_name: '', ig_handle: '', current_club: '', date_of_birth: '',
@@ -420,7 +399,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         ) : (
           <>
             {/* Desktop Table */}
-            <div className="hidden lg:block overflow-x-auto">
+            <div ref={dragScrollRef} className="hidden lg:block overflow-x-auto cursor-grab active:cursor-grabbing">
               <Table>
                 <TableHeader>
                   <TableRow>
