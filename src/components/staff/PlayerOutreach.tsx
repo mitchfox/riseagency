@@ -753,19 +753,10 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-            <Users className="h-5 w-5 sm:h-6 sm:w-6" />
-            Player Outreach
-          </h2>
-          <TableSettingsPopover
-            storageKey={activeTab === 'youth' ? 'outreach-youth' : 'outreach-pro'}
-            columns={activeTab === 'youth' ? OUTREACH_YOUTH_COLS : OUTREACH_PRO_COLS}
-            visibleColumns={activeTab === 'youth' ? youthSettings.visibleColumns : proSettings.visibleColumns}
-            onToggleColumn={activeTab === 'youth' ? youthSettings.toggleColumn : proSettings.toggleColumn}
-            showViewToggle={false}
-          />
-        </div>
+        <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+          <Users className="h-5 w-5 sm:h-6 sm:w-6" />
+          Player Outreach
+        </h2>
         {canEdit && (
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForms(); }}>
             <DialogTrigger asChild>
@@ -854,12 +845,30 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
         </TabsList>
 
         <TabsContent value="youth" className="space-y-4 mt-4">
+          <div className="flex justify-end">
+            <TableSettingsPopover
+              storageKey="outreach-youth"
+              columns={OUTREACH_YOUTH_COLS}
+              visibleColumns={youthSettings.visibleColumns}
+              onToggleColumn={youthSettings.toggleColumn}
+              showViewToggle={false}
+            />
+          </div>
           {renderYouthTable(youthGroups.notMessaged, "Not Messaged Yet")}
           {renderYouthTable(youthGroups.noResponse, "No Response")}
           {renderYouthTable(youthGroups.responded, "Response Received")}
         </TabsContent>
 
         <TabsContent value="pro" className="space-y-4 mt-4">
+          <div className="flex justify-end">
+            <TableSettingsPopover
+              storageKey="outreach-pro"
+              columns={OUTREACH_PRO_COLS}
+              visibleColumns={proSettings.visibleColumns}
+              onToggleColumn={proSettings.toggleColumn}
+              showViewToggle={false}
+            />
+          </div>
           {renderProTable(proGroups.notMessaged, "Not Messaged Yet")}
           {renderProTable(proGroups.noResponse, "No Response")}
           {renderProTable(proGroups.responded, "Response Received")}

@@ -3,19 +3,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Users } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Search, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Users, Edit, CheckCircle2, HelpCircle, Clock, Star } from 'lucide-react';
 import { FaInstagram } from 'react-icons/fa';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
-import { calculateAge } from '@/lib/ageUtils';
+import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { normalizeClubName, findClubCountry, findClubRating } from '@/lib/clubNameUtils';
 import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
 import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
+import { Switch } from '@/components/ui/switch';
 
 interface PlayerData {
   id: string;
@@ -32,6 +35,23 @@ interface PlayerData {
   created_at?: string;
   profile_image_url?: string | null;
   club_logo_url?: string | null;
+  parents_name?: string | null;
+  parent_contact?: string | null;
+  parent_approval?: boolean;
+  messaged?: boolean;
+  response_received?: boolean;
+}
+
+interface AgeRule {
+  country: string;
+  country_code: string;
+  min_contact_age: number | null;
+}
+
+interface ClubRating {
+  club_name: string;
+  first_team_rating: string;
+  academy_rating: string;
 }
 
 type SortField = 'player_name' | 'age' | 'position' | 'nationality' | 'current_club' | 'report_count' | 'created_at' | 'date_of_birth';
@@ -64,52 +84,119 @@ const getPositionOrder = (position: string | null): number => {
 
 const DB_COLUMNS: ColumnConfig[] = [
   { key: 'avatar', label: 'Avatar', defaultVisible: true },
+  { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
   { key: 'name', label: 'Name', defaultVisible: true },
   { key: 'nationality', label: 'Nationality', defaultVisible: true },
   { key: 'position', label: 'Position', defaultVisible: true },
   { key: 'age', label: 'Age', defaultVisible: true },
   { key: 'club', label: 'Club', defaultVisible: true },
   { key: 'dob', label: 'DOB', defaultVisible: true },
+  { key: 'parent', label: 'Parent Name', defaultVisible: false },
+  { key: 'parent_ig', label: 'Parent IG', defaultVisible: false },
   { key: 'source', label: 'Source', defaultVisible: false },
   { key: 'added', label: 'Date Added', defaultVisible: false },
   { key: 'reports', label: 'Reports', defaultVisible: true },
-  { key: 'ig', label: 'Instagram', defaultVisible: false },
+  { key: 'ig', label: 'Instagram', defaultVisible: true },
 ];
 
-const FilterChip = ({ label, isActive, onClick, count }: { label: string; isActive: boolean; onClick: () => void; count?: number }) => (
-  <button
-    onClick={onClick}
-    className={`px-2 py-1 font-bebas uppercase tracking-wider text-xs transition-all duration-200 border whitespace-nowrap ${
-      isActive
-        ? "bg-primary text-primary-foreground border-primary"
-        : "bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
-    }`}
-  >
-    {label}
-    {count !== undefined && count > 0 && (
-      <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] ${isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary text-primary-foreground"}`}>
-        {count}
+// Eligibility badge component
+const EligibilityBadge = ({ player, clubCountryMap, ageRules }: {
+  player: PlayerData; clubCountryMap: Record<string, string>; ageRules: AgeRule[];
+}) => {
+  if (player.source === 'pro_outreach') {
+    return (
+      <TooltipProvider><Tooltip><TooltipTrigger asChild>
+        <span className="inline-flex"><Star className="h-4 w-4 text-amber-500 fill-amber-500" /></span>
+      </TooltipTrigger><TooltipContent><p>Pro player, can be contacted directly</p></TooltipContent></Tooltip></TooltipProvider>
+    );
+  }
+
+  if (!player.date_of_birth) {
+    return (
+      <TooltipProvider><Tooltip><TooltipTrigger asChild>
+        <span className="inline-flex"><HelpCircle className="h-4 w-4 text-muted-foreground" /></span>
+      </TooltipTrigger><TooltipContent><p>No date of birth set</p></TooltipContent></Tooltip></TooltipProvider>
+    );
+  }
+
+  const clubCountry = findClubCountry(player.current_club, clubCountryMap);
+  if (!clubCountry) {
+    return (
+      <TooltipProvider><Tooltip><TooltipTrigger asChild>
+        <span className="inline-flex"><HelpCircle className="h-4 w-4 text-muted-foreground" /></span>
+      </TooltipTrigger><TooltipContent><p>Club country unknown</p></TooltipContent></Tooltip></TooltipProvider>
+    );
+  }
+
+  const rule = ageRules.find(r => r.country.toLowerCase() === clubCountry.toLowerCase());
+  if (!rule || rule.min_contact_age === null) {
+    return (
+      <TooltipProvider><Tooltip><TooltipTrigger asChild>
+        <span className="inline-flex"><HelpCircle className="h-4 w-4 text-muted-foreground" /></span>
+      </TooltipTrigger><TooltipContent><p>No age rules for {clubCountry}</p></TooltipContent></Tooltip></TooltipProvider>
+    );
+  }
+
+  const preciseAge = calculatePreciseAge(player.date_of_birth);
+  if (preciseAge === null) return <HelpCircle className="h-4 w-4 text-muted-foreground" />;
+
+  if (preciseAge >= rule.min_contact_age) {
+    return (
+      <TooltipProvider><Tooltip><TooltipTrigger asChild>
+        <span className="inline-flex"><CheckCircle2 className="h-4 w-4 text-emerald-500" /></span>
+      </TooltipTrigger><TooltipContent><p>Eligible to contact (parent) in {clubCountry}</p></TooltipContent></Tooltip></TooltipProvider>
+    );
+  }
+
+  const eligibleDate = getEligibleDate(player.date_of_birth, rule.min_contact_age);
+  return (
+    <TooltipProvider><Tooltip><TooltipTrigger asChild>
+      <span className="inline-flex items-center gap-1 text-[10px] text-amber-600">
+        <Clock className="h-3.5 w-3.5" />
+        {eligibleDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
       </span>
-    )}
-  </button>
-);
+    </TooltipTrigger><TooltipContent>
+      <p>Can contact parent from {eligibleDate.toLocaleDateString('en-GB')} ({clubCountry}: min age {rule.min_contact_age})</p>
+    </TooltipContent></Tooltip></TooltipProvider>
+  );
+};
+
+const IgTooltipIcon = ({ handle }: { handle: string | null | undefined }) => {
+  if (!handle) return null;
+  const clean = handle.replace(/^@/, '').trim();
+  if (!clean) return null;
+  return (
+    <TooltipProvider><Tooltip><TooltipTrigger asChild>
+      <button
+        onClick={(e) => { e.stopPropagation(); window.open(`https://instagram.com/${clean}`, '_blank', 'noopener,noreferrer'); }}
+        className="p-0.5 hover:scale-110 transition-transform"
+      >
+        <FaInstagram className="h-4 w-4 text-[#E1306C]" />
+      </button>
+    </TooltipTrigger><TooltipContent><p>@{clean}</p></TooltipContent></Tooltip></TooltipProvider>
+  );
+};
 
 export const PlayerDatabase = () => {
   const [players, setPlayers] = useState<PlayerData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [ageFilter, setAgeFilter] = useState<string>('all');
-  const [nationFilter, setNationFilter] = useState<string>('all');
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [sourceFilter, setSourceFilter] = useState<string[]>([]);
+  const [ageFilter, setAgeFilter] = useState<string>('all');
+  const [nationFilter, setNationFilter] = useState<string>('all');
   const [dobFrom, setDobFrom] = useState('');
   const [dobTo, setDobTo] = useState('');
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerData | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editForm, setEditForm] = useState<any>({});
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [clubCountryMap, setClubCountryMap] = useState<Record<string, string>>({});
+  const [ageRules, setAgeRules] = useState<AgeRule[]>([]);
+  const [clubRatings, setClubRatings] = useState<ClubRating[]>([]);
 
   const settings = useTableSettings('player-database', DB_COLUMNS);
   const dragScrollRef = useHorizontalDragScroll();
@@ -118,12 +205,14 @@ export const PlayerDatabase = () => {
 
   const fetchAllPlayers = async () => {
     try {
-      const [scoutingResult, youthResult, proResult, clubLogosResult, clubCountryResult] = await Promise.all([
+      const [scoutingResult, youthResult, proResult, clubLogosResult, clubCountryResult, rulesResult, ratingsResult] = await Promise.all([
         supabase.from('scouting_reports').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_youth').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_pro').select('*').order('created_at', { ascending: false }),
         supabase.from('club_map_positions').select('club_name, image_url'),
-        supabase.from('club_map_positions').select('club_name, country')
+        supabase.from('club_map_positions').select('club_name, country'),
+        supabase.from('recruitment_age_rules').select('country, country_code, min_contact_age'),
+        supabase.from('club_ratings').select('club_name, first_team_rating, academy_rating'),
       ]);
 
       if (scoutingResult.error) throw scoutingResult.error;
@@ -140,6 +229,8 @@ export const PlayerDatabase = () => {
         if (c.club_name && c.country) countryMap[c.club_name.toLowerCase()] = c.country;
       });
       setClubCountryMap(countryMap);
+      setAgeRules(rulesResult.data || []);
+      setClubRatings(ratingsResult.data || []);
 
       const getClubLogo = (clubName: string | null): string | null => {
         if (!clubName) return null;
@@ -185,8 +276,16 @@ export const PlayerDatabase = () => {
             current_club: (outreach as any).current_club || null, nationality: (outreach as any).nationality || null,
             date_of_birth: (outreach as any).date_of_birth || null, report_count: 0, source: 'youth_outreach',
             notes: outreach.notes, ig_handle: outreach.ig_handle, created_at: outreach.created_at,
-            profile_image_url: null, club_logo_url: getClubLogo((outreach as any).current_club)
+            profile_image_url: null, club_logo_url: getClubLogo((outreach as any).current_club),
+            parents_name: outreach.parents_name, parent_contact: outreach.parent_contact,
+            parent_approval: outreach.parent_approval, messaged: outreach.messaged,
+            response_received: outreach.response_received,
           };
+        } else {
+          // Merge parent info if not already set
+          if (!playerMap[name].parents_name && outreach.parents_name) playerMap[name].parents_name = outreach.parents_name;
+          if (!playerMap[name].parent_contact && outreach.parent_contact) playerMap[name].parent_contact = outreach.parent_contact;
+          if (!playerMap[name].ig_handle && outreach.ig_handle) playerMap[name].ig_handle = outreach.ig_handle;
         }
       });
 
@@ -199,8 +298,11 @@ export const PlayerDatabase = () => {
             current_club: (outreach as any).current_club || null, nationality: (outreach as any).nationality || null,
             date_of_birth: (outreach as any).date_of_birth || null, report_count: 0, source: 'pro_outreach',
             notes: outreach.notes, ig_handle: outreach.ig_handle, created_at: outreach.created_at,
-            profile_image_url: null, club_logo_url: getClubLogo((outreach as any).current_club)
+            profile_image_url: null, club_logo_url: getClubLogo((outreach as any).current_club),
+            messaged: outreach.messaged, response_received: outreach.response_received,
           };
+        } else {
+          if (!playerMap[name].ig_handle && outreach.ig_handle) playerMap[name].ig_handle = outreach.ig_handle;
         }
       });
 
@@ -293,14 +395,55 @@ export const PlayerDatabase = () => {
 
   const hasActiveFilters = searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || dobFrom || dobTo;
 
-  const togglePositionFilter = (pos: string) => setPositionFilter(prev => prev.includes(pos) ? prev.filter(v => v !== pos) : [...prev, pos]);
-  const toggleSourceFilter = (src: string) => setSourceFilter(prev => prev.includes(src) ? prev.filter(v => v !== src) : [...prev, src]);
+  const openPlayerDetail = (player: PlayerData) => {
+    setSelectedPlayer(player);
+    setEditMode(false);
+    setEditForm({
+      player_name: player.player_name,
+      position: player.position || '',
+      nationality: player.nationality || '',
+      current_club: player.current_club || '',
+      date_of_birth: player.date_of_birth || '',
+      ig_handle: player.ig_handle || '',
+      notes: player.notes || '',
+      parents_name: player.parents_name || '',
+      parent_contact: player.parent_contact || '',
+    });
+    setDetailOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedPlayer) return;
+    try {
+      const tableName = selectedPlayer.source === 'scouting' ? 'scouting_reports'
+        : selectedPlayer.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
+      const { error } = await supabase.from(tableName).update({
+        player_name: editForm.player_name,
+        position: editForm.position || null,
+        nationality: editForm.nationality || null,
+        current_club: editForm.current_club || null,
+        date_of_birth: editForm.date_of_birth || null,
+        ig_handle: editForm.ig_handle || null,
+        notes: editForm.notes || null,
+        ...(selectedPlayer.source === 'youth_outreach' ? {
+          parents_name: editForm.parents_name || null,
+          parent_contact: editForm.parent_contact || null,
+        } : {}),
+      }).eq('id', selectedPlayer.id);
+      if (error) throw error;
+      toast.success('Player updated');
+      setDetailOpen(false);
+      fetchAllPlayers();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save');
+    }
+  };
 
   if (loading) return <LoadingSpinner size="md" className="py-8" text="Loading player database..." />;
 
   return (
     <div className="space-y-3">
-      {/* Header with settings */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <Users className="h-5 w-5" />
@@ -312,56 +455,87 @@ export const PlayerDatabase = () => {
           visibleColumns={settings.visibleColumns}
           onToggleColumn={settings.toggleColumn}
           showViewToggle={false}
+          filters={
+            <div className="space-y-3 pt-2 border-t">
+              <p className="text-xs text-muted-foreground font-medium">Filters</p>
+              <div className="space-y-2">
+                <Label className="text-xs">Age Group</Label>
+                <select value={ageFilter} onChange={e => setAgeFilter(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">
+                  <option value="all">All Ages</option>
+                  <option value="u18">U18</option>
+                  <option value="18-21">18-21</option>
+                  <option value="22-25">22-25</option>
+                  <option value="26-30">26-30</option>
+                  <option value="30+">30+</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Nationality</Label>
+                <select value={nationFilter} onChange={e => setNationFilter(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">
+                  <option value="all">All Nations</option>
+                  {uniqueNations.map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Position</Label>
+                <div className="flex flex-wrap gap-1">
+                  {uniquePositions.map(pos => (
+                    <button key={pos} onClick={() => setPositionFilter(prev => prev.includes(pos) ? prev.filter(v => v !== pos) : [...prev, pos])}
+                      className={`text-[10px] px-1.5 py-0.5 border rounded ${positionFilter.includes(pos) ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
+                    >{pos}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Source</Label>
+                <div className="flex gap-1">
+                  {['scouting', 'youth_outreach', 'pro_outreach'].map(src => (
+                    <button key={src} onClick={() => setSourceFilter(prev => prev.includes(src) ? prev.filter(v => v !== src) : [...prev, src])}
+                      className={`text-[10px] px-1.5 py-0.5 border rounded ${sourceFilter.includes(src) ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
+                    >{src === 'scouting' ? 'Scout' : src === 'youth_outreach' ? 'Youth' : 'Pro'}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">DOB Range</Label>
+                <div className="flex gap-1 items-center">
+                  <Input type="date" value={dobFrom} onChange={e => setDobFrom(e.target.value)} className="h-7 text-xs flex-1" />
+                  <span className="text-[10px] text-muted-foreground">to</span>
+                  <Input type="date" value={dobTo} onChange={e => setDobTo(e.target.value)} className="h-7 text-xs flex-1" />
+                </div>
+              </div>
+              {hasActiveFilters && (
+                <button onClick={clearAllFilters} className="text-xs text-muted-foreground hover:text-foreground w-full text-center py-1 border rounded">Clear All Filters</button>
+              )}
+            </div>
+          }
         />
       </div>
 
-      {/* Filters */}
-      <div className="space-y-2">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search by name, club, position..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+      {/* Search only */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Search by name, club, position..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+      </div>
+
+      {/* Active filter indicators */}
+      {hasActiveFilters && (
+        <div className="flex flex-wrap gap-1 items-center">
+          {ageFilter !== 'all' && <Badge variant="secondary" className="text-[10px]">{ageFilter}</Badge>}
+          {nationFilter !== 'all' && <Badge variant="secondary" className="text-[10px]">{nationFilter}</Badge>}
+          {positionFilter.map(p => <Badge key={p} variant="secondary" className="text-[10px]">{p}</Badge>)}
+          {sourceFilter.map(s => <Badge key={s} variant="secondary" className="text-[10px]">{s === 'scouting' ? 'Scout' : s === 'youth_outreach' ? 'Youth' : 'Pro'}</Badge>)}
+          {(dobFrom || dobTo) && <Badge variant="secondary" className="text-[10px]">DOB filtered</Badge>}
+          <button onClick={clearAllFilters} className="text-[10px] text-muted-foreground hover:text-foreground ml-1">Clear</button>
         </div>
-        <div className="flex flex-wrap gap-1.5 items-center">
-          <FilterChip label="All Ages" isActive={ageFilter === 'all'} onClick={() => setAgeFilter('all')} />
-          <FilterChip label="U18" isActive={ageFilter === 'u18'} onClick={() => setAgeFilter('u18')} />
-          <FilterChip label="18-21" isActive={ageFilter === '18-21'} onClick={() => setAgeFilter('18-21')} />
-          <FilterChip label="22-25" isActive={ageFilter === '22-25'} onClick={() => setAgeFilter('22-25')} />
-          <FilterChip label="26-30" isActive={ageFilter === '26-30'} onClick={() => setAgeFilter('26-30')} />
-          <FilterChip label="30+" isActive={ageFilter === '30+'} onClick={() => setAgeFilter('30+')} />
-          <span className="w-px h-4 bg-border mx-1" />
-          <FilterChip label="Scouting" isActive={sourceFilter.includes('scouting')} onClick={() => toggleSourceFilter('scouting')} />
-          <FilterChip label="Youth" isActive={sourceFilter.includes('youth_outreach')} onClick={() => toggleSourceFilter('youth_outreach')} />
-          <FilterChip label="Pro" isActive={sourceFilter.includes('pro_outreach')} onClick={() => toggleSourceFilter('pro_outreach')} />
-          {hasActiveFilters && (
-            <>
-              <span className="w-px h-4 bg-border mx-1" />
-              <button onClick={clearAllFilters} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Clear</button>
-            </>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-1">
-          {uniquePositions.slice(0, 8).map(pos => (
-            <FilterChip key={pos} label={pos} isActive={positionFilter.includes(pos)} onClick={() => togglePositionFilter(pos)} />
-          ))}
-          {uniquePositions.length > 8 && (
-            <Select value={nationFilter} onValueChange={setNationFilter}>
-              <SelectTrigger className="h-7 w-[100px] text-xs"><SelectValue placeholder="Nation" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Nations</SelectItem>
-                {uniqueNations.map(nation => (
-                  <SelectItem key={nation} value={nation}>{nation}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-xs text-muted-foreground font-bebas uppercase tracking-wider">DOB:</span>
-          <Input type="date" value={dobFrom} onChange={e => setDobFrom(e.target.value)} className="h-7 w-[140px] text-xs" />
-          <span className="text-xs text-muted-foreground">to</span>
-          <Input type="date" value={dobTo} onChange={e => setDobTo(e.target.value)} className="h-7 w-[140px] text-xs" />
-          {(dobFrom || dobTo) && <button onClick={() => { setDobFrom(''); setDobTo(''); }} className="text-xs text-muted-foreground hover:text-foreground">Clear</button>}
-        </div>
+      )}
+
+      {/* Legend */}
+      <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+        <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Can contact</span>
+        <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" /> Pro</span>
+        <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-amber-600" /> Eligible from date</span>
+        <span className="flex items-center gap-1"><HelpCircle className="h-3.5 w-3.5 text-muted-foreground" /> No DOB/rules</span>
       </div>
 
       <div className="text-xs text-muted-foreground">{visiblePlayers.length} of {filteredAndSortedPlayers.length} players</div>
@@ -369,8 +543,9 @@ export const PlayerDatabase = () => {
       {/* Mobile cards */}
       <div className="md:hidden space-y-2">
         {visiblePlayers.map((player) => (
-          <div key={`${player.source}-${player.id}`} className="p-3 border rounded-lg bg-card/80 backdrop-blur-sm hover:bg-card transition-colors" onClick={() => { setSelectedPlayer(player); setEditDialogOpen(true); }}>
+          <div key={`${player.source}-${player.id}`} className="p-3 border rounded-lg bg-card/80 backdrop-blur-sm hover:bg-card transition-colors cursor-pointer" onClick={() => openPlayerDetail(player)}>
             <div className="flex items-center gap-3">
+              <EligibilityBadge player={player} clubCountryMap={clubCountryMap} ageRules={ageRules} />
               <Avatar className="h-10 w-10 flex-shrink-0">
                 <AvatarImage src={player.profile_image_url || undefined} alt={player.player_name} />
                 <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold text-xs">
@@ -396,12 +571,13 @@ export const PlayerDatabase = () => {
         ))}
       </div>
 
-      {/* Desktop Table with drag scroll */}
+      {/* Desktop Table */}
       <div ref={dragScrollRef} className="hidden md:block border rounded-lg overflow-x-auto bg-card/50 cursor-grab active:cursor-grabbing">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
               {settings.isVisible('avatar') && <TableHead className="font-semibold text-xs w-12"></TableHead>}
+              {settings.isVisible('eligibility') && <TableHead className="font-semibold text-xs w-10"></TableHead>}
               {settings.isVisible('name') && (
                 <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs" onClick={() => handleSort('player_name')}>
                   <div className="flex items-center">NAME {getSortIcon('player_name')}</div>
@@ -432,6 +608,8 @@ export const PlayerDatabase = () => {
                   <div className="flex items-center">DOB {getSortIcon('date_of_birth')}</div>
                 </TableHead>
               )}
+              {settings.isVisible('parent') && <TableHead className="font-semibold text-xs">PARENT</TableHead>}
+              {settings.isVisible('parent_ig') && <TableHead className="font-semibold text-xs w-10 text-center">P.IG</TableHead>}
               {settings.isVisible('source') && <TableHead className="font-semibold text-xs w-16">SRC</TableHead>}
               {settings.isVisible('added') && (
                 <TableHead className="font-semibold cursor-pointer hover:bg-muted/70 transition-colors text-xs w-20" onClick={() => handleSort('created_at')}>
@@ -445,8 +623,9 @@ export const PlayerDatabase = () => {
           <TableBody>
             {visiblePlayers.map((player) => {
               const clubCountry = findClubCountry(player.current_club, clubCountryMap);
+              const clubRating = findClubRating(player.current_club, clubRatings, player.source === 'youth_outreach');
               return (
-                <TableRow key={`${player.source}-${player.id}`} className="hover:bg-muted/30 cursor-pointer group" onClick={() => { setSelectedPlayer(player); setEditDialogOpen(true); }}>
+                <TableRow key={`${player.source}-${player.id}`} className="hover:bg-muted/30 cursor-pointer group" onClick={() => openPlayerDetail(player)}>
                   {settings.isVisible('avatar') && (
                     <TableCell className="py-1.5 pr-0">
                       <Avatar className="h-8 w-8">
@@ -457,10 +636,19 @@ export const PlayerDatabase = () => {
                       </Avatar>
                     </TableCell>
                   )}
+                  {settings.isVisible('eligibility') && (
+                    <TableCell className="py-1.5">
+                      <EligibilityBadge player={player} clubCountryMap={clubCountryMap} ageRules={ageRules} />
+                    </TableCell>
+                  )}
                   {settings.isVisible('name') && <TableCell className="font-medium text-sm py-1.5">{player.player_name}</TableCell>}
                   {settings.isVisible('nationality') && (
                     <TableCell className="py-1.5">
-                      {player.nationality ? <img src={getCountryFlagUrl(player.nationality)} alt={player.nationality} className="w-6 h-auto rounded-sm shadow-sm" title={player.nationality} /> : <span className="text-muted-foreground">-</span>}
+                      {player.nationality ? (
+                        <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                          <img src={getCountryFlagUrl(player.nationality)} alt={player.nationality} className="w-6 h-auto rounded-sm shadow-sm" />
+                        </TooltipTrigger><TooltipContent><p>{player.nationality}</p></TooltipContent></Tooltip></TooltipProvider>
+                      ) : <span className="text-muted-foreground">-</span>}
                     </TableCell>
                   )}
                   {settings.isVisible('position') && (
@@ -469,16 +657,29 @@ export const PlayerDatabase = () => {
                   {settings.isVisible('age') && <TableCell className="text-sm py-1.5">{player.age || '-'}</TableCell>}
                   {settings.isVisible('club') && (
                     <TableCell className="text-sm py-1.5">
-                      <div className="flex items-center gap-2">
-                        {clubCountry && <img src={getCountryFlagUrl(clubCountry)} alt={clubCountry} className="w-4 h-3 object-cover rounded-sm" title={clubCountry} />}
-                        {player.club_logo_url && <img src={player.club_logo_url} alt="" className="w-5 h-5 object-contain flex-shrink-0" />}
-                        <span className="truncate">{player.current_club || '-'}</span>
-                      </div>
+                      <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                        <div className="flex items-center gap-2">
+                          {clubCountry && <img src={getCountryFlagUrl(clubCountry)} alt={clubCountry} className="w-4 h-3 object-cover rounded-sm" />}
+                          {player.club_logo_url && <img src={player.club_logo_url} alt="" className="w-5 h-5 object-contain flex-shrink-0" />}
+                          <span className="truncate">{player.current_club || '-'}</span>
+                          {clubRating && (
+                            <Badge variant="outline" className="text-[10px] px-1 py-0 ml-1">{clubRating}</Badge>
+                          )}
+                        </div>
+                      </TooltipTrigger><TooltipContent><p>{player.current_club}{clubCountry ? ` (${clubCountry})` : ''}{clubRating ? ` - ${clubRating}` : ''}</p></TooltipContent></Tooltip></TooltipProvider>
                     </TableCell>
                   )}
                   {settings.isVisible('dob') && (
                     <TableCell className="text-xs text-muted-foreground py-1.5">
                       {player.date_of_birth ? new Date(player.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
+                    </TableCell>
+                  )}
+                  {settings.isVisible('parent') && (
+                    <TableCell className="text-sm py-1.5">{player.parents_name || '-'}</TableCell>
+                  )}
+                  {settings.isVisible('parent_ig') && (
+                    <TableCell className="text-center py-1.5">
+                      <IgTooltipIcon handle={player.parent_contact} />
                     </TableCell>
                   )}
                   {settings.isVisible('source') && (
@@ -493,11 +694,7 @@ export const PlayerDatabase = () => {
                   )}
                   {settings.isVisible('ig') && (
                     <TableCell className="text-center py-1.5">
-                      {player.ig_handle ? (
-                        <button onClick={(e) => { e.stopPropagation(); window.open(`https://instagram.com/${player.ig_handle?.replace(/^@/, '')}`, '_blank'); }} className="p-0.5 hover:scale-110 transition-transform">
-                          <FaInstagram className="h-4 w-4 text-[#E1306C]" />
-                        </button>
-                      ) : null}
+                      <IgTooltipIcon handle={player.ig_handle} />
                     </TableCell>
                   )}
                   {settings.isVisible('reports') && (
@@ -527,23 +724,80 @@ export const PlayerDatabase = () => {
         <div className="text-center py-8 text-muted-foreground">No players found matching your filters</div>
       )}
 
-      {/* Detail Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Player Details</DialogTitle></DialogHeader>
-          {selectedPlayer && (
+      {/* Player Detail/Edit Dialog */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{editMode ? 'Edit Player' : 'Player Details'}</span>
+              {!editMode && (
+                <Button size="sm" variant="outline" onClick={() => setEditMode(true)} className="gap-1">
+                  <Edit className="h-3 w-3" /> Edit
+                </Button>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedPlayer && !editMode && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><span className="font-medium text-muted-foreground">Name</span><p>{selectedPlayer.player_name}</p></div>
-                <div><span className="font-medium text-muted-foreground">Position</span><p>{selectedPlayer.position || '-'}</p></div>
-                <div><span className="font-medium text-muted-foreground">Age</span><p>{selectedPlayer.age || '-'}</p></div>
-                <div><span className="font-medium text-muted-foreground">Date of Birth</span><p>{selectedPlayer.date_of_birth ? new Date(selectedPlayer.date_of_birth).toLocaleDateString() : '-'}</p></div>
-                <div><span className="font-medium text-muted-foreground">Club</span><p>{selectedPlayer.current_club || '-'}</p></div>
-                <div><span className="font-medium text-muted-foreground">Nationality</span><p>{selectedPlayer.nationality || '-'}</p></div>
-                <div><span className="font-medium text-muted-foreground">Source</span><p className="capitalize">{selectedPlayer.source.replace('_', ' ')}</p></div>
-                <div><span className="font-medium text-muted-foreground">Reports</span><p>{selectedPlayer.report_count}</p></div>
-                {selectedPlayer.ig_handle && <div className="col-span-2"><span className="font-medium text-muted-foreground">Instagram</span><p>@{selectedPlayer.ig_handle}</p></div>}
-                {selectedPlayer.notes && <div className="col-span-2"><span className="font-medium text-muted-foreground">Notes</span><p className="text-muted-foreground">{selectedPlayer.notes}</p></div>}
+              <div className="flex items-center gap-3">
+                <Avatar className="h-14 w-14">
+                  <AvatarImage src={selectedPlayer.profile_image_url || undefined} />
+                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold">
+                    {selectedPlayer.player_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="font-bold text-lg">{selectedPlayer.player_name}</h3>
+                  <div className="flex items-center gap-2">
+                    <EligibilityBadge player={selectedPlayer} clubCountryMap={clubCountryMap} ageRules={ageRules} />
+                    <Badge variant="secondary" className="text-[10px]">{selectedPlayer.source === 'scouting' ? 'Scouting' : selectedPlayer.source === 'youth_outreach' ? 'Youth' : 'Pro'}</Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-muted-foreground text-xs">Position</span><p className="font-medium">{selectedPlayer.position || '-'}</p></div>
+                <div><span className="text-muted-foreground text-xs">Age</span><p className="font-medium">{selectedPlayer.age || '-'}</p></div>
+                <div><span className="text-muted-foreground text-xs">Date of Birth</span><p className="font-medium">{selectedPlayer.date_of_birth ? new Date(selectedPlayer.date_of_birth).toLocaleDateString('en-GB') : '-'}</p></div>
+                <div><span className="text-muted-foreground text-xs">Nationality</span><p className="font-medium">{selectedPlayer.nationality || '-'}</p></div>
+                <div className="col-span-2"><span className="text-muted-foreground text-xs">Club</span><p className="font-medium">{selectedPlayer.current_club || '-'}</p></div>
+                {selectedPlayer.ig_handle && (
+                  <div className="col-span-2"><span className="text-muted-foreground text-xs">Instagram</span><p className="font-medium">@{selectedPlayer.ig_handle.replace(/^@/, '')}</p></div>
+                )}
+                {selectedPlayer.parents_name && (
+                  <div><span className="text-muted-foreground text-xs">Parent Name</span><p className="font-medium">{selectedPlayer.parents_name}</p></div>
+                )}
+                {selectedPlayer.parent_contact && (
+                  <div><span className="text-muted-foreground text-xs">Parent IG</span><p className="font-medium">@{selectedPlayer.parent_contact.replace(/^@/, '')}</p></div>
+                )}
+                <div><span className="text-muted-foreground text-xs">Reports</span><p className="font-medium">{selectedPlayer.report_count}</p></div>
+                {selectedPlayer.notes && <div className="col-span-2"><span className="text-muted-foreground text-xs">Notes</span><p className="text-muted-foreground text-sm">{selectedPlayer.notes}</p></div>}
+              </div>
+            </div>
+          )}
+          {selectedPlayer && editMode && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1"><Label className="text-xs">Name</Label><Input value={editForm.player_name} onChange={e => setEditForm({ ...editForm, player_name: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Position</Label><Input value={editForm.position} onChange={e => setEditForm({ ...editForm, position: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1"><Label className="text-xs">Nationality</Label><Input value={editForm.nationality} onChange={e => setEditForm({ ...editForm, nationality: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Club</Label><Input value={editForm.current_club} onChange={e => setEditForm({ ...editForm, current_club: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1"><Label className="text-xs">Date of Birth</Label><Input type="date" value={editForm.date_of_birth} onChange={e => setEditForm({ ...editForm, date_of_birth: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Instagram</Label><Input value={editForm.ig_handle} onChange={e => setEditForm({ ...editForm, ig_handle: e.target.value })} /></div>
+              </div>
+              {selectedPlayer.source === 'youth_outreach' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1"><Label className="text-xs">Parent Name</Label><Input value={editForm.parents_name} onChange={e => setEditForm({ ...editForm, parents_name: e.target.value })} /></div>
+                  <div className="space-y-1"><Label className="text-xs">Parent IG</Label><Input value={editForm.parent_contact} onChange={e => setEditForm({ ...editForm, parent_contact: e.target.value })} /></div>
+                </div>
+              )}
+              <div className="space-y-1"><Label className="text-xs">Notes</Label><Textarea value={editForm.notes} onChange={e => setEditForm({ ...editForm, notes: e.target.value })} rows={2} /></div>
+              <div className="flex gap-2">
+                <Button onClick={handleSaveEdit} className="flex-1">Save</Button>
+                <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
               </div>
             </div>
           )}
