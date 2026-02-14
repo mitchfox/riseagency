@@ -68,6 +68,12 @@ export const PDFDocumentViewer = ({
   
   const unfilledFields = editableFields.filter(f => !fieldValues[f.id]);
 
+  // Get unique pages that have fields
+  const pagesWithFields = [...new Set(fields.map(f => f.page_number))].sort((a, b) => a - b);
+  const pagesWithUnfilledFields = [...new Set(unfilledFields.map(f => f.page_number))].sort((a, b) => a - b);
+  const currentPageEditableFields = editableFields.filter(f => f.page_number === currentPage);
+  const currentPageUnfilled = currentPageEditableFields.filter(f => !fieldValues[f.id]);
+
   // Auto-fill date fields when entering sign mode (run once when fields load)
   useEffect(() => {
     if (mode !== 'sign' && mode !== 'owner-sign') return;
@@ -96,7 +102,7 @@ export const PDFDocumentViewer = ({
     setTimeout(() => {
       const fieldEl = document.querySelector(`[data-field-id="${nextField.id}"]`);
       fieldEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
+    }, 300);
   };
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
@@ -369,31 +375,53 @@ export const PDFDocumentViewer = ({
 
       {/* Next field navigation for sign modes */}
       {(mode === 'sign' || mode === 'owner-sign') && editableFields.length > 0 && (
-        <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b">
-          <div className="flex items-center gap-2 text-sm">
-            {unfilledFields.length > 0 ? (
-              <>
+        <div className="flex flex-col gap-0 border-b">
+          <div className="flex items-center justify-between px-3 py-2 bg-muted/50">
+            <div className="flex items-center gap-2 text-sm">
+              {unfilledFields.length > 0 ? (
                 <span className="text-muted-foreground">
                   {editableFields.length - unfilledFields.length} of {editableFields.length} fields completed
                 </span>
-              </>
-            ) : (
-              <span className="text-green-600 flex items-center gap-1">
-                <CheckCircle2 className="w-4 h-4" />
-                All fields completed!
-              </span>
+              ) : (
+                <span className="text-green-600 flex items-center gap-1">
+                  <CheckCircle2 className="w-4 h-4" />
+                  All fields completed!
+                </span>
+              )}
+            </div>
+            {unfilledFields.length > 0 && (
+              <Button
+                size="sm"
+                variant="default"
+                onClick={navigateToNextField}
+                className="gap-1"
+              >
+                Next Field {unfilledFields[0]?.page_number !== currentPage && `(Page ${unfilledFields[0]?.page_number})`}
+                <ArrowRight className="w-4 h-4" />
+              </Button>
             )}
           </div>
-          {unfilledFields.length > 0 && (
-            <Button
-              size="sm"
-              variant="default"
-              onClick={navigateToNextField}
-              className="gap-1"
-            >
-              Next Field
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+          {/* Multi-page field indicator */}
+          {pagesWithFields.length > 1 && (
+            <div className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 text-xs">
+              <span>Fields on pages:</span>
+              {pagesWithFields.map(p => (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  className={cn(
+                    "px-1.5 py-0.5 rounded font-medium",
+                    p === currentPage ? "bg-blue-600 text-white" : "bg-blue-100 hover:bg-blue-200",
+                    pagesWithUnfilledFields.includes(p) && p !== currentPage && "ring-1 ring-orange-400"
+                  )}
+                >
+                  {p}
+                </button>
+              ))}
+              {pagesWithUnfilledFields.length > 0 && pagesWithUnfilledFields.some(p => p !== currentPage) && (
+                <span className="ml-1 text-orange-600">• Unsigned fields on other pages</span>
+              )}
+            </div>
           )}
         </div>
       )}

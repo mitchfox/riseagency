@@ -42,6 +42,10 @@ const EVENT_TYPES = [
   { id: "marketing_tip_new", label: "New Marketing Tip", icon: Lightbulb, description: "When a new tip, idea or lesson is added", category: "Marketing" },
   // Contracts
   { id: "contract_signed", label: "Contract Signed", icon: FileText, description: "When a contract is signed by the other party", category: "Contracts" },
+  // Player Milestones
+  { id: "player_birthday", label: "Player Birthdays", icon: PartyPopper, description: "When a player has a birthday", category: "Player Milestones" },
+  { id: "player_turning_18", label: "Player Turning 18", icon: Users, description: "When a player turns 18 and becomes Pro-eligible", category: "Player Milestones" },
+  { id: "player_contactable_age", label: "Contactable Age Reached", icon: CheckSquare, description: "When a youth player reaches contactable age for their country", category: "Player Milestones" },
 ];
 
 const ROLES = [
