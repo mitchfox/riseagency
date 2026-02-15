@@ -33,6 +33,7 @@ import { Progress } from "@/components/ui/progress";
 import { downloadVideo } from "@/lib/videoDownload";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { AddTestResultDialog } from "./AddTestResultDialog";
+import { PlayerFixtureStats } from "./PlayerFixtureStats";
 
 interface Player {
   id: string;
@@ -1940,8 +1941,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               {/* Analysis with nested tabs */}
               <TabsContent value="analysis" className="mt-0 pt-10 md:mt-0 md:pt-0">
                 <Tabs defaultValue="performance" className="w-full">
-                  <TabsList className="flex flex-col md:grid md:grid-cols-4 w-full gap-2 bg-muted/20 rounded-lg p-2 mb-[60px] md:mb-4">
+                  <TabsList className="flex flex-col md:grid md:grid-cols-5 w-full gap-2 bg-muted/20 rounded-lg p-2 mb-[60px] md:mb-4">
                     <TabsTrigger value="performance" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Performance Reports</TabsTrigger>
+                    <TabsTrigger value="player-data" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Player Data</TabsTrigger>
                     <TabsTrigger value="tactical" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Tactical Analysis</TabsTrigger>
                     <TabsTrigger value="other" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Other Analysis</TabsTrigger>
                     <TabsTrigger value="scouting" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Scouting Reports</TabsTrigger>
@@ -2141,6 +2143,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         )}
                       </CardContent>
                     </Card>
+                  </TabsContent>
+
+                  <TabsContent value="player-data" className="mt-0">
+                    <PlayerFixtureStats
+                      playerId={selectedPlayerId!}
+                      playerName={players.find(p => p.id === selectedPlayerId)?.name || 'Player'}
+                    />
                   </TabsContent>
 
                   <TabsContent value="tactical" className="mt-0">

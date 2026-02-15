@@ -2053,6 +2053,7 @@ export type Database = {
           analysis_writer_id: string | null
           created_at: string
           fixture_id: string | null
+          fixture_stats: Json | null
           id: string
           minutes_played: number | null
           notes: string | null
@@ -2071,6 +2072,7 @@ export type Database = {
           analysis_writer_id?: string | null
           created_at?: string
           fixture_id?: string | null
+          fixture_stats?: Json | null
           id?: string
           minutes_played?: number | null
           notes?: string | null
@@ -2089,6 +2091,7 @@ export type Database = {
           analysis_writer_id?: string | null
           created_at?: string
           fixture_id?: string | null
+          fixture_stats?: Json | null
           id?: string
           minutes_played?: number | null
           notes?: string | null
