@@ -41,6 +41,9 @@ import { PaymentOptions } from "@/components/player/PaymentOptions";
 import { PlayerTransferHub } from "@/components/player/TransferHub";
 import { CognisanceSection } from "@/components/portal/CognisanceSection";
 import { NutritionProgramDisplay } from "@/components/portal/NutritionProgramDisplay";
+import { AnalysisComparisons } from "@/components/portal/AnalysisComparisons";
+import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
+import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { MarkdownContent } from "@/utils/markdownRenderer";
 
 interface Analysis {
@@ -1777,12 +1780,21 @@ const Dashboard = () => {
               <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-0 border-b-0">
                 <CardContent className="container mx-auto px-4">
                   <Tabs value={activeAnalysisTab} onValueChange={setActiveAnalysisTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-1 sm:grid-cols-6 gap-2 mb-0 bg-muted h-auto p-2">
+                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 gap-2 mb-0 bg-muted h-auto p-2">
                   <TabsTrigger value="performance" className="font-bebas uppercase text-sm sm:text-base">
                     Performance Analysis
                   </TabsTrigger>
                   <TabsTrigger value="form" className="font-bebas uppercase text-sm sm:text-base">
                     Form
+                  </TabsTrigger>
+                  <TabsTrigger value="comparisons" className="font-bebas uppercase text-sm sm:text-base">
+                    Comparisons
+                  </TabsTrigger>
+                  <TabsTrigger value="video-reports" className="font-bebas uppercase text-sm sm:text-base">
+                    Video Reports
+                  </TabsTrigger>
+                  <TabsTrigger value="data" className="font-bebas uppercase text-sm sm:text-base">
+                    Data
                   </TabsTrigger>
                   <TabsTrigger value="other" className="font-bebas uppercase text-sm sm:text-base">
                     Other Analysis
@@ -2246,6 +2258,18 @@ const Dashboard = () => {
                       />
                     </CardContent>
                   </Card>
+                </TabsContent>
+
+                <TabsContent value="comparisons">
+                  <AnalysisComparisons analyses={analyses} playerData={playerData} />
+                </TabsContent>
+
+                <TabsContent value="video-reports">
+                  <AnalysisVideoReports analyses={analyses} playerId={playerData?.id || ''} />
+                </TabsContent>
+
+                <TabsContent value="data">
+                  <AnalysisDataTab analyses={analyses} playerData={playerData} />
                 </TabsContent>
 
                 <TabsContent value="form">
