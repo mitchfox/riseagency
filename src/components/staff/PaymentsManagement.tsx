@@ -348,7 +348,38 @@ export const PaymentsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     return invoice?.invoice_number || 'Unknown';
   };
 
-  const insPayments = payments.filter(p => p.type === 'in');
+  // Combine manual 'in' payments with paid invoice amounts
+  const [paidInvoicePayments, setPaidInvoicePayments] = useState<Payment[]>([]);
+  
+  useEffect(() => {
+    const fetchPaidInvoices = async () => {
+      const { data } = await supabase
+        .from('invoices')
+        .select('id, amount_paid, currency, invoice_number, player_id, invoice_date, status')
+        .gt('amount_paid', 0);
+      
+      if (data) {
+        const invoicePayments: Payment[] = data.map(inv => ({
+          id: `invoice-${inv.id}`,
+          type: 'in' as const,
+          amount: Number(inv.amount_paid),
+          currency: inv.currency || 'GBP',
+          description: `Invoice #${inv.invoice_number} payment`,
+          payment_method: 'invoice',
+          reference: inv.invoice_number,
+          invoice_id: inv.id,
+          player_id: inv.player_id,
+          payment_date: inv.invoice_date,
+          created_at: inv.invoice_date
+        }));
+        setPaidInvoicePayments(invoicePayments);
+      }
+    };
+    fetchPaidInvoices();
+  }, [payments]); // re-fetch when manual payments change
+
+  const allInsPayments = [...payments.filter(p => p.type === 'in'), ...paidInvoicePayments];
+  const insPayments = allInsPayments;
   const outsPayments = payments.filter(p => p.type === 'out');
 
   const totalIns = insPayments.reduce((acc, p) => {

@@ -26,6 +26,7 @@ interface ScoutingReport {
 interface PlayerScoutingReportsProps {
   playerId: string;
   playerName: string;
+  embedded?: boolean;
 }
 
 const GRADE_COLOURS: Record<string, string> = {
@@ -43,7 +44,7 @@ const GRADE_COLOURS: Record<string, string> = {
   'D-': 'bg-red-700 text-white',
 };
 
-export const PlayerScoutingReports = ({ playerId, playerName }: PlayerScoutingReportsProps) => {
+export const PlayerScoutingReports = ({ playerId, playerName, embedded = false }: PlayerScoutingReportsProps) => {
   const [reports, setReports] = useState<ScoutingReport[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,8 +73,8 @@ export const PlayerScoutingReports = ({ playerId, playerName }: PlayerScoutingRe
 
   if (loading) {
     return (
-      <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
-        <CardContent className="container mx-auto px-4 py-8">
+      <Card className={embedded ? "rounded-none border-0" : "w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0"}>
+        <CardContent className={embedded ? "px-0 py-8" : "container mx-auto px-4 py-8"}>
           <p className="text-center text-muted-foreground">Loading scouting reports...</p>
         </CardContent>
       </Card>
@@ -81,13 +82,13 @@ export const PlayerScoutingReports = ({ playerId, playerName }: PlayerScoutingRe
   }
 
   return (
-    <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
+    <Card className={embedded ? "rounded-none border-0" : "w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0"}>
       <CardHeader marble>
-        <div className="container mx-auto px-4">
+        <div className={embedded ? "" : "container mx-auto px-4"}>
           <CardTitle className="font-heading tracking-tight">Scouting Reports</CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="container mx-auto px-4 space-y-4 py-6">
+      <CardContent className={embedded ? "px-0 space-y-4 py-6" : "container mx-auto px-4 space-y-4 py-6"}>
         {reports.length === 0 ? (
           <div className="py-8">
             <p className="text-center text-muted-foreground">No scouting reports available yet.</p>

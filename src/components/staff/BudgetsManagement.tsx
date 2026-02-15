@@ -30,11 +30,7 @@ const BUDGET_CATEGORIES = [
 ];
 
 export const BudgetsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
-  const [budgets, setBudgets] = useState<Budget[]>([
-    { id: '1', name: 'Marketing Campaign Q1', category: 'Marketing', allocated: 5000, spent: 3200, period: '2024' },
-    { id: '2', name: 'Travel Budget', category: 'Travel', allocated: 10000, spent: 7500, period: '2024' },
-    { id: '3', name: 'Software Subscriptions', category: 'Software', allocated: 2000, spent: 1800, period: '2024' },
-  ]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
 
