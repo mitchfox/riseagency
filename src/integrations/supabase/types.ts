@@ -1127,6 +1127,66 @@ export type Database = {
         }
         Relationships: []
       }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          date: string
+          description: string
+          id: string
+          notes: string | null
+          paid_by_name: string
+          paid_by_user_id: string | null
+          receipt_url: string | null
+          reimbursed: boolean
+          reimbursed_at: string | null
+          tax_deductible: boolean
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          date?: string
+          description: string
+          id?: string
+          notes?: string | null
+          paid_by_name: string
+          paid_by_user_id?: string | null
+          receipt_url?: string | null
+          reimbursed?: boolean
+          reimbursed_at?: string | null
+          tax_deductible?: boolean
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          date?: string
+          description?: string
+          id?: string
+          notes?: string | null
+          paid_by_name?: string
+          paid_by_user_id?: string | null
+          receipt_url?: string | null
+          reimbursed?: boolean
+          reimbursed_at?: string | null
+          tax_deductible?: boolean
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: []
+      }
       fixtures: {
         Row: {
           away_score: number | null
