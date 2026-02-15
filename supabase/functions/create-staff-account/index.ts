@@ -76,10 +76,15 @@ serve(async (req) => {
       );
     }
 
-    // Validate role
-    if (!["admin", "staff", "marketeer"].includes(role)) {
+    // Validate role against available_roles table
+    const { data: validRoles } = await supabaseAdmin
+      .from("available_roles")
+      .select("role_key")
+      .eq("role_key", role);
+
+    if (!validRoles || validRoles.length === 0) {
       return new Response(
-        JSON.stringify({ error: "Role must be 'admin', 'staff', or 'marketeer'" }),
+        JSON.stringify({ error: `Invalid role: '${role}'. Create it in the permissions editor first.` }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
