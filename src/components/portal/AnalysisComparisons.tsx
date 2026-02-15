@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Users, BarChart3 } from "lucide-react";
 import { METRIC_CATEGORIES, ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
 
@@ -43,6 +43,7 @@ export const AnalysisComparisons = ({ analyses, playerData }: Props) => {
   const [formWindow, setFormWindow] = useState<number>(5);
   const [subTab, setSubTab] = useState<string>("percentile");
   const [fixtureAnalyses, setFixtureAnalyses] = useState<Analysis[]>([]);
+  const [selectedMetricKey, setSelectedMetricKey] = useState<string>('goals_per90');
 
   const playerPosition = playerData?.position || '';
   const playerName = playerData?.name || 'You';
@@ -103,39 +104,22 @@ export const AnalysisComparisons = ({ analyses, playerData }: Props) => {
 
   const hasPortalData = Object.values(portalMetrics).some(v => v != null);
 
-  // Radar data for comparison
-  const radarData = useMemo(() => {
-    if (selectedComps.length === 0 && !hasPortalData) return [];
-    const radarMetrics = ALL_METRICS.filter(m =>
-      hasPortalData ? portalMetrics[m.key] != null : selectedComps.some(cp => cp.metrics[m.key] != null)
-    ).slice(0, 12);
-
-    // Normalise values to 0-100 scale for the radar so different units are comparable
-    const allValues: number[] = [];
-    radarMetrics.forEach(m => {
-      if (hasPortalData && portalMetrics[m.key] != null) allValues.push(portalMetrics[m.key]!);
-      selectedComps.forEach(cp => {
-        if (cp.metrics[m.key] != null) allValues.push(cp.metrics[m.key]);
-      });
+  // Bar chart data for selected metric comparison
+  const selectedMetric = ALL_METRICS.find(m => m.key === selectedMetricKey);
+  const barData = useMemo(() => {
+    if (!selectedMetric) return [];
+    const isPercentage = selectedMetricKey.endsWith('_pct');
+    const items: { name: string; value: number; colour: string }[] = [];
+    if (hasPortalData && portalMetrics[selectedMetricKey] != null) {
+      items.push({ name: playerName, value: portalMetrics[selectedMetricKey]!, colour: PORTAL_COLOUR });
+    }
+    selectedComps.forEach((cp, idx) => {
+      if (cp.metrics[selectedMetricKey] != null) {
+        items.push({ name: cp.name, value: cp.metrics[selectedMetricKey], colour: PLAYER_COLOURS[idx % PLAYER_COLOURS.length] });
+      }
     });
-
-    return radarMetrics.map(m => {
-      // Find max across all players for this metric to normalise
-      const metricVals: number[] = [];
-      if (hasPortalData && portalMetrics[m.key] != null) metricVals.push(portalMetrics[m.key]!);
-      selectedComps.forEach(cp => {
-        if (cp.metrics[m.key] != null) metricVals.push(cp.metrics[m.key]);
-      });
-      const maxVal = Math.max(...metricVals, 0.01);
-
-      const entry: any = { metric: m.label };
-      if (hasPortalData) entry[playerName] = Math.round(((portalMetrics[m.key] ?? 0) / maxVal) * 100);
-      selectedComps.forEach(cp => {
-        entry[cp.name] = Math.round(((cp.metrics[m.key] ?? 0) / maxVal) * 100);
-      });
-      return entry;
-    });
-  }, [selectedComps, portalMetrics, hasPortalData, playerName]);
+    return items;
+  }, [selectedComps, portalMetrics, hasPortalData, playerName, selectedMetricKey, selectedMetric]);
 
   return (
     <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
@@ -256,54 +240,65 @@ export const AnalysisComparisons = ({ analyses, playerData }: Props) => {
 
             {(selectedComps.length > 0 || hasPortalData) && (
               <>
-                {/* Radar Chart */}
-                {radarData.length > 0 && (
-                  <div className="bg-card border rounded-lg p-4">
-                    <h4 className="font-semibold mb-4">Radar Comparison</h4>
-                    <p className="text-xs text-muted-foreground mb-2">Values normalised to percentage of the highest value per metric</p>
-                    <ResponsiveContainer width="100%" height={420}>
-                      <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
-                        <PolarGrid stroke="hsl(var(--border))" gridType="polygon" />
-                        <PolarAngleAxis
-                          dataKey="metric"
-                          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                        />
-                        <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
-                        {hasPortalData && (
-                          <Radar
-                            name={playerName}
-                            dataKey={playerName}
-                            stroke={PORTAL_COLOUR}
-                            fill={PORTAL_COLOUR}
-                            fillOpacity={0.2}
-                            strokeWidth={2.5}
-                          />
-                        )}
-                        {selectedComps.map((cp, idx) => (
-                          <Radar
-                            key={cp.id}
-                            name={cp.name}
-                            dataKey={cp.name}
-                            stroke={PLAYER_COLOURS[idx % PLAYER_COLOURS.length]}
-                            fill={PLAYER_COLOURS[idx % PLAYER_COLOURS.length]}
-                            fillOpacity={0.08}
-                            strokeWidth={2}
-                          />
+                {/* Stat Picker Comparison */}
+                <div className="bg-card border rounded-lg p-4 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <h4 className="font-semibold">Stat Comparison</h4>
+                    <Select value={selectedMetricKey} onValueChange={setSelectedMetricKey}>
+                      <SelectTrigger className="w-full sm:w-[260px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {METRIC_CATEGORIES.map(cat => (
+                          <div key={cat.category}>
+                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{cat.category}</div>
+                            {cat.metrics.map(m => (
+                              <SelectItem key={m.key} value={m.key}>
+                                {m.label}{m.key.endsWith('_pct') ? '' : ' / Game'}
+                              </SelectItem>
+                            ))}
+                          </div>
                         ))}
-                        <Legend wrapperStyle={{ fontSize: 12 }} />
-                        <Tooltip
-                          formatter={(value: number) => `${value}%`}
-                          contentStyle={{
-                            backgroundColor: 'hsl(var(--card))',
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px',
-                            fontSize: 12
-                          }}
-                        />
-                      </RadarChart>
-                    </ResponsiveContainer>
+                      </SelectContent>
+                    </Select>
                   </div>
-                )}
+
+                  {barData.length > 0 ? (
+                    <div className="space-y-3">
+                      {/* Horizontal bars */}
+                      {(() => {
+                        const maxVal = Math.max(...barData.map(d => d.value), 0.01);
+                        const isPercentage = selectedMetricKey.endsWith('_pct');
+                        return barData.map((item, idx) => (
+                          <div key={idx} className="space-y-1">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="font-medium">{item.name}</span>
+                              <span className="font-bold tabular-nums">
+                                {item.value.toFixed(2)}{isPercentage ? '%' : ''}
+                              </span>
+                            </div>
+                            <div className="h-6 bg-muted rounded-md overflow-hidden">
+                              <div
+                                className="h-full rounded-md transition-all duration-700"
+                                style={{
+                                  width: `${(item.value / (isPercentage ? 100 : maxVal)) * 100}%`,
+                                  backgroundColor: item.colour,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                      <p className="text-xs text-muted-foreground pt-1">
+                        {selectedMetric?.label}{selectedMetricKey.endsWith('_pct') ? '' : ' per game'} · Last {formWindow} avg for {playerName}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Select players above to compare stats
+                    </p>
+                  )}
+                </div>
 
                 {/* Comparison Table by Category */}
                 {METRIC_CATEGORIES.map(cat => {
