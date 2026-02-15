@@ -1,0 +1,1 @@
+ALTER TABLE public.role_permissions DROP CONSTRAINT role_permissions_role_check;
