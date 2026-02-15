@@ -187,7 +187,7 @@ export const AthleteCentre = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-hidden">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               {/* Mobile-friendly tab navigation */}
               <div className="border-b p-2 md:p-3">
@@ -271,7 +271,7 @@ export const AthleteCentre = () => {
 
               <div className="p-3 md:p-6">
                 <TabsContent value="scouting" className="mt-0">
-                  <PlayerScoutingReports playerId={selectedPlayer} playerName={currentPlayer.name} />
+                  <PlayerScoutingReports playerId={selectedPlayer} playerName={currentPlayer.name} embedded />
                 </TabsContent>
 
                 <TabsContent value="programming" className="mt-0 space-y-3 md:space-y-4">
