@@ -1,0 +1,361 @@
+import { useState, useEffect, useRef, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { Play, Pause, SkipBack, SkipForward, X, Maximize, Trash2, Download, CheckSquare, Film, ListVideo } from "lucide-react";
+import { downloadVideo } from "@/lib/videoDownload";
+
+interface Analysis {
+  id: string;
+  analysis_date: string;
+  opponent: string | null;
+  result: string | null;
+  minutes_played: number | null;
+}
+
+interface ActionClip {
+  id: string;
+  analysis_id: string;
+  action_number: number;
+  action_type: string;
+  action_description: string | null;
+  minute: number | null;
+  video_url: string | null;
+  is_successful: boolean | null;
+  // Joined
+  opponent?: string;
+  match_date?: string;
+}
+
+interface Props {
+  analyses: Analysis[];
+  playerId: string;
+}
+
+export const AnalysisVideoReports = ({ analyses, playerId }: Props) => {
+  const [allActions, setAllActions] = useState<ActionClip[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedMatches, setSelectedMatches] = useState<string[]>([]);
+  const [selectedActionTypes, setSelectedActionTypes] = useState<string[]>([]);
+  const [compilationClips, setCompilationClips] = useState<ActionClip[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [currentClipIndex, setCurrentClipIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [selectedClipIds, setSelectedClipIds] = useState<Set<string>>(new Set());
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const fetchActions = async () => {
+      if (analyses.length === 0) { setLoading(false); return; }
+      const ids = analyses.map(a => a.id);
+      const { data, error } = await supabase
+        .from('performance_report_actions')
+        .select('*')
+        .in('analysis_id', ids)
+        .not('video_url', 'is', null)
+        .order('action_number');
+      if (error) { console.error(error); setLoading(false); return; }
+      
+      const enriched = (data || []).map(a => {
+        const match = analyses.find(an => an.id === a.analysis_id);
+        return { ...a, opponent: match?.opponent || 'Unknown', match_date: match?.analysis_date };
+      });
+      setAllActions(enriched);
+      setLoading(false);
+    };
+    fetchActions();
+  }, [analyses]);
+
+  const actionTypes = useMemo(() => [...new Set(allActions.map(a => a.action_type).filter(Boolean))].sort(), [allActions]);
+
+  const toggleMatch = (id: string) => {
+    setSelectedMatches(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const selectAllMatches = () => {
+    setSelectedMatches(analyses.map(a => a.id));
+  };
+
+  const toggleActionType = (type: string) => {
+    setSelectedActionTypes(prev => prev.includes(type) ? prev.filter(x => x !== type) : [...prev, type]);
+  };
+
+  const generateCompilation = () => {
+    const clips = allActions.filter(a =>
+      selectedMatches.includes(a.analysis_id) &&
+      (selectedActionTypes.length === 0 || selectedActionTypes.includes(a.action_type))
+    ).sort((a, b) => {
+      const dateA = a.match_date || '';
+      const dateB = b.match_date || '';
+      if (dateA !== dateB) return dateA.localeCompare(dateB);
+      return a.action_number - b.action_number;
+    });
+
+    if (clips.length === 0) {
+      toast.error('No clips match your selection');
+      return;
+    }
+    setCompilationClips(clips);
+    setSelectedClipIds(new Set(clips.map(c => c.id)));
+    setCurrentClipIndex(0);
+    setIsPlaying(true);
+    setModalOpen(true);
+  };
+
+  const generateFullReport = () => {
+    setSelectedMatches(analyses.map(a => a.id));
+    setSelectedActionTypes([]);
+    const clips = allActions.sort((a, b) => {
+      const matchA = analyses.find(an => an.id === a.analysis_id);
+      const matchB = analyses.find(an => an.id === b.analysis_id);
+      const dateA = matchA?.analysis_date || '';
+      const dateB = matchB?.analysis_date || '';
+      if (dateA !== dateB) return dateA.localeCompare(dateB);
+      return a.action_number - b.action_number;
+    });
+    if (clips.length === 0) { toast.error('No clips available'); return; }
+    setCompilationClips(clips);
+    setSelectedClipIds(new Set(clips.map(c => c.id)));
+    setCurrentClipIndex(0);
+    setIsPlaying(true);
+    setModalOpen(true);
+  };
+
+  const currentClip = compilationClips[currentClipIndex];
+
+  const handleVideoEnded = () => {
+    if (currentClipIndex < compilationClips.length - 1) {
+      setCurrentClipIndex(prev => prev + 1);
+    } else {
+      setIsPlaying(false);
+    }
+  };
+
+  useEffect(() => {
+    if (videoRef.current && isPlaying && modalOpen) {
+      videoRef.current.play().catch(() => setIsPlaying(false));
+    }
+  }, [currentClipIndex, modalOpen]);
+
+  const toggleClipSelection = (id: string) => {
+    setSelectedClipIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const removeClip = (index: number) => {
+    const clip = compilationClips[index];
+    setCompilationClips(prev => prev.filter((_, i) => i !== index));
+    setSelectedClipIds(prev => { const n = new Set(prev); n.delete(clip.id); return n; });
+    if (currentClipIndex >= compilationClips.length - 1) setCurrentClipIndex(Math.max(0, compilationClips.length - 2));
+  };
+
+  const handleExport = (mode: 'all' | 'selected' | 'single') => {
+    if (mode === 'single' && currentClip?.video_url) {
+      downloadVideo(currentClip.video_url, `clip-${currentClip.action_number}`);
+    } else if (mode === 'selected') {
+      compilationClips.filter(c => selectedClipIds.has(c.id) && c.video_url).forEach((c, i) => {
+        setTimeout(() => downloadVideo(c.video_url!, `clip-${i + 1}-${c.action_type}`), i * 500);
+      });
+    } else {
+      compilationClips.filter(c => c.video_url).forEach((c, i) => {
+        setTimeout(() => downloadVideo(c.video_url!, `clip-${i + 1}-${c.action_type}`), i * 500);
+      });
+    }
+  };
+
+  return (
+    <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
+      <CardHeader marble>
+        <div className="container mx-auto px-4">
+          <CardTitle className="font-heading tracking-tight">Video Reports</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="container mx-auto px-4 space-y-6 py-6">
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">Loading clips...</div>
+        ) : allActions.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">No action clips available from your reports.</div>
+        ) : (
+          <>
+            {/* Step 1: Select matches */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold uppercase tracking-wider">Step 1: Select Matches</h3>
+                <Button variant="ghost" size="sm" onClick={selectAllMatches}>Select All</Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {analyses.filter(a => allActions.some(ac => ac.analysis_id === a.id)).map(a => (
+                  <button
+                    key={a.id}
+                    onClick={() => toggleMatch(a.id)}
+                    className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+                      selectedMatches.includes(a.id) ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'
+                    }`}
+                  >
+                    {a.opponent ? `vs ${a.opponent}` : new Date(a.analysis_date).toLocaleDateString('en-GB')}
+                    {a.result && <span className="ml-1 opacity-70">({a.result})</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Step 2: Select action types */}
+            {selectedMatches.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wider mb-2">Step 2: Select Action Types</h3>
+                <div className="flex flex-wrap gap-2">
+                  {actionTypes.map(type => (
+                    <button
+                      key={type}
+                      onClick={() => toggleActionType(type)}
+                      className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+                        selectedActionTypes.includes(type) ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                  {selectedActionTypes.length > 0 && (
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedActionTypes([])}>Clear</Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Leave empty to include all action types</p>
+              </div>
+            )}
+
+            {/* Generate buttons */}
+            {selectedMatches.length > 0 && (
+              <div className="flex gap-3 flex-wrap">
+                <Button onClick={generateCompilation}>
+                  <Film className="w-4 h-4 mr-2" /> Generate Compilation
+                </Button>
+                <Button variant="outline" onClick={generateFullReport}>
+                  <ListVideo className="w-4 h-4 mr-2" /> Full Action Report Video
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Widescreen compilation modal */}
+        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+          <DialogContent className="max-w-[95vw] w-full p-0 overflow-hidden bg-black border-none">
+            {currentClip && (
+              <div className="flex flex-col h-[90vh]">
+                {/* Video area */}
+                <div className="relative flex-1 min-h-0 bg-black flex items-center justify-center">
+                  {/* Info overlay */}
+                  <div className="absolute top-3 left-3 z-10 bg-black/70 text-white text-sm px-3 py-2 rounded">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge className="bg-primary text-primary-foreground text-xs">{currentClipIndex + 1}/{compilationClips.length}</Badge>
+                      <span className="font-semibold">{currentClip.action_type}</span>
+                    </div>
+                    <p className="text-xs text-white/70">
+                      vs {currentClip.opponent} {currentClip.minute != null && `· ${currentClip.minute}'`}
+                    </p>
+                    {currentClip.action_description && (
+                      <p className="text-xs text-white/60 mt-0.5 line-clamp-2">{currentClip.action_description}</p>
+                    )}
+                  </div>
+
+                  {/* Close + fullscreen */}
+                  <div className="absolute top-3 right-3 z-10 flex gap-2">
+                    <Button variant="ghost" size="icon" className="bg-black/50 hover:bg-black/70 text-white"
+                      onClick={() => videoRef.current?.requestFullscreen?.()}>
+                      <Maximize className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="bg-black/50 hover:bg-black/70 text-white"
+                      onClick={() => setModalOpen(false)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <video
+                    ref={videoRef}
+                    src={currentClip.video_url || ''}
+                    className="max-h-full max-w-full object-contain"
+                    autoPlay muted playsInline
+                    onEnded={handleVideoEnded}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                  />
+                </div>
+
+                {/* Controls */}
+                <div className="bg-black/95 px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20"
+                      disabled={currentClipIndex === 0}
+                      onClick={() => setCurrentClipIndex(i => i - 1)}>
+                      <SkipBack className="h-5 w-5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-10 w-10"
+                      onClick={() => {
+                        if (videoRef.current) { isPlaying ? videoRef.current.pause() : videoRef.current.play(); }
+                      }}>
+                      {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20"
+                      disabled={currentClipIndex >= compilationClips.length - 1}
+                      onClick={() => setCurrentClipIndex(i => i + 1)}>
+                      <SkipForward className="h-5 w-5" />
+                    </Button>
+                  </div>
+
+                  {/* Export dropdown */}
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={() => handleExport('single')}>
+                      <Download className="h-4 w-4 mr-1" /> Clip
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={() => handleExport('selected')}>
+                      <CheckSquare className="h-4 w-4 mr-1" /> Selected ({selectedClipIds.size})
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={() => handleExport('all')}>
+                      <Download className="h-4 w-4 mr-1" /> All
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Clip list */}
+                <div className="bg-black/95 px-4 pb-3 max-h-[150px] overflow-y-auto">
+                  <div className="space-y-1">
+                    {compilationClips.map((clip, index) => (
+                      <div
+                        key={clip.id}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded text-sm cursor-pointer transition-colors ${
+                          index === currentClipIndex ? 'bg-primary text-primary-foreground' : 'text-white/80 hover:bg-white/10'
+                        }`}
+                      >
+                        <Checkbox
+                          checked={selectedClipIds.has(clip.id)}
+                          onCheckedChange={() => toggleClipSelection(clip.id)}
+                          className="border-white/50"
+                        />
+                        <button className="flex-1 text-left" onClick={() => setCurrentClipIndex(index)}>
+                          <span className="font-mono text-xs opacity-60">#{clip.action_number}</span>{' '}
+                          {clip.action_type} · vs {clip.opponent}
+                          {clip.minute != null && <span className="opacity-60"> · {clip.minute}'</span>}
+                        </button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-white/50 hover:text-destructive"
+                          onClick={(e) => { e.stopPropagation(); removeClip(index); }}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  );
+};

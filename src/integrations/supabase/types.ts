@@ -953,6 +953,45 @@ export type Database = {
         }
         Relationships: []
       }
+      comparison_players: {
+        Row: {
+          club: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          metrics: Json | null
+          name: string
+          position: string
+          r90_average: number | null
+          season: string
+          updated_at: string
+        }
+        Insert: {
+          club?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          metrics?: Json | null
+          name: string
+          position: string
+          r90_average?: number | null
+          season?: string
+          updated_at?: string
+        }
+        Update: {
+          club?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          metrics?: Json | null
+          name?: string
+          position?: string
+          r90_average?: number | null
+          season?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       component_locks: {
         Row: {
           component_name: string

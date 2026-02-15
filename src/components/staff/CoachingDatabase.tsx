@@ -22,10 +22,11 @@ import { ClubRatings } from "./ClubRatings";
 import { FormGradesManagement } from "./FormGradesManagement";
 import { MarkdownText } from "@/utils/markdownRenderer";
 import { downloadFile } from "@/utils/openExternalUrl";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, UserCheck } from "lucide-react";
+import { ComparisonPlayerData } from "./ComparisonPlayerData";
 
 
-type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides' | 'club_ratings' | 'form_grade_configs';
+type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides' | 'club_ratings' | 'form_grade_configs' | 'comparison_player_data';
 
 interface Exercise {
   name: string;
@@ -177,6 +178,13 @@ const tableConfigs = {
     icon: GraduationCap,
     color: 'gold',
   },
+  comparison_player_data: {
+    label: 'Player Data',
+    singular: 'Player',
+    fields: [],
+    icon: UserCheck,
+    color: 'sky',
+  },
 };
 
 const getScoreColor = (score: number | string | null) => {
@@ -278,7 +286,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const fetchCategories = async () => {
     // Skip for aphorisms, tactical schemes, performance statistics, scheme view, positional guides, and club ratings as they don't have category/tags
-    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes' || activeTab === 'performance_statistics' || activeTab === 'scheme_view' || activeTab === 'positional_guides' || activeTab === 'club_ratings') {
+    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes' || activeTab === 'performance_statistics' || activeTab === 'scheme_view' || activeTab === 'positional_guides' || activeTab === 'club_ratings' || activeTab === 'comparison_player_data') {
       return;
     }
     
@@ -340,7 +348,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const fetchItems = async () => {
     // Skip fetching for tabs that don't use the database list view
-    if (activeTab === 'scheme_view' || activeTab === 'tactical_schemes' || activeTab === 'positional_guides' || activeTab === 'club_ratings') {
+    if (activeTab === 'scheme_view' || activeTab === 'tactical_schemes' || activeTab === 'positional_guides' || activeTab === 'club_ratings' || activeTab === 'comparison_player_data') {
       setItems([]);
       setTotalItems(0);
       setLoading(false);
@@ -1010,6 +1018,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
               <ClubRatings />
             ) : key === 'form_grade_configs' ? (
               <FormGradesManagement />
+            ) : key === 'comparison_player_data' ? (
+              <ComparisonPlayerData />
             ) : (
               <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-end gap-4">
