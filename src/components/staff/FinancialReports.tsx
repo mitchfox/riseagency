@@ -41,8 +41,8 @@ export const FinancialReports = ({ isAdmin }: { isAdmin: boolean }) => {
         .from('invoices')
         .select('amount, status, due_date');
 
-      if (invoices) {
-        const today = new Date();
+      const today = new Date();
+      if (invoices && invoices.length > 0) {
         const summary: InvoiceSummary = {
           total: invoices.reduce((sum, inv) => sum + Number(inv.amount), 0),
           paid: invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + Number(inv.amount), 0),
@@ -52,20 +52,28 @@ export const FinancialReports = ({ isAdmin }: { isAdmin: boolean }) => {
         setInvoiceSummary(summary);
       }
 
-      // Fetch payments
+      // Income = paid invoices + any incoming payments
+      // Expenses = expenses table totals
       const { data: payments } = await supabase
         .from('payments')
         .select('amount, type');
 
-      if (payments) {
-        const income = payments.filter(p => p.type === 'in').reduce((sum, p) => sum + Number(p.amount), 0);
-        const expenses = payments.filter(p => p.type === 'out').reduce((sum, p) => sum + Number(p.amount), 0);
-        setPaymentSummary({
-          income,
-          expenses,
-          net: income - expenses
-        });
-      }
+      const { data: expensesData } = await supabase
+        .from('expenses')
+        .select('amount');
+
+      const paymentIncome = (payments || []).filter(p => p.type === 'in').reduce((sum, p) => sum + Number(p.amount), 0);
+      const paidInvoiceIncome = (invoices || []).filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + Number(inv.amount), 0);
+      const totalIncome = paymentIncome + paidInvoiceIncome;
+
+      const paymentExpenses = (payments || []).filter(p => p.type === 'out').reduce((sum, p) => sum + Number(p.amount), 0);
+      const totalExpenses = paymentExpenses + (expensesData || []).reduce((sum, e) => sum + Number(e.amount), 0);
+
+      setPaymentSummary({
+        income: totalIncome,
+        expenses: totalExpenses,
+        net: totalIncome - totalExpenses
+      });
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -134,20 +142,20 @@ export const FinancialReports = ({ isAdmin }: { isAdmin: boolean }) => {
             {/* Key Metrics */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
-                title="Total Revenue"
+                title="Received (Paid Invoices)"
                 value={`£${paymentSummary.income.toLocaleString()}`}
                 icon={TrendingUp}
                 color="text-green-500"
               />
               <StatCard
                 title="Total Expenses"
-                value={`£${paymentSummary.expenses.toLocaleString()}`}
+                value={paymentSummary.expenses > 0 ? `£${paymentSummary.expenses.toLocaleString()}` : '—'}
                 icon={TrendingDown}
                 color="text-destructive"
               />
               <StatCard
-                title="Net Profit"
-                value={`£${paymentSummary.net.toLocaleString()}`}
+                title="Net Position"
+                value={paymentSummary.income > 0 || paymentSummary.expenses > 0 ? `£${paymentSummary.net.toLocaleString()}` : '—'}
                 icon={DollarSign}
                 color={paymentSummary.net >= 0 ? 'text-green-500' : 'text-destructive'}
               />
@@ -190,17 +198,23 @@ export const FinancialReports = ({ isAdmin }: { isAdmin: boolean }) => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Money In</span>
-                    <span className="font-medium text-green-500">+£{paymentSummary.income.toLocaleString()}</span>
+                    <span className="text-muted-foreground">Money In (Paid Invoices)</span>
+                    <span className="font-medium text-green-500">
+                      {paymentSummary.income > 0 ? `+£${paymentSummary.income.toLocaleString()}` : '£0'}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Money Out</span>
-                    <span className="font-medium text-destructive">-£{paymentSummary.expenses.toLocaleString()}</span>
+                    <span className="text-muted-foreground">Money Out (Expenses)</span>
+                    <span className="font-medium text-destructive">
+                      {paymentSummary.expenses > 0 ? `-£${paymentSummary.expenses.toLocaleString()}` : '£0'}
+                    </span>
                   </div>
                   <div className="pt-2 border-t flex justify-between items-center">
                     <span className="font-medium">Net Cash Flow</span>
                     <span className={`font-bold ${paymentSummary.net >= 0 ? 'text-green-500' : 'text-destructive'}`}>
-                      {paymentSummary.net >= 0 ? '+' : ''}£{paymentSummary.net.toLocaleString()}
+                      {paymentSummary.income > 0 || paymentSummary.expenses > 0
+                        ? `${paymentSummary.net >= 0 ? '+' : ''}£${paymentSummary.net.toLocaleString()}`
+                        : '£0'}
                     </span>
                   </div>
                 </CardContent>
