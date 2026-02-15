@@ -28,6 +28,7 @@ import { QuickLinksWidget } from "./widgets/QuickLinksWidget";
 import { VisionBoardWidget } from "./widgets/VisionBoardWidget";
 import { DocsWidget } from "./widgets/DocsWidget";
 import { SheetsWidget } from "./widgets/SheetsWidget";
+import { FinancialOverviewWidget } from "./widgets/FinancialOverviewWidget";
 import { FocusedTasksSection } from "./FocusedTasksSection";
 
 interface Goal {
@@ -658,30 +659,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
         return <QuickLinksWidget userId={userId} />;
 
       case "financial":
-        return (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 h-full">
-            <div className="flex flex-col justify-center p-3 bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 rounded border border-emerald-500/30">
-              <div className="text-sm md:text-lg font-bold text-emerald-600">€127k</div>
-              <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider">Revenue</div>
-            </div>
-            <div className="flex flex-col justify-center p-3 bg-gradient-to-br from-rose-500/10 to-rose-600/10 rounded border border-rose-500/30">
-              <div className="text-sm md:text-lg font-bold text-rose-600">€89k</div>
-              <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider">Expenses</div>
-            </div>
-            <div className="flex flex-col justify-center p-3 bg-gradient-to-br from-primary/20 to-primary/5 rounded border border-primary/40">
-              <div className="text-sm md:text-lg font-bold text-primary">€38k</div>
-              <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider">Profit</div>
-            </div>
-            <div className="hidden sm:flex flex-col justify-center p-3 bg-gradient-to-br from-amber-500/10 to-amber-600/10 rounded border border-amber-500/30">
-              <div className="text-sm md:text-lg font-bold text-amber-600">€45k</div>
-              <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider">Commissions</div>
-            </div>
-            <div className="hidden md:flex flex-col justify-center p-3 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded border border-blue-500/30">
-              <div className="text-sm md:text-lg font-bold text-blue-600">€32k</div>
-              <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider">Consulting</div>
-            </div>
-          </div>
-        );
+        return <FinancialOverviewWidget />;
 
       case "schedule":
         return (

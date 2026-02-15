@@ -39,15 +39,15 @@ export const FinancialReports = ({ isAdmin }: { isAdmin: boolean }) => {
       // Fetch invoices
       const { data: invoices } = await supabase
         .from('invoices')
-        .select('amount, status, due_date');
+        .select('amount, amount_paid, status, due_date');
 
       const today = new Date();
       if (invoices && invoices.length > 0) {
         const summary: InvoiceSummary = {
           total: invoices.reduce((sum, inv) => sum + Number(inv.amount), 0),
-          paid: invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + Number(inv.amount), 0),
-          pending: invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + Number(inv.amount), 0),
-          overdue: invoices.filter(inv => inv.status === 'pending' && new Date(inv.due_date) < today).reduce((sum, inv) => sum + Number(inv.amount), 0)
+          paid: invoices.reduce((sum, inv) => sum + Number(inv.amount_paid || 0), 0),
+          pending: invoices.filter(inv => inv.status !== 'paid').reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.amount_paid || 0)), 0),
+          overdue: invoices.filter(inv => inv.status === 'pending' && new Date(inv.due_date) < today).reduce((sum, inv) => sum + (Number(inv.amount) - Number(inv.amount_paid || 0)), 0)
         };
         setInvoiceSummary(summary);
       }
@@ -63,8 +63,9 @@ export const FinancialReports = ({ isAdmin }: { isAdmin: boolean }) => {
         .select('amount');
 
       const paymentIncome = (payments || []).filter(p => p.type === 'in').reduce((sum, p) => sum + Number(p.amount), 0);
-      const paidInvoiceIncome = (invoices || []).filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + Number(inv.amount), 0);
-      const totalIncome = paymentIncome + paidInvoiceIncome;
+      // Use amount_paid from all invoices (covers partial payments too)
+      const invoiceIncome = (invoices || []).reduce((sum, inv) => sum + Number(inv.amount_paid || 0), 0);
+      const totalIncome = paymentIncome + invoiceIncome;
 
       const paymentExpenses = (payments || []).filter(p => p.type === 'out').reduce((sum, p) => sum + Number(p.amount), 0);
       const totalExpenses = paymentExpenses + (expensesData || []).reduce((sum, e) => sum + Number(e.amount), 0);
