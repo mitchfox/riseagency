@@ -110,11 +110,28 @@ export const AnalysisComparisons = ({ analyses, playerData }: Props) => {
       hasPortalData ? portalMetrics[m.key] != null : selectedComps.some(cp => cp.metrics[m.key] != null)
     ).slice(0, 12);
 
-    return radarMetrics.map(m => {
-      const entry: any = { metric: m.label };
-      if (hasPortalData) entry[playerName] = portalMetrics[m.key] ?? 0;
+    // Normalise values to 0-100 scale for the radar so different units are comparable
+    const allValues: number[] = [];
+    radarMetrics.forEach(m => {
+      if (hasPortalData && portalMetrics[m.key] != null) allValues.push(portalMetrics[m.key]!);
       selectedComps.forEach(cp => {
-        entry[cp.name] = cp.metrics[m.key] ?? 0;
+        if (cp.metrics[m.key] != null) allValues.push(cp.metrics[m.key]);
+      });
+    });
+
+    return radarMetrics.map(m => {
+      // Find max across all players for this metric to normalise
+      const metricVals: number[] = [];
+      if (hasPortalData && portalMetrics[m.key] != null) metricVals.push(portalMetrics[m.key]!);
+      selectedComps.forEach(cp => {
+        if (cp.metrics[m.key] != null) metricVals.push(cp.metrics[m.key]);
+      });
+      const maxVal = Math.max(...metricVals, 0.01);
+
+      const entry: any = { metric: m.label };
+      if (hasPortalData) entry[playerName] = Math.round(((portalMetrics[m.key] ?? 0) / maxVal) * 100);
+      selectedComps.forEach(cp => {
+        entry[cp.name] = Math.round(((cp.metrics[m.key] ?? 0) / maxVal) * 100);
       });
       return entry;
     });
@@ -182,9 +199,9 @@ export const AnalysisComparisons = ({ analyses, playerData }: Props) => {
                           return (
                             <div key={m.key} className="space-y-1">
                               <div className="flex justify-between items-center">
-                                <span className="text-sm">{m.label}</span>
+                                <span className="text-sm">{m.label}{m.key.endsWith('_pct') ? '' : ' / Game'}</span>
                                 <div className="flex items-center gap-3">
-                                  <span className="text-sm text-muted-foreground">{value.toFixed(2)} /90</span>
+                                  <span className="text-sm text-muted-foreground">{value.toFixed(2)}{m.key.endsWith('_pct') ? '%' : ''}</span>
                                   <span className="text-lg font-bold text-primary w-12 text-right">{pct}%</span>
                                 </div>
                               </div>
@@ -243,19 +260,23 @@ export const AnalysisComparisons = ({ analyses, playerData }: Props) => {
                 {radarData.length > 0 && (
                   <div className="bg-card border rounded-lg p-4">
                     <h4 className="font-semibold mb-4">Radar Comparison</h4>
-                    <ResponsiveContainer width="100%" height={400}>
-                      <RadarChart data={radarData}>
-                        <PolarGrid stroke="hsl(var(--border))" />
-                        <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                        <PolarRadiusAxis tick={{ fontSize: 10 }} />
+                    <p className="text-xs text-muted-foreground mb-2">Values normalised to percentage of the highest value per metric</p>
+                    <ResponsiveContainer width="100%" height={420}>
+                      <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
+                        <PolarGrid stroke="hsl(var(--border))" gridType="polygon" />
+                        <PolarAngleAxis
+                          dataKey="metric"
+                          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                        />
+                        <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
                         {hasPortalData && (
                           <Radar
                             name={playerName}
                             dataKey={playerName}
                             stroke={PORTAL_COLOUR}
                             fill={PORTAL_COLOUR}
-                            fillOpacity={0.15}
-                            strokeWidth={2}
+                            fillOpacity={0.2}
+                            strokeWidth={2.5}
                           />
                         )}
                         {selectedComps.map((cp, idx) => (
@@ -265,12 +286,20 @@ export const AnalysisComparisons = ({ analyses, playerData }: Props) => {
                             dataKey={cp.name}
                             stroke={PLAYER_COLOURS[idx % PLAYER_COLOURS.length]}
                             fill={PLAYER_COLOURS[idx % PLAYER_COLOURS.length]}
-                            fillOpacity={0.1}
+                            fillOpacity={0.08}
                             strokeWidth={2}
                           />
                         ))}
-                        <Legend />
-                        <Tooltip />
+                        <Legend wrapperStyle={{ fontSize: 12 }} />
+                        <Tooltip
+                          formatter={(value: number) => `${value}%`}
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                            fontSize: 12
+                          }}
+                        />
                       </RadarChart>
                     </ResponsiveContainer>
                   </div>
@@ -292,7 +321,7 @@ export const AnalysisComparisons = ({ analyses, playerData }: Props) => {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Metric</TableHead>
+                            <TableHead>Metric / Game</TableHead>
                             {hasPortalData && (
                               <TableHead>
                                 <div className="flex items-center gap-1.5">
