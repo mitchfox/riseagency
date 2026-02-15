@@ -11,10 +11,16 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { RolePermissionsEditor } from "./RolePermissionsEditor";
 
+interface AvailableRole {
+  role_key: string;
+  role_label: string;
+  description: string | null;
+}
+
 interface StaffAccount {
   email: string;
   password: string;
-  role: "admin" | "staff" | "marketeer";
+  role: string;
   fullName: string;
   phoneNumber: string;
 }
@@ -29,6 +35,7 @@ export const StaffAccountManagement = () => {
   const [resettingPassword, setResettingPassword] = useState<string | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<string | null>(null);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
+  const [availableRoles, setAvailableRoles] = useState<AvailableRole[]>([]);
   const [newAccount, setNewAccount] = useState<StaffAccount>({
     email: "",
     password: "",
@@ -42,7 +49,21 @@ export const StaffAccountManagement = () => {
   useEffect(() => {
     checkAdminRole();
     fetchExistingAccounts();
+    fetchAvailableRoles();
   }, []);
+
+  const fetchAvailableRoles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("available_roles")
+        .select("*")
+        .order("role_key");
+      if (error) throw error;
+      setAvailableRoles(data || []);
+    } catch (error) {
+      console.error("Error fetching available roles:", error);
+    }
+  };
 
   const fetchExistingAccounts = async () => {
     setLoadingAccounts(true);
@@ -57,8 +78,7 @@ export const StaffAccountManagement = () => {
             full_name,
             phone_number
           )
-        `)
-        .in('role', ['admin', 'staff', 'marketeer']);
+        `);
 
       if (error) throw error;
       console.log('Fetched accounts:', data);
@@ -138,7 +158,7 @@ export const StaffAccountManagement = () => {
         // Don't show credentials for existing accounts
         setCreatedAccount(null);
       } else {
-        const roleLabel = newAccount.role === "admin" ? "Admin" : newAccount.role === "marketeer" ? "Marketeer" : "Staff";
+        const roleLabel = availableRoles.find(r => r.role_key === newAccount.role)?.role_label || newAccount.role;
         toast.success(`${roleLabel} account created successfully`);
         // Store created account details to display (only for new accounts)
         setCreatedAccount({ ...newAccount });
@@ -224,7 +244,7 @@ export const StaffAccountManagement = () => {
     }
   };
 
-  const handleChangeRole = async (userId: string, email: string, newRole: "admin" | "staff" | "marketeer") => {
+  const handleChangeRole = async (userId: string, email: string, newRole: string) => {
     setUpdatingRole(userId);
 
     try {
@@ -380,7 +400,7 @@ export const StaffAccountManagement = () => {
                       <p className="text-xs md:text-sm text-muted-foreground mb-1">Role</p>
                       <Select
                         value={account.role}
-                        onValueChange={(value: "admin" | "staff" | "marketeer") =>
+                        onValueChange={(value: string) =>
                           handleChangeRole(account.user_id, account.profiles?.email || '', value)
                         }
                         disabled={updatingRole === account.user_id}
@@ -389,9 +409,11 @@ export const StaffAccountManagement = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="staff">Staff</SelectItem>
-                          <SelectItem value="marketeer">Marketeer</SelectItem>
+                          {availableRoles.map((r) => (
+                            <SelectItem key={r.role_key} value={r.role_key}>
+                              {r.role_label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -545,7 +567,7 @@ export const StaffAccountManagement = () => {
                 <Label htmlFor="staff-role">Role *</Label>
                 <Select
                   value={newAccount.role}
-                  onValueChange={(value: "admin" | "staff" | "marketeer") =>
+                  onValueChange={(value: string) =>
                     setNewAccount({ ...newAccount, role: value })
                   }
                 >
@@ -553,9 +575,11 @@ export const StaffAccountManagement = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">Admin (Full Access)</SelectItem>
-                    <SelectItem value="staff">Staff (View Only)</SelectItem>
-                    <SelectItem value="marketeer">Marketeer (Marketing & Recruitment)</SelectItem>
+                    {availableRoles.map((r) => (
+                      <SelectItem key={r.role_key} value={r.role_key}>
+                        {r.role_label}{r.description ? ` (${r.description})` : ''}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -564,9 +588,9 @@ export const StaffAccountManagement = () => {
             <div className="bg-muted/50 p-4 rounded-lg space-y-2">
               <p className="text-sm font-medium">Access Levels:</p>
               <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                <li>• <strong>Admin:</strong> Can view and edit all content</li>
-                <li>• <strong>Staff:</strong> Can view all content but cannot make changes</li>
-                <li>• <strong>Marketeer:</strong> Can edit Network & Recruitment and Marketing & Brand sections</li>
+                {availableRoles.map((r) => (
+                  <li key={r.role_key}>• <strong>{r.role_label}:</strong> {r.description || 'Custom role'}</li>
+                ))}
               </ul>
             </div>
 
