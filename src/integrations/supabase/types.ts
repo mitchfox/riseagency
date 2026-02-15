@@ -287,6 +287,27 @@ export type Database = {
         }
         Relationships: []
       }
+      available_roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          role_key: string
+          role_label: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          role_key: string
+          role_label: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          role_key?: string
+          role_label?: string
+        }
+        Relationships: []
+      }
       bank_details: {
         Row: {
           account_name: string | null
@@ -4834,6 +4855,14 @@ export type Database = {
       }
     }
     Functions: {
+      add_app_role_enum_value: {
+        Args: { new_value: string }
+        Returns: undefined
+      }
+      check_enum_value_exists: {
+        Args: { enum_name: string; value_name: string }
+        Returns: boolean
+      }
       get_player_name_by_email: { Args: { _email: string }; Returns: string }
       has_role: {
         Args: {
