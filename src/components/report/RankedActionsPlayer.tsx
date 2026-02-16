@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, SkipForward, SkipBack, Play, Pause } from "lucide-react";
+import { X, SkipForward, SkipBack } from "lucide-react";
 
 interface Clip {
   id: string;
@@ -51,7 +51,6 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedA
     if (currentIndex < sortedClips.length - 1) {
       const next = currentIndex + 1;
       setCurrentIndex(next);
-      // Ensure new clip autoplays
       setTimeout(() => {
         videoRef.current?.play().catch(() => {});
       }, 100);
@@ -70,12 +69,12 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedA
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] md:max-w-4xl p-0 bg-black border-primary/30 overflow-hidden">
+      <DialogContent className="fixed inset-0 w-screen h-screen max-w-none max-h-none p-0 bg-black border-0 rounded-none flex flex-col overflow-hidden z-[200]">
         <DialogTitle className="sr-only">
           {mode === "ranked" ? "Ranked" : "Full Match"} Video Report
         </DialogTitle>
         {/* Header */}
-        <div className="flex items-center justify-between p-3 bg-black/80 border-b border-border/30">
+        <div className="flex items-center justify-between px-4 py-2 bg-black/80 border-b border-border/30 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <span className="text-primary font-bold text-sm">
               {mode === "ranked" ? "RANKED" : "MATCH"} REPORT
@@ -89,21 +88,21 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedA
           </Button>
         </div>
 
-        {/* Video */}
-        <div className="aspect-video bg-black">
+        {/* Video - fills remaining space */}
+        <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
             ref={videoRef}
             key={current.video_url}
             src={current.video_url}
             autoPlay={isPlaying}
             controls
-            className="w-full h-full"
+            className="w-full h-full object-contain"
             onEnded={handleVideoEnd}
           />
         </div>
 
         {/* Info bar */}
-        <div className="p-3 bg-black/90 border-t border-border/30">
+        <div className="px-4 py-2 bg-black/90 border-t border-border/30 shrink-0">
           <div className="flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">

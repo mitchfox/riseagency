@@ -26,6 +26,11 @@ const COMPARABLE_STATS: { label: string; playerKey: string; benchmarkKey: string
   { label: "Interceptions /90", playerKey: "interceptions_per90", benchmarkKey: "interceptions_per90" },
 ];
 
+const surname = (name: string) => {
+  const parts = name.trim().split(" ");
+  return parts.length > 1 ? parts[parts.length - 1] : parts[0];
+};
+
 export const QuickStatsComparison = ({ playerId, playerName, playerPosition, onSeeAll }: QuickStatsComparisonProps) => {
   const [loading, setLoading] = React.useState(true);
   const [chartData, setChartData] = React.useState<{ name: string; value: number }[] | null>(null);
@@ -33,22 +38,18 @@ export const QuickStatsComparison = ({ playerId, playerName, playerPosition, onS
   const [benchmarkName, setBenchmarkName] = React.useState("");
   const [visible, setVisible] = React.useState(true);
 
-  // Cache fetched data for cycling
   const playerAnalysesRef = React.useRef<any[] | null>(null);
   const benchmarksRef = React.useRef<any[] | null>(null);
   const usedStatsRef = React.useRef<Set<string>>(new Set());
-
-  const surname = (name: string) => {
-    const parts = name.trim().split(" ");
-    return parts.length > 1 ? parts[parts.length - 1] : parts[0];
-  };
+  // Refs for deduplication — avoids circular deps
+  const statLabelRef = React.useRef("");
+  const benchmarkNameRef = React.useRef("");
 
   const pickComparison = React.useCallback(() => {
     const playerAnalyses = playerAnalysesRef.current;
     const benchmarks = benchmarksRef.current;
     if (!playerAnalyses || playerAnalyses.length === 0 || !benchmarks || benchmarks.length === 0) return false;
 
-    // Reset used stats if we've exhausted them
     if (usedStatsRef.current.size >= COMPARABLE_STATS.length) {
       usedStatsRef.current.clear();
     }
@@ -61,9 +62,8 @@ export const QuickStatsComparison = ({ playerId, playerName, playerPosition, onS
       for (const benchmark of shuffledBenchmarks) {
         const metrics = (benchmark.metrics || {}) as Record<string, number>;
         const benchmarkVal = metrics[stat.benchmarkKey];
-        // Skip if it would produce the same stat+player combination
-        const isSame = stat.label === statLabel && benchmark.name === benchmarkName;
-        if (isSame) continue;
+        // Deduplicate using refs (no state dependency)
+        if (stat.label === statLabelRef.current && benchmark.name === benchmarkNameRef.current) continue;
 
         const playerVals = playerAnalyses
           .map((a: any) => (a.striker_stats as any)?.[stat.playerKey])
@@ -73,6 +73,8 @@ export const QuickStatsComparison = ({ playerId, playerName, playerPosition, onS
           const playerAvg = playerVals.reduce((a: number, b: number) => a + b, 0) / playerVals.length;
 
           usedStatsRef.current.add(stat.label);
+          statLabelRef.current = stat.label;
+          benchmarkNameRef.current = benchmark.name;
           setStatLabel(stat.label);
           setBenchmarkName(benchmark.name);
           setChartData([
@@ -84,46 +86,48 @@ export const QuickStatsComparison = ({ playerId, playerName, playerPosition, onS
       }
     }
     return false;
-  }, [playerName, statLabel, benchmarkName]);
-
-  const fetchData = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const [{ data: playerAnalyses }, { data: benchmarks }] = await Promise.all([
-        supabase
-          .from("player_analysis")
-          .select("striker_stats")
-          .eq("player_id", playerId)
-          .not("r90_score", "is", null)
-          .order("analysis_date", { ascending: false })
-          .limit(5),
-        supabase
-          .from("comparison_players")
-          .select("name, position, metrics")
-          .eq("position", playerPosition),
-      ]);
-
-      playerAnalysesRef.current = playerAnalyses || [];
-      benchmarksRef.current = benchmarks || [];
-
-      if (!pickComparison()) {
-        setChartData(null);
-      }
-    } catch (error) {
-      console.error("Error fetching quick stats:", error);
-      setChartData(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [playerId, playerPosition, pickComparison]);
+  }, [playerName]); // Only depends on playerName now — no circular dep
 
   React.useEffect(() => {
+    let cancelled = false;
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [{ data: playerAnalyses }, { data: benchmarks }] = await Promise.all([
+          supabase
+            .from("player_analysis")
+            .select("striker_stats")
+            .eq("player_id", playerId)
+            .not("r90_score", "is", null)
+            .order("analysis_date", { ascending: false })
+            .limit(5),
+          supabase
+            .from("comparison_players")
+            .select("name, position, metrics")
+            .eq("position", playerPosition),
+        ]);
+
+        if (cancelled) return;
+        playerAnalysesRef.current = playerAnalyses || [];
+        benchmarksRef.current = benchmarks || [];
+
+        if (!pickComparison()) {
+          setChartData(null);
+        }
+      } catch (error) {
+        console.error("Error fetching quick stats:", error);
+        if (!cancelled) setChartData(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
     fetchData();
-  }, [fetchData]);
+    return () => { cancelled = true; };
+  }, [playerId, playerPosition, pickComparison]);
 
   // Auto-rotate every 15 seconds
   React.useEffect(() => {
-    if (!playerAnalysesRef.current || !benchmarksRef.current) return;
+    if (loading || !playerAnalysesRef.current || !benchmarksRef.current) return;
     const interval = setInterval(() => {
       setVisible(false);
       setTimeout(() => {
