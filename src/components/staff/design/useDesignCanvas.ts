@@ -83,7 +83,7 @@ export function useDesignCanvas(initial?: DesignProject) {
       type: 'text',
       text: 'Double-click to edit',
       fontSize: 32,
-      fontFamily: 'Inter',
+      fontFamily: 'Agrandir Tight',
       fontWeight: '400',
       color: '#000000',
       textAlign: 'center',
