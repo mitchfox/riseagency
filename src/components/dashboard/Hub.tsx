@@ -862,6 +862,8 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         <QuickStatsComparison
           playerId={playerData.id}
           playerName={playerData.name || "You"}
+          playerPosition={playerData.position || "CF"}
+          onSeeAll={onNavigateToAnalysis}
         />
       )}
 

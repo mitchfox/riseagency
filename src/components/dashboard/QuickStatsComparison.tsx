@@ -1,157 +1,112 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, RefreshCw } from "lucide-react";
+import { BarChart3, RefreshCw, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, LabelList } from "recharts";
 
 interface QuickStatsComparisonProps {
   playerId: string;
   playerName: string;
+  playerPosition: string;
+  onSeeAll?: () => void;
 }
 
-interface StatComparison {
-  label: string;
-  playerAvg: number;
-  comparisonAvg: number;
-  comparisonName: string;
-}
+// Stats we can compare — keys must exist in both striker_stats and comparison_players.metrics
+const COMPARABLE_STATS: { label: string; playerKey: string; benchmarkKey: string }[] = [
+  { label: "xG /90", playerKey: "xG_adj_per90", benchmarkKey: "npxg_per90" },
+  { label: "xA /90", playerKey: "xA_adj_per90", benchmarkKey: "xa_per90" },
+  { label: "Prog. Passes /90", playerKey: "progressive_passes_adj_per90", benchmarkKey: "progressive_passes_per90" },
+  { label: "Prog. Carries /90", playerKey: "progressive_carries_adj_per90", benchmarkKey: "progressive_carries_per90" },
+  { label: "Duels Won %", playerKey: "duels_won_pct", benchmarkKey: "duels_won_pct" },
+  { label: "Pass Accuracy %", playerKey: "pass_accuracy_pct", benchmarkKey: "pass_accuracy_pct" },
+  { label: "Shots on Target /90", playerKey: "shots_on_target_per90", benchmarkKey: "shots_on_target_per90" },
+  { label: "Key Passes /90", playerKey: "key_passes_per90", benchmarkKey: "key_passes_per90" },
+  { label: "Tackles Won /90", playerKey: "tackles_won_per90", benchmarkKey: "tackles_won_per90" },
+  { label: "Interceptions /90", playerKey: "interceptions_per90", benchmarkKey: "interceptions_per90" },
+];
 
-export const QuickStatsComparison = ({ playerId, playerName }: QuickStatsComparisonProps) => {
-  const [stats, setStats] = React.useState<StatComparison[]>([]);
-  const [comparisonPlayer, setComparisonPlayer] = React.useState<string>("");
+export const QuickStatsComparison = ({ playerId, playerName, playerPosition, onSeeAll }: QuickStatsComparisonProps) => {
   const [loading, setLoading] = React.useState(true);
+  const [chartData, setChartData] = React.useState<{ name: string; value: number }[] | null>(null);
+  const [statLabel, setStatLabel] = React.useState("");
+  const [benchmarkName, setBenchmarkName] = React.useState("");
+
+  const firstName = (name: string) => name.split(" ")[0];
 
   const fetchComparison = React.useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch last 5 analyses for this player
+      // Fetch last 5 analyses for the player
       const { data: playerAnalyses } = await supabase
         .from("player_analysis")
-        .select("r90_score, minutes_played, striker_stats")
+        .select("striker_stats")
         .eq("player_id", playerId)
         .not("r90_score", "is", null)
         .order("analysis_date", { ascending: false })
         .limit(5);
 
       if (!playerAnalyses || playerAnalyses.length === 0) {
-        setStats([]);
+        setChartData(null);
         setLoading(false);
         return;
       }
 
-      // Pick a random comparison player (different from current)
-      const { data: otherPlayers } = await supabase
-        .from("players")
-        .select("id, name")
-        .neq("id", playerId)
-        .in("representation_status", ["represented", "mandated"]);
+      // Fetch benchmark players matching position
+      const { data: benchmarks } = await supabase
+        .from("comparison_players")
+        .select("name, position, metrics")
+        .eq("position", playerPosition);
 
-      if (!otherPlayers || otherPlayers.length === 0) {
-        setStats([]);
+      if (!benchmarks || benchmarks.length === 0) {
+        setChartData(null);
         setLoading(false);
         return;
       }
 
-      const randomPlayer = otherPlayers[Math.floor(Math.random() * otherPlayers.length)];
-      setComparisonPlayer(randomPlayer.name);
+      const randomBenchmark = benchmarks[Math.floor(Math.random() * benchmarks.length)];
+      const metrics = (randomBenchmark.metrics || {}) as Record<string, number>;
+      setBenchmarkName(randomBenchmark.name);
 
-      // Fetch last 5 analyses for comparison player
-      const { data: compAnalyses } = await supabase
-        .from("player_analysis")
-        .select("r90_score, minutes_played, striker_stats")
-        .eq("player_id", randomPlayer.id)
-        .not("r90_score", "is", null)
-        .order("analysis_date", { ascending: false })
-        .limit(5);
+      // Pick a random stat that both have data for
+      const shuffled = [...COMPARABLE_STATS].sort(() => Math.random() - 0.5);
 
-      // Calculate averages
-      const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+      for (const stat of shuffled) {
+        // Player average from last 5
+        const playerVals = playerAnalyses
+          .map(a => (a.striker_stats as any)?.[stat.playerKey])
+          .filter((v): v is number => typeof v === "number");
 
-      const playerR90s = playerAnalyses.map(a => a.r90_score).filter(Boolean) as number[];
-      const compR90s = (compAnalyses || []).map(a => a.r90_score).filter(Boolean) as number[];
+        const benchmarkVal = metrics[stat.benchmarkKey];
 
-      const playerMins = playerAnalyses.map(a => a.minutes_played).filter(Boolean) as number[];
-      const compMins = (compAnalyses || []).map(a => a.minutes_played).filter(Boolean) as number[];
+        if (playerVals.length > 0 && typeof benchmarkVal === "number") {
+          const playerAvg = playerVals.reduce((a, b) => a + b, 0) / playerVals.length;
 
-      // Extract striker stats averages
-      const extractStatAvg = (analyses: any[], key: string) => {
-        const vals = analyses
-          .map(a => a.striker_stats?.[key])
-          .filter((v): v is number => typeof v === 'number');
-        return vals.length > 0 ? avg(vals) : null;
-      };
-
-      const statPairs: { label: string; key: string }[] = [
-        { label: "R90 Score", key: "_r90" },
-        { label: "Minutes Played", key: "_mins" },
-        { label: "xG (adj) /90", key: "xG_adj_per90" },
-        { label: "xA (adj) /90", key: "xA_adj_per90" },
-        { label: "Regains (adj) /90", key: "regains_adj_per90" },
-        { label: "Prog. Passes (adj) /90", key: "progressive_passes_adj_per90" },
-      ];
-
-      const comparisons: StatComparison[] = [];
-
-      for (const { label, key } of statPairs) {
-        let pVal: number | null = null;
-        let cVal: number | null = null;
-
-        if (key === "_r90") {
-          pVal = playerR90s.length > 0 ? avg(playerR90s) : null;
-          cVal = compR90s.length > 0 ? avg(compR90s) : null;
-        } else if (key === "_mins") {
-          pVal = playerMins.length > 0 ? avg(playerMins) : null;
-          cVal = compMins.length > 0 ? avg(compMins) : null;
-        } else {
-          pVal = extractStatAvg(playerAnalyses, key);
-          cVal = extractStatAvg(compAnalyses || [], key);
-        }
-
-        if (pVal !== null) {
-          comparisons.push({
-            label,
-            playerAvg: pVal,
-            comparisonAvg: cVal ?? 0,
-            comparisonName: randomPlayer.name,
-          });
+          setStatLabel(stat.label);
+          setChartData([
+            { name: firstName(playerName), value: Math.round(playerAvg * 100) / 100 },
+            { name: firstName(randomBenchmark.name), value: Math.round(benchmarkVal * 100) / 100 },
+          ]);
+          setLoading(false);
+          return;
         }
       }
 
-      setStats(comparisons);
+      // No matching stat found
+      setChartData(null);
     } catch (error) {
       console.error("Error fetching quick stats:", error);
+      setChartData(null);
     } finally {
       setLoading(false);
     }
-  }, [playerId]);
+  }, [playerId, playerPosition, playerName]);
 
   React.useEffect(() => {
     fetchComparison();
   }, [fetchComparison]);
 
-  if (loading) {
-    return (
-      <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-primary border-b-0">
-        <CardHeader marble className="py-2">
-          <div className="flex items-center gap-2 container mx-auto px-4">
-            <BarChart3 className="h-5 w-5" />
-            <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">Quick Stats</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="container mx-auto px-4 py-6">
-          <div className="space-y-3">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-8 bg-muted animate-pulse rounded" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (stats.length === 0) return null;
-
-  const firstName = (name: string) => name.split(" ")[0];
+  if (!loading && !chartData) return null;
 
   return (
     <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-primary border-b-0">
@@ -159,67 +114,75 @@ export const QuickStatsComparison = ({ playerId, playerName }: QuickStatsCompari
         <div className="flex items-center justify-between container mx-auto px-4 pr-6">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">Last 5 Games</CardTitle>
+            <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">Comparisons</CardTitle>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={fetchComparison}
-            className="flex items-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
-          >
-            <RefreshCw className="h-4 w-4" />
-            New Comparison
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={fetchComparison}
+              className="flex items-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
+            >
+              <RefreshCw className="h-4 w-4" />
+              New
+            </Button>
+            {onSeeAll && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onSeeAll}
+                className="flex items-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
+              >
+                See All
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="container mx-auto px-4 pt-3 pb-4">
-        <p className="text-xs text-muted-foreground mb-3">
-          Averages from last 5 games — compared to <span className="font-semibold text-primary">{comparisonPlayer}</span>
-        </p>
-        <div className="space-y-2">
-          {stats.map((stat) => {
-            const maxVal = Math.max(stat.playerAvg, stat.comparisonAvg, 0.01);
-            const playerPct = (stat.playerAvg / maxVal) * 100;
-            const compPct = (stat.comparisonAvg / maxVal) * 100;
-            const playerWins = stat.playerAvg >= stat.comparisonAvg;
-
-            return (
-              <div key={stat.label} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">{stat.label}</span>
-                  <div className="flex gap-3">
-                    <span className={`font-bold ${playerWins ? "text-primary" : "text-foreground"}`}>
-                      {stat.playerAvg.toFixed(stat.label.includes("Minutes") ? 0 : 2)}
-                    </span>
-                    <span className={`font-bold ${!playerWins ? "text-primary" : "text-muted-foreground"}`}>
-                      {stat.comparisonAvg.toFixed(stat.label.includes("Minutes") ? 0 : 2)}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-1 h-2">
-                  <div
-                    className="rounded-l-full transition-all duration-500"
-                    style={{
-                      width: `${playerPct}%`,
-                      backgroundColor: playerWins ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
-                    }}
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2].map(i => (
+              <div key={i} className="h-8 bg-muted animate-pulse rounded" />
+            ))}
+          </div>
+        ) : chartData ? (
+          <div>
+            <p className="text-xs text-muted-foreground mb-3">
+              <span className="font-semibold text-foreground">{statLabel}</span> — Last 5 games avg vs{" "}
+              <span className="font-semibold text-primary">{benchmarkName}</span>
+            </p>
+            <div className="h-[120px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 40, top: 0, bottom: 0 }}>
+                  <XAxis type="number" hide />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={80}
+                    tick={{ fontSize: 12, fill: "hsl(var(--foreground))" }}
+                    axisLine={false}
+                    tickLine={false}
                   />
-                  <div
-                    className="rounded-r-full transition-all duration-500"
-                    style={{
-                      width: `${compPct}%`,
-                      backgroundColor: !playerWins ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between text-[10px] text-muted-foreground">
-                  <span>{firstName(playerName)}</span>
-                  <span>{firstName(comparisonPlayer)}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                  <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={28}>
+                    {chartData.map((entry, index) => (
+                      <Cell
+                        key={entry.name}
+                        fill={index === 0 ? "hsl(var(--primary))" : "hsl(var(--muted-foreground) / 0.4)"}
+                      />
+                    ))}
+                    <LabelList
+                      dataKey="value"
+                      position="right"
+                      style={{ fontSize: 13, fontWeight: 700, fill: "hsl(var(--foreground))" }}
+                    />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
