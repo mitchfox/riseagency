@@ -678,14 +678,12 @@ const Staff = () => {
         sections: [
           { id: 'overview', title: 'Overview', icon: Calendar },
           { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
+          { id: 'schedule', title: 'Schedule', icon: Calendar },
+          { id: 'meetings', title: 'Meetings', icon: Users },
           { id: 'visionboard', title: 'Vision Board', icon: Target },
           { id: 'docs', title: 'Docs', icon: FileText },
           { id: 'sheets', title: 'Sheets', icon: FileSpreadsheet },
           { id: 'staffschedules', title: 'Staff Schedules', icon: Users },
-          ...(user?.email === 'jolonlevene98@gmail.com' ? [
-            { id: 'notifications', title: 'Notifications', icon: BellRing },
-            { id: 'smsnotifications', title: 'SMS Notifications', icon: MessageSquare }
-          ] : []),
         ],
         locked: false
       },
@@ -695,10 +693,8 @@ const Staff = () => {
         icon: Dumbbell,
         locked: false,
         sections: [
-          { id: 'schedule', title: 'Schedule', icon: Calendar },
           { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
           { id: 'tacticsboard', title: 'Tactics Board', icon: Target },
-          { id: 'meetings', title: 'Meetings', icon: Users },
           { id: 'coachingdata', title: 'Data', icon: Database },
           { id: 'analysis', title: 'Analysis', icon: LineChart },
           { id: 'athletecentre', title: 'Athlete Centre', icon: UserRound },
@@ -711,7 +707,7 @@ const Staff = () => {
         icon: UserCog,
         locked: false,
         sections: [
-          { id: 'players', title: 'Player Management', icon: UserCog },
+          { id: 'players', title: 'Players', icon: UserCog },
           { id: 'transferhub', title: 'Transfer Hub', icon: Building2 },
           { id: 'updates', title: 'Player Updates', icon: BellRing },
           { id: 'requests', title: 'Requests', icon: Target },
@@ -759,16 +755,28 @@ const Staff = () => {
         ]
       },
       {
-        id: 'admin',
-        title: 'Admin & Legal',
+        id: 'legal',
+        title: 'Legal',
         icon: Scale,
         locked: false,
         sections: [
           { id: 'legal', title: 'Legal', icon: Scale },
           { id: 'partners', title: 'Partners', icon: Handshake },
           { id: 'jobs', title: 'Jobs', icon: Briefcase },
+        ]
+      },
+      {
+        id: 'admin',
+        title: 'Admin',
+        icon: Shield,
+        locked: false,
+        sections: [
           { id: 'sitetext', title: 'Site Text', icon: FileText },
           { id: 'languages', title: 'Languages', icon: Languages },
+          ...(user?.email === 'jolonlevene98@gmail.com' ? [
+            { id: 'notifications', title: 'Notifications', icon: BellRing },
+            { id: 'smsnotifications', title: 'SMS Notifications', icon: MessageSquare },
+          ] : []),
           ...(isAdmin ? [
             { id: 'passwords', title: 'Player Passwords', icon: Lock },
             { id: 'staffaccounts', title: 'Staff Accounts', icon: Shield },
@@ -1066,7 +1074,7 @@ const Staff = () => {
 
                 {/* Sections (shown when expanded) */}
                 {isExpanded && !isSingleSection && (
-                  <div className="w-full space-y-1.5 mt-2">
+                  <div className="w-full space-y-1.5 mt-2 pb-16">
                     {category.sections.map((section) => {
                       const SectionIcon = section.icon;
                       const isActive = expandedSection === section.id;

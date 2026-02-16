@@ -210,37 +210,32 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
     }
   }, [userId]);
 
-  // Check for unsaved changes
+  // Auto-save changes to localStorage whenever layouts or widgets change
   useEffect(() => {
+    if (userId === undefined) return;
     const layoutsChanged = JSON.stringify(layouts) !== JSON.stringify(savedLayouts);
     const widgetsChanged = JSON.stringify(visibleWidgets.sort()) !== JSON.stringify([...savedVisibleWidgets].sort());
-    setHasUnsavedChanges(layoutsChanged || widgetsChanged);
-  }, [layouts, savedLayouts, visibleWidgets, savedVisibleWidgets]);
+    if (layoutsChanged || widgetsChanged) {
+      const storageKey = getStorageKey();
+      const layoutsCopy = layouts.map(l => ({ ...l }));
+      const widgetsCopy = [...visibleWidgets];
+      localStorage.setItem(storageKey, JSON.stringify({ visibleWidgets: widgetsCopy, layouts: layoutsCopy }));
+      setSavedLayouts(layoutsCopy);
+      setSavedVisibleWidgets(widgetsCopy);
+    }
+    setHasUnsavedChanges(false);
+  }, [layouts, visibleWidgets]);
 
-  // Save settings to localStorage (only updates local state, doesn't persist)
+  // Keep confirmSaveChanges for backwards compat but it's now a no-op
+  const confirmSaveChanges = () => {};
+
+  // Discard changes (no longer needed but kept for interface)
+  const discardChanges = () => {};
+
+  // Update layout state (auto-persisted via the effect above)
   const updateLayoutState = (newVisibleWidgets: string[], newLayouts: WidgetLayout[]) => {
     setVisibleWidgets(newVisibleWidgets);
     setLayouts(newLayouts);
-  };
-
-  // Persist changes to localStorage
-  const confirmSaveChanges = () => {
-    const storageKey = getStorageKey();
-    // Deep clone the layouts to avoid reference issues
-    const layoutsCopy = layouts.map(l => ({ ...l }));
-    const widgetsCopy = [...visibleWidgets];
-    console.log('Saving overview settings to:', storageKey, { visibleWidgets: widgetsCopy, layouts: layoutsCopy });
-    localStorage.setItem(storageKey, JSON.stringify({ visibleWidgets: widgetsCopy, layouts: layoutsCopy }));
-    setSavedLayouts(layoutsCopy);
-    setSavedVisibleWidgets(widgetsCopy);
-    setHasUnsavedChanges(false);
-  };
-
-  // Discard changes
-  const discardChanges = () => {
-    setLayouts(savedLayouts);
-    setVisibleWidgets(savedVisibleWidgets);
-    setHasUnsavedChanges(false);
   };
 
   const toggleWidgetVisibility = (widgetId: string) => {

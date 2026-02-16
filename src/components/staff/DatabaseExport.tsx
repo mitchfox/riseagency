@@ -210,14 +210,24 @@ export const DatabaseExport = () => {
         </div>
       )}
 
-      <Button onClick={handleExport} disabled={exporting} className="w-full" size="lg">
-        {exporting ? (
-          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-        ) : (
-          <Download className="h-5 w-5 mr-2" />
-        )}
-        {exporting ? "Exporting..." : selectedCategories.length > 0 ? `Export ${selectedCategories.length} Categories` : "Export All Data"}
-      </Button>
+      <div className="flex gap-3">
+        <Button onClick={() => { setSelectedCategories([]); handleExport(); }} disabled={exporting} className="flex-1" size="lg" variant="outline">
+          {exporting && selectedCategories.length === 0 ? (
+            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+          ) : (
+            <Download className="h-5 w-5 mr-2" />
+          )}
+          Export All Data
+        </Button>
+        <Button onClick={handleExport} disabled={exporting || selectedCategories.length === 0} className="flex-1" size="lg">
+          {exporting && selectedCategories.length > 0 ? (
+            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+          ) : (
+            <Download className="h-5 w-5 mr-2" />
+          )}
+          {exporting ? "Exporting..." : `Export ${selectedCategories.length || 'Selected'} Categories`}
+        </Button>
+      </div>
     </div>
   );
 };

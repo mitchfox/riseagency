@@ -98,9 +98,6 @@ export const MarketingGallery = () => {
                 <span className="text-xs font-bebas uppercase tracking-wider text-primary">
                   {item.category}
                 </span>
-                <h4 className="text-sm font-bebas uppercase tracking-wider text-white">
-                  {item.title}
-                </h4>
               </div>
             </div>
           </ScrollReveal>
