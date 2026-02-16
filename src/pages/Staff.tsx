@@ -81,6 +81,8 @@ import type { User } from "@supabase/supabase-js";
 import { ActivityLog } from "@/components/staff/ActivityLog";
 import { DatabaseExport } from "@/components/staff/DatabaseExport";
 import { VideoAnalysis } from "@/components/staff/coaching/VideoAnalysis";
+import { StrengthPowerSpeedSection } from "@/components/staff/programming/StrengthPowerSpeedSection";
+import { NutritionSection } from "@/components/staff/programming/NutritionSection";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTheme } from "next-themes";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
@@ -123,6 +125,8 @@ import {
   Briefcase,
   Handshake,
   Database,
+  Apple,
+  Zap,
 } from "lucide-react";
 
 const Staff = () => {
@@ -137,7 +141,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   
@@ -697,13 +701,23 @@ const Staff = () => {
         locked: false,
         sections: [
           { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
-          { id: '_group_planning', title: 'Planning', isGroupLabel: true },
-          { id: 'tacticsboard', title: 'Tactics Board', icon: Target },
-          { id: 'coachingdata', title: 'Data', icon: Database },
-          { id: '_group_performance', title: 'Performance', isGroupLabel: true },
+          { id: '_group_analysis', title: 'Analysis', isGroupLabel: true },
           { id: 'analysis', title: 'Analysis', icon: LineChart },
           { id: 'videoanalysis', title: 'Video Analysis', icon: Film },
+          { id: 'coachingdata', title: 'Data', icon: Database },
+          { id: '_group_planning', title: 'Planning', isGroupLabel: true },
           { id: 'athletecentre', title: 'Athlete Centre', icon: UserRound },
+          { id: 'tacticsboard', title: 'Tactics Board', icon: Target },
+        ]
+      },
+      {
+        id: 'programming',
+        title: 'Programming',
+        icon: Zap,
+        locked: false,
+        sections: [
+          { id: 'strengthpower', title: 'Strength, Power & Speed', icon: Dumbbell },
+          { id: 'nutrition', title: 'Nutrition', icon: Apple },
         ]
       },
       {
@@ -825,6 +839,8 @@ const Staff = () => {
     expenses: ['costs', 'receipts', 'spending', 'reimbursement'],
     athletecentre: ['athlete', 'development', 'programming', 'periodisation'],
     videoanalysis: ['video', 'footage', 'annotations', 'clips', 'timestamps'],
+    strengthpower: ['strength', 'power', 'speed', 'gym', 'training', 'exercises', 'programming'],
+    nutrition: ['nutrition', 'diet', 'food', 'macros', 'calories', 'meal', 'supplements'],
     activitylog: ['audit', 'activity', 'log', 'history', 'actions'],
     dataexport: ['export', 'backup', 'download', 'csv', 'data'],
     scoutingcentre: ['scouting', 'reports', 'scouts', 'evaluations'],
@@ -1212,6 +1228,8 @@ const Staff = () => {
                   {expandedSection === 'notifications' && user?.email === 'jolonlevene98@gmail.com' && <NotificationSettingsManagement />}
                   {expandedSection === 'smsnotifications' && user?.email === 'jolonlevene98@gmail.com' && <StaffSMSNotifications />}
                   {expandedSection === 'videoanalysis' && <VideoAnalysis />}
+                  {expandedSection === 'strengthpower' && <StrengthPowerSpeedSection />}
+                  {expandedSection === 'nutrition' && <NutritionSection />}
                   {expandedSection === 'activitylog' && isAdmin && <ActivityLog />}
                   {expandedSection === 'dataexport' && isAdmin && <DatabaseExport />}
                 </CardContent>
