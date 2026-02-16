@@ -21,6 +21,7 @@ import { BrandKitPanel } from './BrandKitPanel';
 import { TemplatesPanel } from './TemplatesPanel';
 import { FiltersPanel } from './FiltersPanel';
 import { ExportDialog } from './ExportDialog';
+import { FloatingToolbar } from './FloatingToolbar';
 import { CANVAS_PRESETS } from './types';
 import type { ShapeType, SnapLine, DesignProject, DesignTemplate } from './types';
 
@@ -148,9 +149,14 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
     return () => { window.removeEventListener('mousemove', handleMove); window.removeEventListener('mouseup', handleUp); };
   }, [isPanning, canvas]);
 
-  const handleDrag = useCallback((id: string, x: number, y: number) => {
+  const handleDrag = useCallback((id: string, x: number, y: number, ctrlKey?: boolean) => {
     const el = canvas.project.elements.find(e => e.id === id);
     if (!el) return;
+    if (ctrlKey) {
+      setActiveSnapLines([]);
+      canvas.updateElement(id, { x, y });
+      return;
+    }
     const result = canvas.calculateSnap({ ...el, x, y }, canvas.project.elements);
     setActiveSnapLines(result.lines);
     canvas.updateElement(id, { x: result.x, y: result.y });
@@ -468,13 +474,24 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
                       ...(line.type === 'vertical'
                         ? { left: line.position, top: 0, width: 1, height: '100%' }
                         : { top: line.position, left: 0, height: 1, width: '100%' }),
-                      backgroundColor: '#ef4444',
+                      backgroundColor: '#ec4899',
                       zIndex: 9999,
                       pointerEvents: 'none',
                     }}
                   />
                 ))}
 
+                {/* Floating toolbar for selected element */}
+                {selectedElement && canvas.selectedIds.length === 1 && (
+                  <FloatingToolbar
+                    element={selectedElement}
+                    zoom={canvas.zoom}
+                    onUpdate={canvas.updateElement}
+                    onDelete={canvas.deleteSelected}
+                    onDuplicate={canvas.duplicateSelected}
+                    onMoveLayer={canvas.moveLayer}
+                  />
+                )}
                 {canvas.project.elements.map(el => (
                   <CanvasElement
                     key={el.id}

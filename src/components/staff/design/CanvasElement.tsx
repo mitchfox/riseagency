@@ -9,7 +9,7 @@ interface CanvasElementProps {
   onUpdate: (id: string, updates: Partial<DesignElement>) => void;
   onDragStart: () => void;
   onDragEnd: () => void;
-  onDrag: (id: string, x: number, y: number) => void;
+  onDrag: (id: string, x: number, y: number, ctrlKey?: boolean) => void;
 }
 
 export function CanvasElement({
@@ -47,7 +47,7 @@ export function CanvasElement({
       if (isDragging) {
         const dx = (e.clientX - dragStart.current.x) / zoom;
         const dy = (e.clientY - dragStart.current.y) / zoom;
-        onDrag(element.id, dragStart.current.elX + dx, dragStart.current.elY + dy);
+        onDrag(element.id, dragStart.current.elX + dx, dragStart.current.elY + dy, e.ctrlKey || e.metaKey);
       }
       if (isResizing && resizeHandle) {
         const dx = (e.clientX - resizeStart.current.x) / zoom;
@@ -261,7 +261,7 @@ export function CanvasElement({
         opacity: element.opacity,
         cursor: element.locked ? 'default' : isDragging ? 'grabbing' : 'move',
         zIndex: isSelected ? 999 : 'auto',
-        outline: isSelected ? '2px solid hsl(var(--primary))' : 'none',
+        outline: isSelected ? '2px solid #a855f7' : 'none',
         outlineOffset: '1px',
       }}
       onMouseDown={handleMouseDown}
@@ -278,7 +278,7 @@ export function CanvasElement({
                 position: 'absolute',
                 width: 8,
                 height: 8,
-                backgroundColor: 'hsl(var(--primary))',
+                backgroundColor: '#a855f7',
                 border: '1px solid white',
                 borderRadius: '50%',
                 ...handlePositions[h],

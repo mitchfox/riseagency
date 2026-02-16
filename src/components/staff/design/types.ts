@@ -101,9 +101,7 @@ export const CANVAS_PRESETS = [
 ] as const;
 
 export const FONT_FAMILIES = [
-  'Inter', 'Arial', 'Georgia', 'Times New Roman', 'Courier New',
-  'Verdana', 'Trebuchet MS', 'Impact', 'Comic Sans MS',
-  'Helvetica', 'Futura', 'Garamond', 'Palatino', 'Bookman',
+  'Agrandir Tight',
 ];
 
 export const SHAPE_DEFAULTS: Record<ShapeType, Partial<DesignElement>> = {
@@ -142,9 +140,9 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
     background: '#1a1a2e',
     elements: [
       { type: 'shape', shapeType: 'rectangle', x: 0, y: 0, width: 1080, height: 1080, fill: '#1a1a2e', opacity: 1 },
-      { type: 'text', text: 'ANNOUNCEMENT', x: 140, y: 200, width: 800, height: 80, fontSize: 64, fontFamily: 'Impact', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
+      { type: 'text', text: 'ANNOUNCEMENT', x: 140, y: 200, width: 800, height: 80, fontSize: 64, fontFamily: 'Agrandir Tight', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
       { type: 'shape', shapeType: 'rectangle', x: 340, y: 300, width: 400, height: 4, fill: '#e94560' },
-      { type: 'text', text: 'Your message here', x: 140, y: 400, width: 800, height: 200, fontSize: 36, fontFamily: 'Inter', color: '#cccccc', textAlign: 'center' },
+      { type: 'text', text: 'Your message here', x: 140, y: 400, width: 800, height: 200, fontSize: 36, fontFamily: 'Agrandir Tight', color: '#cccccc', textAlign: 'center' },
     ],
   },
   {
@@ -155,9 +153,9 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
     height: 1080,
     background: '#0f3460',
     elements: [
-      { type: 'text', text: 'MATCH DAY', x: 190, y: 100, width: 700, height: 100, fontSize: 80, fontFamily: 'Impact', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
-      { type: 'text', text: 'VS', x: 440, y: 450, width: 200, height: 80, fontSize: 72, fontFamily: 'Impact', color: '#e94560', textAlign: 'center' },
-      { type: 'text', text: 'Saturday, 3:00 PM', x: 240, y: 850, width: 600, height: 50, fontSize: 28, fontFamily: 'Inter', color: '#aaaaaa', textAlign: 'center' },
+      { type: 'text', text: 'MATCH DAY', x: 190, y: 100, width: 700, height: 100, fontSize: 80, fontFamily: 'Agrandir Tight', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
+      { type: 'text', text: 'VS', x: 440, y: 450, width: 200, height: 80, fontSize: 72, fontFamily: 'Agrandir Tight', color: '#e94560', textAlign: 'center' },
+      { type: 'text', text: 'Saturday, 3:00 PM', x: 240, y: 850, width: 600, height: 50, fontSize: 28, fontFamily: 'Agrandir Tight', color: '#aaaaaa', textAlign: 'center' },
     ],
   },
   {
@@ -169,9 +167,9 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
     background: '#16213e',
     elements: [
       { type: 'shape', shapeType: 'rectangle', x: 0, y: 1400, width: 1080, height: 520, fill: '#0f3460' },
-      { type: 'text', text: 'PLAYER SPOTLIGHT', x: 90, y: 100, width: 900, height: 80, fontSize: 48, fontFamily: 'Impact', color: '#e94560', textAlign: 'center' },
-      { type: 'text', text: 'Player Name', x: 90, y: 1480, width: 900, height: 80, fontSize: 56, fontFamily: 'Impact', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
-      { type: 'text', text: 'Position | #00', x: 90, y: 1580, width: 900, height: 50, fontSize: 28, fontFamily: 'Inter', color: '#aaaaaa', textAlign: 'center' },
+      { type: 'text', text: 'PLAYER SPOTLIGHT', x: 90, y: 100, width: 900, height: 80, fontSize: 48, fontFamily: 'Agrandir Tight', color: '#e94560', textAlign: 'center' },
+      { type: 'text', text: 'Player Name', x: 90, y: 1480, width: 900, height: 80, fontSize: 56, fontFamily: 'Agrandir Tight', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
+      { type: 'text', text: 'Position | #00', x: 90, y: 1580, width: 900, height: 50, fontSize: 28, fontFamily: 'Agrandir Tight', color: '#aaaaaa', textAlign: 'center' },
     ],
   },
   {
@@ -182,10 +180,10 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
     height: 1080,
     background: '#ffffff',
     elements: [
-      { type: 'text', text: '"', x: 100, y: 200, width: 100, height: 150, fontSize: 200, fontFamily: 'Georgia', color: '#e0e0e0' },
-      { type: 'text', text: 'Your inspirational quote goes here', x: 150, y: 350, width: 780, height: 250, fontSize: 42, fontFamily: 'Georgia', fontStyle: 'italic', color: '#333333', textAlign: 'center' },
+      { type: 'text', text: '"', x: 100, y: 200, width: 100, height: 150, fontSize: 200, fontFamily: 'Agrandir Tight', color: '#e0e0e0' },
+      { type: 'text', text: 'Your inspirational quote goes here', x: 150, y: 350, width: 780, height: 250, fontSize: 42, fontFamily: 'Agrandir Tight', fontStyle: 'italic', color: '#333333', textAlign: 'center' },
       { type: 'shape', shapeType: 'rectangle', x: 440, y: 650, width: 200, height: 3, fill: '#333333' },
-      { type: 'text', text: '— Author Name', x: 250, y: 700, width: 580, height: 50, fontSize: 24, fontFamily: 'Inter', color: '#666666', textAlign: 'center' },
+      { type: 'text', text: '— Author Name', x: 250, y: 700, width: 580, height: 50, fontSize: 24, fontFamily: 'Agrandir Tight', color: '#666666', textAlign: 'center' },
     ],
   },
   {
@@ -197,8 +195,8 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
     background: '#ff0000',
     elements: [
       { type: 'shape', shapeType: 'rectangle', x: 0, y: 0, width: 1280, height: 720, fill: '#1a1a1a' },
-      { type: 'text', text: 'VIDEO TITLE', x: 80, y: 200, width: 600, height: 120, fontSize: 72, fontFamily: 'Impact', fontWeight: 'bold', color: '#ffffff' },
-      { type: 'text', text: 'Subtitle text here', x: 80, y: 340, width: 600, height: 60, fontSize: 32, fontFamily: 'Inter', color: '#cccccc' },
+      { type: 'text', text: 'VIDEO TITLE', x: 80, y: 200, width: 600, height: 120, fontSize: 72, fontFamily: 'Agrandir Tight', fontWeight: 'bold', color: '#ffffff' },
+      { type: 'text', text: 'Subtitle text here', x: 80, y: 340, width: 600, height: 60, fontSize: 32, fontFamily: 'Agrandir Tight', color: '#cccccc' },
     ],
   },
   {
@@ -209,9 +207,9 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
     height: 1920,
     background: '#667eea',
     elements: [
-      { type: 'text', text: 'SWIPE UP', x: 290, y: 1600, width: 500, height: 60, fontSize: 36, fontFamily: 'Inter', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
-      { type: 'text', text: 'Your Story Title', x: 90, y: 700, width: 900, height: 100, fontSize: 64, fontFamily: 'Inter', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
-      { type: 'text', text: 'Add description here', x: 140, y: 850, width: 800, height: 60, fontSize: 28, fontFamily: 'Inter', color: 'rgba(255,255,255,0.8)', textAlign: 'center' },
+      { type: 'text', text: 'SWIPE UP', x: 290, y: 1600, width: 500, height: 60, fontSize: 36, fontFamily: 'Agrandir Tight', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
+      { type: 'text', text: 'Your Story Title', x: 90, y: 700, width: 900, height: 100, fontSize: 64, fontFamily: 'Agrandir Tight', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
+      { type: 'text', text: 'Add description here', x: 140, y: 850, width: 800, height: 60, fontSize: 28, fontFamily: 'Agrandir Tight', color: 'rgba(255,255,255,0.8)', textAlign: 'center' },
     ],
   },
 ];
