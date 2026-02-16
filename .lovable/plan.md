@@ -1,48 +1,81 @@
 
 
-# Fix Site Visitors: Duration Tracking and Hide Controls
+# Staff Portal and Site-wide Improvements
 
-## Problem 1: All durations recorded as 0
+## 1. Breadcrumb Navigation Bar
+**Where:** Staff portal main content area, below the header  
+**What:** Add a breadcrumb trail showing `Category > Section` so users always know where they are. Clicking the category name collapses back to category view. This replaces the generic card title with richer context.
 
-**Root cause:** Race condition in `usePageTracking.ts`. When the user navigates away, the cleanup function awaits the tracking promise then reads `visitIdRef.current`. But the new page's effect has already run and reset `visitIdRef.current = null` before the async cleanup gets to read it.
+## 2. Sidebar Transition Animations
+**Where:** Staff sidebar section expansion  
+**What:** Animate the section list when a category expands -- stagger each item sliding in from the left with a slight delay between each. Currently sections just pop in; staggered Framer Motion `variants` with `staggerChildren` would add a premium feel.
 
-**Fix:** Store the visit ID in a local variable scoped to each effect instance instead of reading from the shared ref after an await.
+## 3. Keyboard Shortcuts Bar
+**Where:** Staff portal footer or floating tooltip  
+**What:** Add keyboard shortcuts beyond just Cmd+K search:
+- Arrow keys to navigate between sections
+- `Esc` to go back to overview
+- Number keys `1-9` to jump to categories  
 
-```
-File: src/hooks/usePageTracking.ts
+Display a small shortcut hint strip at the bottom of the sidebar.
 
-Change the trackPageView function to return the visitId, and
-store it in a local variable that the cleanup closure captures
-directly, avoiding the ref race condition.
-```
+## 4. Section Favourites / Pinning
+**Where:** Sidebar and overview  
+**What:** Let staff pin their most-used sections to the top of the sidebar as quick-access icons. Stored in localStorage per user. A small star icon on hover of each section button toggles the pin.
 
-Specifically:
-- Make `trackPageView` return the visitId string
-- Store the returned value in a local `let localVisitId` variable
-- In the cleanup, use `localVisitId` directly instead of reading `visitIdRef.current`
-- Remove the `visitIdRef` entirely since it is no longer needed
+## 5. Toasts with Undo Actions
+**Where:** Sitewide on destructive actions  
+**What:** When deleting or hiding items (e.g. hiding a visitor IP, removing a player), show a toast with an "Undo" button that reverses the action within a 5-second window. Uses sonner's built-in action support.
 
-## Problem 2: Hide by IP / Hide by Location
+## 6. Overview Widget Transitions
+**Where:** StaffOverview dashboard  
+**What:** Add entrance animations to widgets when they load -- a subtle scale-up and fade-in. When dragging widgets, add a gentle rotation tilt to the dragged item for tactile feedback.
 
-This already exists in the code (lines 238-278 and 362-407 in `SiteVisitorsManagement.tsx`). The "Hide IP" and "Hide by Location" buttons are only visible when viewing a specific visitor's details. No changes needed here -- this is already working.
+## 7. Global Loading Skeleton Screens
+**Where:** All data-heavy sections (Player Database, Recruitment, Analysis)  
+**What:** Replace the basic loading spinners with skeleton shimmer placeholders that match the layout of the content being loaded. This feels faster and more polished than a centred spinner.
+
+## 8. Contextual Quick Actions
+**Where:** Player Database rows, Recruitment table rows  
+**What:** Add a right-click context menu (or a "..." overflow menu) on table rows with common actions like "View Profile", "Send Message", "Add Note", "Copy Details". Uses Radix's existing ContextMenu component.
+
+## 9. Collapsible Section Memory
+**Where:** All accordion-style content within sections  
+**What:** Persist which sub-tabs or accordions are expanded within each section to localStorage, so the view state is preserved across visits.
+
+## 10. Public Site: Scroll Progress Indicator
+**Where:** All public pages with long content (About, Players, etc.)  
+**What:** A thin gold progress bar fixed to the top of the viewport that fills as the user scrolls down. Subtle but adds a layer of polish.
 
 ---
 
 ## Technical Details
 
-### File: `src/hooks/usePageTracking.ts`
-
-Current broken flow:
+### Breadcrumb (Staff.tsx)
+Add a `Breadcrumb` component between the header and content card. Derive the label from the `expandedCategory` and `expandedSection` state. Render as:
 ```text
-Effect runs -> visitIdRef = null -> trackPageView() starts async
-Cleanup runs -> captures promise -> awaits it -> reads visitIdRef (already null from next effect)
+[Category Icon] Category Name  >  Section Name
+```
+The category portion is clickable and collapses the section back to category view.
+
+### Sidebar Stagger Animation (Staff.tsx)
+Wrap the expanded sections list in a `motion.div` with `variants`:
+```text
+container: { transition: { staggerChildren: 0.04 } }
+item: { initial: { x: -10, opacity: 0 }, animate: { x: 0, opacity: 1 } }
 ```
 
-Fixed flow:
-```text
-Effect runs -> trackPageView() starts, returns visitId into local var
-Cleanup runs -> uses local var directly (immune to next effect resetting anything)
-```
+### Section Pinning (Staff.tsx + localStorage)
+- Store `pinnedSections: string[]` in localStorage keyed by userId
+- Render pinned sections as small icon buttons above the category list in the sidebar
+- Toggle pin via a star icon that appears on hover of any section button
 
-The key change: replace the shared mutable ref with a per-effect-instance local variable that gets set when the tracking promise resolves, and read in the cleanup closure without any ref indirection.
+### Skeleton Screens
+Create a reusable `TableSkeleton` component with animated shimmer rows matching the table layout (avatar circle, text bars of varying width). Use Tailwind's `animate-pulse` on grey rectangles.
+
+### Scroll Progress (public pages)
+A fixed `div` at `top: 0` with `width` driven by `window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100`. Gold background, 2px height, z-50.
+
+### Keyboard Shortcuts (Staff.tsx)
+Extend the existing `useEffect` keyboard listener to handle additional keys. Show a `?` floating button that opens a shortcuts cheat sheet dialog.
 
