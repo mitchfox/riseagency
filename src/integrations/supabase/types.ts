@@ -2046,6 +2046,7 @@ export type Database = {
           action_score: number | null
           action_type: string | null
           analysis_id: string
+          clip_id: string | null
           created_at: string | null
           id: string
           is_successful: boolean | null
@@ -2053,6 +2054,7 @@ export type Database = {
           notes: string | null
           recorded_stat: Json | null
           updated_at: string | null
+          video_analysis_id: string | null
           video_url: string | null
           zone: number | null
         }
@@ -2062,6 +2064,7 @@ export type Database = {
           action_score?: number | null
           action_type?: string | null
           analysis_id: string
+          clip_id?: string | null
           created_at?: string | null
           id?: string
           is_successful?: boolean | null
@@ -2069,6 +2072,7 @@ export type Database = {
           notes?: string | null
           recorded_stat?: Json | null
           updated_at?: string | null
+          video_analysis_id?: string | null
           video_url?: string | null
           zone?: number | null
         }
@@ -2078,6 +2082,7 @@ export type Database = {
           action_score?: number | null
           action_type?: string | null
           analysis_id?: string
+          clip_id?: string | null
           created_at?: string | null
           id?: string
           is_successful?: boolean | null
@@ -2085,6 +2090,7 @@ export type Database = {
           notes?: string | null
           recorded_stat?: Json | null
           updated_at?: string | null
+          video_analysis_id?: string | null
           video_url?: string | null
           zone?: number | null
         }
@@ -2094,6 +2100,13 @@ export type Database = {
             columns: ["analysis_id"]
             isOneToOne: false
             referencedRelation: "player_analysis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_report_actions_video_analysis_id_fkey"
+            columns: ["video_analysis_id"]
+            isOneToOne: false
+            referencedRelation: "video_analyses"
             referencedColumns: ["id"]
           },
         ]
@@ -4856,6 +4869,7 @@ export type Database = {
           created_by: string | null
           id: string
           match_date: string | null
+          match_minute_offset: number | null
           opponent: string | null
           player_id: string | null
           title: string
@@ -4870,6 +4884,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           match_date?: string | null
+          match_minute_offset?: number | null
           opponent?: string | null
           player_id?: string | null
           title: string
@@ -4884,6 +4899,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           match_date?: string | null
+          match_minute_offset?: number | null
           opponent?: string | null
           player_id?: string | null
           title?: string
