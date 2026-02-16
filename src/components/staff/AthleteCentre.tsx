@@ -7,13 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  User, FileText, Dumbbell, LineChart, Target, Calendar,
-  Save, Loader2, ChevronRight, ClipboardList
+  User, Dumbbell, LineChart, Target, Calendar,
+  Save, Loader2, ChevronRight, ClipboardList, BarChart3, Film, Database
 } from "lucide-react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { PlayerScoutingReports } from "@/components/PlayerScoutingReports";
+import { AnalysisComparisons } from "@/components/portal/AnalysisComparisons";
+import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
+import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 
 interface Player {
   id: string;
@@ -37,12 +40,16 @@ interface PlayerAnalysis {
   analysis_date: string;
   opponent: string | null;
   r90_score: number | null;
+  minutes_played: number | null;
+  result: string | null;
+  striker_stats?: any;
+  fixture_stats?: any;
 }
 
 export const AthleteCentre = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("scouting");
+  const [activeTab, setActiveTab] = useState("longterm");
   const [loading, setLoading] = useState(true);
   
   // Player-specific data
@@ -87,24 +94,15 @@ export const AthleteCentre = () => {
 
     setPrograms(programsData || []);
 
-    // Fetch analyses
+    // Fetch analyses with full data for portal components
     const { data: analysesData } = await supabase
       .from("player_analysis")
-      .select("id, analysis_date, opponent, r90_score")
+      .select("id, analysis_date, opponent, r90_score, minutes_played, result, striker_stats, fixture_stats")
       .eq("player_id", playerId)
-      .order("analysis_date", { ascending: false })
-      .limit(10);
+      .order("analysis_date", { ascending: false });
 
     setAnalyses(analysesData || []);
 
-    // Fetch player notes (focuses and long-term plan from player bio or a new field)
-    const { data: playerData } = await supabase
-      .from("players")
-      .select("bio")
-      .eq("id", playerId)
-      .single();
-
-    // For now we'll use bio as a placeholder - in production you'd have dedicated fields
     setFocuses("");
     setLongTermPlan("");
   };
@@ -114,7 +112,6 @@ export const AthleteCentre = () => {
   const handleSaveFocuses = async () => {
     if (!selectedPlayer) return;
     setSaving(true);
-    // This would save to a dedicated field in production
     toast.success("Development focuses saved");
     setSaving(false);
   };
@@ -122,7 +119,6 @@ export const AthleteCentre = () => {
   const handleSaveLongTermPlan = async () => {
     if (!selectedPlayer) return;
     setSaving(true);
-    // This would save to a dedicated field in production
     toast.success("Long-term plan saved");
     setSaving(false);
   };
@@ -131,9 +127,20 @@ export const AthleteCentre = () => {
     return <LoadingSpinner size="lg" className="py-12" />;
   }
 
+  const tabItems = [
+    { value: "longterm", label: "Long-Term Plan", icon: Calendar },
+    { value: "focuses", label: "Dev Focuses", icon: Target },
+    { value: "programming", label: "Programming", icon: Dumbbell },
+    { value: "scouting", label: "Scouting", icon: ClipboardList },
+    { value: "data", label: "Data", icon: Database },
+    { value: "comparisons", label: "Comparisons", icon: BarChart3 },
+    { value: "video", label: "Video Reports", icon: Film },
+    { value: "analysis", label: "Analysis", icon: LineChart },
+  ];
+
   return (
     <div className="space-y-4">
-      {/* Player Selector - Dropdown */}
+      {/* Player Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex-1">
           <Select value={selectedPlayer || ""} onValueChange={setSelectedPlayer}>
@@ -189,89 +196,98 @@ export const AthleteCentre = () => {
           </CardHeader>
           <CardContent className="p-0 overflow-hidden">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              {/* Mobile-friendly tab navigation */}
+              {/* Mobile dropdown */}
               <div className="border-b p-2 md:p-3">
                 <Select value={activeTab} onValueChange={setActiveTab}>
                   <SelectTrigger className="w-full md:hidden">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="scouting">
-                      <div className="flex items-center gap-2">
-                        <ClipboardList className="h-4 w-4" />
-                        Scouting Reports
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="programming">
-                      <div className="flex items-center gap-2">
-                        <Dumbbell className="h-4 w-4" />
-                        Programming
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="analysis">
-                      <div className="flex items-center gap-2">
-                        <LineChart className="h-4 w-4" />
-                        Performance Analysis
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="focuses">
-                      <div className="flex items-center gap-2">
-                        <Target className="h-4 w-4" />
-                        Development Focuses
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="longterm">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        Long-Term Plan
-                      </div>
-                    </SelectItem>
+                    {tabItems.map((tab) => (
+                      <SelectItem key={tab.value} value={tab.value}>
+                        <div className="flex items-center gap-2">
+                          <tab.icon className="h-4 w-4" />
+                          {tab.label}
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 
-                {/* Desktop tabs - hidden on mobile */}
-                <TabsList className="hidden md:flex w-full justify-start h-auto p-0 bg-transparent rounded-none gap-1">
-                  <TabsTrigger 
-                    value="scouting" 
-                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t px-4 py-2 text-sm"
-                  >
-                    <ClipboardList className="h-4 w-4 mr-2" />
-                    Scouting
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="programming" 
-                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t px-4 py-2 text-sm"
-                  >
-                    <Dumbbell className="h-4 w-4 mr-2" />
-                    Programming
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="analysis" 
-                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t px-4 py-2 text-sm"
-                  >
-                    <LineChart className="h-4 w-4 mr-2" />
-                    Analysis
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="focuses" 
-                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t px-4 py-2 text-sm"
-                  >
-                    <Target className="h-4 w-4 mr-2" />
-                    Focuses
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="longterm" 
-                    className="data-[state=active]:bg-primary/10 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-t px-4 py-2 text-sm"
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Long-Term
-                  </TabsTrigger>
+                {/* Desktop tabs */}
+                <TabsList className="hidden md:flex w-full justify-start h-auto p-0 bg-transparent rounded-none gap-1 flex-wrap">
+                  {tabItems.map((tab) => (
+                    <TabsTrigger 
+                      key={tab.value}
+                      value={tab.value} 
+                      className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-t px-3 py-2 text-sm"
+                    >
+                      <tab.icon className="h-4 w-4 mr-1.5" />
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
                 </TabsList>
               </div>
 
               <div className="p-3 md:p-6">
-                <TabsContent value="scouting" className="mt-0">
-                  <PlayerScoutingReports playerId={selectedPlayer} playerName={currentPlayer.name} embedded />
+                <TabsContent value="longterm" className="mt-0 space-y-3 md:space-y-4">
+                  <div className="flex items-center justify-between mb-3 md:mb-4">
+                    <h3 className="text-base md:text-lg font-semibold">Long-Term Development Plan</h3>
+                  </div>
+                  <div className="space-y-3 md:space-y-4">
+                    <Textarea
+                      placeholder="Outline the long-term development trajectory for this player...
+
+Examples:
+• 6-month goals: Establish as first-team regular
+• 1-year goals: Attract interest from higher leagues
+• 2-year goals: Ready for professional contract
+• Career pathway notes and milestones"
+                      value={longTermPlan}
+                      onChange={(e) => setLongTermPlan(e.target.value)}
+                      className="min-h-[150px] md:min-h-[200px] resize-none text-sm md:text-base"
+                    />
+                    <div className="flex justify-end">
+                      <Button onClick={handleSaveLongTermPlan} disabled={saving} size="sm" className="md:size-default">
+                        {saving ? (
+                          <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                        )}
+                        Save Plan
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="focuses" className="mt-0 space-y-3 md:space-y-4">
+                  <div className="flex items-center justify-between mb-3 md:mb-4">
+                    <h3 className="text-base md:text-lg font-semibold">Development Focuses</h3>
+                  </div>
+                  <div className="space-y-3 md:space-y-4">
+                    <Textarea
+                      placeholder="Enter key areas of focus for this player's development...
+
+Examples:
+• Improve first touch under pressure
+• Increase shooting accuracy from distance
+• Work on defensive positioning
+• Develop leadership skills on the pitch"
+                      value={focuses}
+                      onChange={(e) => setFocuses(e.target.value)}
+                      className="min-h-[150px] md:min-h-[200px] resize-none text-sm md:text-base"
+                    />
+                    <div className="flex justify-end">
+                      <Button onClick={handleSaveFocuses} disabled={saving} size="sm" className="md:size-default">
+                        {saving ? (
+                          <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                        )}
+                        Save Focuses
+                      </Button>
+                    </div>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="programming" className="mt-0 space-y-3 md:space-y-4">
@@ -320,6 +336,22 @@ export const AthleteCentre = () => {
                   )}
                 </TabsContent>
 
+                <TabsContent value="scouting" className="mt-0">
+                  <PlayerScoutingReports playerId={selectedPlayer} playerName={currentPlayer.name} embedded />
+                </TabsContent>
+
+                <TabsContent value="data" className="mt-0">
+                  <AnalysisDataTab analyses={analyses} playerData={currentPlayer} />
+                </TabsContent>
+
+                <TabsContent value="comparisons" className="mt-0">
+                  <AnalysisComparisons analyses={analyses} playerData={currentPlayer} />
+                </TabsContent>
+
+                <TabsContent value="video" className="mt-0">
+                  <AnalysisVideoReports analyses={analyses} playerId={selectedPlayer} />
+                </TabsContent>
+
                 <TabsContent value="analysis" className="mt-0 space-y-3 md:space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 md:mb-4">
                     <h3 className="text-base md:text-lg font-semibold">Performance Analysis</h3>
@@ -362,68 +394,6 @@ export const AthleteCentre = () => {
                       <p className="text-sm md:text-base">No analysis reports yet</p>
                     </div>
                   )}
-                </TabsContent>
-
-                <TabsContent value="focuses" className="mt-0 space-y-3 md:space-y-4">
-                  <div className="flex items-center justify-between mb-3 md:mb-4">
-                    <h3 className="text-base md:text-lg font-semibold">Development Focuses</h3>
-                  </div>
-
-                  <div className="space-y-3 md:space-y-4">
-                    <Textarea
-                      placeholder="Enter key areas of focus for this player's development...
-
-Examples:
-• Improve first touch under pressure
-• Increase shooting accuracy from distance
-• Work on defensive positioning
-• Develop leadership skills on the pitch"
-                      value={focuses}
-                      onChange={(e) => setFocuses(e.target.value)}
-                      className="min-h-[150px] md:min-h-[200px] resize-none text-sm md:text-base"
-                    />
-                    <div className="flex justify-end">
-                      <Button onClick={handleSaveFocuses} disabled={saving} size="sm" className="md:size-default">
-                        {saving ? (
-                          <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-2 animate-spin" />
-                        ) : (
-                          <Save className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-                        )}
-                        Save Focuses
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="longterm" className="mt-0 space-y-3 md:space-y-4">
-                  <div className="flex items-center justify-between mb-3 md:mb-4">
-                    <h3 className="text-base md:text-lg font-semibold">Long-Term Development Plan</h3>
-                  </div>
-
-                  <div className="space-y-3 md:space-y-4">
-                    <Textarea
-                      placeholder="Outline the long-term development trajectory for this player...
-
-Examples:
-• 6-month goals: Establish as first-team regular
-• 1-year goals: Attract interest from higher leagues
-• 2-year goals: Ready for professional contract
-• Career pathway notes and milestones"
-                      value={longTermPlan}
-                      onChange={(e) => setLongTermPlan(e.target.value)}
-                      className="min-h-[150px] md:min-h-[200px] resize-none text-sm md:text-base"
-                    />
-                    <div className="flex justify-end">
-                      <Button onClick={handleSaveLongTermPlan} disabled={saving} size="sm" className="md:size-default">
-                        {saving ? (
-                          <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-2 animate-spin" />
-                        ) : (
-                          <Save className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-                        )}
-                        Save Plan
-                      </Button>
-                    </div>
-                  </div>
                 </TabsContent>
               </div>
             </Tabs>

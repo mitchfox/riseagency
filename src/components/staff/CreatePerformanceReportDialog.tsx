@@ -1487,10 +1487,10 @@ export const CreatePerformanceReportDialog = ({
                         onClick={() => openR90Viewer(index)}
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 hover:text-black"
+                        className="h-8 w-8 [&>svg]:hover:text-black"
                         title="R90 Ratings Reference"
                       >
-                        <Search className="h-4 w-4 text-primary" />
+                        <Search className="h-4 w-4 text-primary hover:text-black" />
                       </Button>
                       {/* Record Stat button - mobile */}
                       <ActionStatRecorder
@@ -1702,10 +1702,10 @@ export const CreatePerformanceReportDialog = ({
                             onClick={() => openR90Viewer(index)}
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 hover:text-black"
+                            className="h-8 w-8 [&>svg]:hover:text-black"
                             title="R90 Ratings Reference"
                           >
-                            <Search className="h-4 w-4 text-primary" />
+                            <Search className="h-4 w-4 text-primary hover:text-black" />
                           </Button>
                           {/* Record Stat button */}
                           <ActionStatRecorder
