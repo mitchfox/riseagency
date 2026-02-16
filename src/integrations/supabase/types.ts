@@ -4850,6 +4850,8 @@ export type Database = {
       video_analyses: {
         Row: {
           annotations: Json
+          auto_delete_at: string | null
+          clips: Json
           created_at: string
           created_by: string | null
           id: string
@@ -4862,6 +4864,8 @@ export type Database = {
         }
         Insert: {
           annotations?: Json
+          auto_delete_at?: string | null
+          clips?: Json
           created_at?: string
           created_by?: string | null
           id?: string
@@ -4874,6 +4878,8 @@ export type Database = {
         }
         Update: {
           annotations?: Json
+          auto_delete_at?: string | null
+          clips?: Json
           created_at?: string
           created_by?: string | null
           id?: string
@@ -5085,6 +5091,7 @@ export type Database = {
         Args: { enum_name: string; value_name: string }
         Returns: boolean
       }
+      cleanup_expired_video_analyses: { Args: never; Returns: undefined }
       get_player_name_by_email: { Args: { _email: string }; Returns: string }
       has_role: {
         Args: {
