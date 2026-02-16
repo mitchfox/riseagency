@@ -11,6 +11,7 @@ import {
   Magnet, Image as ImageIcon, Trash2, Layers, Keyboard,
   ChevronLeft, Upload, SlidersHorizontal,
   PanelLeftClose, Palette, LayoutTemplate, Wand2, Hexagon, Pentagon,
+  Shapes, Wrench, FolderOpen, Sparkles, Pipette,
 } from 'lucide-react';
 import { useDesignCanvas } from './useDesignCanvas';
 import { CanvasElement } from './CanvasElement';
@@ -31,7 +32,7 @@ interface DesignStudioProps {
   onSave: (project: DesignProject) => void;
 }
 
-type PanelType = 'assets' | 'layers' | 'properties' | 'brand' | 'templates' | 'filters' | null;
+type PanelType = 'assets' | 'layers' | 'properties' | 'brand' | 'templates' | 'filters' | 'elements' | null;
 
 export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioProps) {
   const canvas = useDesignCanvas(initialProject);
@@ -228,31 +229,28 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
     { type: 'pentagon', icon: Pentagon, label: 'Pentagon' },
   ];
 
-  const ToolBtn = ({ active, onClick, icon: Icon, label, shortcut }: { active?: boolean; onClick: () => void; icon: any; label: string; shortcut?: string }) => (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          onClick={onClick}
-          className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
-        >
-          <Icon className="h-5 w-5" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="right" className="text-xs">
-        {label}{shortcut && <kbd className="ml-1.5 px-1 py-0.5 bg-muted rounded text-[10px] font-mono">{shortcut}</kbd>}
-      </TooltipContent>
-    </Tooltip>
-  );
+  // Canva-style sidebar items: icon + label, hover opens panel
+  const sidebarItems: { key: PanelType; icon: any; label: string; action?: () => void }[] = [
+    { key: 'templates', icon: LayoutTemplate, label: 'Design' },
+    { key: 'elements', icon: Shapes, label: 'Elements' },
+    { key: null, icon: Type, label: 'Text', action: () => canvas.addText() },
+    { key: 'brand', icon: Palette, label: 'Brand' },
+    { key: 'assets', icon: Upload, label: 'Uploads' },
+    { key: 'properties', icon: SlidersHorizontal, label: 'Tools' },
+    { key: 'layers', icon: Layers, label: 'Layers' },
+    { key: 'filters', icon: Wand2, label: 'Effects' },
+  ];
 
   const togglePanel = (panel: PanelType) => setLeftPanel(leftPanel === panel ? null : panel);
 
   const panelTitles: Record<string, string> = {
-    assets: 'Saved Assets',
+    assets: 'Uploads',
     layers: 'Layers',
     properties: 'Properties',
     brand: 'Brand Kit',
-    templates: 'Templates',
-    filters: 'Filters & Effects',
+    templates: 'Design',
+    filters: 'Effects & Filters',
+    elements: 'Elements',
   };
 
   return (
@@ -326,50 +324,43 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
 
         {/* Main area */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Left toolbar */}
-          <div className="w-[52px] border-r bg-muted/20 flex flex-col items-center py-2 gap-1 flex-shrink-0">
-            <ToolBtn active={canvas.activeTool === 'select'} onClick={() => canvas.setActiveTool('select')} icon={MousePointer2} label="Select" shortcut="V" />
-            <ToolBtn active={canvas.activeTool === 'hand'} onClick={() => canvas.setActiveTool('hand')} icon={Hand} label="Pan" shortcut="H" />
-
-            <div className="w-6 h-px bg-border my-1" />
-
-            <ToolBtn active={leftPanel === 'templates'} onClick={() => togglePanel('templates')} icon={LayoutTemplate} label="Templates" />
-            <ToolBtn onClick={() => canvas.addText()} icon={Type} label="Text" shortcut="T" />
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <div>
-                  <ToolBtn onClick={() => {}} icon={Square} label="Shapes" />
-                </div>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-2 grid grid-cols-4 gap-1" side="right" align="start">
-                {shapes.map(s => {
-                  const Icon = s.icon;
-                  return (
-                    <Button key={s.type} variant="ghost" size="icon" className="h-9 w-9" onClick={() => canvas.addShape(s.type)} title={s.label}>
-                      <Icon className="h-4 w-4" />
-                    </Button>
-                  );
-                })}
-              </PopoverContent>
-            </Popover>
-
-            <ToolBtn onClick={() => canvas.addLine()} icon={Minus} label="Line" shortcut="L" />
-            <ToolBtn onClick={() => fileInputRef.current?.click()} icon={Upload} label="Upload Image" />
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-
-            <div className="w-6 h-px bg-border my-1" />
-
-            <ToolBtn active={leftPanel === 'assets'} onClick={() => togglePanel('assets')} icon={ImageIcon} label="Saved Assets" />
-            <ToolBtn active={leftPanel === 'brand'} onClick={() => togglePanel('brand')} icon={Palette} label="Brand Kit" />
-            <ToolBtn active={leftPanel === 'layers'} onClick={() => togglePanel('layers')} icon={Layers} label="Layers" />
-            <ToolBtn active={leftPanel === 'properties'} onClick={() => togglePanel('properties')} icon={SlidersHorizontal} label="Properties" />
-            <ToolBtn active={leftPanel === 'filters'} onClick={() => togglePanel('filters')} icon={Wand2} label="Filters" />
+          {/* Left toolbar - Canva style with icon + label */}
+          <div className="w-[72px] border-r bg-muted/20 flex flex-col items-center py-2 gap-0.5 flex-shrink-0">
+            {sidebarItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = item.key && leftPanel === item.key;
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => {
+                    if (item.action) { item.action(); return; }
+                    if (item.key) togglePanel(item.key);
+                  }}
+                  onMouseEnter={() => {
+                    if (item.key && leftPanel !== null && leftPanel !== item.key) {
+                      setLeftPanel(item.key);
+                    }
+                  }}
+                  className={`w-[64px] flex flex-col items-center gap-0.5 py-2 rounded-lg transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="text-[10px] leading-tight">{item.label}</span>
+                </button>
+              );
+            })}
 
             <div className="flex-1" />
 
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+
             {canvas.selectedIds.length > 0 && (
-              <ToolBtn onClick={canvas.deleteSelected} icon={Trash2} label="Delete" shortcut="Del" />
+              <button
+                onClick={canvas.deleteSelected}
+                className="w-[64px] flex flex-col items-center gap-0.5 py-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <Trash2 className="h-5 w-5" />
+                <span className="text-[10px] leading-tight">Delete</span>
+              </button>
             )}
           </div>
 
@@ -417,6 +408,35 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
                 )}
                 {leftPanel === 'templates' && <TemplatesPanel onApplyTemplate={handleApplyTemplate} />}
                 {leftPanel === 'filters' && <FiltersPanel element={selectedElement} onUpdate={canvas.updateElement} />}
+                {leftPanel === 'elements' && (
+                  <div className="p-3 space-y-4">
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase">Shapes</p>
+                      <div className="grid grid-cols-4 gap-1">
+                        {shapes.map(s => {
+                          const Icon = s.icon;
+                          return (
+                            <Button key={s.type} variant="ghost" size="icon" className="h-10 w-10" onClick={() => canvas.addShape(s.type)} title={s.label}>
+                              <Icon className="h-5 w-5" />
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase">Lines</p>
+                      <Button variant="ghost" size="sm" className="w-full justify-start gap-2 h-8 text-xs" onClick={() => canvas.addLine()}>
+                        <Minus className="h-4 w-4" /> Line
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase">Upload</p>
+                      <Button variant="outline" size="sm" className="w-full h-8 text-xs gap-1" onClick={() => fileInputRef.current?.click()}>
+                        <Upload className="h-3.5 w-3.5" /> Upload Image
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

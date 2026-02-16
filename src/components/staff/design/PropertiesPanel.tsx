@@ -1,11 +1,33 @@
+import { useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Pipette } from 'lucide-react';
 import type { DesignElement } from './types';
 import { FONT_FAMILIES } from './types';
+
+function EyedropperButton({ onPick }: { onPick: (colour: string) => void }) {
+  const handlePick = useCallback(async () => {
+    try {
+      if (!('EyeDropper' in window)) return;
+      const dropper = new (window as any).EyeDropper();
+      const result = await dropper.open();
+      onPick(result.sRGBHex);
+    } catch {
+      // user cancelled
+    }
+  }, [onPick]);
+
+  if (!('EyeDropper' in window)) return null;
+
+  return (
+    <Button variant="outline" size="icon" className="h-7 w-7 shrink-0" onClick={handlePick} title="Pick colour from screen">
+      <Pipette className="h-3.5 w-3.5" />
+    </Button>
+  );
+}
 
 interface PropertiesPanelProps {
   element: DesignElement | null;
@@ -131,6 +153,7 @@ export function PropertiesPanel({ element, onUpdate }: PropertiesPanelProps) {
             <div className="flex gap-2 items-center">
               <input type="color" value={element.color || '#000000'} onChange={e => update({ color: e.target.value })} className="w-7 h-7 rounded cursor-pointer border" />
               <Input value={element.color || '#000000'} onChange={e => update({ color: e.target.value })} className="h-7 text-xs flex-1" />
+              <EyedropperButton onPick={(c) => update({ color: c })} />
             </div>
           </div>
           <div className="space-y-1">
@@ -179,6 +202,7 @@ export function PropertiesPanel({ element, onUpdate }: PropertiesPanelProps) {
             <div className="flex gap-2 items-center">
               <input type="color" value={element.fill || '#3b82f6'} onChange={e => update({ fill: e.target.value })} className="w-7 h-7 rounded cursor-pointer border" />
               <Input value={element.fill || '#3b82f6'} onChange={e => update({ fill: e.target.value })} className="h-7 text-xs flex-1" />
+              <EyedropperButton onPick={(c) => update({ fill: c })} />
             </div>
           </div>
           <div className="space-y-1">
@@ -186,6 +210,7 @@ export function PropertiesPanel({ element, onUpdate }: PropertiesPanelProps) {
             <div className="flex gap-2 items-center">
               <input type="color" value={element.stroke || '#000000'} onChange={e => update({ stroke: e.target.value })} className="w-7 h-7 rounded cursor-pointer border" />
               <Input value={element.stroke || '#000000'} onChange={e => update({ stroke: e.target.value })} className="h-7 text-xs flex-1" />
+              <EyedropperButton onPick={(c) => update({ stroke: c })} />
             </div>
           </div>
           <div className="space-y-1">
