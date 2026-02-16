@@ -677,13 +677,16 @@ const Staff = () => {
         icon: Calendar,
         sections: [
           { id: 'overview', title: 'Overview', icon: Calendar },
-          { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
+          { id: '_group_schedule', title: 'Schedule', isGroupLabel: true },
           { id: 'schedule', title: 'Schedule', icon: Calendar },
           { id: 'meetings', title: 'Meetings', icon: Users },
+          { id: 'staffschedules', title: 'Staff Schedules', icon: Users },
+          { id: '_group_tasks', title: 'Tasks', isGroupLabel: true },
+          { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
           { id: 'visionboard', title: 'Vision Board', icon: Target },
+          { id: '_group_apps', title: 'Apps', isGroupLabel: true },
           { id: 'docs', title: 'Docs', icon: FileText },
           { id: 'sheets', title: 'Sheets', icon: FileSpreadsheet },
-          { id: 'staffschedules', title: 'Staff Schedules', icon: Users },
         ],
         locked: false
       },
@@ -816,13 +819,14 @@ const Staff = () => {
   const filteredCategories = categories.map(category => ({
     ...category,
     sections: category.sections.filter(section => {
+      if ((section as any).isGroupLabel) return true; // Always show group labels if their siblings match
       const q = searchQuery.toLowerCase();
       if (!q) return true;
       if (section.title.toLowerCase().includes(q)) return true;
       const keywords = SECTION_KEYWORDS[section.id] || [];
       return keywords.some(kw => kw.includes(q));
     })
-  })).filter(category => category.sections.length > 0);
+  })).filter(category => category.sections.filter(s => !(s as any).isGroupLabel).length > 0);
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
@@ -938,9 +942,9 @@ const Staff = () => {
                     const searchInput = document.querySelector('[cmdk-input]') as HTMLInputElement;
                     const currentSearch = searchInput?.value?.toLowerCase() || '';
                     
-                    // Flatten sections and sort by relevance to search
+                    // Flatten sections and sort by relevance to search (exclude group labels)
                     const allSections = categories.flatMap(category => 
-                      category.sections.map(section => ({ section, category }))
+                      category.sections.filter(s => !(s as any).isGroupLabel).map(section => ({ section, category }))
                     );
                     
                     // Sort: exact matches first, then starts-with, then contains
@@ -1015,7 +1019,7 @@ const Staff = () => {
         </button>
 
         {/* Left Sidebar - Fixed */}
-        <div className={`fixed ${isMobile ? 'top-16' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 ${
+        <div className={`fixed ${isMobile ? 'top-16' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 ${
           sidebarCollapsed ? 'w-0 border-0 opacity-0 pointer-events-none' : 'w-14 md:w-24'
         }`}>
           {/* Search Button */}
@@ -1031,8 +1035,9 @@ const Staff = () => {
           {filteredCategories.map((category, index) => {
             const CategoryIcon = category.icon;
             const isExpanded = expandedCategory === category.id;
-            const hasActiveSection = category.sections.some(s => s.id === expandedSection);
-            const isSingleSection = category.sections.length === 1;
+            const hasActiveSection = category.sections.filter(s => !(s as any).isGroupLabel).some(s => s.id === expandedSection);
+            const realSections = category.sections.filter(s => !(s as any).isGroupLabel);
+            const isSingleSection = realSections.length === 1;
             
             // Hide this category if another one is expanded
             const shouldShow = !expandedCategory || expandedCategory === category.id;
@@ -1074,8 +1079,19 @@ const Staff = () => {
 
                 {/* Sections (shown when expanded) */}
                 {isExpanded && !isSingleSection && (
-                  <div className="w-full space-y-1.5 mt-2 pb-16">
+                  <div className="w-full space-y-1 mt-2 pb-16">
                     {category.sections.map((section) => {
+                      // Render group labels as small dividers
+                      if ((section as any).isGroupLabel) {
+                        return (
+                          <div key={section.id} className="pt-2 pb-0.5 px-1">
+                            <span className="text-[5px] sm:text-[6px] uppercase tracking-widest text-primary/60 font-bold text-center block">
+                              {section.title}
+                            </span>
+                            <div className="h-px bg-primary/20 mt-0.5" />
+                          </div>
+                        );
+                      }
                       const SectionIcon = section.icon;
                       const isActive = expandedSection === section.id;
                       return (
@@ -1120,7 +1136,7 @@ const Staff = () => {
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
                 <CardHeader>
                   <CardTitle className="text-2xl">
-                    {categories.flatMap(c => c.sections).find(s => s.id === expandedSection)?.title}
+                    {categories.flatMap(c => c.sections).filter(s => !(s as any).isGroupLabel).find(s => s.id === expandedSection)?.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1217,6 +1233,13 @@ const Staff = () => {
                       </h3>
                       <div className="space-y-1">
                         {category.sections.map((section) => {
+                          if ((section as any).isGroupLabel) {
+                            return (
+                              <p key={section.id} className="text-[10px] font-bold uppercase tracking-wider text-primary/60 px-2 pt-2">
+                                {section.title}
+                              </p>
+                            );
+                          }
                           const Icon = section.icon;
                           return (
                             <Button
