@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Film, Plus, Play, Trash2, Loader2, Upload, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft } from "lucide-react";
+import { Film, Plus, Play, Trash2, Loader2, Upload, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Save, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -73,6 +73,11 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
   const [showTimestampOverride, setShowTimestampOverride] = useState(false);
   const [overrideMinute, setOverrideMinute] = useState("");
   const [syncHalf, setSyncHalf] = useState<"1st" | "2nd">("1st");
+
+  // Save to clips
+  const [savingClipIds, setSavingClipIds] = useState<Set<string>>(new Set());
+  const [savedClipIds, setSavedClipIds] = useState<Set<string>>(new Set());
+  const [savingAll, setSavingAll] = useState(false);
 
   useEffect(() => {
     fetchVideos();
@@ -218,6 +223,52 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
     } catch (err) {
       toast.error('Failed to delete');
     }
+  };
+
+  const handleSaveClipToAll = async (clipId: string) => {
+    if (!selectedVideo) return;
+    setSavingClipIds(prev => new Set(prev).add(clipId));
+    try {
+      await callFunction({
+        action: 'saveToClips',
+        playerEmail,
+        videoId: selectedVideo.id,
+        clipIds: [clipId],
+      });
+      setSavedClipIds(prev => new Set(prev).add(clipId));
+      toast.success("Clip saved to All Clips");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save clip");
+    }
+    setSavingClipIds(prev => { const n = new Set(prev); n.delete(clipId); return n; });
+  };
+
+  const handleSaveAllClips = async () => {
+    if (!selectedVideo || selectedVideo.clips.length === 0) return;
+    setSavingAll(true);
+    try {
+      const unsavedIds = selectedVideo.clips.filter(c => !savedClipIds.has(c.id)).map(c => c.id);
+      if (unsavedIds.length === 0) {
+        toast.info("All clips already saved");
+        setSavingAll(false);
+        return;
+      }
+      await callFunction({
+        action: 'saveToClips',
+        playerEmail,
+        videoId: selectedVideo.id,
+        clipIds: unsavedIds,
+      });
+      setSavedClipIds(prev => {
+        const n = new Set(prev);
+        unsavedIds.forEach(id => n.add(id));
+        return n;
+      });
+      toast.success(`${unsavedIds.length} clip${unsavedIds.length > 1 ? 's' : ''} saved to All Clips`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save clips");
+    }
+    setSavingAll(false);
   };
 
   const playClip = (clip: Clip) => {
@@ -407,57 +458,89 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
 
         {/* Clips list */}
         <div className="pt-1">
-          <h4 className="text-sm font-medium mb-1">Clips ({selectedVideo.clips.length})</h4>
+          <div className="flex items-center justify-between mb-1">
+            <h4 className="text-sm font-medium">Clips ({selectedVideo.clips.length})</h4>
+            {selectedVideo.clips.length > 0 && selectedVideo.video_url && (
+              <Button
+                onClick={handleSaveAllClips}
+                disabled={savingAll || selectedVideo.clips.every(c => savedClipIds.has(c.id))}
+                variant="outline"
+                size="sm"
+                className="gap-1 text-xs"
+              >
+                {savingAll ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                Save All to Clips
+              </Button>
+            )}
+          </div>
           <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
-            {clipsNewestFirst.map(clip => (
-              <div key={clip.id} className="p-2.5 rounded-lg border bg-card hover:bg-muted/30 transition-colors group/clip">
-                <div className="flex items-center gap-2">
-                  <button onClick={() => playClip(clip)} className="flex items-center gap-1 text-primary hover:underline font-mono text-xs whitespace-nowrap shrink-0">
-                    <Play className="h-3 w-3" />
-                    {fmtTime(clip.start)} → {fmtTime(clip.end)}
-                  </button>
-                  <p className="text-[10px] text-muted-foreground shrink-0">
-                    {getMatchMinute(clip.start, selectedVideo.match_minute_offset)}'
-                  </p>
+            {clipsNewestFirst.map(clip => {
+              const isSaving = savingClipIds.has(clip.id);
+              const isSaved = savedClipIds.has(clip.id);
+              return (
+                <div key={clip.id} className="p-2.5 rounded-lg border bg-card hover:bg-muted/30 transition-colors group/clip">
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => playClip(clip)} className="flex items-center gap-1 text-primary hover:underline font-mono text-xs whitespace-nowrap shrink-0">
+                      <Play className="h-3 w-3" />
+                      {fmtTime(clip.start)} → {fmtTime(clip.end)}
+                    </button>
+                    <p className="text-[10px] text-muted-foreground shrink-0">
+                      {getMatchMinute(clip.start, selectedVideo.match_minute_offset)}'
+                    </p>
 
-                  <div className="flex-1" />
+                    <div className="flex-1" />
 
-                  <div className="flex items-center gap-0.5 opacity-0 group-hover/clip:opacity-100 transition-opacity shrink-0">
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'start', -1)} title="Extend start -1s">
-                      <ChevronsLeft className="h-3 w-3" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'start', 1)} title="Trim start +1s">
-                      <ChevronLeft className="h-3 w-3" />
-                    </Button>
-                    <span className="text-[9px] text-muted-foreground mx-0.5">|</span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'end', -1)} title="Trim end -1s">
-                      <ChevronLeft className="h-3 w-3 rotate-180" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'end', 1)} title="Extend end +1s">
-                      <ChevronsRight className="h-3 w-3" />
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover/clip:opacity-100 transition-opacity shrink-0">
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'start', -1)} title="Extend start -1s">
+                        <ChevronsLeft className="h-3 w-3" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'start', 1)} title="Trim start +1s">
+                        <ChevronLeft className="h-3 w-3" />
+                      </Button>
+                      <span className="text-[9px] text-muted-foreground mx-0.5">|</span>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'end', -1)} title="Trim end -1s">
+                        <ChevronLeft className="h-3 w-3 rotate-180" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'end', 1)} title="Extend end +1s">
+                        <ChevronsRight className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    {/* Save to All Clips button */}
+                    {selectedVideo.video_url && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={`h-6 w-6 shrink-0 ${isSaved ? 'text-green-500' : 'opacity-0 group-hover/clip:opacity-100 text-muted-foreground hover:text-primary'}`}
+                        onClick={() => !isSaved && handleSaveClipToAll(clip.id)}
+                        disabled={isSaving || isSaved}
+                        title={isSaved ? "Saved to All Clips" : "Save to All Clips"}
+                      >
+                        {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : isSaved ? <CheckCircle className="h-3 w-3" /> : <Save className="h-3 w-3" />}
+                      </Button>
+                    )}
+
+                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/clip:opacity-100 text-muted-foreground hover:text-destructive shrink-0" onClick={() => handleDeleteClip(clip.id)}>
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
 
-                  <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/clip:opacity-100 text-muted-foreground hover:text-destructive shrink-0" onClick={() => handleDeleteClip(clip.id)}>
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  {/* Title only */}
+                  <div className="mt-1.5">
+                    <Input
+                      placeholder="Clip title..."
+                      defaultValue={clip.label || ""}
+                      onBlur={e => {
+                        if (e.target.value !== (clip.label || "")) {
+                          handleUpdateClipLabel(clip.id, e.target.value);
+                        }
+                      }}
+                      className="h-7 text-xs"
+                    />
+                  </div>
                 </div>
-
-                {/* Title only */}
-                <div className="mt-1.5">
-                  <Input
-                    placeholder="Clip title..."
-                    defaultValue={clip.label || ""}
-                    onBlur={e => {
-                      if (e.target.value !== (clip.label || "")) {
-                        handleUpdateClipLabel(clip.id, e.target.value);
-                      }
-                    }}
-                    className="h-7 text-xs"
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
             {clipsNewestFirst.length === 0 && (
               <p className="text-center text-sm text-muted-foreground py-4">No clips yet. Hover over the video and press "Clip (±5s)" during playback.</p>
             )}
