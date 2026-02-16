@@ -1,14 +1,16 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, Tag, X, ChevronLeft, Minus, ChevronsLeft, ChevronsRight, Edit3, Link2 } from "lucide-react";
+import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Slider } from "@/components/ui/slider";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Annotation {
   id: string;
@@ -40,8 +42,11 @@ interface VideoAnalysisEntry {
   created_at: string;
 }
 
-const ACTION_TYPES = [
-  "pressing", "build-up", "transition", "set-piece", "defensive", "attacking", "individual", "other"
+const DEFAULT_ACTION_TYPES = [
+  "pressing", "build-up", "transition", "set-piece", "defensive", "attacking",
+  "individual", "dribble", "pass", "cross", "shot", "tackle", "interception",
+  "header", "save", "clearance", "foul", "free-kick", "corner", "throw-in",
+  "goal-kick", "penalty", "offside", "substitution", "other"
 ];
 
 const ACTION_COLOURS: Record<string, string> = {
@@ -52,7 +57,6 @@ const ACTION_COLOURS: Record<string, string> = {
   defensive: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
   attacking: "bg-orange-500/20 text-orange-400 border-orange-500/30",
   individual: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
-  other: "bg-muted text-muted-foreground border-border",
 };
 
 export const VideoAnalysis = () => {
@@ -61,8 +65,6 @@ export const VideoAnalysis = () => {
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<VideoAnalysisEntry | null>(null);
   const [showUpload, setShowUpload] = useState(false);
-  const [filterAction, setFilterAction] = useState("all");
-  const [activeTab, setActiveTab] = useState<"annotations" | "clips">("annotations");
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Upload form
@@ -85,9 +87,19 @@ export const VideoAnalysis = () => {
   const [showTimestampOverride, setShowTimestampOverride] = useState(false);
   const [overrideMinute, setOverrideMinute] = useState("");
 
+  // Known action types from existing reports
+  const [knownActionTypes, setKnownActionTypes] = useState<string[]>([]);
+
+  // Export to report
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [availableReports, setAvailableReports] = useState<{ id: string; title: string; player_name: string }[]>([]);
+  const [selectedReportId, setSelectedReportId] = useState("");
+  const [exporting, setExporting] = useState(false);
+
   useEffect(() => {
     fetchVideos();
     fetchPlayers();
+    fetchKnownActionTypes();
   }, []);
 
   const fetchVideos = async () => {
@@ -111,6 +123,22 @@ export const VideoAnalysis = () => {
     const { data } = await supabase.from("players").select("id, name").order("name");
     if (data) setPlayers(data);
   };
+
+  const fetchKnownActionTypes = async () => {
+    const { data } = await supabase
+      .from("performance_report_actions")
+      .select("action_type")
+      .not("action_type", "is", null);
+    if (data) {
+      const unique = [...new Set(data.map(d => d.action_type).filter(Boolean) as string[])];
+      setKnownActionTypes(unique);
+    }
+  };
+
+  const allActionTypes = useMemo(() => {
+    const merged = new Set([...DEFAULT_ACTION_TYPES, ...knownActionTypes]);
+    return [...merged].sort();
+  }, [knownActionTypes]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -180,7 +208,6 @@ export const VideoAnalysis = () => {
     setCreating(false);
   };
 
-  // Instant clip: 5s before, 5s after current time
   const handleInstantClip = async () => {
     if (!selectedVideo || !videoRef.current) return;
 
@@ -193,14 +220,13 @@ export const VideoAnalysis = () => {
       start: clipStart,
       end: clipEnd,
       label: `Action at ${fmtMatchTime(currentTime, selectedVideo.match_minute_offset)}`,
-      action_type: annotationAction,
+      action_type: "",
       created_at: new Date().toISOString(),
     };
 
-    const updatedClips = [...selectedVideo.clips, newClip].sort((a, b) => a.start - b.start);
+    const updatedClips = [...selectedVideo.clips, newClip];
     await saveClips(updatedClips);
     toast.success(`Clip created: ${fmtTime(clipStart)} → ${fmtTime(clipEnd)}`);
-    setActiveTab("clips");
   };
 
   const handleExtendClip = async (clipId: string, side: 'start' | 'end', seconds: number) => {
@@ -229,14 +255,13 @@ export const VideoAnalysis = () => {
 
   const saveClips = async (clips: Clip[]) => {
     if (!selectedVideo) return;
-    const sorted = clips.sort((a, b) => a.start - b.start);
     const { error } = await supabase
       .from("video_analyses")
-      .update({ clips: sorted as any })
+      .update({ clips: clips as any })
       .eq("id", selectedVideo.id);
 
     if (!error) {
-      const updated = { ...selectedVideo, clips: sorted };
+      const updated = { ...selectedVideo, clips };
       setSelectedVideo(updated);
       setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
     }
@@ -284,7 +309,6 @@ export const VideoAnalysis = () => {
     }
   };
 
-  // Timestamp override: sets offset so that current video position = entered match minute
   const handleTimestampOverride = async () => {
     if (!selectedVideo || !videoRef.current || !overrideMinute) return;
     const currentVideoTime = videoRef.current.currentTime;
@@ -340,13 +364,73 @@ export const VideoAnalysis = () => {
     }
   };
 
+  // Export clips to a performance report
+  const handleOpenExport = async () => {
+    const { data } = await supabase
+      .from("analyses")
+      .select("id, title, player_name")
+      .eq("analysis_type", "performance")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (data) {
+      setAvailableReports(data.map(d => ({
+        id: d.id,
+        title: d.title || "Untitled Report",
+        player_name: d.player_name || "Unknown",
+      })));
+    }
+    setShowExportDialog(true);
+  };
+
+  const handleExportToReport = async () => {
+    if (!selectedVideo || !selectedReportId) return;
+    setExporting(true);
+
+    try {
+      // Get existing max action_number
+      const { data: existing } = await supabase
+        .from("performance_report_actions")
+        .select("action_number")
+        .eq("analysis_id", selectedReportId)
+        .order("action_number", { ascending: false })
+        .limit(1);
+
+      let nextNumber = (existing?.[0]?.action_number || 0) + 1;
+
+      const actionsToInsert = selectedVideo.clips.map((clip, i) => ({
+        analysis_id: selectedReportId,
+        action_number: nextNumber + i,
+        minute: getMatchMinute(clip.start, selectedVideo.match_minute_offset),
+        action_type: clip.action_type || "other",
+        action_description: clip.label,
+        video_url: selectedVideo.video_url || null,
+        video_analysis_id: selectedVideo.id,
+        clip_id: clip.id,
+        is_successful: true,
+      }));
+
+      const { error } = await supabase
+        .from("performance_report_actions")
+        .insert(actionsToInsert);
+
+      if (error) throw error;
+
+      toast.success(`${actionsToInsert.length} actions exported to report`);
+      setShowExportDialog(false);
+      setSelectedReportId("");
+    } catch (err: any) {
+      toast.error(err.message || "Export failed");
+    }
+    setExporting(false);
+  };
+
   const fmtTime = (s: number) => {
     const mins = Math.floor(s / 60);
     const secs = Math.floor(s % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Match time = video time + offset, snapped to nearest 5s for report linking
   const fmtMatchTime = (videoSeconds: number, offset: number) => {
     const matchSeconds = videoSeconds + offset;
     const mins = Math.floor(matchSeconds / 60);
@@ -356,18 +440,9 @@ export const VideoAnalysis = () => {
 
   const getMatchMinute = (videoSeconds: number, offset: number) => {
     const matchSeconds = videoSeconds + offset;
-    // Snap to nearest 5 second marker before
     const snapped = Math.floor(matchSeconds / 5) * 5;
     return Math.floor(snapped / 60);
   };
-
-  const filteredAnnotations = selectedVideo
-    ? filterAction === "all" ? selectedVideo.annotations : selectedVideo.annotations.filter(a => a.action_type === filterAction)
-    : [];
-
-  const filteredClips = selectedVideo
-    ? filterAction === "all" ? selectedVideo.clips : selectedVideo.clips.filter(c => c.action_type === filterAction)
-    : [];
 
   const daysUntilExpiry = (dateStr: string | null) => {
     if (!dateStr) return null;
@@ -375,10 +450,234 @@ export const VideoAnalysis = () => {
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   };
 
+  // Clips sorted newest first for display
+  const clipsNewestFirst = selectedVideo
+    ? [...selectedVideo.clips].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    : [];
+
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
   }
 
+  // ── Selected video: full-width takeover ──
+  if (selectedVideo) {
+    return (
+      <div className="space-y-4">
+        {/* Compact header with back button */}
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => setSelectedVideo(null)} className="h-8 w-8 shrink-0">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-medium text-sm truncate">{selectedVideo.title}</h3>
+            <p className="text-xs text-muted-foreground">
+              {selectedVideo.opponent && `vs ${selectedVideo.opponent}`}
+              {selectedVideo.match_date && ` · ${format(new Date(selectedVideo.match_date), "dd MMM yyyy")}`}
+              {selectedVideo.clips.length > 0 && ` · ${selectedVideo.clips.length} clips`}
+            </p>
+          </div>
+        </div>
+
+        {/* Widescreen video player */}
+        {selectedVideo.video_url ? (
+          <>
+            <div className="w-full bg-black rounded-lg overflow-hidden">
+              <video
+                ref={videoRef}
+                src={selectedVideo.video_url}
+                controls
+                className="w-full aspect-video"
+              />
+            </div>
+
+            {/* Action bar */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <Button onClick={handleInstantClip} variant="default" size="sm" className="gap-1.5">
+                <Scissors className="h-4 w-4" /> Clip (±5s)
+              </Button>
+
+              <div className="flex-1 flex gap-2 min-w-[200px]">
+                <Input
+                  placeholder="Add note..."
+                  value={annotationText}
+                  onChange={e => setAnnotationText(e.target.value)}
+                  className="flex-1"
+                  onKeyDown={e => e.key === 'Enter' && handleAddAnnotation()}
+                />
+                <ActionTypeCombobox
+                  value={annotationAction}
+                  onChange={setAnnotationAction}
+                  actionTypes={allActionTypes}
+                />
+                <Button onClick={handleAddAnnotation} disabled={!annotationText} size="sm" variant="secondary">
+                  <MessageSquare className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <Button
+                onClick={() => setShowTimestampOverride(!showTimestampOverride)}
+                variant="outline"
+                size="sm"
+                className="gap-1"
+              >
+                <Clock className="h-3.5 w-3.5" /> Sync
+              </Button>
+
+              {selectedVideo.clips.length > 0 && (
+                <Button onClick={handleOpenExport} variant="outline" size="sm" className="gap-1">
+                  <Download className="h-3.5 w-3.5" /> Export to Report
+                </Button>
+              )}
+            </div>
+
+            {showTimestampOverride && (
+              <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border text-sm">
+                <span className="text-muted-foreground whitespace-nowrap">Current position =</span>
+                <Input
+                  type="number"
+                  placeholder="Match minute"
+                  value={overrideMinute}
+                  onChange={e => setOverrideMinute(e.target.value)}
+                  className="w-24"
+                />
+                <span className="text-muted-foreground">'</span>
+                <Button onClick={handleTimestampOverride} size="sm" disabled={!overrideMinute}>Apply</Button>
+                <span className="text-[10px] text-muted-foreground flex-1">All timestamps after this point will adjust.</span>
+              </div>
+            )}
+          </>
+        ) : (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              <Film className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p>Video file expired. Clips and annotations preserved below.</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Annotations (collapsible) */}
+        {selectedVideo.annotations.length > 0 && (
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Notes ({selectedVideo.annotations.length})
+            </summary>
+            <div className="mt-2 space-y-1.5 max-h-[300px] overflow-y-auto">
+              {selectedVideo.annotations.map(ann => (
+                <div key={ann.id} className="flex items-start gap-3 p-2.5 rounded-lg border bg-card hover:bg-muted/30 transition-colors group/ann">
+                  <button onClick={() => jumpToTimestamp(ann.timestamp)} className="flex items-center gap-1 text-primary hover:underline font-mono text-xs whitespace-nowrap">
+                    <Play className="h-3 w-3" />
+                    {fmtMatchTime(ann.timestamp, selectedVideo.match_minute_offset)}
+                  </button>
+                  <p className="text-sm flex-1">{ann.text}</p>
+                  <Badge variant="outline" className={`text-[10px] capitalize border ${ACTION_COLOURS[ann.action_type] || 'bg-muted text-muted-foreground border-border'}`}>{ann.action_type}</Badge>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/ann:opacity-100 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteAnnotation(ann.id)}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
+
+        {/* Clips list: newest first */}
+        <div>
+          <h4 className="text-sm font-medium mb-2">Clips ({selectedVideo.clips.length})</h4>
+          <div className="space-y-2 max-h-[500px] overflow-y-auto">
+            {clipsNewestFirst.map(clip => (
+              <div key={clip.id} className="p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors group/clip">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => playClip(clip)} className="flex items-center gap-1 text-primary hover:underline font-mono text-xs whitespace-nowrap shrink-0">
+                    <Play className="h-3 w-3" />
+                    {fmtTime(clip.start)} → {fmtTime(clip.end)}
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    {editingClipId === clip.id ? (
+                      <Input
+                        defaultValue={clip.label}
+                        autoFocus
+                        onBlur={e => handleUpdateClipLabel(clip.id, e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleUpdateClipLabel(clip.id, (e.target as HTMLInputElement).value)}
+                        className="h-7 text-sm"
+                      />
+                    ) : (
+                      <p className="text-sm truncate cursor-pointer hover:text-primary" onClick={() => setEditingClipId(clip.id)}>
+                        {clip.label}
+                      </p>
+                    )}
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Match: {fmtMatchTime(clip.start, selectedVideo.match_minute_offset)} → {fmtMatchTime(clip.end, selectedVideo.match_minute_offset)}
+                      {' · '}{getMatchMinute(clip.start, selectedVideo.match_minute_offset)}'
+                    </p>
+                  </div>
+
+                  {/* Action type: searchable combobox */}
+                  <ActionTypeCombobox
+                    value={clip.action_type}
+                    onChange={(v) => handleUpdateClipAction(clip.id, v)}
+                    actionTypes={allActionTypes}
+                    compact
+                  />
+
+                  {/* Adjust controls */}
+                  <div className="flex items-center gap-0.5 opacity-0 group-hover/clip:opacity-100 transition-opacity shrink-0">
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'start', -1)} title="Extend start -1s">
+                      <ChevronsLeft className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'start', 1)} title="Trim start +1s">
+                      <ChevronLeft className="h-3 w-3" />
+                    </Button>
+                    <span className="text-[9px] text-muted-foreground mx-0.5">|</span>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'end', -1)} title="Trim end -1s">
+                      <ChevronLeft className="h-3 w-3 rotate-180" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'end', 1)} title="Extend end +1s">
+                      <ChevronsRight className="h-3 w-3" />
+                    </Button>
+                  </div>
+
+                  <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/clip:opacity-100 text-muted-foreground hover:text-destructive shrink-0" onClick={() => handleDeleteClip(clip.id)}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {clipsNewestFirst.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground py-6">No clips yet. Press "Clip (±5s)" during playback.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Export dialog */}
+        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Export Clips to Performance Report</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">
+                {selectedVideo.clips.length} clip(s) will be added as actions with their match minutes, action types and video links.
+              </p>
+              <Select value={selectedReportId} onValueChange={setSelectedReportId}>
+                <SelectTrigger><SelectValue placeholder="Select a performance report" /></SelectTrigger>
+                <SelectContent>
+                  {availableReports.map(r => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.player_name} — {r.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={handleExportToReport} disabled={!selectedReportId || exporting} className="w-full">
+                {exporting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Exporting...</> : <><Download className="h-4 w-4 mr-2" /> Export Actions</>}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // ── Video list (no video selected) ──
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -391,7 +690,6 @@ export const VideoAnalysis = () => {
         </Button>
       </div>
 
-      {/* Inline Upload Panel */}
       {showUpload && (
         <Card className="border-primary/30">
           <CardContent className="p-5">
@@ -442,27 +740,24 @@ export const VideoAnalysis = () => {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Video List */}
-        <div className="lg:col-span-1 space-y-2 max-h-[700px] overflow-y-auto">
-          {videos.length === 0 && !showUpload ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Film className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No match videos yet</p>
-              <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowUpload(true)}>
-                <Upload className="h-4 w-4 mr-1" /> Upload First Match
-              </Button>
-            </div>
-          ) : (
-            videos.map(video => {
+      <div className="space-y-2">
+        {videos.length === 0 && !showUpload ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Film className="h-16 w-16 mx-auto mb-4 opacity-30" />
+            <p>No match videos yet</p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowUpload(true)}>
+              <Upload className="h-4 w-4 mr-1" /> Upload First Match
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {videos.map(video => {
               const expiry = daysUntilExpiry(video.auto_delete_at);
               return (
                 <div
                   key={video.id}
                   onClick={() => setSelectedVideo(video)}
-                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                    selectedVideo?.id === video.id ? 'border-primary bg-primary/5' : 'hover:bg-muted/30'
-                  }`}
+                  className="p-4 rounded-lg border cursor-pointer hover:bg-muted/30 transition-colors"
                 >
                   <div className="flex items-start justify-between">
                     <div className="min-w-0 flex-1">
@@ -487,198 +782,88 @@ export const VideoAnalysis = () => {
                   </div>
                 </div>
               );
-            })
-          )}
-        </div>
-
-        {/* Video Player & Tools */}
-        {selectedVideo ? (
-          <div className="lg:col-span-2 space-y-4">
-            {selectedVideo.video_url ? (
-              <>
-                <Card className="overflow-hidden">
-                  <CardContent className="p-0">
-                    <video ref={videoRef} src={selectedVideo.video_url} controls className="w-full bg-black" />
-                  </CardContent>
-                </Card>
-
-                {/* Action bar */}
-                <div className="flex flex-wrap gap-2 items-center">
-                  {/* Instant clip button */}
-                  <Button onClick={handleInstantClip} variant="default" size="sm" className="gap-1.5">
-                    <Scissors className="h-4 w-4" /> Clip (±5s)
-                  </Button>
-
-                  {/* Annotation quick-add */}
-                  <div className="flex-1 flex gap-2 min-w-[200px]">
-                    <Input
-                      placeholder="Add note..."
-                      value={annotationText}
-                      onChange={e => setAnnotationText(e.target.value)}
-                      className="flex-1"
-                      onKeyDown={e => e.key === 'Enter' && handleAddAnnotation()}
-                    />
-                    <Select value={annotationAction} onValueChange={setAnnotationAction}>
-                      <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {ACTION_TYPES.map(t => <SelectItem key={t} value={t} className="capitalize">{t}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <Button onClick={handleAddAnnotation} disabled={!annotationText} size="sm" variant="secondary">
-                      <MessageSquare className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  {/* Timestamp sync */}
-                  <Button
-                    onClick={() => setShowTimestampOverride(!showTimestampOverride)}
-                    variant="outline"
-                    size="sm"
-                    className="gap-1"
-                    title="Sync video time to match minute"
-                  >
-                    <Clock className="h-3.5 w-3.5" /> Sync
-                  </Button>
-                </div>
-
-                {/* Timestamp override panel */}
-                {showTimestampOverride && (
-                  <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border text-sm">
-                    <span className="text-muted-foreground whitespace-nowrap">Current position =</span>
-                    <Input
-                      type="number"
-                      placeholder="Match minute"
-                      value={overrideMinute}
-                      onChange={e => setOverrideMinute(e.target.value)}
-                      className="w-24"
-                    />
-                    <span className="text-muted-foreground">'</span>
-                    <Button onClick={handleTimestampOverride} size="sm" disabled={!overrideMinute}>Apply</Button>
-                    <span className="text-[10px] text-muted-foreground flex-1">All timestamps after this point will adjust. Does not affect earlier clips.</span>
-                  </div>
-                )}
-              </>
-            ) : (
-              <Card>
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  <Film className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                  <p>Video file expired. Clips and annotations preserved below.</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Tabs + filter */}
-            <div className="flex items-center gap-3">
-              <div className="flex rounded-lg border overflow-hidden">
-                <button onClick={() => setActiveTab("annotations")} className={`px-4 py-1.5 text-sm font-medium transition-colors ${activeTab === "annotations" ? "bg-primary text-primary-foreground" : "hover:bg-muted/50"}`}>
-                  Notes ({selectedVideo.annotations.length})
-                </button>
-                <button onClick={() => setActiveTab("clips")} className={`px-4 py-1.5 text-sm font-medium transition-colors ${activeTab === "clips" ? "bg-primary text-primary-foreground" : "hover:bg-muted/50"}`}>
-                  Clips ({selectedVideo.clips.length})
-                </button>
-              </div>
-              <Select value={filterAction} onValueChange={setFilterAction}>
-                <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {ACTION_TYPES.map(t => <SelectItem key={t} value={t} className="capitalize">{t}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Annotations */}
-            {activeTab === "annotations" && (
-              <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
-                {filteredAnnotations.map(ann => (
-                  <div key={ann.id} className="flex items-start gap-3 p-2.5 rounded-lg border bg-card hover:bg-muted/30 transition-colors group">
-                    <button onClick={() => jumpToTimestamp(ann.timestamp)} className="flex items-center gap-1 text-primary hover:underline font-mono text-xs whitespace-nowrap">
-                      <Play className="h-3 w-3" />
-                      {fmtMatchTime(ann.timestamp, selectedVideo.match_minute_offset)}
-                    </button>
-                    <p className="text-sm flex-1">{ann.text}</p>
-                    <Badge variant="outline" className={`text-[10px] capitalize border ${ACTION_COLOURS[ann.action_type] || ''}`}>{ann.action_type}</Badge>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteAnnotation(ann.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-                {filteredAnnotations.length === 0 && <p className="text-center text-sm text-muted-foreground py-4">No annotations yet.</p>}
-              </div>
-            )}
-
-            {/* Clips */}
-            {activeTab === "clips" && (
-              <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                {filteredClips.map(clip => (
-                  <div key={clip.id} className="p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors group">
-                    <div className="flex items-start gap-3">
-                      <button onClick={() => playClip(clip)} className="flex items-center gap-1 text-primary hover:underline font-mono text-xs whitespace-nowrap mt-0.5">
-                        <Play className="h-3 w-3" />
-                        {fmtTime(clip.start)} → {fmtTime(clip.end)}
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        {editingClipId === clip.id ? (
-                          <Input
-                            defaultValue={clip.label}
-                            autoFocus
-                            onBlur={e => handleUpdateClipLabel(clip.id, e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleUpdateClipLabel(clip.id, (e.target as HTMLInputElement).value)}
-                            className="h-7 text-sm"
-                          />
-                        ) : (
-                          <p className="text-sm truncate cursor-pointer hover:text-primary" onClick={() => setEditingClipId(clip.id)}>
-                            {clip.label}
-                          </p>
-                        )}
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          Match: {fmtMatchTime(clip.start, selectedVideo.match_minute_offset)} → {fmtMatchTime(clip.end, selectedVideo.match_minute_offset)}
-                          {' · '}Report minute: {getMatchMinute(clip.start, selectedVideo.match_minute_offset)}'
-                        </p>
-                      </div>
-                      <Badge variant="outline" className={`text-[10px] capitalize border shrink-0 ${ACTION_COLOURS[clip.action_type] || ''}`}>{clip.action_type}</Badge>
-                    </div>
-                    {/* Clip adjust controls */}
-                    <div className="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-[10px] text-muted-foreground mr-1">Adjust:</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'start', -1)} title="Extend start -1s">
-                        <ChevronsLeft className="h-3 w-3" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'start', 1)} title="Trim start +1s">
-                        <ChevronLeft className="h-3 w-3" />
-                      </Button>
-                      <span className="text-[9px] text-muted-foreground mx-1">|</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'end', -1)} title="Trim end -1s">
-                        <ChevronLeft className="h-3 w-3 rotate-180" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'end', 1)} title="Extend end +1s">
-                        <ChevronsRight className="h-3 w-3" />
-                      </Button>
-                      <div className="flex-1" />
-                      <Select value={clip.action_type} onValueChange={v => handleUpdateClipAction(clip.id, v)}>
-                        <SelectTrigger className="h-6 w-[100px] text-[10px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {ACTION_TYPES.map(t => <SelectItem key={t} value={t} className="capitalize text-xs">{t}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteClip(clip.id)}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                {filteredClips.length === 0 && <p className="text-center text-sm text-muted-foreground py-4">No clips yet. Press "Clip (±5s)" during playback to create instant clips.</p>}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="lg:col-span-2 flex items-center justify-center py-12 text-muted-foreground">
-            <div className="text-center">
-              <Film className="h-16 w-16 mx-auto mb-4 opacity-30" />
-              <p>Select a match video to begin analysis</p>
-            </div>
+            })}
           </div>
         )}
       </div>
     </div>
   );
 };
+
+// ── Searchable / typeable action type combobox ──
+function ActionTypeCombobox({
+  value,
+  onChange,
+  actionTypes,
+  compact = false,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  actionTypes: string[];
+  compact?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filtered = actionTypes.filter(t =>
+    t.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleSelect = (v: string) => {
+    onChange(v);
+    setOpen(false);
+    setSearch("");
+  };
+
+  const handleCustom = () => {
+    if (search.trim()) {
+      onChange(search.trim().toLowerCase());
+      setOpen(false);
+      setSearch("");
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={`justify-between capitalize ${compact ? 'h-7 text-[10px] w-[110px]' : 'w-[130px]'}`}
+        >
+          {value || "Action type"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0" align="start">
+        <Command>
+          <CommandInput
+            placeholder="Search or type..."
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            <CommandEmpty>
+              {search.trim() ? (
+                <button
+                  className="w-full px-3 py-2 text-sm text-left hover:bg-accent cursor-pointer"
+                  onClick={handleCustom}
+                >
+                  Use "{search.trim()}"
+                </button>
+              ) : (
+                <span className="text-muted-foreground text-sm">No matches</span>
+              )}
+            </CommandEmpty>
+            <CommandGroup>
+              {filtered.map(t => (
+                <CommandItem key={t} value={t} onSelect={() => handleSelect(t)} className="capitalize cursor-pointer">
+                  {t}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
