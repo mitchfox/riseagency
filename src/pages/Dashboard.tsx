@@ -47,6 +47,7 @@ import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { MarkdownContent } from "@/utils/markdownRenderer";
 import { InjuryLog } from "@/components/portal/InjuryLog";
+import { PlayerMatchClipper } from "@/components/portal/PlayerMatchClipper";
 
 interface Analysis {
   id: string;
@@ -4061,12 +4062,15 @@ const Dashboard = () => {
               <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-0">
                 <CardContent className="container mx-auto px-4 pt-2">
                   <Tabs defaultValue="best" className="w-full" key="highlights-tabs">
-                    <TabsList className="grid w-full grid-cols-2 gap-2 mb-2 bg-muted h-auto p-2">
+                    <TabsList className="grid w-full grid-cols-3 gap-2 mb-2 bg-muted h-auto p-2">
                       <TabsTrigger value="match" className="font-bebas uppercase">
                         Match Highlights
                       </TabsTrigger>
                       <TabsTrigger value="best" className="font-bebas uppercase">
                         Best Clips
+                      </TabsTrigger>
+                      <TabsTrigger value="clipper" className="font-bebas uppercase">
+                        Match Clipper
                       </TabsTrigger>
                     </TabsList>
                         
@@ -4347,6 +4351,15 @@ const Dashboard = () => {
                               </div>
                             </TabsContent>
                           </Tabs>
+                  </TabsContent>
+
+                  <TabsContent value="clipper">
+                    {playerData?.id && (
+                      <PlayerMatchClipper
+                        playerId={playerData.id}
+                        playerEmail={localStorage.getItem("player_email") || sessionStorage.getItem("player_email") || ""}
+                      />
+                    )}
                   </TabsContent>
                   </Tabs>
                 </CardContent>
