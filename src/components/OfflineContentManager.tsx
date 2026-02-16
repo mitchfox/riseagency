@@ -32,6 +32,7 @@ export const OfflineContentManager = ({
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [storageUsage, setStorageUsage] = useState({ used: 0, quota: 0 });
+  const [lastSynced, setLastSynced] = useState("Never");
   const [cachedItems, setCachedItems] = useState({
     players: 0,
     analyses: 0,
@@ -56,6 +57,7 @@ export const OfflineContentManager = ({
   const loadStorageInfo = async () => {
     const usage = await CacheManager.getStorageUsage();
     setStorageUsage(usage);
+    setLastSynced(CacheManager.getLastSyncedFormatted());
 
     const playerCache = await CacheManager.getCachedItems('players');
     const analysisCache = await CacheManager.getCachedItems('analyses');
@@ -120,6 +122,10 @@ export const OfflineContentManager = ({
       toast.success("Content downloaded for offline use", {
         description: "Everything except videos is now available offline"
       });
+
+      CacheManager.setSyncTimestamp('players');
+      CacheManager.setSyncTimestamp('analyses');
+      CacheManager.setSyncTimestamp('assets');
 
       await loadStorageInfo();
     } catch (error) {
@@ -237,6 +243,7 @@ export const OfflineContentManager = ({
 
         {/* Info */}
         <div className="text-xs text-muted-foreground space-y-1 p-3 bg-muted/20 rounded-md">
+          <p className="font-medium text-foreground/80">Last synced: {lastSynced}</p>
           <p>• Downloaded content is available offline</p>
           <p>• Updates require internet connection</p>
           <p>• Cache cleared on app update</p>

@@ -6,6 +6,9 @@ interface CacheConfig {
   ttl?: number; // time to live in seconds
 }
 
+const DEFAULT_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
+const SYNC_META_KEY = 'rise-cache-sync-meta';
+
 export class CacheManager {
   private static readonly CACHE_PREFIX = 'rise-offline-';
   private static readonly VERSION = 'v1';
@@ -379,5 +382,61 @@ export class CacheManager {
     }
 
     console.log('[Cache] Download for offline complete');
+  }
+
+  // TTL support
+  static getSyncMeta(): Record<string, number> {
+    try {
+      const raw = localStorage.getItem(SYNC_META_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  }
+
+  static setSyncTimestamp(category: string): void {
+    const meta = this.getSyncMeta();
+    meta[category] = Date.now();
+    localStorage.setItem(SYNC_META_KEY, JSON.stringify(meta));
+  }
+
+  static getLastSyncedAt(category: string): number | null {
+    return this.getSyncMeta()[category] || null;
+  }
+
+  static getLastSyncedFormatted(category?: string): string {
+    const meta = this.getSyncMeta();
+    if (category) {
+      const ts = meta[category];
+      return ts ? new Date(ts).toLocaleString() : 'Never';
+    }
+    const allTimestamps = Object.values(meta);
+    if (allTimestamps.length === 0) return 'Never';
+    const latest = Math.max(...allTimestamps);
+    return new Date(latest).toLocaleString();
+  }
+
+  static isCacheStale(category: string, ttl: number = DEFAULT_TTL): boolean {
+    const lastSync = this.getLastSyncedAt(category);
+    if (!lastSync) return true;
+    return Date.now() - lastSync > ttl;
+  }
+
+  // Background sync for stale content
+  static async syncStaleContent(
+    categories: string[],
+    fetchFn: (category: string) => Promise<void>
+  ): Promise<void> {
+    const staleCategories = categories.filter(c => this.isCacheStale(c));
+    if (staleCategories.length === 0) return;
+
+    console.log(`[Cache] Background sync: ${staleCategories.length} stale categories`);
+    await Promise.all(staleCategories.map(async (cat) => {
+      try {
+        await fetchFn(cat);
+        this.setSyncTimestamp(cat);
+        console.log(`[Cache] Synced ${cat}`);
+      } catch (error) {
+        console.error(`[Cache] Failed to sync ${cat}:`, error);
+      }
+    }));
   }
 }

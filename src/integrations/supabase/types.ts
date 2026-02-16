@@ -2128,6 +2128,33 @@ export type Database = {
         }
         Relationships: []
       }
+      periodisation_plans: {
+        Row: {
+          created_at: string
+          id: string
+          phases: Json
+          player_id: string
+          season: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          phases?: Json
+          player_id: string
+          season?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          phases?: Json
+          player_id?: string
+          season?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       player_analysis: {
         Row: {
           analysis_date: string
@@ -2314,6 +2341,33 @@ export type Database = {
           },
         ]
       }
+      player_goals: {
+        Row: {
+          created_at: string
+          id: string
+          metric_key: string
+          player_id: string
+          target_value: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metric_key: string
+          player_id: string
+          target_value: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metric_key?: string
+          player_id?: string
+          target_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       player_hidden_stats: {
         Row: {
           created_at: string
@@ -2349,6 +2403,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      player_injury_log: {
+        Row: {
+          body_area: string
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          player_id: string
+          severity: string
+          status: string
+        }
+        Insert: {
+          body_area: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          player_id: string
+          severity?: string
+          status?: string
+        }
+        Update: {
+          body_area?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          player_id?: string
+          severity?: string
+          status?: string
+        }
+        Relationships: []
       }
       player_nutrition_programs: {
         Row: {
@@ -4227,6 +4314,42 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_activity_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_name: string | null
+          entity_type: string
+          id: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_name?: string | null
+          entity_type: string
+          id?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_name?: string | null
+          entity_type?: string
+          id?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       staff_availability: {
         Row: {
           availability_date: string
@@ -4723,6 +4846,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      video_analyses: {
+        Row: {
+          annotations: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          match_date: string | null
+          opponent: string | null
+          player_id: string | null
+          title: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          annotations?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          match_date?: string | null
+          opponent?: string | null
+          player_id?: string | null
+          title: string
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          annotations?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          match_date?: string | null
+          opponent?: string | null
+          player_id?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: []
       }
       video_player_tags: {
         Row: {

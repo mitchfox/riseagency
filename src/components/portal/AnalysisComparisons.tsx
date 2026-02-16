@@ -5,8 +5,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, BarChart3 } from "lucide-react";
+import { Users, BarChart3, Target } from "lucide-react";
 import { METRIC_CATEGORIES, ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
+import { GoalTracking } from "@/components/portal/GoalTracking";
 
 interface Analysis {
   id: string;
@@ -154,6 +155,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
           <TabsList>
             <TabsTrigger value="percentile"><BarChart3 className="w-4 h-4 mr-1" /> Percentile</TabsTrigger>
             <TabsTrigger value="comparison"><Users className="w-4 h-4 mr-1" /> Player Comparison</TabsTrigger>
+            <TabsTrigger value="goals"><Target className="w-4 h-4 mr-1" /> Goals</TabsTrigger>
           </TabsList>
 
           {/* Percentile Tab */}
@@ -369,6 +371,10 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
                 })}
               </>
             )}
+          </TabsContent>
+          {/* Goals Tab */}
+          <TabsContent value="goals" className="mt-4">
+            <GoalTracking playerData={playerData} fixtureAnalyses={fixtureAnalyses} formWindow={formWindow} />
           </TabsContent>
         </Tabs>
       </CardContent>
