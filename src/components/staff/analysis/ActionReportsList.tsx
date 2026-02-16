@@ -24,7 +24,12 @@ interface ActionReport {
   player_image_url?: string;
 }
 
-export const ActionReportsList = () => {
+interface ActionReportsListProps {
+  onCreateReport?: (playerId: string, playerName: string) => void;
+  onEditReport?: (playerId: string, playerName: string, analysisId: string) => void;
+}
+
+export const ActionReportsList = ({ onCreateReport, onEditReport }: ActionReportsListProps = {}) => {
   const [reports, setReports] = useState<ActionReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -240,10 +245,14 @@ export const ActionReportsList = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        setReportEditorAnalysisId(report.id);
-                        setReportEditorPlayerId(report.player_id);
-                        setReportEditorPlayerName(report.player_name || "");
-                        setShowReportEditor(true);
+                        if (onEditReport) {
+                          onEditReport(report.player_id, report.player_name || "", report.id);
+                        } else {
+                          setReportEditorAnalysisId(report.id);
+                          setReportEditorPlayerId(report.player_id);
+                          setReportEditorPlayerName(report.player_name || "");
+                          setShowReportEditor(true);
+                        }
                       }}
                       className="h-8 px-2 md:px-3"
                     >
@@ -293,12 +302,18 @@ export const ActionReportsList = () => {
                   <button
                     key={player.id}
                     onClick={() => {
-                      setReportEditorPlayerId(player.id);
-                      setReportEditorPlayerName(player.name);
-                      setReportEditorAnalysisId(undefined);
-                      setShowPlayerPicker(false);
-                      setPlayerSearchQuery("");
-                      setShowReportEditor(true);
+                      if (onCreateReport) {
+                        onCreateReport(player.id, player.name);
+                        setShowPlayerPicker(false);
+                        setPlayerSearchQuery("");
+                      } else {
+                        setReportEditorPlayerId(player.id);
+                        setReportEditorPlayerName(player.name);
+                        setReportEditorAnalysisId(undefined);
+                        setShowPlayerPicker(false);
+                        setPlayerSearchQuery("");
+                        setShowReportEditor(true);
+                      }
                     }}
                     className="w-full text-left px-3 py-2 rounded-md hover:bg-accent flex items-center gap-2 transition-colors"
                   >
