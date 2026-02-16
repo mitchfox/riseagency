@@ -25,6 +25,7 @@ import BetweenTheLinesManagement from "@/components/staff/BetweenTheLinesManagem
 import { CoachingDatabase } from "@/components/staff/CoachingDatabase";
 import { AnalysisManagement } from "@/components/staff/AnalysisManagement";
 import { ActionReportsList } from "@/components/staff/analysis/ActionReportsList";
+import { CoachingDataSection } from "@/components/staff/CoachingDataSection";
 import { FormSubmissionsManagement } from "@/components/staff/FormSubmissionsManagement";
 import { SiteVisitorsManagement } from "@/components/staff/SiteVisitorsManagement";
 import { InvoiceManagement } from "@/components/staff/InvoiceManagement";
@@ -118,6 +119,7 @@ import {
   MessageSquare,
   Briefcase,
   Handshake,
+  Database,
 } from "lucide-react";
 
 const Staff = () => {
@@ -729,7 +731,7 @@ const Staff = () => {
           { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
           { id: 'tacticsboard', title: 'Tactics Board', icon: Target },
           { id: 'meetings', title: 'Meetings', icon: Users },
-          { id: 'coachingdata', title: 'Data', icon: LineChart },
+          { id: 'coachingdata', title: 'Data', icon: Database },
           { id: 'analysis', title: 'Analysis', icon: LineChart },
           { id: 'athletecentre', title: 'Athlete Centre', icon: UserRound },
         ]
@@ -1143,7 +1145,7 @@ const Staff = () => {
                   {expandedSection === 'coaching' && <CoachingDatabase isAdmin={isAdmin} />}
                   {expandedSection === 'tacticsboard' && <TacticsBoard />}
                   {expandedSection === 'meetings' && <Meetings />}
-                  {expandedSection === 'coachingdata' && <ActionReportsList />}
+                  {expandedSection === 'coachingdata' && <CoachingDataSection />}
                   {expandedSection === 'analysis' && <AnalysisManagement isAdmin={isAdmin} />}
                   {expandedSection === 'marketing' && <MarketingManagement isAdmin={isAdmin} isMarketeer={isMarketeer} />}
                   {expandedSection === 'contentcreator' && <ContentCreator />}

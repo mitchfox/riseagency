@@ -2,7 +2,7 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
-import { Calendar, TrendingUp, ArrowRight, Trophy, X, FileText } from "lucide-react";
+import { Calendar, TrendingUp, ArrowRight, Trophy, X, FileText, Eye } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine, Rectangle } from "recharts";
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } from "date-fns";
 import { Link, useNavigate } from "react-router-dom";
@@ -774,7 +774,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="p-0 h-8 w-8 bg-black text-white hover:bg-primary hover:text-black rounded font-bold text-[10px]"
+                              className="p-0 h-8 w-auto px-2 bg-black text-white border border-white hover:bg-primary hover:text-black rounded font-bold text-[10px] flex items-center gap-1"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const slug = createAnalysisSlug(preMatch.home_team || '', preMatch.away_team || '', preMatch.id);
@@ -782,6 +782,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                               }}
                               title="View Pre-Match Analysis"
                             >
+                              <Eye className="h-3 w-3" />
                               PRE
                             </Button>
                           );
@@ -795,7 +796,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="p-0 h-8 w-8 bg-black text-white hover:bg-primary hover:text-black rounded font-bold text-[10px]"
+                                className="p-0 h-8 w-auto px-2 bg-black text-white border border-white hover:bg-primary hover:text-black rounded font-bold text-[10px] flex items-center gap-1"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   const slug = createAnalysisSlug(postMatch.homeTeam, postMatch.awayTeam, postMatch.id);
@@ -803,6 +804,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                                 }}
                                 title="View Post-Match Analysis"
                               >
+                                <Eye className="h-3 w-3" />
                                 POST
                               </Button>
                             );
@@ -816,7 +818,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="p-0 h-8 w-8 bg-black text-white hover:bg-primary hover:text-black rounded font-bold text-[10px]"
+                              className="p-0 h-8 w-auto px-2 bg-black text-white border border-white hover:bg-primary hover:text-black rounded font-bold text-[10px] flex items-center gap-1"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const slug = createAnalysisSlug(postMatch.home_team || '', postMatch.away_team || '', postMatch.id);
@@ -824,6 +826,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                               }}
                               title="View Post-Match Analysis"
                             >
+                              <Eye className="h-3 w-3" />
                               POST
                             </Button>
                           );
