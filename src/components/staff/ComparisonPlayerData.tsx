@@ -28,7 +28,6 @@ export const METRIC_CATEGORIES = [
       { key: 'total_shots_per90', label: 'Total Shots' },
       { key: 'shots_outside_box_per90', label: 'Shots Outside Box' },
       { key: 'shots_inside_box_per90', label: 'Shots Inside Box' },
-      { key: 'shot_creating_actions_per90', label: 'Shot Creating Actions' },
     ]
   },
   {
