@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Search, TrendingUp, Edit, Eye, User } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -37,6 +38,8 @@ export const ActionReportsList = () => {
   const [reportEditorAnalysisId, setReportEditorAnalysisId] = useState<string | undefined>(undefined);
   const [selectedReportAnalysisId, setSelectedReportAnalysisId] = useState<string | null>(null);
   const [performanceReportDialogOpen, setPerformanceReportDialogOpen] = useState(false);
+  const [showPlayerPicker, setShowPlayerPicker] = useState(false);
+  const [playerSearchQuery, setPlayerSearchQuery] = useState("");
 
   useEffect(() => {
     fetchReports();
@@ -152,7 +155,7 @@ export const ActionReportsList = () => {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={() => setShowReportEditor(true)}>
+        <Button onClick={() => setShowPlayerPicker(true)}>
           <Plus className="w-4 h-4 mr-2" />
           New Action Report
         </Button>
@@ -266,6 +269,47 @@ export const ActionReportsList = () => {
           ))}
         </div>
       )}
+
+      {/* Player Picker Dialog */}
+      <Dialog open={showPlayerPicker} onOpenChange={setShowPlayerPicker}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Player</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search players..."
+                value={playerSearchQuery}
+                onChange={(e) => setPlayerSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="max-h-[300px] overflow-y-auto space-y-1">
+              {players
+                .filter(p => p.name.toLowerCase().includes(playerSearchQuery.toLowerCase()))
+                .map((player) => (
+                  <button
+                    key={player.id}
+                    onClick={() => {
+                      setReportEditorPlayerId(player.id);
+                      setReportEditorPlayerName(player.name);
+                      setReportEditorAnalysisId(undefined);
+                      setShowPlayerPicker(false);
+                      setPlayerSearchQuery("");
+                      setShowReportEditor(true);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-md hover:bg-accent flex items-center gap-2 transition-colors"
+                  >
+                    <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium">{player.name}</span>
+                  </button>
+                ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Performance Report Editor Dialog */}
       {showReportEditor && (
