@@ -61,10 +61,13 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
     }
   }, [initialCategory, open]);
 
-  // Reset search filter when dialog opens - NO auto-fill from searchTerm
+  // Reset search filter and collapse all sections when dialog opens
   useEffect(() => {
     if (open) {
       setSearchFilter(''); // Always start with empty search
+      setExpandedCategories(new Set()); // All sections collapsed by default
+      setExpandedSubcategories(new Set());
+      setExpandedRatings(new Set());
     }
   }, [open]);
 
