@@ -480,12 +480,13 @@ export const ActionsByTypeDialog = ({
                                   <Input
                                     type="number"
                                     step="0.00001"
-                                    value={edited.action_score}
-                                    onChange={(e) =>
+                                    value={edited.action_score ?? ""}
+                                    onChange={(e) => {
+                                      const raw = e.target.value;
                                       updateEditedAction(action.id!, {
-                                        action_score: parseFloat(e.target.value) || 0,
-                                      })
-                                    }
+                                        action_score: raw === "" ? 0 : parseFloat(raw) || 0,
+                                      });
+                                    }}
                                     disabled={!isAdmin}
                                     className={`h-9 font-mono ${getActionScoreColor(edited.action_score)}`}
                                   />
