@@ -16,11 +16,12 @@ import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
 import { SessionDatabaseSelector } from "./SessionDatabaseSelector";
 import { SaveToCoachingDBDialog } from "./SaveToCoachingDBDialog";
 interface ProgrammingManagementProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
   playerId: string;
   playerName: string;
   isAdmin: boolean;
+  embedded?: boolean;
 }
 
 interface Exercise {
@@ -179,7 +180,7 @@ const initialProgrammingData = (): ProgrammingData => ({
   testing: '',
 });
 
-export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, isAdmin }: ProgrammingManagementProps) => {
+export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, isAdmin, embedded }: ProgrammingManagementProps) => {
   const [programs, setPrograms] = useState<any[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<any | null>(null);
   const [programmingData, setProgrammingData] = useState<ProgrammingData>(initialProgrammingData());
@@ -233,24 +234,22 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
 
   // Check for recovery data on mount
   useEffect(() => {
-    if (isOpen && selectedProgram) {
+    if ((isOpen || embedded) && selectedProgram) {
       const backupKey = getBackupKey();
       const backup = localStorage.getItem(backupKey);
       if (backup) {
         try {
           const backupData = JSON.parse(backup);
-          // If backup is less than 24 hours old and for this program
           if (backupData.programId === selectedProgram.id && 
               Date.now() - backupData.timestamp < 24 * 60 * 60 * 1000) {
             setShowRecoveryBanner(true);
           }
         } catch (e) {
-          // Invalid backup, remove it
           localStorage.removeItem(backupKey);
         }
       }
     }
-  }, [isOpen, selectedProgram]);
+  }, [isOpen, embedded, selectedProgram]);
 
   // Recovery function
   const recoverUnsavedChanges = () => {
@@ -302,7 +301,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
   }, []);
 
   useEffect(() => {
-    if (isOpen && playerId) {
+    if ((isOpen || embedded) && playerId) {
       // Clear any pending lookups when switching players
       Object.values(exerciseLookupTimeoutRef.current).forEach(clearTimeout);
       exerciseLookupTimeoutRef.current = {};
@@ -319,7 +318,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
       fetchExerciseTitles();
       loadAllPlayers();
     }
-  }, [isOpen, playerId]);
+  }, [isOpen, embedded, playerId]);
 
   const loadAllPlayers = async () => {
     try {
@@ -1333,67 +1332,55 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
     }
   };
 
-  return (
-    <>
-      {/* Template Selection Dialog */}
-      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">Select Program Template</DialogTitle>
-          </DialogHeader>
-          
-          {loadingTemplates ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Loading templates...</p>
-            </div>
-          ) : coachingPrograms.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">No templates available in coaching database yet.</p>
-              <p className="text-sm text-muted-foreground mt-2">Create programs in the Coaching Database first to use them as templates.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {coachingPrograms.map((program) => (
-                <Card key={program.id} className="hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => createProgramFromTemplate(program)}>
-                  <CardContent className="pt-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-semibold">{program.title}</h4>
-                        {program.description && (
-                          <p className="text-sm text-muted-foreground mt-1">{program.description}</p>
-                        )}
-                        {program.weeks && (
-                          <Badge variant="secondary" className="mt-2">
-                            {program.weeks} weeks
-                          </Badge>
-                        )}
-                      </div>
-                      <Button size="sm" variant="outline" disabled={loading}>
-                        Use Template
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isOpen} onOpenChange={(open) => {
-        if (!open && hasUnsavedChanges) {
-          if (!confirm('You have unsaved changes. Are you sure you want to close? Your work is backed up locally.')) {
-            return;
-          }
-        }
-        onClose();
-      }}>
-      <DialogContent className="w-[98vw] max-w-[1800px] max-h-[90vh] overflow-y-auto bg-background">
+  const templateDialog = (
+    <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">Programming Management - {playerName}</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Select Program Template</DialogTitle>
         </DialogHeader>
+        
+        {loadingTemplates ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Loading templates...</p>
+          </div>
+        ) : coachingPrograms.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No templates available in coaching database yet.</p>
+            <p className="text-sm text-muted-foreground mt-2">Create programs in the Coaching Database first to use them as templates.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {coachingPrograms.map((program) => (
+              <Card key={program.id} className="hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => createProgramFromTemplate(program)}>
+                <CardContent className="pt-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-semibold">{program.title}</h4>
+                      {program.description && (
+                        <p className="text-sm text-muted-foreground mt-1">{program.description}</p>
+                      )}
+                      {program.weeks && (
+                        <Badge variant="secondary" className="mt-2">
+                          {program.weeks} weeks
+                        </Badge>
+                      )}
+                    </div>
+                    <Button size="sm" variant="outline" disabled={loading}>
+                      Use Template
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
 
-        {/* Recovery Banner */}
+  const innerContent = (
+    <>
+      {/* Recovery Banner */}
         {showRecoveryBanner && selectedProgram && (
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -2241,9 +2228,11 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
             </div>
           </div>
         )}
-      </DialogContent>
-      </Dialog>
+    </>
+  );
 
+  const fixturesAndSelectors = (
+    <>
       <datalist id="exercise-titles-list">
         {exerciseTitles.map((title, idx) => (
           <option key={idx} value={title} />
@@ -2251,14 +2240,14 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
       </datalist>
 
       <ExerciseDatabaseSelector
-      isOpen={isExerciseSelectorOpen}
-      onClose={() => setIsExerciseSelectorOpen(false)}
-      onSelect={(exercise) => {
-        if (selectedSession) {
-          addExerciseFromDatabase(selectedSession as SessionKey, exercise);
-        }
-      }}
-    />
+        isOpen={isExerciseSelectorOpen}
+        onClose={() => setIsExerciseSelectorOpen(false)}
+        onSelect={(exercise) => {
+          if (selectedSession) {
+            addExerciseFromDatabase(selectedSession as SessionKey, exercise);
+          }
+        }}
+      />
 
       <SessionDatabaseSelector
         isOpen={isSessionSelectorOpen}
@@ -2274,189 +2263,226 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
         isOpen={showSaveToDBDialog}
         onClose={() => setShowSaveToDBDialog(false)}
         programmingData={programmingData}
-        programName={selectedProgram?.program_name || ''}
+        programName={selectedProgram?.program_name || playerName}
       />
 
-    <Dialog open={showPasteDialog} onOpenChange={setShowPasteDialog}>
-      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-3xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">Paste Exercises</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="bg-muted p-3 sm:p-4 rounded-lg text-xs sm:text-sm space-y-2">
-            <p className="font-semibold">Format: Tab-separated values (one exercise per line)</p>
-            <p className="text-muted-foreground">Order: Name → Description → Reps → Sets → Load → Recovery Time → Video URL (optional)</p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Example: Copy from Excel/Sheets where columns are: Exercise Name | Description | Reps | Sets | Load | Recovery Time | Video URL
+      {/* Paste Exercises Dialog */}
+      <Dialog open={showPasteDialog} onOpenChange={setShowPasteDialog}>
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl">Paste Exercises</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Paste exercise data from a spreadsheet. Each line should be: Name, Description, Reps, Sets, Load, Recovery Time, Video URL (comma or tab separated).
             </p>
+            <Textarea
+              value={pasteText}
+              onChange={(e) => setPasteText(e.target.value)}
+              placeholder="Exercise Name, Description, 10, 3, 50kg, 60s, https://..."
+              className="min-h-[200px] font-mono text-sm"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowPasteDialog(false)}>Cancel</Button>
+              <Button onClick={() => {
+                if (selectedSession && pasteText.trim()) {
+                  parsePastedExercises();
+                  setShowPasteDialog(false);
+                  setPasteText("");
+                }
+              }}>Import Exercises</Button>
+            </div>
           </div>
-          <Textarea
-            placeholder="Paste your exercises here (tab-separated)...&#10;&#10;Example:&#10;Wall Volleys - Single-Leg Standing	Stand 1–2 metres from a wall...	90s (45s each side)	2	Bodyweight	60s&#10;Reverse Nordic Curl	Kneel on a padded surface...	8	2	Bodyweight	90s	https://video-url.com"
-            value={pasteText}
-            onChange={(e) => setPasteText(e.target.value)}
-            rows={10}
-            className="font-mono text-xs sm:text-sm"
-          />
-          <div className="flex flex-col sm:flex-row justify-end gap-2">
-            <Button variant="outline" onClick={() => {
-              setShowPasteDialog(false);
-              setPasteText("");
-            }} className="w-full sm:w-auto">
-              Cancel
-            </Button>
-            <Button onClick={parsePastedExercises} className="w-full sm:w-auto">
-              Import Exercises
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
 
-    <Dialog open={showPasteScheduleDialog} onOpenChange={setShowPasteScheduleDialog}>
-      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">Paste Weekly Schedule</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="bg-muted p-3 sm:p-4 rounded-lg text-xs sm:text-sm space-y-2">
-            <p className="font-semibold">Format: One day per line (Monday to Sunday)</p>
-            <p className="text-muted-foreground">Just paste the activity/session for each day</p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Example: Copy 7 lines from Excel/Sheets with one activity per line. Colors will be auto-assigned based on session letters (A-H).
+      {/* Paste Schedule Dialog */}
+      <Dialog open={showPasteScheduleDialog} onOpenChange={setShowPasteScheduleDialog}>
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl">Paste Weekly Schedule</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Paste a weekly schedule. Each line should contain a day and its session (e.g., "Monday: A" or "Mon,A").
             </p>
+            <Textarea
+              value={pasteScheduleText}
+              onChange={(e) => setPasteScheduleText(e.target.value)}
+              placeholder="Monday: A&#10;Tuesday: B&#10;Wednesday: REST&#10;..."
+              className="min-h-[200px] font-mono text-sm"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowPasteScheduleDialog(false)}>Cancel</Button>
+              <Button onClick={() => {
+                if (pasteScheduleWeekIndex !== null && pasteScheduleText.trim()) {
+                  parsePastedSchedule();
+                  setShowPasteScheduleDialog(false);
+                  setPasteScheduleText("");
+                }
+              }}>Import Schedule</Button>
+            </div>
           </div>
-          <Textarea
-            placeholder="Paste your weekly schedule here (one day per line)...&#10;&#10;Example:&#10;Session A&#10;Rest&#10;Session B&#10;Rest&#10;Session C&#10;Rest&#10;Recovery"
-            value={pasteScheduleText}
-            onChange={(e) => setPasteScheduleText(e.target.value)}
-            rows={10}
-            className="font-mono text-xs sm:text-sm"
-          />
-          <div className="flex flex-col sm:flex-row justify-end gap-2">
-            <Button variant="outline" onClick={() => {
-              setShowPasteScheduleDialog(false);
-              setPasteScheduleText("");
-              setPasteScheduleWeekIndex(null);
-            }} className="w-full sm:w-auto">
-              Cancel
-            </Button>
-            <Button onClick={parsePastedSchedule} className="w-full sm:w-auto">
-              Import Schedule
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
 
-    {/* Fixtures Dialog */}
-    <Dialog open={showFixturesDialog} onOpenChange={setShowFixturesDialog}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Add Fixtures to Schedule</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Select Player</Label>
-            <Select value={selectedFixturePlayer} onValueChange={setSelectedFixturePlayer}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a player..." />
-              </SelectTrigger>
-              <SelectContent>
-                {allPlayers.map((player) => (
-                  <SelectItem key={player.id} value={player.id}>
-                    {player.name} {player.club ? `(${player.club})` : ''}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Button 
-            onClick={fetchFixtures} 
-            disabled={!selectedFixturePlayer || fetchingFixtures}
-            className="w-full"
-          >
-            {fetchingFixtures ? 'Fetching Fixtures...' : 'Fetch Fixtures'}
-          </Button>
-
-          {availableFixtures.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Select Fixtures to Add</Label>
-                <Badge variant="secondary">{selectedFixtures.size} selected</Badge>
-              </div>
-              <div className="space-y-2 max-h-96 overflow-y-auto border rounded-lg p-3">
-                {availableFixtures.map((fixture, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                      selectedFixtures.has(idx)
-                        ? 'bg-primary/10 border-primary'
-                        : 'hover:bg-muted'
-                    }`}
-                    onClick={() => {
-                      const newSelected = new Set(selectedFixtures);
-                      if (newSelected.has(idx)) {
-                        newSelected.delete(idx);
-                      } else {
-                        newSelected.add(idx);
+      {/* Fixtures Dialog */}
+      <Dialog open={showFixturesDialog} onOpenChange={setShowFixturesDialog}>
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl">Add Fixtures to Schedule</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Select value={selectedFixturePlayer} onValueChange={setSelectedFixturePlayer}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Select player's team..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {allPlayers
+                    .filter(p => p.club)
+                    .reduce((unique: any[], player: any) => {
+                      if (!unique.find(u => u.club === player.club)) {
+                        unique.push(player);
                       }
-                      setSelectedFixtures(newSelected);
+                      return unique;
+                    }, [])
+                    .map(player => (
+                      <SelectItem key={player.id} value={player.club}>
+                        {player.club} ({player.name})
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <Button 
+                onClick={() => fetchFixtures()}
+                disabled={!selectedFixturePlayer || fetchingFixtures}
+              >
+                {fetchingFixtures ? 'Loading...' : 'Fetch Fixtures'}
+              </Button>
+            </div>
+
+            {availableFixtures.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-muted-foreground">{availableFixtures.length} fixtures found</p>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => {
+                      if (selectedFixtures.size === availableFixtures.length) {
+                        setSelectedFixtures(new Set());
+                      } else {
+                        setSelectedFixtures(new Set(availableFixtures.map((_: any, i: number) => i)));
+                      }
                     }}
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-semibold text-sm">
-                          {fixture.home_team} vs {fixture.away_team}
+                    {selectedFixtures.size === availableFixtures.length ? 'Deselect All' : 'Select All'}
+                  </Button>
+                </div>
+                <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+                  {availableFixtures.map((fixture: any, idx: number) => (
+                    <div 
+                      key={idx} 
+                      className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                        selectedFixtures.has(idx) ? 'border-primary bg-primary/5' : 'hover:bg-accent/50'
+                      }`}
+                      onClick={() => {
+                        const newSelected = new Set(selectedFixtures);
+                        if (newSelected.has(idx)) {
+                          newSelected.delete(idx);
+                        } else {
+                          newSelected.add(idx);
+                        }
+                        setSelectedFixtures(newSelected);
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-semibold text-sm">
+                            {fixture.home_team} vs {fixture.away_team}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {new Date(fixture.match_date).toLocaleDateString('en-GB', {
+                              weekday: 'short',
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
+                            {fixture.competition && ` • ${fixture.competition}`}
+                          </div>
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {new Date(fixture.match_date).toLocaleDateString('en-GB', {
-                            weekday: 'short',
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric'
-                          })}
-                          {fixture.competition && ` • ${fixture.competition}`}
-                        </div>
+                        <Checkbox
+                          checked={selectedFixtures.has(idx)}
+                          onCheckedChange={() => {
+                            const newSelected = new Set(selectedFixtures);
+                            if (newSelected.has(idx)) {
+                              newSelected.delete(idx);
+                            } else {
+                              newSelected.add(idx);
+                            }
+                            setSelectedFixtures(newSelected);
+                          }}
+                        />
                       </div>
-                      <Checkbox
-                        checked={selectedFixtures.has(idx)}
-                        onCheckedChange={() => {
-                          const newSelected = new Set(selectedFixtures);
-                          if (newSelected.has(idx)) {
-                            newSelected.delete(idx);
-                          } else {
-                            newSelected.add(idx);
-                          }
-                          setSelectedFixtures(newSelected);
-                        }}
-                      />
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setShowFixturesDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={addFixturesToSchedule}
+                    disabled={selectedFixtures.size === 0}
+                  >
+                    Add {selectedFixtures.size} Fixture{selectedFixtures.size !== 1 ? 's' : ''} to Schedule
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setShowFixturesDialog(false)}>
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={addFixturesToSchedule}
-                  disabled={selectedFixtures.size === 0}
-                >
-                  Add {selectedFixtures.size} Fixture{selectedFixtures.size !== 1 ? 's' : ''} to Schedule
-                </Button>
-              </div>
-            </div>
-          )}
+            )}
 
-          {availableFixtures.length === 0 && selectedFixturePlayer && !fetchingFixtures && (
-            <div className="text-center text-muted-foreground py-8">
-              Click "Fetch Fixtures" to load fixtures for the selected player's team
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+            {availableFixtures.length === 0 && selectedFixturePlayer && !fetchingFixtures && (
+              <div className="text-center text-muted-foreground py-8">
+                Click "Fetch Fixtures" to load fixtures for the selected player's team
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="space-y-6">
+        <h3 className="text-lg font-semibold">Programming — {playerName}</h3>
+        {innerContent}
+        {templateDialog}
+        {fixturesAndSelectors}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {templateDialog}
+      <Dialog open={isOpen} onOpenChange={(open) => {
+        if (!open && hasUnsavedChanges) {
+          if (!confirm('You have unsaved changes. Are you sure you want to close? Your work is backed up locally.')) {
+            return;
+          }
+        }
+        onClose?.();
+      }}>
+        <DialogContent className="w-[98vw] max-w-[1800px] max-h-[90vh] overflow-y-auto bg-background">
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl">Programming Management - {playerName}</DialogTitle>
+          </DialogHeader>
+          {innerContent}
+        </DialogContent>
+      </Dialog>
+      {fixturesAndSelectors}
     </>
   );
 };

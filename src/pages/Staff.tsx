@@ -769,14 +769,7 @@ const Staff = () => {
           { id: '_group_planning', title: 'Planning', isGroupLabel: true },
           { id: 'athletecentre', title: 'Athlete Centre', icon: UserRound },
           { id: 'tacticsboard', title: 'Tactics Board', icon: Target },
-        ]
-      },
-      {
-        id: 'programming',
-        title: 'Programming',
-        icon: Zap,
-        locked: false,
-        sections: [
+          { id: '_group_programming', title: 'Programming', isGroupLabel: true },
           { id: 'strengthpower', title: 'Strength, Power & Speed', icon: Dumbbell },
           { id: 'nutrition', title: 'Nutrition', icon: Apple },
         ]
