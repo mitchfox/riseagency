@@ -11,6 +11,9 @@ import { getR90Grade } from "@/lib/gradeCalculations";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
 import { QuickStatsComparison } from "./QuickStatsComparison";
+import { ParallaxHero } from "@/components/portal/ParallaxHero";
+import { NextFixtureCountdown } from "@/components/portal/NextFixtureCountdown";
+import { checkAndFireConfetti } from "@/lib/confetti";
 
 interface PlayerProgram {
   id: string;
@@ -56,6 +59,18 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
   const [reportDialogOpen, setReportDialogOpen] = React.useState(false);
   const [selectedReportId, setSelectedReportId] = React.useState<string | null>(null);
   const [postMatchAnalyses, setPostMatchAnalyses] = React.useState<Map<string, { id: string; homeTeam: string; awayTeam: string }>>(new Map());
+  const confettiFired = React.useRef(false);
+
+  // Fire confetti on personal best R90
+  React.useEffect(() => {
+    if (confettiFired.current || analyses.length < 2) return;
+    const sorted = [...analyses].sort((a, b) => new Date(b.analysis_date).getTime() - new Date(a.analysis_date).getTime());
+    const latest = sorted[0];
+    const previousBest = Math.max(...sorted.slice(1).map(a => a.r90_score ?? 0));
+    if (latest?.r90_score != null && checkAndFireConfetti(latest.r90_score, previousBest)) {
+      confettiFired.current = true;
+    }
+  }, [analyses]);
 
   // Fetch post-match analyses linked to fixtures
   React.useEffect(() => {
@@ -394,7 +409,20 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
 
   return (
     <>
+      {/* Parallax Hero Header */}
+      {playerData?.image_url && (
+        <ParallaxHero
+          imageUrl={playerData.image_url}
+          playerName={playerData.name || "Player"}
+          clubName={playerData.current_club}
+          position={playerData.position}
+        />
+      )}
+
       <div className="space-y-0 mb-0">
+        {/* Next Fixture Countdown */}
+        <NextFixtureCountdown playerName={playerData?.name} />
+
         {/* Schedule Card - Full Width */}
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-0 border-b-0 z-30">
           <CardHeader marble className="py-2">

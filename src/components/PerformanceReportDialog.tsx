@@ -4,12 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, X, ImageIcon, Video, Play, Calculator } from "lucide-react";
+import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
 import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
 import { STAT_TYPE_CONFIGS, StatTypeConfig } from "@/components/staff/ActionStatRecorder";
+import { R90FlowChart } from "@/components/report/R90FlowChart";
+import { ActionHeatmap } from "@/components/report/ActionHeatmap";
+import { RankedActionsPlayer } from "@/components/report/RankedActionsPlayer";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -61,6 +64,10 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
   const contentRef = useRef<HTMLDivElement>(null);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>("");
+  const [showR90Flow, setShowR90Flow] = useState(false);
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showRankedPlayer, setShowRankedPlayer] = useState(false);
+  const [rankedMode, setRankedMode] = useState<"chronological" | "ranked">("chronological");
   const [showClippedActions, setShowClippedActions] = useState(false);
 
   // Pre-fetch data when analysisId changes (even before dialog opens)
@@ -536,6 +543,70 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                 )}
               </div>
 
+              {/* Graphics Buttons Row */}
+              {actions.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={showR90Flow ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => { setShowR90Flow(!showR90Flow); setShowHeatmap(false); }}
+                    className="text-xs"
+                  >
+                    <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
+                    R90 Flow
+                  </Button>
+                  <Button
+                    variant={showHeatmap ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); }}
+                    className="text-xs"
+                  >
+                    <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
+                    Action Heatmap
+                  </Button>
+                  {actions.filter(a => a.video_url).length > 0 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setRankedMode("chronological"); setShowRankedPlayer(true); }}
+                        className="text-xs"
+                      >
+                        <Film className="h-3.5 w-3.5 mr-1.5" />
+                        Full Match Video
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setRankedMode("ranked"); setShowRankedPlayer(true); }}
+                        className="text-xs"
+                      >
+                        <Award className="h-3.5 w-3.5 mr-1.5" />
+                        Ranked Actions
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* R90 Flow Chart */}
+              {showR90Flow && analysis.minutes_played && (
+                <Card className="overflow-hidden">
+                  <CardContent className="p-3 md:p-6">
+                    <R90FlowChart actions={actions} minutesPlayed={analysis.minutes_played} />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Action Heatmap */}
+              {showHeatmap && analysis.minutes_played && (
+                <Card className="overflow-hidden">
+                  <CardContent className="p-3 md:p-6">
+                    <ActionHeatmap actions={actions} minutesPlayed={analysis.minutes_played} />
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Key Stats */}
               <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4 p-2 md:p-4 bg-accent/20 rounded-lg">
                 <div className="text-center p-2">
@@ -760,6 +831,24 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
             action_number: a.action_number,
             action_type: a.action_type,
             action_description: a.action_description,
+            video_url: a.video_url!,
+            minute: a.minute,
+          }))}
+      />
+
+      {/* Ranked/Full Match Video Player */}
+      <RankedActionsPlayer
+        open={showRankedPlayer}
+        onOpenChange={setShowRankedPlayer}
+        mode={rankedMode}
+        clips={actions
+          .filter(a => a.video_url)
+          .map(a => ({
+            id: a.id,
+            action_number: a.action_number,
+            action_type: a.action_type,
+            action_description: a.action_description,
+            action_score: a.action_score,
             video_url: a.video_url!,
             minute: a.minute,
           }))}
