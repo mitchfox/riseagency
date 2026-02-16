@@ -425,7 +425,7 @@ export const AnalysisMatchDetails = ({
                 <Input
                   type="number"
                   value={formData.home_score ?? ""}
-                  onChange={(e) => setFormData({ ...formData, home_score: parseInt(e.target.value) || undefined })}
+                  onChange={(e) => setFormData({ ...formData, home_score: e.target.value === "" ? undefined : parseInt(e.target.value) })}
                   className="text-center"
                 />
               </div>
@@ -434,7 +434,7 @@ export const AnalysisMatchDetails = ({
                 <Input
                   type="number"
                   value={formData.away_score ?? ""}
-                  onChange={(e) => setFormData({ ...formData, away_score: parseInt(e.target.value) || undefined })}
+                  onChange={(e) => setFormData({ ...formData, away_score: e.target.value === "" ? undefined : parseInt(e.target.value) })}
                   className="text-center"
                 />
               </div>
