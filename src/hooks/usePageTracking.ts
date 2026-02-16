@@ -10,10 +10,7 @@ const shouldTrackRoute = (pathname: string): boolean => {
 
 export const usePageTracking = () => {
   const location = useLocation();
-  const startTimeRef = useRef<number>(Date.now());
   const visitorIdRef = useRef<string>("");
-  const visitIdRef = useRef<string | null>(null);
-  const trackingPromiseRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     let visitorId = localStorage.getItem("visitor_id");
@@ -30,10 +27,9 @@ export const usePageTracking = () => {
     }
 
     const startTime = Date.now();
-    startTimeRef.current = startTime;
-    visitIdRef.current = null;
+    let localVisitId: string | null = null;
 
-    const trackPageView = async () => {
+    const trackPageView = async (): Promise<string | null> => {
       try {
         const { data, error } = await supabase.functions.invoke("track-visit", {
           body: {
@@ -45,31 +41,27 @@ export const usePageTracking = () => {
         });
 
         if (!error && data?.visitId) {
-          visitIdRef.current = data.visitId;
+          return data.visitId;
         }
       } catch (error) {
         console.error("Failed to track page view:", error);
       }
+      return null;
     };
 
-    trackingPromiseRef.current = trackPageView();
+    const trackingPromise = trackPageView().then(id => {
+      localVisitId = id;
+    });
 
     return () => {
-      const capturedStartTime = startTimeRef.current;
-      const capturedPromise = trackingPromiseRef.current;
-
-      // Wait for the initial tracking to complete before sending duration
       const sendDuration = async () => {
-        if (capturedPromise) {
-          await capturedPromise;
-        }
-        const duration = Math.round((Date.now() - capturedStartTime) / 1000);
-        const visitId = visitIdRef.current;
+        await trackingPromise;
+        const duration = Math.round((Date.now() - startTime) / 1000);
 
-        if (duration >= 1 && visitId) {
+        if (duration >= 1 && localVisitId) {
           supabase.functions.invoke("track-visit", {
             body: {
-              visitId,
+              visitId: localVisitId,
               duration,
               isInitial: false,
             },
