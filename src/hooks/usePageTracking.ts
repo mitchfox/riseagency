@@ -13,6 +13,7 @@ export const usePageTracking = () => {
   const startTimeRef = useRef<number>(Date.now());
   const visitorIdRef = useRef<string>("");
   const visitIdRef = useRef<string | null>(null);
+  const trackingPromiseRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     let visitorId = localStorage.getItem("visitor_id");
@@ -51,21 +52,32 @@ export const usePageTracking = () => {
       }
     };
 
-    trackPageView();
+    trackingPromiseRef.current = trackPageView();
 
     return () => {
-      const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
-      const visitId = visitIdRef.current;
+      const capturedStartTime = startTimeRef.current;
+      const capturedPromise = trackingPromiseRef.current;
 
-      if (duration >= 1 && visitId) {
-        supabase.functions.invoke("track-visit", {
-          body: {
-            visitId,
-            duration,
-            isInitial: false,
-          },
-        });
-      }
+      // Wait for the initial tracking to complete before sending duration
+      const sendDuration = async () => {
+        if (capturedPromise) {
+          await capturedPromise;
+        }
+        const duration = Math.round((Date.now() - capturedStartTime) / 1000);
+        const visitId = visitIdRef.current;
+
+        if (duration >= 1 && visitId) {
+          supabase.functions.invoke("track-visit", {
+            body: {
+              visitId,
+              duration,
+              isInitial: false,
+            },
+          });
+        }
+      };
+
+      sendDuration();
     };
   }, [location.pathname]);
 };

@@ -697,11 +697,13 @@ const Staff = () => {
         locked: false,
         sections: [
           { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
+          { id: '_group_planning', title: 'Planning', isGroupLabel: true },
           { id: 'tacticsboard', title: 'Tactics Board', icon: Target },
           { id: 'coachingdata', title: 'Data', icon: Database },
+          { id: '_group_performance', title: 'Performance', isGroupLabel: true },
           { id: 'analysis', title: 'Analysis', icon: LineChart },
-          { id: 'athletecentre', title: 'Athlete Centre', icon: UserRound },
           { id: 'videoanalysis', title: 'Video Analysis', icon: Film },
+          { id: 'athletecentre', title: 'Athlete Centre', icon: UserRound },
         ]
       },
       {
@@ -711,6 +713,7 @@ const Staff = () => {
         locked: false,
         sections: [
           { id: 'players', title: 'Players', icon: UserCog },
+          { id: '_group_transfers', title: 'Transfers', isGroupLabel: true },
           { id: 'transferhub', title: 'Transfer Hub', icon: Building2 },
           { id: 'updates', title: 'Player Updates', icon: BellRing },
           { id: 'requests', title: 'Requests', icon: Target },
@@ -722,8 +725,10 @@ const Staff = () => {
         icon: Network,
         locked: false,
         sections: [
+          { id: '_group_network', title: 'Network', isGroupLabel: true },
           { id: 'clubnetwork', title: 'Club Network', icon: Network },
           { id: 'playerlist', title: 'Player List', icon: Users },
+          { id: '_group_scouting', title: 'Scouting', isGroupLabel: true },
           { id: 'recruitment', title: 'Recruitment', icon: Target },
           { id: 'playerdatabase', title: 'Player Database', icon: Users },
           { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
@@ -736,10 +741,12 @@ const Staff = () => {
         icon: Megaphone,
         locked: false,
         sections: [
+          { id: '_group_content', title: 'Content', isGroupLabel: true },
           { id: 'marketing', title: 'Marketing', icon: Megaphone },
           { id: 'contentcreator', title: 'Content Creator', icon: Film },
-          { id: 'salesdeck', title: 'Sales Deck', icon: Briefcase },
           { id: 'publiccontent', title: 'Public Content', icon: Megaphone },
+          { id: '_group_commercial', title: 'Commercial', isGroupLabel: true },
+          { id: 'salesdeck', title: 'Sales Deck', icon: Briefcase },
           { id: 'visitors', title: 'Site Visitors', icon: Eye },
         ]
       },
@@ -749,10 +756,13 @@ const Staff = () => {
         icon: Wallet,
         locked: false,
         sections: [
+          { id: '_group_billing', title: 'Billing', isGroupLabel: true },
           { id: 'invoices', title: 'Invoices', icon: FileCheck },
           { id: 'payments', title: 'Payments In/Out', icon: Receipt },
+          { id: '_group_tracking', title: 'Tracking', isGroupLabel: true },
           { id: 'expenses', title: 'Expenses', icon: Calculator },
           { id: 'taxrecords', title: 'Tax Records', icon: FileSpreadsheet },
+          { id: '_group_overview_fin', title: 'Overview', isGroupLabel: true },
           { id: 'budgets', title: 'Budgets', icon: PiggyBank },
           { id: 'financialreports', title: 'Reports', icon: TrendingUp },
         ]
@@ -774,18 +784,23 @@ const Staff = () => {
         icon: Shield,
         locked: false,
         sections: [
+          { id: '_group_site', title: 'Site', isGroupLabel: true },
           { id: 'sitetext', title: 'Site Text', icon: FileText },
           { id: 'languages', title: 'Languages', icon: Languages },
           ...(user?.email === 'jolonlevene98@gmail.com' ? [
+            { id: '_group_comms', title: 'Communications', isGroupLabel: true },
             { id: 'notifications', title: 'Notifications', icon: BellRing },
             { id: 'smsnotifications', title: 'SMS Notifications', icon: MessageSquare },
           ] : []),
           ...(isAdmin ? [
+            { id: '_group_access', title: 'Access', isGroupLabel: true },
             { id: 'passwords', title: 'Player Passwords', icon: Lock },
             { id: 'staffaccounts', title: 'Staff Accounts', icon: Shield },
+            { id: '_group_data', title: 'Data', isGroupLabel: true },
             { id: 'activitylog', title: 'Activity Log', icon: ClipboardList },
             { id: 'dataexport', title: 'Data Export', icon: Download },
           ] : []),
+          { id: '_group_system', title: 'System', isGroupLabel: true },
           { id: 'pwainstall', title: 'PWA Install', icon: Download },
           { id: 'offlinemanager', title: 'Offline Content', icon: HardDrive },
           { id: 'pushnotifications', title: 'Push Notifications', icon: Bell },

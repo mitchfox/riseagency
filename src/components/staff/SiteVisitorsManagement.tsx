@@ -28,9 +28,20 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
-import { Eye, MapPin, Clock, RefreshCw, EyeOff, CalendarIcon } from "lucide-react";
+import { Eye, MapPin, Clock, RefreshCw, EyeOff, CalendarIcon, ShieldOff } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface SiteVisit {
   id: string;
@@ -109,28 +120,27 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         avgDuration: visitsWithDuration.length ? Math.round(totalDuration / visitsWithDuration.length) : 0,
       });
 
-      // Load all-time stats - use count for total visits
-      let countQuery = supabase
-        .from("site_visits")
-        .select("*", { count: 'exact', head: false });
+      // Load all-time stats using aggregation via RPC or count-only queries
+      const [countRes, uniqueRes] = await Promise.all([
+        supabase
+          .from("site_visits")
+          .select("*", { count: 'exact', head: true })
+          .eq("hidden", showHidden ? showHidden : false),
+        supabase
+          .from("site_visits")
+          .select("visitor_id, duration")
+          .eq("hidden", showHidden ? showHidden : false)
+      ]);
 
-      // Only filter by hidden status when not showing hidden visitors
-      if (!showHidden) {
-        countQuery = countQuery.eq("hidden", false);
-      }
-
-      const { data: allTimeData, error: allTimeError, count: totalCount } = await countQuery;
-
-      if (allTimeError) throw allTimeError;
-
-      const allTimeUniqueVisitors = new Set(allTimeData?.map((v) => v.visitor_id) || []);
-      const allTimeVisitsWithDuration = allTimeData?.filter(v => v.duration > 0) || [];
-      const allTimeTotalDuration = allTimeVisitsWithDuration.reduce((acc, v) => acc + v.duration, 0);
+      const allVisitors = uniqueRes.data || [];
+      const allTimeUniqueVisitors = new Set(allVisitors.map(v => v.visitor_id));
+      const allTimeWithDuration = allVisitors.filter(v => v.duration > 0);
+      const allTimeTotalDuration = allTimeWithDuration.reduce((acc, v) => acc + v.duration, 0);
 
       setAllTimeStats({
-        totalVisits: totalCount || 0,
+        totalVisits: countRes.count || 0,
         uniqueVisitors: allTimeUniqueVisitors.size,
-        avgDuration: allTimeVisitsWithDuration.length ? Math.round(allTimeTotalDuration / allTimeVisitsWithDuration.length) : 0,
+        avgDuration: allTimeWithDuration.length ? Math.round(allTimeTotalDuration / allTimeWithDuration.length) : 0,
       });
     } catch (error) {
       console.error("Error loading visits:", error);
@@ -225,6 +235,48 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
+  const hideByIpOrLocation = async (ip?: string, location?: string) => {
+    try {
+      // Find all visits matching this IP or location
+      const { data: matchingVisits, error: fetchError } = await supabase
+        .from("site_visits")
+        .select("id, location")
+        .eq("hidden", false);
+
+      if (fetchError) throw fetchError;
+
+      const idsToHide = (matchingVisits || [])
+        .filter(v => {
+          const loc = v.location as any;
+          if (ip && loc?.ip === ip) return true;
+          if (location && formatLocation(v.location) === location) return true;
+          return false;
+        })
+        .map(v => v.id);
+
+      if (idsToHide.length === 0) {
+        toast.info("No matching visits found");
+        return;
+      }
+
+      // Update in batches of 100
+      for (let i = 0; i < idsToHide.length; i += 100) {
+        const batch = idsToHide.slice(i, i + 100);
+        const { error } = await supabase
+          .from("site_visits")
+          .update({ hidden: true })
+          .in("id", batch);
+        if (error) throw error;
+      }
+
+      toast.success(`Hidden ${idsToHide.length} visits from ${ip || location}`);
+      loadVisits();
+    } catch (error) {
+      console.error("Error hiding by IP:", error);
+      toast.error("Failed to hide visits");
+    }
+  };
+
   const formatDuration = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
     const minutes = Math.floor(seconds / 60);
@@ -242,7 +294,7 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   const filteredVisits = visits.filter((visit) => {
-    // Filter out specific visitor IDs and Bedford, England location
+    // Filter out specific visitor IDs
     if (visit.visitor_id === "visitor_1761434517054_gd6h507zq") return false;
     
     const location = formatLocation(visit.location);
@@ -293,7 +345,7 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     
     return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <Button
             variant="outline"
             onClick={() => {
@@ -304,23 +356,76 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             ← Back to All Visitors
           </Button>
 
-          {isVisitorHidden ? (
-            <Button
-              variant="default"
-              onClick={() => unhideVisitor(selectedVisitor)}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Unhide Visitor
-            </Button>
-          ) : (
-            <Button
-              variant="destructive"
-              onClick={() => hideVisitor(selectedVisitor)}
-            >
-              <EyeOff className="h-4 w-4 mr-2" />
-              Hide Visitor
-            </Button>
-          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            {visitorDetails.length > 0 && visitorDetails[0].location && (
+              <>
+                {(visitorDetails[0].location as any)?.ip && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <ShieldOff className="h-4 w-4 mr-2" />
+                        Hide IP ({(visitorDetails[0].location as any).ip})
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Hide all visits from this IP?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will hide all visits from IP {(visitorDetails[0].location as any).ip} across all dates.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => hideByIpOrLocation((visitorDetails[0].location as any).ip)}>
+                          Hide All
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <MapPin className="h-4 w-4 mr-2" />
+                      Hide Location ({formatLocation(visitorDetails[0].location)})
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Hide all visits from this location?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will hide all visits from {formatLocation(visitorDetails[0].location)} across all dates.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => hideByIpOrLocation(undefined, formatLocation(visitorDetails[0].location))}>
+                        Hide All
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            )}
+
+            {isVisitorHidden ? (
+              <Button
+                variant="default"
+                onClick={() => unhideVisitor(selectedVisitor)}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Unhide Visitor
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                onClick={() => hideVisitor(selectedVisitor)}
+              >
+                <EyeOff className="h-4 w-4 mr-2" />
+                Hide Visitor
+              </Button>
+            )}
+          </div>
         </div>
 
         <Card>
