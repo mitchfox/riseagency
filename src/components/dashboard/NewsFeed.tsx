@@ -2,7 +2,7 @@ import * as React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Inbox, ArrowRight, FileText, Trophy, Video, BarChart3, Dumbbell } from "lucide-react";
+import { Inbox, ArrowRight, FileText, Trophy, Video, BarChart3, Dumbbell, ChevronDown, ChevronUp } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -39,9 +39,44 @@ const COLOUR_MAP: Record<string, string> = {
   comparison: "bg-orange-500/15 text-orange-500",
 };
 
+const STORAGE_KEY = "newsfeed_read_items";
+
+const getReadItems = (): Set<string> => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch {
+    return new Set();
+  }
+};
+
+const markAsRead = (id: string) => {
+  const read = getReadItems();
+  read.add(id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...read]));
+};
+
 export const NewsFeed = ({ playerId, playerName, onNavigateToAnalysis, onNavigateToForm, onOpenReport }: NewsFeedProps) => {
   const [items, setItems] = React.useState<FeedItem[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [readItems, setReadItems] = React.useState<Set<string>>(new Set());
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setReadItems(getReadItems());
+  }, []);
+
+  // Auto-expand first unread item
+  React.useEffect(() => {
+    if (items.length > 0 && expandedId === null) {
+      const firstUnread = items.find(item => !readItems.has(item.id));
+      if (firstUnread) {
+        setExpandedId(firstUnread.id);
+        markAsRead(firstUnread.id);
+        setReadItems(prev => new Set([...prev, firstUnread.id]));
+      }
+    }
+  }, [items, readItems]);
 
   React.useEffect(() => {
     const fetchFeed = async () => {
@@ -49,7 +84,6 @@ export const NewsFeed = ({ playerId, playerName, onNavigateToAnalysis, onNavigat
       const feed: FeedItem[] = [];
 
       try {
-        // Fetch recent performance reports
         const { data: reports } = await supabase
           .from("player_analysis")
           .select("id, analysis_date, opponent, r90_score")
@@ -69,7 +103,6 @@ export const NewsFeed = ({ playerId, playerName, onNavigateToAnalysis, onNavigat
           });
         });
 
-        // Fetch recent tagged analyses (pre/post match)
         const { data: tags } = await supabase
           .from("analysis_player_tags")
           .select("analysis_id, created_at, analyses(id, title, analysis_type, home_team, away_team)")
@@ -90,7 +123,6 @@ export const NewsFeed = ({ playerId, playerName, onNavigateToAnalysis, onNavigat
           });
         });
 
-        // Fetch recent highlight projects
         const { data: highlights } = await supabase
           .from("highlight_projects")
           .select("id, name, created_at")
@@ -108,7 +140,6 @@ export const NewsFeed = ({ playerId, playerName, onNavigateToAnalysis, onNavigat
           });
         });
 
-        // Sort by timestamp descending and take top 8
         feed.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setItems(feed.slice(0, 8));
       } catch (err) {
@@ -123,13 +154,37 @@ export const NewsFeed = ({ playerId, playerName, onNavigateToAnalysis, onNavigat
 
   if (!loading && items.length === 0) return null;
 
+  const unreadCount = items.filter(item => !readItems.has(item.id)).length;
+
+  const handleItemClick = (item: FeedItem) => {
+    // Toggle expand
+    const isExpanding = expandedId !== item.id;
+    setExpandedId(isExpanding ? item.id : null);
+
+    // Mark as read
+    if (!readItems.has(item.id)) {
+      markAsRead(item.id);
+      setReadItems(prev => new Set([...prev, item.id]));
+    }
+
+    // Fire onClick if collapsing (second click) or if it has an action
+    if (!isExpanding && item.onClick) {
+      item.onClick();
+    }
+  };
+
   return (
     <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-primary border-b-0">
       <CardHeader marble className="py-2">
         <div className="flex items-center justify-between container mx-auto px-4 pr-6">
           <div className="flex items-center gap-2">
             <Inbox className="h-5 w-5" />
-            <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">Updates</CardTitle>
+            <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">Inbox</CardTitle>
+            {unreadCount > 0 && (
+              <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                {unreadCount}
+              </span>
+            )}
           </div>
           {onNavigateToAnalysis && (
             <Button
@@ -152,32 +207,72 @@ export const NewsFeed = ({ playerId, playerName, onNavigateToAnalysis, onNavigat
             ))}
           </div>
         ) : (
-          <AnimatePresence>
-            <div className="space-y-1">
-              {items.map((item, idx) => (
-                <motion.button
+          <div className="space-y-0.5">
+            {items.map((item, idx) => {
+              const isRead = readItems.has(item.id);
+              const isExpanded = expandedId === item.id;
+
+              return (
+                <motion.div
                   key={item.id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  onClick={item.onClick}
-                  disabled={!item.onClick}
-                  className="w-full flex items-start gap-3 p-2.5 rounded-lg text-left hover:bg-accent/10 transition-colors disabled:cursor-default group"
+                  transition={{ delay: idx * 0.04 }}
                 >
-                  <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${COLOUR_MAP[item.type] || "bg-muted text-muted-foreground"}`}>
-                    {ICON_MAP[item.type]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">{item.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">{item.subtitle}</p>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0 mt-0.5">
-                    {formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}
-                  </span>
-                </motion.button>
-              ))}
-            </div>
-          </AnimatePresence>
+                  <button
+                    onClick={() => handleItemClick(item)}
+                    className={`w-full flex items-start gap-3 p-2.5 rounded-lg text-left transition-all group ${
+                      isExpanded
+                        ? "bg-accent/15 border border-primary/20"
+                        : isRead
+                        ? "opacity-50 hover:opacity-80 hover:bg-accent/5"
+                        : "hover:bg-accent/10 font-medium"
+                    }`}
+                  >
+                    <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${COLOUR_MAP[item.type] || "bg-muted text-muted-foreground"}`}>
+                      {ICON_MAP[item.type]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        {!isRead && (
+                          <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-primary" />
+                        )}
+                        <p className="text-sm truncate group-hover:text-primary transition-colors">{item.title}</p>
+                      </div>
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <p className="text-xs text-muted-foreground mt-1">{item.subtitle}</p>
+                            {item.onClick && (
+                              <span className="text-xs text-primary mt-1 inline-flex items-center gap-1">
+                                View <ArrowRight className="h-3 w-3" />
+                              </span>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap mt-0.5">
+                        {formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}
+                      </span>
+                      {isExpanded ? (
+                        <ChevronUp className="h-3 w-3 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </div>
+                  </button>
+                </motion.div>
+              );
+            })}
+          </div>
         )}
       </CardContent>
     </Card>

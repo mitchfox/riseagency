@@ -155,6 +155,35 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
           ))}
         </div>
 
+        {/* Player picker - shared across all sub-tabs */}
+        <div className="mb-4">
+          <p className="text-sm font-medium mb-2">Select comparison players ({playerPosition} only):</p>
+          {comparisonPlayers.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No players stored for this position.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {comparisonPlayers.map(cp => (
+                <button
+                  key={cp.id}
+                  onClick={() => togglePlayer(cp.id)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition-colors ${
+                    selectedPlayerIds.includes(cp.id)
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'border-border hover:bg-muted'
+                  }`}
+                >
+                  <Avatar className="h-5 w-5">
+                    {cp.image_url ? <AvatarImage src={cp.image_url} /> : null}
+                    <AvatarFallback className="text-[10px]">{cp.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  {cp.name}
+                  <span className="text-xs opacity-70">{cp.club} · {cp.season}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         <Tabs value={subTab} onValueChange={setSubTab}>
           <TabsList>
             <TabsTrigger value="percentile"><BarChart3 className="w-4 h-4 mr-1" /> Percentile</TabsTrigger>
@@ -247,34 +276,6 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
 
           {/* Direct Comparison Tab */}
           <TabsContent value="comparison" className="space-y-6 mt-4">
-            <div>
-              <p className="text-sm font-medium mb-2">Select comparison players ({playerPosition} only):</p>
-              {comparisonPlayers.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No players stored for this position.</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {comparisonPlayers.map(cp => (
-                    <button
-                      key={cp.id}
-                      onClick={() => togglePlayer(cp.id)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition-colors ${
-                        selectedPlayerIds.includes(cp.id)
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'border-border hover:bg-muted'
-                      }`}
-                    >
-                      <Avatar className="h-5 w-5">
-                        {cp.image_url ? <AvatarImage src={cp.image_url} /> : null}
-                        <AvatarFallback className="text-[10px]">{cp.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      {cp.name}
-                      <span className="text-xs opacity-70">{cp.club} · {cp.season}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {(selectedComps.length > 0 || hasPortalData) && (
               <>
                 {/* Stat Picker Comparison */}

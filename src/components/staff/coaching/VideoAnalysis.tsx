@@ -92,7 +92,7 @@ export const VideoAnalysis = () => {
       created_by: session.session?.user?.id || null,
       annotations: [],
     };
-    if (newPlayerId) insertData.player_id = newPlayerId;
+    if (newPlayerId && newPlayerId !== "none") insertData.player_id = newPlayerId;
 
     const { data, error } = await supabase
       .from("video_analyses")
@@ -210,7 +210,7 @@ export const VideoAnalysis = () => {
             <Select value={newPlayerId} onValueChange={setNewPlayerId}>
               <SelectTrigger><SelectValue placeholder="Link to player (optional)" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value="none">None</SelectItem>
                 {players.map(p => (
                   <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                 ))}
