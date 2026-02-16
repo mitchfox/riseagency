@@ -277,7 +277,7 @@ export const AthleteCentre = () => {
                 <TabsContent value="programming" className="mt-0 space-y-3 md:space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 md:mb-4">
                     <h3 className="text-base md:text-lg font-semibold">Training Programs</h3>
-                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground">
                       View All Programs
                     </Button>
                   </div>
@@ -323,7 +323,7 @@ export const AthleteCentre = () => {
                 <TabsContent value="analysis" className="mt-0 space-y-3 md:space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 md:mb-4">
                     <h3 className="text-base md:text-lg font-semibold">Performance Analysis</h3>
-                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground">
                       View All Analysis
                     </Button>
                   </div>

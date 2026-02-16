@@ -23,6 +23,7 @@ import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
 import { ActionVideoUpload } from "./ActionVideoUpload";
 import { ActionStatRecorder, aggregateRecordedStats, RecordedStat, STAT_TYPE_CONFIGS, StatTypeConfig } from "./ActionStatRecorder";
 import { UnifiedStatsEditor, UnifiedStat, mergeStatsForEditor, unifiedStatsToStrikerStats } from "./UnifiedStatsEditor";
+import { FixtureStatsEditor } from "./FixtureStatsEditor";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -137,6 +138,7 @@ export const CreatePerformanceReportDialog = ({
   const [actionSearchFilters, setActionSearchFilters] = useState<Record<number, string>>({});
   const [isByActionDialogOpen, setIsByActionDialogOpen] = useState(false);
   const [unifiedStats, setUnifiedStats] = useState<UnifiedStat[]>([]);
+  const [fixtureStats, setFixtureStats] = useState<Record<string, number>>({});
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -638,6 +640,7 @@ export const CreatePerformanceReportDialog = ({
       setMinutesPlayed(analysisData.minutes_played?.toString() || "");
       setSelectedFixtureId(analysisData.fixture_id || "");
       setPerformanceOverview(analysisData.performance_overview || "");
+      setFixtureStats((analysisData.fixture_stats as Record<string, number>) || {});
       
       // Re-derive opponent from fixture data to reflect any changes to fixture
       // (fixture team names may have been edited since report was saved)
@@ -915,6 +918,7 @@ export const CreatePerformanceReportDialog = ({
     setR90Score("");
     setMinutesPlayed("");
     setOpponent("");
+    setFixtureStats({});
     setResult("");
     setSelectedFixtureId("");
     setPerformanceOverview("");
@@ -1154,6 +1158,7 @@ export const CreatePerformanceReportDialog = ({
             opponent: opponent,
             result: result || null,
             striker_stats: strikerStatsJson,
+            fixture_stats: Object.keys(fixtureStats).length > 0 ? fixtureStats : null,
             performance_overview: performanceOverview || null,
           })
           .eq("id", analysisId);
@@ -1214,6 +1219,7 @@ export const CreatePerformanceReportDialog = ({
             opponent: opponent,
             result: result || null,
             striker_stats: strikerStatsJson,
+            fixture_stats: Object.keys(fixtureStats).length > 0 ? fixtureStats : null,
             performance_overview: performanceOverview || null,
           })
           .select()
@@ -1436,7 +1442,21 @@ export const CreatePerformanceReportDialog = ({
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Performance Overview */}
+          {/* Per-90 Fixture Stats (synced to Player Data) */}
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full text-sm sm:text-base">
+                Per-90 Fixture Stats (Optional)
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4">
+              <FixtureStatsEditor
+                fixtureStats={fixtureStats}
+                onStatsChange={setFixtureStats}
+              />
+            </CollapsibleContent>
+          </Collapsible>
+
           <div>
             <Label htmlFor="performance-overview">Performance Overview (Optional)</Label>
             <Textarea
@@ -1467,7 +1487,7 @@ export const CreatePerformanceReportDialog = ({
                         onClick={() => openR90Viewer(index)}
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8"
+                        className="h-8 w-8 hover:text-black"
                         title="R90 Ratings Reference"
                       >
                         <Search className="h-4 w-4 text-primary" />
@@ -1682,7 +1702,7 @@ export const CreatePerformanceReportDialog = ({
                             onClick={() => openR90Viewer(index)}
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8"
+                            className="h-8 w-8 hover:text-black"
                             title="R90 Ratings Reference"
                           >
                             <Search className="h-4 w-4 text-primary" />

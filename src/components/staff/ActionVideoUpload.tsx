@@ -126,10 +126,15 @@ export const ActionVideoUpload = ({
       
       {currentVideoUrl ? (
         <div className="flex items-center gap-1">
-          <span className="text-xs text-primary flex items-center gap-1">
+          <a
+            href={currentVideoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-primary flex items-center gap-1 hover:underline cursor-pointer"
+          >
             <Video className="h-3 w-3" />
             Clip
-          </span>
+          </a>
           {!disabled && (
             <Button
               variant="ghost"
