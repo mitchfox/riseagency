@@ -26,18 +26,6 @@ const getR90Color = (r90: number) => {
   return "hsl(0, 93%, 12%)";
 };
 
-const getR90Grade = (r90: number) => {
-  if (r90 >= 2.5) return "A+";
-  if (r90 >= 1.8) return "A";
-  if (r90 >= 1.4) return "B+";
-  if (r90 >= 1.0) return "B";
-  if (r90 >= 0.8) return "C+";
-  if (r90 >= 0.6) return "C";
-  if (r90 >= 0.4) return "D+";
-  if (r90 >= 0.2) return "D";
-  if (r90 >= 0) return "E";
-  return "F";
-};
 
 export const ActionHeatmap = ({ actions, minutesPlayed }: ActionHeatmapProps) => {
   // Group actions into fixed 15-minute periods, only showing periods the player was active in
@@ -113,7 +101,6 @@ export const ActionHeatmap = ({ actions, minutesPlayed }: ActionHeatmapProps) =>
       <div className="grid grid-cols-6 gap-1">
         {blocks.map((block, idx) => {
           const color = block.count > 0 ? getR90Color(block.r90) : "hsl(var(--muted))";
-          const grade = block.count > 0 ? getR90Grade(block.r90) : "-";
 
           return (
             <div
@@ -126,7 +113,6 @@ export const ActionHeatmap = ({ actions, minutesPlayed }: ActionHeatmapProps) =>
               title={`${block.range}: ${block.count} actions, R90 ${block.r90.toFixed(2)}`}
             >
               <span className="text-[10px] font-bold text-black drop-shadow-sm">{block.range}</span>
-              <span className="text-lg font-bold text-black drop-shadow-sm">{grade}</span>
               <span className="text-[9px] text-black/70">
                 {block.count} act{block.count !== 1 ? "s" : ""}
               </span>

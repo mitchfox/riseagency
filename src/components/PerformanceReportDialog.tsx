@@ -12,6 +12,7 @@ import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
 import { STAT_TYPE_CONFIGS, StatTypeConfig } from "@/components/staff/ActionStatRecorder";
 import { R90FlowChart } from "@/components/report/R90FlowChart";
 import { ActionHeatmap } from "@/components/report/ActionHeatmap";
+import { ChanceCreationFlow } from "@/components/report/ChanceCreationFlow";
 import { RankedActionsPlayer } from "@/components/report/RankedActionsPlayer";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
@@ -66,6 +67,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
   const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>("");
   const [showR90Flow, setShowR90Flow] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showChanceCreation, setShowChanceCreation] = useState(false);
   const [showRankedPlayer, setShowRankedPlayer] = useState(false);
   const [rankedMode, setRankedMode] = useState<"chronological" | "ranked">("chronological");
   const [showClippedActions, setShowClippedActions] = useState(false);
@@ -558,12 +560,24 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                   <Button
                     variant={showHeatmap ? "default" : "outline"}
                     size="sm"
-                    onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); }}
+                    onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); setShowChanceCreation(false); }}
                     className="text-xs"
                   >
                     <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
                     Period Grade Map
                   </Button>
+                  {/* Chance Creation Flow - only show if xC data exists */}
+                  {analysis.striker_stats && ['crossing_movement_xC', 'movement_in_behind_xC', 'movement_down_side_xC', 'triple_threat_xC', 'movement_to_feet_xC'].some(k => (analysis.striker_stats as any)?.[k] > 0) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { setShowChanceCreation(!showChanceCreation); setShowR90Flow(false); setShowHeatmap(false); }}
+                      className="text-xs"
+                    >
+                      <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
+                      Chance Creation Flow
+                    </Button>
+                  )}
                   {actions.filter(a => a.video_url).length > 0 && (
                     <>
                       <Button
@@ -603,6 +617,15 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                 <Card className="overflow-hidden">
                   <CardContent className="p-3 md:p-6">
                     <ActionHeatmap actions={actions} minutesPlayed={analysis.minutes_played} />
+                  </CardContent>
+              </Card>
+              )}
+
+              {/* Chance Creation Flow */}
+              {showChanceCreation && analysis.striker_stats && (
+                <Card className="overflow-hidden">
+                  <CardContent className="p-3 md:p-6">
+                    <ChanceCreationFlow strikerStats={analysis.striker_stats as Record<string, any>} />
                   </CardContent>
                 </Card>
               )}
