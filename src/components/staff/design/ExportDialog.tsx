@@ -31,7 +31,6 @@ export function ExportDialog({ canvasRef, project }: ExportDialogProps) {
       const bgColor = transparentBg ? null : project.background;
 
       if (format === 'svg') {
-        // Basic SVG export
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${project.width}" height="${project.height}" viewBox="0 0 ${project.width} ${project.height}">
           <rect width="100%" height="100%" fill="${transparentBg ? 'none' : project.background}"/>
           <text x="50%" y="50%" text-anchor="middle" fill="#999" font-size="24">SVG export - use PNG/PDF for full fidelity</text>
@@ -48,14 +47,38 @@ export function ExportDialog({ canvasRef, project }: ExportDialogProps) {
         return;
       }
 
-      const canvas = await html2canvas(canvasRef.current, {
+      // Clone the canvas element so we can remove selection outlines for export
+      const clone = canvasRef.current.cloneNode(true) as HTMLElement;
+      clone.style.position = 'fixed';
+      clone.style.left = '-99999px';
+      clone.style.top = '0';
+      clone.style.zIndex = '-1';
+      // Remove selection outlines and resize handles from clone
+      clone.querySelectorAll('[style*="outline"]').forEach((el: any) => {
+        el.style.outline = 'none';
+        el.style.outlineOffset = '0';
+      });
+      // Remove snap lines and resize handles
+      clone.querySelectorAll('[style*="z-index: 10000"], [style*="zIndex: 10000"]').forEach(el => el.remove());
+      document.body.appendChild(clone);
+
+      const canvas = await html2canvas(clone, {
         useCORS: true,
+        allowTaint: true,
         backgroundColor: bgColor,
         scale,
         width: project.width,
         height: project.height,
         logging: false,
+        onclone: (doc) => {
+          // Ensure fonts are loaded in clone
+          const style = doc.createElement('style');
+          style.textContent = `@font-face { font-family: 'Agrandir Tight'; src: url('/fonts/agrandir-tight.otf') format('opentype'); }`;
+          doc.head.appendChild(style);
+        },
       } as any);
+
+      document.body.removeChild(clone);
 
       if (format === 'pdf') {
         const imgData = canvas.toDataURL('image/png');

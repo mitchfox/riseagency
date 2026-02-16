@@ -206,6 +206,7 @@ export function CanvasElement({
               color: element.color,
               letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
               lineHeight: element.lineHeight || 1.2,
+              textShadow: element.textShadow || undefined,
               cursor: isEditing ? 'text' : 'move',
               userSelect: isEditing ? 'text' : 'none',
               display: 'flex',
@@ -222,7 +223,11 @@ export function CanvasElement({
             src={element.src}
             alt={element.name}
             className="w-full h-full pointer-events-none"
-            style={{ objectFit: element.objectFit || 'cover', borderRadius: element.borderRadius ? `${element.borderRadius}px` : undefined }}
+            style={{
+              objectFit: element.objectFit || 'cover',
+              borderRadius: element.borderRadius ? `${element.borderRadius}px` : undefined,
+              filter: element.filter && element.filter !== 'none' ? element.filter : undefined,
+            }}
             draggable={false}
           />
         );
@@ -261,8 +266,8 @@ export function CanvasElement({
         opacity: element.opacity,
         cursor: element.locked ? 'default' : isDragging ? 'grabbing' : 'move',
         zIndex: isSelected ? 999 : 'auto',
-        outline: isSelected ? '2px solid #a855f7' : 'none',
-        outlineOffset: '1px',
+        outline: isSelected ? '3px solid #a855f7' : 'none',
+        outlineOffset: '2px',
       }}
       onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}
@@ -276,8 +281,8 @@ export function CanvasElement({
               onMouseDown={e => handleResizeMouseDown(e, h)}
               style={{
                 position: 'absolute',
-                width: 8,
-                height: 8,
+                width: 10,
+                height: 10,
                 backgroundColor: '#a855f7',
                 border: '1px solid white',
                 borderRadius: '50%',
