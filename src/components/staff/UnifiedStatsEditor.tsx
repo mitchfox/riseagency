@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Plus, X, Calculator } from 'lucide-react';
+import { Plus, EyeOff, Calculator } from 'lucide-react';
 import { 
   STAT_TYPE_CONFIGS,
   StatTypeConfig,
@@ -502,14 +502,14 @@ export const UnifiedStatsEditor = ({
           {stats.map((stat) => (
             <Card key={stat.key} className="relative group">
               <CardContent className="p-3">
-                {/* Delete button */}
+                {/* Hide button */}
                 <button
                   type="button"
                   onClick={() => handleDeleteStat(stat.key)}
-                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-destructive/10 rounded"
-                  title="Remove stat"
+                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded"
+                  title="Hide from report"
                 >
-                  <X className="h-3 w-3 text-destructive" />
+                  <EyeOff className="h-3 w-3 text-muted-foreground" />
                 </button>
 
                 <div className="flex items-center gap-1 mb-2 pr-5">

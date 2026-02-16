@@ -1467,8 +1467,6 @@ export const CreatePerformanceReportDialog = ({
               <FixtureStatsEditor
                 fixtureStats={fixtureStats}
                 onStatsChange={setFixtureStats}
-                unifiedStats={unifiedStats}
-                onUnifiedStatsChange={setUnifiedStats}
               />
             </CollapsibleContent>
           </Collapsible>

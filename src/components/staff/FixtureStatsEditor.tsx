@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { METRIC_CATEGORIES } from "./ComparisonPlayerData";
-import type { UnifiedStat } from "./UnifiedStatsEditor";
+
 
 // Mapping from fixture stat keys to match statistics (unified stats) keys
 // fixture_stat_key → { unifiedKey, unifiedType }
@@ -28,7 +28,6 @@ export const FIXTURE_TO_UNIFIED_MAP: Record<string, { key: string; type: 'count'
   accurate_long_balls_per90: { key: 'long_passes_completed', type: 'count' },
   npxg_per90: { key: 'npxg', type: 'score' },
   xa_per90: { key: 'xa', type: 'score' },
-  shot_creating_actions_per90: { key: 'shot_creating_actions', type: 'count' },
 };
 
 // Reverse mapping: unified stat key → fixture stat key
@@ -39,11 +38,9 @@ export const UNIFIED_TO_FIXTURE_MAP: Record<string, string> = Object.fromEntries
 interface FixtureStatsEditorProps {
   fixtureStats: Record<string, number>;
   onStatsChange: (stats: Record<string, number>) => void;
-  unifiedStats?: UnifiedStat[];
-  onUnifiedStatsChange?: (stats: UnifiedStat[]) => void;
 }
 
-export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, unifiedStats, onUnifiedStatsChange }: FixtureStatsEditorProps) => {
+export const FixtureStatsEditor = ({ fixtureStats, onStatsChange }: FixtureStatsEditorProps) => {
   const [activeCategory, setActiveCategory] = useState("Shooting");
 
   const handleChange = (key: string, value: string) => {
@@ -55,36 +52,6 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, unifiedStats, 
     }
     onStatsChange(updated);
 
-    // Sync to unified stats if mapping exists
-    const mapping = FIXTURE_TO_UNIFIED_MAP[key];
-    if (mapping && unifiedStats && onUnifiedStatsChange) {
-      const numVal = parseFloat(value);
-      const existingIdx = unifiedStats.findIndex(s => s.key === mapping.key);
-      if (existingIdx >= 0) {
-        const newStats = [...unifiedStats];
-        if (value === '' || isNaN(numVal)) {
-          // Remove the unified stat
-          newStats.splice(existingIdx, 1);
-        } else {
-          newStats[existingIdx] = {
-            ...newStats[existingIdx],
-            count: mapping.type === 'count' ? numVal : undefined,
-            score: mapping.type === 'score' ? numVal : undefined,
-          };
-        }
-        onUnifiedStatsChange(newStats);
-      } else if (!isNaN(numVal) && value !== '') {
-        // Add new unified stat
-        const config = { name: key, key: mapping.key };
-        onUnifiedStatsChange([...unifiedStats, {
-          key: mapping.key,
-          displayName: mapping.key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-          type: mapping.type === 'count' ? 'count' : 'score',
-          count: mapping.type === 'count' ? numVal : undefined,
-          score: mapping.type === 'score' ? numVal : undefined,
-        }]);
-      }
-    }
   };
 
   return (
