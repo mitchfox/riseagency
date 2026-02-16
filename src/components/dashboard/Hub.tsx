@@ -533,6 +533,18 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
           </CardContent>
         </Card>
 
+        {/* News Feed / Inbox - directly below schedule */}
+        {playerData?.id && (
+          <NewsFeed
+            playerId={playerData.id}
+            playerName={playerData.name || "Player"}
+            onNavigateToAnalysis={onNavigateToAnalysis}
+            onOpenReport={(id) => {
+              setSelectedReportId(id);
+              setReportDialogOpen(true);
+            }}
+          />
+        )}
 
         {/* R90 Performance Chart & Recent Analysis Combined - Full Width */}
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-0 border-t-[2px] border-t-[hsl(43,49%,61%)] z-20 overflow-visible">
@@ -854,18 +866,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         analysisId={selectedReportId}
       />
 
-      {/* News Feed - Updates Inbox */}
-      {playerData?.id && (
-        <NewsFeed
-          playerId={playerData.id}
-          playerName={playerData.name || "Player"}
-          onNavigateToAnalysis={onNavigateToAnalysis}
-          onOpenReport={(id) => {
-            setSelectedReportId(id);
-            setReportDialogOpen(true);
-          }}
-        />
-      )}
+      {/* News Feed moved to below schedule */}
 
       {/* Quick Stats Comparison - Penultimate section */}
       {playerData?.id && (
