@@ -1857,7 +1857,7 @@ const Dashboard = () => {
                                 </div>
                               </div>
 
-                              {/* Line 2: Buttons */}
+                              {/* Line 2: Buttons - Order: R90, PRE, POST */}
                               <div className="flex items-center gap-2 flex-wrap">
                                 {analysis.r90_score !== null && analysis.r90_score !== undefined && (
                                   <button
@@ -1871,39 +1871,53 @@ const Dashboard = () => {
                                   </button>
                                 )}
                                 
-                                {analysis.analysis_writer_data && (
+                                {/* Pre-match buttons first */}
+                                {analysis.analysis_writer_data?.analysis_type === "pre-match" && (
                                   <Button 
                                     variant="outline" 
                                     size="sm"
-                                    onClick={() => {
-                                      navigate(`/analysis/${analysis.analysis_writer_id}`);
-                                    }}
-                                    className={`text-xs border-0 ${
-                                      analysis.analysis_writer_data.analysis_type === "pre-match" 
-                                        ? "bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500" 
-                                        : "bg-[hsl(43,49%,61%)] text-black hover:bg-[hsl(43,49%,71%)]"
-                                    }`}
+                                    onClick={() => navigate(`/analysis/${analysis.analysis_writer_id}`)}
+                                    className="text-xs border-0 bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500"
                                   >
                                     <FileText className="w-3 h-3 mr-1" />
-                                    {analysis.analysis_writer_data.analysis_type === "pre-match" ? "Pre-Match" : "Post-Match"} Analysis
+                                    Pre-Match Analysis
                                   </Button>
                                 )}
-
-                                {/* Tagged analyses buttons */}
-                                {analysis.tagged_analyses?.map((ta: any, taIdx: number) => (
+                                {analysis.tagged_analyses?.filter((ta: any) => ta.analysis_type === "pre-match").map((ta: any, taIdx: number) => (
                                   <Button 
-                                    key={`tagged-${taIdx}`}
+                                    key={`tagged-pre-${taIdx}`}
                                     variant="outline" 
                                     size="sm"
                                     onClick={() => navigate(`/analysis/${ta.id}`)}
-                                    className={`text-xs border-0 ${
-                                      ta.analysis_type === "pre-match" 
-                                        ? "bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500" 
-                                        : "bg-[hsl(43,49%,61%)] text-black hover:bg-[hsl(43,49%,71%)]"
-                                    }`}
+                                    className="text-xs border-0 bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 hover:from-slate-400 hover:to-slate-500"
                                   >
                                     <FileText className="w-3 h-3 mr-1" />
-                                    {ta.analysis_type === "pre-match" ? "Pre-Match" : "Post-Match"} Analysis
+                                    Pre-Match Analysis
+                                  </Button>
+                                ))}
+
+                                {/* Post-match buttons second */}
+                                {analysis.analysis_writer_data?.analysis_type === "post-match" && (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => navigate(`/analysis/${analysis.analysis_writer_id}`)}
+                                    className="text-xs border-0 bg-[hsl(43,49%,61%)] text-black hover:bg-[hsl(43,49%,71%)]"
+                                  >
+                                    <FileText className="w-3 h-3 mr-1" />
+                                    Post-Match Analysis
+                                  </Button>
+                                )}
+                                {analysis.tagged_analyses?.filter((ta: any) => ta.analysis_type === "post-match").map((ta: any, taIdx: number) => (
+                                  <Button 
+                                    key={`tagged-post-${taIdx}`}
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => navigate(`/analysis/${ta.id}`)}
+                                    className="text-xs border-0 bg-[hsl(43,49%,61%)] text-black hover:bg-[hsl(43,49%,71%)]"
+                                  >
+                                    <FileText className="w-3 h-3 mr-1" />
+                                    Post-Match Analysis
                                   </Button>
                                 ))}
                                 

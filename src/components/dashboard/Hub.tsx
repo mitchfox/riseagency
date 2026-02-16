@@ -774,7 +774,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="p-1 h-8 w-8 bg-slate-300/30 hover:bg-slate-300/50"
+                              className="p-0 h-8 w-8 bg-black text-white hover:bg-primary hover:text-black rounded font-bold text-[10px]"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const slug = createAnalysisSlug(preMatch.home_team || '', preMatch.away_team || '', preMatch.id);
@@ -782,7 +782,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                               }}
                               title="View Pre-Match Analysis"
                             >
-                              <FileText className="h-4 w-4 text-slate-600" />
+                              PRE
                             </Button>
                           );
                         })()}
@@ -795,7 +795,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="p-1 h-8 w-8 bg-risegold/20 hover:bg-risegold/40"
+                                className="p-0 h-8 w-8 bg-black text-white hover:bg-primary hover:text-black rounded font-bold text-[10px]"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   const slug = createAnalysisSlug(postMatch.homeTeam, postMatch.awayTeam, postMatch.id);
@@ -803,7 +803,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                                 }}
                                 title="View Post-Match Analysis"
                               >
-                                <FileText className="h-4 w-4 text-risegold" />
+                                POST
                               </Button>
                             );
                           }
@@ -816,7 +816,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="p-1 h-8 w-8 bg-risegold/20 hover:bg-risegold/40"
+                              className="p-0 h-8 w-8 bg-black text-white hover:bg-primary hover:text-black rounded font-bold text-[10px]"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const slug = createAnalysisSlug(postMatch.home_team || '', postMatch.away_team || '', postMatch.id);
@@ -824,7 +824,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
                               }}
                               title="View Post-Match Analysis"
                             >
-                              <FileText className="h-4 w-4 text-risegold" />
+                              POST
                             </Button>
                           );
                         })()}
