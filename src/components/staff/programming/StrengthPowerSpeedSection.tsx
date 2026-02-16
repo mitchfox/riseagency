@@ -7,32 +7,23 @@ import { ProgrammingManagement } from "@/components/staff/ProgrammingManagement"
 export const StrengthPowerSpeedSection = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
   const [players, setPlayers] = useState<{ id: string; name: string; position: string }[]>([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
+    const fetchPlayers = async () => {
+      const { data } = await supabase
+        .from("players")
+        .select("id, name, position")
+        .order("name");
+      setPlayers(data || []);
+    };
     fetchPlayers();
   }, []);
 
-  const fetchPlayers = async () => {
-    const { data } = await supabase
-      .from("players")
-      .select("id, name, position")
-      .order("name");
-    setPlayers(data || []);
-  };
-
   const currentPlayer = players.find(p => p.id === selectedPlayer);
-
-  const handlePlayerChange = (value: string) => {
-    setSelectedPlayer(value);
-    if (value !== "all") {
-      setDialogOpen(true);
-    }
-  };
 
   return (
     <div className="space-y-4">
-      <Select value={selectedPlayer} onValueChange={handlePlayerChange}>
+      <Select value={selectedPlayer} onValueChange={setSelectedPlayer}>
         <SelectTrigger className="w-full sm:w-[300px]">
           <SelectValue placeholder="Select a player..." />
         </SelectTrigger>
@@ -55,8 +46,7 @@ export const StrengthPowerSpeedSection = () => {
 
       {selectedPlayer !== "all" && currentPlayer && (
         <ProgrammingManagement
-          isOpen={dialogOpen}
-          onClose={() => setDialogOpen(false)}
+          embedded
           playerId={currentPlayer.id}
           playerName={currentPlayer.name}
           isAdmin={true}

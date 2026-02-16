@@ -60,11 +60,12 @@ export interface NutritionProgram {
 }
 
 interface NutritionProgramManagementProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
   playerId: string;
   playerName: string;
   onProgramsChange?: (programs: NutritionProgram[]) => void;
+  embedded?: boolean;
 }
 
 const defaultProgram: Partial<NutritionProgram> = {
@@ -110,7 +111,7 @@ const defaultProgram: Partial<NutritionProgram> = {
   fat_recovery_day: "",
 };
 
-export const NutritionProgramManagement = ({ isOpen, onClose, playerId, playerName, onProgramsChange }: NutritionProgramManagementProps) => {
+export const NutritionProgramManagement = ({ isOpen, onClose, playerId, playerName, onProgramsChange, embedded }: NutritionProgramManagementProps) => {
   const [programs, setPrograms] = useState<NutritionProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -124,10 +125,10 @@ export const NutritionProgramManagement = ({ isOpen, onClose, playerId, playerNa
   const [activeTab, setActiveTab] = useState("programs");
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen || embedded) {
       fetchPrograms();
     }
-  }, [playerId, isOpen]);
+  }, [playerId, isOpen, embedded]);
 
   useEffect(() => {
     if (onProgramsChange) {
@@ -886,72 +887,86 @@ export const NutritionProgramManagement = ({ isOpen, onClose, playerId, playerNa
     );
   };
 
+  const innerContent = (
+    <>
+      {editingProgram ? renderProgramEditor() : renderProgramsList()}
+
+      <SaveNutritionToCoachingDBDialog
+        isOpen={showSaveToDBDialog}
+        onClose={() => setShowSaveToDBDialog(false)}
+        nutritionProgram={programToSave}
+        playerName={playerName}
+      />
+
+      {/* Template Selection Dialog */}
+      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Select Nutrition Template</DialogTitle>
+          </DialogHeader>
+          
+          {loadingTemplates ? (
+            <div className="text-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+              <p className="text-sm text-muted-foreground mt-2">Loading templates...</p>
+            </div>
+          ) : coachingPrograms.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No nutrition templates found in the coaching database.</p>
+              <p className="text-sm mt-2">Save a nutrition program to the coaching database first.</p>
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              {coachingPrograms.map((template) => (
+                <Card 
+                  key={template.id} 
+                  className="cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => createProgramFromTemplate(template)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium">{template.title}</h4>
+                        {template.description && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                            {template.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Created: {new Date(template.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Button size="sm" disabled={saving}>
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Use'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="space-y-6">
+        <h3 className="text-lg font-semibold">Nutrition Programs — {playerName}</h3>
+        {innerContent}
+      </div>
+    );
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose?.()}>
       <DialogContent className="max-w-5xl max-h-[90vh] p-6 overflow-hidden">
         <DialogHeader>
           <DialogTitle>Manage Nutrition Programs - {playerName}</DialogTitle>
         </DialogHeader>
-        
-        {editingProgram ? renderProgramEditor() : renderProgramsList()}
-
-        <SaveNutritionToCoachingDBDialog
-          isOpen={showSaveToDBDialog}
-          onClose={() => setShowSaveToDBDialog(false)}
-          nutritionProgram={programToSave}
-          playerName={playerName}
-        />
-
-        {/* Template Selection Dialog */}
-        <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Select Nutrition Template</DialogTitle>
-            </DialogHeader>
-            
-            {loadingTemplates ? (
-              <div className="text-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                <p className="text-sm text-muted-foreground mt-2">Loading templates...</p>
-              </div>
-            ) : coachingPrograms.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No nutrition templates found in the coaching database.</p>
-                <p className="text-sm mt-2">Save a nutrition program to the coaching database first.</p>
-              </div>
-            ) : (
-              <div className="grid gap-3">
-                {coachingPrograms.map((template) => (
-                  <Card 
-                    key={template.id} 
-                    className="cursor-pointer hover:border-primary transition-colors"
-                    onClick={() => createProgramFromTemplate(template)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium">{template.title}</h4>
-                          {template.description && (
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                              {template.description}
-                            </p>
-                          )}
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Created: {new Date(template.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <Button size="sm" disabled={saving}>
-                          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Use'}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        {innerContent}
       </DialogContent>
     </Dialog>
   );
