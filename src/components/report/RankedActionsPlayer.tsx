@@ -109,8 +109,8 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedA
               <div className="flex items-center gap-2">
                 <span className="text-white text-sm font-semibold">#{current.action_number}</span>
                 <span className="text-white/70 text-xs">{Math.floor(current.minute)}'</span>
-                <span className={`text-sm font-bold ${getScoreColor(current.action_score)}`}>
-                  {current.action_score >= 0 ? "+" : ""}{current.action_score.toFixed(3)}
+                <span className={`text-sm font-bold ${getScoreColor(current.action_score ?? 0)}`}>
+                  {current.action_score != null ? `${current.action_score >= 0 ? "+" : ""}${current.action_score.toFixed(3)}` : "—"}
                 </span>
               </div>
               <p className="text-white/60 text-xs truncate mt-0.5">{current.action_type}: {current.action_description}</p>
