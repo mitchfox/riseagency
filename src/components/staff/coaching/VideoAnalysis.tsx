@@ -41,6 +41,8 @@ interface VideoAnalysisEntry {
   clips: Clip[];
   auto_delete_at: string | null;
   match_minute_offset: number;
+  second_half_offset: number | null;
+  second_half_video_time: number | null;
   created_at: string;
 }
 
@@ -96,7 +98,11 @@ export const VideoAnalysis = () => {
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [availableReports, setAvailableReports] = useState<{ id: string; title: string; player_name: string }[]>([]);
   const [selectedReportId, setSelectedReportId] = useState("");
+  const [exportPlayerId, setExportPlayerId] = useState("");
   const [exporting, setExporting] = useState(false);
+
+  // Half-time sync
+  const [syncHalf, setSyncHalf] = useState<"1st" | "2nd">("1st");
 
   useEffect(() => {
     fetchVideos();
@@ -116,6 +122,8 @@ export const VideoAnalysis = () => {
         annotations: (v.annotations as any as Annotation[]) || [],
         clips: (v.clips as any as Clip[]) || [],
         match_minute_offset: Number(v.match_minute_offset) || 0,
+        second_half_offset: null,
+        second_half_video_time: null,
       })));
     }
     setLoading(false);
@@ -193,7 +201,7 @@ export const VideoAnalysis = () => {
       if (error) throw error;
 
       if (data) {
-        const entry = { ...data, annotations: [] as Annotation[], clips: [] as Clip[], match_minute_offset: 0 };
+        const entry: VideoAnalysisEntry = { ...data, annotations: [] as Annotation[], clips: [] as Clip[], match_minute_offset: 0, second_half_offset: null, second_half_video_time: null };
         setVideos(prev => [entry, ...prev]);
         setSelectedVideo(entry);
         setShowUpload(false);
@@ -329,20 +337,34 @@ export const VideoAnalysis = () => {
     if (!selectedVideo || !videoRef.current || !overrideMinute) return;
     const currentVideoTime = videoRef.current.currentTime;
     const targetMatchSeconds = parseFloat(overrideMinute) * 60;
-    const newOffset = targetMatchSeconds - currentVideoTime;
 
-    const { error } = await supabase
-      .from("video_analyses")
-      .update({ match_minute_offset: newOffset })
-      .eq("id", selectedVideo.id);
-
-    if (!error) {
-      const updated = { ...selectedVideo, match_minute_offset: newOffset };
+    if (syncHalf === "2nd") {
+      // Second half: store separately so we know after this video time, minutes reset to 45+
+      const updated = {
+        ...selectedVideo,
+        second_half_offset: targetMatchSeconds - currentVideoTime,
+        second_half_video_time: currentVideoTime,
+      };
       setSelectedVideo(updated);
       setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
       setShowTimestampOverride(false);
       setOverrideMinute("");
-      toast.success(`Timestamp synced: this point is now ${overrideMinute}'`);
+      toast.success(`2nd half synced: this point is now ${overrideMinute}'`);
+    } else {
+      const newOffset = targetMatchSeconds - currentVideoTime;
+      const { error } = await supabase
+        .from("video_analyses")
+        .update({ match_minute_offset: newOffset })
+        .eq("id", selectedVideo.id);
+
+      if (!error) {
+        const updated = { ...selectedVideo, match_minute_offset: newOffset };
+        setSelectedVideo(updated);
+        setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
+        setShowTimestampOverride(false);
+        setOverrideMinute("");
+        toast.success(`1st half synced: this point is now ${overrideMinute}'`);
+      }
     }
   };
 
@@ -381,11 +403,21 @@ export const VideoAnalysis = () => {
   };
 
   // Export clips to a performance report
-  const handleOpenExport = async () => {
+  const handleOpenExport = () => {
+    setExportPlayerId("");
+    setSelectedReportId("");
+    setAvailableReports([]);
+    setShowExportDialog(true);
+  };
+
+  const handleExportPlayerChange = async (playerId: string) => {
+    setExportPlayerId(playerId);
+    setSelectedReportId("");
     const { data } = await supabase
       .from("analyses")
       .select("id, title, player_name")
       .eq("analysis_type", "performance")
+      .eq("player_name", players.find(p => p.id === playerId)?.name || "")
       .order("created_at", { ascending: false })
       .limit(50);
 
@@ -396,7 +428,6 @@ export const VideoAnalysis = () => {
         player_name: d.player_name || "Unknown",
       })));
     }
-    setShowExportDialog(true);
   };
 
   const handleExportToReport = async () => {
@@ -448,14 +479,25 @@ export const VideoAnalysis = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const fmtMatchTime = (videoSeconds: number, offset: number) => {
+  // Get the effective offset for a given video time, accounting for half-time
+  const getEffectiveOffset = (videoSeconds: number) => {
+    if (!selectedVideo) return 0;
+    if (selectedVideo.second_half_video_time !== null && selectedVideo.second_half_offset !== null && videoSeconds >= selectedVideo.second_half_video_time) {
+      return selectedVideo.second_half_offset;
+    }
+    return selectedVideo.match_minute_offset;
+  };
+
+  const fmtMatchTime = (videoSeconds: number, _offset: number) => {
+    const offset = getEffectiveOffset(videoSeconds);
     const matchSeconds = videoSeconds + offset;
     const mins = Math.floor(matchSeconds / 60);
     const secs = Math.floor(matchSeconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getMatchMinute = (videoSeconds: number, offset: number) => {
+  const getMatchMinute = (videoSeconds: number, _offset: number) => {
+    const offset = getEffectiveOffset(videoSeconds);
     const matchSeconds = videoSeconds + offset;
     const snapped = Math.floor(matchSeconds / 5) * 5;
     return Math.floor(snapped / 60);
@@ -479,7 +521,7 @@ export const VideoAnalysis = () => {
   // ── Selected video: full-width takeover ──
   if (selectedVideo) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-1">
         {/* Header: back + title + sync/export */}
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => setSelectedVideo(null)} className="h-8 w-8 shrink-0">
@@ -510,41 +552,53 @@ export const VideoAnalysis = () => {
           </div>
         </div>
 
-        {/* Widescreen video player */}
-        {selectedVideo.video_url ? (
-          <>
-            <div className="w-full bg-black rounded-lg overflow-hidden">
-              <video
-                ref={videoRef}
-                src={selectedVideo.video_url}
-                controls
-                className="w-full aspect-video"
-              />
+        {/* Sync panel - ABOVE the video */}
+        {showTimestampOverride && (
+          <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border text-sm">
+            <div className="flex rounded-md border overflow-hidden shrink-0">
+              <button
+                onClick={() => setSyncHalf("1st")}
+                className={`px-2.5 py-1 text-xs font-medium transition-colors ${syncHalf === "1st" ? "bg-primary text-primary-foreground" : "hover:bg-muted/50"}`}
+              >1st Half</button>
+              <button
+                onClick={() => setSyncHalf("2nd")}
+                className={`px-2.5 py-1 text-xs font-medium transition-colors ${syncHalf === "2nd" ? "bg-primary text-primary-foreground" : "hover:bg-muted/50"}`}
+              >2nd Half</button>
             </div>
+            <span className="text-muted-foreground whitespace-nowrap text-xs">This point =</span>
+            <Input
+              type="number"
+              placeholder={syncHalf === "2nd" ? "e.g. 45" : "e.g. 0"}
+              value={overrideMinute}
+              onChange={e => setOverrideMinute(e.target.value)}
+              className="w-20 h-7 text-xs"
+            />
+            <span className="text-muted-foreground text-xs">'</span>
+            <Button onClick={handleTimestampOverride} size="sm" className="h-7 text-xs" disabled={!overrideMinute}>Apply</Button>
+            <span className="text-[10px] text-muted-foreground flex-1">
+              {syncHalf === "2nd"
+                ? "Sets where 2nd half begins. Clips after this use 2nd half offset."
+                : "Sets 1st half offset. Clips before 2nd half marker use this."}
+            </span>
+          </div>
+        )}
 
-            {/* Action bar - just the clip button */}
-            <div className="flex items-center gap-2">
-              <Button onClick={handleInstantClip} variant="default" size="sm" className="gap-1.5">
+        {/* Widescreen video player with overlaid clip button */}
+        {selectedVideo.video_url ? (
+          <div className="relative w-full bg-black rounded-lg overflow-hidden group/player">
+            <video
+              ref={videoRef}
+              src={selectedVideo.video_url}
+              controls
+              className="w-full aspect-video"
+            />
+            {/* Clip button overlay */}
+            <div className="absolute bottom-14 left-1/2 -translate-x-1/2 opacity-0 group-hover/player:opacity-100 transition-opacity">
+              <Button onClick={handleInstantClip} size="sm" className="gap-1.5 shadow-lg bg-primary/90 backdrop-blur-sm">
                 <Scissors className="h-4 w-4" /> Clip (±5s)
               </Button>
             </div>
-
-            {showTimestampOverride && (
-              <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border text-sm">
-                <span className="text-muted-foreground whitespace-nowrap">Current position =</span>
-                <Input
-                  type="number"
-                  placeholder="Match minute"
-                  value={overrideMinute}
-                  onChange={e => setOverrideMinute(e.target.value)}
-                  className="w-24"
-                />
-                <span className="text-muted-foreground">'</span>
-                <Button onClick={handleTimestampOverride} size="sm" disabled={!overrideMinute}>Apply</Button>
-                <span className="text-[10px] text-muted-foreground flex-1">All timestamps after this point will adjust.</span>
-              </div>
-            )}
-          </>
+          </div>
         ) : (
           <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
@@ -555,13 +609,12 @@ export const VideoAnalysis = () => {
         )}
 
         {/* Clips list: newest first */}
-        <div>
-          <h4 className="text-sm font-medium mb-2">Clips ({selectedVideo.clips.length})</h4>
-          <div className="space-y-2 max-h-[500px] overflow-y-auto">
+        <div className="pt-1">
+          <h4 className="text-sm font-medium mb-1">Clips ({selectedVideo.clips.length})</h4>
+          <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
             {clipsNewestFirst.map(clip => (
-              <div key={clip.id} className="p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors group/clip">
-                {/* Row 1: play, time, action type, adjust, delete */}
-                <div className="flex items-center gap-3">
+              <div key={clip.id} className="p-2.5 rounded-lg border bg-card hover:bg-muted/30 transition-colors group/clip">
+                <div className="flex items-center gap-2">
                   <button onClick={() => playClip(clip)} className="flex items-center gap-1 text-primary hover:underline font-mono text-xs whitespace-nowrap shrink-0">
                     <Play className="h-3 w-3" />
                     {fmtTime(clip.start)} → {fmtTime(clip.end)}
@@ -579,7 +632,6 @@ export const VideoAnalysis = () => {
 
                   <div className="flex-1" />
 
-                  {/* Adjust controls */}
                   <div className="flex items-center gap-0.5 opacity-0 group-hover/clip:opacity-100 transition-opacity shrink-0">
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExtendClip(clip.id, 'start', -1)} title="Extend start -1s">
                       <ChevronsLeft className="h-3 w-3" />
@@ -601,8 +653,7 @@ export const VideoAnalysis = () => {
                   </Button>
                 </div>
 
-                {/* Row 2: action description + coach's note */}
-                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="mt-1.5 grid grid-cols-1 md:grid-cols-2 gap-1.5">
                   <Input
                     placeholder="Action description..."
                     defaultValue={clip.action_description || ""}
@@ -627,12 +678,12 @@ export const VideoAnalysis = () => {
               </div>
             ))}
             {clipsNewestFirst.length === 0 && (
-              <p className="text-center text-sm text-muted-foreground py-6">No clips yet. Press "Clip (±5s)" during playback.</p>
+              <p className="text-center text-sm text-muted-foreground py-4">No clips yet. Hover over the video and press "Clip (±5s)" during playback.</p>
             )}
           </div>
         </div>
 
-        {/* Export dialog */}
+        {/* Export dialog with player picker first */}
         <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -640,18 +691,30 @@ export const VideoAnalysis = () => {
             </DialogHeader>
             <div className="space-y-4 py-2">
               <p className="text-sm text-muted-foreground">
-                {selectedVideo.clips.length} clip(s) will be added as actions with their match minutes, action types and video links.
+                {selectedVideo.clips.length} clip(s) will be added as additional actions to the selected report.
               </p>
-              <Select value={selectedReportId} onValueChange={setSelectedReportId}>
-                <SelectTrigger><SelectValue placeholder="Select a performance report" /></SelectTrigger>
+              <Select value={exportPlayerId} onValueChange={handleExportPlayerChange}>
+                <SelectTrigger><SelectValue placeholder="Select player first" /></SelectTrigger>
                 <SelectContent>
-                  {availableReports.map(r => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.player_name} — {r.title}
-                    </SelectItem>
+                  {players.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {exportPlayerId && (
+                <Select value={selectedReportId} onValueChange={setSelectedReportId}>
+                  <SelectTrigger><SelectValue placeholder="Select performance report" /></SelectTrigger>
+                  <SelectContent>
+                    {availableReports.length === 0 ? (
+                      <SelectItem value="__none" disabled>No reports found for this player</SelectItem>
+                    ) : (
+                      availableReports.map(r => (
+                        <SelectItem key={r.id} value={r.id}>{r.title}</SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
               <Button onClick={handleExportToReport} disabled={!selectedReportId || exporting} className="w-full">
                 {exporting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Exporting...</> : <><Download className="h-4 w-4 mr-2" /> Export Actions</>}
               </Button>
