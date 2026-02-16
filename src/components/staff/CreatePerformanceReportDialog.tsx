@@ -23,7 +23,7 @@ import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
 import { ActionVideoUpload } from "./ActionVideoUpload";
 import { ActionStatRecorder, aggregateRecordedStats, RecordedStat, STAT_TYPE_CONFIGS, StatTypeConfig } from "./ActionStatRecorder";
 import { UnifiedStatsEditor, UnifiedStat, mergeStatsForEditor, unifiedStatsToStrikerStats } from "./UnifiedStatsEditor";
-import { FixtureStatsEditor } from "./FixtureStatsEditor";
+import { FixtureStatsEditor, UNIFIED_TO_FIXTURE_MAP } from "./FixtureStatsEditor";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -1436,7 +1436,21 @@ export const CreatePerformanceReportDialog = ({
               {/* Unified Statistics Editor */}
               <UnifiedStatsEditor
                 stats={unifiedStats}
-                onStatsChange={setUnifiedStats}
+                onStatsChange={(newStats) => {
+                  setUnifiedStats(newStats);
+                  // Sync matching stats to fixture stats
+                  const updatedFixture = { ...fixtureStats };
+                  newStats.forEach(stat => {
+                    const fixtureKey = UNIFIED_TO_FIXTURE_MAP[stat.key];
+                    if (fixtureKey) {
+                      const val = stat.type === 'count' ? stat.count : stat.type === 'score' ? stat.score : undefined;
+                      if (val != null) {
+                        updatedFixture[fixtureKey] = val;
+                      }
+                    }
+                  });
+                  setFixtureStats(updatedFixture);
+                }}
                 minutesPlayed={parseInt(minutesPlayed) || 0}
               />
             </CollapsibleContent>
@@ -1446,13 +1460,15 @@ export const CreatePerformanceReportDialog = ({
           <Collapsible>
             <CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full text-sm sm:text-base">
-                Per-90 Fixture Stats (Optional)
+                Fixture Stats (Optional)
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-4">
               <FixtureStatsEditor
                 fixtureStats={fixtureStats}
                 onStatsChange={setFixtureStats}
+                unifiedStats={unifiedStats}
+                onUnifiedStatsChange={setUnifiedStats}
               />
             </CollapsibleContent>
           </Collapsible>

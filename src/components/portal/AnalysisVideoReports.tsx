@@ -187,10 +187,32 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
           <div className="text-center py-8 text-muted-foreground">No action clips available from your reports.</div>
         ) : (
           <>
-            {/* Step 1: Select matches */}
+            {/* Step 1: Select action types */}
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wider mb-2">Step 1: Select Action Types</h3>
+              <div className="flex flex-wrap gap-2">
+                {actionTypes.map(type => (
+                  <button
+                    key={type}
+                    onClick={() => toggleActionType(type)}
+                    className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+                      selectedActionTypes.includes(type) ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+                {selectedActionTypes.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedActionTypes([])}>Clear</Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Leave empty to include all action types</p>
+            </div>
+
+            {/* Step 2: Select matches */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold uppercase tracking-wider">Step 1: Select Matches</h3>
+                <h3 className="text-sm font-semibold uppercase tracking-wider">Step 2: Select Matches</h3>
                 <Button variant="ghost" size="sm" onClick={selectAllMatches}>Select All</Button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -209,35 +231,11 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
               </div>
             </div>
 
-            {/* Step 2: Select action types */}
-            {selectedMatches.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold uppercase tracking-wider mb-2">Step 2: Select Action Types</h3>
-                <div className="flex flex-wrap gap-2">
-                  {actionTypes.map(type => (
-                    <button
-                      key={type}
-                      onClick={() => toggleActionType(type)}
-                      className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${
-                        selectedActionTypes.includes(type) ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'
-                      }`}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                  {selectedActionTypes.length > 0 && (
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedActionTypes([])}>Clear</Button>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Leave empty to include all action types</p>
-              </div>
-            )}
-
             {/* Generate buttons */}
             {selectedMatches.length > 0 && (
               <div className="flex gap-3 flex-wrap">
                 <Button onClick={generateCompilation}>
-                  <Film className="w-4 h-4 mr-2" /> Generate Compilation
+                  <Film className="w-4 h-4 mr-2" /> Watch
                 </Button>
                 <Button variant="outline" onClick={generateFullReport}>
                   <ListVideo className="w-4 h-4 mr-2" /> Full Action Report Video
