@@ -562,7 +562,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                     className="text-xs"
                   >
                     <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
-                    Action Heatmap
+                    Period Grade Map
                   </Button>
                   {actions.filter(a => a.video_url).length > 0 && (
                     <>

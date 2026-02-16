@@ -1,22 +1,46 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface ParallaxHeroProps {
   imageUrl: string | null;
+  imageUrls?: string[];
   playerName: string;
   clubName?: string;
   position?: string;
+  nextFixture?: { home_team: string; away_team: string; match_date: string; venue?: string } | null;
 }
 
-export const ParallaxHero = ({ imageUrl, playerName, clubName, position }: ParallaxHeroProps) => {
+export const ParallaxHero = ({ imageUrl, imageUrls, playerName, clubName, position, nextFixture }: ParallaxHeroProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Build images list
+  const images = useMemo(() => {
+    const list: string[] = [];
+    if (imageUrls && imageUrls.length > 0) {
+      list.push(...imageUrls);
+    } else if (imageUrl) {
+      list.push(imageUrl);
+    }
+    return list;
+  }, [imageUrl, imageUrls]);
+
+  // Cycle images every 6s
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentImageIndex(prev => (prev + 1) % images.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [images.length]);
 
   useEffect(() => {
     const handleScroll = () => {
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         const scrollProgress = -rect.top / (window.innerHeight + rect.height);
-        setOffset(scrollProgress * 40); // max 40px shift
+        setOffset(scrollProgress * 40);
       }
     };
 
@@ -24,21 +48,55 @@ export const ParallaxHero = ({ imageUrl, playerName, clubName, position }: Paral
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (!imageUrl) return null;
+  // Countdown logic
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    if (!nextFixture) return;
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, [nextFixture]);
+
+  const countdown = useMemo(() => {
+    if (!nextFixture) return null;
+    const target = new Date(nextFixture.match_date);
+    const diff = target.getTime() - now.getTime();
+    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, passed: true };
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    return { days, hours, minutes, seconds, passed: false };
+  }, [nextFixture, now]);
+
+  if (images.length === 0) return null;
+
+  const units = countdown ? [
+    { label: "DAYS", value: countdown.days },
+    { label: "HRS", value: countdown.hours },
+    { label: "MIN", value: countdown.minutes },
+    { label: "SEC", value: countdown.seconds },
+  ] : [];
 
   return (
     <div
       ref={containerRef}
       className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] h-[200px] md:h-[280px] overflow-hidden"
     >
-      {/* Background image with parallax */}
-      <div
-        className="absolute inset-0 bg-cover bg-center transition-transform duration-100"
-        style={{
-          backgroundImage: `url(${imageUrl})`,
-          transform: `translateY(${offset}px) scale(1.1)`,
-        }}
-      />
+      {/* Crossfade images with parallax */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentImageIndex}
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `url(${images[currentImageIndex]})`,
+            transform: `translateY(${offset}px) scale(1.1)`,
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.2, ease: "easeInOut" }}
+        />
+      </AnimatePresence>
 
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
@@ -58,6 +116,30 @@ export const ParallaxHero = ({ imageUrl, playerName, clubName, position }: Paral
             <span className="text-xs md:text-sm text-white/80">{clubName}</span>
           )}
         </div>
+
+        {/* Countdown overlay */}
+        {countdown && !countdown.passed && nextFixture && (
+          <div className="mt-2">
+            <p className="text-[10px] text-white/60 mb-1">
+              {nextFixture.home_team} vs {nextFixture.away_team}
+            </p>
+            <div className="flex gap-2">
+              {units.map(unit => (
+                <div key={unit.label} className="flex flex-col items-center">
+                  <div className="bg-black/70 border border-primary/30 rounded px-2 py-1 min-w-[36px]">
+                    <span className="text-lg md:text-xl font-bold text-primary tabular-nums">
+                      {String(unit.value).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <span className="text-[8px] text-white/50 mt-0.5 font-medium">{unit.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {countdown?.passed && nextFixture && (
+          <p className="text-primary font-bold text-sm mt-2">Match day!</p>
+        )}
       </div>
     </div>
   );

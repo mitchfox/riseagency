@@ -12,8 +12,47 @@ import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
 import { QuickStatsComparison } from "./QuickStatsComparison";
 import { ParallaxHero } from "@/components/portal/ParallaxHero";
-import { NextFixtureCountdown } from "@/components/portal/NextFixtureCountdown";
 import { checkAndFireConfetti } from "@/lib/confetti";
+
+// Helper: fetches next fixture for player's club and renders ParallaxHero with countdown
+const ParallaxHeroWithFixture = ({ playerData, marketingImages }: { playerData: any; marketingImages: string[] }) => {
+  const [nextFixture, setNextFixture] = React.useState<{ home_team: string; away_team: string; match_date: string; venue?: string } | null>(null);
+
+  React.useEffect(() => {
+    const fetchNext = async () => {
+      const club = playerData?.current_club;
+      if (!club) return;
+      const today = new Date().toISOString().split("T")[0];
+      const { data } = await supabase
+        .from("fixtures")
+        .select("match_date, home_team, away_team, venue")
+        .gte("match_date", today)
+        .or(`home_team.ilike.%${club}%,away_team.ilike.%${club}%`)
+        .order("match_date", { ascending: true })
+        .limit(1);
+      if (data && data.length > 0) setNextFixture(data[0]);
+    };
+    fetchNext();
+  }, [playerData?.current_club]);
+
+  const imageUrls = React.useMemo(() => {
+    const urls: string[] = [];
+    if (marketingImages.length > 0) urls.push(...marketingImages);
+    else if (playerData?.image_url) urls.push(playerData.image_url);
+    return urls;
+  }, [marketingImages, playerData?.image_url]);
+
+  return (
+    <ParallaxHero
+      imageUrl={imageUrls[0] || null}
+      imageUrls={imageUrls}
+      playerName={playerData?.name || "Player"}
+      clubName={playerData?.current_club}
+      position={playerData?.position}
+      nextFixture={nextFixture}
+    />
+  );
+};
 
 interface PlayerProgram {
   id: string;
@@ -376,52 +415,21 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
     .sort((a, b) => new Date(b.analysis_date).getTime() - new Date(a.analysis_date).getTime())
     .slice(0, 5);
 
-  // Extract video thumbnails from highlights and marketing gallery images
-  const videoThumbnails = React.useMemo(() => {
-    const thumbnails: string[] = [];
-    
-    // Add marketing gallery images first
-    thumbnails.push(...marketingImages);
-    
-    if (playerData?.highlights) {
-      Object.values(playerData.highlights).forEach((highlight: any) => {
-        if (highlight?.clips && Array.isArray(highlight.clips)) {
-          highlight.clips.forEach((clip: any) => {
-            if (clip?.videoUrl) {
-              // Generate thumbnail URL from video URL
-              const videoUrl = clip.videoUrl;
-              // If it's a Supabase storage URL, we can try to get a frame
-              thumbnails.push(videoUrl);
-            }
-          });
-        }
-      });
-    }
-    
-    // Filter out videos - only keep images
-    const imageOnly = thumbnails.filter(url => !(url.includes('supabase') && url.includes('videos')));
-    
-    // No fallback - only show 21:9 marketing gallery images
-    
-    console.log('Image thumbnails generated:', imageOnly.length, imageOnly);
-    return imageOnly;
-  }, [playerData, marketingImages]);
-
   return (
     <>
-      {/* Parallax Hero Header */}
-      {playerData?.image_url && (
-        <ParallaxHero
-          imageUrl={playerData.image_url}
-          playerName={playerData.name || "Player"}
-          clubName={playerData.current_club}
-          position={playerData.position}
+      {/* Parallax Hero Header with countdown overlay */}
+      {(playerData?.image_url || marketingImages.length > 0) && (
+        <ParallaxHeroWithFixture
+          playerData={playerData}
+          marketingImages={marketingImages}
         />
       )}
 
       <div className="space-y-0 mb-0">
-        {/* Next Fixture Countdown */}
-        <NextFixtureCountdown playerName={playerData?.name} />
+        {/* Gold line above schedule */}
+        <div className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw]">
+          <div className="border-t-2 border-primary"></div>
+        </div>
 
         {/* Schedule Card - Full Width */}
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-0 border-b-0 z-30">
@@ -523,47 +531,6 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
           </CardContent>
         </Card>
 
-        {/* Video/Image Carousel - Full Width - Always visible */}
-        <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-[2px] border-b-[hsl(43,49%,61%)] z-25 !mt-0 !mb-[13px]">
-          <CardContent className="p-0 overflow-hidden">
-            {!imagesPreloaded || videoThumbnails.length === 0 ? (
-              // Loading skeleton - shown while images load
-              <div className="infinite-scroll-container">
-                <div className="infinite-scroll-content" style={{ animationPlayState: 'paused' }}>
-                  {[1, 2, 3].map((index) => (
-                    <div key={index} className="inline-block px-2">
-                      <div 
-                        className="relative bg-muted animate-pulse" 
-                        style={{ aspectRatio: '21/9', width: '85vw' }}
-                      >
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <LoadingSpinner size="sm" />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              // Actual images - shown when loaded
-              <div className="infinite-scroll-container">
-                <div className="infinite-scroll-content">
-                  {[...videoThumbnails, ...videoThumbnails].map((thumbnail, index) => (
-                    <div key={index} className="inline-block px-2">
-                      <div className="relative" style={{ aspectRatio: '21/9', width: '85vw' }}>
-                        <img
-                          src={thumbnail}
-                          alt={`Player content ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         {/* R90 Performance Chart & Recent Analysis Combined - Full Width */}
         <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-0 border-t-[2px] border-t-[hsl(43,49%,61%)] z-20 overflow-visible">
