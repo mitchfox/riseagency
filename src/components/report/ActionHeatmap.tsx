@@ -12,33 +12,53 @@ interface ActionHeatmapProps {
   minutesPlayed: number;
 }
 
-const getScoreColor = (score: number) => {
-  if (score >= 0.1) return "hsl(142, 76%, 36%)";
-  if (score >= 0.05) return "hsl(142, 60%, 50%)";
-  if (score >= 0.02) return "hsl(82, 84%, 67%)";
-  if (score > 0) return "hsl(48, 96%, 53%)";
-  if (score === 0) return "hsl(var(--muted))";
-  if (score > -0.03) return "hsl(25, 95%, 53%)";
-  return "hsl(0, 84%, 60%)";
+// R90 rating colour scale
+const getR90Color = (r90: number) => {
+  if (r90 >= 2.5) return "hsl(43, 49%, 61%)";
+  if (r90 >= 1.8) return "hsl(142, 72%, 29%)";
+  if (r90 >= 1.4) return "hsl(142, 76%, 36%)";
+  if (r90 >= 1.0) return "hsl(82, 84%, 67%)";
+  if (r90 >= 0.8) return "hsl(48, 96%, 53%)";
+  if (r90 >= 0.6) return "hsl(25, 95%, 53%)";
+  if (r90 >= 0.4) return "hsl(25, 95%, 37%)";
+  if (r90 >= 0.2) return "hsl(0, 91%, 71%)";
+  if (r90 >= 0) return "hsl(0, 84%, 60%)";
+  return "hsl(0, 93%, 12%)";
+};
+
+const getR90Grade = (r90: number) => {
+  if (r90 >= 2.5) return "A+";
+  if (r90 >= 1.8) return "A";
+  if (r90 >= 1.4) return "B+";
+  if (r90 >= 1.0) return "B";
+  if (r90 >= 0.8) return "C+";
+  if (r90 >= 0.6) return "C";
+  if (r90 >= 0.4) return "D+";
+  if (r90 >= 0.2) return "D";
+  if (r90 >= 0) return "E";
+  return "F";
 };
 
 export const ActionHeatmap = ({ actions, minutesPlayed }: ActionHeatmapProps) => {
-  // Group actions into 15-minute blocks
+  // Group actions into 15-minute blocks and compute R90 per period
   const blocks = useMemo(() => {
     const blockCount = Math.ceil(minutesPlayed / 15) || 6;
-    const result: { range: string; actions: PerformanceAction[]; totalScore: number; count: number }[] = [];
+    const result: { range: string; actions: PerformanceAction[]; totalScore: number; count: number; r90: number }[] = [];
 
     for (let i = 0; i < blockCount; i++) {
       const start = i * 15;
       const end = Math.min((i + 1) * 15, minutesPlayed);
+      const periodMinutes = end - start;
       const blockActions = actions.filter(a => Math.floor(a.minute) >= start && Math.floor(a.minute) < end);
       const totalScore = blockActions.reduce((sum, a) => sum + a.action_score, 0);
+      const r90 = periodMinutes > 0 ? (totalScore / periodMinutes) * 90 : 0;
 
       result.push({
         range: `${start}-${end}'`,
         actions: blockActions,
         totalScore,
         count: blockActions.length,
+        r90,
       });
     }
 
@@ -53,19 +73,17 @@ export const ActionHeatmap = ({ actions, minutesPlayed }: ActionHeatmapProps) =>
     );
   }
 
-  const maxAbsScore = Math.max(...blocks.map(b => Math.abs(b.totalScore)), 0.01);
-
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold">Action Heatmap</h4>
+        <h4 className="text-sm font-semibold">Period Grade Map</h4>
         <span className="text-xs text-muted-foreground">{actions.length} actions across {minutesPlayed} min</span>
       </div>
 
       <div className="grid grid-cols-6 gap-1">
         {blocks.map((block, idx) => {
-          const intensity = Math.abs(block.totalScore) / maxAbsScore;
-          const color = block.count > 0 ? getScoreColor(block.totalScore / block.count) : "hsl(var(--muted))";
+          const color = block.count > 0 ? getR90Color(block.r90) : "hsl(var(--muted))";
+          const grade = block.count > 0 ? getR90Grade(block.r90) : "-";
 
           return (
             <div
@@ -73,33 +91,18 @@ export const ActionHeatmap = ({ actions, minutesPlayed }: ActionHeatmapProps) =>
               className="relative rounded-md flex flex-col items-center justify-center py-3 px-1 transition-all hover:scale-105"
               style={{
                 backgroundColor: color,
-                opacity: block.count > 0 ? 0.4 + intensity * 0.6 : 0.2,
+                opacity: block.count > 0 ? 0.85 : 0.2,
               }}
-              title={`${block.range}: ${block.count} actions, score ${block.totalScore.toFixed(3)}`}
+              title={`${block.range}: ${block.count} actions, R90 ${block.r90.toFixed(2)}`}
             >
-              <span className="text-[10px] font-bold text-white drop-shadow-md">{block.range}</span>
-              <span className="text-lg font-bold text-white drop-shadow-md">{block.count}</span>
-              <span className="text-[9px] text-white/80 drop-shadow-sm">
-                {block.totalScore > 0 ? "+" : ""}{block.totalScore.toFixed(3)}
+              <span className="text-[10px] font-bold text-black drop-shadow-sm">{block.range}</span>
+              <span className="text-lg font-bold text-black drop-shadow-sm">{grade}</span>
+              <span className="text-[9px] text-black/70">
+                {block.count} act{block.count !== 1 ? "s" : ""}
               </span>
             </div>
           );
         })}
-      </div>
-
-      <div className="flex items-center justify-center gap-4 text-[10px] text-muted-foreground pt-1">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "hsl(0, 84%, 60%)" }} />
-          <span>Negative</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "hsl(48, 96%, 53%)" }} />
-          <span>Neutral</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "hsl(142, 76%, 36%)" }} />
-          <span>Positive</span>
-        </div>
       </div>
     </div>
   );
