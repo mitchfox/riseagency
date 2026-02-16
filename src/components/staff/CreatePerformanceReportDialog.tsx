@@ -23,7 +23,7 @@ import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
 import { ActionVideoUpload } from "./ActionVideoUpload";
 import { ActionStatRecorder, aggregateRecordedStats, RecordedStat, STAT_TYPE_CONFIGS, StatTypeConfig } from "./ActionStatRecorder";
 import { UnifiedStatsEditor, UnifiedStat, mergeStatsForEditor, unifiedStatsToStrikerStats } from "./UnifiedStatsEditor";
-import { FixtureStatsEditor, UNIFIED_TO_FIXTURE_MAP } from "./FixtureStatsEditor";
+import { FixtureStatsEditor, UNIFIED_TO_FIXTURE_MAP, FIXTURE_TO_UNIFIED_MAP } from "./FixtureStatsEditor";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -1466,7 +1466,24 @@ export const CreatePerformanceReportDialog = ({
             <CollapsibleContent className="mt-4">
               <FixtureStatsEditor
                 fixtureStats={fixtureStats}
-                onStatsChange={setFixtureStats}
+                onStatsChange={(newFixtureStats) => {
+                  setFixtureStats(newFixtureStats);
+                  // Sync matching fixture stats to existing unified stats (don't auto-add new ones)
+                  setUnifiedStats(prev => {
+                    const updated = prev.map(stat => {
+                      const fixtureKey = UNIFIED_TO_FIXTURE_MAP[stat.key];
+                      if (fixtureKey && newFixtureStats[fixtureKey] != null) {
+                        if (stat.type === 'count') {
+                          return { ...stat, count: newFixtureStats[fixtureKey] };
+                        } else if (stat.type === 'score') {
+                          return { ...stat, score: newFixtureStats[fixtureKey] };
+                        }
+                      }
+                      return stat;
+                    });
+                    return updated;
+                  });
+                }}
               />
             </CollapsibleContent>
           </Collapsible>

@@ -5,7 +5,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Plus, EyeOff, Calculator } from 'lucide-react';
+import { Plus, EyeOff, Calculator, GripVertical } from 'lucide-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { 
   STAT_TYPE_CONFIGS,
   StatTypeConfig,
@@ -168,6 +171,28 @@ const CALCULATED_STATS: CalculatedStatDef[] = [
   },
 ];
 
+// Sortable stat card wrapper
+const SortableStatCard = ({ id, children }: { id: string; children: React.ReactNode }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} className="relative group">
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute left-1 top-1 cursor-grab active:cursor-grabbing z-10 p-0.5 hover:bg-accent/50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <GripVertical className="h-3 w-3 text-muted-foreground" />
+      </div>
+      {children}
+    </div>
+  );
+};
+
 export const UnifiedStatsEditor = ({
   stats,
   onStatsChange,
@@ -175,6 +200,22 @@ export const UnifiedStatsEditor = ({
 }: UnifiedStatsEditorProps) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingStatKey, setEditingStatKey] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleStatDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = stats.findIndex(s => s.key === active.id);
+      const newIndex = stats.findIndex(s => s.key === over.id);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        onStatsChange(arrayMove(stats, oldIndex, newIndex));
+      }
+    }
+  };
   
   // New stat form state
   const [selectedStatKey, setSelectedStatKey] = useState('');
@@ -498,97 +539,75 @@ export const UnifiedStatsEditor = ({
           No statistics recorded. Add stats manually or record them per action.
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {stats.map((stat) => (
-            <Card key={stat.key} className="relative group">
-              <CardContent className="p-3">
-                {/* Hide button */}
-                <button
-                  type="button"
-                  onClick={() => handleDeleteStat(stat.key)}
-                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded"
-                  title="Hide from report"
-                >
-                  <EyeOff className="h-3 w-3 text-muted-foreground" />
-                </button>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleStatDragEnd}>
+          <SortableContext items={stats.map(s => s.key)} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {stats.map((stat) => (
+                <SortableStatCard key={stat.key} id={stat.key}>
+                  <Card className="relative">
+                    <CardContent className="p-3">
+                      {/* Hide button */}
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteStat(stat.key)}
+                        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded"
+                        title="Hide from report"
+                      >
+                        <EyeOff className="h-3 w-3 text-muted-foreground" />
+                      </button>
 
-                <div className="flex items-center gap-1 mb-2 pr-5">
-                  <Label className="text-xs font-semibold block truncate">{stat.displayName}</Label>
-                  {/* Type change dropdown */}
-                  <Select value={stat.type} onValueChange={(v) => handleUpdateStatType(stat.key, v as StatInputMode)}>
-                    <SelectTrigger className="h-5 w-5 p-0 border-0 opacity-0 group-hover:opacity-100 transition-opacity [&>svg]:h-3 [&>svg]:w-3">
-                      <span className="sr-only">Change type</span>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="success_fail">Success/Fail</SelectItem>
-                      <SelectItem value="count">Count</SelectItem>
-                      <SelectItem value="score">Score</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {stat.type === 'success_fail' && (
-                  <div>
-                    <div className="flex items-center gap-1 mb-1">
-                      <Input
-                        type="number"
-                        value={stat.successful ?? 0}
-                        onChange={(e) => handleInlineEdit(stat.key, 'successful', e.target.value)}
-                        className="h-7 text-center text-sm w-14"
-                      />
-                      <span className="text-muted-foreground">/</span>
-                      <Input
-                        type="number"
-                        value={stat.total ?? 0}
-                        onChange={(e) => handleInlineEdit(stat.key, 'total', e.target.value)}
-                        className="h-7 text-center text-sm w-14"
-                      />
-                    </div>
-                    <div className="text-[10px] text-center text-muted-foreground">
-                      {(stat.total ?? 0) > 0 
-                        ? (((stat.successful ?? 0) / (stat.total ?? 1)) * 100).toFixed(1) 
-                        : '0.0'}% success
-                    </div>
-                  </div>
-                )}
-                
-                {stat.type === 'count' && (
-                  <div className="text-center">
-                    <Input
-                      type="number"
-                      value={stat.count ?? 0}
-                      onChange={(e) => handleInlineEdit(stat.key, 'count', e.target.value)}
-                      className="h-8 text-center text-lg font-bold w-full"
-                    />
-                  </div>
-                )}
-                
-                {stat.type === 'score' && (
-                  <div className="text-center">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={stat.score?.toFixed(2) ?? '0.00'}
-                      onChange={(e) => handleInlineEdit(stat.key, 'score', e.target.value)}
-                      className="h-8 text-center text-lg font-bold w-full"
-                    />
-                    {stat.per90 && (
-                      <div className="text-[10px] text-muted-foreground mt-1">
-                        p90: {stat.per90}
+                      <div className="flex items-center gap-1 mb-2 pr-5 pl-4">
+                        <Label className="text-xs font-semibold block truncate">{stat.displayName}</Label>
+                        <Select value={stat.type} onValueChange={(v) => handleUpdateStatType(stat.key, v as StatInputMode)}>
+                          <SelectTrigger className="h-5 w-5 p-0 border-0 opacity-0 group-hover:opacity-100 transition-opacity [&>svg]:h-3 [&>svg]:w-3">
+                            <span className="sr-only">Change type</span>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="success_fail">Success/Fail</SelectItem>
+                            <SelectItem value="count">Count</SelectItem>
+                            <SelectItem value="score">Score</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                    )}
-                  </div>
-                )}
+                      
+                      {stat.type === 'success_fail' && (
+                        <div>
+                          <div className="flex items-center gap-1 mb-1">
+                            <Input type="number" value={stat.successful ?? 0} onChange={(e) => handleInlineEdit(stat.key, 'successful', e.target.value)} className="h-7 text-center text-sm w-14" />
+                            <span className="text-muted-foreground">/</span>
+                            <Input type="number" value={stat.total ?? 0} onChange={(e) => handleInlineEdit(stat.key, 'total', e.target.value)} className="h-7 text-center text-sm w-14" />
+                          </div>
+                          <div className="text-[10px] text-center text-muted-foreground">
+                            {(stat.total ?? 0) > 0 ? (((stat.successful ?? 0) / (stat.total ?? 1)) * 100).toFixed(1) : '0.0'}% success
+                          </div>
+                        </div>
+                      )}
+                      
+                      {stat.type === 'count' && (
+                        <div className="text-center">
+                          <Input type="number" value={stat.count ?? 0} onChange={(e) => handleInlineEdit(stat.key, 'count', e.target.value)} className="h-8 text-center text-lg font-bold w-full" />
+                        </div>
+                      )}
+                      
+                      {stat.type === 'score' && (
+                        <div className="text-center">
+                          <Input type="number" step="0.01" value={stat.score?.toFixed(2) ?? '0.00'} onChange={(e) => handleInlineEdit(stat.key, 'score', e.target.value)} className="h-8 text-center text-lg font-bold w-full" />
+                          {stat.per90 && (
+                            <div className="text-[10px] text-muted-foreground mt-1">p90: {stat.per90}</div>
+                          )}
+                        </div>
+                      )}
 
-                {stat.isFromActions && (
-                  <div className="text-[9px] text-muted-foreground mt-1 text-center">
-                    (from actions)
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                      {stat.isFromActions && (
+                        <div className="text-[9px] text-muted-foreground mt-1 text-center">(from actions)</div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </SortableStatCard>
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Auto-Calculated Stats Section */}
