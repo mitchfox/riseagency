@@ -16,7 +16,7 @@ import { ParallaxHero } from "@/components/portal/ParallaxHero";
 import { checkAndFireConfetti } from "@/lib/confetti";
 
 // Helper: fetches next fixture for player's club and renders ParallaxHero with countdown
-const ParallaxHeroWithFixture = ({ playerData, marketingImages }: { playerData: any; marketingImages: string[] }) => {
+const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints }: { playerData: any; marketingImages: string[]; imageFocalPoints: string[] }) => {
   const [nextFixture, setNextFixture] = React.useState<{ home_team: string; away_team: string; match_date: string; venue?: string } | null>(null);
 
   React.useEffect(() => {
@@ -47,6 +47,7 @@ const ParallaxHeroWithFixture = ({ playerData, marketingImages }: { playerData: 
     <ParallaxHero
       imageUrl={imageUrls[0] || null}
       imageUrls={imageUrls}
+      imageFocalPoints={imageFocalPoints}
       playerName={playerData?.name || "Player"}
       clubName={playerData?.current_club}
       position={playerData?.position}
@@ -93,6 +94,7 @@ interface HubProps {
 export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateToAnalysis, onNavigateToComparisons, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
   const navigate = useNavigate();
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
+  const [imageFocalPoints, setImageFocalPoints] = React.useState<string[]>([]);
   const [imagesPreloaded, setImagesPreloaded] = React.useState(false);
   const hasAnimated = React.useRef(false);
   const chartRef = React.useRef<HTMLDivElement>(null);
@@ -212,19 +214,20 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
       // Fetch images filtered by this specific player's ID - no category filter
       const { data: images, error } = await supabase
         .from('marketing_gallery')
-        .select('file_url')
+        .select('file_url, focal_point')
         .eq('file_type', 'image')
         .eq('player_id', playerData.id)
         .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching player images:', error, error.message, error.details);
-        setImagesPreloaded(true); // Still allow carousel to show
+        setImagesPreloaded(true);
         return;
       }
       
-      console.log('Player images from DB:', images?.length, 'URLs:', images?.map(i => i.file_url));
+      console.log('Player images from DB:', images?.length);
       const imageUrls = images?.map(img => img.file_url) || [];
+      const focalPoints = images?.map(img => (img as any).focal_point || 'center') || [];
       
       if (imageUrls.length === 0) {
         console.log('No images to preload');
@@ -232,8 +235,8 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         return;
       }
       
-      // Set images immediately so they're available
       setMarketingImages(imageUrls);
+      setImageFocalPoints(focalPoints);
       
       // Priority load: Load first 4 images immediately, then show carousel
       const priorityCount = Math.min(4, imageUrls.length);
@@ -424,6 +427,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         <ParallaxHeroWithFixture
           playerData={playerData}
           marketingImages={marketingImages}
+          imageFocalPoints={imageFocalPoints}
         />
       )}
 

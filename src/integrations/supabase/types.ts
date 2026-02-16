@@ -1632,6 +1632,7 @@ export type Database = {
           description: string | null
           file_type: string
           file_url: string
+          focal_point: string | null
           id: string
           player_id: string | null
           thumbnail_url: string | null
@@ -1644,6 +1645,7 @@ export type Database = {
           description?: string | null
           file_type: string
           file_url: string
+          focal_point?: string | null
           id?: string
           player_id?: string | null
           thumbnail_url?: string | null
@@ -1656,6 +1658,7 @@ export type Database = {
           description?: string | null
           file_type?: string
           file_url?: string
+          focal_point?: string | null
           id?: string
           player_id?: string | null
           thumbnail_url?: string | null
