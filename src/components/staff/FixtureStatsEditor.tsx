@@ -24,9 +24,9 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange }: FixtureStats
 
   return (
     <div className="space-y-3">
-      <Label className="text-sm font-semibold">Per-90 Fixture Stats</Label>
+      <Label className="text-sm font-semibold">Fixture Stats</Label>
       <p className="text-xs text-muted-foreground">
-        These stats sync to Player Data for portal comparisons.
+        Raw match totals. Per-90 averages are calculated automatically for portal comparisons.
       </p>
       <Tabs value={activeCategory} onValueChange={setActiveCategory}>
         <TabsList className="grid grid-cols-4 gap-1">

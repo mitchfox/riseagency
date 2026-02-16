@@ -341,15 +341,15 @@ Examples:
                 </TabsContent>
 
                 <TabsContent value="data" className="mt-0">
-                  <AnalysisDataTab analyses={analyses} playerData={currentPlayer} />
+                  <AnalysisDataTab analyses={analyses} playerData={currentPlayer} embedded />
                 </TabsContent>
 
                 <TabsContent value="comparisons" className="mt-0">
-                  <AnalysisComparisons analyses={analyses} playerData={currentPlayer} />
+                  <AnalysisComparisons analyses={analyses} playerData={currentPlayer} embedded />
                 </TabsContent>
 
                 <TabsContent value="video" className="mt-0">
-                  <AnalysisVideoReports analyses={analyses} playerId={selectedPlayer} />
+                  <AnalysisVideoReports analyses={analyses} playerId={selectedPlayer} embedded />
                 </TabsContent>
 
                 <TabsContent value="analysis" className="mt-0 space-y-3 md:space-y-4">

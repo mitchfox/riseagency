@@ -34,9 +34,10 @@ interface ActionClip {
 interface Props {
   analyses: Analysis[];
   playerId: string;
+  embedded?: boolean;
 }
 
-export const AnalysisVideoReports = ({ analyses, playerId }: Props) => {
+export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) => {
   const [allActions, setAllActions] = useState<ActionClip[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMatches, setSelectedMatches] = useState<string[]>([]);
@@ -171,13 +172,15 @@ export const AnalysisVideoReports = ({ analyses, playerId }: Props) => {
   };
 
   return (
-    <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
-      <CardHeader marble>
-        <div className="container mx-auto px-4">
-          <CardTitle className="font-heading tracking-tight">Video Reports</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="container mx-auto px-4 space-y-6 py-6">
+    <Card className={embedded ? "rounded-none border-0 shadow-none" : "w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0"}>
+      {!embedded && (
+        <CardHeader marble>
+          <div className="container mx-auto px-4">
+            <CardTitle className="font-heading tracking-tight">Video Reports</CardTitle>
+          </div>
+        </CardHeader>
+      )}
+      <CardContent className={embedded ? "p-0 space-y-6" : "container mx-auto px-4 space-y-6 py-6"}>
         {loading ? (
           <div className="text-center py-8 text-muted-foreground">Loading clips...</div>
         ) : allActions.length === 0 ? (

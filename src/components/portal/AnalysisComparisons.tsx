@@ -35,9 +35,10 @@ const PORTAL_COLOUR = 'hsl(43, 49%, 61%)';
 interface Props {
   analyses: Analysis[];
   playerData: any;
+  embedded?: boolean;
 }
 
-export const AnalysisComparisons = ({ analyses, playerData }: Props) => {
+export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) => {
   const [comparisonPlayers, setComparisonPlayers] = useState<ComparisonPlayer[]>([]);
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [formWindow, setFormWindow] = useState<number>(5);
@@ -122,13 +123,15 @@ export const AnalysisComparisons = ({ analyses, playerData }: Props) => {
   }, [selectedComps, portalMetrics, hasPortalData, playerName, selectedMetricKey, selectedMetric]);
 
   return (
-    <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
-      <CardHeader marble>
-        <div className="container mx-auto px-4">
-          <CardTitle className="font-heading tracking-tight">Comparisons</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="container mx-auto px-4 space-y-6 py-6">
+    <Card className={embedded ? "rounded-none border-0 shadow-none" : "w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0"}>
+      {!embedded && (
+        <CardHeader marble>
+          <div className="container mx-auto px-4">
+            <CardTitle className="font-heading tracking-tight">Comparisons</CardTitle>
+          </div>
+        </CardHeader>
+      )}
+      <CardContent className={embedded ? "p-0 space-y-6" : "container mx-auto px-4 space-y-6 py-6"}>
         {/* Form window selector */}
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Form window:</span>
