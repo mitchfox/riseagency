@@ -6,7 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb } from "lucide-react";
+import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb, Star, HelpCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
+import { KeyboardShortcutsDialog } from "@/components/staff/KeyboardShortcutsDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -143,6 +146,10 @@ const Staff = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
+  });
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   
   // Role permissions from database
@@ -202,16 +209,70 @@ const Staff = () => {
   }, [searchParams, isStaff]);
 
   // Keyboard shortcut for search
+  // Persist pinned sections
+  useEffect(() => {
+    localStorage.setItem('staff_pinned_sections', JSON.stringify(pinnedSections));
+  }, [pinnedSections]);
+
+  const togglePin = (sectionId: string) => {
+    setPinnedSections(prev => 
+      prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]
+    );
+  };
+
+  // Extended keyboard shortcuts
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
+      // Don't intercept if user is typing in an input
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setSidebarSearchOpen((open) => !open);
+        return;
+      }
+      if (e.key === "?" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setShortcutsOpen(true);
+        return;
+      }
+      if (e.key === "Escape") {
+        setExpandedSection('overview');
+        setExpandedCategory('overview');
+        setSearchParams({ section: 'overview' });
+        return;
+      }
+      // Number keys 1-9 to jump to categories
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= 9) {
+        const cats = buildCategories();
+        const target = cats[num - 1];
+        if (target) {
+          setExpandedCategory(target.id);
+          const realSections = target.sections.filter(s => !(s as any).isGroupLabel);
+          if (realSections.length === 1) {
+            handleSectionToggle(realSections[0].id as any);
+          }
+        }
+        return;
+      }
+      // Arrow keys to navigate sections within expanded category
+      if ((e.key === "ArrowUp" || e.key === "ArrowDown") && expandedCategory) {
+        e.preventDefault();
+        const cat = buildCategories().find(c => c.id === expandedCategory);
+        if (!cat) return;
+        const realSections = cat.sections.filter(s => !(s as any).isGroupLabel);
+        const currentIdx = realSections.findIndex(s => s.id === expandedSection);
+        const nextIdx = e.key === "ArrowDown" 
+          ? Math.min(currentIdx + 1, realSections.length - 1)
+          : Math.max(currentIdx - 1, 0);
+        handleSectionToggle(realSections[nextIdx].id as any);
       }
     };
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, []);
+  }, [expandedCategory, expandedSection]);
 
   const handleSectionToggle = (section: string) => {
     const newSection = expandedSection === section ? null : section;
@@ -1053,6 +1114,37 @@ const Staff = () => {
         <div className={`fixed ${isMobile ? 'top-16' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 ${
           sidebarCollapsed ? 'w-0 border-0 opacity-0 pointer-events-none' : 'w-14 md:w-24'
         }`}>
+          {/* Pinned Sections */}
+          {pinnedSections.length > 0 && !expandedCategory && (
+            <div className="w-full space-y-1 pb-1">
+              {pinnedSections.map(pinId => {
+                const section = categories.flatMap(c => c.sections).find(s => s.id === pinId && !(s as any).isGroupLabel);
+                if (!section) return null;
+                const PinIcon = section.icon;
+                const isActive = expandedSection === pinId;
+                return (
+                  <button
+                    key={pinId}
+                    onClick={() => {
+                      handleSectionToggle(pinId as any);
+                      const parent = categories.find(c => c.sections.some(s => s.id === pinId));
+                      if (parent) setExpandedCategory(parent.id);
+                    }}
+                    className={`group w-full rounded-lg flex flex-col items-center justify-center py-1.5 px-1 transition-all ${
+                      isActive ? 'bg-primary text-primary-foreground shadow-md' : 'hover:bg-primary/10'
+                    }`}
+                    title={section.title}
+                  >
+                    <PinIcon className={`w-4 h-4 ${isActive ? 'text-primary-foreground' : 'text-primary'}`} />
+                  </button>
+                );
+              })}
+              <div className="w-full px-2 py-1">
+                <div className="h-px bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
+              </div>
+            </div>
+          )}
+
           {/* Search Button */}
           <button
             onClick={() => setSidebarSearchOpen(true)}
@@ -1108,44 +1200,70 @@ const Staff = () => {
                   )}
                 </button>
 
-                {/* Sections (shown when expanded) */}
+                {/* Sections (shown when expanded) - staggered animation */}
+                <AnimatePresence>
                 {isExpanded && !isSingleSection && (
-                  <div className="w-full space-y-1 mt-2 pb-16">
+                  <motion.div 
+                    className="w-full space-y-1 mt-2 pb-16"
+                    initial="hidden"
+                    animate="show"
+                    exit="hidden"
+                    variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
+                  >
                     {category.sections.map((section) => {
-                      // Render group labels as small dividers
                       if ((section as any).isGroupLabel) {
                         return (
-                          <div key={section.id} className="pt-2 pb-0.5 px-1">
+                          <motion.div 
+                            key={section.id} 
+                            className="pt-2 pb-0.5 px-1"
+                            variants={{ hidden: { x: -10, opacity: 0 }, show: { x: 0, opacity: 1 } }}
+                          >
                             <span className="text-[5px] sm:text-[6px] uppercase tracking-widest text-primary/60 font-bold text-center block">
                               {section.title}
                             </span>
                             <div className="h-px bg-primary/20 mt-0.5" />
-                          </div>
+                          </motion.div>
                         );
                       }
                       const SectionIcon = section.icon;
                       const isActive = expandedSection === section.id;
+                      const isPinned = pinnedSections.includes(section.id);
                       return (
-                        <button
+                        <motion.div
                           key={section.id}
-                          onClick={() => handleSectionToggle(section.id as any)}
-                          className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-1.5 md:py-2 px-1 transition-all ${
-                            isActive 
-                              ? 'bg-primary text-primary-foreground shadow-md' 
-                              : 'hover:bg-primary/10'
-                          }`}
+                          variants={{ hidden: { x: -10, opacity: 0 }, show: { x: 0, opacity: 1 } }}
                         >
-                          <SectionIcon className={`w-4 h-4 md:w-5 md:h-5 mb-0.5 md:mb-1 ${isActive ? 'text-primary-foreground' : ''}`} />
-                          <span className={`text-[5px] sm:text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
-                            {section.title.split(' ').map((word, i) => (
-                              <span key={i} className="block">{word}</span>
-                            ))}
-                          </span>
-                        </button>
+                          <button
+                            onClick={() => handleSectionToggle(section.id as any)}
+                            className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-1.5 md:py-2 px-1 transition-all ${
+                              isActive 
+                                ? 'bg-primary text-primary-foreground shadow-md' 
+                                : 'hover:bg-primary/10'
+                            }`}
+                          >
+                            <SectionIcon className={`w-4 h-4 md:w-5 md:h-5 mb-0.5 md:mb-1 ${isActive ? 'text-primary-foreground' : ''}`} />
+                            <span className={`text-[5px] sm:text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
+                              {section.title.split(' ').map((word, i) => (
+                                <span key={i} className="block">{word}</span>
+                              ))}
+                            </span>
+                            {/* Pin/star icon on hover */}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); togglePin(section.id); }}
+                              className={`absolute -top-0.5 -right-0.5 p-0.5 rounded-full transition-all ${
+                                isPinned ? 'opacity-100 text-primary' : 'opacity-0 group-hover:opacity-60 text-muted-foreground hover:text-primary'
+                              }`}
+                              title={isPinned ? 'Unpin section' : 'Pin section'}
+                            >
+                              <Star className={`w-2.5 h-2.5 ${isPinned ? 'fill-primary' : ''}`} />
+                            </button>
+                          </button>
+                        </motion.div>
                       );
                     })}
-                  </div>
+                  </motion.div>
                 )}
+                </AnimatePresence>
                 
                 {/* Gold divider between categories */}
                 {index < filteredCategories.length - 1 && (
@@ -1164,13 +1282,28 @@ const Staff = () => {
         } ${isMobile ? 'pb-[60px]' : ''}`}>
           {expandedSection ? (
             <div className="container mx-auto px-3 md:px-6 py-4 md:py-6">
+              {/* Breadcrumb */}
+              {(() => {
+                const parentCat = categories.find(c => c.sections.some(s => s.id === expandedSection && !(s as any).isGroupLabel));
+                const activeSection = parentCat?.sections.find(s => s.id === expandedSection && !(s as any).isGroupLabel);
+                if (parentCat && activeSection) {
+                  return (
+                    <StaffBreadcrumb
+                      categoryTitle={parentCat.title}
+                      categoryIcon={parentCat.icon}
+                      sectionTitle={activeSection.title}
+                      onCategoryClick={() => {
+                        setExpandedCategory(parentCat.id);
+                        setExpandedSection(null);
+                        setSearchParams({});
+                      }}
+                    />
+                  );
+                }
+                return null;
+              })()}
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
-                <CardHeader>
-                  <CardTitle className="text-2xl">
-                    {categories.flatMap(c => c.sections).filter(s => !(s as any).isGroupLabel).find(s => s.id === expandedSection)?.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} userId={user?.id} isMarketeer={isMarketeer} />}
                   {expandedSection === 'focusedtasks' && <FocusedTasksSection />}
                   {expandedSection === 'schedule' && (
@@ -1305,9 +1438,21 @@ const Staff = () => {
             <Button onClick={handleLogout} variant="outline" size="sm" className="shrink-0">
               Logout
             </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-9 w-9 shrink-0 hidden md:flex"
+              onClick={() => setShortcutsOpen(true)}
+              title="Keyboard shortcuts (?)"
+            >
+              <HelpCircle className="h-4 w-4 text-muted-foreground" />
+            </Button>
           </div>
         </div>
       </div>
+
+      {/* Keyboard Shortcuts Dialog */}
+      <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
     </div>
   );
 };

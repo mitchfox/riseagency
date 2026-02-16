@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { ScrollProgressBar } from "@/components/ScrollProgressBar";
 import logo from "@/assets/logo.png";
 import riseStar from "@/assets/rise-star.png";
 import { X, MessageCircle, Users, LogIn, Handshake, ArrowRight, Compass, FileText, Search, Star, Calendar, Briefcase, Send, BookOpen, Activity, Newspaper, Heart, Package, Phone, TrendingUp } from "lucide-react";
@@ -338,6 +339,7 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
   };
 
   return <>
+      <ScrollProgressBar />
       {/* Top Utility Bar - only on homepage and only when not scrolled */}
       {showTopBar && !isScrolled && <div className="fixed top-14 md:top-16 inset-x-0 z-[99] w-full max-w-full overflow-hidden bg-background/95 backdrop-blur-md transition-all duration-500 border-b-2 border-primary">
           <div className="container mx-auto px-2 md:px-4">

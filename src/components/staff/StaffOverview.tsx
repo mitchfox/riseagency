@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Target, CheckSquare, Users, Calendar, Link2, TrendingUp, Settings, RotateCcw, Layers, Plus, Search, Megaphone, ClipboardList, BarChart3, FileText, Mail, Dumbbell, Bell, Clock, FolderOpen, MessageSquare, Briefcase, Globe, Receipt, UserPlus, Activity, Timer, Zap, Focus, Brain, ListTodo, Gauge, Workflow, Kanban, GitBranch, Repeat, Flag, Milestone, Trophy, Sparkles, Loader2 } from "lucide-react";
@@ -1309,28 +1310,37 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
           </div>
         ) : isMobile ? (
           /* Mobile: Stack widgets vertically */
-          <div className="space-y-3">
+          <motion.div 
+            className="space-y-3"
+            initial="hidden"
+            animate="show"
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+          >
             {visibleWidgets.map(widgetId => {
               const config = filteredWidgetConfigs.find(c => c.id === widgetId);
               const layout = layouts.find(l => l.id === widgetId);
               if (!config || !layout) return null;
               return (
-                <SortableWidget
+                <motion.div
                   key={widgetId}
-                  id={widgetId}
-                  layout={{ ...layout, widthPercent: 100 }}
-                  title={config.title}
-                  icon={config.icon}
-                  expanded={expandedWidget === widgetId}
-                  onToggleExpand={() => toggleWidget(widgetId)}
-                  onResize={handleResize}
-                  rowHeight={DEFAULT_HEIGHT_PX}
+                  variants={{ hidden: { scale: 0.95, opacity: 0 }, show: { scale: 1, opacity: 1 } }}
                 >
-                  {renderWidgetContent(widgetId, layout)}
-                </SortableWidget>
+                  <SortableWidget
+                    id={widgetId}
+                    layout={{ ...layout, widthPercent: 100 }}
+                    title={config.title}
+                    icon={config.icon}
+                    expanded={expandedWidget === widgetId}
+                    onToggleExpand={() => toggleWidget(widgetId)}
+                    onResize={handleResize}
+                    rowHeight={DEFAULT_HEIGHT_PX}
+                  >
+                    {renderWidgetContent(widgetId, layout)}
+                  </SortableWidget>
+                </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         ) : (
           /* Desktop: Original DnD layout */
           <DndContext
