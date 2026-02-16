@@ -146,6 +146,32 @@ export function CanvasElement({
             <polygon points={`${element.width/2},${strokeWidth||0} ${element.width-(strokeWidth||0)},${element.height/2} ${element.width/2},${element.height-(strokeWidth||0)} ${strokeWidth||0},${element.height/2}`} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
           </svg>
         );
+      case 'hexagon': {
+        const hx = element.width / 2, hy = element.height / 2;
+        const hr = Math.min(hx, hy) - (strokeWidth||0);
+        const hpts = Array.from({ length: 6 }, (_, i) => {
+          const angle = (Math.PI / 3) * i - Math.PI / 2;
+          return `${hx + hr * Math.cos(angle)},${hy + hr * Math.sin(angle)}`;
+        }).join(' ');
+        return (
+          <svg width="100%" height="100%" viewBox={`0 0 ${element.width} ${element.height}`}>
+            <polygon points={hpts} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+          </svg>
+        );
+      }
+      case 'pentagon': {
+        const px = element.width / 2, py = element.height / 2;
+        const pr = Math.min(px, py) - (strokeWidth||0);
+        const ppts = Array.from({ length: 5 }, (_, i) => {
+          const angle = (2 * Math.PI / 5) * i - Math.PI / 2;
+          return `${px + pr * Math.cos(angle)},${py + pr * Math.sin(angle)}`;
+        }).join(' ');
+        return (
+          <svg width="100%" height="100%" viewBox={`0 0 ${element.width} ${element.height}`}>
+            <polygon points={ppts} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+          </svg>
+        );
+      }
       case 'arrow':
         return (
           <svg width="100%" height="100%" viewBox={`0 0 ${element.width} ${element.height}`}>
