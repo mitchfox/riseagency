@@ -54,18 +54,15 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
   const [expandedSubcategories, setExpandedSubcategories] = useState<Set<string>>(new Set());
   const [searchFilter, setSearchFilter] = useState('');
 
-  // Update category when initialCategory changes - NO auto-search
-  useEffect(() => {
-    if (initialCategory && open) {
-      setSelectedCategory(initialCategory);
-    }
-  }, [initialCategory, open]);
+  // Always reset to 'all' when opening - never auto-filter to a specific category
+  // initialCategory is intentionally ignored to ensure all categories are visible
 
-  // Reset search filter and collapse all sections when dialog opens
+  // Reset everything when dialog opens - always start fresh on 'all'
   useEffect(() => {
     if (open) {
-      setSearchFilter(''); // Always start with empty search
-      setExpandedCategories(new Set()); // All sections collapsed by default
+      setSelectedCategory('all');
+      setSearchFilter('');
+      setExpandedCategories(new Set());
       setExpandedSubcategories(new Set());
       setExpandedRatings(new Set());
     }

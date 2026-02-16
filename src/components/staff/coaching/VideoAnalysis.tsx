@@ -514,6 +514,20 @@ export const VideoAnalysis = () => {
     ? [...selectedVideo.clips].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     : [];
 
+  // Esc key: close video workspace only (not the parent section)
+  useEffect(() => {
+    if (!selectedVideo) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedVideo(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [selectedVideo]);
+
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
   }
