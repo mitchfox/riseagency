@@ -4,13 +4,14 @@ import { AnimatePresence, motion } from "framer-motion";
 interface ParallaxHeroProps {
   imageUrl: string | null;
   imageUrls?: string[];
+  imageFocalPoints?: string[];
   playerName: string;
   clubName?: string;
   position?: string;
   nextFixture?: { home_team: string; away_team: string; match_date: string; venue?: string } | null;
 }
 
-export const ParallaxHero = ({ imageUrl, imageUrls, playerName, clubName, position, nextFixture }: ParallaxHeroProps) => {
+export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName, clubName, position, nextFixture }: ParallaxHeroProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -86,9 +87,10 @@ export const ParallaxHero = ({ imageUrl, imageUrls, playerName, clubName, positi
       <AnimatePresence mode="wait">
         <motion.div
           key={currentImageIndex}
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover"
           style={{
             backgroundImage: `url(${images[currentImageIndex]})`,
+            backgroundPosition: (imageFocalPoints?.[currentImageIndex] || 'center').replace('-', ' '),
             transform: `translateY(${offset}px) scale(1.1)`,
           }}
           initial={{ opacity: 0 }}

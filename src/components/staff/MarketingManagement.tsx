@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Calendar as CalendarIcon, Image, Upload, Trash2, Play, List, Folder, ChevronDown, Plus, Users, Tag } from "lucide-react";
+import { Calendar as CalendarIcon, Image, Upload, Trash2, Play, List, Folder, ChevronDown, Plus, Users, Tag, Download, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { VideoPreviewCard } from "./VideoPreviewCard";
@@ -64,6 +64,10 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   const [showCreatePlaylistDialog, setShowCreatePlaylistDialog] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [newPlaylistPlayerId, setNewPlaylistPlayerId] = useState<string>('');
+  const [editingImage, setEditingImage] = useState<GalleryItem | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editPlayerId, setEditPlayerId] = useState<string | null>(null);
+  const [editFocalPoint, setEditFocalPoint] = useState<string>('center');
 
   // Collapsible section states
   const [openSections, setOpenSections] = useState<string[]>(["schedule"]);
@@ -317,6 +321,46 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
     }
   };
 
+  const handleEditImage = async () => {
+    if (!editingImage) return;
+    try {
+      const { error } = await supabase
+        .from('marketing_gallery')
+        .update({
+          title: editTitle,
+          player_id: editPlayerId || null,
+          focal_point: editFocalPoint,
+        })
+        .eq('id', editingImage.id);
+      if (error) throw error;
+      toast.success('Image updated');
+      setEditingImage(null);
+      fetchGalleryItems();
+    } catch (error) {
+      console.error('Edit error:', error);
+      toast.error('Failed to update image');
+    }
+  };
+
+  const handleDownloadImage = async (item: GalleryItem) => {
+    try {
+      const link = document.createElement('a');
+      const url = item.file_url.includes('supabase.co/storage')
+        ? (item.file_url.includes('?') ? `${item.file_url}&download=` : `${item.file_url}?download=`)
+        : item.file_url;
+      link.href = url;
+      link.download = item.title || 'image';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download');
+    }
+  };
+
   const fetchPlayerHighlights = async () => {
     const { data, error } = await supabase
       .from('players')
@@ -492,10 +536,15 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                               </div>
                               <CardContent className="p-4">
                                 <h3 className="font-semibold mb-1">{item.title}</h3>
+                                {item.player_id && (
+                                  <p className="text-xs text-muted-foreground mb-1">
+                                    Linked: {players.find(p => p.id === item.player_id)?.name || 'Unknown player'}
+                                  </p>
+                                )}
                                 {item.description && (
                                   <p className="text-sm text-muted-foreground mb-3">{item.description}</p>
                                 )}
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 flex-wrap">
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -504,6 +553,27 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                                   >
                                     View Full
                                   </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleDownloadImage(item)}
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </Button>
+                                  {canManage && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setEditingImage(item);
+                                        setEditTitle(item.title);
+                                        setEditPlayerId(item.player_id);
+                                        setEditFocalPoint((item as any).focal_point || 'center');
+                                      }}
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                    </Button>
+                                  )}
                                   {canManage && (
                                     <Button
                                       size="sm"
@@ -1069,6 +1139,70 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
               <Button onClick={handleCreatePlaylist}>
                 Create Playlist
               </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Image Dialog */}
+      <Dialog open={!!editingImage} onOpenChange={(open) => !open && setEditingImage(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Image</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Title</Label>
+              <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+            </div>
+            <div>
+              <Label>Linked Player</Label>
+              <Select value={editPlayerId || 'none'} onValueChange={(v) => setEditPlayerId(v === 'none' ? null : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="No player linked" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No player linked</SelectItem>
+                  {players.map(player => (
+                    <SelectItem key={player.id} value={player.id}>{player.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Focal Point (for portal slider)</Label>
+              <Select value={editFocalPoint} onValueChange={setEditFocalPoint}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="top">Top</SelectItem>
+                  <SelectItem value="top-left">Top Left</SelectItem>
+                  <SelectItem value="top-right">Top Right</SelectItem>
+                  <SelectItem value="center">Centre</SelectItem>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                  <SelectItem value="bottom">Bottom</SelectItem>
+                  <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                  <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">Controls which part of the image shows in the portal hero slider</p>
+            </div>
+            {editingImage && (
+              <div className="relative aspect-video bg-muted rounded overflow-hidden border">
+                <img
+                  src={editingImage.file_url}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                  style={{ objectPosition: editFocalPoint.replace('-', ' ') }}
+                />
+                <span className="absolute bottom-1 right-1 text-[10px] bg-black/70 text-white px-1.5 py-0.5 rounded">Preview</span>
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditingImage(null)}>Cancel</Button>
+              <Button onClick={handleEditImage}>Save Changes</Button>
             </div>
           </div>
         </DialogContent>
