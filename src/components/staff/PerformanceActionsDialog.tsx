@@ -679,8 +679,11 @@ export const PerformanceActionsDialog = ({
                   id="action_score"
                   type="number"
                   step="0.00001"
-                  value={newAction.action_score}
-                  onChange={(e) => setNewAction({ ...newAction, action_score: parseFloat(e.target.value) || 0 })}
+                  value={newAction.action_score ?? ""}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    setNewAction({ ...newAction, action_score: raw === "" ? 0 : parseFloat(raw) || 0 });
+                  }}
                 />
                 {newAction.zone && (
                   <div className="text-xs text-muted-foreground">
