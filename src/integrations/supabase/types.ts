@@ -4872,6 +4872,7 @@ export type Database = {
           match_minute_offset: number | null
           opponent: string | null
           player_id: string | null
+          source: string
           title: string
           updated_at: string
           video_url: string
@@ -4887,6 +4888,7 @@ export type Database = {
           match_minute_offset?: number | null
           opponent?: string | null
           player_id?: string | null
+          source?: string
           title: string
           updated_at?: string
           video_url: string
@@ -4902,6 +4904,7 @@ export type Database = {
           match_minute_offset?: number | null
           opponent?: string | null
           player_id?: string | null
+          source?: string
           title?: string
           updated_at?: string
           video_url?: string
