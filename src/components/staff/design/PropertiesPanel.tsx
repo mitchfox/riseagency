@@ -72,6 +72,17 @@ export function PropertiesPanel({ element, onUpdate }: PropertiesPanelProps) {
         </div>
       </div>
 
+      {/* Corner Radius - available for shapes (rectangle), images */}
+      {(element.type === 'image' || (element.type === 'shape' && element.shapeType === 'rectangle')) && (
+        <div className="space-y-1">
+          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Corner Radius</Label>
+          <div className="flex items-center gap-2">
+            <Slider value={[element.borderRadius || 0]} min={0} max={Math.min(element.width, element.height) / 2} step={1} onValueChange={([v]) => update({ borderRadius: v })} className="flex-1" />
+            <span className="w-8 text-right">{element.borderRadius || 0}px</span>
+          </div>
+        </div>
+      )}
+
       {/* Text properties */}
       {element.type === 'text' && (
         <>
@@ -136,18 +147,19 @@ export function PropertiesPanel({ element, onUpdate }: PropertiesPanelProps) {
             </div>
           </div>
           <div className="space-y-1">
-            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Stroke</Label>
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Border</Label>
             <div className="flex gap-2 items-center">
               <input type="color" value={element.stroke || '#000000'} onChange={e => update({ stroke: e.target.value })} className="w-7 h-7 rounded cursor-pointer border" />
-              <Input type="number" value={element.strokeWidth || 0} onChange={e => update({ strokeWidth: Number(e.target.value) })} className="h-7 text-xs w-16" placeholder="Width" />
+              <Input value={element.stroke || '#000000'} onChange={e => update({ stroke: e.target.value })} className="h-7 text-xs flex-1" />
             </div>
           </div>
-          {element.shapeType === 'rectangle' && (
-            <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Corner Radius</Label>
-              <Slider value={[element.borderRadius || 0]} min={0} max={100} step={1} onValueChange={([v]) => update({ borderRadius: v })} />
+          <div className="space-y-1">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Border Width</Label>
+            <div className="flex items-center gap-2">
+              <Slider value={[element.strokeWidth || 0]} min={0} max={20} step={1} onValueChange={([v]) => update({ strokeWidth: v })} className="flex-1" />
+              <span className="w-8 text-right">{element.strokeWidth || 0}px</span>
             </div>
-          )}
+          </div>
         </>
       )}
 

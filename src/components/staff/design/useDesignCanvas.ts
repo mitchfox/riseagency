@@ -201,6 +201,12 @@ export function useDesignCanvas(initial?: DesignProject) {
     const elRight = el.x + el.width;
     const elBottom = el.y + el.height;
 
+    // Canvas edges
+    if (Math.abs(el.x) < SNAP_THRESHOLD) { snappedX = 0; lines.push({ type: 'vertical', position: 0 }); }
+    if (Math.abs(el.y) < SNAP_THRESHOLD) { snappedY = 0; lines.push({ type: 'horizontal', position: 0 }); }
+    if (Math.abs(elRight - project.width) < SNAP_THRESHOLD) { snappedX = project.width - el.width; lines.push({ type: 'vertical', position: project.width }); }
+    if (Math.abs(elBottom - project.height) < SNAP_THRESHOLD) { snappedY = project.height - el.height; lines.push({ type: 'horizontal', position: project.height }); }
+
     // Canvas center
     const canvasCenterX = project.width / 2;
     const canvasCenterY = project.height / 2;

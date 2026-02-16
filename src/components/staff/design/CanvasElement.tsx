@@ -52,17 +52,34 @@ export function CanvasElement({
       if (isResizing && resizeHandle) {
         const dx = (e.clientX - resizeStart.current.x) / zoom;
         const dy = (e.clientY - resizeStart.current.y) / zoom;
+        const proportional = !e.ctrlKey && !e.metaKey;
+        const aspectRatio = resizeStart.current.w / resizeStart.current.h;
+
         let newW = resizeStart.current.w;
         let newH = resizeStart.current.h;
         let newX = resizeStart.current.elX;
         let newY = resizeStart.current.elY;
 
-        if (resizeHandle.includes('e')) newW = Math.max(20, resizeStart.current.w + dx);
-        if (resizeHandle.includes('w')) { newW = Math.max(20, resizeStart.current.w - dx); newX = resizeStart.current.elX + dx; }
-        if (resizeHandle.includes('s')) newH = Math.max(20, resizeStart.current.h + dy);
-        if (resizeHandle.includes('n')) { newH = Math.max(20, resizeStart.current.h - dy); newY = resizeStart.current.elY + dy; }
+        const isCorner = ['nw', 'ne', 'se', 'sw'].includes(resizeHandle);
 
-        onUpdate(element.id, { width: newW, height: newH, x: newX, y: newY });
+        if (resizeHandle.includes('e')) newW = Math.max(20, resizeStart.current.w + dx);
+        if (resizeHandle.includes('w')) { newW = Math.max(20, resizeStart.current.w - dx); newX = resizeStart.current.elX + (resizeStart.current.w - newW); }
+        if (resizeHandle.includes('s')) newH = Math.max(20, resizeStart.current.h + dy);
+        if (resizeHandle.includes('n')) { newH = Math.max(20, resizeStart.current.h - dy); newY = resizeStart.current.elY + (resizeStart.current.h - newH); }
+
+        // Proportional constraint for corners (unless Ctrl held)
+        if (proportional && isCorner) {
+          if (resizeHandle === 'se' || resizeHandle === 'ne') {
+            newH = newW / aspectRatio;
+            if (resizeHandle === 'ne') newY = resizeStart.current.elY + resizeStart.current.h - newH;
+          } else {
+            newW = newH * aspectRatio;
+            if (resizeHandle === 'nw') { newX = resizeStart.current.elX + resizeStart.current.w - newW; newY = resizeStart.current.elY + resizeStart.current.h - newH; }
+            if (resizeHandle === 'sw') { newX = resizeStart.current.elX + resizeStart.current.w - newW; }
+          }
+        }
+
+        onUpdate(element.id, { width: Math.max(20, newW), height: Math.max(20, newH), x: newX, y: newY });
       }
     };
 
@@ -108,7 +125,7 @@ export function CanvasElement({
             <polygon points={`${element.width/2},${strokeWidth||0} ${element.width - (strokeWidth||0)},${element.height - (strokeWidth||0)} ${strokeWidth||0},${element.height - (strokeWidth||0)}`} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
           </svg>
         );
-      case 'star':
+      case 'star': {
         const cx = element.width / 2, cy = element.height / 2;
         const outerR = Math.min(cx, cy) - (strokeWidth||0);
         const innerR = outerR * 0.4;
@@ -122,6 +139,7 @@ export function CanvasElement({
             <polygon points={points} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
           </svg>
         );
+      }
       case 'diamond':
         return (
           <svg width="100%" height="100%" viewBox={`0 0 ${element.width} ${element.height}`}>
@@ -178,7 +196,7 @@ export function CanvasElement({
             src={element.src}
             alt={element.name}
             className="w-full h-full pointer-events-none"
-            style={{ objectFit: element.objectFit || 'cover' }}
+            style={{ objectFit: element.objectFit || 'cover', borderRadius: element.borderRadius ? `${element.borderRadius}px` : undefined }}
             draggable={false}
           />
         );
