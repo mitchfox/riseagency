@@ -28,6 +28,7 @@ export const FIXTURE_TO_UNIFIED_MAP: Record<string, { key: string; type: 'count'
   accurate_long_balls_per90: { key: 'long_passes_completed', type: 'count' },
   npxg_per90: { key: 'npxg', type: 'score' },
   xa_per90: { key: 'xa', type: 'score' },
+  shot_creating_actions_per90: { key: 'shot_creating_actions', type: 'count' },
 };
 
 // Reverse mapping: unified stat key → fixture stat key

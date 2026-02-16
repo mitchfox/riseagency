@@ -192,6 +192,7 @@ export const METRIC_KEY_MAP: Record<string, string> = {
   'carries_into_final_third': 'carries_into_final_third',
   'progressivecarries': 'progressive_carries',
   'shotcreatingactions': 'shot_creating_actions',
+  'shot_creating_actions_per90': 'shot_creating_actions',
   'goalcreatingactions': 'goal_creating_actions',
   
   // Defensive
