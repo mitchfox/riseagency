@@ -77,6 +77,7 @@ Deno.serve(async (req) => {
           clips: [],
           auto_delete_at: autoDeleteAt.toISOString(),
           match_minute_offset: 0,
+          source: 'player',
         })
         .select()
         .single();
@@ -120,6 +121,7 @@ Deno.serve(async (req) => {
           .from('video_analyses')
           .select('*')
           .eq('player_id', player.id)
+          .eq('source', 'player')
           .order('created_at', { ascending: false });
 
         if (error) throw error;
