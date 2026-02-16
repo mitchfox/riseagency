@@ -1,13 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, BarChart3, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, BarChart3, Target, Box } from "lucide-react";
 import { METRIC_CATEGORIES, ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
 import { GoalTracking } from "@/components/portal/GoalTracking";
+
+const RadarChart3D = lazy(() => import("@/components/portal/RadarChart3D").then(m => ({ default: m.RadarChart3D })));
 
 interface Analysis {
   id: string;
@@ -154,9 +157,36 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
         <Tabs value={subTab} onValueChange={setSubTab}>
           <TabsList>
             <TabsTrigger value="percentile"><BarChart3 className="w-4 h-4 mr-1" /> Percentile</TabsTrigger>
+            <TabsTrigger value="radar3d"><Box className="w-4 h-4 mr-1" /> 3D Radar</TabsTrigger>
             <TabsTrigger value="comparison"><Users className="w-4 h-4 mr-1" /> Player Comparison</TabsTrigger>
             <TabsTrigger value="goals"><Target className="w-4 h-4 mr-1" /> Goals</TabsTrigger>
           </TabsList>
+
+          {/* 3D Radar Tab */}
+          <TabsContent value="radar3d" className="mt-4">
+            {hasPortalData ? (
+              <Suspense fallback={<div className="h-[400px] flex items-center justify-center text-muted-foreground">Loading 3D radar...</div>}>
+                <RadarChart3D
+                  playerName={playerName}
+                  metrics={(() => {
+                    const radarMetrics = ALL_METRICS
+                      .filter(m => portalMetrics[m.key] != null)
+                      .slice(0, 8)
+                      .map(m => {
+                        const value = portalMetrics[m.key]!;
+                        const allVals = comparisonPlayers.map(cp => cp.metrics[m.key]).filter((v): v is number => v != null);
+                        const belowCount = allVals.filter(v => v < value).length;
+                        const pct = allVals.length > 0 ? Math.round((belowCount / allVals.length) * 100) : 50;
+                        return { label: m.label.replace(/ \/ Game$/, ''), value: pct };
+                      });
+                    return radarMetrics;
+                  })()}
+                />
+              </Suspense>
+            ) : (
+              <p className="text-muted-foreground text-center py-6">No fixture stats recorded yet.</p>
+            )}
+          </TabsContent>
 
           {/* Percentile Tab */}
           <TabsContent value="percentile" className="space-y-6 mt-4">
