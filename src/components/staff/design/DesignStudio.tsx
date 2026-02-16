@@ -41,8 +41,29 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
   const [activeSnapLines, setActiveSnapLines] = useState<SnapLine[]>([]);
   const [isPanning, setIsPanning] = useState(false);
   const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const [hasInitialised, setHasInitialised] = useState(false);
 
   const selectedElement = canvas.project.elements.find(el => canvas.selectedIds.includes(el.id)) || null;
+
+  // Auto-show properties panel when an element is selected
+  useEffect(() => {
+    if (canvas.selectedIds.length > 0 && leftPanel !== 'properties') {
+      setLeftPanel('properties');
+    }
+  }, [canvas.selectedIds]);
+
+  // Auto-centre and fit canvas on first load
+  useEffect(() => {
+    if (hasInitialised || !canvasAreaRef.current) return;
+    const rect = canvasAreaRef.current.getBoundingClientRect();
+    const padding = 60;
+    const scaleX = (rect.width - padding * 2) / canvas.project.width;
+    const scaleY = (rect.height - padding * 2) / canvas.project.height;
+    const fitZoom = Math.min(scaleX, scaleY, 1);
+    canvas.setZoom(fitZoom);
+    canvas.setPanOffset({ x: 0, y: 0 });
+    setHasInitialised(true);
+  }, [hasInitialised, canvas.project.width, canvas.project.height]);
 
   // Auto-save periodically
   useEffect(() => {
@@ -339,12 +360,12 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
             <div
               style={{
                 transform: `translate(${canvas.panOffset.x}px, ${canvas.panOffset.y}px) scale(${canvas.zoom})`,
-                transformOrigin: '0 0',
+                transformOrigin: 'center center',
                 position: 'absolute',
                 left: '50%',
                 top: '50%',
-                marginLeft: -(canvas.project.width * canvas.zoom) / 2 / canvas.zoom,
-                marginTop: -(canvas.project.height * canvas.zoom) / 2 / canvas.zoom,
+                marginLeft: -canvas.project.width / 2,
+                marginTop: -canvas.project.height / 2,
               }}
             >
               {/* Shadow */}
