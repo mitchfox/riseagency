@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ActionReportsList } from "@/components/staff/analysis/ActionReportsList";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { AnalysisComparisons } from "@/components/portal/AnalysisComparisons";
+import { CreatePerformanceReportDialog } from "@/components/staff/CreatePerformanceReportDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
-import { ClipboardList, BarChart3, LineChart, Database } from "lucide-react";
+import { ClipboardList, BarChart3, Database, User } from "lucide-react";
 
 interface PlayerAnalysis {
   id: string;
@@ -19,11 +19,18 @@ interface PlayerAnalysis {
   fixture_stats?: any;
 }
 
+interface InlineReportState {
+  playerId: string;
+  playerName: string;
+  analysisId?: string;
+}
+
 export const CoachingDataSection = () => {
   const [activeTab, setActiveTab] = useState("reports");
   const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
   const [players, setPlayers] = useState<{ id: string; name: string; position: string; image_url: string | null }[]>([]);
   const [analyses, setAnalyses] = useState<PlayerAnalysis[]>([]);
+  const [inlineReport, setInlineReport] = useState<InlineReportState | null>(null);
 
   useEffect(() => {
     fetchPlayers();
@@ -59,6 +66,20 @@ export const CoachingDataSection = () => {
     { value: "matchdata", label: "Match Data", icon: Database },
     { value: "comparisons", label: "Comparisons", icon: BarChart3 },
   ];
+
+  // If inline report is open, show it instead of tabs
+  if (inlineReport) {
+    return (
+      <CreatePerformanceReportDialog
+        inline
+        playerId={inlineReport.playerId}
+        playerName={inlineReport.playerName}
+        analysisId={inlineReport.analysisId}
+        onClose={() => setInlineReport(null)}
+        onSuccess={() => setInlineReport(null)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -97,7 +118,14 @@ export const CoachingDataSection = () => {
         </TabsList>
 
         <TabsContent value="reports" className="mt-0">
-          <ActionReportsList />
+          <ActionReportsList
+            onCreateReport={(playerId, playerName) => {
+              setInlineReport({ playerId, playerName });
+            }}
+            onEditReport={(playerId, playerName, analysisId) => {
+              setInlineReport({ playerId, playerName, analysisId });
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="matchdata" className="mt-0 space-y-4">

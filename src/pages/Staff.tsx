@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -180,13 +180,17 @@ const Staff = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Check URL parameters for section and player
   useEffect(() => {
     const section = searchParams.get('section');
     if (section && isStaff) {
       setExpandedSection(section as any);
+      // Also expand the parent category
+      const cats = buildCategories();
+      const parentCat = cats.find(c => c.sections.some(s => s.id === section));
+      if (parentCat) setExpandedCategory(parentCat.id);
     }
   }, [searchParams, isStaff]);
 
@@ -202,9 +206,15 @@ const Staff = () => {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  const handleSectionToggle = (section: 'overview' | 'staffaccounts' | 'players' | 'playerlist' | 'recruitment' | 'publiccontent' | 'coaching' | 'analysis' | 'marketing' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'legal') => {
-    setExpandedSection(expandedSection === section ? null : section);
-    // Scroll to top when section changes
+  const handleSectionToggle = (section: string) => {
+    const newSection = expandedSection === section ? null : section;
+    setExpandedSection(newSection as any);
+    // Update URL
+    if (newSection) {
+      setSearchParams({ section: newSection });
+    } else {
+      setSearchParams({});
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -446,6 +456,150 @@ const Staff = () => {
           section: 'Invoices',
           sectionId: 'invoices',
           type: 'invoice'
+        });
+      });
+
+      // Search coaching database items
+      const { data: coachingDrills } = await supabase
+        .from('coaching_drills')
+        .select('id, title, category')
+        .ilike('title', searchTerm)
+        .limit(5);
+
+      coachingDrills?.forEach(drill => {
+        results.push({
+          id: drill.id,
+          title: drill.title,
+          description: drill.category || 'Drill',
+          section: 'Coaching Database',
+          sectionId: 'coaching',
+          type: 'drill'
+        });
+      });
+
+      // Search coaching sessions
+      const { data: coachingSessions } = await supabase
+        .from('coaching_sessions')
+        .select('id, title, category')
+        .ilike('title', searchTerm)
+        .limit(5);
+
+      coachingSessions?.forEach(session => {
+        results.push({
+          id: session.id,
+          title: session.title,
+          description: session.category || 'Session',
+          section: 'Coaching Database',
+          sectionId: 'coaching',
+          type: 'coaching_session'
+        });
+      });
+
+      // Search coaching exercises
+      const { data: coachingExercises } = await supabase
+        .from('coaching_exercises')
+        .select('id, title, category')
+        .ilike('title', searchTerm)
+        .limit(5);
+
+      coachingExercises?.forEach(exercise => {
+        results.push({
+          id: exercise.id,
+          title: exercise.title,
+          description: exercise.category || 'Exercise',
+          section: 'Coaching Database',
+          sectionId: 'coaching',
+          type: 'coaching_exercise'
+        });
+      });
+
+      // Search marketing campaigns
+      const { data: campaigns } = await supabase
+        .from('marketing_campaigns')
+        .select('id, title, status')
+        .ilike('title', searchTerm)
+        .limit(5);
+
+      campaigns?.forEach(campaign => {
+        results.push({
+          id: campaign.id,
+          title: campaign.title,
+          description: campaign.status,
+          section: 'Marketing',
+          sectionId: 'marketing',
+          type: 'campaign'
+        });
+      });
+
+      // Search club network contacts
+      const { data: contacts } = await supabase
+        .from('club_network_contacts')
+        .select('id, name, club_name, position')
+        .or(`name.ilike.${searchTerm},club_name.ilike.${searchTerm}`)
+        .limit(5);
+
+      contacts?.forEach(contact => {
+        results.push({
+          id: contact.id,
+          title: contact.name,
+          description: `${contact.position || ''}${contact.club_name ? ` at ${contact.club_name}` : ''}`,
+          section: 'Club Network',
+          sectionId: 'clubnetwork',
+          type: 'contact'
+        });
+      });
+
+      // Search legal documents
+      const { data: legalDocs } = await supabase
+        .from('legal_documents')
+        .select('id, title, category')
+        .ilike('title', searchTerm)
+        .limit(5);
+
+      legalDocs?.forEach(doc => {
+        results.push({
+          id: doc.id,
+          title: doc.title,
+          description: doc.category,
+          section: 'Legal',
+          sectionId: 'legal',
+          type: 'legal_doc'
+        });
+      });
+
+      // Search expenses
+      const { data: expenses } = await supabase
+        .from('expenses')
+        .select('id, description, category, amount')
+        .ilike('description', searchTerm)
+        .limit(5);
+
+      expenses?.forEach(expense => {
+        results.push({
+          id: expense.id,
+          title: expense.description,
+          description: `${expense.category} - £${expense.amount}`,
+          section: 'Expenses',
+          sectionId: 'expenses',
+          type: 'expense'
+        });
+      });
+
+      // Search performance reports (player_analysis)
+      const { data: perfReports } = await supabase
+        .from('player_analysis')
+        .select('id, opponent, analysis_date, players!player_analysis_player_id_fkey(name)')
+        .ilike('opponent', searchTerm)
+        .limit(5);
+
+      perfReports?.forEach((report: any) => {
+        results.push({
+          id: report.id,
+          title: `vs ${report.opponent || 'Unknown'} - ${report.players?.name || ''}`,
+          description: report.analysis_date,
+          section: 'Data',
+          sectionId: 'coachingdata',
+          type: 'performance_report'
         });
       });
 
@@ -864,7 +1018,7 @@ const Staff = () => {
       <div className="flex flex-1 relative">
         {/* Quick Search Command Dialog */}
         <Dialog open={sidebarSearchOpen} onOpenChange={setSidebarSearchOpen}>
-          <DialogContent className="overflow-hidden p-0 shadow-lg">
+          <DialogContent className="overflow-hidden p-0 shadow-lg max-w-3xl w-[90vw]">
             <Command shouldFilter={false} className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
               <CommandInput 
                 placeholder="Search players, updates, content..." 
