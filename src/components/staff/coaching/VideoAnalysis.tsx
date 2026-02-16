@@ -25,6 +25,8 @@ interface Clip {
   end: number;
   label: string;
   action_type: string;
+  action_description: string;
+  notes: string;
   created_at: string;
 }
 
@@ -221,6 +223,8 @@ export const VideoAnalysis = () => {
       end: clipEnd,
       label: `Action at ${fmtMatchTime(currentTime, selectedVideo.match_minute_offset)}`,
       action_type: "",
+      action_description: "",
+      notes: "",
       created_at: new Date().toISOString(),
     };
 
@@ -250,6 +254,18 @@ export const VideoAnalysis = () => {
   const handleUpdateClipAction = async (clipId: string, action_type: string) => {
     if (!selectedVideo) return;
     const updatedClips = selectedVideo.clips.map(c => c.id === clipId ? { ...c, action_type } : c);
+    await saveClips(updatedClips);
+  };
+
+  const handleUpdateClipDescription = async (clipId: string, action_description: string) => {
+    if (!selectedVideo) return;
+    const updatedClips = selectedVideo.clips.map(c => c.id === clipId ? { ...c, action_description } : c);
+    await saveClips(updatedClips);
+  };
+
+  const handleUpdateClipNotes = async (clipId: string, notes: string) => {
+    if (!selectedVideo) return;
+    const updatedClips = selectedVideo.clips.map(c => c.id === clipId ? { ...c, notes } : c);
     await saveClips(updatedClips);
   };
 
@@ -403,7 +419,8 @@ export const VideoAnalysis = () => {
         action_number: nextNumber + i,
         minute: getMatchMinute(clip.start, selectedVideo.match_minute_offset),
         action_type: clip.action_type || "other",
-        action_description: clip.label,
+        action_description: clip.action_description || clip.label,
+        notes: clip.notes || null,
         video_url: selectedVideo.video_url || null,
         video_analysis_id: selectedVideo.id,
         clip_id: clip.id,
@@ -463,7 +480,7 @@ export const VideoAnalysis = () => {
   if (selectedVideo) {
     return (
       <div className="space-y-4">
-        {/* Compact header with back button */}
+        {/* Header: back + title + sync/export */}
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => setSelectedVideo(null)} className="h-8 w-8 shrink-0">
             <ArrowLeft className="h-4 w-4" />
@@ -475,6 +492,21 @@ export const VideoAnalysis = () => {
               {selectedVideo.match_date && ` · ${format(new Date(selectedVideo.match_date), "dd MMM yyyy")}`}
               {selectedVideo.clips.length > 0 && ` · ${selectedVideo.clips.length} clips`}
             </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              onClick={() => setShowTimestampOverride(!showTimestampOverride)}
+              variant="outline"
+              size="sm"
+              className="gap-1"
+            >
+              <Clock className="h-3.5 w-3.5" /> Sync
+            </Button>
+            {selectedVideo.clips.length > 0 && (
+              <Button onClick={handleOpenExport} variant="outline" size="sm" className="gap-1">
+                <Download className="h-3.5 w-3.5" /> Export to Report
+              </Button>
+            )}
           </div>
         </div>
 
@@ -490,44 +522,11 @@ export const VideoAnalysis = () => {
               />
             </div>
 
-            {/* Action bar */}
-            <div className="flex flex-wrap gap-2 items-center">
+            {/* Action bar - just the clip button */}
+            <div className="flex items-center gap-2">
               <Button onClick={handleInstantClip} variant="default" size="sm" className="gap-1.5">
                 <Scissors className="h-4 w-4" /> Clip (±5s)
               </Button>
-
-              <div className="flex-1 flex gap-2 min-w-[200px]">
-                <Input
-                  placeholder="Add note..."
-                  value={annotationText}
-                  onChange={e => setAnnotationText(e.target.value)}
-                  className="flex-1"
-                  onKeyDown={e => e.key === 'Enter' && handleAddAnnotation()}
-                />
-                <ActionTypeCombobox
-                  value={annotationAction}
-                  onChange={setAnnotationAction}
-                  actionTypes={allActionTypes}
-                />
-                <Button onClick={handleAddAnnotation} disabled={!annotationText} size="sm" variant="secondary">
-                  <MessageSquare className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <Button
-                onClick={() => setShowTimestampOverride(!showTimestampOverride)}
-                variant="outline"
-                size="sm"
-                className="gap-1"
-              >
-                <Clock className="h-3.5 w-3.5" /> Sync
-              </Button>
-
-              {selectedVideo.clips.length > 0 && (
-                <Button onClick={handleOpenExport} variant="outline" size="sm" className="gap-1">
-                  <Download className="h-3.5 w-3.5" /> Export to Report
-                </Button>
-              )}
             </div>
 
             {showTimestampOverride && (
@@ -555,68 +554,30 @@ export const VideoAnalysis = () => {
           </Card>
         )}
 
-        {/* Annotations (collapsible) */}
-        {selectedVideo.annotations.length > 0 && (
-          <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Notes ({selectedVideo.annotations.length})
-            </summary>
-            <div className="mt-2 space-y-1.5 max-h-[300px] overflow-y-auto">
-              {selectedVideo.annotations.map(ann => (
-                <div key={ann.id} className="flex items-start gap-3 p-2.5 rounded-lg border bg-card hover:bg-muted/30 transition-colors group/ann">
-                  <button onClick={() => jumpToTimestamp(ann.timestamp)} className="flex items-center gap-1 text-primary hover:underline font-mono text-xs whitespace-nowrap">
-                    <Play className="h-3 w-3" />
-                    {fmtMatchTime(ann.timestamp, selectedVideo.match_minute_offset)}
-                  </button>
-                  <p className="text-sm flex-1">{ann.text}</p>
-                  <Badge variant="outline" className={`text-[10px] capitalize border ${ACTION_COLOURS[ann.action_type] || 'bg-muted text-muted-foreground border-border'}`}>{ann.action_type}</Badge>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/ann:opacity-100 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteAnnotation(ann.id)}>
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </details>
-        )}
-
         {/* Clips list: newest first */}
         <div>
           <h4 className="text-sm font-medium mb-2">Clips ({selectedVideo.clips.length})</h4>
           <div className="space-y-2 max-h-[500px] overflow-y-auto">
             {clipsNewestFirst.map(clip => (
               <div key={clip.id} className="p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors group/clip">
+                {/* Row 1: play, time, action type, adjust, delete */}
                 <div className="flex items-center gap-3">
                   <button onClick={() => playClip(clip)} className="flex items-center gap-1 text-primary hover:underline font-mono text-xs whitespace-nowrap shrink-0">
                     <Play className="h-3 w-3" />
                     {fmtTime(clip.start)} → {fmtTime(clip.end)}
                   </button>
-                  <div className="flex-1 min-w-0">
-                    {editingClipId === clip.id ? (
-                      <Input
-                        defaultValue={clip.label}
-                        autoFocus
-                        onBlur={e => handleUpdateClipLabel(clip.id, e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleUpdateClipLabel(clip.id, (e.target as HTMLInputElement).value)}
-                        className="h-7 text-sm"
-                      />
-                    ) : (
-                      <p className="text-sm truncate cursor-pointer hover:text-primary" onClick={() => setEditingClipId(clip.id)}>
-                        {clip.label}
-                      </p>
-                    )}
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Match: {fmtMatchTime(clip.start, selectedVideo.match_minute_offset)} → {fmtMatchTime(clip.end, selectedVideo.match_minute_offset)}
-                      {' · '}{getMatchMinute(clip.start, selectedVideo.match_minute_offset)}'
-                    </p>
-                  </div>
+                  <p className="text-[10px] text-muted-foreground shrink-0">
+                    {getMatchMinute(clip.start, selectedVideo.match_minute_offset)}'
+                  </p>
 
-                  {/* Action type: searchable combobox */}
                   <ActionTypeCombobox
                     value={clip.action_type}
                     onChange={(v) => handleUpdateClipAction(clip.id, v)}
                     actionTypes={allActionTypes}
                     compact
                   />
+
+                  <div className="flex-1" />
 
                   {/* Adjust controls */}
                   <div className="flex items-center gap-0.5 opacity-0 group-hover/clip:opacity-100 transition-opacity shrink-0">
@@ -638,6 +599,30 @@ export const VideoAnalysis = () => {
                   <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/clip:opacity-100 text-muted-foreground hover:text-destructive shrink-0" onClick={() => handleDeleteClip(clip.id)}>
                     <Trash2 className="h-3 w-3" />
                   </Button>
+                </div>
+
+                {/* Row 2: action description + coach's note */}
+                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Action description..."
+                    defaultValue={clip.action_description || ""}
+                    onBlur={e => {
+                      if (e.target.value !== (clip.action_description || "")) {
+                        handleUpdateClipDescription(clip.id, e.target.value);
+                      }
+                    }}
+                    className="h-7 text-xs"
+                  />
+                  <Input
+                    placeholder="Coach's note..."
+                    defaultValue={clip.notes || ""}
+                    onBlur={e => {
+                      if (e.target.value !== (clip.notes || "")) {
+                        handleUpdateClipNotes(clip.id, e.target.value);
+                      }
+                    }}
+                    className="h-7 text-xs"
+                  />
                 </div>
               </div>
             ))}
