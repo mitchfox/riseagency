@@ -83,12 +83,13 @@ interface HubProps {
   playerData: any;
   dailyAphorism?: any;
   onNavigateToAnalysis: () => void;
+  onNavigateToComparisons?: () => void;
   onNavigateToForm?: () => void;
   onNavigateToSession?: (sessionKey: string) => void;
   onNavigateToSchedule?: () => void;
 }
 
-export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateToAnalysis, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
+export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateToAnalysis, onNavigateToComparisons, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
   const navigate = useNavigate();
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
   const [imagesPreloaded, setImagesPreloaded] = React.useState(false);
@@ -858,7 +859,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
           playerId={playerData.id}
           playerName={playerData.name || "You"}
           playerPosition={playerData.position || "CF"}
-          onSeeAll={onNavigateToAnalysis}
+          onSeeAll={onNavigateToComparisons || onNavigateToAnalysis}
         />
       )}
 
