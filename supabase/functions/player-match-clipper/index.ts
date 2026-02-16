@@ -204,6 +204,94 @@ Deno.serve(async (req) => {
         );
       }
 
+      case 'saveToClips': {
+        const { videoId, clipIds } = body;
+
+        // Get the video with its clips and URL
+        const { data: videoData, error: videoErr } = await supabase
+          .from('video_analyses')
+          .select('video_url, clips, title, opponent')
+          .eq('id', videoId)
+          .eq('player_id', player.id)
+          .eq('source', 'player')
+          .maybeSingle();
+
+        if (videoErr || !videoData) {
+          return new Response(
+            JSON.stringify({ error: 'Video not found' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        if (!videoData.video_url) {
+          return new Response(
+            JSON.stringify({ error: 'Video file has expired' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const allClips = (videoData.clips as any[]) || [];
+        const clipsToSave = clipIds
+          ? allClips.filter((c: any) => clipIds.includes(c.id))
+          : allClips;
+
+        if (clipsToSave.length === 0) {
+          return new Response(
+            JSON.stringify({ error: 'No clips to save' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Get current player highlights
+        const { data: playerData, error: playerFetchErr } = await supabase
+          .from('players')
+          .select('highlights')
+          .eq('id', player.id)
+          .single();
+
+        if (playerFetchErr) throw playerFetchErr;
+
+        let highlights: any = { matchHighlights: [], bestClips: [] };
+        try {
+          if (playerData?.highlights) {
+            const parsed = typeof playerData.highlights === 'string'
+              ? JSON.parse(playerData.highlights)
+              : playerData.highlights;
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+              highlights = {
+                matchHighlights: Array.isArray(parsed.matchHighlights) ? parsed.matchHighlights : [],
+                bestClips: Array.isArray(parsed.bestClips) ? parsed.bestClips : [],
+              };
+            }
+          }
+        } catch { /* use defaults */ }
+
+        // Create new clip entries using media fragment URLs
+        const now = new Date().toISOString();
+        const newClipEntries = clipsToSave.map((clip: any) => ({
+          id: `${player.id}_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+          name: clip.label || `Clip from ${videoData.title}`,
+          videoUrl: `${videoData.video_url}#t=${Math.floor(clip.start)},${Math.ceil(clip.end)}`,
+          addedAt: now,
+          clubLogo: null,
+          logoUrl: null,
+        }));
+
+        highlights.bestClips = [...newClipEntries, ...highlights.bestClips];
+
+        const { error: updateErr } = await supabase
+          .from('players')
+          .update({ highlights })
+          .eq('id', player.id);
+
+        if (updateErr) throw updateErr;
+
+        return new Response(
+          JSON.stringify({ success: true, saved: newClipEntries.length }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       default:
         return new Response(
           JSON.stringify({ error: 'Unknown action' }),
