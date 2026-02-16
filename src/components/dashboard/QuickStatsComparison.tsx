@@ -48,39 +48,43 @@ export const QuickStatsComparison = ({ playerId, playerName, playerPosition, onS
     const benchmarks = benchmarksRef.current;
     if (!playerAnalyses || playerAnalyses.length === 0 || !benchmarks || benchmarks.length === 0) return false;
 
-    const randomBenchmark = benchmarks[Math.floor(Math.random() * benchmarks.length)];
-    const metrics = (randomBenchmark.metrics || {}) as Record<string, number>;
-
     // Reset used stats if we've exhausted them
     if (usedStatsRef.current.size >= COMPARABLE_STATS.length) {
       usedStatsRef.current.clear();
     }
 
     const available = COMPARABLE_STATS.filter(s => !usedStatsRef.current.has(s.label));
-    const shuffled = [...available].sort(() => Math.random() - 0.5);
+    const shuffledStats = [...available].sort(() => Math.random() - 0.5);
+    const shuffledBenchmarks = [...benchmarks].sort(() => Math.random() - 0.5);
 
-    for (const stat of shuffled) {
-      const playerVals = playerAnalyses
-        .map((a: any) => (a.striker_stats as any)?.[stat.playerKey])
-        .filter((v: any): v is number => typeof v === "number");
+    for (const stat of shuffledStats) {
+      for (const benchmark of shuffledBenchmarks) {
+        const metrics = (benchmark.metrics || {}) as Record<string, number>;
+        const benchmarkVal = metrics[stat.benchmarkKey];
+        // Skip if it would produce the same stat+player combination
+        const isSame = stat.label === statLabel && benchmark.name === benchmarkName;
+        if (isSame) continue;
 
-      const benchmarkVal = metrics[stat.benchmarkKey];
+        const playerVals = playerAnalyses
+          .map((a: any) => (a.striker_stats as any)?.[stat.playerKey])
+          .filter((v: any): v is number => typeof v === "number");
 
-      if (playerVals.length > 0 && typeof benchmarkVal === "number") {
-        const playerAvg = playerVals.reduce((a: number, b: number) => a + b, 0) / playerVals.length;
+        if (playerVals.length > 0 && typeof benchmarkVal === "number") {
+          const playerAvg = playerVals.reduce((a: number, b: number) => a + b, 0) / playerVals.length;
 
-        usedStatsRef.current.add(stat.label);
-        setStatLabel(stat.label);
-        setBenchmarkName(randomBenchmark.name);
-        setChartData([
-          { name: surname(playerName), value: Math.round(playerAvg * 100) / 100 },
-          { name: surname(randomBenchmark.name), value: Math.round(benchmarkVal * 100) / 100 },
-        ]);
-        return true;
+          usedStatsRef.current.add(stat.label);
+          setStatLabel(stat.label);
+          setBenchmarkName(benchmark.name);
+          setChartData([
+            { name: surname(playerName), value: Math.round(playerAvg * 100) / 100 },
+            { name: surname(benchmark.name), value: Math.round(benchmarkVal * 100) / 100 },
+          ]);
+          return true;
+        }
       }
     }
     return false;
-  }, [playerName]);
+  }, [playerName, statLabel, benchmarkName]);
 
   const fetchData = React.useCallback(async () => {
     setLoading(true);

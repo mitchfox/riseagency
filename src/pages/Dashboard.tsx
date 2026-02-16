@@ -1735,6 +1735,10 @@ const Dashboard = () => {
                   setActiveTab("analysis");
                   setActiveAnalysisTab("performance");
                 }}
+                onNavigateToComparisons={() => {
+                  setActiveTab("analysis");
+                  setActiveAnalysisTab("comparisons");
+                }}
                 onNavigateToForm={() => {
                   setActiveTab("analysis");
                   setActiveAnalysisTab("form");

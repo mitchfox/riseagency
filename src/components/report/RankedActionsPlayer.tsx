@@ -49,7 +49,12 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedA
 
   const handleVideoEnd = () => {
     if (currentIndex < sortedClips.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+      const next = currentIndex + 1;
+      setCurrentIndex(next);
+      // Ensure new clip autoplays
+      setTimeout(() => {
+        videoRef.current?.play().catch(() => {});
+      }, 100);
     }
   };
 

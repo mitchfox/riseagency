@@ -59,7 +59,11 @@ export const ClippedActionsPlayer = ({
 
   const handleVideoEnded = () => {
     if (currentIndex < clips.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+      const next = currentIndex + 1;
+      setCurrentIndex(next);
+      setTimeout(() => {
+        videoRef.current?.play().catch(() => {});
+      }, 100);
     } else {
       setIsPlaying(false);
     }
