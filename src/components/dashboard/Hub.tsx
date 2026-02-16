@@ -11,6 +11,7 @@ import { getR90Grade } from "@/lib/gradeCalculations";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
 import { QuickStatsComparison } from "./QuickStatsComparison";
+import { NewsFeed } from "./NewsFeed";
 import { ParallaxHero } from "@/components/portal/ParallaxHero";
 import { checkAndFireConfetti } from "@/lib/confetti";
 
@@ -852,6 +853,19 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         onOpenChange={setReportDialogOpen}
         analysisId={selectedReportId}
       />
+
+      {/* News Feed - Updates Inbox */}
+      {playerData?.id && (
+        <NewsFeed
+          playerId={playerData.id}
+          playerName={playerData.name || "Player"}
+          onNavigateToAnalysis={onNavigateToAnalysis}
+          onOpenReport={(id) => {
+            setSelectedReportId(id);
+            setReportDialogOpen(true);
+          }}
+        />
+      )}
 
       {/* Quick Stats Comparison - Penultimate section */}
       {playerData?.id && (

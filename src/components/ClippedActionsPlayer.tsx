@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, SkipBack, SkipForward, Play, Pause, Maximize } from 'lucide-react';
+import { X, SkipBack, SkipForward, Play, Pause } from 'lucide-react';
 
 interface ClipAction {
   id: string;
@@ -29,33 +29,12 @@ export const ClippedActionsPlayer = ({
 
   const currentClip = clips[currentIndex];
 
-  // Reset to first clip when dialog opens and auto-fullscreen
   useEffect(() => {
     if (open) {
       setCurrentIndex(0);
       setIsPlaying(true);
-      // Auto-open fullscreen after short delay
-      const timer = setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.requestFullscreen?.().catch(() => {
-            // Fallback for iOS Safari
-            (videoRef.current as any)?.webkitEnterFullscreen?.();
-          });
-        }
-      }, 300);
-      return () => clearTimeout(timer);
     }
   }, [open]);
-
-  const handleFullscreen = () => {
-    if (videoRef.current) {
-      if (videoRef.current.requestFullscreen) {
-        videoRef.current.requestFullscreen();
-      } else if ((videoRef.current as any).webkitEnterFullscreen) {
-        (videoRef.current as any).webkitEnterFullscreen();
-      }
-    }
-  };
 
   const handleVideoEnded = () => {
     if (currentIndex < clips.length - 1) {
@@ -70,15 +49,11 @@ export const ClippedActionsPlayer = ({
   };
 
   const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-    }
+    if (currentIndex > 0) setCurrentIndex(prev => prev - 1);
   };
 
   const handleNext = () => {
-    if (currentIndex < clips.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-    }
+    if (currentIndex < clips.length - 1) setCurrentIndex(prev => prev + 1);
   };
 
   const togglePlayPause = () => {
@@ -92,13 +67,9 @@ export const ClippedActionsPlayer = ({
     }
   };
 
-  // Auto-play when clip changes
   useEffect(() => {
     if (videoRef.current && isPlaying) {
-      videoRef.current.play().catch(() => {
-        // Autoplay was prevented
-        setIsPlaying(false);
-      });
+      videoRef.current.play().catch(() => setIsPlaying(false));
     }
   }, [currentIndex]);
 
@@ -106,45 +77,28 @@ export const ClippedActionsPlayer = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black">
-        <div className="relative">
-          {/* Top buttons */}
-          <div className="absolute top-2 right-2 z-10 flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="bg-black/50 hover:bg-black/70 text-white"
-              onClick={handleFullscreen}
-              title="Fullscreen"
-            >
-              <Maximize className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="bg-black/50 hover:bg-black/70 text-white"
-              onClick={() => onOpenChange(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+      <DialogContent className="fixed inset-0 w-screen h-screen max-w-none max-h-none p-0 bg-black border-0 rounded-none flex flex-col overflow-hidden z-[200]">
+        <DialogTitle className="sr-only">Full Match Video</DialogTitle>
 
-          {/* Clip info overlay */}
-          <div className="absolute top-2 left-2 z-10 bg-black/70 text-white text-sm px-3 py-2 rounded max-w-[70%]">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold">
-                {currentIndex + 1}/{clips.length}
-              </span>
-              <span className="font-semibold">{currentClip.action_type}</span>
-            </div>
-            <p className="text-xs text-white/80 line-clamp-2">{currentClip.action_description}</p>
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-2 bg-black/80 border-b border-border/30 shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold">
+              {currentIndex + 1}/{clips.length}
+            </span>
+            <span className="text-white text-sm font-semibold">{currentClip.action_type}</span>
           </div>
+          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-white/60 hover:text-white">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
-          {/* Video player - no controls to prevent unmuting */}
+        {/* Video - fills remaining space */}
+        <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
             ref={videoRef}
             src={currentClip.video_url}
-            className="w-full max-h-[70vh] object-contain"
+            className="w-full h-full object-contain"
             autoPlay
             muted
             playsInline
@@ -152,61 +106,41 @@ export const ClippedActionsPlayer = ({
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
           />
+          {/* Description overlay */}
+          <div className="absolute bottom-4 left-4 right-4 bg-black/70 text-white text-xs px-3 py-2 rounded max-w-[80%]">
+            <p className="line-clamp-2">{currentClip.action_description}</p>
+          </div>
+        </div>
 
-          {/* Navigation controls */}
-          <div className="bg-black/90 p-4 flex items-center justify-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-white/20"
-              onClick={handlePrevious}
-              disabled={currentIndex === 0}
-            >
+        {/* Controls */}
+        <div className="bg-black/90 border-t border-border/30 px-4 py-2 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handlePrevious} disabled={currentIndex === 0}>
               <SkipBack className="h-5 w-5" />
             </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-white hover:bg-white/20 h-12 w-12"
-              onClick={togglePlayPause}
-            >
-              {isPlaying ? (
-                <Pause className="h-6 w-6" />
-              ) : (
-                <Play className="h-6 w-6" />
-              )}
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-10 w-10" onClick={togglePlayPause}>
+              {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
             </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-white/20"
-              onClick={handleNext}
-              disabled={currentIndex === clips.length - 1}
-            >
+            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handleNext} disabled={currentIndex === clips.length - 1}>
               <SkipForward className="h-5 w-5" />
             </Button>
           </div>
 
-          {/* Clip thumbnails/list */}
-          <div className="bg-black/95 p-2 max-h-[100px] overflow-x-auto">
-            <div className="flex gap-2">
-              {clips.map((clip, index) => (
-                <button
-                  key={clip.id}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`flex-shrink-0 px-3 py-2 rounded text-xs text-left transition-colors ${
-                    index === currentIndex
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-white/10 text-white/80 hover:bg-white/20'
-                  }`}
-                >
-                  <div className="font-bold">#{clip.action_number}</div>
-                  <div className="truncate max-w-[100px]">{clip.action_type}</div>
-                </button>
-              ))}
-            </div>
+          {/* Clip selector */}
+          <div className="flex gap-1.5 overflow-x-auto max-w-[50%]">
+            {clips.map((clip, index) => (
+              <button
+                key={clip.id}
+                onClick={() => setCurrentIndex(index)}
+                className={`flex-shrink-0 px-2.5 py-1.5 rounded text-xs transition-colors ${
+                  index === currentIndex
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-white/10 text-white/80 hover:bg-white/20'
+                }`}
+              >
+                #{clip.action_number}
+              </button>
+            ))}
           </div>
         </div>
       </DialogContent>

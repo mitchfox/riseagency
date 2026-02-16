@@ -6,9 +6,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Users, BarChart3, Target, Box } from "lucide-react";
+import { Users, BarChart3, Target, Box, Crosshair } from "lucide-react";
 import { METRIC_CATEGORIES, ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
 import { GoalTracking } from "@/components/portal/GoalTracking";
+import { ScoutingComparisonMatrix } from "@/components/portal/ScoutingComparisonMatrix";
 
 const RadarChart3D = lazy(() => import("@/components/portal/RadarChart3D").then(m => ({ default: m.RadarChart3D })));
 
@@ -159,6 +160,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
             <TabsTrigger value="percentile"><BarChart3 className="w-4 h-4 mr-1" /> Percentile</TabsTrigger>
             <TabsTrigger value="radar3d"><Box className="w-4 h-4 mr-1" /> 3D Radar</TabsTrigger>
             <TabsTrigger value="comparison"><Users className="w-4 h-4 mr-1" /> Player Comparison</TabsTrigger>
+            <TabsTrigger value="scouting"><Crosshair className="w-4 h-4 mr-1" /> Scouting Matrix</TabsTrigger>
             <TabsTrigger value="goals"><Target className="w-4 h-4 mr-1" /> Goals</TabsTrigger>
           </TabsList>
 
@@ -401,6 +403,17 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
                 })}
               </>
             )}
+          </TabsContent>
+          {/* Scouting Matrix Tab */}
+          <TabsContent value="scouting" className="mt-4">
+            <ScoutingComparisonMatrix
+              playerName={playerName}
+              portalMetrics={portalMetrics}
+              hasPortalData={hasPortalData}
+              comparisonPlayers={comparisonPlayers}
+              selectedPlayerIds={selectedPlayerIds}
+              formWindow={formWindow}
+            />
           </TabsContent>
           {/* Goals Tab */}
           <TabsContent value="goals" className="mt-4">
