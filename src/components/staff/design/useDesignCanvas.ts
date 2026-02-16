@@ -4,8 +4,8 @@ import { SHAPE_DEFAULTS } from './types';
 
 const generateId = () => Math.random().toString(36).slice(2, 11);
 
-export function useDesignCanvas() {
-  const [project, setProject] = useState<DesignProject>({
+export function useDesignCanvas(initial?: DesignProject) {
+  const [project, setProject] = useState<DesignProject>(initial ?? {
     id: generateId(),
     name: 'Untitled Design',
     width: 1080,

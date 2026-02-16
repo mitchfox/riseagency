@@ -77,7 +77,7 @@ import { StaffSMSNotifications } from "@/components/staff/StaffSMSNotifications"
 import { VisionBoardSection } from "@/components/staff/VisionBoardSection";
 import { DocsSection } from "@/components/staff/DocsSection";
 import { SheetsSection } from "@/components/staff/SheetsSection";
-import { DesignStudio } from "@/components/staff/design/DesignStudio";
+import { DesignProjects } from "@/components/staff/design/DesignProjects";
 
 import { supabase } from "@/integrations/supabase/client";
 import { VersionManager } from "@/lib/versionManager";
@@ -1314,7 +1314,7 @@ const Staff = () => {
                   {expandedSection === 'visionboard' && <VisionBoardSection />}
                   {expandedSection === 'docs' && <DocsSection />}
                   {expandedSection === 'sheets' && <SheetsSection />}
-                  {expandedSection === 'designstudio' && <DesignStudio />}
+                  {expandedSection === 'designstudio' && <DesignProjects />}
                   {expandedSection === 'staffschedules' && <StaffSchedulesManagement />}
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
                   {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
