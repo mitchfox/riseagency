@@ -84,17 +84,19 @@ export const VideoAnalysis = () => {
 
     const { data: session } = await supabase.auth.getSession();
 
+    const insertData: any = {
+      title: newTitle,
+      video_url: newUrl,
+      opponent: newOpponent || null,
+      match_date: newMatchDate || null,
+      created_by: session.session?.user?.id || null,
+      annotations: [],
+    };
+    if (newPlayerId) insertData.player_id = newPlayerId;
+
     const { data, error } = await supabase
       .from("video_analyses")
-      .insert({
-        title: newTitle,
-        video_url: newUrl,
-        player_id: newPlayerId || null,
-        opponent: newOpponent || null,
-        match_date: newMatchDate || null,
-        created_by: session.session?.user?.id || null,
-        annotations: [],
-      })
+      .insert(insertData)
       .select()
       .single();
 
