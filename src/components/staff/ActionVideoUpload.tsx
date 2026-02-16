@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Video, Upload, X, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -28,6 +29,7 @@ export const ActionVideoUpload = ({
 }: ActionVideoUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState('');
+  const [previewOpen, setPreviewOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,6 +116,7 @@ export const ActionVideoUpload = ({
   };
 
   return (
+    <>
     <div className="flex items-center gap-2">
       <input
         ref={fileInputRef}
@@ -126,15 +129,14 @@ export const ActionVideoUpload = ({
       
       {currentVideoUrl ? (
         <div className="flex items-center gap-1">
-          <a
-            href={currentVideoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => setPreviewOpen(true)}
             className="text-xs text-primary flex items-center gap-1 hover:underline cursor-pointer"
           >
             <Video className="h-3 w-3" />
             Clip
-          </a>
+          </button>
           {!disabled && (
             <Button
               variant="ghost"
@@ -169,5 +171,19 @@ export const ActionVideoUpload = ({
         </Button>
       )}
     </div>
+
+    {/* Video Preview Dialog */}
+    <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+      <DialogContent className="max-w-4xl w-full p-2">
+        <video
+          src={currentVideoUrl || ''}
+          controls
+          autoPlay
+          muted
+          className="w-full rounded-lg"
+        />
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };

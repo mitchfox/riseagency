@@ -243,7 +243,7 @@ export const ActionStatRecorder = ({
         <Button
           variant="ghost"
           size="sm"
-          className={`h-8 min-w-8 p-0 px-1 hover:text-black ${hasRecordedStats ? 'bg-primary/10' : ''}`}
+          className={`h-8 min-w-8 p-0 px-1 [&>div>svg]:hover:text-black [&>svg]:hover:text-black ${hasRecordedStats ? 'bg-primary/10' : ''}`}
           disabled={disabled}
           title={hasRecordedStats 
             ? `${stats.length} stat(s) recorded` 
