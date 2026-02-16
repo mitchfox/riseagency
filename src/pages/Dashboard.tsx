@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
@@ -1715,46 +1716,60 @@ const Dashboard = () => {
             </DropdownMenu>
         </div>
 
-        {/* Hub Section - Full Width, No Container */}
-        {activeTab === "hub" && (
-          <Hub 
-            programs={programs} 
-            analyses={analyses} 
-            playerData={playerData}
-            dailyAphorism={dailyAphorism}
-            onNavigateToAnalysis={() => {
-              setActiveTab("analysis");
-              setActiveAnalysisTab("performance");
-            }}
-            onNavigateToForm={() => {
-              setActiveTab("analysis");
-              setActiveAnalysisTab("form");
-            }}
-            onNavigateToSession={(sessionKey) => {
-              setActiveTab("physical");
-              setSelectedSession(sessionKey);
-              setAccordionValue((prev) => {
-                if (!prev.includes("sessions")) {
-                  return [...prev, "sessions"];
-                }
-                return prev;
-              });
-              // Scroll to the session after state updates
-              setTimeout(() => {
-                const element = document.getElementById(`session-${sessionKey}`);
-                if (element) {
-                  element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-              }, 300);
-            }}
-            onNavigateToSchedule={() => {
-              setActiveTab("physical");
-            }}
-          />
-        )}
+        {/* Tab Content with Transitions */}
+        <AnimatePresence mode="wait">
+          {activeTab === "hub" && (
+            <motion.div
+              key="hub"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Hub 
+                programs={programs} 
+                analyses={analyses} 
+                playerData={playerData}
+                dailyAphorism={dailyAphorism}
+                onNavigateToAnalysis={() => {
+                  setActiveTab("analysis");
+                  setActiveAnalysisTab("performance");
+                }}
+                onNavigateToForm={() => {
+                  setActiveTab("analysis");
+                  setActiveAnalysisTab("form");
+                }}
+                onNavigateToSession={(sessionKey) => {
+                  setActiveTab("physical");
+                  setSelectedSession(sessionKey);
+                  setAccordionValue((prev) => {
+                    if (!prev.includes("sessions")) {
+                      return [...prev, "sessions"];
+                    }
+                    return prev;
+                  });
+                  setTimeout(() => {
+                    const element = document.getElementById(`session-${sessionKey}`);
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }, 300);
+                }}
+                onNavigateToSchedule={() => {
+                  setActiveTab("physical");
+                }}
+              />
+            </motion.div>
+          )}
 
-        {/* Content Section with Padding - For Other Tabs */}
-        {activeTab !== "hub" && (
+          {activeTab !== "hub" && (
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
         <div className="container mx-auto max-w-6xl px-4 md:px-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Upload Progress Indicator */}
@@ -4460,7 +4475,9 @@ const Dashboard = () => {
             </TabsContent>
           </Tabs>
         </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
       {/* Exercise Details Dialog */}

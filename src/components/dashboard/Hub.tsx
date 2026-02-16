@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade } from "@/lib/gradeCalculations";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
+import { QuickStatsComparison } from "./QuickStatsComparison";
 
 interface PlayerProgram {
   id: string;
@@ -855,6 +856,14 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         onOpenChange={setReportDialogOpen}
         analysisId={selectedReportId}
       />
+
+      {/* Quick Stats Comparison - Penultimate section */}
+      {playerData?.id && (
+        <QuickStatsComparison
+          playerId={playerData.id}
+          playerName={playerData.name || "You"}
+        />
+      )}
 
       {/* Gold Separator Line */}
       {dailyAphorism && (
