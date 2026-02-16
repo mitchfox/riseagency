@@ -24,9 +24,10 @@ import { MarkdownText } from "@/utils/markdownRenderer";
 import { downloadFile } from "@/utils/openExternalUrl";
 import { GraduationCap, UserCheck } from "lucide-react";
 import { ComparisonPlayerData } from "./ComparisonPlayerData";
+import { ActionReportsList } from "./analysis/ActionReportsList";
 
 
-type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides' | 'club_ratings' | 'form_grade_configs' | 'comparison_player_data';
+type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides' | 'club_ratings' | 'form_grade_configs' | 'comparison_player_data' | 'performance_data';
 
 interface Exercise {
   name: string;
@@ -184,6 +185,13 @@ const tableConfigs = {
     fields: [],
     icon: UserCheck,
     color: 'sky',
+  },
+  performance_data: {
+    label: 'Data',
+    singular: 'Report',
+    fields: [],
+    icon: LineChart,
+    color: 'emerald',
   },
 };
 
@@ -1020,6 +1028,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
               <FormGradesManagement />
             ) : key === 'comparison_player_data' ? (
               <ComparisonPlayerData />
+            ) : key === 'performance_data' ? (
+              <ActionReportsList />
             ) : (
               <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-end gap-4">

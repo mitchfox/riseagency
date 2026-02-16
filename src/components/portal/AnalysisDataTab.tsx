@@ -20,6 +20,7 @@ interface Analysis {
 interface Props {
   analyses: Analysis[];
   playerData: any;
+  embedded?: boolean;
 }
 
 const STAT_DEFS = [
@@ -42,7 +43,7 @@ const getR90Color = (score: number) => {
   return "hsl(140, 60%, 40%)";
 };
 
-export const AnalysisDataTab = ({ analyses, playerData }: Props) => {
+export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(analyses.map(a => a.id)));
 
   const toggleMatch = (id: string) => {
@@ -113,13 +114,15 @@ export const AnalysisDataTab = ({ analyses, playerData }: Props) => {
   }, [seasonAverages]);
 
   return (
-    <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
-      <CardHeader marble>
-        <div className="container mx-auto px-4">
-          <CardTitle className="font-heading tracking-tight">Data</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="container mx-auto px-4 space-y-8 py-6">
+    <Card className={embedded ? "rounded-none border-0 shadow-none" : "w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0"}>
+      {!embedded && (
+        <CardHeader marble>
+          <div className="container mx-auto px-4">
+            <CardTitle className="font-heading tracking-tight">Data</CardTitle>
+          </div>
+        </CardHeader>
+      )}
+      <CardContent className={embedded ? "p-0 space-y-6" : "container mx-auto px-4 space-y-8 py-6"}>
         {/* Player Summary */}
         <div className="bg-card border rounded-lg p-6">
           <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
