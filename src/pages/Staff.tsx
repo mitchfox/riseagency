@@ -78,6 +78,9 @@ import { SheetsSection } from "@/components/staff/SheetsSection";
 import { supabase } from "@/integrations/supabase/client";
 import { VersionManager } from "@/lib/versionManager";
 import type { User } from "@supabase/supabase-js";
+import { ActivityLog } from "@/components/staff/ActivityLog";
+import { DatabaseExport } from "@/components/staff/DatabaseExport";
+import { VideoAnalysis } from "@/components/staff/coaching/VideoAnalysis";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTheme } from "next-themes";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
@@ -134,7 +137,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   
@@ -333,274 +336,85 @@ const Staff = () => {
     try {
       const searchTerm = `%${query}%`;
 
-      // Search players
-      const { data: players } = await supabase
-        .from('players')
-        .select('id, name, position, club')
-        .ilike('name', searchTerm)
-        .limit(10);
+      // Run all queries in parallel with Promise.all
+      const [
+        playersRes,
+        updatesRes,
+        blogsRes,
+        analysesRes,
+        prospectsRes,
+        scoutingRes,
+        invoicesRes,
+        drillsRes,
+        sessionsRes,
+        exercisesRes,
+        campaignsRes,
+        contactsRes,
+        legalDocsRes,
+        expensesRes,
+        perfReportsRes,
+      ] = await Promise.all([
+        supabase.from('players').select('id, name, position, club').ilike('name', searchTerm).limit(10),
+        supabase.from('updates').select('id, title, content, date').or(`title.ilike.${searchTerm},content.ilike.${searchTerm}`).limit(5),
+        supabase.from('blog_posts').select('id, title, excerpt').or(`title.ilike.${searchTerm},excerpt.ilike.${searchTerm}`).limit(5),
+        supabase.from('analyses').select('id, title, analysis_type').ilike('title', searchTerm).limit(5),
+        supabase.from('prospects').select('id, name, position, current_club').ilike('name', searchTerm).limit(5),
+        supabase.from('scouting_reports').select('id, player_name, position, current_club, status').ilike('player_name', searchTerm).limit(5),
+        supabase.from('invoices').select('id, invoice_number, description, amount').or(`invoice_number.ilike.${searchTerm},description.ilike.${searchTerm}`).limit(5),
+        supabase.from('coaching_drills').select('id, title, category').ilike('title', searchTerm).limit(5),
+        supabase.from('coaching_sessions').select('id, title, category').ilike('title', searchTerm).limit(5),
+        supabase.from('coaching_exercises').select('id, title, category').ilike('title', searchTerm).limit(5),
+        supabase.from('marketing_campaigns').select('id, title, status').ilike('title', searchTerm).limit(5),
+        supabase.from('club_network_contacts').select('id, name, club_name, position').or(`name.ilike.${searchTerm},club_name.ilike.${searchTerm}`).limit(5),
+        supabase.from('legal_documents').select('id, title, category').ilike('title', searchTerm).limit(5),
+        supabase.from('expenses').select('id, description, category, amount').ilike('description', searchTerm).limit(5),
+        supabase.from('player_analysis').select('id, opponent, analysis_date, players!player_analysis_player_id_fkey(name)').ilike('opponent', searchTerm).limit(5),
+      ]);
 
-      players?.forEach(player => {
-        results.push({
-          id: player.id,
-          title: player.name,
-          description: `${player.position}${player.club ? ` at ${player.club}` : ''}`,
-          section: 'Player Management',
-          sectionId: 'players',
-          type: 'player'
-        });
+      playersRes.data?.forEach(player => {
+        results.push({ id: player.id, title: player.name, description: `${player.position}${player.club ? ` at ${player.club}` : ''}`, section: 'Player Management', sectionId: 'players', type: 'player' });
       });
-
-      // Search updates
-      const { data: updates } = await supabase
-        .from('updates')
-        .select('id, title, content, date')
-        .or(`title.ilike.${searchTerm},content.ilike.${searchTerm}`)
-        .limit(5);
-
-      updates?.forEach(update => {
-        results.push({
-          id: update.id,
-          title: update.title,
-          description: update.content?.substring(0, 80) + '...',
-          section: 'Player Updates',
-          sectionId: 'updates',
-          type: 'update'
-        });
+      updatesRes.data?.forEach(update => {
+        results.push({ id: update.id, title: update.title, description: update.content?.substring(0, 80) + '...', section: 'Player Updates', sectionId: 'updates', type: 'update' });
       });
-
-      // Search blog posts
-      const { data: blogs } = await supabase
-        .from('blog_posts')
-        .select('id, title, excerpt')
-        .or(`title.ilike.${searchTerm},excerpt.ilike.${searchTerm}`)
-        .limit(5);
-
-      blogs?.forEach(blog => {
-        results.push({
-          id: blog.id,
-          title: blog.title,
-          description: blog.excerpt?.substring(0, 80),
-          section: 'News Articles',
-          sectionId: 'blog',
-          type: 'blog'
-        });
+      blogsRes.data?.forEach(blog => {
+        results.push({ id: blog.id, title: blog.title, description: blog.excerpt?.substring(0, 80), section: 'News Articles', sectionId: 'blog', type: 'blog' });
       });
-
-      // Search analyses
-      const { data: analyses } = await supabase
-        .from('analyses')
-        .select('id, title, analysis_type')
-        .ilike('title', searchTerm)
-        .limit(5);
-
-      analyses?.forEach(analysis => {
-        results.push({
-          id: analysis.id,
-          title: analysis.title || 'Untitled Analysis',
-          description: analysis.analysis_type,
-          section: 'Analysis',
-          sectionId: 'analysis',
-          type: 'analysis'
-        });
+      analysesRes.data?.forEach(analysis => {
+        results.push({ id: analysis.id, title: analysis.title || 'Untitled Analysis', description: analysis.analysis_type, section: 'Analysis', sectionId: 'analysis', type: 'analysis' });
       });
-
-      // Search prospects
-      const { data: prospects } = await supabase
-        .from('prospects')
-        .select('id, name, position, current_club')
-        .ilike('name', searchTerm)
-        .limit(5);
-
-      prospects?.forEach(prospect => {
-        results.push({
-          id: prospect.id,
-          title: prospect.name,
-          description: `${prospect.position || 'Unknown'}${prospect.current_club ? ` at ${prospect.current_club}` : ''}`,
-          section: 'Recruitment',
-          sectionId: 'recruitment',
-          type: 'prospect'
-        });
+      prospectsRes.data?.forEach(prospect => {
+        results.push({ id: prospect.id, title: prospect.name, description: `${prospect.position || 'Unknown'}${prospect.current_club ? ` at ${prospect.current_club}` : ''}`, section: 'Recruitment', sectionId: 'recruitment', type: 'prospect' });
       });
-
-      // Search scouting reports
-      const { data: scoutingReports } = await supabase
-        .from('scouting_reports')
-        .select('id, player_name, position, current_club, status')
-        .ilike('player_name', searchTerm)
-        .limit(5);
-
-      scoutingReports?.forEach(report => {
-        results.push({
-          id: report.id,
-          title: report.player_name,
-          description: `${report.position || 'Unknown'}${report.current_club ? ` at ${report.current_club}` : ''} - ${report.status}`,
-          section: 'Scouting Centre',
-          sectionId: 'scoutingcentre',
-          type: 'scouting_report'
-        });
+      scoutingRes.data?.forEach(report => {
+        results.push({ id: report.id, title: report.player_name, description: `${report.position || 'Unknown'}${report.current_club ? ` at ${report.current_club}` : ''} - ${report.status}`, section: 'Scouting Centre', sectionId: 'scoutingcentre', type: 'scouting_report' });
       });
-
-      // Search invoices
-      const { data: invoices } = await supabase
-        .from('invoices')
-        .select('id, invoice_number, description, amount')
-        .or(`invoice_number.ilike.${searchTerm},description.ilike.${searchTerm}`)
-        .limit(5);
-
-      invoices?.forEach(invoice => {
-        results.push({
-          id: invoice.id,
-          title: invoice.invoice_number,
-          description: `${invoice.description || ''} - €${invoice.amount}`,
-          section: 'Invoices',
-          sectionId: 'invoices',
-          type: 'invoice'
-        });
+      invoicesRes.data?.forEach(invoice => {
+        results.push({ id: invoice.id, title: invoice.invoice_number, description: `${invoice.description || ''} - €${invoice.amount}`, section: 'Invoices', sectionId: 'invoices', type: 'invoice' });
       });
-
-      // Search coaching database items
-      const { data: coachingDrills } = await supabase
-        .from('coaching_drills')
-        .select('id, title, category')
-        .ilike('title', searchTerm)
-        .limit(5);
-
-      coachingDrills?.forEach(drill => {
-        results.push({
-          id: drill.id,
-          title: drill.title,
-          description: drill.category || 'Drill',
-          section: 'Coaching Database',
-          sectionId: 'coaching',
-          type: 'drill'
-        });
+      drillsRes.data?.forEach(drill => {
+        results.push({ id: drill.id, title: drill.title, description: drill.category || 'Drill', section: 'Coaching Database', sectionId: 'coaching', type: 'drill' });
       });
-
-      // Search coaching sessions
-      const { data: coachingSessions } = await supabase
-        .from('coaching_sessions')
-        .select('id, title, category')
-        .ilike('title', searchTerm)
-        .limit(5);
-
-      coachingSessions?.forEach(session => {
-        results.push({
-          id: session.id,
-          title: session.title,
-          description: session.category || 'Session',
-          section: 'Coaching Database',
-          sectionId: 'coaching',
-          type: 'coaching_session'
-        });
+      sessionsRes.data?.forEach(session => {
+        results.push({ id: session.id, title: session.title, description: session.category || 'Session', section: 'Coaching Database', sectionId: 'coaching', type: 'coaching_session' });
       });
-
-      // Search coaching exercises
-      const { data: coachingExercises } = await supabase
-        .from('coaching_exercises')
-        .select('id, title, category')
-        .ilike('title', searchTerm)
-        .limit(5);
-
-      coachingExercises?.forEach(exercise => {
-        results.push({
-          id: exercise.id,
-          title: exercise.title,
-          description: exercise.category || 'Exercise',
-          section: 'Coaching Database',
-          sectionId: 'coaching',
-          type: 'coaching_exercise'
-        });
+      exercisesRes.data?.forEach(exercise => {
+        results.push({ id: exercise.id, title: exercise.title, description: exercise.category || 'Exercise', section: 'Coaching Database', sectionId: 'coaching', type: 'coaching_exercise' });
       });
-
-      // Search marketing campaigns
-      const { data: campaigns } = await supabase
-        .from('marketing_campaigns')
-        .select('id, title, status')
-        .ilike('title', searchTerm)
-        .limit(5);
-
-      campaigns?.forEach(campaign => {
-        results.push({
-          id: campaign.id,
-          title: campaign.title,
-          description: campaign.status,
-          section: 'Marketing',
-          sectionId: 'marketing',
-          type: 'campaign'
-        });
+      campaignsRes.data?.forEach(campaign => {
+        results.push({ id: campaign.id, title: campaign.title, description: campaign.status, section: 'Marketing', sectionId: 'marketing', type: 'campaign' });
       });
-
-      // Search club network contacts
-      const { data: contacts } = await supabase
-        .from('club_network_contacts')
-        .select('id, name, club_name, position')
-        .or(`name.ilike.${searchTerm},club_name.ilike.${searchTerm}`)
-        .limit(5);
-
-      contacts?.forEach(contact => {
-        results.push({
-          id: contact.id,
-          title: contact.name,
-          description: `${contact.position || ''}${contact.club_name ? ` at ${contact.club_name}` : ''}`,
-          section: 'Club Network',
-          sectionId: 'clubnetwork',
-          type: 'contact'
-        });
+      contactsRes.data?.forEach(contact => {
+        results.push({ id: contact.id, title: contact.name, description: `${contact.position || ''}${contact.club_name ? ` at ${contact.club_name}` : ''}`, section: 'Club Network', sectionId: 'clubnetwork', type: 'contact' });
       });
-
-      // Search legal documents
-      const { data: legalDocs } = await supabase
-        .from('legal_documents')
-        .select('id, title, category')
-        .ilike('title', searchTerm)
-        .limit(5);
-
-      legalDocs?.forEach(doc => {
-        results.push({
-          id: doc.id,
-          title: doc.title,
-          description: doc.category,
-          section: 'Legal',
-          sectionId: 'legal',
-          type: 'legal_doc'
-        });
+      legalDocsRes.data?.forEach(doc => {
+        results.push({ id: doc.id, title: doc.title, description: doc.category, section: 'Legal', sectionId: 'legal', type: 'legal_doc' });
       });
-
-      // Search expenses
-      const { data: expenses } = await supabase
-        .from('expenses')
-        .select('id, description, category, amount')
-        .ilike('description', searchTerm)
-        .limit(5);
-
-      expenses?.forEach(expense => {
-        results.push({
-          id: expense.id,
-          title: expense.description,
-          description: `${expense.category} - £${expense.amount}`,
-          section: 'Expenses',
-          sectionId: 'expenses',
-          type: 'expense'
-        });
+      expensesRes.data?.forEach(expense => {
+        results.push({ id: expense.id, title: expense.description, description: `${expense.category} - £${expense.amount}`, section: 'Expenses', sectionId: 'expenses', type: 'expense' });
       });
-
-      // Search performance reports (player_analysis)
-      const { data: perfReports } = await supabase
-        .from('player_analysis')
-        .select('id, opponent, analysis_date, players!player_analysis_player_id_fkey(name)')
-        .ilike('opponent', searchTerm)
-        .limit(5);
-
-      perfReports?.forEach((report: any) => {
-        results.push({
-          id: report.id,
-          title: `vs ${report.opponent || 'Unknown'} - ${report.players?.name || ''}`,
-          description: report.analysis_date,
-          section: 'Data',
-          sectionId: 'coachingdata',
-          type: 'performance_report'
-        });
+      perfReportsRes.data?.forEach((report: any) => {
+        results.push({ id: report.id, title: `vs ${report.opponent || 'Unknown'} - ${report.players?.name || ''}`, description: report.analysis_date, section: 'Data', sectionId: 'coachingdata', type: 'performance_report' });
       });
 
       setSearchResults(results);
@@ -888,6 +702,7 @@ const Staff = () => {
           { id: 'coachingdata', title: 'Data', icon: Database },
           { id: 'analysis', title: 'Analysis', icon: LineChart },
           { id: 'athletecentre', title: 'Athlete Centre', icon: UserRound },
+          { id: 'videoanalysis', title: 'Video Analysis', icon: Film },
         ]
       },
       {
@@ -957,6 +772,8 @@ const Staff = () => {
           ...(isAdmin ? [
             { id: 'passwords', title: 'Player Passwords', icon: Lock },
             { id: 'staffaccounts', title: 'Staff Accounts', icon: Shield },
+            { id: 'activitylog', title: 'Activity Log', icon: ClipboardList },
+            { id: 'dataexport', title: 'Data Export', icon: Download },
           ] : []),
           { id: 'pwainstall', title: 'PWA Install', icon: Download },
           { id: 'offlinemanager', title: 'Offline Content', icon: HardDrive },
@@ -968,11 +785,35 @@ const Staff = () => {
 
   const categories = buildCategories();
 
+  // Keyword map for deeper sidebar search
+  const SECTION_KEYWORDS: Record<string, string[]> = {
+    coaching: ['drills', 'sessions', 'exercises', 'database', 'training'],
+    coachingdata: ['performance', 'reports', 'r90', 'stats', 'data', 'actions'],
+    analysis: ['match', 'pre-match', 'post-match', 'video', 'reports'],
+    players: ['player', 'management', 'squad', 'roster', 'profile'],
+    marketing: ['campaigns', 'social', 'brand', 'content', 'posts'],
+    invoices: ['billing', 'payments', 'fees', 'charges'],
+    legal: ['contracts', 'documents', 'compliance', 'agreements'],
+    clubnetwork: ['contacts', 'clubs', 'agents', 'scouts', 'network'],
+    recruitment: ['prospects', 'signings', 'targets', 'transfers'],
+    expenses: ['costs', 'receipts', 'spending', 'reimbursement'],
+    athletecentre: ['athlete', 'development', 'programming', 'periodisation'],
+    videoanalysis: ['video', 'footage', 'annotations', 'clips', 'timestamps'],
+    activitylog: ['audit', 'activity', 'log', 'history', 'actions'],
+    dataexport: ['export', 'backup', 'download', 'csv', 'data'],
+    scoutingcentre: ['scouting', 'reports', 'scouts', 'evaluations'],
+    transferhub: ['transfers', 'outreach', 'clubs', 'deals'],
+  };
+
   const filteredCategories = categories.map(category => ({
     ...category,
-    sections: category.sections.filter(section =>
-      section.title.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    sections: category.sections.filter(section => {
+      const q = searchQuery.toLowerCase();
+      if (!q) return true;
+      if (section.title.toLowerCase().includes(q)) return true;
+      const keywords = SECTION_KEYWORDS[section.id] || [];
+      return keywords.some(kw => kw.includes(q));
+    })
   })).filter(category => category.sections.length > 0);
 
   return (
@@ -1331,6 +1172,9 @@ const Staff = () => {
                   {expandedSection === 'pushnotifications' && <StaffPushNotifications />}
                   {expandedSection === 'notifications' && user?.email === 'jolonlevene98@gmail.com' && <NotificationSettingsManagement />}
                   {expandedSection === 'smsnotifications' && user?.email === 'jolonlevene98@gmail.com' && <StaffSMSNotifications />}
+                  {expandedSection === 'videoanalysis' && <VideoAnalysis />}
+                  {expandedSection === 'activitylog' && isAdmin && <ActivityLog />}
+                  {expandedSection === 'dataexport' && isAdmin && <DatabaseExport />}
                 </CardContent>
               </Card>
             </div>

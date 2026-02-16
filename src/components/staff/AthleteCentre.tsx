@@ -5,10 +5,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   User, Dumbbell, LineChart, Target, Calendar,
-  Save, Loader2, ChevronRight, ClipboardList, BarChart3, Film, Database
+  Save, Loader2, ChevronRight, ClipboardList, BarChart3, Film, Database, Plus, Trash2, GripHorizontal
 } from "lucide-react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { toast } from "sonner";
@@ -17,6 +18,7 @@ import { PlayerScoutingReports } from "@/components/PlayerScoutingReports";
 import { AnalysisComparisons } from "@/components/portal/AnalysisComparisons";
 import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
+import { InjuryLog } from "@/components/portal/InjuryLog";
 
 interface Player {
   id: string;
@@ -158,8 +160,10 @@ export const AthleteCentre = () => {
 
   const tabItems = [
     { value: "longterm", label: "Long-Term Plan", icon: Calendar },
+    { value: "periodisation", label: "Periodisation", icon: GripHorizontal },
     { value: "focuses", label: "Dev Focuses", icon: Target },
     { value: "programming", label: "Programming", icon: Dumbbell },
+    { value: "injuries", label: "Injury Log", icon: ClipboardList },
     { value: "scouting", label: "Scouting", icon: ClipboardList },
     { value: "data", label: "Data", icon: Database },
     { value: "comparisons", label: "Comparisons", icon: BarChart3 },
@@ -304,6 +308,10 @@ export const AthleteCentre = () => {
                   </div>
                 </TabsContent>
 
+                <TabsContent value="periodisation" className="mt-0 space-y-4">
+                  <PeriodisationPlanner playerId={selectedPlayer} />
+                </TabsContent>
+
                 <TabsContent value="programming" className="mt-0 space-y-3 md:space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 md:mb-4">
                     <h3 className="text-base md:text-lg font-semibold">Training Programs</h3>
@@ -337,6 +345,10 @@ export const AthleteCentre = () => {
                       <p className="text-sm md:text-base">No programs assigned yet</p>
                     </div>
                   )}
+                </TabsContent>
+
+                <TabsContent value="injuries" className="mt-0">
+                  <InjuryLog playerId={selectedPlayer} readOnly />
                 </TabsContent>
 
                 <TabsContent value="scouting" className="mt-0">
@@ -391,6 +403,187 @@ export const AthleteCentre = () => {
             </Tabs>
           </CardContent>
         </Card>
+      )}
+    </div>
+  );
+};
+
+// Periodisation Planner sub-component
+const PHASE_TYPES = [
+  { value: "pre-season", label: "Pre-Season", colour: "hsl(220, 70%, 50%)" },
+  { value: "in-season", label: "In-Season", colour: "hsl(140, 60%, 40%)" },
+  { value: "recovery", label: "Recovery", colour: "hsl(45, 80%, 50%)" },
+  { value: "off-season", label: "Off-Season", colour: "hsl(0, 0%, 60%)" },
+  { value: "competition", label: "Competition", colour: "hsl(0, 70%, 50%)" },
+  { value: "transition", label: "Transition", colour: "hsl(280, 60%, 50%)" },
+];
+
+interface Phase {
+  name: string;
+  start_date: string;
+  end_date: string;
+  type: string;
+  colour: string;
+}
+
+const PeriodisationPlanner = ({ playerId }: { playerId: string }) => {
+  const [phases, setPhases] = useState<Phase[]>([]);
+  const [season, setSeason] = useState("2024/25");
+  const [planId, setPlanId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPlan();
+  }, [playerId, season]);
+
+  const fetchPlan = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("periodisation_plans")
+      .select("*")
+      .eq("player_id", playerId)
+      .eq("season", season)
+      .maybeSingle();
+
+    if (data) {
+      setPlanId(data.id);
+      setPhases((data.phases as any as Phase[]) || []);
+    } else {
+      setPlanId(null);
+      setPhases([]);
+    }
+    setLoading(false);
+  };
+
+  const addPhase = () => {
+    setPhases(prev => [...prev, {
+      name: "",
+      start_date: format(new Date(), "yyyy-MM-dd"),
+      end_date: format(new Date(), "yyyy-MM-dd"),
+      type: "pre-season",
+      colour: PHASE_TYPES[0].colour,
+    }]);
+  };
+
+  const updatePhase = (index: number, field: keyof Phase, value: string) => {
+    setPhases(prev => prev.map((p, i) => {
+      if (i !== index) return p;
+      const updated = { ...p, [field]: value };
+      if (field === "type") {
+        const pt = PHASE_TYPES.find(t => t.value === value);
+        if (pt) updated.colour = pt.colour;
+      }
+      return updated;
+    }));
+  };
+
+  const removePhase = (index: number) => {
+    setPhases(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    if (planId) {
+      await supabase
+        .from("periodisation_plans")
+        .update({ phases: phases as any })
+        .eq("id", planId);
+    } else {
+      const { data } = await supabase
+        .from("periodisation_plans")
+        .insert({ player_id: playerId, season, phases: phases as any })
+        .select()
+        .single();
+      if (data) setPlanId(data.id);
+    }
+    toast.success("Periodisation plan saved");
+    setSaving(false);
+  };
+
+  if (loading) return <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-base md:text-lg font-semibold">Periodisation Planner</h3>
+        <div className="flex items-center gap-2">
+          <Select value={season} onValueChange={setSeason}>
+            <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2023/24">2023/24</SelectItem>
+              <SelectItem value="2024/25">2024/25</SelectItem>
+              <SelectItem value="2025/26">2025/26</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="outline" onClick={addPhase}>
+            <Plus className="h-4 w-4 mr-1" /> Add Phase
+          </Button>
+        </div>
+      </div>
+
+      {/* Visual timeline */}
+      {phases.length > 0 && (
+        <div className="overflow-x-auto">
+          <div className="flex gap-1 min-w-[600px]">
+            {phases.map((phase, idx) => (
+              <div
+                key={idx}
+                className="flex-1 min-w-[80px] rounded-lg p-2 text-center text-xs text-white font-medium"
+                style={{ backgroundColor: phase.colour }}
+              >
+                <div className="truncate">{phase.name || phase.type}</div>
+                <div className="opacity-75 text-[10px] mt-0.5">
+                  {phase.start_date ? format(new Date(phase.start_date), "dd MMM") : '?'} - {phase.end_date ? format(new Date(phase.end_date), "dd MMM") : '?'}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Phase editor */}
+      <div className="space-y-3">
+        {phases.map((phase, idx) => (
+          <div key={idx} className="flex flex-wrap items-center gap-2 p-3 rounded-lg border bg-card">
+            <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: phase.colour }} />
+            <Input
+              placeholder="Phase name"
+              value={phase.name}
+              onChange={e => updatePhase(idx, "name", e.target.value)}
+              className="flex-1 min-w-[120px]"
+            />
+            <Select value={phase.type} onValueChange={v => updatePhase(idx, "type", v)}>
+              <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PHASE_TYPES.map(t => (
+                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input type="date" value={phase.start_date} onChange={e => updatePhase(idx, "start_date", e.target.value)} className="w-[140px]" />
+            <Input type="date" value={phase.end_date} onChange={e => updatePhase(idx, "end_date", e.target.value)} className="w-[140px]" />
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => removePhase(idx)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      {phases.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground">
+          <GripHorizontal className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <p>No phases planned yet. Add a phase to start building the periodisation cycle.</p>
+        </div>
+      )}
+
+      {phases.length > 0 && (
+        <div className="flex justify-end">
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+            Save Plan
+          </Button>
+        </div>
       )}
     </div>
   );

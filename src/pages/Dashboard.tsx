@@ -45,6 +45,7 @@ import { AnalysisComparisons } from "@/components/portal/AnalysisComparisons";
 import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { MarkdownContent } from "@/utils/markdownRenderer";
+import { InjuryLog } from "@/components/portal/InjuryLog";
 
 interface Analysis {
   id: string;
@@ -3764,6 +3765,17 @@ const Dashboard = () => {
                       })}
                     </>
                   )}
+                </CardContent>
+              </Card>
+              {/* Injury Log Section */}
+              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0 mt-6">
+                <CardHeader marble>
+                  <div className="container mx-auto px-4">
+                    <CardTitle className="font-heading tracking-tight">Injury Log</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="container mx-auto px-4 py-4">
+                  {playerData?.id && <InjuryLog playerId={playerData.id} />}
                 </CardContent>
               </Card>
             </TabsContent>
