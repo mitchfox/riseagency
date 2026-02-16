@@ -90,7 +90,7 @@ const RadarMesh = ({ metrics }: { metrics: MetricData[] }) => {
               itemSize={3}
             />
           </bufferGeometry>
-          <lineBasicMaterial color="hsl(0, 0%, 30%)" transparent opacity={0.3} />
+          <lineBasicMaterial color="#4d4d4d" transparent opacity={0.3} />
         </lineLoop>
       ))}
 
@@ -105,7 +105,7 @@ const RadarMesh = ({ metrics }: { metrics: MetricData[] }) => {
               itemSize={3}
             />
           </bufferGeometry>
-          <lineBasicMaterial color="hsl(0, 0%, 25%)" transparent opacity={0.4} />
+          <lineBasicMaterial color="#404040" transparent opacity={0.4} />
         </line>
       ))}
 
@@ -113,11 +113,11 @@ const RadarMesh = ({ metrics }: { metrics: MetricData[] }) => {
       {shape && (
         <mesh geometry={shape}>
           <meshStandardMaterial
-            color="hsl(43, 49%, 61%)"
+            color="#c4a84d"
             transparent
             opacity={0.55}
             side={THREE.DoubleSide}
-            emissive="hsl(43, 49%, 41%)"
+            emissive="#9a7d2e"
             emissiveIntensity={0.2}
           />
         </mesh>
@@ -133,14 +133,14 @@ const RadarMesh = ({ metrics }: { metrics: MetricData[] }) => {
             itemSize={3}
           />
         </bufferGeometry>
-        <lineBasicMaterial color="hsl(43, 49%, 71%)" linewidth={2} />
+        <lineBasicMaterial color="#d4be76" linewidth={2} />
       </lineLoop>
 
       {/* Vertex dots */}
       {valuePoints.map((p, i) => (
         <mesh key={`dot-${i}`} position={p}>
           <sphereGeometry args={[0.06, 8, 8]} />
-          <meshStandardMaterial color="hsl(43, 49%, 81%)" emissive="hsl(43, 49%, 61%)" emissiveIntensity={0.5} />
+          <meshStandardMaterial color="#ddd0a0" emissive="#c4a84d" emissiveIntensity={0.5} />
         </mesh>
       ))}
 
