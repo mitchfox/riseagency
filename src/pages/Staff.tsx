@@ -77,6 +77,7 @@ import { StaffSMSNotifications } from "@/components/staff/StaffSMSNotifications"
 import { VisionBoardSection } from "@/components/staff/VisionBoardSection";
 import { DocsSection } from "@/components/staff/DocsSection";
 import { SheetsSection } from "@/components/staff/SheetsSection";
+import { DesignStudio } from "@/components/staff/design/DesignStudio";
 
 import { supabase } from "@/integrations/supabase/client";
 import { VersionManager } from "@/lib/versionManager";
@@ -91,6 +92,7 @@ import { useTheme } from "next-themes";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
 import marbleBackground from "@/assets/smudged-marble-overlay.png";
 import whiteMarbleBackground from "@/assets/white-marble-overlay.png";
+import { Palette } from "lucide-react";
 import { 
   Calendar, 
   Users, 
@@ -144,7 +146,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -752,6 +754,7 @@ const Staff = () => {
           { id: '_group_apps', title: 'Apps', isGroupLabel: true },
           { id: 'docs', title: 'Docs', icon: FileText },
           { id: 'sheets', title: 'Sheets', icon: FileSpreadsheet },
+          { id: 'designstudio', title: 'Design Studio', icon: Palette },
         ],
         locked: false
       },
@@ -1311,6 +1314,7 @@ const Staff = () => {
                   {expandedSection === 'visionboard' && <VisionBoardSection />}
                   {expandedSection === 'docs' && <DocsSection />}
                   {expandedSection === 'sheets' && <SheetsSection />}
+                  {expandedSection === 'designstudio' && <DesignStudio />}
                   {expandedSection === 'staffschedules' && <StaffSchedulesManagement />}
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
                   {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
