@@ -7,19 +7,22 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { toast } from 'sonner';
 import {
   MousePointer2, Type, Square, Circle, Triangle, Star, Diamond, ArrowRight,
-  Minus, Hand, Undo2, Redo2, ZoomIn, ZoomOut, Download, Grid3X3,
+  Minus, Hand, Undo2, Redo2, ZoomIn, ZoomOut, Grid3X3,
   Magnet, Image as ImageIcon, Trash2, Layers, Keyboard,
-  ChevronLeft, Upload, Palette, SlidersHorizontal,
-  PanelLeftClose, PanelLeftOpen,
+  ChevronLeft, Upload, SlidersHorizontal,
+  PanelLeftClose, Palette, LayoutTemplate, Wand2, Hexagon, Pentagon,
 } from 'lucide-react';
 import { useDesignCanvas } from './useDesignCanvas';
 import { CanvasElement } from './CanvasElement';
 import { LayersPanel } from './LayersPanel';
 import { PropertiesPanel } from './PropertiesPanel';
 import { SavedAssetsPanel } from './SavedAssetsPanel';
+import { BrandKitPanel } from './BrandKitPanel';
+import { TemplatesPanel } from './TemplatesPanel';
+import { FiltersPanel } from './FiltersPanel';
+import { ExportDialog } from './ExportDialog';
 import { CANVAS_PRESETS } from './types';
-import type { ShapeType, SnapLine, DesignProject } from './types';
-import html2canvas from 'html2canvas';
+import type { ShapeType, SnapLine, DesignProject, DesignTemplate } from './types';
 
 interface DesignStudioProps {
   initialProject: DesignProject;
@@ -27,11 +30,13 @@ interface DesignStudioProps {
   onSave: (project: DesignProject) => void;
 }
 
+type PanelType = 'assets' | 'layers' | 'properties' | 'brand' | 'templates' | 'filters' | null;
+
 export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioProps) {
   const canvas = useDesignCanvas(initialProject);
   const canvasRef = useRef<HTMLDivElement>(null);
   const canvasAreaRef = useRef<HTMLDivElement>(null);
-  const [leftPanel, setLeftPanel] = useState<'assets' | 'layers' | 'properties' | null>(null);
+  const [leftPanel, setLeftPanel] = useState<PanelType>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [canvasPreset, setCanvasPreset] = useState<string>(() => {
     const match = CANVAS_PRESETS.find(p => p.width === initialProject.width && p.height === initialProject.height);
@@ -42,17 +47,20 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
   const [isPanning, setIsPanning] = useState(false);
   const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const [hasInitialised, setHasInitialised] = useState(false);
+  const [customW, setCustomW] = useState(String(initialProject.width));
+  const [customH, setCustomH] = useState(String(initialProject.height));
 
   const selectedElement = canvas.project.elements.find(el => canvas.selectedIds.includes(el.id)) || null;
 
-  // Auto-show properties panel when an element is selected
+  // Auto-show properties panel when element selected
   useEffect(() => {
-    if (canvas.selectedIds.length > 0 && leftPanel !== 'properties') {
+    if (canvas.selectedIds.length > 0) {
+      if (selectedElement?.type === 'image' && leftPanel === 'filters') return; // keep filters open
       setLeftPanel('properties');
     }
   }, [canvas.selectedIds]);
 
-  // Auto-centre and fit canvas on first load
+  // Auto-centre and fit canvas
   useEffect(() => {
     if (hasInitialised || !canvasAreaRef.current) return;
     const rect = canvasAreaRef.current.getBoundingClientRect();
@@ -65,11 +73,9 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
     setHasInitialised(true);
   }, [hasInitialised, canvas.project.width, canvas.project.height]);
 
-  // Auto-save periodically
+  // Auto-save
   useEffect(() => {
-    const timer = setInterval(() => {
-      onSave(canvas.project);
-    }, 10000);
+    const timer = setInterval(() => onSave(canvas.project), 10000);
     return () => clearInterval(timer);
   }, [canvas.project, onSave]);
 
@@ -108,19 +114,14 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
     const el = canvasAreaRef.current;
     if (!el) return;
     const handleWheel = (e: WheelEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
-        canvas.setZoom(z => Math.max(0.1, Math.min(3, z - e.deltaY * 0.001)));
-      } else {
-        e.preventDefault();
-        canvas.setZoom(z => Math.max(0.1, Math.min(3, z - e.deltaY * 0.002)));
-      }
+      e.preventDefault();
+      const delta = e.ctrlKey || e.metaKey ? e.deltaY * 0.001 : e.deltaY * 0.002;
+      canvas.setZoom(z => Math.max(0.1, Math.min(3, z - delta)));
     };
     el.addEventListener('wheel', handleWheel, { passive: false });
     return () => el.removeEventListener('wheel', handleWheel);
   }, [canvas]);
 
-  // Middle-click / space drag to pan
   const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.target === canvasRef.current || e.target === canvasAreaRef.current || canvas.activeTool === 'hand') {
       if (e.button === 0 || e.button === 1) {
@@ -157,21 +158,6 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
 
   const handleDragEnd = useCallback(() => setActiveSnapLines([]), []);
 
-  const handleExport = useCallback(async () => {
-    if (!canvasRef.current) return;
-    try {
-      const c = await html2canvas(canvasRef.current, {
-        useCORS: true, backgroundColor: null,
-        width: canvas.project.width, height: canvas.project.height,
-      } as any);
-      const link = document.createElement('a');
-      link.download = `${canvas.project.name}.png`;
-      link.href = c.toDataURL('image/png');
-      link.click();
-      toast.success('Design exported');
-    } catch { toast.error('Failed to export'); }
-  }, [canvas.project]);
-
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -184,7 +170,45 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
   const handlePresetChange = useCallback((preset: string) => {
     setCanvasPreset(preset);
     const p = CANVAS_PRESETS.find(pr => pr.name === preset);
-    if (p) canvas.setProject((prev: DesignProject) => ({ ...prev, width: p.width, height: p.height }));
+    if (p) {
+      canvas.setProject((prev: DesignProject) => ({ ...prev, width: p.width, height: p.height }));
+      setCustomW(String(p.width));
+      setCustomH(String(p.height));
+    }
+  }, [canvas]);
+
+  const handleCustomDimensions = useCallback(() => {
+    const w = parseInt(customW) || 1080;
+    const h = parseInt(customH) || 1080;
+    canvas.setProject((prev: DesignProject) => ({ ...prev, width: w, height: h }));
+    setCanvasPreset('Custom');
+  }, [customW, customH, canvas]);
+
+  const handleApplyTemplate = useCallback((template: DesignTemplate) => {
+    canvas.setProject((prev: DesignProject) => ({
+      ...prev,
+      width: template.width,
+      height: template.height,
+      background: template.background,
+      elements: template.elements.map((el, i) => ({
+        id: Math.random().toString(36).slice(2, 11),
+        type: el.type || 'text',
+        x: el.x ?? 0,
+        y: el.y ?? 0,
+        width: el.width ?? 200,
+        height: el.height ?? 50,
+        rotation: 0,
+        opacity: el.opacity ?? 1,
+        locked: false,
+        visible: true,
+        name: el.name || `${el.type} ${i + 1}`,
+        ...el,
+      })) as any,
+    }));
+    setCustomW(String(template.width));
+    setCustomH(String(template.height));
+    setLeftPanel(null);
+    toast.success('Template applied');
   }, [canvas]);
 
   const shapes: { type: ShapeType; icon: any; label: string }[] = [
@@ -194,6 +218,8 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
     { type: 'star', icon: Star, label: 'Star' },
     { type: 'diamond', icon: Diamond, label: 'Diamond' },
     { type: 'arrow', icon: ArrowRight, label: 'Arrow' },
+    { type: 'hexagon', icon: Hexagon, label: 'Hexagon' },
+    { type: 'pentagon', icon: Pentagon, label: 'Pentagon' },
   ];
 
   const ToolBtn = ({ active, onClick, icon: Icon, label, shortcut }: { active?: boolean; onClick: () => void; icon: any; label: string; shortcut?: string }) => (
@@ -212,6 +238,17 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
     </Tooltip>
   );
 
+  const togglePanel = (panel: PanelType) => setLeftPanel(leftPanel === panel ? null : panel);
+
+  const panelTitles: Record<string, string> = {
+    assets: 'Saved Assets',
+    layers: 'Layers',
+    properties: 'Properties',
+    brand: 'Brand Kit',
+    templates: 'Templates',
+    filters: 'Filters & Effects',
+  };
+
   return (
     <TooltipProvider delayDuration={300}>
       <div className="flex flex-col h-[calc(100vh-8rem)] bg-background rounded-lg border overflow-hidden">
@@ -227,7 +264,6 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
           />
           <div className="w-px h-5 bg-border" />
 
-          {/* Undo/Redo */}
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={canvas.undo} disabled={canvas.historyIndex <= 0} title="Undo">
             <Undo2 className="h-3.5 w-3.5" />
           </Button>
@@ -245,11 +281,28 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
             </SelectContent>
           </Select>
 
+          {/* Custom dimensions */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 text-[10px] font-mono px-2">
+                {canvas.project.width}×{canvas.project.height}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2 space-y-2" align="end">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase">Custom Size</p>
+              <div className="flex gap-1.5 items-center">
+                <Input value={customW} onChange={e => setCustomW(e.target.value)} className="h-7 text-xs" placeholder="Width" />
+                <span className="text-muted-foreground text-xs">×</span>
+                <Input value={customH} onChange={e => setCustomH(e.target.value)} className="h-7 text-xs" placeholder="Height" />
+              </div>
+              <Button size="sm" className="w-full h-7 text-xs" onClick={handleCustomDimensions}>Apply</Button>
+            </PopoverContent>
+          </Popover>
+
           <input type="color" value={canvas.project.background} onChange={e => canvas.setProject(p => ({ ...p, background: e.target.value }))} className="w-7 h-7 rounded cursor-pointer border" title="Background" />
 
           <div className="w-px h-5 bg-border" />
 
-          {/* Grid / Snap */}
           <Button variant={canvas.showGrid ? 'default' : 'ghost'} size="icon" className="h-7 w-7" onClick={() => canvas.setShowGrid(!canvas.showGrid)} title="Grid">
             <Grid3X3 className="h-3.5 w-3.5" />
           </Button>
@@ -262,20 +315,19 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowShortcuts(!showShortcuts)} title="Shortcuts">
             <Keyboard className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleExport}>
-            <Download className="h-3 w-3" /> Export
-          </Button>
+          <ExportDialog canvasRef={canvasRef as any} project={canvas.project} />
         </div>
 
         {/* Main area */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Canva-style left toolbar */}
+          {/* Left toolbar */}
           <div className="w-[52px] border-r bg-muted/20 flex flex-col items-center py-2 gap-1 flex-shrink-0">
             <ToolBtn active={canvas.activeTool === 'select'} onClick={() => canvas.setActiveTool('select')} icon={MousePointer2} label="Select" shortcut="V" />
             <ToolBtn active={canvas.activeTool === 'hand'} onClick={() => canvas.setActiveTool('hand')} icon={Hand} label="Pan" shortcut="H" />
 
             <div className="w-6 h-px bg-border my-1" />
 
+            <ToolBtn active={leftPanel === 'templates'} onClick={() => togglePanel('templates')} icon={LayoutTemplate} label="Templates" />
             <ToolBtn onClick={() => canvas.addText()} icon={Type} label="Text" shortcut="T" />
 
             <Popover>
@@ -284,7 +336,7 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
                   <ToolBtn onClick={() => {}} icon={Square} label="Shapes" />
                 </div>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-2 grid grid-cols-3 gap-1" side="right" align="start">
+              <PopoverContent className="w-auto p-2 grid grid-cols-4 gap-1" side="right" align="start">
                 {shapes.map(s => {
                   const Icon = s.icon;
                   return (
@@ -302,14 +354,14 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
 
             <div className="w-6 h-px bg-border my-1" />
 
-            {/* Panel toggles */}
-            <ToolBtn active={leftPanel === 'assets'} onClick={() => setLeftPanel(leftPanel === 'assets' ? null : 'assets')} icon={ImageIcon} label="Saved Assets" />
-            <ToolBtn active={leftPanel === 'layers'} onClick={() => setLeftPanel(leftPanel === 'layers' ? null : 'layers')} icon={Layers} label="Layers" />
-            <ToolBtn active={leftPanel === 'properties'} onClick={() => setLeftPanel(leftPanel === 'properties' ? null : 'properties')} icon={SlidersHorizontal} label="Properties" />
+            <ToolBtn active={leftPanel === 'assets'} onClick={() => togglePanel('assets')} icon={ImageIcon} label="Saved Assets" />
+            <ToolBtn active={leftPanel === 'brand'} onClick={() => togglePanel('brand')} icon={Palette} label="Brand Kit" />
+            <ToolBtn active={leftPanel === 'layers'} onClick={() => togglePanel('layers')} icon={Layers} label="Layers" />
+            <ToolBtn active={leftPanel === 'properties'} onClick={() => togglePanel('properties')} icon={SlidersHorizontal} label="Properties" />
+            <ToolBtn active={leftPanel === 'filters'} onClick={() => togglePanel('filters')} icon={Wand2} label="Filters" />
 
             <div className="flex-1" />
 
-            {/* Delete */}
             {canvas.selectedIds.length > 0 && (
               <ToolBtn onClick={canvas.deleteSelected} icon={Trash2} label="Delete" shortcut="Del" />
             )}
@@ -317,10 +369,10 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
 
           {/* Slide-out panel */}
           {leftPanel && (
-            <div className="w-56 border-r bg-card flex-shrink-0 overflow-hidden flex flex-col animate-in slide-in-from-left-2 duration-200">
+            <div className="w-60 border-r bg-card flex-shrink-0 overflow-hidden flex flex-col animate-in slide-in-from-left-2 duration-200">
               <div className="flex items-center justify-between px-3 py-2 border-b">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {leftPanel === 'assets' ? 'Saved Assets' : leftPanel === 'layers' ? 'Layers' : 'Properties'}
+                  {panelTitles[leftPanel] || leftPanel}
                 </h3>
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setLeftPanel(null)}>
                   <PanelLeftClose className="h-3.5 w-3.5" />
@@ -343,6 +395,22 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
                   />
                 )}
                 {leftPanel === 'properties' && <PropertiesPanel element={selectedElement} onUpdate={canvas.updateElement} />}
+                {leftPanel === 'brand' && (
+                  <BrandKitPanel
+                    onApplyColour={(c) => {
+                      if (selectedElement) {
+                        if (selectedElement.type === 'text') canvas.updateElement(selectedElement.id, { color: c });
+                        else if (selectedElement.type === 'shape') canvas.updateElement(selectedElement.id, { fill: c });
+                      }
+                    }}
+                    onApplyFont={(f) => {
+                      if (selectedElement?.type === 'text') canvas.updateElement(selectedElement.id, { fontFamily: f });
+                    }}
+                    onAddLogo={(url) => canvas.addImage(url, 'Brand Logo')}
+                  />
+                )}
+                {leftPanel === 'templates' && <TemplatesPanel onApplyTemplate={handleApplyTemplate} />}
+                {leftPanel === 'filters' && <FiltersPanel element={selectedElement} onUpdate={canvas.updateElement} />}
               </div>
             </div>
           )}
@@ -426,7 +494,7 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
               </div>
             </div>
 
-            {/* Zoom controls - floating bottom-right */}
+            {/* Zoom controls */}
             <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-card/90 backdrop-blur border rounded-lg px-2 py-1 shadow-sm">
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => canvas.setZoom(z => Math.max(0.1, z - 0.1))}>
                 <ZoomOut className="h-3 w-3" />
@@ -437,7 +505,6 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
               </Button>
             </div>
 
-            {/* Size indicator */}
             <div className="absolute bottom-3 left-3 text-[10px] text-muted-foreground bg-card/80 backdrop-blur px-2 py-0.5 rounded shadow-sm">
               {canvas.project.width} × {canvas.project.height}
             </div>

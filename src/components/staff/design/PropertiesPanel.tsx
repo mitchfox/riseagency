@@ -72,7 +72,7 @@ export function PropertiesPanel({ element, onUpdate }: PropertiesPanelProps) {
         </div>
       </div>
 
-      {/* Corner Radius - available for shapes (rectangle), images */}
+      {/* Corner Radius */}
       {(element.type === 'image' || (element.type === 'shape' && element.shapeType === 'rectangle')) && (
         <div className="space-y-1">
           <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Corner Radius</Label>
@@ -133,6 +133,41 @@ export function PropertiesPanel({ element, onUpdate }: PropertiesPanelProps) {
               <Input value={element.color || '#000000'} onChange={e => update({ color: e.target.value })} className="h-7 text-xs flex-1" />
             </div>
           </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Letter Spacing</Label>
+            <div className="flex items-center gap-2">
+              <Slider value={[element.letterSpacing || 0]} min={-5} max={20} step={0.5} onValueChange={([v]) => update({ letterSpacing: v })} className="flex-1" />
+              <span className="w-8 text-right">{element.letterSpacing || 0}px</span>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Line Height</Label>
+            <div className="flex items-center gap-2">
+              <Slider value={[(element.lineHeight || 1.2) * 100]} min={80} max={300} step={5} onValueChange={([v]) => update({ lineHeight: v / 100 })} className="flex-1" />
+              <span className="w-8 text-right">{(element.lineHeight || 1.2).toFixed(1)}</span>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Text Shadow</Label>
+            <div className="grid grid-cols-3 gap-1">
+              {[
+                { label: 'None', value: '' },
+                { label: 'Soft', value: '2px 2px 4px rgba(0,0,0,0.3)' },
+                { label: 'Hard', value: '3px 3px 0px rgba(0,0,0,0.5)' },
+                { label: 'Glow', value: '0 0 10px rgba(255,255,255,0.8)' },
+                { label: 'Lift', value: '0 4px 8px rgba(0,0,0,0.4)' },
+                { label: 'Outline', value: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' },
+              ].map(s => (
+                <button
+                  key={s.label}
+                  onClick={() => update({ textShadow: s.value })}
+                  className={`text-[10px] py-1 rounded border text-center transition-colors ${element.textShadow === s.value ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-muted'}`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </>
       )}
 
@@ -147,7 +182,7 @@ export function PropertiesPanel({ element, onUpdate }: PropertiesPanelProps) {
             </div>
           </div>
           <div className="space-y-1">
-            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Border</Label>
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Border Colour</Label>
             <div className="flex gap-2 items-center">
               <input type="color" value={element.stroke || '#000000'} onChange={e => update({ stroke: e.target.value })} className="w-7 h-7 rounded cursor-pointer border" />
               <Input value={element.stroke || '#000000'} onChange={e => update({ stroke: e.target.value })} className="h-7 text-xs flex-1" />
