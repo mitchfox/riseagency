@@ -448,33 +448,36 @@ export const AnnotationCanvas = ({
           </g>
         );
       case 'semi-circle': {
-        // Flat oval disc (ellipse) placed under players like reference image
+        // Open bottom-arc ellipse that sits under a player like a ground ring
         const rx = el.width || el.radius || 4;
         const ry = el.height || (rx * 0.35);
         const rotation = el.angle || 0;
+        // Draw only the bottom ~60% of the ellipse (hide the top arc behind the player)
+        // We use an SVG arc path: start at left, sweep the bottom to right
+        // Parametric: from ~-50° to ~230° (bottom portion)
+        const startAngle = -50 * (Math.PI / 180);
+        const endAngle = 230 * (Math.PI / 180);
+        const x1 = el.x + rx * Math.cos(startAngle);
+        const y1 = el.y + ry * Math.sin(startAngle);
+        const x2 = el.x + rx * Math.cos(endAngle);
+        const y2 = el.y + ry * Math.sin(endAngle);
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}
             transform={`rotate(${rotation}, ${el.x}, ${el.y})`}>
-            {/* Shadow/3D effect ellipse slightly offset */}
+            {/* Subtle ground shadow */}
             <ellipse
-              cx={el.x} cy={el.y + ry * 0.15}
-              rx={rx} ry={ry}
-              fill="rgba(0,0,0,0.3)" stroke="none"
+              cx={el.x} cy={el.y + ry * 0.2}
+              rx={rx * 0.9} ry={ry * 0.6}
+              fill="rgba(0,0,0,0.15)" stroke="none"
             />
-            {/* Main disc ellipse */}
-            <ellipse
-              cx={el.x} cy={el.y}
-              rx={rx} ry={ry}
-              fill={el.color} fillOpacity={el.fillOpacity || 0.5}
-              stroke={el.color} strokeWidth={el.strokeWidth * 0.5} strokeOpacity={0.9}
-            >
-              {anim && <animate attributeName="fill-opacity" from="0" to={String(el.fillOpacity || 0.5)} dur="0.3s" fill="freeze" />}
-            </ellipse>
-            {/* Highlight arc on top edge */}
-            <ellipse
-              cx={el.x} cy={el.y - ry * 0.1}
-              rx={rx * 0.8} ry={ry * 0.5}
-              fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth={0.5}
+            {/* Bottom arc only - no fill */}
+            <path
+              d={`M ${x1} ${y1} A ${rx} ${ry} 0 1 1 ${x2} ${y2}`}
+              fill="none"
+              stroke={el.color}
+              strokeWidth={el.strokeWidth}
+              strokeOpacity={0.9}
+              strokeLinecap="round"
             />
           </g>
         );
