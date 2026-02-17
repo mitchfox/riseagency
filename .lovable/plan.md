@@ -1,48 +1,95 @@
 
 
-## Unified Annotation Render Pipeline — COMPLETED
+# Export Pipeline Hardening
 
-### What was done
+## Summary
 
-1. **Created `src/lib/annotationRenderUtils.ts`** — Pure, deterministic render evaluation:
-   - `computeVisibleElements(elements, time, config?)` — filters by time window, interpolates keyframes (exact time, not frame count), applies animateIn/animateOut. Returns `ComputedAnnotationElement[]` with final x, y, opacity, scale. Never mutates originals.
-   - `renderElementsToSVGString(elements, width, height)` — generates SVG markup from computed state for canvas compositing during export. No DOM dependency.
-   - `waitForSeek(video, targetTime)` — proper promise-based seek with `seeked` event + 200ms fallback + 16ms decode delay.
+Apply six targeted refinements to the export pipeline to eliminate flicker, ensure frame accuracy, and isolate export from playback state.
 
-2. **Refactored `AnnotationEditor.tsx`**:
-   - `visibleElements` useMemo now calls `computeVisibleElements` with `forceOpacity: 1` during freeze/drawing.
-   - Export pipeline completely rewritten: seeks frame-by-frame using `waitForSeek`, calls `computeVisibleElements(allElements, offset)` per frame, generates SVG via `renderElementsToSVGString`, draws to canvas. **Zero DOM references during export.**
-   - Removed the old `interpolateKeyframes` function (moved to shared utils).
+---
 
-3. **Fixed `VideoAnalysis.tsx` freeze-frame system**:
-   - Added `overlayFreezeUntilRef` for time-driven freeze tracking.
-   - Effect A now uses `computeVisibleElements` for annotation detection.
-   - End-check listener guarded: won't interfere during active freeze.
-   - Overlay rendering uses `computeVisibleElements` instead of inline filtering.
-   - Both playback and export now call the same pure function.
+## Changes
 
-### Architecture
+### 1. Frame decode readiness check (`annotationRenderUtils.ts`)
+
+Update `waitForSeek` to check `video.readyState >= 2` (HAVE_CURRENT_DATA) after the `seeked` event fires, polling briefly if needed. Increase post-seek delay to 50ms and add a `requestAnimationFrame` gate for compositor flush. Increase fallback timeout to 300ms.
 
 ```
-computeVisibleElements(elements, T)
-         ↓
-  ComputedAnnotationElement[]
-       ↓              ↓
-  Playback          Export
-  (AnnotationCanvas)  (renderElementsToSVGString → canvas)
+Current flow:
+  seeked -> 16ms delay -> resolve (200ms fallback)
+
+New flow:
+  seeked -> poll readyState >= 2 (up to 100ms) -> 50ms delay -> rAF -> resolve (300ms fallback)
 ```
 
-Both paths receive identical computed arrays. If they differ, the system is broken.
+### 2. Frame stepping precision (`AnnotationEditor.tsx`)
 
-### What stays unchanged
+Replace floating-point accumulation with index-based time calculation to prevent drift:
 
-- AnnotationCanvas rendering (SVG elements, resize handles, interaction)
-- Drawing mode workflow
-- Timeline dots, sidebar, keyframe editing
-- localStorage persistence (flagged for future database migration)
+```
+Current:  time = klipStart + (i / fps)    // already index-based, correct
+Verify:   offset = i / fps                // not i * frameStep
+```
 
-### Strategic follow-ups
+The current code already uses `i / fps` which is correct. Will verify no `t += frameStep` pattern exists elsewhere.
 
-- [ ] Database persistence for annotation projects (replace localStorage with JSONB table)
-- [ ] JSON export button for annotation metadata
-- [ ] Deterministic render consistency test (snapshot comparison)
+### 3. Metadata readiness before export (`AnnotationEditor.tsx`)
+
+Before reading `videoWidth`/`videoHeight`, await `loadedmetadata` if `readyState < 1`. Fail explicitly if dimensions are zero rather than silently falling back to 1920x1080.
+
+```
+Current:  const vw = video.videoWidth || 1920
+
+New:
+  if (video.readyState < 1) await loadedmetadata event
+  if (!video.videoWidth || !video.videoHeight) throw + toast error
+  const vw = video.videoWidth
+  const vh = video.videoHeight
+```
+
+### 4. Frame pacing adjustment (`AnnotationEditor.tsx`)
+
+Replace `setTimeout(r, 1000 / fps)` with `setTimeout(r, 50)`. This is a pragmatic compromise -- enough for MediaRecorder to ingest each frame without tying pacing to wall-clock time. Effective FPS won't be mathematically exact but will be stable enough for analysis output.
+
+### 5. Isolate export from playback state (`AnnotationEditor.tsx`)
+
+Add an `isExportingRef` guard. When true:
+- Effect A (freeze detection) short-circuits immediately
+- Effect B (freeze resume timer) short-circuits immediately
+- No playback freeze state is set or cleared during export
+
+This prevents any playback listener from interfering with the export's explicit time control.
+
+```
+const isExportingRef = useRef(false);
+
+// In exportClip:
+isExportingRef.current = true;
+try { ... } finally { isExportingRef.current = false; }
+
+// In Effect A:
+if (isExportingRef.current) return;
+
+// In Effect B:
+if (isExportingRef.current) return;
+```
+
+### 6. Remove redundant `clearRect` (`AnnotationEditor.tsx`)
+
+Remove `ctx.clearRect(0, 0, vw, vh)` before `ctx.drawImage(video, ...)` since the video frame draw overwrites the entire buffer.
+
+---
+
+## Files affected
+
+- **`src/lib/annotationRenderUtils.ts`** -- harden `waitForSeek` with readyState polling, longer delay, rAF gate, 300ms fallback
+- **`src/components/staff/annotations/AnnotationEditor.tsx`** -- metadata check, explicit dimension failure, frame pacing fix, isExportingRef isolation, remove clearRect
+
+## What this does not change
+
+- `computeVisibleElements` -- already pure, already deterministic
+- `renderElementsToSVGString` -- already DOM-free
+- Playback rendering -- untouched
+- Drawing mode -- untouched
+- localStorage persistence -- separate concern for a future migration
+
