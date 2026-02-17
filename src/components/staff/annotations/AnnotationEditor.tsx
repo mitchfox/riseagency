@@ -72,6 +72,8 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const playbackFreezeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isExportingRef = useRef(false);
   const playbackFreezeDurationRef = useRef(3);
+  // Track which element IDs triggered the current freeze so we only show those
+  const freezeElementIdsRef = useRef<Set<string>>(new Set());
 
   const activeKlip = klips.find(k => k.id === activeKlipId);
   const klipOffset = activeKlip ? currentTime - activeKlip.startTime : 0;
@@ -82,10 +84,14 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
 
   const visibleElements = useMemo(() => {
     // Use the shared pure function
-    // Only force opacity in drawing mode; during playback freeze let natural timing apply
-    // so that previous annotations fade out correctly
     const forceOpacity = drawingMode ? 1 : null;
-    const computed = computeVisibleElements(allElements, effectiveOffset, { forceOpacity });
+    let computed = computeVisibleElements(allElements, effectiveOffset, { forceOpacity });
+
+    // During playback freeze, only show the elements that triggered it
+    // This prevents previous annotations from re-appearing
+    if (playbackFreezeActive && freezeElementIdsRef.current.size > 0 && !drawingMode) {
+      computed = computed.filter(el => freezeElementIdsRef.current.has(el.id));
+    }
 
     // In drawing mode, also include the selected element even if not in time window
     if (drawingMode && selectedId) {
@@ -187,11 +193,23 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
 
     if (newVisible.length === 0) return;
 
-    // Mark these as triggered
+    // Mark these as triggered and track freeze element IDs
+    const freezeIds = new Set<string>();
     newVisible.forEach(el => {
       const roundedTime = Math.round(el.appearAt * 100) / 100;
       triggeredTimesRef.current.add(roundedTime);
+      freezeIds.add(el.id);
     });
+    // Also include any other elements that are newly visible at this exact time
+    visibleElements.forEach(el => freezeIds.add(el.id));
+    // But remove elements whose duration has nearly expired
+    visibleElements.forEach(el => {
+      if (el.duration !== undefined) {
+        const remaining = (el.appearAt + el.duration) - effectiveOffset;
+        if (remaining < 0.1) freezeIds.delete(el.id);
+      }
+    });
+    freezeElementIdsRef.current = freezeIds;
 
     // Calculate the longest remaining duration among visible annotations
     const maxDuration = Math.max(
@@ -1244,35 +1262,44 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                     </div>
                   )}
 
-                  {/* Semi-circle disc: width/height for ellipse shape */}
+                  {/* Semi-circle disc: width/height/rotation sliders */}
                   {selectedElement.type === 'semi-circle' && (
-                    <div className="space-y-1 pt-2 border-t border-white/10">
+                    <div className="space-y-2 pt-2 border-t border-white/10">
                       <Label className="text-[9px] text-white/40">Disc Shape</Label>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-[9px] text-white/40 w-14">Width</Label>
-                        <Input
-                          type="number" step="0.5" min="0.5"
-                          value={(selectedElement.width || selectedElement.radius || 4).toFixed(1)}
-                          onChange={e => updateElement(selectedElement.id, { width: parseFloat(e.target.value) || 4 })}
-                          className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[9px] text-white/40">Width</Label>
+                          <span className="text-[9px] text-white/30">{(selectedElement.width || selectedElement.radius || 4).toFixed(1)}</span>
+                        </div>
+                        <Slider
+                          value={[selectedElement.width || selectedElement.radius || 4]}
+                          min={0.5} max={20} step={0.5}
+                          onValueChange={([v]) => updateElement(selectedElement.id, { width: v })}
+                          className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-[9px] text-white/40 w-14">Height</Label>
-                        <Input
-                          type="number" step="0.5" min="0.5"
-                          value={(selectedElement.height || ((selectedElement.width || selectedElement.radius || 4) * 0.35)).toFixed(1)}
-                          onChange={e => updateElement(selectedElement.id, { height: parseFloat(e.target.value) || 1.5 })}
-                          className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[9px] text-white/40">Height</Label>
+                          <span className="text-[9px] text-white/30">{(selectedElement.height || ((selectedElement.width || selectedElement.radius || 4) * 0.35)).toFixed(1)}</span>
+                        </div>
+                        <Slider
+                          value={[selectedElement.height || ((selectedElement.width || selectedElement.radius || 4) * 0.35)]}
+                          min={0.5} max={10} step={0.5}
+                          onValueChange={([v]) => updateElement(selectedElement.id, { height: v })}
+                          className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-[9px] text-white/40 w-14">Rotation</Label>
-                        <Input
-                          type="number" step="5" min="0" max="360"
-                          value={selectedElement.angle ?? 0}
-                          onChange={e => updateElement(selectedElement.id, { angle: parseInt(e.target.value) || 0 })}
-                          className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[9px] text-white/40">Rotation</Label>
+                          <span className="text-[9px] text-white/30">{selectedElement.angle ?? 0}°</span>
+                        </div>
+                        <Slider
+                          value={[selectedElement.angle ?? 0]}
+                          min={0} max={360} step={5}
+                          onValueChange={([v]) => updateElement(selectedElement.id, { angle: v })}
+                          className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
                         />
                       </div>
                     </div>
