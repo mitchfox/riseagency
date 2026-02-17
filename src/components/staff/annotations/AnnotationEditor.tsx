@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import {
   ArrowLeft, Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight,
   Save, Volume2, VolumeX, Trash2, Layers, Clock, Timer,
-  Lock, Pencil, X,
+  Lock, Pencil, X, Download, PenLine,
 } from "lucide-react";
 import { AnnotationProject, AnnotationElement, Klip, ElementKeyframe } from "./AnnotationProjects";
 import { AnnotationCanvas, TrackerState } from "./AnnotationCanvas";
@@ -73,7 +73,8 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [freezeFrameUrl, setFreezeFrameUrl] = useState<string | null>(null);
   const [drawingStartElements, setDrawingStartElements] = useState<AnnotationElement[]>([]);
   const [drawingTimestamp, setDrawingTimestamp] = useState(0);
-
+  const [projectName, setProjectName] = useState(project.name);
+  const [isRenaming, setIsRenaming] = useState(false);
   // Playback freeze state (separate from drawing mode freeze)
   const [playbackFreezeUrl, setPlaybackFreezeUrl] = useState<string | null>(null);
   const [playbackFreezeActive, setPlaybackFreezeActive] = useState(false);
@@ -325,9 +326,23 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   }, [activeKlipId, klips]);
 
   const handleSave = () => {
-    onSave({ ...project, klips });
+    onSave({ ...project, name: projectName, klips });
     toast.success("Project saved");
   };
+
+  const exportClip = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || !activeKlip) {
+      toast.error("No clip to export");
+      return;
+    }
+    // Download the source video file as MP4
+    const a = document.createElement('a');
+    a.href = video.currentSrc || project.videoUrl;
+    a.download = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}.mp4`;
+    a.click();
+    toast.success("Export started — video will download shortly");
+  }, [activeKlip, projectName, project.videoUrl]);
 
   const startDrawing = useCallback(() => {
     const video = videoRef.current;
@@ -450,8 +465,31 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
         <Button variant="ghost" size="icon" className="h-8 w-8 text-white/70 hover:text-white" onClick={onBack}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <span className="text-sm font-medium truncate flex-1">{project.name}</span>
+        {isRenaming ? (
+          <Input
+            autoFocus
+            value={projectName}
+            onChange={e => setProjectName(e.target.value)}
+            onBlur={() => setIsRenaming(false)}
+            onKeyDown={e => { if (e.key === 'Enter') setIsRenaming(false); }}
+            className="h-7 text-sm font-medium bg-white/5 border-white/10 text-white max-w-[200px]"
+          />
+        ) : (
+          <span
+            className="text-sm font-medium truncate flex-1 cursor-pointer hover:text-primary transition-colors"
+            onClick={() => setIsRenaming(true)}
+            title="Click to rename"
+          >
+            {projectName}
+          </span>
+        )}
         <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" className="text-white/70 hover:text-white gap-1 text-xs" onClick={() => setIsRenaming(true)} title="Rename">
+            <PenLine className="w-3.5 h-3.5" />
+          </Button>
+          <Button variant="ghost" size="sm" className="text-white/70 hover:text-white gap-1 text-xs" onClick={exportClip} title="Export clip">
+            <Download className="w-3.5 h-3.5" /> Export
+          </Button>
           <Button variant="ghost" size="sm" className="text-white/70 hover:text-white gap-1.5 text-xs" onClick={() => setShowPanel(!showPanel)}>
             <Layers className="w-3.5 h-3.5" /> {showPanel ? 'Hide' : 'Show'} Panel
           </Button>
@@ -687,7 +725,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 </Button>
               )}
               <div className="space-y-0.5">
-                {allElements.map((el) => {
+                {[...allElements].sort((a, b) => a.appearAt - b.appearAt).map((el) => {
                   const isVisible = visibleElements.some(v => v.id === el.id);
                   return (
                     <div
@@ -796,6 +834,85 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                     >
                       Set appear to now ({klipOffset.toFixed(1)}s)
                     </Button>
+                  </div>
+
+                  {/* Colour */}
+                  <div className="space-y-1 pt-2 border-t border-white/10">
+                    <div className="flex items-center gap-1 text-[10px] text-white/40">
+                      <span>Colour</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {['#ff0000', '#ffff00', '#00ff00', '#00bfff', '#ffffff', '#ff8c00', '#ff00ff', '#000000'].map(c => (
+                        <button
+                          key={c}
+                          className={`w-5 h-5 rounded-full border-2 transition-transform ${
+                            selectedElement.color === c ? 'border-white scale-110' : 'border-transparent hover:scale-105'
+                          }`}
+                          style={{ backgroundColor: c }}
+                          onClick={() => updateElement(selectedElement.id, { color: c })}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Size */}
+                  <div className="space-y-1 pt-2 border-t border-white/10">
+                    <div className="flex items-center gap-1 text-[10px] text-white/40">
+                      <span>Size</span>
+                    </div>
+                    {(selectedElement.type === 'circle' || selectedElement.type === 'spotlight' || selectedElement.type === 'player-marker') && (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-[9px] text-white/40 w-14">Radius</Label>
+                        <Input
+                          type="number" step="0.5" min="0.5"
+                          value={selectedElement.radius?.toFixed(1) ?? ''}
+                          onChange={e => updateElement(selectedElement.id, { radius: parseFloat(e.target.value) || 1 })}
+                          className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                        />
+                      </div>
+                    )}
+                    {selectedElement.type === 'rect' && (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-[9px] text-white/40 w-14">Width</Label>
+                          <Input
+                            type="number" step="0.5" min="0.5"
+                            value={selectedElement.width?.toFixed(1) ?? ''}
+                            onChange={e => updateElement(selectedElement.id, { width: parseFloat(e.target.value) || 1 })}
+                            className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-[9px] text-white/40 w-14">Height</Label>
+                          <Input
+                            type="number" step="0.5" min="0.5"
+                            value={selectedElement.height?.toFixed(1) ?? ''}
+                            onChange={e => updateElement(selectedElement.id, { height: parseFloat(e.target.value) || 1 })}
+                            className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                          />
+                        </div>
+                      </>
+                    )}
+                    {(selectedElement.type === 'text') && (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-[9px] text-white/40 w-14">Font size</Label>
+                        <Input
+                          type="number" step="0.5" min="1"
+                          value={selectedElement.fontSize?.toFixed(1) ?? '3'}
+                          onChange={e => updateElement(selectedElement.id, { fontSize: parseFloat(e.target.value) || 3 })}
+                          className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-[9px] text-white/40 w-14">Stroke</Label>
+                      <Input
+                        type="number" step="1" min="1" max="20"
+                        value={selectedElement.strokeWidth}
+                        onChange={e => updateElement(selectedElement.id, { strokeWidth: parseInt(e.target.value) || 2 })}
+                        className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                      />
+                    </div>
                   </div>
 
                   {selectedElement.keyframes && selectedElement.keyframes.length > 0 && (

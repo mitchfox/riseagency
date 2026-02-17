@@ -38,6 +38,12 @@ export const AnnotationCanvas = ({
   const [currentPos, setCurrentPos] = useState({ x: 0, y: 0 });
   const [freehandPoints, setFreehandPoints] = useState<{ x: number; y: number }[]>([]);
   const [dragging, setDragging] = useState<{ id: string; offX: number; offY: number } | null>(null);
+  const [resizing, setResizing] = useState<{
+    id: string;
+    handle: 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w';
+    startPos: { x: number; y: number };
+    startEl: { x: number; y: number; width?: number; height?: number; radius?: number; x2?: number; y2?: number; fontSize?: number };
+  } | null>(null);
 
   const getPos = useCallback((e: React.MouseEvent) => {
     const svg = svgRef.current;
@@ -157,6 +163,67 @@ export const AnnotationCanvas = ({
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const pos = getPos(e);
+    if (resizing) {
+      const dx = pos.x - resizing.startPos.x;
+      const dy = pos.y - resizing.startPos.y;
+      const h = resizing.handle;
+      const s = resizing.startEl;
+
+      setElements(prev => prev.map(el => {
+        if (el.id !== resizing.id) return el;
+
+        // Circle/spotlight/player-marker: resize radius
+        if (el.radius !== undefined && (el.type === 'circle' || el.type === 'spotlight' || el.type === 'player-marker')) {
+          const delta = h.includes('e') || h.includes('s') ? Math.max(dx, dy) : Math.min(dx, dy);
+          const isCorner = h.length === 2;
+          const scaleFactor = isCorner ? delta : (h === 'e' || h === 'w' ? dx : dy);
+          return { ...el, radius: Math.max(0.5, (s.radius ?? 2) + scaleFactor * (h.includes('w') || h.includes('n') ? -1 : 1)) };
+        }
+
+        // Rect: resize width/height
+        if (el.type === 'rect') {
+          const isCorner = h.length === 2;
+          let newW = s.width ?? 1;
+          let newH = s.height ?? 1;
+          let newX = s.x;
+          let newY = s.y;
+
+          if (h.includes('e')) newW = Math.max(1, (s.width ?? 1) + dx);
+          if (h.includes('w')) { newW = Math.max(1, (s.width ?? 1) - dx); newX = s.x + dx; }
+          if (h.includes('s')) newH = Math.max(1, (s.height ?? 1) + dy);
+          if (h.includes('n')) { newH = Math.max(1, (s.height ?? 1) - dy); newY = s.y + dy; }
+
+          // Corner handles: proportional resize
+          if (isCorner) {
+            const ratio = (s.width ?? 1) / (s.height ?? 1);
+            if (Math.abs(dx) > Math.abs(dy)) {
+              newH = newW / ratio;
+            } else {
+              newW = newH * ratio;
+            }
+          }
+          return { ...el, x: newX, y: newY, width: newW, height: newH };
+        }
+
+        // Lines/arrows: move endpoints
+        if (el.x2 !== undefined && el.y2 !== undefined) {
+          if (h === 'se' || h === 'e' || h === 's') {
+            return { ...el, x2: (s.x2 ?? 0) + dx, y2: (s.y2 ?? 0) + dy };
+          }
+          if (h === 'nw' || h === 'w' || h === 'n') {
+            return { ...el, x: s.x + dx, y: s.y + dy };
+          }
+        }
+
+        // Text: resize font
+        if (el.type === 'text') {
+          return { ...el, fontSize: Math.max(1, (s.fontSize ?? 3) + dy * 0.1) };
+        }
+
+        return el;
+      }));
+      return;
+    }
     if (dragging) {
       setElements(prev => prev.map(el =>
         el.id === dragging.id ? { ...el, x: pos.x - dragging.offX, y: pos.y - dragging.offY } : el
@@ -168,9 +235,10 @@ export const AnnotationCanvas = ({
     if (activeTool === 'freehand') {
       setFreehandPoints(prev => [...prev, pos]);
     }
-  }, [drawing, dragging, activeTool, getPos, setElements]);
+  }, [drawing, dragging, resizing, activeTool, getPos, setElements]);
 
   const handleMouseUp = useCallback(() => {
+    if (resizing) { setResizing(null); return; }
     if (dragging) { setDragging(null); return; }
     if (!drawing) return;
     setDrawing(false);
@@ -578,11 +646,82 @@ export const AnnotationCanvas = ({
     });
   };
 
+  const renderResizeHandles = () => {
+    if (activeTool !== 'select' || !selectedId) return null;
+    const el = elements.find(e => e.id === selectedId);
+    if (!el) return null;
+
+    const handleSize = 0.8; // percentage
+    type HandleDef = { handle: 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w'; x: number; y: number; cursor: string };
+    let handles: HandleDef[] = [];
+
+    if (el.type === 'rect' && el.width !== undefined && el.height !== undefined) {
+      const x = el.x, y = el.y, w = el.width, h = el.height;
+      handles = [
+        { handle: 'nw', x, y, cursor: 'nwse-resize' },
+        { handle: 'ne', x: x + w, y, cursor: 'nesw-resize' },
+        { handle: 'sw', x, y: y + h, cursor: 'nesw-resize' },
+        { handle: 'se', x: x + w, y: y + h, cursor: 'nwse-resize' },
+        { handle: 'n', x: x + w / 2, y, cursor: 'ns-resize' },
+        { handle: 's', x: x + w / 2, y: y + h, cursor: 'ns-resize' },
+        { handle: 'e', x: x + w, y: y + h / 2, cursor: 'ew-resize' },
+        { handle: 'w', x, y: y + h / 2, cursor: 'ew-resize' },
+      ];
+    } else if ((el.type === 'circle' || el.type === 'spotlight' || el.type === 'player-marker') && el.radius !== undefined) {
+      const r = el.radius;
+      handles = [
+        { handle: 'ne', x: el.x + r, y: el.y - r, cursor: 'nesw-resize' },
+        { handle: 'se', x: el.x + r, y: el.y + r, cursor: 'nwse-resize' },
+        { handle: 'sw', x: el.x - r, y: el.y + r, cursor: 'nesw-resize' },
+        { handle: 'nw', x: el.x - r, y: el.y - r, cursor: 'nwse-resize' },
+        { handle: 'e', x: el.x + r, y: el.y, cursor: 'ew-resize' },
+        { handle: 'w', x: el.x - r, y: el.y, cursor: 'ew-resize' },
+        { handle: 'n', x: el.x, y: el.y - r, cursor: 'ns-resize' },
+        { handle: 's', x: el.x, y: el.y + r, cursor: 'ns-resize' },
+      ];
+    } else if (el.x2 !== undefined && el.y2 !== undefined) {
+      // Line/arrow/curve: endpoints
+      handles = [
+        { handle: 'nw', x: el.x, y: el.y, cursor: 'move' },
+        { handle: 'se', x: el.x2, y: el.y2, cursor: 'move' },
+      ];
+    }
+
+    if (handles.length === 0) return null;
+
+    return (
+      <g>
+        {handles.map(h => (
+          <rect
+            key={h.handle}
+            x={`${h.x - handleSize / 2}%`}
+            y={`${h.y - handleSize / 2}%`}
+            width={`${handleSize}%`}
+            height={`${handleSize}%`}
+            fill="white"
+            stroke="hsl(var(--primary))"
+            strokeWidth={1.5}
+            style={{ cursor: h.cursor }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              setResizing({
+                id: el.id,
+                handle: h.handle,
+                startPos: getPos(e),
+                startEl: { x: el.x, y: el.y, width: el.width, height: el.height, radius: el.radius, x2: el.x2, y2: el.y2, fontSize: el.fontSize },
+              });
+            }}
+          />
+        ))}
+      </g>
+    );
+  };
+
   return (
     <svg
       ref={svgRef}
       className="absolute inset-0 w-full h-full"
-      style={{ cursor: activeTool === 'select' ? 'default' : 'crosshair' }}
+      style={{ cursor: resizing ? 'grabbing' : activeTool === 'select' ? 'default' : 'crosshair' }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
@@ -591,6 +730,7 @@ export const AnnotationCanvas = ({
       {renderTrackers()}
       {elements.map(renderElement)}
       {renderPreview()}
+      {renderResizeHandles()}
     </svg>
   );
 };
