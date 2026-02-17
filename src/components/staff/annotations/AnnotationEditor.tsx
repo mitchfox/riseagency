@@ -71,6 +71,8 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [trackers, setTrackers] = useState<TrackerState[]>([]);
   const [drawingMode, setDrawingMode] = useState(false);
   const [freezeFrameUrl, setFreezeFrameUrl] = useState<string | null>(null);
+  const [drawingStartElements, setDrawingStartElements] = useState<AnnotationElement[]>([]);
+  const [drawingTimestamp, setDrawingTimestamp] = useState(0);
 
   const activeKlip = klips.find(k => k.id === activeKlipId);
   const klipOffset = activeKlip ? currentTime - activeKlip.startTime : 0;
@@ -206,6 +208,9 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     if (!video) return;
     video.pause();
     setIsPlaying(false);
+    setDrawingTimestamp(video.currentTime);
+    // Save current elements so we can revert on cancel
+    setDrawingStartElements(activeKlip?.elements || []);
     try {
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth;
@@ -216,16 +221,35 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
         setFreezeFrameUrl(canvas.toDataURL('image/jpeg', 0.85));
       }
     } catch {
-      // Fallback if canvas export fails (CORS)
       setFreezeFrameUrl(null);
     }
     setDrawingMode(true);
     setActiveTool('select');
-  }, []);
+  }, [activeKlip]);
 
-  const stopDrawing = useCallback(() => {
+  const saveDrawing = useCallback(() => {
     setDrawingMode(false);
     setFreezeFrameUrl(null);
+    setActiveTool('select');
+    setSelectedId(null);
+    // Elements are already in the klip — just close drawing mode
+    handleSave();
+    toast.success("Annotation saved");
+  }, [handleSave]);
+
+  const cancelDrawing = useCallback(() => {
+    // Revert elements to what they were before drawing started
+    setKlips(prev => prev.map(k => {
+      if (k.id !== activeKlipId) return k;
+      return { ...k, elements: drawingStartElements };
+    }));
+    setDrawingMode(false);
+    setFreezeFrameUrl(null);
+    setActiveTool('select');
+    setSelectedId(null);
+  }, [activeKlipId, drawingStartElements]);
+
+  const handleToolUsed = useCallback(() => {
     setActiveTool('select');
   }, []);
 
@@ -339,7 +363,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 onClick={drawingMode ? undefined : togglePlay}
               />
               {drawingMode && freezeFrameUrl && (
-                <img src={freezeFrameUrl} className="max-w-full max-h-full absolute inset-0 m-auto" alt="Freeze frame" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                <img src={freezeFrameUrl} className="max-w-full max-h-full absolute inset-0 m-auto" alt="Freeze frame" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', zIndex: 10 }} />
               )}
               {activeKlip && drawingMode && (
                 <AnnotationCanvas
@@ -356,6 +380,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                   linkSource={linkSource}
                   setLinkSource={setLinkSource}
                   klipOffset={klipOffset}
+                  onToolUsed={handleToolUsed}
                 />
               )}
             </div>
@@ -403,21 +428,23 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                   />
                 ))}
                 {activeKlip && duration > 0 && allElements.map(el => {
-                  const elStart = activeKlip.startTime + el.appearAt;
-                  const elEnd = el.duration ? elStart + el.duration : activeKlip.endTime;
+                  const elTime = activeKlip.startTime + el.appearAt;
                   return (
                     <div
                       key={el.id}
-                      className={`absolute h-0.5 rounded-full cursor-pointer ${
-                        el.id === selectedId ? 'opacity-100' : 'opacity-40'
+                      className={`absolute cursor-pointer rounded-full transition-all ${
+                        el.id === selectedId ? 'ring-2 ring-white scale-125' : 'hover:scale-110'
                       }`}
                       style={{
-                        top: 'calc(100% + 6px)',
-                        left: `${(elStart / duration) * 100}%`,
-                        width: `${((elEnd - elStart) / duration) * 100}%`,
+                        top: 'calc(100% + 3px)',
+                        left: `${(elTime / duration) * 100}%`,
+                        width: '8px',
+                        height: '8px',
                         backgroundColor: el.color,
+                        transform: `translateX(-4px)${el.id === selectedId ? ' scale(1.25)' : ''}`,
                       }}
-                      onClick={() => setSelectedId(el.id)}
+                      onClick={() => { setSelectedId(el.id); seek(elTime); }}
+                      title={`${el.type} at ${el.appearAt.toFixed(1)}s`}
                     />
                   );
                 })}
@@ -464,17 +491,27 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
         {/* Right sidebar */}
         {showPanel && (
           <div className="w-60 bg-[#161a24] border-l border-white/10 shrink-0 flex flex-col overflow-hidden">
-            {/* Draw / Stop Drawing button */}
+            {/* Draw / Save / Cancel buttons */}
             <div className="p-3 border-b border-white/10">
               {drawingMode ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs gap-1.5 border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
-                  onClick={stopDrawing}
-                >
-                  <X className="w-3.5 h-3.5" /> Exit Drawing
-                </Button>
+                <div className="flex gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-xs gap-1 border-green-500/50 text-green-400 hover:bg-green-500/10 hover:text-green-300"
+                    onClick={saveDrawing}
+                  >
+                    <Save className="w-3.5 h-3.5" /> Save
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-xs gap-1 border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                    onClick={cancelDrawing}
+                  >
+                    <X className="w-3.5 h-3.5" /> Cancel
+                  </Button>
+                </div>
               ) : (
                 <Button
                   variant="outline"
