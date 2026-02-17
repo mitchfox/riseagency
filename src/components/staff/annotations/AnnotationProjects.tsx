@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Plus, Film, Trash2, Copy } from "lucide-react";
+import { Plus, Film, Trash2, Copy, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { AnnotationEditor } from "./AnnotationEditor";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 // ── Types ──
 
@@ -99,24 +100,45 @@ export const AnnotationProjects = () => {
     localStorage.setItem('annotation_projects_v3', JSON.stringify(updated));
   };
 
+  const [uploading, setUploading] = useState(false);
+
   const handleNewProject = () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'video/*';
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
-      const url = URL.createObjectURL(file);
+      setUploading(true);
+      const projectId = crypto.randomUUID();
+      const ext = file.name.split('.').pop() || 'mp4';
+      const storagePath = `${projectId}.${ext}`;
+
+      const { error } = await supabase.storage
+        .from('annotation-videos')
+        .upload(storagePath, file, { upsert: true });
+
+      if (error) {
+        toast.error('Failed to upload video: ' + error.message);
+        setUploading(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('annotation-videos')
+        .getPublicUrl(storagePath);
+
       const project: AnnotationProject = {
-        id: crypto.randomUUID(),
+        id: projectId,
         name: file.name.replace(/\.[^.]+$/, ''),
-        videoUrl: url,
+        videoUrl: urlData.publicUrl,
         videoName: file.name,
         createdAt: new Date().toISOString(),
         klips: [],
       };
       setActiveProject(project);
       saveProjects([project, ...projects]);
+      setUploading(false);
     };
     input.click();
   };
@@ -168,13 +190,13 @@ export const AnnotationProjects = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card
           className="flex flex-col items-center justify-center p-8 cursor-pointer hover:border-primary/50 transition-colors border-dashed border-2 min-h-[180px]"
-          onClick={handleNewProject}
+          onClick={uploading ? undefined : handleNewProject}
         >
           <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-            <Plus className="w-8 h-8 text-primary" />
+            {uploading ? <Loader2 className="w-8 h-8 text-primary animate-spin" /> : <Plus className="w-8 h-8 text-primary" />}
           </div>
-          <span className="font-semibold">New Project</span>
-          <span className="text-xs text-muted-foreground mt-1">Upload a video to annotate</span>
+          <span className="font-semibold">{uploading ? 'Uploading...' : 'New Project'}</span>
+          <span className="text-xs text-muted-foreground mt-1">{uploading ? 'Saving video to cloud storage' : 'Upload a video to annotate'}</span>
         </Card>
       </div>
 
