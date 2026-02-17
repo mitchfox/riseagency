@@ -100,6 +100,22 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
       if (e.key === 't' && !ctrl) canvas.setActiveTool('text');
       if (e.key === 'h' && !ctrl) canvas.setActiveTool('hand');
       if (e.key === 'l' && !ctrl) canvas.setActiveTool('line');
+      // Text formatting shortcuts
+      if (ctrl && e.key === 'b') {
+        e.preventDefault();
+        const sel = canvas.project.elements.find(el => canvas.selectedIds.includes(el.id));
+        if (sel?.type === 'text') canvas.updateElement(sel.id, { fontWeight: sel.fontWeight === 'bold' || sel.fontWeight === '700' ? '400' : 'bold' });
+      }
+      if (ctrl && e.key === 'i') {
+        e.preventDefault();
+        const sel = canvas.project.elements.find(el => canvas.selectedIds.includes(el.id));
+        if (sel?.type === 'text') canvas.updateElement(sel.id, { fontStyle: sel.fontStyle === 'italic' ? 'normal' : 'italic' });
+      }
+      if (ctrl && e.key === 'u') {
+        e.preventDefault();
+        const sel = canvas.project.elements.find(el => canvas.selectedIds.includes(el.id));
+        if (sel?.type === 'text') canvas.updateElement(sel.id, { textDecoration: sel.textDecoration === 'underline' ? 'none' : 'underline' });
+      }
       if (e.key === '?' && !ctrl) setShowShortcuts(prev => !prev);
       if (e.key === '+' || e.key === '=') { e.preventDefault(); canvas.setZoom(z => Math.min(z + 0.1, 3)); }
       if (e.key === '-') { e.preventDefault(); canvas.setZoom(z => Math.max(z - 0.1, 0.1)); }
@@ -230,15 +246,15 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
   ];
 
   // Canva-style sidebar items: icon + label, hover opens panel
-  const sidebarItems: { key: PanelType; icon: any; label: string; action?: () => void }[] = [
-    { key: 'templates', icon: LayoutTemplate, label: 'Design' },
-    { key: 'elements', icon: Shapes, label: 'Elements' },
-    { key: null, icon: Type, label: 'Text', action: () => canvas.addText() },
-    { key: 'brand', icon: Palette, label: 'Brand' },
-    { key: 'assets', icon: Upload, label: 'Uploads' },
-    { key: 'properties', icon: SlidersHorizontal, label: 'Tools' },
-    { key: 'layers', icon: Layers, label: 'Layers' },
-    { key: 'filters', icon: Wand2, label: 'Effects' },
+  const sidebarItems: { key: PanelType; icon: any; label: string; desc: string; action?: () => void }[] = [
+    { key: 'templates', icon: LayoutTemplate, label: 'Design', desc: 'Templates & presets' },
+    { key: 'elements', icon: Shapes, label: 'Elements', desc: 'Shapes, lines & uploads' },
+    { key: null, icon: Type, label: 'Text', desc: 'Add a text box', action: () => canvas.addText() },
+    { key: 'brand', icon: Palette, label: 'Brand', desc: 'Colours, fonts & logos' },
+    { key: 'assets', icon: FolderOpen, label: 'Assets', desc: 'Gallery & brand content' },
+    { key: 'properties', icon: SlidersHorizontal, label: 'Tools', desc: 'Edit properties' },
+    { key: 'layers', icon: Layers, label: 'Layers', desc: 'Reorder & organise' },
+    { key: 'filters', icon: Wand2, label: 'Effects', desc: 'Filters & effects' },
   ];
 
   const togglePanel = (panel: PanelType) => setLeftPanel(leftPanel === panel ? null : panel);
@@ -342,9 +358,11 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
                     }
                   }}
                   className={`w-[64px] flex flex-col items-center gap-0.5 py-2 rounded-lg transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                  title={item.desc}
                 >
                   <Icon className="h-5 w-5" />
-                  <span className="text-[10px] leading-tight">{item.label}</span>
+                  <span className="text-[10px] leading-tight font-medium">{item.label}</span>
+                  <span className="text-[8px] leading-tight opacity-60">{item.desc.split(' ')[0]}</span>
                 </button>
               );
             })}
@@ -389,6 +407,7 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
                     onMoveLayer={canvas.moveLayer}
                     onDelete={canvas.deleteSelected}
                     onDuplicate={canvas.duplicateSelected}
+                    onReorder={canvas.reorderElements}
                   />
                 )}
                 {leftPanel === 'properties' && <PropertiesPanel element={selectedElement} onUpdate={canvas.updateElement} />}

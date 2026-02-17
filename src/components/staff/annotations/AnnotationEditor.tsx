@@ -2,9 +2,11 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   ArrowLeft, Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight,
   Save, Volume2, VolumeX, Plus, Trash2, Layers, Download, Scissors, Eye, EyeOff,
+  Clock, Timer,
 } from "lucide-react";
 import { AnnotationProject, AnnotationElement, VideoSegment } from "./AnnotationProjects";
 import { AnnotationCanvas, TrackerState } from "./AnnotationCanvas";
@@ -35,6 +37,8 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showLayers, setShowLayers] = useState(true);
   const [linkSource, setLinkSource] = useState<string | null>(null);
+  const [cuttingSegment, setCuttingSegment] = useState(false);
+  const [cutStart, setCutStart] = useState<number | null>(null);
 
   // Segments
   const [segments, setSegments] = useState<VideoSegment[]>(project.segments || []);
@@ -46,7 +50,17 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [trackers, setTrackers] = useState<TrackerState[]>([]);
 
   const activeSegment = segments.find(s => s.id === activeSegmentId);
-  const elements = activeSegment?.elements || [];
+
+  // Filter elements based on current time relative to segment
+  const allElements = activeSegment?.elements || [];
+  const segmentOffset = activeSegment ? currentTime - activeSegment.startTime : 0;
+  const visibleElements = allElements.filter(el => {
+    if (el.appearAt === undefined) return true;
+    const start = el.appearAt;
+    const end = el.duration !== undefined ? start + el.duration : Infinity;
+    return segmentOffset >= start && segmentOffset < end;
+  });
+
   const setElements = useCallback((updater: React.SetStateAction<AnnotationElement[]>) => {
     setSegments(prev => prev.map(s => {
       if (s.id !== activeSegmentId) return s;
@@ -55,7 +69,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     }));
   }, [activeSegmentId]);
 
-  // Segment colours
   const segmentColors = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#a855f7', '#ec4899', '#06b6d4', '#f97316'];
 
   // Video events
@@ -121,12 +134,48 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     toast.success("Segment created");
   }, [currentTime, duration, segments.length]);
 
+  // Quick cut: mark in/out points
+  const handleCut = useCallback(() => {
+    if (!cuttingSegment) {
+      setCuttingSegment(true);
+      setCutStart(currentTime);
+      toast.info("Mark-in set. Scrub to end point and click Cut again.");
+    } else {
+      if (cutStart !== null) {
+        const start = Math.min(cutStart, currentTime);
+        const end = Math.max(cutStart, currentTime);
+        if (end - start < 0.1) {
+          toast.error("Segment too short");
+        } else {
+          const id = crypto.randomUUID();
+          const seg: VideoSegment = {
+            id,
+            name: `Cut ${segments.length + 1}`,
+            startTime: start,
+            endTime: end,
+            elements: [],
+            color: segmentColors[segments.length % segmentColors.length],
+          };
+          setSegments(prev => [...prev, seg]);
+          setActiveSegmentId(id);
+          toast.success(`Segment cut: ${formatTime(start)} → ${formatTime(end)}`);
+        }
+      }
+      setCuttingSegment(false);
+      setCutStart(null);
+    }
+  }, [cuttingSegment, cutStart, currentTime, segments.length]);
+
   const deleteSegment = useCallback((id: string) => {
     setSegments(prev => prev.filter(s => s.id !== id));
     if (activeSegmentId === id) {
       setActiveSegmentId(segments.find(s => s.id !== id)?.id || null);
     }
   }, [activeSegmentId, segments]);
+
+  const updateSegmentTimes = useCallback((id: string, start: number, end: number) => {
+    setSegments(prev => prev.map(s => s.id === id ? { ...s, startTime: start, endTime: end } : s));
+  }, []);
 
   // Save
   const handleSave = () => {
@@ -141,11 +190,16 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     }
   }, [selectedId, setElements]);
 
+  // Update selected element timing
+  const updateElementTiming = useCallback((id: string, updates: Partial<AnnotationElement>) => {
+    setElements(prev => prev.map(el => el.id === id ? { ...el, ...updates } : el));
+  }, [setElements]);
+
   // Update tracker positions when video time changes
   useEffect(() => {
     trackers.forEach(tracker => {
       if (!tracker.active) return;
-      const el = elements.find(e => e.id === tracker.elementId);
+      const el = allElements.find(e => e.id === tracker.elementId);
       if (el) {
         const time = videoRef.current?.currentTime || 0;
         const lastPos = tracker.positions[tracker.positions.length - 1];
@@ -168,7 +222,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       if (e.key === 'ArrowRight' && !e.shiftKey) { e.preventDefault(); stepFrame(1); }
       if (e.key === 'ArrowLeft' && e.shiftKey) { e.preventDefault(); stepFrame(-10); }
       if (e.key === 'ArrowRight' && e.shiftKey) { e.preventDefault(); stepFrame(10); }
-      if (e.key === 'Escape') { setActiveTool('select'); setSelectedId(null); setLinkSource(null); }
+      if (e.key === 'Escape') { setActiveTool('select'); setSelectedId(null); setLinkSource(null); setCuttingSegment(false); setCutStart(null); }
       if (e.key === 'v') setActiveTool('select');
     };
     window.addEventListener('keydown', onKey);
@@ -183,6 +237,8 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}.${String(fr).padStart(2, '0')}`;
   };
+
+  const selectedElement = allElements.find(el => el.id === selectedId);
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] bg-[#1e2330] rounded-lg overflow-hidden text-white">
@@ -229,7 +285,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
               />
               {activeSegment && (
                 <AnnotationCanvas
-                  elements={elements}
+                  elements={visibleElements}
                   setElements={setElements}
                   activeTool={activeTool}
                   activeColor={activeColor}
@@ -241,6 +297,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                   setTrackers={setTrackers}
                   linkSource={linkSource}
                   setLinkSource={setLinkSource}
+                  segmentOffset={segmentOffset}
                 />
               )}
               {!activeSegment && (
@@ -249,17 +306,20 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 </div>
               )}
             </div>
-            {/* Link source indicator */}
             {linkSource && (
               <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-primary/80 text-white text-xs px-3 py-1 rounded-full">
                 Click second element to link
+              </div>
+            )}
+            {cuttingSegment && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-red-500/80 text-white text-xs px-3 py-1 rounded-full animate-pulse">
+                Cutting: mark-in at {formatTime(cutStart || 0)} — scrub to end and click Cut again
               </div>
             )}
           </div>
 
           {/* Transport controls */}
           <div className="bg-[#161a24] border-t border-white/10 px-4 py-2 shrink-0 space-y-1">
-            {/* Timeline with segment markers */}
             <div className="flex items-center gap-3">
               <span className="text-xs text-white/60 font-mono w-24">{formatTime(currentTime)}</span>
               <div className="flex-1 relative">
@@ -270,7 +330,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                   onValueChange={([v]) => seek(v)}
                   className="[&_[role=slider]]:bg-primary [&_[role=slider]]:h-3 [&_[role=slider]]:w-3"
                 />
-                {/* Segment indicators on timeline */}
                 {duration > 0 && segments.map(seg => (
                   <div
                     key={seg.id}
@@ -285,11 +344,20 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                     onClick={() => { setActiveSegmentId(seg.id); seek(seg.startTime); }}
                   />
                 ))}
+                {/* Cut region indicator */}
+                {cuttingSegment && cutStart !== null && duration > 0 && (
+                  <div
+                    className="absolute top-full mt-0.5 h-1.5 rounded-full bg-red-500/40"
+                    style={{
+                      left: `${(Math.min(cutStart, currentTime) / duration) * 100}%`,
+                      width: `${(Math.abs(currentTime - cutStart) / duration) * 100}%`,
+                    }}
+                  />
+                )}
               </div>
               <span className="text-xs text-white/60 font-mono w-24 text-right">{formatTime(duration)}</span>
             </div>
 
-            {/* Playback buttons */}
             <div className="flex items-center justify-center gap-1 pt-1">
               <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70" onClick={() => seek(0)}>
                 <SkipBack className="w-3.5 h-3.5" />
@@ -318,8 +386,16 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
 
               <div className="mx-3 border-l border-white/10 h-5" />
 
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`text-xs gap-1 h-6 px-2 ${cuttingSegment ? 'text-red-400 hover:text-red-300' : 'text-white/60 hover:text-white'}`}
+                onClick={handleCut}
+              >
+                <Scissors className="w-3 h-3" /> {cuttingSegment ? 'Set End' : 'Cut'}
+              </Button>
               <Button variant="ghost" size="sm" className="text-xs text-white/60 hover:text-white gap-1 h-6 px-2" onClick={addSegment}>
-                <Scissors className="w-3 h-3" /> New Segment
+                <Plus className="w-3 h-3" /> Segment
               </Button>
             </div>
           </div>
@@ -327,13 +403,13 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
 
         {/* Right sidebar */}
         {showLayers && (
-          <div className="w-52 bg-[#161a24] border-l border-white/10 shrink-0 flex flex-col overflow-hidden">
+          <div className="w-56 bg-[#161a24] border-l border-white/10 shrink-0 flex flex-col overflow-hidden">
             {/* Segments */}
             <div className="p-3 border-b border-white/10">
               <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Segments</p>
-              <div className="space-y-1 max-h-32 overflow-y-auto">
+              <div className="space-y-1 max-h-40 overflow-y-auto">
                 {segments.length === 0 && (
-                  <p className="text-xs text-white/30">No segments yet</p>
+                  <p className="text-xs text-white/30">No segments yet. Use Cut or + Segment below.</p>
                 )}
                 {segments.map(seg => (
                   <div
@@ -352,12 +428,38 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                   </div>
                 ))}
               </div>
+              {/* Segment timing editor */}
+              {activeSegment && (
+                <div className="mt-2 pt-2 border-t border-white/10 space-y-1">
+                  <div className="flex items-center gap-1 text-[10px] text-white/40">
+                    <Timer className="w-3 h-3" />
+                    <span>Segment Range</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={activeSegment.startTime.toFixed(1)}
+                      onChange={e => updateSegmentTimes(activeSegment.id, parseFloat(e.target.value) || 0, activeSegment.endTime)}
+                      className="h-6 text-[10px] bg-white/5 border-white/10 text-white"
+                    />
+                    <span className="text-white/30 text-xs">→</span>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={activeSegment.endTime.toFixed(1)}
+                      onChange={e => updateSegmentTimes(activeSegment.id, activeSegment.startTime, parseFloat(e.target.value) || 0)}
+                      className="h-6 text-[10px] bg-white/5 border-white/10 text-white"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Elements / Layers */}
             <div className="p-3 flex-1 overflow-y-auto">
               <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2">
-                Elements {activeSegment ? `(${elements.length})` : ''}
+                Elements {activeSegment ? `(${allElements.length})` : ''}
               </p>
               {selectedId && (
                 <Button variant="destructive" size="sm" className="w-full text-xs mb-2 h-7" onClick={handleDelete}>
@@ -365,19 +467,94 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 </Button>
               )}
               <div className="space-y-0.5">
-                {elements.map((el, i) => (
-                  <div
-                    key={el.id}
-                    className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded cursor-pointer ${
-                      el.id === selectedId ? 'bg-primary/20 text-primary' : 'text-white/50 hover:bg-white/5'
-                    }`}
-                    onClick={() => setSelectedId(el.id)}
-                  >
-                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: el.color }} />
-                    <span className="truncate">{el.type}{el.text ? `: ${el.text}` : ''}{el.number !== undefined ? ` #${el.number}` : ''}</span>
-                  </div>
-                ))}
+                {allElements.map((el) => {
+                  const isVisible = visibleElements.includes(el);
+                  return (
+                    <div
+                      key={el.id}
+                      className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded cursor-pointer ${
+                        el.id === selectedId ? 'bg-primary/20 text-primary' : isVisible ? 'text-white/50 hover:bg-white/5' : 'text-white/20 hover:bg-white/5'
+                      }`}
+                      onClick={() => setSelectedId(el.id)}
+                    >
+                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: el.color }} />
+                      <span className="truncate flex-1">
+                        {el.type}{el.text ? `: ${el.text}` : ''}{el.number !== undefined ? ` #${el.number}` : ''}
+                      </span>
+                      {el.appearAt !== undefined && (
+                        <span className="text-[9px] text-white/25">{el.appearAt.toFixed(1)}s</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
+
+              {/* Element timing controls */}
+              {selectedElement && (
+                <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
+                  <div className="flex items-center gap-1 text-[10px] text-white/40">
+                    <Clock className="w-3 h-3" />
+                    <span>Element Timing</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-[9px] text-white/40 w-12">Appear</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={selectedElement.appearAt ?? ''}
+                        placeholder="Start"
+                        onChange={e => {
+                          const v = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                          updateElementTiming(selectedElement.id, { appearAt: v });
+                        }}
+                        className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                      />
+                      <span className="text-[9px] text-white/30">s</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-[9px] text-white/40 w-12">Duration</Label>
+                      <Input
+                        type="number"
+                        step="0.5"
+                        min="0.5"
+                        value={selectedElement.duration ?? ''}
+                        placeholder="∞"
+                        onChange={e => {
+                          const v = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                          updateElementTiming(selectedElement.id, { duration: v });
+                        }}
+                        className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                      />
+                      <span className="text-[9px] text-white/30">s</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full h-6 text-[10px] text-white/40"
+                      onClick={() => updateElementTiming(selectedElement.id, { appearAt: segmentOffset })}
+                    >
+                      Set appear to current time ({segmentOffset.toFixed(1)}s)
+                    </Button>
+                  </div>
+                  {/* Magnifier zoom control */}
+                  {selectedElement.type === 'magnifier' && (
+                    <div className="space-y-1">
+                      <Label className="text-[9px] text-white/40">Zoom Level</Label>
+                      <Slider
+                        value={[selectedElement.zoomLevel || 2]}
+                        min={1.5}
+                        max={5}
+                        step={0.5}
+                        onValueChange={([v]) => updateElementTiming(selectedElement.id, { zoomLevel: v })}
+                        className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
+                      />
+                      <span className="text-[9px] text-white/30">{selectedElement.zoomLevel || 2}x zoom</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Trackers */}

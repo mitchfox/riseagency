@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Pipette } from 'lucide-react';
+import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Pipette, CaseSensitive } from 'lucide-react';
 import type { DesignElement } from './types';
 import { FONT_FAMILIES } from './types';
 
@@ -94,6 +94,24 @@ export function PropertiesPanel({ element, onUpdate }: PropertiesPanelProps) {
         </div>
       </div>
 
+      {/* Background toggle */}
+      {(element.type === 'image' || element.type === 'shape') && (
+        <div className="space-y-1">
+          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Layer Role</Label>
+          <Button
+            variant={element.isBackground ? 'default' : 'outline'}
+            size="sm"
+            className="w-full h-7 text-xs"
+            onClick={() => update({ isBackground: !element.isBackground })}
+          >
+            {element.isBackground ? '✓ Background Layer' : 'Set as Background'}
+          </Button>
+          {element.isBackground && (
+            <p className="text-[9px] text-muted-foreground">Double-click on canvas to select and move background layers.</p>
+          )}
+        </div>
+      )}
+
       {/* Corner Radius */}
       {(element.type === 'image' || (element.type === 'shape' && element.shapeType === 'rectangle')) && (
         <div className="space-y-1">
@@ -121,32 +139,39 @@ export function PropertiesPanel({ element, onUpdate }: PropertiesPanelProps) {
             <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Size</Label>
             <Input type="number" value={element.fontSize} onChange={e => update({ fontSize: Number(e.target.value) })} className="h-7 text-xs" />
           </div>
-          <div className="flex gap-1">
-            <Button variant={element.fontWeight === 'bold' || element.fontWeight === '700' ? 'default' : 'outline'} size="icon" className="h-7 w-7"
-              onClick={() => update({ fontWeight: element.fontWeight === 'bold' || element.fontWeight === '700' ? '400' : 'bold' })}>
-              <Bold className="h-3 w-3" />
-            </Button>
-            <Button variant={element.fontStyle === 'italic' ? 'default' : 'outline'} size="icon" className="h-7 w-7"
-              onClick={() => update({ fontStyle: element.fontStyle === 'italic' ? 'normal' : 'italic' })}>
-              <Italic className="h-3 w-3" />
-            </Button>
-            <Button variant={element.textDecoration === 'underline' ? 'default' : 'outline'} size="icon" className="h-7 w-7"
-              onClick={() => update({ textDecoration: element.textDecoration === 'underline' ? 'none' : 'underline' })}>
-              <Underline className="h-3 w-3" />
-            </Button>
-            <div className="w-px bg-border mx-1" />
-            <Button variant={element.textAlign === 'left' ? 'default' : 'outline'} size="icon" className="h-7 w-7"
-              onClick={() => update({ textAlign: 'left' })}>
-              <AlignLeft className="h-3 w-3" />
-            </Button>
-            <Button variant={element.textAlign === 'center' ? 'default' : 'outline'} size="icon" className="h-7 w-7"
-              onClick={() => update({ textAlign: 'center' })}>
-              <AlignCenter className="h-3 w-3" />
-            </Button>
-            <Button variant={element.textAlign === 'right' ? 'default' : 'outline'} size="icon" className="h-7 w-7"
-              onClick={() => update({ textAlign: 'right' })}>
-              <AlignRight className="h-3 w-3" />
-            </Button>
+          <div className="space-y-1.5">
+            <div className="flex gap-1 flex-wrap">
+              <Button variant={element.fontWeight === 'bold' || element.fontWeight === '700' ? 'default' : 'outline'} size="icon" className="h-7 w-7"
+                onClick={() => update({ fontWeight: element.fontWeight === 'bold' || element.fontWeight === '700' ? '400' : 'bold' })} title="Bold (Ctrl+B)">
+                <Bold className="h-3 w-3" />
+              </Button>
+              <Button variant={element.fontStyle === 'italic' ? 'default' : 'outline'} size="icon" className="h-7 w-7"
+                onClick={() => update({ fontStyle: element.fontStyle === 'italic' ? 'normal' : 'italic' })} title="Italic (Ctrl+I)">
+                <Italic className="h-3 w-3" />
+              </Button>
+              <Button variant={element.textDecoration === 'underline' ? 'default' : 'outline'} size="icon" className="h-7 w-7"
+                onClick={() => update({ textDecoration: element.textDecoration === 'underline' ? 'none' : 'underline' })} title="Underline (Ctrl+U)">
+                <Underline className="h-3 w-3" />
+              </Button>
+              <Button variant={element.textTransform === 'uppercase' ? 'default' : 'outline'} size="icon" className="h-7 w-7"
+                onClick={() => update({ textTransform: element.textTransform === 'uppercase' ? 'none' : 'uppercase' })} title="Uppercase">
+                <CaseSensitive className="h-3 w-3" />
+              </Button>
+            </div>
+            <div className="flex gap-1">
+              <Button variant={element.textAlign === 'left' ? 'default' : 'outline'} size="icon" className="h-7 w-7"
+                onClick={() => update({ textAlign: 'left' })} title="Align left">
+                <AlignLeft className="h-3 w-3" />
+              </Button>
+              <Button variant={element.textAlign === 'center' ? 'default' : 'outline'} size="icon" className="h-7 w-7"
+                onClick={() => update({ textAlign: 'center' })} title="Align centre">
+                <AlignCenter className="h-3 w-3" />
+              </Button>
+              <Button variant={element.textAlign === 'right' ? 'default' : 'outline'} size="icon" className="h-7 w-7"
+                onClick={() => update({ textAlign: 'right' })} title="Align right">
+                <AlignRight className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
           <div className="space-y-1">
             <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Colour</Label>
