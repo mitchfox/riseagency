@@ -690,7 +690,29 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                       className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded cursor-pointer ${
                         el.id === selectedId ? 'bg-primary/20 text-primary' : isVisible ? 'text-white/50 hover:bg-white/5' : 'text-white/20 hover:bg-white/5'
                       }`}
-                      onClick={() => setSelectedId(el.id)}
+                      onClick={() => {
+                        setSelectedId(el.id);
+                        if (activeKlip) {
+                          const seekTime = activeKlip.startTime + el.appearAt;
+                          const video = videoRef.current;
+                          if (video) {
+                            // Clear any existing freeze state
+                            if (playbackFreezeTimerRef.current) clearTimeout(playbackFreezeTimerRef.current);
+                            triggeredTimesRef.current.clear();
+                            video.currentTime = seekTime;
+                            setCurrentTime(seekTime);
+                            video.pause();
+                            setIsPlaying(false);
+
+                            // Trigger a manual freeze to show the annotation
+                            const elDuration = el.duration ?? 3;
+                            playbackFreezeDurationRef.current = elDuration;
+                            setPlaybackFreezeActive(true);
+                            setPlaybackFreezePhase('showing');
+                            setPlaybackFreezeUrl(null); // video itself is paused at the right frame
+                          }
+                        }
+                      }}
                     >
                       <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: el.color }} />
                       <span className="truncate flex-1">
