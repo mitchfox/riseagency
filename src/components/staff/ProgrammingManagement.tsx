@@ -1913,29 +1913,20 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                 {/* Free Plan Section - staff only, never visible to players */}
                 <Card className="border-dashed border-primary/30">
                   <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-primary" />
-                        Free Plan
-                      </CardTitle>
-                      <Badge variant="outline" className="text-[10px]">Staff Only</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Jot down what you're working on. Get AI-suggested exercises and session plans from your coaching database.</p>
+                    <CardTitle className="text-base">Free Plan</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <Textarea
                       placeholder="What are you working on for this player? e.g. 'Improving first-step acceleration and hip mobility for the next 4 weeks...'"
-                      value={(() => {
+                      defaultValue={(() => {
                         try { return localStorage.getItem(`freeplan_${playerId}_${selectedProgram?.id}`) || ''; }
                         catch { return ''; }
                       })()}
                       onChange={(e) => {
                         try { localStorage.setItem(`freeplan_${playerId}_${selectedProgram?.id}`, e.target.value); } catch {}
-                        // Force re-render
-                        setHasUnsavedChanges(prev => prev);
                       }}
                       rows={4}
-                      className="text-sm"
+                      className="text-sm relative z-10"
                     />
                     <div className="flex items-center gap-2">
                       <Button

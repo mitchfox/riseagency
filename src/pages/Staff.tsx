@@ -280,13 +280,9 @@ const Staff = () => {
   }, [expandedCategory, expandedSection]);
 
   const handleSectionToggle = (section: string) => {
-    const newSection = expandedSection === section ? null : section;
-    setExpandedSection(newSection as any);
-    if (newSection) {
-      setSearchParams({ section: newSection });
-    } else {
-      setSearchParams({});
-    }
+    // Always navigate to the section - never toggle off by clicking the same one
+    setExpandedSection(section as any);
+    setSearchParams({ section });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -318,6 +314,8 @@ const Staff = () => {
   };
 
   const [tabOverflowOpen, setTabOverflowOpen] = useState(false);
+  const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
+  const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
 
   // Load saved email and remember me preference on mount
   useEffect(() => {
@@ -987,13 +985,30 @@ const Staff = () => {
           <div className="flex items-center gap-1.5 overflow-hidden min-w-0 mr-4"
             style={{ maxWidth: 'calc(50% - 60px)' }}
             onDragOver={(e) => e.preventDefault()}
+            onDragEnd={() => { setDraggingTabId(null); setDragOverTabId(null); }}
           >
             {(() => {
               const openTabs: string[] = (() => { try { return JSON.parse(localStorage.getItem('staff_open_tabs') || '[]'); } catch { return []; } })();
               const allSections = categories.flatMap(c => c.sections.filter(s => !(s as any).isGroupLabel));
               const MAX_VISIBLE = isMobile ? 2 : 3;
-              const visibleTabs = openTabs.slice(0, MAX_VISIBLE);
-              const overflowTabs = openTabs.slice(MAX_VISIBLE);
+              
+              // Compute display order: if dragging, show the reordered preview
+              const displayTabs = (() => {
+                if (draggingTabId && dragOverTabId && draggingTabId !== dragOverTabId) {
+                  const reordered = [...openTabs];
+                  const fromIdx = reordered.indexOf(draggingTabId);
+                  const toIdx = reordered.indexOf(dragOverTabId);
+                  if (fromIdx !== -1 && toIdx !== -1) {
+                    reordered.splice(fromIdx, 1);
+                    reordered.splice(toIdx, 0, draggingTabId);
+                    return reordered;
+                  }
+                }
+                return openTabs;
+              })();
+              
+              const visibleTabs = displayTabs.slice(0, MAX_VISIBLE);
+              const overflowTabs = displayTabs.slice(MAX_VISIBLE);
 
               return (
                 <>
@@ -1002,53 +1017,68 @@ const Staff = () => {
                     if (!sec) return null;
                     const TabIcon = sec.icon;
                     const isActive = expandedSection === tabId;
+                    const isDragging = draggingTabId === tabId;
 
                     return (
-                      <Popover key={tabId}>
-                        <PopoverTrigger asChild>
-                          <button
-                            draggable
-                            onDragStart={(e) => {
-                              e.dataTransfer.setData('text/plain', tabId);
-                              e.dataTransfer.effectAllowed = 'move';
-                            }}
-                            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
-                            onDrop={(e) => {
-                              e.preventDefault();
-                              const draggedId = e.dataTransfer.getData('text/plain');
-                              if (draggedId === tabId) return;
-                              const updated = [...openTabs];
-                              const fromIdx = updated.indexOf(draggedId);
-                              const toIdx = updated.indexOf(tabId);
-                              if (fromIdx === -1 || toIdx === -1) return;
-                              updated.splice(fromIdx, 1);
-                              updated.splice(toIdx, 0, draggedId);
-                              localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
-                              setExpandedSection(prev => prev);
-                            }}
-                            onClick={() => handleSectionToggle(tabId as any)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-full border cursor-grab active:cursor-grabbing ${
-                              isActive
-                                ? 'border-primary/40 text-primary bg-primary/10'
-                                : 'border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40'
-                            }`}
-                          >
-                            <TabIcon className="w-3.5 h-3.5 shrink-0" />
-                            {!isMobile && <span className="truncate max-w-[90px]">{sec.title}</span>}
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent side="bottom" align="start" className="w-auto p-2 flex items-center gap-2">
-                          <span className="text-xs font-medium">{sec.title}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-5 w-5 text-muted-foreground hover:text-destructive"
-                            onClick={() => removeTab(tabId)}
-                          >
-                            <span className="text-sm">×</span>
-                          </Button>
-                        </PopoverContent>
-                      </Popover>
+                      <motion.div
+                        key={tabId}
+                        layout
+                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                        className="shrink-0"
+                      >
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData('text/plain', tabId);
+                                e.dataTransfer.effectAllowed = 'move';
+                                setDraggingTabId(tabId);
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = 'move';
+                                if (dragOverTabId !== tabId) setDragOverTabId(tabId);
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const draggedId = e.dataTransfer.getData('text/plain');
+                                if (draggedId === tabId) { setDraggingTabId(null); setDragOverTabId(null); return; }
+                                const updated = [...openTabs];
+                                const fromIdx = updated.indexOf(draggedId);
+                                const toIdx = updated.indexOf(tabId);
+                                if (fromIdx === -1 || toIdx === -1) return;
+                                updated.splice(fromIdx, 1);
+                                updated.splice(toIdx, 0, draggedId);
+                                localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
+                                setDraggingTabId(null);
+                                setDragOverTabId(null);
+                                setExpandedSection(prev => prev);
+                              }}
+                              onClick={() => handleSectionToggle(tabId as any)}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-full border cursor-grab active:cursor-grabbing ${
+                                isActive
+                                  ? 'border-primary/40 text-primary bg-primary/10'
+                                  : 'border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40'
+                              } ${isDragging ? 'opacity-50 scale-95' : ''}`}
+                            >
+                              <TabIcon className="w-3.5 h-3.5 shrink-0" />
+                              {!isMobile && <span className="truncate max-w-[90px]">{sec.title}</span>}
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent side="bottom" align="start" className="w-auto p-2 flex items-center gap-2">
+                            <span className="text-xs font-medium">{sec.title}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5 text-muted-foreground hover:text-destructive"
+                              onClick={() => removeTab(tabId)}
+                            >
+                              <span className="text-sm">×</span>
+                            </Button>
+                          </PopoverContent>
+                        </Popover>
+                      </motion.div>
                     );
                   })}
 
