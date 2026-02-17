@@ -973,15 +973,25 @@ const Staff = () => {
 
       {/* Header with Logo - always visible */}
        <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="flex items-center h-16 px-4">
-          {/* Left side: open tabs */}
-          <div className="flex items-center gap-1.5 overflow-hidden min-w-0 flex-1 mr-4"
+        <div className="flex items-center h-16 px-4 relative">
+          {/* Centre logo — absolutely positioned, never moves */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+            <img
+              src={theme === 'light' ? '/RISEBlack.png' : '/RISEWhite.png'}
+              alt="RISE"
+              className="h-9 w-auto"
+            />
+          </div>
+
+          {/* Left side: open tabs — stops before logo */}
+          <div className="flex items-center gap-1.5 overflow-hidden min-w-0 mr-4"
+            style={{ maxWidth: 'calc(50% - 60px)' }}
             onDragOver={(e) => e.preventDefault()}
           >
             {(() => {
               const openTabs: string[] = (() => { try { return JSON.parse(localStorage.getItem('staff_open_tabs') || '[]'); } catch { return []; } })();
               const allSections = categories.flatMap(c => c.sections.filter(s => !(s as any).isGroupLabel));
-              const MAX_VISIBLE = isMobile ? 2 : 4;
+              const MAX_VISIBLE = isMobile ? 2 : 3;
               const visibleTabs = openTabs.slice(0, MAX_VISIBLE);
               const overflowTabs = openTabs.slice(MAX_VISIBLE);
 
@@ -1017,10 +1027,10 @@ const Staff = () => {
                               setExpandedSection(prev => prev);
                             }}
                             onClick={() => handleSectionToggle(tabId as any)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-lg border cursor-grab active:cursor-grabbing ${
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-full border cursor-grab active:cursor-grabbing ${
                               isActive
                                 ? 'border-primary/40 text-primary bg-primary/10'
-                                : 'border-border/40 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40'
+                                : 'border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40'
                             }`}
                           >
                             <TabIcon className="w-3.5 h-3.5 shrink-0" />
@@ -1046,7 +1056,7 @@ const Staff = () => {
                     <>
                       <button
                         onClick={() => setTabOverflowOpen(true)}
-                        className="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg border border-border/40 text-muted-foreground hover:text-foreground hover:bg-muted/40 shrink-0"
+                        className="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-full border border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted/40 shrink-0"
                       >
                         +{overflowTabs.length}
                       </button>
@@ -1077,44 +1087,21 @@ const Staff = () => {
                     </>
                   )}
 
-                  {/* Add tab button */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button className="flex items-center justify-center w-7 h-7 rounded-lg border border-dashed border-border/40 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40 shrink-0 transition-colors">
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent side="bottom" align="start" className="w-56 p-2">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 px-1">Pin a section</p>
-                      <div className="space-y-0.5 max-h-60 overflow-y-auto">
-                        {allSections.filter(s => !openTabs.includes(s.id)).map(s => {
-                          const SIcon = s.icon;
-                          return (
-                            <button
-                              key={s.id}
-                              className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded-md hover:bg-muted/50 text-left"
-                              onClick={() => { addSectionAsTab(s.id); }}
-                            >
-                              <SIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                              <span>{s.title}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  {/* Add tab button — navigates to overview */}
+                  <button
+                    className="flex items-center justify-center w-7 h-7 rounded-full border border-dashed border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40 shrink-0 transition-colors"
+                    onClick={() => handleSectionToggle('overview')}
+                    title="Open new tab"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
                 </>
               );
             })()}
           </div>
 
-          {/* Right side: logo + theme toggle + notifications — always far right */}
-          <div className="flex items-center gap-3 shrink-0">
-            <img
-              src={theme === 'light' ? '/RISEBlack.png' : '/RISEWhite.png'}
-              alt="RISE"
-              className="h-9 w-auto"
-            />
+          {/* Right side: theme toggle + notifications — always far right */}
+          <div className="flex items-center gap-3 shrink-0 ml-auto">
             <Button
               variant="ghost"
               size="icon"
