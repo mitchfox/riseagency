@@ -374,11 +374,7 @@ export const AnnotationCanvas = ({
             d={pathD}
             stroke={el.color} strokeWidth={el.strokeWidth} fill="none" strokeLinecap="round"
             style={selStyle}
-            strokeDasharray={anim ? "500" : undefined}
-            strokeDashoffset={anim ? "0" : undefined}
-          >
-            {anim && <animate attributeName="stroke-dashoffset" from="500" to="0" dur="0.5s" fill="freeze" />}
-          </path>
+          />
         );
       }
       case 'rect':
@@ -406,22 +402,16 @@ export const AnnotationCanvas = ({
       case 'spotlight':
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
+            {/* Dark overlay with cut-out circle for spotlight effect */}
             <circle
               cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius}%`}
-              fill={el.color} fillOpacity={el.opacity || 0.3} stroke={el.color} strokeWidth={1}
-            >
-              {anim && <animate attributeName="r" from="0" to={`${el.radius}%`} dur="0.4s" fill="freeze" calcMode="spline" keySplines="0.34 1.56 0.64 1" />}
-              {anim && <animate attributeName="fill-opacity" from="0" to={String(el.opacity || 0.3)} dur="0.4s" fill="freeze" />}
-            </circle>
-            {anim && (
-              <circle
-                cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius}%`}
-                fill="none" stroke={el.color} strokeWidth={2} strokeOpacity={0.5}
-              >
-                <animate attributeName="r" from={`${(el.radius || 5) * 0.5}%`} to={`${(el.radius || 5) * 1.3}%`} dur="0.6s" fill="freeze" />
-                <animate attributeName="stroke-opacity" from="0.8" to="0" dur="0.6s" fill="freeze" />
-              </circle>
-            )}
+              fill={el.color} fillOpacity={el.opacity || 0.3} stroke={el.color} strokeWidth={2} strokeOpacity={0.6}
+            />
+            {/* Glow ring */}
+            <circle
+              cx={`${el.x}%`} cy={`${el.y}%`} r={`${(el.radius || 5) * 1.1}%`}
+              fill="none" stroke={el.color} strokeWidth={1} strokeOpacity={0.3}
+            />
           </g>
         );
       case 'vision-cone': {
@@ -539,13 +529,23 @@ export const AnnotationCanvas = ({
       }
       case 'text':
         return (
-          <text key={el.id} data-element-id={el.id}
-            x={`${el.x}%`} y={`${el.y}%`} fill={el.color}
-            fontSize={`${el.fontSize || 3}%`} fontFamily="sans-serif" fontWeight="bold"
-            style={selStyle}>
-            {el.text}
-            {anim && <animate attributeName="opacity" from="0" to="1" dur="0.3s" fill="freeze" />}
-          </text>
+          <g key={el.id} data-element-id={el.id} style={selStyle}>
+            {/* Background for visibility */}
+            <text
+              x={`${el.x}%`} y={`${el.y}%`} fill="black"
+              fontSize={`${el.fontSize || 3}%`} fontFamily="sans-serif" fontWeight="bold"
+              stroke="black" strokeWidth={3} strokeOpacity={0.5}
+              paintOrder="stroke"
+            >
+              {el.text}
+            </text>
+            <text
+              x={`${el.x}%`} y={`${el.y}%`} fill={el.color}
+              fontSize={`${el.fontSize || 3}%`} fontFamily="sans-serif" fontWeight="bold"
+            >
+              {el.text}
+            </text>
+          </g>
         );
       case 'player-marker':
         return (
@@ -560,14 +560,12 @@ export const AnnotationCanvas = ({
         );
       case 'freehand':
         if (!el.points || el.points.length < 2) return null;
-        const d = el.points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x}% ${p.y}%`).join(' ');
+        const fhD = el.points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x}% ${p.y}%`).join(' ');
         return (
           <path key={el.id} data-element-id={el.id}
-            d={d} stroke={el.color} strokeWidth={el.strokeWidth} fill="none" strokeLinecap="round" strokeLinejoin="round"
+            d={fhD} stroke={el.color} strokeWidth={el.strokeWidth} fill="none" strokeLinecap="round" strokeLinejoin="round"
             style={selStyle}
-          >
-            {anim && <animate attributeName="stroke-dashoffset" from="1000" to="0" dur="0.5s" fill="freeze" />}
-          </path>
+          />
         );
       default:
         return null;
