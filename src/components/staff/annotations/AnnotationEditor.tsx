@@ -210,16 +210,20 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     );
     playbackFreezeDurationRef.current = maxDuration;
 
-    // Capture freeze frame
+    // Capture freeze frame - ensure video dimensions are valid
     let frameUrl: string | null = null;
     try {
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0);
-        frameUrl = canvas.toDataURL('image/jpeg', 0.85);
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      if (vw > 0 && vh > 0) {
+        const canvas = document.createElement('canvas');
+        canvas.width = vw;
+        canvas.height = vh;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, vw, vh);
+          frameUrl = canvas.toDataURL('image/jpeg', 0.85);
+        }
       }
     } catch {
       // CORS or other issue - proceed without freeze frame image
@@ -474,7 +478,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 ref={videoRef}
                 src={project.videoUrl}
                 crossOrigin="anonymous"
-                className={`max-w-full max-h-[calc(100vh-16rem)] block ${drawingMode || playbackFreezeActive ? 'invisible' : ''}`}
+                className={`max-w-full max-h-[calc(100vh-16rem)] block ${drawingMode ? 'invisible' : ''}`}
                 muted={muted}
                 playsInline
                 preload="auto"
