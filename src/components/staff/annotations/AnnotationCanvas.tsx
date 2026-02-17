@@ -19,6 +19,17 @@ interface AnnotationCanvasProps {
   isDrawingMode?: boolean;
 }
 
+/** Convert dashPattern to SVG strokeDasharray */
+const getDashArray = (pattern?: string, sw?: number): string | undefined => {
+  const w = sw || 3;
+  switch (pattern) {
+    case 'dashed': return `${w * 4} ${w * 2}`;
+    case 'dotted': return `${w} ${w * 2}`;
+    case 'dash-dot': return `${w * 4} ${w * 1.5} ${w} ${w * 1.5}`;
+    default: return undefined;
+  }
+};
+
 export const AnnotationCanvas = ({
   elements, setElements, activeTool, activeColor, strokeWidth, fillOpacity,
   selectedId, setSelectedId, videoRef, linkSource, setLinkSource, klipOffset = 0,
@@ -126,6 +137,20 @@ export const AnnotationCanvas = ({
       return;
     }
 
+    if (activeTool === 'image-layer') {
+      // Image layer: create a rect-like clipping region the user will drag to shape
+      setElements(prev => [...prev, {
+        id: crypto.randomUUID(), type: 'image-layer',
+        x: pos.x - 5, y: pos.y - 5,
+        width: 10, height: 10,
+        color: '#ffffff', strokeWidth: 2, opacity: 1, fillOpacity: 1,
+        layerZIndex: 100,
+        appearAt: klipOffset, ...defaultTiming,
+      }]);
+      onToolUsed?.();
+      return;
+    }
+
     setDrawing(true);
     setStartPos(pos);
     setCurrentPos(pos);
@@ -150,8 +175,8 @@ export const AnnotationCanvas = ({
           return { ...el, radius: Math.max(0.5, (s.radius ?? 2) + scaleFactor * (h.includes('w') || h.includes('n') ? -1 : 1)) };
         }
 
-        // Rect: resize width/height
-        if (el.type === 'rect') {
+        // Rect / space-oval / image-layer: resize width/height
+        if (el.type === 'rect' || el.type === 'space-oval' || el.type === 'image-layer') {
           const isCorner = h.length === 2;
           let newW = s.width ?? 1;
           let newH = s.height ?? 1;
@@ -163,7 +188,6 @@ export const AnnotationCanvas = ({
           if (h.includes('s')) newH = Math.max(1, (s.height ?? 1) + dy);
           if (h.includes('n')) { newH = Math.max(1, (s.height ?? 1) - dy); newY = s.y + dy; }
 
-          // Corner handles: proportional resize
           if (isCorner) {
             const ratio = (s.width ?? 1) / (s.height ?? 1);
             if (Math.abs(dx) > Math.abs(dy)) {
@@ -210,13 +234,22 @@ export const AnnotationCanvas = ({
 
     switch (activeTool) {
       case 'line':
-        setElements(prev => [...prev, { ...base, type: 'line' as const, x: startPos.x, y: startPos.y, x2: currentPos.x, y2: currentPos.y }]);
+        setElements(prev => [...prev, { ...base, type: 'line' as const, x: startPos.x, y: startPos.y, x2: currentPos.x, y2: currentPos.y, dashPattern: 'solid' as const }]);
         onToolUsed?.();
         break;
       case 'arrow':
-        setElements(prev => [...prev, { ...base, type: 'arrow' as const, x: startPos.x, y: startPos.y, x2: currentPos.x, y2: currentPos.y }]);
+        setElements(prev => [...prev, { ...base, type: 'arrow' as const, x: startPos.x, y: startPos.y, x2: currentPos.x, y2: currentPos.y, dashPattern: 'solid' as const }]);
         onToolUsed?.();
         break;
+      case 'curved-arrow': {
+        setElements(prev => [...prev, {
+          ...base, type: 'curved-arrow' as const,
+          x: startPos.x, y: startPos.y, x2: currentPos.x, y2: currentPos.y,
+          curveOffset: -15, dashPattern: 'solid' as const,
+        }]);
+        onToolUsed?.();
+        break;
+      }
       case 'rect':
         setElements(prev => [...prev, {
           ...base, type: 'rect' as const,
@@ -235,13 +268,29 @@ export const AnnotationCanvas = ({
         break;
       }
       case 'semi-circle': {
+        // Flat oval disc: placed at click position
         const cx = (startPos.x + currentPos.x) / 2;
         const cy = (startPos.y + currentPos.y) / 2;
-        const sr = Math.max(Math.abs(currentPos.x - startPos.x), Math.abs(currentPos.y - startPos.y)) / 2;
+        const rx = Math.abs(currentPos.x - startPos.x) / 2 || 4;
+        const ry = Math.abs(currentPos.y - startPos.y) / 2 || 1.5;
         setElements(prev => [...prev, {
-          ...base, type: 'semi-circle' as const, x: cx, y: cy, radius: sr || 2,
+          ...base, type: 'semi-circle' as const, x: cx, y: cy,
+          width: rx, height: ry, radius: rx,
           fillOpacity: fillOpacity || 0.5,
-          angle: 180, // faces down by default (placed under a player)
+          angle: 0,
+        }]);
+        onToolUsed?.();
+        break;
+      }
+      case 'space-oval': {
+        const cx = (startPos.x + currentPos.x) / 2;
+        const cy = (startPos.y + currentPos.y) / 2;
+        const w = Math.abs(currentPos.x - startPos.x) || 15;
+        const h = Math.abs(currentPos.y - startPos.y) || 8;
+        setElements(prev => [...prev, {
+          ...base, type: 'space-oval' as const, x: cx, y: cy,
+          width: w, height: h,
+          fillOpacity: fillOpacity || 0.25,
         }]);
         onToolUsed?.();
         break;
@@ -297,6 +346,13 @@ export const AnnotationCanvas = ({
     return luminance > 0.5 ? '#000000' : '#ffffff';
   };
 
+  // Sort elements so image-layer types render last (on top)
+  const sortedElements = [...elements].sort((a, b) => {
+    const zA = a.type === 'image-layer' ? (a.layerZIndex ?? 100) : 0;
+    const zB = b.type === 'image-layer' ? (b.layerZIndex ?? 100) : 0;
+    return zA - zB;
+  });
+
   const renderElement = (el: AnnotationElement) => {
     const isSelected = el.id === selectedId;
     const baseStyle = getAnimStyle(el);
@@ -313,6 +369,7 @@ export const AnnotationCanvas = ({
             <line
               x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round"
+              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth)}
             >
               {anim && <animate attributeName="x2" from={`${el.x}%`} to={`${el.x2}%`} dur="0.3s" fill="freeze" />}
               {anim && <animate attributeName="y2" from={`${el.y}%`} to={`${el.y2}%`} dur="0.3s" fill="freeze" />}
@@ -329,10 +386,41 @@ export const AnnotationCanvas = ({
               </marker>
             </defs>
             <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
-              stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round" markerEnd={`url(#${mid})`}>
+              stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round" markerEnd={`url(#${mid})`}
+              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth)}
+            >
               {anim && <animate attributeName="x2" from={`${el.x}%`} to={`${el.x2}%`} dur="0.3s" fill="freeze" />}
               {anim && <animate attributeName="y2" from={`${el.y}%`} to={`${el.y2}%`} dur="0.3s" fill="freeze" />}
             </line>
+          </g>
+        );
+      }
+      case 'curved-arrow': {
+        const mid = `carrow-${el.id}`;
+        const offset = el.curveOffset ?? -15;
+        // Control point perpendicular to midpoint
+        const mx = ((el.x) + (el.x2 ?? el.x)) / 2;
+        const my = ((el.y) + (el.y2 ?? el.y)) / 2;
+        const dx = (el.x2 ?? el.x) - el.x;
+        const dy = (el.y2 ?? el.y) - el.y;
+        const len = Math.sqrt(dx * dx + dy * dy) || 1;
+        const nx = -dy / len;
+        const ny = dx / len;
+        const cx = mx + nx * offset;
+        const cy = my + ny * offset;
+        return (
+          <g key={el.id} data-element-id={el.id} style={selStyle}>
+            <defs>
+              <marker id={mid} markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill={el.color} />
+              </marker>
+            </defs>
+            <path
+              d={`M ${el.x} ${el.y} Q ${cx} ${cy} ${el.x2 ?? el.x} ${el.y2 ?? el.y}`}
+              stroke={el.color} strokeWidth={el.strokeWidth} fill="none" strokeLinecap="round"
+              markerEnd={`url(#${mid})`}
+              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth)}
+            />
           </g>
         );
       }
@@ -360,24 +448,63 @@ export const AnnotationCanvas = ({
           </g>
         );
       case 'semi-circle': {
-        // Semi-circle disc: a half-circle that can be placed under players
-        const r = el.radius || 2;
-        const rotation = el.angle || 180;
+        // Flat oval disc (ellipse) placed under players like reference image
+        const rx = el.width || el.radius || 4;
+        const ry = el.height || (rx * 0.35);
+        const rotation = el.angle || 0;
         return (
-          <g key={el.id} data-element-id={el.id} style={selStyle}>
-            <path
-              d={`M ${el.x - r} ${el.y} A ${r} ${r} 0 0 1 ${el.x + r} ${el.y} Z`}
+          <g key={el.id} data-element-id={el.id} style={selStyle}
+            transform={`rotate(${rotation}, ${el.x}, ${el.y})`}>
+            {/* Shadow/3D effect ellipse slightly offset */}
+            <ellipse
+              cx={el.x} cy={el.y + ry * 0.15}
+              rx={rx} ry={ry}
+              fill="rgba(0,0,0,0.3)" stroke="none"
+            />
+            {/* Main disc ellipse */}
+            <ellipse
+              cx={el.x} cy={el.y}
+              rx={rx} ry={ry}
               fill={el.color} fillOpacity={el.fillOpacity || 0.5}
-              stroke={el.color} strokeWidth={el.strokeWidth} strokeOpacity={0.8}
-              transform={`rotate(${rotation - 180}, ${el.x}, ${el.y})`}
+              stroke={el.color} strokeWidth={el.strokeWidth * 0.5} strokeOpacity={0.9}
             >
               {anim && <animate attributeName="fill-opacity" from="0" to={String(el.fillOpacity || 0.5)} dur="0.3s" fill="freeze" />}
-            </path>
+            </ellipse>
+            {/* Highlight arc on top edge */}
+            <ellipse
+              cx={el.x} cy={el.y - ry * 0.1}
+              rx={rx * 0.8} ry={ry * 0.5}
+              fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth={0.5}
+            />
+          </g>
+        );
+      }
+      case 'space-oval': {
+        // Hatched/striped oval for highlighting space on the pitch
+        const rx = (el.width || 15) / 2;
+        const ry = (el.height || 8) / 2;
+        const patId = `hatch-${el.id}`;
+        return (
+          <g key={el.id} data-element-id={el.id} style={selStyle}>
+            <defs>
+              <pattern id={patId} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <line x1="0" y1="0" x2="0" y2="4" stroke={el.color} strokeWidth="1.5" strokeOpacity={el.fillOpacity || 0.25} />
+              </pattern>
+            </defs>
+            <ellipse
+              cx={el.x} cy={el.y}
+              rx={rx} ry={ry}
+              fill={`url(#${patId})`}
+              stroke={el.color} strokeWidth={el.strokeWidth * 0.5}
+              strokeOpacity={0.5} strokeDasharray="3 2"
+            >
+              {anim && <animate attributeName="rx" from="0" to={String(rx)} dur="0.3s" fill="freeze" />}
+              {anim && <animate attributeName="ry" from="0" to={String(ry)} dur="0.3s" fill="freeze" />}
+            </ellipse>
           </g>
         );
       }
       case 'spotlight': {
-        // Spotlight: darkens surrounding area, brightens inside circle
         const r = el.radius || 5;
         const maskId = `spot-mask-${el.id}`;
         return (
@@ -388,9 +515,7 @@ export const AnnotationCanvas = ({
                 <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`} fill="black" />
               </mask>
             </defs>
-            {/* Dark overlay everywhere except the spotlight area */}
             <rect x="0" y="0" width="100%" height="100%" fill="black" fillOpacity={el.fillOpacity || 0.3} mask={`url(#${maskId})`} />
-            {/* Bright ring around the spotlight edge */}
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`}
               fill="none" stroke={el.color} strokeWidth={2} strokeOpacity={0.6}
             />
@@ -401,7 +526,6 @@ export const AnnotationCanvas = ({
         );
       }
       case 'vision-cone': {
-        // Proper vision cone: fan/wedge shape from a point
         const len = el.coneLength || 15;
         const angle = el.angle || 0;
         const spread = el.coneSpread || 40;
@@ -409,7 +533,6 @@ export const AnnotationCanvas = ({
         const rad1 = ((angle - halfSpread) * Math.PI) / 180;
         const rad2 = ((angle + halfSpread) * Math.PI) / 180;
 
-        // Calculate arc points in viewBox coordinates (0-100)
         const x1 = el.x + len * Math.cos(rad1);
         const y1 = el.y + len * Math.sin(rad1);
         const x2 = el.x + len * Math.cos(rad2);
@@ -429,7 +552,6 @@ export const AnnotationCanvas = ({
                 <stop offset="100%" stopColor={el.color} stopOpacity={0.05} />
               </radialGradient>
             </defs>
-            {/* Vision cone wedge */}
             <path
               d={`M ${el.x} ${el.y} L ${x1} ${y1} A ${len} ${len} 0 ${largeArc} 1 ${x2} ${y2} Z`}
               fill={`url(#${gradientId})`}
@@ -437,11 +559,9 @@ export const AnnotationCanvas = ({
             >
               {anim && <animate attributeName="opacity" from="0" to="1" dur="0.4s" fill="freeze" />}
             </path>
-            {/* Origin dot */}
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r="0.8%" fill={el.color} fillOpacity={0.8}>
               {anim && <animate attributeName="r" from="0" to="0.8%" dur="0.2s" fill="freeze" />}
             </circle>
-            {/* Edge lines for clarity */}
             <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${x1}%`} y2={`${y1}%`}
               stroke={el.color} strokeWidth={1} strokeOpacity={0.3} strokeDasharray="3 2" />
             <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${x2}%`} y2={`${y2}%`}
@@ -475,7 +595,6 @@ export const AnnotationCanvas = ({
         const r = el.radius || 8;
         const clipId = `mag-clip-${el.id}`;
         const video = videoRef.current;
-        const svg = svgRef.current;
         let videoSrc = '';
         if (video) {
           try { videoSrc = video.currentSrc || ''; } catch { /* no-op */ }
@@ -487,7 +606,7 @@ export const AnnotationCanvas = ({
                 <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`} />
               </clipPath>
             </defs>
-            {video && svg && (
+            {video && svgRef.current && (
               <foreignObject
                 x={`${el.x - r}%`} y={`${el.y - r}%`}
                 width={`${r * 2}%`} height={`${r * 2}%`}
@@ -560,6 +679,54 @@ export const AnnotationCanvas = ({
             </circle>
           </g>
         );
+      case 'image-layer': {
+        // Image layer: clips part of the video frame and renders it on top
+        const video = videoRef.current;
+        const w = el.width || 10;
+        const h = el.height || 10;
+        const clipId = `img-layer-${el.id}`;
+        let videoSrc = '';
+        if (video) {
+          try { videoSrc = video.currentSrc || ''; } catch { /* no-op */ }
+        }
+        return (
+          <g key={el.id} data-element-id={el.id} style={{...selStyle, zIndex: el.layerZIndex || 100 }}>
+            <defs>
+              <clipPath id={clipId}>
+                <rect x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`} />
+              </clipPath>
+            </defs>
+            {video && (
+              <foreignObject
+                x={`${el.x}%`} y={`${el.y}%`}
+                width={`${w}%`} height={`${h}%`}
+                style={{ pointerEvents: 'none' }}
+              >
+                <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}>
+                  <video
+                    src={videoSrc} muted playsInline
+                    style={{
+                      position: 'absolute',
+                      width: `${100 / (w / 100)}%`,
+                      height: `${100 / (h / 100)}%`,
+                      left: `${-(el.x / w) * 100}%`,
+                      top: `${-(el.y / h) * 100}%`,
+                      pointerEvents: 'none',
+                    }}
+                    ref={(v) => { if (v && video) v.currentTime = video.currentTime; }}
+                  />
+                </div>
+              </foreignObject>
+            )}
+            {/* Selection border */}
+            <rect
+              x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`}
+              fill="none" stroke={isSelected ? '#a855f7' : 'rgba(255,255,255,0.4)'} strokeWidth={isSelected ? 2 : 1}
+              strokeDasharray={isSelected ? undefined : '4 2'}
+            />
+          </g>
+        );
+      }
       default:
         return null;
     }
@@ -570,6 +737,7 @@ export const AnnotationCanvas = ({
     switch (activeTool) {
       case 'line':
       case 'arrow':
+      case 'curved-arrow':
       case 'distance':
         return <line x1={`${startPos.x}%`} y1={`${startPos.y}%`} x2={`${currentPos.x}%`} y2={`${currentPos.y}%`}
           stroke={activeColor} strokeWidth={strokeWidth} strokeDasharray="4" opacity={0.7} />;
@@ -581,8 +749,7 @@ export const AnnotationCanvas = ({
           strokeDasharray="4" opacity={0.7} />;
       }
       case 'circle':
-      case 'spotlight':
-      case 'semi-circle': {
+      case 'spotlight': {
         const cx = (startPos.x + currentPos.x) / 2;
         const cy = (startPos.y + currentPos.y) / 2;
         const r = Math.max(Math.abs(currentPos.x - startPos.x), Math.abs(currentPos.y - startPos.y)) / 2;
@@ -591,6 +758,17 @@ export const AnnotationCanvas = ({
           stroke={previewColor} strokeWidth={strokeWidth}
           fill={previewColor} fillOpacity={fillOpacity * 0.3}
           strokeDasharray="4" opacity={0.7} />;
+      }
+      case 'semi-circle':
+      case 'space-oval': {
+        const cx = (startPos.x + currentPos.x) / 2;
+        const cy = (startPos.y + currentPos.y) / 2;
+        const rx = Math.abs(currentPos.x - startPos.x) / 2 || 2;
+        const ry = Math.abs(currentPos.y - startPos.y) / 2 || 1;
+        return <ellipse cx={cx} cy={cy} rx={rx} ry={ry}
+          stroke={activeColor} strokeWidth={strokeWidth * 0.5}
+          fill={activeColor} fillOpacity={fillOpacity * 0.3}
+          strokeDasharray="3 2" opacity={0.7} />;
       }
       case 'vision-cone': {
         const dx = currentPos.x - startPos.x, dy = currentPos.y - startPos.y;
@@ -620,7 +798,7 @@ export const AnnotationCanvas = ({
     let handles: HandleDef[] = [];
     let bbox: { x: number; y: number; w: number; h: number } | null = null;
 
-    if (el.type === 'rect' && el.width !== undefined && el.height !== undefined) {
+    if ((el.type === 'rect' || el.type === 'space-oval' || el.type === 'image-layer') && el.width !== undefined && el.height !== undefined) {
       const x = el.x, y = el.y, w = el.width, h = el.height;
       bbox = { x, y, w, h };
       handles = [
@@ -723,7 +901,7 @@ export const AnnotationCanvas = ({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      {elements.map(renderElement)}
+      {sortedElements.map(renderElement)}
       {renderPreview()}
       {renderResizeHandles()}
     </svg>

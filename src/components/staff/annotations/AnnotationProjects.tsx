@@ -18,9 +18,9 @@ export interface ElementKeyframe {
 
 export interface AnnotationElement {
   id: string;
-  type: 'line' | 'arrow' | 'curve' | 'rect' | 'circle' | 'spotlight' | 'text' | 'freehand'
+  type: 'line' | 'arrow' | 'curved-arrow' | 'curve' | 'rect' | 'circle' | 'spotlight' | 'text' | 'freehand'
     | 'player-marker' | 'vision-cone' | 'distance' | 'magnifier' | 'linked-line'
-    | 'semi-circle' | 'point';
+    | 'semi-circle' | 'point' | 'space-oval' | 'image-layer';
   x: number;
   y: number;
   x2?: number;
@@ -41,6 +41,12 @@ export interface AnnotationElement {
   coneSpread?: number;
   linkedTo?: string;
   zoomLevel?: number;
+  /** Dash pattern for lines/arrows: 'solid' | 'dashed' | 'dotted' | 'dash-dot' */
+  dashPattern?: 'solid' | 'dashed' | 'dotted' | 'dash-dot';
+  /** Curve control point offset for curved-arrow (percentage units) */
+  curveOffset?: number;
+  /** For image-layer: z-index override to keep above other annotations */
+  layerZIndex?: number;
 
   // ── Timeline event properties ──
   // When this element first appears (seconds from klip start)

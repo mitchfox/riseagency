@@ -21,10 +21,10 @@ interface AnnotationEditorProps {
 }
 
 export type AnnotationTool =
-  | 'select' | 'line' | 'arrow' | 'rect' | 'circle'
+  | 'select' | 'line' | 'arrow' | 'curved-arrow' | 'rect' | 'circle'
   | 'spotlight' | 'player-marker' | 'eraser'
   | 'vision-cone' | 'distance' | 'magnifier' | 'linked-line'
-  | 'semi-circle' | 'point';
+  | 'semi-circle' | 'point' | 'space-oval' | 'image-layer';
 
 // interpolateKeyframes moved to annotationRenderUtils.ts
 
@@ -1141,7 +1141,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                         />
                       </div>
                     )}
-                    {selectedElement.type === 'rect' && (
+                    {(selectedElement.type === 'rect' || selectedElement.type === 'space-oval' || selectedElement.type === 'image-layer') && (
                       <>
                         <div className="flex items-center gap-2">
                           <Label className="text-[9px] text-white/40 w-14">Width</Label>
@@ -1185,6 +1185,83 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                     </div>
                   </div>
 
+                  {/* Line Style (dash pattern) */}
+                  {(['line', 'arrow', 'curved-arrow', 'linked-line'].includes(selectedElement.type)) && (
+                    <div className="space-y-1.5 pt-2 border-t border-white/10">
+                      <div className="flex items-center gap-1 text-[10px] text-white/40">
+                        <span>Line Style</span>
+                      </div>
+                      <div className="flex gap-1">
+                        {([
+                          { id: 'solid', label: '━━━' },
+                          { id: 'dashed', label: '╌╌╌' },
+                          { id: 'dotted', label: '···' },
+                          { id: 'dash-dot', label: '╌·╌' },
+                        ] as const).map(style => (
+                          <button
+                            key={style.id}
+                            className={`flex-1 text-[9px] py-1 rounded border transition-colors ${
+                              (selectedElement.dashPattern || 'solid') === style.id
+                                ? 'bg-white/15 border-white/30 text-white'
+                                : 'border-white/10 text-white/40 hover:bg-white/5'
+                            }`}
+                            onClick={() => updateElement(selectedElement.id, { dashPattern: style.id })}
+                          >
+                            {style.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Curved arrow: curve amount */}
+                  {selectedElement.type === 'curved-arrow' && (
+                    <div className="space-y-1 pt-2 border-t border-white/10">
+                      <Label className="text-[9px] text-white/40">Curve Amount</Label>
+                      <Slider
+                        value={[selectedElement.curveOffset ?? -15]}
+                        min={-40} max={40} step={1}
+                        onValueChange={([v]) => updateElement(selectedElement.id, { curveOffset: v })}
+                        className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
+                      />
+                      <span className="text-[9px] text-white/30">{selectedElement.curveOffset ?? -15}</span>
+                    </div>
+                  )}
+
+                  {/* Semi-circle disc: width/height for ellipse shape */}
+                  {selectedElement.type === 'semi-circle' && (
+                    <div className="space-y-1 pt-2 border-t border-white/10">
+                      <Label className="text-[9px] text-white/40">Disc Shape</Label>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-[9px] text-white/40 w-14">Width</Label>
+                        <Input
+                          type="number" step="0.5" min="0.5"
+                          value={(selectedElement.width || selectedElement.radius || 4).toFixed(1)}
+                          onChange={e => updateElement(selectedElement.id, { width: parseFloat(e.target.value) || 4 })}
+                          className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-[9px] text-white/40 w-14">Height</Label>
+                        <Input
+                          type="number" step="0.5" min="0.5"
+                          value={(selectedElement.height || ((selectedElement.width || selectedElement.radius || 4) * 0.35)).toFixed(1)}
+                          onChange={e => updateElement(selectedElement.id, { height: parseFloat(e.target.value) || 1.5 })}
+                          className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-[9px] text-white/40 w-14">Rotation</Label>
+                        <Input
+                          type="number" step="5" min="0" max="360"
+                          value={selectedElement.angle ?? 0}
+                          onChange={e => updateElement(selectedElement.id, { angle: parseInt(e.target.value) || 0 })}
+                          className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   {selectedElement.keyframes && selectedElement.keyframes.length > 0 && (
                     <div className="pt-2 border-t border-white/10 space-y-1">
                       <p className="text-[10px] text-white/40">Keyframes ({selectedElement.keyframes.length})</p>
@@ -1219,7 +1296,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                     </div>
                   )}
 
-                  {(selectedElement.type === 'rect' || selectedElement.type === 'circle' || selectedElement.type === 'spotlight' || selectedElement.type === 'semi-circle' || selectedElement.type === 'vision-cone') && (
+                  {(selectedElement.type === 'rect' || selectedElement.type === 'circle' || selectedElement.type === 'spotlight' || selectedElement.type === 'semi-circle' || selectedElement.type === 'vision-cone' || selectedElement.type === 'space-oval') && (
                     <div className="space-y-1 pt-2 border-t border-white/10">
                       <Label className="text-[9px] text-white/40">Fill Opacity</Label>
                       <Slider
