@@ -115,6 +115,8 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     if (drawingMode) {
       const drawOffset = drawingTimestamp - (activeKlip?.startTime ?? 0);
       computed = computed.filter(el => {
+        // Always show image layers — they must mask annotations at all times
+        if (el.type === 'image-layer') return true;
         // Show elements that start at this exact drawing time (within 0.15s tolerance)
         if (Math.abs(el.appearAt - drawOffset) < 0.15) return true;
         // Also show the currently selected element regardless
@@ -359,18 +361,39 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     ctx: CanvasRenderingContext2D,
     elements: ReturnType<typeof computeVisibleElements>,
     vw: number,
-    vh: number
+    vh: number,
+    video?: HTMLVideoElement | null,
   ) => {
     if (elements.length === 0) return;
-    const svgString = renderElementsToSVGString(elements, vw, vh);
-    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-    const svgUrl = URL.createObjectURL(svgBlob);
-    await new Promise<void>((resolve) => {
-      const img = new Image();
-      img.onload = () => { ctx.drawImage(img, 0, 0, vw, vh); URL.revokeObjectURL(svgUrl); resolve(); };
-      img.onerror = () => { URL.revokeObjectURL(svgUrl); resolve(); };
-      img.src = svgUrl;
-    });
+
+    // Separate image-layer elements — these need direct canvas drawing, not SVG
+    const imageLayers = elements.filter(el => el.type === 'image-layer');
+    const otherElements = elements.filter(el => el.type !== 'image-layer');
+
+    // 1) Draw non-image-layer annotations via SVG
+    if (otherElements.length > 0) {
+      const svgString = renderElementsToSVGString(otherElements, vw, vh);
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      await new Promise<void>((resolve) => {
+        const img = new Image();
+        img.onload = () => { ctx.drawImage(img, 0, 0, vw, vh); URL.revokeObjectURL(svgUrl); resolve(); };
+        img.onerror = () => { URL.revokeObjectURL(svgUrl); resolve(); };
+        img.src = svgUrl;
+      });
+    }
+
+    // 2) Draw image layers on top by re-stamping the video frame in those regions
+    if (video && imageLayers.length > 0) {
+      for (const il of imageLayers) {
+        const sx = (il.computedX / 100) * vw;
+        const sy = (il.computedY / 100) * vh;
+        const sw = ((il.width || 10) / 100) * vw;
+        const sh = ((il.height || 10) / 100) * vh;
+        // Re-draw the video frame into this region, overwriting any annotations
+        ctx.drawImage(video, sx, sy, sw, sh, sx, sy, sw, sh);
+      }
+    }
   }, []);
 
   const exportClip = useCallback(async () => {
@@ -465,7 +488,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
             const offset = mediaTime - klipStart;
             const computed = computeVisibleElements(allElements, offset);
             if (computed.length > 0) {
-              await drawSvgOverlay(ctx, computed, vw, vh);
+              await drawSvgOverlay(ctx, computed, vw, vh, video);
             }
 
             // Progress reporting at ~10% intervals
@@ -496,7 +519,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
           ctx.drawImage(video, 0, 0, vw, vh);
 
           const computed = computeVisibleElements(allElements, offset);
-          await drawSvgOverlay(ctx, computed, vw, vh);
+          await drawSvgOverlay(ctx, computed, vw, vh, video);
 
           await new Promise(r => setTimeout(r, 50));
 
