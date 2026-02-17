@@ -224,15 +224,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       triggeredTimesRef.current.add(roundedTime);
       freezeIds.add(el.id);
     });
-    // Also include any other elements that are newly visible at this exact time
-    visibleElements.forEach(el => freezeIds.add(el.id));
-    // But remove elements whose duration has nearly expired
-    visibleElements.forEach(el => {
-      if (el.duration !== undefined) {
-        const remaining = (el.appearAt + el.duration) - effectiveOffset;
-        if (remaining < 0.1) freezeIds.delete(el.id);
-      }
-    });
+    // Only show the newly triggered elements — do NOT add all visible elements
     freezeElementIdsRef.current = freezeIds;
 
     // Calculate the longest remaining duration among visible annotations
