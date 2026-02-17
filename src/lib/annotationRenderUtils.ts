@@ -228,10 +228,16 @@ export function renderElementsToSVGString(
         const rx = el.width || el.radius || 4;
         const ry = el.height || (rx * 0.35);
         const rotation = el.angle || 0;
+        const startAngle = -50 * (Math.PI / 180);
+        const endAngle = 230 * (Math.PI / 180);
+        const x1 = x + rx * Math.cos(startAngle);
+        const y1 = y + ry * Math.sin(startAngle);
+        const x2 = x + rx * Math.cos(endAngle);
+        const y2 = y + ry * Math.sin(endAngle);
         parts.push(
           groupOpen,
           `<g transform="rotate(${rotation}, ${x}%, ${y}%)">`,
-          `<ellipse cx="${x}%" cy="${y}%" rx="${rx}%" ry="${ry}%" fill="${el.color}" fill-opacity="${el.fillOpacity || 0.5}" stroke="${el.color}" stroke-width="${el.strokeWidth * 0.5}" stroke-opacity="0.9"/>`,
+          `<path d="M ${x1}% ${y1}% A ${rx}% ${ry}% 0 1 1 ${x2}% ${y2}%" fill="none" stroke="${el.color}" stroke-width="${el.strokeWidth}" stroke-opacity="0.9" stroke-linecap="round"/>`,
           `</g>`,
           groupClose
         );
