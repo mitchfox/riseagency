@@ -377,8 +377,30 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 />
               )}
               {!activeKlip && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none">
-                  <p className="text-white/60 text-sm">Create a klip to begin annotating</p>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                  <Button
+                    variant="default"
+                    size="lg"
+                    className="gap-2"
+                    onClick={() => {
+                      // Auto-create a klip spanning the full video and activate drawing
+                      const id = crypto.randomUUID();
+                      const klip: Klip = {
+                        id,
+                        name: `Annotation ${klips.length + 1}`,
+                        startTime: 0,
+                        endTime: duration || 10,
+                        elements: [],
+                        color: klipColors[klips.length % klipColors.length],
+                      };
+                      setKlips(prev => [...prev, klip]);
+                      setActiveKlipId(id);
+                      setActiveTool('arrow');
+                      toast.success("Ready to draw. Select a tool and click on the video.");
+                    }}
+                  >
+                    <Plus className="w-5 h-5" /> Draw
+                  </Button>
                 </div>
               )}
             </div>
@@ -493,10 +515,10 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 className={`text-xs gap-1 h-6 px-2 ${cuttingKlip ? 'text-red-400 hover:text-red-300' : 'text-white/60 hover:text-white'}`}
                 onClick={handleCut}
               >
-                <Scissors className="w-3 h-3" /> {cuttingKlip ? 'Set End' : 'Cut Klip'}
+                <Scissors className="w-3 h-3" /> {cuttingKlip ? 'Set End' : 'Cut Segment'}
               </Button>
               <Button variant="ghost" size="sm" className="text-xs text-white/60 hover:text-white gap-1 h-6 px-2" onClick={addKlip}>
-                <Plus className="w-3 h-3" /> Klip
+                <Plus className="w-3 h-3" /> Draw
               </Button>
               {selectedId && (
                 <Button variant="ghost" size="sm" className="text-xs text-amber-400/70 hover:text-amber-300 gap-1 h-6 px-2" onClick={addKeyframe} title="Add keyframe (Ctrl+K)">
@@ -512,10 +534,10 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
           <div className="w-60 bg-[#161a24] border-l border-white/10 shrink-0 flex flex-col overflow-hidden">
             {/* Klips */}
             <div className="p-3 border-b border-white/10">
-              <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Klips</p>
+              <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Segments</p>
               <div className="space-y-1 max-h-36 overflow-y-auto">
                 {klips.length === 0 && (
-                  <p className="text-xs text-white/30">No klips yet. Use Cut or + Klip below.</p>
+                  <p className="text-xs text-white/30">Click Draw to start annotating.</p>
                 )}
                 {klips.map(klip => (
                   <div
@@ -538,7 +560,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 <div className="mt-2 pt-2 border-t border-white/10 space-y-1">
                   <div className="flex items-center gap-1 text-[10px] text-white/40">
                     <Timer className="w-3 h-3" />
-                    <span>Klip Range</span>
+                    <span>Segment Range</span>
                   </div>
                   <div className="flex gap-1">
                     <Input

@@ -153,7 +153,7 @@ export const AnnotationProjects = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Annotations</h2>
-        <p className="text-muted-foreground text-sm">KlipDraw-style tactical analysis with timeline events and motion tracking</p>
+        <p className="text-muted-foreground text-sm">Draw tactical annotations on video clips with timeline events and motion tracking</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -178,7 +178,7 @@ export const AnnotationProjects = () => {
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">Name</th>
                   <th className="text-left p-3 font-medium">Video</th>
-                  <th className="text-left p-3 font-medium">Klips</th>
+                  <th className="text-left p-3 font-medium">Segments</th>
                   <th className="text-left p-3 font-medium">Date</th>
                   <th className="text-right p-3 font-medium">Actions</th>
                 </tr>

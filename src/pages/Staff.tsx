@@ -284,6 +284,14 @@ const Staff = () => {
     // Update URL
     if (newSection) {
       setSearchParams({ section: newSection });
+      // Add to open tabs
+      try {
+        const tabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
+        if (!tabs.includes(newSection)) {
+          const updated = [...tabs, newSection].slice(-8); // Max 8 tabs
+          localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
+        }
+      } catch {}
     } else {
       setSearchParams({});
     }
@@ -753,14 +761,22 @@ const Staff = () => {
           { id: '_group_tasks', title: 'Tasks', isGroupLabel: true },
           { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
           { id: 'visionboard', title: 'Vision Board', icon: Target },
-          { id: '_group_apps', title: 'Apps', isGroupLabel: true },
+        ],
+        locked: false
+      },
+      {
+        id: 'apps',
+        title: 'Apps',
+        icon: Zap,
+        locked: false,
+        sections: [
           { id: 'docs', title: 'Docs', icon: FileText },
           { id: 'sheets', title: 'Sheets', icon: FileSpreadsheet },
           { id: 'designstudio', title: 'Design Studio', icon: Palette },
           { id: 'annotations', title: 'Annotations', icon: Film },
+          { id: 'videoanalysis', title: 'Video Analysis', icon: Film },
           { id: 'streams', title: 'Streams', icon: Tv },
         ],
-        locked: false
       },
       {
         id: 'coaching',
@@ -771,7 +787,6 @@ const Staff = () => {
           { id: 'coaching', title: 'Coaching Database', icon: Dumbbell },
           { id: '_group_analysis', title: 'Analysis', isGroupLabel: true },
           { id: 'analysis', title: 'Analysis', icon: LineChart },
-          { id: 'videoanalysis', title: 'Video Analysis', icon: Film },
           { id: 'coachingdata', title: 'Data', icon: Database },
           { id: '_group_planning', title: 'Planning', isGroupLabel: true },
           { id: 'athletecentre', title: 'Athlete Centre', icon: UserRound },
@@ -938,23 +953,71 @@ const Staff = () => {
       {/* Header with Logo - always visible */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="h-10 w-10 group"
-              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              <Lightbulb className={`h-5 w-5 transition-colors ${theme === 'dark' ? 'text-primary group-hover:text-foreground' : 'text-primary fill-primary group-hover:text-foreground group-hover:fill-foreground'}`} />
-            </Button>
+          <div className="flex items-center h-16 gap-2">
+            {/* Left side: open tabs */}
+            <div className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-none min-w-0">
+              {(() => {
+                const openTabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
+                const allSections = categories.flatMap(c => c.sections.filter(s => !(s as any).isGroupLabel));
+                // Always include current section
+                const tabs = Array.from(new Set([...(expandedSection ? [expandedSection] : []), ...openTabs]));
+                return tabs.map(tabId => {
+                  const sec = allSections.find(s => s.id === tabId);
+                  if (!sec) return null;
+                  const TabIcon = sec.icon;
+                  const isActive = expandedSection === tabId;
+                  return (
+                    <button
+                      key={tabId}
+                      onClick={() => handleSectionToggle(tabId as any)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all shrink-0 ${
+                        isActive ? 'bg-primary text-primary-foreground' : 'bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <TabIcon className="w-3 h-3" />
+                      <span>{sec.title}</span>
+                      {tabs.length > 1 && (
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const updated = openTabs.filter(t => t !== tabId);
+                            localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
+                            if (isActive && updated.length > 0) {
+                              handleSectionToggle(updated[updated.length - 1] as any);
+                            } else if (isActive) {
+                              handleSectionToggle('overview');
+                            }
+                            // Force re-render
+                            setExpandedSection(prev => prev);
+                          }}
+                          className="ml-1 hover:text-destructive cursor-pointer"
+                        >
+                          ×
+                        </span>
+                      )}
+                    </button>
+                  );
+                });
+              })()}
+            </div>
+            {/* Centre logo */}
             <img 
               src={theme === 'light' ? '/RISEBlack.png' : '/RISEWhite.png'}
               alt="RISE"
-              className={theme === 'light' ? "h-10 w-auto" : "h-10 w-auto"}
+              className="h-10 w-auto shrink-0"
             />
-            <div className="flex items-center gap-2">
+            {/* Right side: notifications + theme toggle */}
+            <div className="flex items-center gap-2 shrink-0">
               {user && <StaffNotificationsDropdown userId={user.id} />}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="h-9 w-9 group"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                <Lightbulb className={`h-5 w-5 transition-colors ${theme === 'dark' ? 'text-primary group-hover:text-foreground' : 'text-primary fill-primary group-hover:text-foreground group-hover:fill-foreground'}`} />
+              </Button>
             </div>
           </div>
         </div>
