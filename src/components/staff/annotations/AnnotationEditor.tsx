@@ -141,42 +141,56 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     }
   }, [duration, klips.length, autoCreated]);
 
+  // Use requestAnimationFrame for smoother time tracking during playback
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    const onTime = () => setCurrentTime(video.currentTime);
+    let rafId: number;
+    const updateTime = () => {
+      setCurrentTime(video.currentTime);
+      if (!video.paused) rafId = requestAnimationFrame(updateTime);
+    };
+    const onPlay = () => { rafId = requestAnimationFrame(updateTime); };
+    const onPause = () => { cancelAnimationFrame(rafId); setCurrentTime(video.currentTime); };
     const onLoaded = () => setDuration(video.duration);
-    const onEnded = () => setIsPlaying(false);
+    const onEnded = () => { setIsPlaying(false); cancelAnimationFrame(rafId); };
+    const onTime = () => setCurrentTime(video.currentTime);
+    video.addEventListener('play', onPlay);
+    video.addEventListener('pause', onPause);
     video.addEventListener('timeupdate', onTime);
     video.addEventListener('loadedmetadata', onLoaded);
     video.addEventListener('ended', onEnded);
     return () => {
+      cancelAnimationFrame(rafId);
+      video.removeEventListener('play', onPlay);
+      video.removeEventListener('pause', onPause);
       video.removeEventListener('timeupdate', onTime);
       video.removeEventListener('loadedmetadata', onLoaded);
       video.removeEventListener('ended', onEnded);
     };
   }, []);
 
+  // Pause when annotation becomes visible during playback
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || drawingMode) return;
     if (hasVisibleAnnotations && !video.paused) {
       wasPlayingRef.current = true;
       video.pause();
       setIsPlaying(false);
     }
-  }, [hasVisibleAnnotations]);
+  }, [hasVisibleAnnotations, drawingMode]);
 
-  // Auto-resume when annotations finish their duration
+  // Auto-resume: find the latest ending annotation and wait for it to finish
   useEffect(() => {
     if (drawingMode || !activeKlip) return;
-    if (!hasVisibleAnnotations && wasPlayingRef.current) {
-      wasPlayingRef.current = false;
-      const video = videoRef.current;
-      if (video && video.paused && video.currentTime > 0 && video.currentTime < duration) {
-        video.play();
-        setIsPlaying(true);
-      }
+    if (hasVisibleAnnotations || !wasPlayingRef.current) return;
+    // All annotations have passed, resume playback
+    wasPlayingRef.current = false;
+    const video = videoRef.current;
+    if (video && video.paused && video.currentTime > 0 && video.currentTime < duration) {
+      video.play();
+      setIsPlaying(true);
     }
   }, [hasVisibleAnnotations, drawingMode, activeKlip, duration]);
 

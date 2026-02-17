@@ -57,13 +57,7 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
   const currentElements = canvas.currentPage?.elements || [];
   const selectedElement = currentElements.find(el => canvas.selectedIds.includes(el.id)) || null;
 
-  // Auto-show properties panel when element selected
-  useEffect(() => {
-    if (canvas.selectedIds.length > 0) {
-      if (selectedElement?.type === 'image' && leftPanel === 'filters') return;
-      setLeftPanel('properties');
-    }
-  }, [canvas.selectedIds]);
+  // No longer auto-open properties panel on selection - user must click to open it
 
   // Auto-centre and fit canvas
   useEffect(() => {

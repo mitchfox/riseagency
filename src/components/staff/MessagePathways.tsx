@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Plus, Trash2, ChevronDown, ChevronRight, Copy, Sparkles, GripVertical, ArrowDown } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronRight, Copy, Sparkles, GripVertical, ArrowDown, Image as ImageIcon, X, BookOpen } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+interface CaseStudyImage {
+  id: string;
+  url: string;
+  caption: string;
+}
 
 interface PathwayStep {
   id: string;
@@ -33,6 +40,7 @@ interface PathwayStep {
   template_name: string;
   custom_message: string;
   step_label: string;
+  case_study_images?: CaseStudyImage[];
 }
 
 interface Pathway {
@@ -56,6 +64,9 @@ const MessagePathways = () => {
   const [expandedPathway, setExpandedPathway] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState<{ pathwayId: string; stepIndex: number } | null>(null);
   const [generatingAI, setGeneratingAI] = useState(false);
+  const [viewingCaseStudy, setViewingCaseStudy] = useState<{ pathwayId: string; stepIndex: number } | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   
   const [formData, setFormData] = useState({
     name: '',
@@ -177,6 +188,7 @@ const MessagePathways = () => {
       template_name: '',
       custom_message: '',
       step_label: `Step ${formData.steps.length + 1}`,
+      case_study_images: [],
     };
     setFormData({ ...formData, steps: [...formData.steps, newStep] });
   };
@@ -206,6 +218,50 @@ const MessagePathways = () => {
   const copyMessage = (message: string) => {
     navigator.clipboard.writeText(message);
     toast.success('Message copied to clipboard');
+  };
+
+  const handleCaseStudyUpload = async (stepIndex: number, file: File) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `pathway-case-studies/${crypto.randomUUID()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('marketing-gallery')
+        .upload(filePath, file);
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('marketing-gallery')
+        .getPublicUrl(filePath);
+      
+      const newImage: CaseStudyImage = {
+        id: crypto.randomUUID(),
+        url: publicUrl,
+        caption: '',
+      };
+      
+      const step = formData.steps[stepIndex];
+      const currentImages = step.case_study_images || [];
+      updateStep(stepIndex, { case_study_images: [...currentImages, newImage] });
+      toast.success('Image uploaded');
+    } catch {
+      toast.error('Failed to upload image');
+    }
+  };
+
+  const removeCaseStudyImage = (stepIndex: number, imageId: string) => {
+    const step = formData.steps[stepIndex];
+    const filtered = (step.case_study_images || []).filter(img => img.id !== imageId);
+    updateStep(stepIndex, { case_study_images: filtered });
+  };
+
+  const updateCaseStudyCaption = (stepIndex: number, imageId: string, caption: string) => {
+    const step = formData.steps[stepIndex];
+    const updated = (step.case_study_images || []).map(img =>
+      img.id === imageId ? { ...img, caption } : img
+    );
+    updateStep(stepIndex, { case_study_images: updated });
   };
 
   const generateAIResponse = async (step: PathwayStep, context: string) => {
@@ -336,6 +392,20 @@ Generate a ready-to-send message:`,
                               <div className="flex items-center justify-between mb-2">
                                 <h4 className="font-medium">{step.step_label || step.template_name || `Step ${index + 1}`}</h4>
                                 <div className="flex gap-2">
+                                  {step.case_study_images && step.case_study_images.length > 0 && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setViewingCaseStudy(
+                                        viewingCaseStudy?.pathwayId === pathway.id && viewingCaseStudy?.stepIndex === index
+                                          ? null
+                                          : { pathwayId: pathway.id, stepIndex: index }
+                                      )}
+                                    >
+                                      <BookOpen className="h-4 w-4 mr-1" />
+                                      Case Study ({step.case_study_images.length})
+                                    </Button>
+                                  )}
                                   <Button
                                     variant="ghost"
                                     size="sm"
@@ -363,6 +433,28 @@ Generate a ready-to-send message:`,
                               <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                                 {step.custom_message}
                               </p>
+
+                              {/* Case study images inline view */}
+                              {viewingCaseStudy?.pathwayId === pathway.id && viewingCaseStudy?.stepIndex === index && step.case_study_images && step.case_study_images.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-border/50">
+                                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Case Study</p>
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    {step.case_study_images.map((img) => (
+                                      <div key={img.id} className="space-y-1">
+                                        <img
+                                          src={img.url}
+                                          alt={img.caption || 'Case study'}
+                                          className="w-full rounded-lg border border-border/50 cursor-pointer hover:opacity-80 transition-opacity"
+                                          onClick={() => setLightboxImage(img.url)}
+                                        />
+                                        {img.caption && (
+                                          <p className="text-[10px] text-muted-foreground">{img.caption}</p>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                           {index < pathway.steps.length - 1 && (
@@ -380,6 +472,15 @@ Generate a ready-to-send message:`,
           ))
         )}
       </div>
+
+      {/* Lightbox */}
+      {lightboxImage && (
+        <Dialog open={!!lightboxImage} onOpenChange={() => setLightboxImage(null)}>
+          <DialogContent className="max-w-4xl p-2">
+            <img src={lightboxImage} alt="Case study" className="w-full rounded-lg" />
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Create/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -473,6 +574,61 @@ Generate a ready-to-send message:`,
                               placeholder="Enter your message or select a template..."
                               rows={4}
                             />
+                          </div>
+
+                          {/* Case Study Images */}
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <Label className="text-xs text-muted-foreground">Case Study Images</Label>
+                              <div>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  ref={(el) => { fileInputRefs.current[step.id] = el; }}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleCaseStudyUpload(index, file);
+                                    e.target.value = '';
+                                  }}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-xs gap-1"
+                                  onClick={() => fileInputRefs.current[step.id]?.click()}
+                                >
+                                  <ImageIcon className="h-3 w-3" /> Add Image
+                                </Button>
+                              </div>
+                            </div>
+                            {step.case_study_images && step.case_study_images.length > 0 && (
+                              <div className="grid grid-cols-3 gap-2">
+                                {step.case_study_images.map((img) => (
+                                  <div key={img.id} className="relative group">
+                                    <img
+                                      src={img.url}
+                                      alt={img.caption}
+                                      className="w-full h-20 object-cover rounded border border-border/50"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => removeCaseStudyImage(index, img.id)}
+                                      className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                    <Input
+                                      value={img.caption}
+                                      onChange={(e) => updateCaseStudyCaption(index, img.id, e.target.value)}
+                                      placeholder="Caption..."
+                                      className="h-6 text-[10px] mt-1"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <Button
