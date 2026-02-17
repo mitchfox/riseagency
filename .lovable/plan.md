@@ -1,68 +1,43 @@
 
 
-## Fix: Annotation Playback - Freeze Frame, Display, Auto-Resume
+## Fix: Annotation Auto-Resume and Immediate Visibility
 
-### Problem
+### Bug 1: Auto-resume timer gets cancelled immediately
 
-Three bugs are creating a broken playback experience:
+**Root cause**: The playback freeze effect (line 178) sets a `setTimeout` to resume the video, but its cleanup function clears that timer. Because the effect depends on `currentTime`, `visibleElements`, `effectiveOffset`, and `playbackFreezeActive`, when `playbackFreezeActive` changes to `true`, React re-runs the effect. The new run hits the early return (`if (playbackFreezeActive) return`), but React also runs the *cleanup* from the previous render, which clears the timeout before it can fire.
 
-1. **No freeze frame captured** during playback. When an annotation's time is reached, the video pauses but no screenshot is taken, so the annotation may overlay an incorrect or blank frame.
-2. **Deadlock**: The auto-resume logic waits for `hasVisibleAnnotations` to become false, but since the video is paused, `currentTime` never advances, so visibility never changes. The video stays paused indefinitely.
-3. **No timer**: There is no `setTimeout` to resume playback after the annotation's duration (typically 3 seconds).
+**Fix**: Move the `setTimeout` out of the effect entirely. Instead, start the timer in a *separate* `useEffect` that only runs when `playbackFreezeActive` becomes `true`. This way the timer lives independently and won't be cancelled by the detection effect re-running.
 
-### Solution
+New effect (roughly):
+```text
+useEffect:
+  if playbackFreezeActive is true:
+    start setTimeout for maxDuration
+    on fire: clear freeze state, resume video
+    cleanup: clearTimeout (only runs when playbackFreezeActive changes)
+```
 
-Replace the current reactive pause/resume approach with an explicit freeze-frame-and-timer system during playback.
+The detection effect keeps everything except the setTimeout -- it just sets the state and pauses the video.
+
+### Bug 2: Newly drawn annotations not visible on the freeze frame
+
+**Root cause**: Elements are created with `appearAt: klipOffset`, but during drawing mode, visibility is calculated using `effectiveOffset = drawingTimestamp - activeKlip.startTime`. If there's any tiny timing mismatch, the element sits just outside the visibility window.
+
+**Fix**: When in drawing mode, set `effectiveOffset` to exactly match `klipOffset` so newly placed elements are always within range. The simplest approach is to just use `klipOffset` in both modes during drawing, since the video is paused and `currentTime` is stable.
 
 ### Changes (single file: `AnnotationEditor.tsx`)
 
-**1. Add a "playback freeze" state**
+1. **Split the freeze effect into two**:
+   - Effect A (detection): monitors `currentTime` + `visibleElements`, captures frame, pauses video, sets `playbackFreezeActive = true`. Stores the duration in a ref. No timer here.
+   - Effect B (resume timer): watches `playbackFreezeActive`. When it becomes true, starts `setTimeout` using the stored duration. When it fires, clears freeze state and resumes playback. Cleanup only clears this single timer.
 
-New state variables:
-- `playbackFreezeUrl` (string | null) - the captured frame image during playback
-- `playbackFreezeActive` (boolean) - whether we are currently in a playback freeze
+2. **Fix effectiveOffset**: In drawing mode, use `klipOffset` directly rather than recalculating from `drawingTimestamp`. This ensures new elements whose `appearAt` equals `klipOffset` are always visible.
 
-This is separate from the existing `drawingMode` / `freezeFrameUrl` which is for the manual drawing workflow.
-
-**2. Replace the pause/resume effects (lines 173-195)**
-
-Remove the two `useEffect` hooks that check `hasVisibleAnnotations`. Replace with a single effect that:
-
-- Monitors `currentTime` during playback
-- When annotations become visible and the video is playing:
-  1. Captures a freeze frame (canvas screenshot of the video element)
-  2. Pauses the video
-  3. Sets `playbackFreezeActive = true`
-  4. Starts a `setTimeout` for the longest visible annotation's remaining duration
-- When the timer fires:
-  1. Clears `playbackFreezeUrl` and `playbackFreezeActive`
-  2. Resumes the video from where it was paused
-
-**3. Render the playback freeze frame**
-
-Add a conditional render block (similar to the drawing mode freeze frame) that shows the captured frame image when `playbackFreezeActive` is true. The annotation canvas overlay already renders when `visibleElements.length > 0`, so annotations will appear on top of this frozen image.
-
-**4. Prevent re-triggering**
-
-Track which annotation times have already been triggered during this playback session using a `Set` ref (`triggeredTimesRef`). Reset the set when the user manually seeks or starts a new playback session.
-
-### Technical Detail
-
-```text
-Playback Flow:
-  Video playing --> currentTime hits annotation.appearAt
-    --> Capture freeze frame (canvas.toDataURL)
-    --> video.pause()
-    --> Show freeze frame image + annotation overlay
-    --> setTimeout(annotation.duration)
-        --> Hide freeze frame
-        --> video.play() (resume from same point)
-        --> Continue until next annotation
-```
+3. **Store freeze duration in a ref** (`playbackFreezeDurationRef`) so the resume effect can read it without needing it as a dependency.
 
 ### What stays the same
 
-- Drawing mode workflow (manual freeze frame, toolbar, save/cancel) is untouched
-- Element visibility filtering logic remains the same
-- Timeline dots, keyframes, and all sidebar controls unchanged
+- Drawing mode workflow (freeze frame, toolbar, save/cancel) untouched
+- Element creation logic in AnnotationCanvas unchanged
+- Timeline dots, sidebar controls, keyframes all unchanged
 
