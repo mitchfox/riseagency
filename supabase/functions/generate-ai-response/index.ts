@@ -43,7 +43,7 @@ serve(async (req) => {
             content: prompt
           }
         ],
-        max_tokens: 500,
+        max_tokens: 4000,
       }),
     });
 

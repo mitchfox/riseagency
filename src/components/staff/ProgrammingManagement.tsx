@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Database, Sparkles, Calendar, FolderOpen, Save } from "lucide-react";
+import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Database, Sparkles, Calendar, FolderOpen, Save, Copy } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -1950,7 +1950,7 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                               .limit(100);
 
                             const exerciseContext = exercises?.map(e => 
-                              `${e.title} (${e.category || 'General'})${e.description ? ': ' + e.description : ''}`
+                              `- ${e.title} | ${e.category || 'General'} | Reps: ${e.reps || 'N/A'} | Sets: ${e.sets || 'N/A'} | Load: ${e.load || 'N/A'}`
                             ).join('\n') || 'No exercises in database yet.';
 
                             const { data: { session } } = await supabase.auth.getSession();
@@ -1965,22 +1965,25 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                                   'Authorization': `Bearer ${session.access_token}`,
                                 },
                                 body: JSON.stringify({
-                                  prompt: `You are a strength and conditioning coach. Based on what I'm working on with this player, suggest exercises and a session plan using exercises from my database where possible.
+                                  prompt: `You are a strength and conditioning coach building session plans. Return ONLY valid JSON, no other text.
 
-My coaching database exercises:
+My exercise database:
 ${exerciseContext}
 
-What I'm working on:
-${freePlanText}
+What I'm working on with this player: ${freePlanText}
 
-Player: ${playerName}
+Return a JSON array of session objects. Each session has a "name" (e.g. "Session 1 - Acceleration & Power") and "exercises" array. Each exercise has: "name", "reps", "sets", "load", "recovery".
 
-Provide:
-1. Suggested exercises (prefer ones from my database, but suggest new ones too if needed)
-2. A brief session plan structure
-3. Sets/reps/load recommendations
+RULES:
+- Use exercises from my database wherever possible, using the EXACT names, reps, sets, and load formats as they appear (e.g. "12 (6 each side)" not "6 per side")
+- Only suggest new exercises if the database genuinely lacks something needed
+- Do not truncate or cut short. Include all exercises needed for complete sessions
+- No markdown formatting, no asterisks, no hashes
+- Reps/sets/load must match the style in my database exactly
+- Return 2-4 sessions depending on what makes sense
 
-Keep it practical and concise. Format with clear headings.`
+Example format:
+[{"name":"Session 1 - Lower Body Power","exercises":[{"name":"Sumo Deadlifts","reps":"12","sets":"3","load":"80% 1RM","recovery":"90s"}]}]`
                                 }),
                               }
                             );
