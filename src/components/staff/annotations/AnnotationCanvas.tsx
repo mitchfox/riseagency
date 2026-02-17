@@ -966,7 +966,7 @@ export const AnnotationCanvas = ({
     const el = elements.find(e => e.id === selectedId);
     if (!el) return null;
 
-    const handleSize = 8;
+    const handleSize = 3;
     const hitSize = 20;
     type HandleDef = { handle: 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w'; x: number; y: number; cursor: string };
     let handles: HandleDef[] = [];
@@ -1034,10 +1034,10 @@ export const AnnotationCanvas = ({
               <circle
                 cx={`${ep.x}%`}
                 cy={`${ep.y}%`}
-                r="4"
+                r="2"
                 fill="white"
                 stroke="none"
-                style={{ cursor: 'move', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}
+                style={{ cursor: 'move', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))' }}
                 pointerEvents="none"
               />
             </g>
@@ -1080,10 +1080,10 @@ export const AnnotationCanvas = ({
             <circle
               cx={`${h.x}%`}
               cy={`${h.y}%`}
-              r="4"
+              r="2"
               fill="white"
               stroke="none"
-              style={{ cursor: h.cursor, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}
+              style={{ cursor: h.cursor, filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))' }}
               pointerEvents="none"
             />
           </g>
