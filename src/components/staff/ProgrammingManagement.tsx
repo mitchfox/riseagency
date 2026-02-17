@@ -1909,6 +1909,138 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Free Plan Section - staff only, never visible to players */}
+                <Card className="border-dashed border-primary/30">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        Free Plan
+                      </CardTitle>
+                      <Badge variant="outline" className="text-[10px]">Staff Only</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Jot down what you're working on. Get AI-suggested exercises and session plans from your coaching database.</p>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Textarea
+                      placeholder="What are you working on for this player? e.g. 'Improving first-step acceleration and hip mobility for the next 4 weeks...'"
+                      value={(() => {
+                        try { return localStorage.getItem(`freeplan_${playerId}_${selectedProgram?.id}`) || ''; }
+                        catch { return ''; }
+                      })()}
+                      onChange={(e) => {
+                        try { localStorage.setItem(`freeplan_${playerId}_${selectedProgram?.id}`, e.target.value); } catch {}
+                        // Force re-render
+                        setHasUnsavedChanges(prev => prev);
+                      }}
+                      rows={4}
+                      className="text-sm"
+                    />
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5"
+                        disabled={aiGenerating}
+                        onClick={async () => {
+                          const freePlanText = localStorage.getItem(`freeplan_${playerId}_${selectedProgram?.id}`) || '';
+                          if (!freePlanText.trim()) {
+                            toast.error('Write what you\'re working on first');
+                            return;
+                          }
+                          setAiGenerating(true);
+                          try {
+                            // Fetch exercises from coaching database for context
+                            const { data: exercises } = await supabase
+                              .from('coaching_exercises')
+                              .select('title, category, description, reps, sets, load')
+                              .limit(100);
+
+                            const exerciseContext = exercises?.map(e => 
+                              `${e.title} (${e.category || 'General'})${e.description ? ': ' + e.description : ''}`
+                            ).join('\n') || 'No exercises in database yet.';
+
+                            const { data: { session } } = await supabase.auth.getSession();
+                            if (!session) throw new Error('Not authenticated');
+
+                            const response = await fetch(
+                              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-ai-response`,
+                              {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  'Authorization': `Bearer ${session.access_token}`,
+                                },
+                                body: JSON.stringify({
+                                  prompt: `You are a strength and conditioning coach. Based on what I'm working on with this player, suggest exercises and a session plan using exercises from my database where possible.
+
+My coaching database exercises:
+${exerciseContext}
+
+What I'm working on:
+${freePlanText}
+
+Player: ${playerName}
+
+Provide:
+1. Suggested exercises (prefer ones from my database, but suggest new ones too if needed)
+2. A brief session plan structure
+3. Sets/reps/load recommendations
+
+Keep it practical and concise. Format with clear headings.`
+                                }),
+                              }
+                            );
+
+                            if (!response.ok) throw new Error('AI request failed');
+                            const data = await response.json();
+                            const suggestion = data.content || data.message || 'No suggestions generated.';
+                            
+                            // Store suggestion
+                            localStorage.setItem(`freeplan_suggestion_${playerId}_${selectedProgram?.id}`, suggestion);
+                            setHasUnsavedChanges(prev => prev); // force re-render
+                            toast.success('Suggestions generated');
+                          } catch (error) {
+                            console.error('AI suggestion error:', error);
+                            toast.error('Failed to generate suggestions');
+                          } finally {
+                            setAiGenerating(false);
+                          }
+                        }}
+                      >
+                        <Sparkles className={`w-3.5 h-3.5 ${aiGenerating ? 'animate-pulse' : ''}`} />
+                        {aiGenerating ? 'Thinking...' : 'Get AI Suggestions'}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs text-muted-foreground"
+                        onClick={() => {
+                          localStorage.removeItem(`freeplan_suggestion_${playerId}_${selectedProgram?.id}`);
+                          setHasUnsavedChanges(prev => prev);
+                        }}
+                      >
+                        Clear Suggestions
+                      </Button>
+                    </div>
+                    {(() => {
+                      const suggestion = (() => {
+                        try { return localStorage.getItem(`freeplan_suggestion_${playerId}_${selectedProgram?.id}`) || ''; }
+                        catch { return ''; }
+                      })();
+                      if (!suggestion) return null;
+                      return (
+                        <div className="mt-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                          <p className="text-[10px] uppercase tracking-wider text-primary/60 mb-2 font-medium">AI Suggestions</p>
+                          <div className="text-sm whitespace-pre-wrap leading-relaxed text-foreground/80">{suggestion}</div>
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="schedule" className="space-y-4">

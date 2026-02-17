@@ -953,29 +953,66 @@ const Staff = () => {
       {/* Header with Logo - always visible */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="flex items-center h-16 gap-2">
-            {/* Left side: open tabs */}
-            <div className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-none min-w-0">
+          <div className="flex items-center h-16 gap-0">
+            {/* Left side: open tabs - stops before centre logo */}
+            <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none min-w-0 flex-1 mr-3"
+              onDragOver={(e) => e.preventDefault()}
+            >
               {(() => {
-                const openTabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
+                const openTabs: string[] = (() => { try { return JSON.parse(localStorage.getItem('staff_open_tabs') || '[]'); } catch { return []; } })();
                 const allSections = categories.flatMap(c => c.sections.filter(s => !(s as any).isGroupLabel));
-                // Always include current section
                 const tabs = Array.from(new Set([...(expandedSection ? [expandedSection] : []), ...openTabs]));
-                return tabs.map(tabId => {
+                // Calculate condensed mode based on tab count
+                const maxFullTabs = isMobile ? 0 : 6;
+                const maxFirstWord = isMobile ? 0 : 10;
+                const condensed = tabs.length > maxFullTabs;
+                const iconOnly = tabs.length > maxFirstWord || isMobile;
+
+                return tabs.map((tabId, tabIndex) => {
                   const sec = allSections.find(s => s.id === tabId);
                   if (!sec) return null;
                   const TabIcon = sec.icon;
                   const isActive = expandedSection === tabId;
+                  // Get first word of title for condensed mode
+                  const firstWord = sec.title.split(' ')[0];
+
                   return (
                     <button
                       key={tabId}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', tabId);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const draggedId = e.dataTransfer.getData('text/plain');
+                        if (draggedId === tabId) return;
+                        const updated = [...tabs];
+                        const fromIdx = updated.indexOf(draggedId);
+                        const toIdx = updated.indexOf(tabId);
+                        if (fromIdx === -1 || toIdx === -1) return;
+                        updated.splice(fromIdx, 1);
+                        updated.splice(toIdx, 0, draggedId);
+                        localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
+                        setExpandedSection(prev => prev); // force re-render
+                      }}
                       onClick={() => handleSectionToggle(tabId as any)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all shrink-0 ${
-                        isActive ? 'bg-primary text-primary-foreground' : 'bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground'
+                      className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium transition-all shrink-0 border-b-2 cursor-grab active:cursor-grabbing ${
+                        isActive 
+                          ? 'border-primary text-primary bg-primary/5' 
+                          : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                       }`}
+                      title={sec.title}
                     >
-                      <TabIcon className="w-3 h-3" />
-                      <span>{sec.title}</span>
+                      <TabIcon className="w-3.5 h-3.5 shrink-0" />
+                      {!iconOnly && (
+                        <span className="truncate">{condensed ? firstWord : sec.title}</span>
+                      )}
                       {tabs.length > 1 && (
                         <span
                           onClick={(e) => {
@@ -987,10 +1024,12 @@ const Staff = () => {
                             } else if (isActive) {
                               handleSectionToggle('overview');
                             }
-                            // Force re-render
                             setExpandedSection(prev => prev);
                           }}
-                          className="ml-1 hover:text-destructive cursor-pointer"
+                          className="ml-0.5 text-[10px] opacity-0 group-hover:opacity-100 hover:text-destructive cursor-pointer leading-none"
+                          style={{ opacity: isActive ? 0.6 : 0 }}
+                          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                          onMouseLeave={(e) => (e.currentTarget.style.opacity = isActive ? '0.6' : '0')}
                         >
                           ×
                         </span>
@@ -1000,15 +1039,16 @@ const Staff = () => {
                 });
               })()}
             </div>
-            {/* Centre logo */}
-            <img 
-              src={theme === 'light' ? '/RISEBlack.png' : '/RISEWhite.png'}
-              alt="RISE"
-              className="h-10 w-auto shrink-0"
-            />
-            {/* Right side: notifications + theme toggle */}
-            <div className="flex items-center gap-2 shrink-0">
-              {user && <StaffNotificationsDropdown userId={user.id} />}
+            {/* Centre logo - absolutely positioned to stay central */}
+            <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none">
+              <img 
+                src={theme === 'light' ? '/RISEBlack.png' : '/RISEWhite.png'}
+                alt="RISE"
+                className="h-10 w-auto"
+              />
+            </div>
+            {/* Right side: theme toggle + notifications */}
+            <div className="flex items-center gap-1 shrink-0 ml-3">
               <Button
                 variant="ghost"
                 size="icon"
@@ -1018,6 +1058,7 @@ const Staff = () => {
               >
                 <Lightbulb className={`h-5 w-5 transition-colors ${theme === 'dark' ? 'text-primary group-hover:text-foreground' : 'text-primary fill-primary group-hover:text-foreground group-hover:fill-foreground'}`} />
               </Button>
+              {user && <StaffNotificationsDropdown userId={user.id} />}
             </div>
           </div>
         </div>
