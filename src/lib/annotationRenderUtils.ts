@@ -176,21 +176,10 @@ export function renderElementsToSVGString(
         break;
       }
 
-      case 'curve': {
-        const midX = (x + (el.x2 || 0)) / 2;
-        const midY = Math.min(y, el.y2 || 0) - 10;
-        parts.push(
-          groupOpen,
-          `<path d="M ${x}% ${y}% Q ${midX}% ${midY}% ${el.x2}% ${el.y2}%" stroke="${el.color}" stroke-width="${el.strokeWidth}" fill="none" stroke-linecap="round"/>`,
-          groupClose
-        );
-        break;
-      }
-
       case 'rect':
         parts.push(
           groupOpen,
-          `<rect x="${x}%" y="${y}%" width="${el.width}%" height="${el.height}%" stroke="${el.color}" stroke-width="${el.strokeWidth}" fill="none"/>`,
+          `<rect x="${x}%" y="${y}%" width="${el.width}%" height="${el.height}%" stroke="${el.color}" stroke-width="${el.strokeWidth}" fill="${el.fillOpacity ? el.color : 'none'}" fill-opacity="${el.fillOpacity || 0}"/>`,
           groupClose
         );
         break;
@@ -198,34 +187,51 @@ export function renderElementsToSVGString(
       case 'circle':
         parts.push(
           groupOpen,
-          `<circle cx="${x}%" cy="${y}%" r="${el.radius}%" stroke="${el.color}" stroke-width="${el.strokeWidth}" fill="none"/>`,
+          `<circle cx="${x}%" cy="${y}%" r="${el.radius}%" stroke="${el.color}" stroke-width="${el.strokeWidth}" fill="${el.fillOpacity ? el.color : 'none'}" fill-opacity="${el.fillOpacity || 0}"/>`,
           groupClose
         );
         break;
 
-      case 'spotlight':
+      case 'semi-circle': {
+        const r = el.radius || 2;
+        const rotation = el.angle || 180;
         parts.push(
           groupOpen,
-          `<circle cx="${x}%" cy="${y}%" r="${el.radius}%" fill="${el.color}" fill-opacity="${el.opacity || 0.3}" stroke="${el.color}" stroke-width="2" stroke-opacity="0.6"/>`,
-          `<circle cx="${x}%" cy="${y}%" r="${(el.radius || 5) * 1.1}%" fill="none" stroke="${el.color}" stroke-width="1" stroke-opacity="0.3"/>`,
+          `<path d="M ${x - r}% ${y}% A ${r} ${r} 0 0 1 ${x + r}% ${y}% Z" fill="${el.color}" fill-opacity="${el.fillOpacity || 0.5}" stroke="${el.color}" stroke-width="${el.strokeWidth}" stroke-opacity="0.8" transform="rotate(${rotation - 180}, ${x}%, ${y}%)"/>`,
           groupClose
         );
         break;
+      }
+
+      case 'spotlight': {
+        const r = el.radius || 5;
+        const maskId = `spot-exp-${el.id}`;
+        parts.push(
+          groupOpen,
+          `<defs><mask id="${maskId}"><rect x="0" y="0" width="100%" height="100%" fill="white"/><circle cx="${x}%" cy="${y}%" r="${r}%" fill="black"/></mask></defs>`,
+          `<rect x="0" y="0" width="100%" height="100%" fill="black" fill-opacity="${el.fillOpacity || 0.3}" mask="url(#${maskId})"/>`,
+          `<circle cx="${x}%" cy="${y}%" r="${r}%" fill="none" stroke="${el.color}" stroke-width="2" stroke-opacity="0.6"/>`,
+          groupClose
+        );
+        break;
+      }
 
       case 'vision-cone': {
         const len = el.coneLength || 15;
         const angle = el.angle || 0;
-        const spread = 30;
-        const rad1 = ((angle - spread) * Math.PI) / 180;
-        const rad2 = ((angle + spread) * Math.PI) / 180;
+        const spread = el.coneSpread || 40;
+        const halfSpread = spread / 2;
+        const rad1 = ((angle - halfSpread) * Math.PI) / 180;
+        const rad2 = ((angle + halfSpread) * Math.PI) / 180;
         const vx1 = x + len * Math.cos(rad1);
         const vy1 = y + len * Math.sin(rad1);
         const vx2 = x + len * Math.cos(rad2);
         const vy2 = y + len * Math.sin(rad2);
+        const largeArc = spread > 180 ? 1 : 0;
         parts.push(
           groupOpen,
-          `<path d="M ${x}% ${y}% L ${vx1}% ${vy1}% A ${len} ${len} 0 0 1 ${vx2}% ${vy2}% Z" fill="${el.color}" fill-opacity="${el.opacity || 0.25}" stroke="${el.color}" stroke-width="1" stroke-opacity="0.5"/>`,
-          `<circle cx="${x}%" cy="${y}%" r="0.6%" fill="${el.color}"/>`,
+          `<path d="M ${x}% ${y}% L ${vx1}% ${vy1}% A ${len} ${len} 0 ${largeArc} 1 ${vx2}% ${vy2}% Z" fill="${el.color}" fill-opacity="${el.fillOpacity || 0.2}" stroke="${el.color}" stroke-width="1" stroke-opacity="0.4"/>`,
+          `<circle cx="${x}%" cy="${y}%" r="0.8%" fill="${el.color}" fill-opacity="0.8"/>`,
           groupClose
         );
         break;
@@ -248,33 +254,27 @@ export function renderElementsToSVGString(
         break;
       }
 
-      case 'text':
-        parts.push(
-          groupOpen,
-          `<text x="${x}%" y="${y}%" fill="black" font-size="${el.fontSize || 3}%" font-family="sans-serif" font-weight="bold" stroke="black" stroke-width="3" stroke-opacity="0.5" paint-order="stroke">${escapeXml(el.text || '')}</text>`,
-          `<text x="${x}%" y="${y}%" fill="${el.color}" font-size="${el.fontSize || 3}%" font-family="sans-serif" font-weight="bold">${escapeXml(el.text || '')}</text>`,
-          groupClose
-        );
-        break;
-
-      case 'player-marker':
+      case 'player-marker': {
+        const r = parseInt(el.color.slice(1, 3), 16);
+        const g = parseInt(el.color.slice(3, 5), 16);
+        const b = parseInt(el.color.slice(5, 7), 16);
+        const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        const textColor = lum > 0.5 ? '#000000' : '#ffffff';
         parts.push(
           groupOpen,
           `<circle cx="${x}%" cy="${y}%" r="${el.radius || 2.5}%" fill="${el.color}" fill-opacity="0.85" stroke="white" stroke-width="1.5"/>`,
-          `<text x="${x}%" y="${y}%" fill="white" text-anchor="middle" dominant-baseline="central" font-size="2.2%" font-weight="bold">${el.number ?? ''}</text>`,
+          `<text x="${x}%" y="${y}%" fill="${textColor}" text-anchor="middle" dominant-baseline="central" font-size="2.2%" font-weight="bold">${el.number ?? ''}</text>`,
           groupClose
         );
         break;
+      }
 
-      case 'freehand':
-        if (el.points && el.points.length >= 2) {
-          const d = el.points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x}% ${p.y}%`).join(' ');
-          parts.push(
-            groupOpen,
-            `<path d="${d}" stroke="${el.color}" stroke-width="${el.strokeWidth}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
-            groupClose
-          );
-        }
+      case 'point':
+        parts.push(
+          groupOpen,
+          `<circle cx="${x}%" cy="${y}%" r="${el.radius || 1}%" fill="${el.color}" fill-opacity="0.9" stroke="white" stroke-width="1.5"/>`,
+          groupClose
+        );
         break;
 
       case 'linked-line': {
@@ -288,7 +288,6 @@ export function renderElementsToSVGString(
         break;
       }
 
-      // Magnifier: cannot render live video zoom in export SVG, draw a placeholder ring
       case 'magnifier': {
         const r = el.radius || 8;
         parts.push(

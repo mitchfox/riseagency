@@ -9,7 +9,7 @@ import {
   Lock, Pencil, X, Download, PenLine,
 } from "lucide-react";
 import { AnnotationProject, AnnotationElement, Klip, ElementKeyframe } from "./AnnotationProjects";
-import { AnnotationCanvas, TrackerState } from "./AnnotationCanvas";
+import { AnnotationCanvas } from "./AnnotationCanvas";
 import { AnnotationToolbar } from "./AnnotationToolbar";
 import { toast } from "sonner";
 import { computeVisibleElements, renderElementsToSVGString, waitForSeek } from "@/lib/annotationRenderUtils";
@@ -21,9 +21,10 @@ interface AnnotationEditorProps {
 }
 
 export type AnnotationTool =
-  | 'select' | 'line' | 'arrow' | 'curve' | 'rect' | 'circle'
-  | 'spotlight' | 'text' | 'freehand' | 'player-marker' | 'eraser'
-  | 'vision-cone' | 'distance' | 'magnifier' | 'linked-line' | 'tracker';
+  | 'select' | 'line' | 'arrow' | 'rect' | 'circle'
+  | 'spotlight' | 'player-marker' | 'eraser'
+  | 'vision-cone' | 'distance' | 'magnifier' | 'linked-line'
+  | 'semi-circle' | 'point';
 
 // interpolateKeyframes moved to annotationRenderUtils.ts
 
@@ -36,6 +37,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [activeTool, setActiveTool] = useState<AnnotationTool>('select');
   const [activeColor, setActiveColor] = useState('#ff0000');
   const [strokeWidth, setStrokeWidth] = useState(3);
+  const [fillOpacity, setFillOpacity] = useState(0.3);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showPanel, setShowPanel] = useState(true);
@@ -49,7 +51,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [activeKlipId, setActiveKlipId] = useState<string | null>(project.klips?.[0]?.id || null);
   const [autoCreated, setAutoCreated] = useState(false);
 
-  const [trackers, setTrackers] = useState<TrackerState[]>([]);
   const [drawingMode, setDrawingMode] = useState(false);
   const [freezeFrameUrl, setFreezeFrameUrl] = useState<string | null>(null);
   const [drawingStartElements, setDrawingStartElements] = useState<AnnotationElement[]>([]);
@@ -518,21 +519,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     toast.success(`Keyframe added at ${klipOffset.toFixed(1)}s`);
   }, [selectedId, allElements, klipOffset, updateElement]);
 
-  useEffect(() => {
-    trackers.forEach(tracker => {
-      if (!tracker.active) return;
-      const el = allElements.find(e => e.id === tracker.elementId);
-      if (el) {
-        const time = videoRef.current?.currentTime || 0;
-        const lastPos = tracker.positions[tracker.positions.length - 1];
-        if (lastPos && (Math.abs(el.x - lastPos.x) > 0.5 || Math.abs(el.y - lastPos.y) > 0.5)) {
-          setTrackers(prev => prev.map(t =>
-            t.id === tracker.id ? { ...t, positions: [...t.positions, { time, x: el.x, y: el.y }] } : t
-          ));
-        }
-      }
-    });
-  }, [currentTime]);
+  // (Tracker functionality removed)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -611,6 +598,8 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
             setActiveColor={setActiveColor}
             strokeWidth={strokeWidth}
             setStrokeWidth={setStrokeWidth}
+            fillOpacity={fillOpacity}
+            setFillOpacity={setFillOpacity}
           />
         )}
 
@@ -663,11 +652,10 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                     activeTool={drawingMode ? activeTool : 'select'}
                     activeColor={activeColor}
                     strokeWidth={strokeWidth}
+                    fillOpacity={fillOpacity}
                     selectedId={drawingMode ? selectedId : null}
                     setSelectedId={drawingMode ? setSelectedId : () => {}}
                     videoRef={videoRef}
-                    trackers={trackers}
-                    setTrackers={setTrackers}
                     linkSource={linkSource}
                     setLinkSource={setLinkSource}
                     klipOffset={klipOffset}
@@ -1132,31 +1120,43 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                       <Label className="text-[9px] text-white/40">Zoom Level</Label>
                       <Slider
                         value={[selectedElement.zoomLevel || 2]}
-                        min={1.5} max={5} step={0.5}
+                        min={1} max={10} step={0.5}
                         onValueChange={([v]) => updateElement(selectedElement.id, { zoomLevel: v })}
                         className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
                       />
                       <span className="text-[9px] text-white/30">{selectedElement.zoomLevel || 2}x zoom</span>
                     </div>
                   )}
+
+                  {(selectedElement.type === 'rect' || selectedElement.type === 'circle' || selectedElement.type === 'spotlight' || selectedElement.type === 'semi-circle' || selectedElement.type === 'vision-cone') && (
+                    <div className="space-y-1 pt-2 border-t border-white/10">
+                      <Label className="text-[9px] text-white/40">Fill Opacity</Label>
+                      <Slider
+                        value={[selectedElement.fillOpacity ?? 0.3]}
+                        min={0} max={1} step={0.05}
+                        onValueChange={([v]) => updateElement(selectedElement.id, { fillOpacity: v })}
+                        className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
+                      />
+                      <span className="text-[9px] text-white/30">{Math.round((selectedElement.fillOpacity ?? 0.3) * 100)}%</span>
+                    </div>
+                  )}
+
+                  {selectedElement.type === 'vision-cone' && (
+                    <div className="space-y-1 pt-2 border-t border-white/10">
+                      <Label className="text-[9px] text-white/40">Cone Spread</Label>
+                      <Slider
+                        value={[selectedElement.coneSpread ?? 40]}
+                        min={10} max={180} step={5}
+                        onValueChange={([v]) => updateElement(selectedElement.id, { coneSpread: v })}
+                        className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
+                      />
+                      <span className="text-[9px] text-white/30">{selectedElement.coneSpread ?? 40}°</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
-            {trackers.length > 0 && (
-              <div className="p-3 border-t border-white/10">
-                <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Trackers ({trackers.length})</p>
-                <div className="space-y-0.5">
-                  {trackers.map((t, i) => (
-                    <div key={t.id} className="flex items-center gap-1.5 text-xs text-white/50 px-2 py-1">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
-                      <span>Tracker {i + 1}</span>
-                      <span className="text-white/30 ml-auto">{t.positions.length} pts</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>

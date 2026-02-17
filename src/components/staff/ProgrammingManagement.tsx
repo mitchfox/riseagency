@@ -2081,7 +2081,7 @@ Example format:
                                         variant="ghost"
                                         className="h-5 w-5 p-0"
                                         onClick={() => {
-                                          navigator.clipboard.writeText(`${ex.name}\t${ex.reps || ''}\t${ex.sets || ''}\t${ex.load || ''}\t${ex.recovery || ''}`);
+                                          navigator.clipboard.writeText(`${ex.name}\t\t${ex.reps || ''}\t${ex.sets || ''}\t${ex.load || ''}\t${ex.recovery || ''}`);
                                           toast.success(`Copied ${ex.name}`);
                                         }}
                                       >
@@ -2109,9 +2109,9 @@ Example format:
                                     className="h-6 text-[10px] gap-1"
                                     onClick={() => {
                                       const allExercises = [...(session.pre_exercises || []), ...(session.exercises || [])];
-                                      const header = 'Exercise\tReps\tSets\tLoad\tRecovery';
+                                      const header = 'Exercise\tDescription\tReps\tSets\tLoad\tRecovery';
                                       const rows = allExercises.map(ex =>
-                                        `${ex.name}\t${ex.reps || 'N/A'}\t${ex.sets || 'N/A'}\t${ex.load || 'N/A'}\t${ex.recovery || 'N/A'}`
+                                        `${ex.name}\t\t${ex.reps || 'N/A'}\t${ex.sets || 'N/A'}\t${ex.load || 'N/A'}\t${ex.recovery || 'N/A'}`
                                       ).join('\n');
                                       navigator.clipboard.writeText(`${session.name}\n${header}\n${rows}`);
                                       toast.success(`Copied ${session.name}`);
