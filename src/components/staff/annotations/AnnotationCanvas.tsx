@@ -448,7 +448,6 @@ export const AnnotationCanvas = ({
           </g>
         );
       case 'semi-circle': {
-        // Open bottom-arc ellipse that sits under a player like a ground ring
         const rx = el.width || el.radius || 4;
         const ry = el.height || (rx * 0.35);
         const rotation = el.angle || 0;
@@ -459,6 +458,7 @@ export const AnnotationCanvas = ({
         const x2 = el.x + rx * Math.cos(endAngle);
         const y2 = el.y + ry * Math.sin(endAngle);
         const gradId = `disc-grad-${el.id}`;
+        const glowId = `disc-glow-${el.id}`;
         const pathD = `M ${x1} ${y1} A ${rx} ${ry} 0 1 1 ${x2} ${y2}`;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}
@@ -466,41 +466,61 @@ export const AnnotationCanvas = ({
             <defs>
               <linearGradient id={gradId} gradientUnits="userSpaceOnUse"
                 x1={`${el.x - rx}`} y1={`${el.y}`} x2={`${el.x + rx}`} y2={`${el.y}`}>
-                <stop offset="0%" stopColor={el.color} stopOpacity={0.3}>
-                  <animate attributeName="stop-opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" />
+                <stop offset="0%" stopColor={el.color} stopOpacity={0.6}>
+                  <animate attributeName="stop-opacity" values="0.6;1;0.6" dur="1.8s" repeatCount="indefinite" />
                 </stop>
-                <stop offset="30%" stopColor="white" stopOpacity={0.9}>
-                  <animate attributeName="offset" values="0;0.5;1" dur="2s" repeatCount="indefinite" />
+                <stop offset="20%" stopColor="white" stopOpacity={0.95}>
+                  <animate attributeName="offset" values="0.05;0.45;0.85;0.45;0.05" dur="2.4s" repeatCount="indefinite" />
                 </stop>
-                <stop offset="60%" stopColor={el.color} stopOpacity={1}>
-                  <animate attributeName="stop-opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" />
+                <stop offset="40%" stopColor={el.color} stopOpacity={1}>
+                  <animate attributeName="stop-opacity" values="1;0.7;1" dur="1.8s" repeatCount="indefinite" />
                 </stop>
-                <stop offset="100%" stopColor={el.color} stopOpacity={0.3}>
-                  <animate attributeName="stop-opacity" values="0.3;0.8;0.3" dur="2s" repeatCount="indefinite" />
+                <stop offset="70%" stopColor="white" stopOpacity={0.7}>
+                  <animate attributeName="offset" values="0.85;0.55;0.15;0.55;0.85" dur="2.4s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="100%" stopColor={el.color} stopOpacity={0.6}>
+                  <animate attributeName="stop-opacity" values="0.6;1;0.6" dur="1.8s" repeatCount="indefinite" />
                 </stop>
               </linearGradient>
+              <filter id={glowId} x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="1.5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
             </defs>
-            {/* Subtle ground shadow */}
+            {/* Ground shadow */}
             <ellipse
               cx={el.x} cy={el.y + ry * 0.2}
               rx={rx * 0.9} ry={ry * 0.6}
-              fill="rgba(0,0,0,0.15)" stroke="none"
+              fill="rgba(0,0,0,0.18)" stroke="none"
             />
-            {/* Bottom arc with animated gradient */}
+            {/* Outer glow */}
+            <path
+              d={pathD}
+              fill="none"
+              stroke={el.color}
+              strokeWidth={el.strokeWidth * 3}
+              strokeOpacity={0.12}
+              strokeLinecap="round"
+            />
+            {/* Main arc with animated glossy gradient */}
             <path
               d={pathD}
               fill="none"
               stroke={`url(#${gradId})`}
               strokeWidth={el.strokeWidth}
               strokeLinecap="round"
+              filter={`url(#${glowId})`}
             />
-            {/* Subtle glow layer underneath */}
+            {/* Inner highlight for glossy depth */}
             <path
               d={pathD}
               fill="none"
-              stroke={el.color}
-              strokeWidth={el.strokeWidth * 2.5}
-              strokeOpacity={0.15}
+              stroke="white"
+              strokeWidth={Math.max(el.strokeWidth * 0.3, 0.8)}
+              strokeOpacity={0.25}
               strokeLinecap="round"
             />
           </g>
