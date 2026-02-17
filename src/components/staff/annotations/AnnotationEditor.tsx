@@ -111,6 +111,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
 
   // Pause video whenever any annotation is visible during playback
   const hasVisibleAnnotations = visibleElements.length > 0 && !drawingMode;
+  const wasPlayingRef = useRef(false);
 
   const setElements = useCallback((updater: React.SetStateAction<AnnotationElement[]>) => {
     setKlips(prev => prev.map(k => {
@@ -160,24 +161,24 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     const video = videoRef.current;
     if (!video) return;
     if (hasVisibleAnnotations && !video.paused) {
+      wasPlayingRef.current = true;
       video.pause();
       setIsPlaying(false);
     }
   }, [hasVisibleAnnotations]);
 
-  // Auto-resume when annotations end
+  // Auto-resume when annotations finish their duration
   useEffect(() => {
     if (drawingMode || !activeKlip) return;
-    if (!hasVisibleAnnotations && !isPlaying && videoRef.current?.paused) {
-      // Check if we were playing before annotations paused us
-      const wasPlayingBeforePause = videoRef.current.currentTime > 0 && videoRef.current.currentTime < duration;
-      // Only auto-resume if there are annotations in this klip (meaning we likely paused for one)
-      if (allElements.length > 0 && wasPlayingBeforePause) {
-        videoRef.current.play();
+    if (!hasVisibleAnnotations && wasPlayingRef.current) {
+      wasPlayingRef.current = false;
+      const video = videoRef.current;
+      if (video && video.paused && video.currentTime > 0 && video.currentTime < duration) {
+        video.play();
         setIsPlaying(true);
       }
     }
-  }, [hasVisibleAnnotations, drawingMode]);
+  }, [hasVisibleAnnotations, drawingMode, activeKlip, duration]);
 
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
