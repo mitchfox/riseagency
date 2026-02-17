@@ -1,28 +1,17 @@
 import { useState, useEffect } from "react";
-import { Plus, FolderOpen, Film, Trash2 } from "lucide-react";
+import { Plus, Film, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { AnnotationEditor } from "./AnnotationEditor";
+import { toast } from "sonner";
 
-export interface AnnotationProject {
-  id: string;
-  name: string;
-  videoUrl: string;
-  videoName: string;
-  createdAt: string;
-  annotations: AnnotationLayer[];
-}
-
-export interface AnnotationLayer {
-  id: string;
-  frameStart: number;
-  frameEnd: number;
-  elements: AnnotationElement[];
-}
+// ── Types ──
 
 export interface AnnotationElement {
   id: string;
-  type: 'line' | 'arrow' | 'curve' | 'rect' | 'circle' | 'spotlight' | 'text' | 'freehand' | 'player-marker';
+  type: 'line' | 'arrow' | 'curve' | 'rect' | 'circle' | 'spotlight' | 'text' | 'freehand'
+    | 'player-marker' | 'vision-cone' | 'distance' | 'magnifier' | 'linked-line';
   x: number;
   y: number;
   x2?: number;
@@ -37,19 +26,55 @@ export interface AnnotationElement {
   opacity?: number;
   points?: { x: number; y: number }[];
   number?: number;
+  // Vision cone
+  angle?: number;
+  coneLength?: number;
+  // Linked elements
+  linkedTo?: string;
+  // Animation keyframes
+  keyframes?: Keyframe[];
 }
+
+export interface Keyframe {
+  time: number; // seconds into segment
+  x: number;
+  y: number;
+  opacity?: number;
+}
+
+export interface VideoSegment {
+  id: string;
+  name: string;
+  startTime: number;
+  endTime: number;
+  elements: AnnotationElement[];
+  color: string;
+}
+
+export interface AnnotationProject {
+  id: string;
+  name: string;
+  videoUrl: string;
+  videoName: string;
+  createdAt: string;
+  segments: VideoSegment[];
+}
+
+// ── Projects Dashboard ──
 
 export const AnnotationProjects = () => {
   const [projects, setProjects] = useState<AnnotationProject[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('annotation_projects') || '[]');
+      return JSON.parse(localStorage.getItem('annotation_projects_v2') || '[]');
     } catch { return []; }
   });
   const [activeProject, setActiveProject] = useState<AnnotationProject | null>(null);
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const saveProjects = (updated: AnnotationProject[]) => {
     setProjects(updated);
-    localStorage.setItem('annotation_projects', JSON.stringify(updated));
+    localStorage.setItem('annotation_projects_v2', JSON.stringify(updated));
   };
 
   const handleNewProject = () => {
@@ -66,7 +91,7 @@ export const AnnotationProjects = () => {
         videoUrl: url,
         videoName: file.name,
         createdAt: new Date().toISOString(),
-        annotations: [],
+        segments: [],
       };
       setActiveProject(project);
       saveProjects([project, ...projects]);
@@ -76,6 +101,23 @@ export const AnnotationProjects = () => {
 
   const handleDelete = (id: string) => {
     saveProjects(projects.filter(p => p.id !== id));
+    toast.success("Project deleted");
+  };
+
+  const handleDuplicate = (project: AnnotationProject) => {
+    const dup: AnnotationProject = {
+      ...project,
+      id: crypto.randomUUID(),
+      name: `${project.name} (copy)`,
+      createdAt: new Date().toISOString(),
+    };
+    saveProjects([dup, ...projects]);
+    toast.success("Project duplicated");
+  };
+
+  const handleRename = (id: string) => {
+    saveProjects(projects.map(p => p.id === id ? { ...p, name: renameValue } : p));
+    setRenaming(null);
   };
 
   const handleSave = (project: AnnotationProject) => {
@@ -96,11 +138,9 @@ export const AnnotationProjects = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Annotations</h2>
-          <p className="text-muted-foreground text-sm">Add spotlights, arrows and effects to match videos and clips</p>
-        </div>
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Annotations</h2>
+        <p className="text-muted-foreground text-sm">Add spotlights, tracking and tactical effects to match videos and clips</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -125,6 +165,7 @@ export const AnnotationProjects = () => {
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">Name</th>
                   <th className="text-left p-3 font-medium">Video</th>
+                  <th className="text-left p-3 font-medium">Segments</th>
                   <th className="text-left p-3 font-medium">Date</th>
                   <th className="text-right p-3 font-medium">Actions</th>
                 </tr>
@@ -136,21 +177,39 @@ export const AnnotationProjects = () => {
                     className="border-b last:border-0 hover:bg-muted/30 cursor-pointer"
                     onClick={() => setActiveProject(project)}
                   >
-                    <td className="p-3 flex items-center gap-2">
-                      <Film className="w-4 h-4 text-muted-foreground" />
-                      {project.name}
+                    <td className="p-3">
+                      {renaming === project.id ? (
+                        <Input
+                          value={renameValue}
+                          onChange={e => setRenameValue(e.target.value)}
+                          onBlur={() => handleRename(project.id)}
+                          onKeyDown={e => e.key === 'Enter' && handleRename(project.id)}
+                          className="h-7 text-sm"
+                          autoFocus
+                          onClick={e => e.stopPropagation()}
+                        />
+                      ) : (
+                        <span
+                          className="flex items-center gap-2"
+                          onDoubleClick={(e) => { e.stopPropagation(); setRenaming(project.id); setRenameValue(project.name); }}
+                        >
+                          <Film className="w-4 h-4 text-muted-foreground shrink-0" />
+                          {project.name}
+                        </span>
+                      )}
                     </td>
                     <td className="p-3 text-muted-foreground">{project.videoName}</td>
+                    <td className="p-3 text-muted-foreground">{project.segments.length}</td>
                     <td className="p-3 text-muted-foreground">
                       {new Date(project.createdAt).toLocaleDateString('en-GB')}
                     </td>
-                    <td className="p-3 text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }}
-                      >
+                    <td className="p-3 text-right space-x-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7"
+                        onClick={(e) => { e.stopPropagation(); handleDuplicate(project); }}>
+                        <Copy className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </td>
