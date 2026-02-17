@@ -277,7 +277,6 @@ export const AnnotationCanvas = ({
         break;
       }
       case 'semi-circle': {
-        // Flat oval disc: placed at click position
         const cx = (startPos.x + currentPos.x) / 2;
         const cy = (startPos.y + currentPos.y) / 2;
         const rx = Math.abs(currentPos.x - startPos.x) / 2 || 4;
@@ -307,7 +306,6 @@ export const AnnotationCanvas = ({
       case 'spotlight': {
         const cx = (startPos.x + currentPos.x) / 2;
         const cy = (startPos.y + currentPos.y) / 2;
-        // Use the larger dimension so it's always a circle by default
         const sr = Math.max(Math.abs(currentPos.x - startPos.x), Math.abs(currentPos.y - startPos.y)) / 2;
         setElements(prev => [...prev, {
           ...base, type: 'spotlight' as const, x: cx, y: cy, radius: sr || 5,
@@ -336,7 +334,7 @@ export const AnnotationCanvas = ({
         onToolUsed?.();
         break;
     }
-  }, [drawing, dragging, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, klipOffset]);
+  }, [drawing, dragging, draggingEndpoint, resizing, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, klipOffset]);
 
   // Compute animation CSS for elements
   const getAnimStyle = (el: AnnotationElement): React.CSSProperties => {
@@ -902,8 +900,8 @@ export const AnnotationCanvas = ({
             {/* Selection border */}
             <rect
               x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`}
-              fill="none" stroke={isSelected ? '#a855f7' : 'rgba(255,255,255,0.4)'} strokeWidth={isSelected ? 2 : 1}
-              strokeDasharray={isSelected ? undefined : '4 2'}
+              fill="none" stroke={isSelected ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.4)'} strokeWidth={1}
+              strokeDasharray="4 2"
               pointerEvents="none"
             />
           </g>
@@ -936,9 +934,10 @@ export const AnnotationCanvas = ({
         const cy = (startPos.y + currentPos.y) / 2;
         const r = Math.max(Math.abs(currentPos.x - startPos.x), Math.abs(currentPos.y - startPos.y)) / 2;
         const previewColor = activeTool === 'spotlight' ? '#ffff00' : activeColor;
+        // For spotlight preview, just show the circle outline — no full-screen mask
         return <circle cx={`${cx}%`} cy={`${cy}%`} r={`${r}%`}
           stroke={previewColor} strokeWidth={strokeWidth}
-          fill={previewColor} fillOpacity={fillOpacity * 0.3}
+          fill="none"
           strokeDasharray="4" opacity={0.7} />;
       }
       case 'semi-circle':
@@ -1039,16 +1038,13 @@ export const AnnotationCanvas = ({
                   setDraggingEndpoint({ id: el.id, endpoint: ep.key });
                 }}
               />
-              <rect
-                x={`${ep.x - epHSX / 2}%`}
-                y={`${ep.y - epHSY / 2}%`}
-                width={`${epHSX}%`}
-                height={`${epHSY}%`}
-                rx="1" ry="1"
+              <circle
+                cx={`${ep.x}%`}
+                cy={`${ep.y}%`}
+                r="4"
                 fill="white"
-                stroke="#a855f7"
-                strokeWidth={2}
-                style={{ cursor: 'move', filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))' }}
+                stroke="none"
+                style={{ cursor: 'move', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}
                 pointerEvents="none"
               />
             </g>
@@ -1069,15 +1065,6 @@ export const AnnotationCanvas = ({
 
     return (
       <g>
-        {bbox && (
-          <rect
-            x={`${bbox.x}%`} y={`${bbox.y}%`}
-            width={`${bbox.w}%`} height={`${bbox.h}%`}
-            fill="none" stroke="#a855f7" strokeWidth={1.5}
-            strokeDasharray="6 3" opacity={0.8}
-            pointerEvents="none"
-          />
-        )}
         {handles.map(h => (
           <g key={h.handle}>
             <rect
@@ -1097,16 +1084,13 @@ export const AnnotationCanvas = ({
                 });
               }}
             />
-            <rect
-              x={`${h.x - hSizePctX / 2}%`}
-              y={`${h.y - hSizePctY / 2}%`}
-              width={`${hSizePctX}%`}
-              height={`${hSizePctY}%`}
-              rx="1" ry="1"
+            <circle
+              cx={`${h.x}%`}
+              cy={`${h.y}%`}
+              r="4"
               fill="white"
-              stroke="#a855f7"
-              strokeWidth={2}
-              style={{ cursor: h.cursor, filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))' }}
+              stroke="none"
+              style={{ cursor: h.cursor, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}
               pointerEvents="none"
             />
           </g>
