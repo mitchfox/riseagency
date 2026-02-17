@@ -366,10 +366,10 @@ export const AnnotationCanvas = ({
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <path
-              d={`M ${el.x - r}% ${el.y}% A ${r} ${r} 0 0 1 ${el.x + r}% ${el.y}% Z`}
+              d={`M ${el.x - r} ${el.y} A ${r} ${r} 0 0 1 ${el.x + r} ${el.y} Z`}
               fill={el.color} fillOpacity={el.fillOpacity || 0.5}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeOpacity={0.8}
-              transform={`rotate(${rotation - 180}, ${el.x}%, ${el.y}%)`}
+              transform={`rotate(${rotation - 180}, ${el.x}, ${el.y})`}
             >
               {anim && <animate attributeName="fill-opacity" from="0" to={String(el.fillOpacity || 0.5)} dur="0.3s" fill="freeze" />}
             </path>
@@ -409,16 +409,13 @@ export const AnnotationCanvas = ({
         const rad1 = ((angle - halfSpread) * Math.PI) / 180;
         const rad2 = ((angle + halfSpread) * Math.PI) / 180;
 
-        // Calculate arc points in percentage coordinates
+        // Calculate arc points in viewBox coordinates (0-100)
         const x1 = el.x + len * Math.cos(rad1);
         const y1 = el.y + len * Math.sin(rad1);
         const x2 = el.x + len * Math.cos(rad2);
         const y2 = el.y + len * Math.sin(rad2);
 
-        // For the arc, we need to determine if it's a large arc (> 180 degrees)
         const largeArc = spread > 180 ? 1 : 0;
-
-        // Create gradient-like transparency with multiple concentric arcs
         const gradientId = `vc-grad-${el.id}`;
 
         return (
@@ -426,7 +423,7 @@ export const AnnotationCanvas = ({
             <defs>
               <radialGradient id={gradientId}
                 gradientUnits="userSpaceOnUse"
-                cx={`${el.x}%`} cy={`${el.y}%`} r={`${len}%`}>
+                cx={el.x} cy={el.y} r={len}>
                 <stop offset="0%" stopColor={el.color} stopOpacity={el.fillOpacity || 0.3} />
                 <stop offset="70%" stopColor={el.color} stopOpacity={(el.fillOpacity || 0.3) * 0.6} />
                 <stop offset="100%" stopColor={el.color} stopOpacity={0.05} />
@@ -434,7 +431,7 @@ export const AnnotationCanvas = ({
             </defs>
             {/* Vision cone wedge */}
             <path
-              d={`M ${el.x}% ${el.y}% L ${x1}% ${y1}% A ${len} ${len} 0 ${largeArc} 1 ${x2}% ${y2}% Z`}
+              d={`M ${el.x} ${el.y} L ${x1} ${y1} A ${len} ${len} 0 ${largeArc} 1 ${x2} ${y2} Z`}
               fill={`url(#${gradientId})`}
               stroke={el.color} strokeWidth={1} strokeOpacity={0.4}
             >
@@ -604,7 +601,7 @@ export const AnnotationCanvas = ({
         const y1 = startPos.y + len * Math.sin(angle - spread);
         const x2 = startPos.x + len * Math.cos(angle + spread);
         const y2 = startPos.y + len * Math.sin(angle + spread);
-        return <path d={`M ${startPos.x}% ${startPos.y}% L ${x1}% ${y1}% A ${len} ${len} 0 0 1 ${x2}% ${y2}% Z`}
+        return <path d={`M ${startPos.x} ${startPos.y} L ${x1} ${y1} A ${len} ${len} 0 0 1 ${x2} ${y2} Z`}
           fill={activeColor} fillOpacity={0.15} stroke={activeColor} strokeWidth={1} opacity={0.7} />;
       }
       default:
@@ -717,6 +714,8 @@ export const AnnotationCanvas = ({
   return (
     <svg
       ref={svgRef}
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
       className="absolute inset-0 w-full h-full"
       style={{ cursor: resizing ? 'grabbing' : activeTool === 'select' ? 'default' : 'crosshair' }}
       onMouseDown={handleMouseDown}

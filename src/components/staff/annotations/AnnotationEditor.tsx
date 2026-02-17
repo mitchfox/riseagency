@@ -56,6 +56,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [drawingStartElements, setDrawingStartElements] = useState<AnnotationElement[]>([]);
   const [drawingTimestamp, setDrawingTimestamp] = useState(0);
   const [projectName, setProjectName] = useState(project.name);
+  const [videoError, setVideoError] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [recentColours, setRecentColours] = useState<string[]>(() => {
     try {
@@ -397,34 +398,34 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
         let lastProgressBucket = -1;
 
         await new Promise<void>((resolve) => {
-          const handleFrame = (_now: number, metadata: { mediaTime: number }) => {
+          let resolved = false;
+          const finish = () => {
+            if (resolved) return;
+            resolved = true;
+            video.pause();
+            video.removeEventListener('ended', onEnded);
+            resolve();
+          };
+
+          const onEnded = () => finish();
+          video.addEventListener('ended', onEnded);
+
+          const handleFrame = async (_now: number, metadata: { mediaTime: number }) => {
             const mediaTime = metadata.mediaTime;
 
-            if (mediaTime >= klipEnd) {
-              video.pause();
-              resolve();
+            if (mediaTime >= klipEnd || resolved) {
+              finish();
               return;
             }
 
-            // Draw video frame (overwrites entire buffer)
+            // Draw video frame
             ctx.drawImage(video, 0, 0, vw, vh);
 
-            // Compute and draw annotations synchronously-ish
+            // Compute and draw annotations synchronously
             const offset = mediaTime - klipStart;
             const computed = computeVisibleElements(allElements, offset);
             if (computed.length > 0) {
-              // For the fast path we draw SVG overlay synchronously via a pre-rendered approach
-              // We queue the SVG draw but don't await it per-frame to keep up with playback
-              const svgString = renderElementsToSVGString(computed, vw, vh);
-              const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-              const svgUrl = URL.createObjectURL(svgBlob);
-              const img = new Image();
-              img.onload = () => {
-                ctx.drawImage(img, 0, 0, vw, vh);
-                URL.revokeObjectURL(svgUrl);
-              };
-              img.onerror = () => URL.revokeObjectURL(svgUrl);
-              img.src = svgUrl;
+              await drawSvgOverlay(ctx, computed, vw, vh);
             }
 
             // Progress reporting at ~10% intervals
@@ -434,7 +435,9 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
               toast.info(`Exporting... ${progressBucket * 10}%`, { id: 'export-progress' });
             }
 
-            (video as any).requestVideoFrameCallback(handleFrame);
+            if (!resolved) {
+              (video as any).requestVideoFrameCallback(handleFrame);
+            }
           };
 
           (video as any).requestVideoFrameCallback(handleFrame);
@@ -470,8 +473,10 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       const a = document.createElement('a');
       a.href = url;
       a.download = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}.webm`;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
 
       video.playbackRate = savedRate;
       video.currentTime = savedTime;
@@ -538,10 +543,17 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     setSelectedId(null);
   }, [activeKlipId, drawingStartElements]);
 
-  // Don't auto-switch tool after placement — allow multiple annotations
+  // After placing an annotation, switch to select and select the new element
   const handleToolUsed = useCallback(() => {
-    // Keep the current tool active so user can place multiple annotations
-  }, []);
+    setActiveTool('select');
+    // The newly added element is the last in the array — select it after a tick
+    setTimeout(() => {
+      const latest = klips.find(k => k.id === activeKlipId)?.elements;
+      if (latest && latest.length > 0) {
+        setSelectedId(latest[latest.length - 1].id);
+      }
+    }, 0);
+  }, [klips, activeKlipId]);
 
   const handleDeleteElement = useCallback(() => {
     if (selectedId) {
@@ -663,7 +675,40 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 playsInline
                 preload="auto"
                 onClick={drawingMode ? undefined : togglePlay}
+                onError={() => {
+                  if (project.videoUrl.startsWith('blob:')) {
+                    setVideoError(true);
+                    toast.error("Video file expired. Please re-upload.", { id: 'video-error', duration: 10000 });
+                  }
+                }}
               />
+              {/* Re-upload overlay when video expired */}
+              {videoError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-30 gap-3">
+                  <p className="text-white/70 text-sm">Video file expired (blob URLs don't persist between sessions)</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-white border-white/30"
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'video/*';
+                      input.onchange = (ev) => {
+                        const file = (ev.target as HTMLInputElement).files?.[0];
+                        if (!file) return;
+                        const url = URL.createObjectURL(file);
+                        onSave({ ...project, name: projectName, videoUrl: url, videoName: file.name, klips });
+                        setVideoError(false);
+                        if (videoRef.current) videoRef.current.src = url;
+                      };
+                      input.click();
+                    }}
+                  >
+                    Re-upload Video
+                  </Button>
+                </div>
+              )}
               {/* Drawing mode freeze frame */}
               {drawingMode && freezeFrameUrl && (
                 <img
@@ -1085,7 +1130,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                     <div className="flex items-center gap-1 text-[10px] text-white/40">
                       <span>Size</span>
                     </div>
-                    {(selectedElement.type === 'circle' || selectedElement.type === 'spotlight' || selectedElement.type === 'player-marker') && (
+                    {(selectedElement.type === 'circle' || selectedElement.type === 'spotlight' || selectedElement.type === 'player-marker' || selectedElement.type === 'semi-circle') && (
                       <div className="flex items-center gap-2">
                         <Label className="text-[9px] text-white/40 w-14">Radius</Label>
                         <Input
