@@ -41,10 +41,10 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [activeTool, setActiveTool] = useState<AnnotationTool>('select');
   // Persist last-used colour and stroke per tool type
   const [activeColor, setActiveColor] = useState(() => {
-    try { return localStorage.getItem('annotation-last-colour') || '#ff0000'; } catch { return '#ff0000'; }
+    try { return localStorage.getItem('annotation-last-colour') || '#C6A332'; } catch { return '#C6A332'; }
   });
   const [strokeWidth, setStrokeWidth] = useState(() => {
-    try { return parseInt(localStorage.getItem('annotation-last-stroke') || '1') || 1; } catch { return 1; }
+    try { return parseFloat(localStorage.getItem('annotation-last-stroke') || '1') || 1; } catch { return 1; }
   });
   const [fillOpacity, setFillOpacity] = useState(0.15);
 
@@ -1183,23 +1183,28 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                       <span className="text-[9px] text-white/30 font-mono">{selectedElement.color}</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {['#ff0000', '#ffff00', '#00ff00', '#00bfff', '#ffffff', '#ff8c00', '#ff00ff', '#000000'].map(c => (
+                      {[{ color: '#C6A332', label: 'Rise Gold' }, { color: '#ffffff', label: 'White' }, { color: '#000000', label: 'Black' }].map(({ color }) => (
                         <button
-                          key={c}
+                          key={color}
                           className={`w-5 h-5 rounded-full border-2 transition-transform ${
-                            selectedElement.color === c ? 'border-white scale-110' : 'border-transparent hover:scale-105'
+                            selectedElement.color === color ? 'border-white scale-110' : 'border-transparent hover:scale-105'
                           }`}
-                          style={{ backgroundColor: c }}
-                          onClick={() => {
-                            updateElement(selectedElement.id, { color: c });
-                            setRecentColours(prev => {
-                              const updated = [c, ...prev.filter(x => x !== c)].slice(0, 8);
-                              localStorage.setItem('annotation-recent-colours', JSON.stringify(updated));
-                              return updated;
-                            });
-                          }}
+                          style={{ backgroundColor: color }}
+                          onClick={() => updateElement(selectedElement.id, { color })}
                         />
                       ))}
+                      <label className={`w-5 h-5 rounded-full cursor-pointer border-2 transition-transform overflow-hidden ${
+                        !['#C6A332', '#ffffff', '#000000'].includes(selectedElement.color) ? 'border-white scale-110' : 'border-white/30 hover:scale-105'
+                      }`} style={{ background: 'conic-gradient(red,yellow,lime,aqua,blue,magenta,red)' }}>
+                        <input type="color" value={selectedElement.color} onChange={e => {
+                          updateElement(selectedElement.id, { color: e.target.value });
+                          setRecentColours(prev => {
+                            const updated = [e.target.value, ...prev.filter(x => x !== e.target.value)].slice(0, 8);
+                            localStorage.setItem('annotation-recent-colours', JSON.stringify(updated));
+                            return updated;
+                          });
+                        }} className="sr-only" />
+                      </label>
                     </div>
                     {recentColours.length > 0 && (
                       <div>

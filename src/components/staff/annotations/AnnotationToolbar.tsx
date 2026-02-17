@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   MousePointer2, Minus, MoveRight, Square, Circle,
@@ -39,13 +40,21 @@ const tools: { id: AnnotationTool; icon: React.ComponentType<any>; label: string
   { id: 'eraser', icon: Eraser, label: 'Remove element', shortLabel: 'Erase', hotkey: 'E', group: 'util' },
 ];
 
-const colors = ['#ff0000', '#ffff00', '#00ff00', '#00bfff', '#ffffff', '#ff8c00', '#ff00ff', '#000000'];
+const RISE_GOLD = '#C6A332';
+const brandColors = [
+  { color: RISE_GOLD, label: 'Rise Gold' },
+  { color: '#ffffff', label: 'White' },
+  { color: '#000000', label: 'Black' },
+];
 
 export const AnnotationToolbar = ({
   activeTool, setActiveTool, activeColor, setActiveColor, strokeWidth, setStrokeWidth,
   fillOpacity, setFillOpacity,
 }: AnnotationToolbarProps) => {
   const showFillOpacity = ['rect', 'circle', 'spotlight', 'magnifier', 'semi-circle', 'vision-cone', 'space-oval'].includes(activeTool);
+  const [recentColors, setRecentColors] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('annotation-recent-colours') || '[]'); } catch { return []; }
+  });
 
   return (
     <div className="w-14 bg-[#161a24] border-r border-white/10 flex flex-col items-center py-2 gap-0.5 shrink-0 overflow-y-auto">
@@ -81,12 +90,45 @@ export const AnnotationToolbar = ({
 
       <div className="my-2 w-8 border-t border-white/10" />
 
-      <div className="grid grid-cols-2 gap-1 px-1">
-        {colors.map(c => (
+      <div className="flex flex-col items-center gap-1 px-1">
+        {brandColors.map(({ color, label }) => (
+          <Tooltip key={color}>
+            <TooltipTrigger asChild>
+              <button
+                className={`w-5 h-5 rounded-full border-2 transition-transform ${
+                  activeColor === color ? 'border-white scale-110' : 'border-transparent hover:scale-105'
+                }`}
+                style={{ backgroundColor: color }}
+                onClick={() => setActiveColor(color)}
+              />
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-[10px]">{label}</TooltipContent>
+          </Tooltip>
+        ))}
+        {/* Colour picker */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <label className={`w-5 h-5 rounded-full cursor-pointer border-2 transition-transform overflow-hidden ${
+              !brandColors.some(b => b.color === activeColor) ? 'border-white scale-110' : 'border-white/30 hover:scale-105'
+            }`} style={{ background: 'conic-gradient(red,yellow,lime,aqua,blue,magenta,red)' }}>
+              <input type="color" value={activeColor} onChange={e => {
+                setActiveColor(e.target.value);
+                setRecentColors(prev => {
+                  const next = [e.target.value, ...prev.filter(c => c !== e.target.value)].slice(0, 4);
+                  try { localStorage.setItem('annotation-recent-colours', JSON.stringify(next)); } catch {}
+                  return next;
+                });
+              }} className="sr-only" />
+            </label>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="text-[10px]">Custom colour</TooltipContent>
+        </Tooltip>
+        {/* Recent custom colours */}
+        {recentColors.filter(c => !brandColors.some(b => b.color === c)).slice(0, 3).map(c => (
           <button
             key={c}
-            className={`w-5 h-5 rounded-full border-2 transition-transform ${
-              activeColor === c ? 'border-white scale-110' : 'border-transparent hover:scale-105'
+            className={`w-4 h-4 rounded-full border transition-transform ${
+              activeColor === c ? 'border-white scale-110' : 'border-white/20 hover:scale-105'
             }`}
             style={{ backgroundColor: c }}
             onClick={() => setActiveColor(c)}
@@ -99,18 +141,18 @@ export const AnnotationToolbar = ({
       <div className="flex flex-col items-center gap-1 px-1 w-full">
         <Label className="text-[8px] text-white/40 uppercase">Thickness</Label>
         <div className="flex items-center justify-center w-full px-0.5">
-          <span className="text-[9px] text-white/30 font-mono w-4 text-center">{strokeWidth}</span>
+          <span className="text-[9px] text-white/30 font-mono w-4 text-center">{strokeWidth.toFixed(1)}</span>
         </div>
         <div className="w-10 py-1">
           <Slider
             value={[strokeWidth]}
-            min={1} max={20} step={1}
+            min={0.2} max={6} step={0.2}
             onValueChange={([v]) => setStrokeWidth(v)}
             className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
           />
         </div>
         <div className="flex items-center justify-center gap-0.5 mt-0.5">
-          {[1, 3, 5, 8].map(w => (
+          {[0.4, 1, 2, 4].map(w => (
             <button
               key={w}
               className={`flex items-center justify-center w-6 h-5 rounded ${
@@ -119,7 +161,7 @@ export const AnnotationToolbar = ({
               onClick={() => setStrokeWidth(w)}
               title={`${w}px`}
             >
-              <div className="rounded-full bg-white" style={{ width: `${Math.min(w * 2, 12)}px`, height: `${Math.max(w, 2)}px` }} />
+              <div className="rounded-full bg-white" style={{ width: `${Math.min(w * 3, 12)}px`, height: `${Math.max(w, 1)}px` }} />
             </button>
           ))}
         </div>
