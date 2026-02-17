@@ -380,7 +380,7 @@ export const AnnotationCanvas = ({
               strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${lineLen}`}
               strokeDashoffset={anim ? undefined : 0}
             >
-              {anim && <animate attributeName="stroke-dashoffset" from={`${lineLen}`} to="0" dur="0.4s" fill="freeze" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${lineLen}`} to="0" dur="0.8s" fill="freeze" />}
             </line>
           </g>
         );
@@ -404,7 +404,7 @@ export const AnnotationCanvas = ({
               strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${arrowLen}`}
               strokeDashoffset={anim ? undefined : 0}
             >
-              {anim && <animate attributeName="stroke-dashoffset" from={`${arrowLen}`} to="0" dur="0.4s" fill="freeze" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${arrowLen}`} to="0" dur="0.8s" fill="freeze" />}
             </line>
           </g>
         );
@@ -439,7 +439,7 @@ export const AnnotationCanvas = ({
               strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${curveLen}`}
               strokeDashoffset={anim ? undefined : 0}
             >
-              {anim && <animate attributeName="stroke-dashoffset" from={`${curveLen}`} to="0" dur="0.4s" fill="freeze" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${curveLen}`} to="0" dur="0.8s" fill="freeze" />}
             </path>
           </g>
         );
@@ -455,7 +455,7 @@ export const AnnotationCanvas = ({
               fill={el.fillOpacity ? el.color : 'none'} fillOpacity={el.fillOpacity || 0}
               strokeDasharray={rectDash}
             >
-              {anim && <animate attributeName="stroke-dashoffset" from={`${rectPerim}`} to="0" dur="1.5s" repeatCount="indefinite" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${rectPerim}`} to="0" dur="4s" repeatCount="indefinite" />}
             </rect>
           </g>
         );
@@ -472,7 +472,7 @@ export const AnnotationCanvas = ({
               strokeDasharray={circDash}
             >
               {anim && <animate attributeName="r" from="0" to={`${el.radius}%`} dur="0.3s" fill="freeze" />}
-              {anim && <animate attributeName="stroke-dashoffset" from={`${circPerim}`} to="0" dur="1.5s" repeatCount="indefinite" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${circPerim}`} to="0" dur="4s" repeatCount="indefinite" />}
             </circle>
           </g>
         );
@@ -642,6 +642,8 @@ export const AnnotationCanvas = ({
         const maskId = `spot-mask-${el.id}`;
         const spotGradId = `spot-grad-${el.id}`;
         const spotGlowId = `spot-glow-${el.id}`;
+        const spotPerim = 2 * Math.PI * r;
+        const spotDash = `${spotPerim * 0.08} ${spotPerim * 0.04}`;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
@@ -680,11 +682,14 @@ export const AnnotationCanvas = ({
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r * 1.08}%`}
               fill="none" stroke={el.color} strokeWidth={el.strokeWidth || 1} strokeOpacity={0.1}
             />
-            {/* Main glossy ring */}
+            {/* Main glossy ring with flywheel */}
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`}
               fill="none" stroke={`url(#${spotGradId})`} strokeWidth={el.strokeWidth || 1}
               filter={`url(#${spotGlowId})`}
-            />
+              strokeDasharray={spotDash}
+            >
+              {anim && <animate attributeName="stroke-dashoffset" from={`${spotPerim}`} to="0" dur="4s" repeatCount="indefinite" />}
+            </circle>
             {/* Inner highlight */}
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r * 0.95}%`}
               fill="none" stroke="white" strokeWidth={Math.max((el.strokeWidth || 1) * 0.3, 0.3)} strokeOpacity={0.2}
@@ -811,7 +816,7 @@ export const AnnotationCanvas = ({
               strokeDasharray={magDash}
             >
               {anim && <animate attributeName="r" from="0" to={`${r}%`} dur="0.3s" fill="freeze" />}
-              {anim && <animate attributeName="stroke-dashoffset" from={`${magCircPerim}`} to="0" dur="1.2s" repeatCount="indefinite" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${magCircPerim}`} to="0" dur="4s" repeatCount="indefinite" />}
             </circle>
             <text x={`${el.x}%`} y={`${(el.y || 0) - r - 0.8}%`}
               fill="white" fontSize="1.2%" textAnchor="middle" opacity={0.6}>
@@ -840,7 +845,7 @@ export const AnnotationCanvas = ({
             <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
               stroke={el.color} strokeWidth={sw} strokeDasharray={lnkDash}
               markerStart={`url(#${mid})`} markerEnd={`url(#${mid})`}>
-              {anim && <animate attributeName="stroke-dashoffset" from={`${lnkTotalDash}`} to="0" dur="0.6s" repeatCount="indefinite" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${lnkTotalDash}`} to="0" dur="1.8s" repeatCount="indefinite" />}
             </line>
           </g>
         );
@@ -864,7 +869,7 @@ export const AnnotationCanvas = ({
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <circle cx={el.x} cy={el.y} r={el.radius || 1} fill={el.color} fillOpacity={0.9}
               stroke="white" strokeWidth={0.3}>
-              {anim && <animate attributeName="r" from="0" to={String(el.radius || 1)} dur="0.2s" fill="freeze" />}
+              {anim && <animate attributeName="r" from="0" to={String(el.radius || 1)} dur="0.5s" fill="freeze" />}
             </circle>
           </g>
         );
@@ -898,7 +903,7 @@ export const AnnotationCanvas = ({
 
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
-            {/* Always render a filled rect so image layer covers annotations beneath */}
+            {/* Image layer: show video frame snapshot to hide annotations beneath, fully transparent borders */}
             {layerDataUrl ? (
               <image
                 href={layerDataUrl}
@@ -908,13 +913,14 @@ export const AnnotationCanvas = ({
                 style={{ pointerEvents: 'none' }}
               />
             ) : (
+              /* Fallback when video frame not available - transparent placeholder */
               <rect
                 x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`}
-                fill="black" fillOpacity={0.6}
+                fill="transparent"
                 pointerEvents="none"
               />
             )}
-            {/* Drag handle overlay */}
+            {/* Invisible drag handle */}
             <rect
               x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`}
               fill="transparent" stroke="none"
@@ -924,7 +930,7 @@ export const AnnotationCanvas = ({
             {isSelected && (
               <rect
                 x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`}
-                fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth={0.5}
+                fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth={0.3}
                 strokeDasharray="4 2"
                 pointerEvents="none"
               />
