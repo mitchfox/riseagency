@@ -651,12 +651,17 @@ export const AnnotationCanvas = ({
     const el = elements.find(e => e.id === selectedId);
     if (!el) return null;
 
-    const handleSize = 0.8; // percentage
+    const handleSize = 1.4; // percentage - larger for easier grabbing
+    const hitSize = 2.2; // even larger invisible hit area
     type HandleDef = { handle: 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w'; x: number; y: number; cursor: string };
     let handles: HandleDef[] = [];
 
+    // Also render a bounding box outline
+    let bbox: { x: number; y: number; w: number; h: number } | null = null;
+
     if (el.type === 'rect' && el.width !== undefined && el.height !== undefined) {
       const x = el.x, y = el.y, w = el.width, h = el.height;
+      bbox = { x, y, w, h };
       handles = [
         { handle: 'nw', x, y, cursor: 'nwse-resize' },
         { handle: 'ne', x: x + w, y, cursor: 'nesw-resize' },
@@ -669,6 +674,7 @@ export const AnnotationCanvas = ({
       ];
     } else if ((el.type === 'circle' || el.type === 'spotlight' || el.type === 'player-marker') && el.radius !== undefined) {
       const r = el.radius;
+      bbox = { x: el.x - r, y: el.y - r, w: r * 2, h: r * 2 };
       handles = [
         { handle: 'ne', x: el.x + r, y: el.y - r, cursor: 'nesw-resize' },
         { handle: 'se', x: el.x + r, y: el.y + r, cursor: 'nwse-resize' },
@@ -680,7 +686,6 @@ export const AnnotationCanvas = ({
         { handle: 's', x: el.x, y: el.y + r, cursor: 'ns-resize' },
       ];
     } else if (el.x2 !== undefined && el.y2 !== undefined) {
-      // Line/arrow/curve: endpoints
       handles = [
         { handle: 'nw', x: el.x, y: el.y, cursor: 'move' },
         { handle: 'se', x: el.x2, y: el.y2, cursor: 'move' },
@@ -691,27 +696,50 @@ export const AnnotationCanvas = ({
 
     return (
       <g>
-        {handles.map(h => (
+        {/* Bounding box outline */}
+        {bbox && (
           <rect
-            key={h.handle}
-            x={`${h.x - handleSize / 2}%`}
-            y={`${h.y - handleSize / 2}%`}
-            width={`${handleSize}%`}
-            height={`${handleSize}%`}
-            fill="white"
-            stroke="hsl(var(--primary))"
-            strokeWidth={1.5}
-            style={{ cursor: h.cursor }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              setResizing({
-                id: el.id,
-                handle: h.handle,
-                startPos: getPos(e),
-                startEl: { x: el.x, y: el.y, width: el.width, height: el.height, radius: el.radius, x2: el.x2, y2: el.y2, fontSize: el.fontSize },
-              });
-            }}
+            x={`${bbox.x}%`} y={`${bbox.y}%`}
+            width={`${bbox.w}%`} height={`${bbox.h}%`}
+            fill="none" stroke="hsl(var(--primary))" strokeWidth={1}
+            strokeDasharray="4 2" opacity={0.7}
+            pointerEvents="none"
           />
+        )}
+        {handles.map(h => (
+          <g key={h.handle}>
+            {/* Invisible larger hit area */}
+            <rect
+              x={`${h.x - hitSize / 2}%`}
+              y={`${h.y - hitSize / 2}%`}
+              width={`${hitSize}%`}
+              height={`${hitSize}%`}
+              fill="transparent"
+              style={{ cursor: h.cursor }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                setResizing({
+                  id: el.id,
+                  handle: h.handle,
+                  startPos: getPos(e),
+                  startEl: { x: el.x, y: el.y, width: el.width, height: el.height, radius: el.radius, x2: el.x2, y2: el.y2, fontSize: el.fontSize },
+                });
+              }}
+            />
+            {/* Visible handle */}
+            <rect
+              x={`${h.x - handleSize / 2}%`}
+              y={`${h.y - handleSize / 2}%`}
+              width={`${handleSize}%`}
+              height={`${handleSize}%`}
+              rx="2" ry="2"
+              fill="white"
+              stroke="hsl(var(--primary))"
+              strokeWidth={2}
+              style={{ cursor: h.cursor, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}
+              pointerEvents="none"
+            />
+          </g>
         ))}
       </g>
     );
