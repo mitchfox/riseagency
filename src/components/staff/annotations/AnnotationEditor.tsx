@@ -82,7 +82,9 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
 
   const visibleElements = useMemo(() => {
     // Use the shared pure function
-    const forceOpacity = (playbackFreezeActive || drawingMode) ? 1 : null;
+    // Only force opacity in drawing mode; during playback freeze let natural timing apply
+    // so that previous annotations fade out correctly
+    const forceOpacity = drawingMode ? 1 : null;
     const computed = computeVisibleElements(allElements, effectiveOffset, { forceOpacity });
 
     // In drawing mode, also include the selected element even if not in time window
