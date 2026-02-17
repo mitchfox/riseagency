@@ -498,7 +498,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                   style={{ zIndex: 10 }}
                 />
               )}
-              {activeKlip && (drawingMode || visibleElements.length > 0) && (
+              {activeKlip && (drawingMode || (visibleElements.length > 0 && playbackFreezeActive)) && (
                 <div
                   className="absolute inset-0"
                   style={{
