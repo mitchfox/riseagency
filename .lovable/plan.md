@@ -1,43 +1,48 @@
 
 
-## Fix: Annotations Randomly Reappearing After Freeze
+## Unified Annotation Render Pipeline — COMPLETED
 
-### Root cause
+### What was done
 
-When the freeze cycle completes (showing -> fading -> idle), the video resumes from the same `currentTime`. Since the annotation's time window spans `appearAt` to `appearAt + duration`, `currentTime` is still within that window. The `visibleElements` memo still includes those elements, and the render condition `visibleElements.length > 0` evaluates true, so the annotations reappear on the live video.
+1. **Created `src/lib/annotationRenderUtils.ts`** — Pure, deterministic render evaluation:
+   - `computeVisibleElements(elements, time, config?)` — filters by time window, interpolates keyframes (exact time, not frame count), applies animateIn/animateOut. Returns `ComputedAnnotationElement[]` with final x, y, opacity, scale. Never mutates originals.
+   - `renderElementsToSVGString(elements, width, height)` — generates SVG markup from computed state for canvas compositing during export. No DOM dependency.
+   - `waitForSeek(video, targetTime)` — proper promise-based seek with `seeked` event + 200ms fallback + 16ms decode delay.
 
-The `triggeredTimesRef` only prevents the freeze from re-triggering -- it doesn't prevent the annotations from rendering.
+2. **Refactored `AnnotationEditor.tsx`**:
+   - `visibleElements` useMemo now calls `computeVisibleElements` with `forceOpacity: 1` during freeze/drawing.
+   - Export pipeline completely rewritten: seeks frame-by-frame using `waitForSeek`, calls `computeVisibleElements(allElements, offset)` per frame, generates SVG via `renderElementsToSVGString`, draws to canvas. **Zero DOM references during export.**
+   - Removed the old `interpolateKeyframes` function (moved to shared utils).
 
-### Fix
+3. **Fixed `VideoAnalysis.tsx` freeze-frame system**:
+   - Added `overlayFreezeUntilRef` for time-driven freeze tracking.
+   - Effect A now uses `computeVisibleElements` for annotation detection.
+   - End-check listener guarded: won't interfere during active freeze.
+   - Overlay rendering uses `computeVisibleElements` instead of inline filtering.
+   - Both playback and export now call the same pure function.
 
-During normal playback (not drawing mode, not in a playback freeze), annotations should only render while a freeze is active. They should never appear floating over a playing video.
-
-**Change the render condition** on line 501 from:
+### Architecture
 
 ```
-{activeKlip && (drawingMode || visibleElements.length > 0) && (
+computeVisibleElements(elements, T)
+         ↓
+  ComputedAnnotationElement[]
+       ↓              ↓
+  Playback          Export
+  (AnnotationCanvas)  (renderElementsToSVGString → canvas)
 ```
 
-to:
+Both paths receive identical computed arrays. If they differ, the system is broken.
 
-```
-{activeKlip && (drawingMode || (visibleElements.length > 0 && playbackFreezeActive)) && (
-```
+### What stays unchanged
 
-This ensures the annotation canvas overlay only renders in two cases:
-1. Drawing mode (manual editing)
-2. During a playback freeze (the intended display window)
+- AnnotationCanvas rendering (SVG elements, resize handles, interaction)
+- Drawing mode workflow
+- Timeline dots, sidebar, keyframe editing
+- localStorage persistence (flagged for future database migration)
 
-Once the freeze ends and `playbackFreezeActive` becomes false, the overlay disappears regardless of whether `visibleElements` still contains elements.
+### Strategic follow-ups
 
-### What stays the same
-
-- All freeze detection, timing, and phase logic unchanged
-- Drawing mode workflow unaffected
-- The `visibleElements` memo itself unchanged
-- Timeline dots, sidebar, keyframes all unchanged
-
-### Single change
-
-One line in `AnnotationEditor.tsx` (line 501).
-
+- [ ] Database persistence for annotation projects (replace localStorage with JSONB table)
+- [ ] JSON export button for annotation metadata
+- [ ] Deterministic render consistency test (snapshot comparison)

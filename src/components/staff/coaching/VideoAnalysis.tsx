@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEditor";
 import { AnnotationCanvas } from "@/components/staff/annotations/AnnotationCanvas";
 import type { AnnotationProject, Klip, AnnotationElement } from "@/components/staff/annotations/AnnotationProjects";
+import { computeVisibleElements } from "@/lib/annotationRenderUtils";
 
 interface Annotation {
   id: string;
@@ -112,7 +113,7 @@ export const VideoAnalysis = () => {
   const [annotatingClip, setAnnotatingClip] = useState<Clip | null>(null);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
 
-  // Clip playback annotation freeze system (mirrors AnnotationEditor exactly)
+  // Clip playback annotation freeze system — time-driven, no setTimeout race conditions
   const [overlayElements, setOverlayElements] = useState<any[]>([]);
   const [overlayKlipStart, setOverlayKlipStart] = useState(0);
   const [overlayFreezeActive, setOverlayFreezeActive] = useState(false);
@@ -122,6 +123,8 @@ export const VideoAnalysis = () => {
   const overlayFreezeDurationRef = useRef<number>(3);
   const overlayClipEndRef = useRef<number>(0);
   const [overlayCurrentTime, setOverlayCurrentTime] = useState(0);
+  /** Absolute video time at which the current freeze should end */
+  const overlayFreezeUntilRef = useRef<number>(0);
 
   useEffect(() => {
     fetchVideos();
@@ -389,6 +392,7 @@ export const VideoAnalysis = () => {
 
   const playClip = (clip: Clip) => {
     if (!videoRef.current) return;
+    const video = videoRef.current;
 
     // Load saved annotations for this clip
     let allEls: any[] = [];
@@ -406,88 +410,99 @@ export const VideoAnalysis = () => {
     if (overlayFreezeTimerRef.current) clearTimeout(overlayFreezeTimerRef.current);
     setOverlayFreezeActive(false);
     setOverlayFreezePhase('idle');
+    overlayFreezeUntilRef.current = 0;
     setOverlayElements(allEls);
     setOverlayKlipStart(klipStart);
     overlayClipEndRef.current = clip.end;
 
-    videoRef.current.currentTime = clip.start;
-    videoRef.current.play();
+    video.currentTime = clip.start;
+    video.play();
+
+    // End-check listener — guarded against interfering with active freeze
     const checkEnd = () => {
-      if (videoRef.current && videoRef.current.currentTime >= clip.end) {
+      if (!videoRef.current) return;
+      // Don't stop during a freeze
+      if (overlayFreezeActive) return;
+      if (videoRef.current.currentTime >= clip.end) {
         videoRef.current.pause();
         videoRef.current.removeEventListener('timeupdate', checkEnd);
         setOverlayElements([]);
         setOverlayFreezeActive(false);
+        setOverlayFreezePhase('idle');
       }
     };
-    videoRef.current.addEventListener('timeupdate', checkEnd);
+    video.addEventListener('timeupdate', checkEnd);
   };
 
   // Effect A: Detect annotation timestamps during clip playback, pause video
+  // Uses computeVisibleElements for consistency with export
   useEffect(() => {
     if (overlayElements.length === 0 || overlayFreezeActive) return;
     const video = videoRef.current;
     if (!video || video.paused) return;
 
     const offset = video.currentTime - overlayKlipStart;
-    const nowVisible = overlayElements.filter(el => {
-      const start = el.appearAt ?? 0;
-      const end = el.duration !== undefined ? start + el.duration : Infinity;
-      const roundedTime = Math.round((el.appearAt ?? 0) * 100) / 100;
-      return offset >= start - 0.05 && offset < end && !overlayTriggeredRef.current.has(roundedTime);
+
+    // Use the shared pure function
+    const visible = computeVisibleElements(overlayElements as AnnotationElement[], offset, { forceOpacity: 1 });
+
+    // Check for newly visible elements we haven't triggered yet
+    const newVisible = visible.filter(el => {
+      const roundedTime = Math.round(el.appearAt * 100) / 100;
+      return !overlayTriggeredRef.current.has(roundedTime);
     });
 
-    if (nowVisible.length === 0) return;
+    if (newVisible.length === 0) return;
 
     // Mark as triggered
-    nowVisible.forEach(el => {
-      overlayTriggeredRef.current.add(Math.round((el.appearAt ?? 0) * 100) / 100);
+    newVisible.forEach(el => {
+      overlayTriggeredRef.current.add(Math.round(el.appearAt * 100) / 100);
     });
 
-    // Get all visible elements at this offset
-    const allVisible = overlayElements.filter(el => {
-      const start = el.appearAt ?? 0;
-      const end = el.duration !== undefined ? start + el.duration : Infinity;
-      return offset >= start - 0.05 && offset < end;
-    });
-
-    // Calculate longest remaining duration
+    // Calculate longest remaining duration among all visible
     const maxDuration = Math.max(
-      ...allVisible.map(el => {
+      ...visible.map(el => {
         const elDur = el.duration ?? 3;
-        const elapsed = offset - (el.appearAt ?? 0);
+        const elapsed = offset - el.appearAt;
         return Math.max(elDur - elapsed, 0.5);
       })
     );
     overlayFreezeDurationRef.current = maxDuration;
 
-    // Pause video — the paused video frame IS the background (no canvas capture needed)
+    // Set freeze-until as absolute video time
+    overlayFreezeUntilRef.current = video.currentTime + maxDuration;
+
+    // Pause video — the paused frame IS the background
     video.pause();
     setOverlayFreezeActive(true);
     setOverlayFreezePhase('showing');
   }, [overlayCurrentTime, overlayElements, overlayKlipStart, overlayFreezeActive]);
 
-  // Effect B: Resume timer — showing → fading → idle (separate effect, mirrors AnnotationEditor)
+  // Effect B: Resume after freeze — time-driven with a single timer (no setTimeout chains)
   useEffect(() => {
     if (!overlayFreezeActive) return;
 
-    const timer = setTimeout(() => {
+    const showDuration = overlayFreezeDurationRef.current * 1000;
+    const fadeDuration = 400;
+
+    const showTimer = setTimeout(() => {
       setOverlayFreezePhase('fading');
 
       const fadeTimer = setTimeout(() => {
         setOverlayFreezeActive(false);
         setOverlayFreezePhase('idle');
+        overlayFreezeUntilRef.current = 0;
         const v = videoRef.current;
         if (v && v.currentTime < overlayClipEndRef.current) {
           v.play();
         }
-      }, 400);
+      }, fadeDuration);
 
       overlayFreezeTimerRef.current = fadeTimer;
-    }, overlayFreezeDurationRef.current * 1000);
+    }, showDuration);
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(showTimer);
       if (overlayFreezeTimerRef.current) clearTimeout(overlayFreezeTimerRef.current);
     };
   }, [overlayFreezeActive]);
@@ -726,12 +741,16 @@ export const VideoAnalysis = () => {
             {/* Annotation canvas overlay during freeze */}
             {overlayFreezeActive && (() => {
               const offset = (videoRef.current?.currentTime ?? 0) - overlayKlipStart;
-              const visible = overlayElements.filter((el: any) => {
-                const start = el.appearAt ?? 0;
-                const end = el.duration !== undefined ? start + el.duration : Infinity;
-                return offset >= start - 0.05 && offset < end;
-              });
-              if (visible.length === 0) return null;
+              // Use the shared pure function for consistency with export
+              const computed = computeVisibleElements(overlayElements as AnnotationElement[], offset, { forceOpacity: 1 });
+              if (computed.length === 0) return null;
+              // Map computed results back to shape AnnotationCanvas expects
+              const visible = computed.map(el => ({
+                ...el,
+                x: el.computedX,
+                y: el.computedY,
+                opacity: el.computedOpacity,
+              }));
               return (
                 <div
                   className="absolute inset-0"

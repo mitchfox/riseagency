@@ -12,6 +12,7 @@ import { AnnotationProject, AnnotationElement, Klip, ElementKeyframe } from "./A
 import { AnnotationCanvas, TrackerState } from "./AnnotationCanvas";
 import { AnnotationToolbar } from "./AnnotationToolbar";
 import { toast } from "sonner";
+import { computeVisibleElements, renderElementsToSVGString, waitForSeek } from "@/lib/annotationRenderUtils";
 
 interface AnnotationEditorProps {
   project: AnnotationProject;
@@ -24,27 +25,7 @@ export type AnnotationTool =
   | 'spotlight' | 'text' | 'freehand' | 'player-marker' | 'eraser'
   | 'vision-cone' | 'distance' | 'magnifier' | 'linked-line' | 'tracker';
 
-const interpolateKeyframes = (keyframes: ElementKeyframe[], time: number): { x: number; y: number; opacity: number; scale: number } | null => {
-  if (!keyframes || keyframes.length === 0) return null;
-  if (time <= keyframes[0].time) return { x: keyframes[0].x, y: keyframes[0].y, opacity: keyframes[0].opacity ?? 1, scale: keyframes[0].scale ?? 1 };
-  if (time >= keyframes[keyframes.length - 1].time) {
-    const last = keyframes[keyframes.length - 1];
-    return { x: last.x, y: last.y, opacity: last.opacity ?? 1, scale: last.scale ?? 1 };
-  }
-  for (let i = 0; i < keyframes.length - 1; i++) {
-    const a = keyframes[i], b = keyframes[i + 1];
-    if (time >= a.time && time <= b.time) {
-      const t = (time - a.time) / (b.time - a.time);
-      return {
-        x: a.x + (b.x - a.x) * t,
-        y: a.y + (b.y - a.y) * t,
-        opacity: (a.opacity ?? 1) + ((b.opacity ?? 1) - (a.opacity ?? 1)) * t,
-        scale: (a.scale ?? 1) + ((b.scale ?? 1) - (a.scale ?? 1)) * t,
-      };
-    }
-  }
-  return null;
-};
+// interpolateKeyframes moved to annotationRenderUtils.ts
 
 export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -96,40 +77,34 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const allElements = activeKlip?.elements || [];
 
   const visibleElements = useMemo(() => {
-    const filtered = allElements.filter(el => {
-      // In drawing mode, always include the selected element
-      if (drawingMode && selectedId && el.id === selectedId) return true;
-      const start = el.appearAt;
-      const end = el.duration !== undefined ? start + el.duration : Infinity;
-      // Use small epsilon for floating point tolerance
-      return effectiveOffset >= start - 0.05 && effectiveOffset < end;
-    });
+    // Use the shared pure function
+    const forceOpacity = (playbackFreezeActive || drawingMode) ? 1 : null;
+    const computed = computeVisibleElements(allElements, effectiveOffset, { forceOpacity });
 
-    return filtered.map(el => {
-      // During playback freeze or drawing mode, show at full opacity
-      if (playbackFreezeActive || drawingMode) {
-        return { ...el, opacity: el.opacity ?? 1 };
-      }
-      if (el.keyframes && el.keyframes.length > 0) {
-        const interp = interpolateKeyframes(el.keyframes, effectiveOffset);
-        if (interp) return { ...el, x: interp.x, y: interp.y, opacity: interp.opacity };
-      }
-      if (el.animateIn && el.animateIn > 0) {
-        const elapsed = effectiveOffset - el.appearAt;
-        if (elapsed < el.animateIn) {
-          const opacity = (elapsed / el.animateIn) * (el.opacity ?? 1);
-          return { ...el, opacity };
+    // In drawing mode, also include the selected element even if not in time window
+    if (drawingMode && selectedId) {
+      const alreadyIncluded = computed.some(el => el.id === selectedId);
+      if (!alreadyIncluded) {
+        const selectedEl = allElements.find(el => el.id === selectedId);
+        if (selectedEl) {
+          computed.push({
+            ...selectedEl,
+            computedOpacity: selectedEl.opacity ?? 1,
+            computedX: selectedEl.x,
+            computedY: selectedEl.y,
+            computedScale: 1,
+          });
         }
       }
-      if (el.animateOut && el.animateOut > 0 && el.duration) {
-        const remaining = (el.appearAt + el.duration) - effectiveOffset;
-        if (remaining < el.animateOut) {
-          const opacity = (remaining / el.animateOut) * (el.opacity ?? 1);
-          return { ...el, opacity };
-        }
-      }
-      return el;
-    });
+    }
+
+    // Map computed elements back to the shape AnnotationCanvas expects
+    return computed.map(el => ({
+      ...el,
+      x: el.computedX,
+      y: el.computedY,
+      opacity: el.computedOpacity,
+    }));
   }, [allElements, effectiveOffset, playbackFreezeActive, drawingMode, selectedId]);
 
   const hasVisibleAnnotations = visibleElements.length > 0 && !drawingMode;
@@ -342,9 +317,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       return;
     }
 
-    const container = video.closest('.relative');
-    const svgEl = container?.querySelector('svg');
-
     toast.info("Recording clip with annotations — this may take a moment...");
 
     try {
@@ -366,7 +338,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       const klipDuration = klipEnd - klipStart;
       const totalFrames = Math.ceil(klipDuration * fps);
 
-      // Use MediaRecorder to capture canvas as video
       const stream = canvas.captureStream(fps);
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm',
@@ -383,57 +354,45 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
 
       mediaRecorder.start();
 
-      // Render each frame by seeking, drawing video + SVG
-      const renderFrame = (frameIndex: number): Promise<void> => {
-        return new Promise(resolve => {
-          const time = klipStart + (frameIndex / fps);
-          video.currentTime = time;
-          const onSeeked = () => {
-            video.removeEventListener('seeked', onSeeked);
-            ctx.clearRect(0, 0, vw, vh);
-            ctx.drawImage(video, 0, 0, vw, vh);
-
-            // Determine which annotations are visible at this offset
-            const offset = time - klipStart;
-            const visibleEls = allElements.filter(el => {
-              const start = el.appearAt;
-              const end = el.duration !== undefined ? start + el.duration : Infinity;
-              return offset >= start - 0.05 && offset < end;
-            });
-
-            if (svgEl && visibleEls.length > 0) {
-              // Clone the SVG, serialise, and draw onto the canvas
-              const svgClone = svgEl.cloneNode(true) as SVGElement;
-              svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-              svgClone.setAttribute('width', String(vw));
-              svgClone.setAttribute('height', String(vh));
-              const svgData = new XMLSerializer().serializeToString(svgClone);
-              const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-              const svgUrl = URL.createObjectURL(svgBlob);
-              const img = new Image();
-              img.onload = () => {
-                ctx.drawImage(img, 0, 0, vw, vh);
-                URL.revokeObjectURL(svgUrl);
-                // Brief delay to give MediaRecorder time to capture the frame
-                setTimeout(resolve, 1000 / fps);
-              };
-              img.onerror = () => {
-                URL.revokeObjectURL(svgUrl);
-                setTimeout(resolve, 1000 / fps);
-              };
-              img.src = svgUrl;
-            } else {
-              setTimeout(resolve, 1000 / fps);
-            }
-          };
-          video.addEventListener('seeked', onSeeked);
-        });
-      };
-
-      // Render frames sequentially
+      // Render each frame deterministically — no DOM SVG cloning
       for (let i = 0; i < totalFrames; i++) {
-        await renderFrame(i);
-        // Update progress every 30 frames
+        const time = klipStart + (i / fps);
+        const offset = time - klipStart;
+
+        // Seek and wait for decoded frame
+        await waitForSeek(video, time);
+
+        // Draw video frame
+        ctx.clearRect(0, 0, vw, vh);
+        ctx.drawImage(video, 0, 0, vw, vh);
+
+        // Compute visible elements using the shared pure function
+        const computed = computeVisibleElements(allElements, offset);
+
+        if (computed.length > 0) {
+          // Generate SVG from computed state (no DOM dependency)
+          const svgString = renderElementsToSVGString(computed, vw, vh);
+          const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+          const svgUrl = URL.createObjectURL(svgBlob);
+
+          await new Promise<void>((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              ctx.drawImage(img, 0, 0, vw, vh);
+              URL.revokeObjectURL(svgUrl);
+              resolve();
+            };
+            img.onerror = () => {
+              URL.revokeObjectURL(svgUrl);
+              resolve();
+            };
+            img.src = svgUrl;
+          });
+        }
+
+        // Give MediaRecorder time to capture
+        await new Promise(r => setTimeout(r, 1000 / fps));
+
         if (i % 30 === 0) {
           const pct = Math.round((i / totalFrames) * 100);
           toast.info(`Exporting... ${pct}%`, { id: 'export-progress' });
@@ -443,7 +402,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       mediaRecorder.stop();
       const blob = await recordingDone;
 
-      // Download
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -451,7 +409,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       a.click();
       URL.revokeObjectURL(url);
 
-      // Restore
       video.currentTime = savedTime;
       if (wasPlaying) video.play();
 
