@@ -1972,9 +1972,15 @@ ${exerciseContext}
 
 What I'm working on with this player: ${freePlanText}
 
-Return a JSON array of session objects. Each session has a "name" (e.g. "Session 1 - Acceleration & Power") and "exercises" array. Each exercise has: "name", "reps", "sets", "load", "recovery".
+Return a JSON array of session objects. Each session has a "name" and TWO exercise arrays:
+- "pre_exercises": warmup/activation exercises (almost always 1 set each, lighter loads, shorter recovery)
+- "exercises": main working exercises (full sets/load/recovery)
+
+Each exercise object has: "name", "reps", "sets", "load", "recovery".
 
 RULES:
+- Every session MUST have both pre_exercises and exercises sections
+- Pre-session exercises are warmups/activation work - typically 1 set, bodyweight or light band, short recovery
 - Use exercises from my database wherever possible, using the EXACT names, reps, sets, and load formats as they appear (e.g. "12 (6 each side)" not "6 per side")
 - Do not truncate or cut short. Include all exercises needed for complete sessions
 - No markdown formatting, no asterisks, no hashes
@@ -1983,7 +1989,7 @@ RULES:
 - IMPORTANT: After the database-based sessions, also include 1-2 extra sessions that use ONLY exercises NOT in my database. Label these clearly e.g. "Session 4 - Additional Ideas (Non-Database)". These are for inspiration and should use exercises the database does not contain.
 
 Example format:
-[{"name":"Session 1 - Lower Body Power","exercises":[{"name":"Sumo Deadlifts","reps":"12","sets":"3","load":"80% 1RM","recovery":"90s"}]},{"name":"Session 4 - Additional Ideas (Non-Database)","exercises":[{"name":"Nordic Hamstring Curl","reps":"6","sets":"3","load":"Bodyweight","recovery":"90s"}]}]`
+[{"name":"Session 1 - Lower Body Power","pre_exercises":[{"name":"Banded Glute Walks","reps":"12","sets":"1","load":"Light Band","recovery":"30s"}],"exercises":[{"name":"Sumo Deadlifts","reps":"12","sets":"3","load":"80% 1RM","recovery":"90s"}]}]`
                                 }),
                               }
                             );
@@ -2028,7 +2034,7 @@ Example format:
                       if (!suggestion) return null;
 
                       // Try to parse as JSON sessions array
-                      let parsedSessions: { name: string; exercises: { name: string; reps: string; sets: string; load: string; recovery: string }[] }[] | null = null;
+                      let parsedSessions: { name: string; pre_exercises?: { name: string; reps: string; sets: string; load: string; recovery: string }[]; exercises: { name: string; reps: string; sets: string; load: string; recovery: string }[] }[] | null = null;
                       try {
                         // Strip any markdown fences or leading text before the JSON
                         let cleaned = suggestion.trim();
@@ -2046,6 +2052,49 @@ Example format:
                       }
 
                       if (parsedSessions) {
+                        const renderExerciseTable = (exercises: any[], label: string) => (
+                          <div className="mt-1">
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium px-3 py-1 bg-muted/20">{label}</p>
+                            <table className="w-full text-xs">
+                              <thead>
+                                <tr className="border-b border-border/50 bg-muted/30">
+                                  <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Exercise</th>
+                                  <th className="text-left px-2 py-1.5 font-medium text-muted-foreground w-24">Reps</th>
+                                  <th className="text-left px-2 py-1.5 font-medium text-muted-foreground w-16">Sets</th>
+                                  <th className="text-left px-2 py-1.5 font-medium text-muted-foreground w-24">Load</th>
+                                  <th className="text-left px-2 py-1.5 font-medium text-muted-foreground w-20">Recovery</th>
+                                  <th className="w-8"></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {exercises.map((ex, eIdx) => (
+                                  <tr key={eIdx} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
+                                    <td className="px-3 py-1.5 font-medium">{ex.name}</td>
+                                    <td className="px-2 py-1.5 text-muted-foreground">{ex.reps || 'N/A'}</td>
+                                    <td className="px-2 py-1.5 text-muted-foreground">{ex.sets || 'N/A'}</td>
+                                    <td className="px-2 py-1.5 text-muted-foreground">{ex.load || 'N/A'}</td>
+                                    <td className="px-2 py-1.5 text-muted-foreground">{ex.recovery || 'N/A'}</td>
+                                    <td className="px-1 py-1.5">
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-5 w-5 p-0"
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(`${ex.name}\t${ex.reps || ''}\t${ex.sets || ''}\t${ex.load || ''}\t${ex.recovery || ''}`);
+                                          toast.success(`Copied ${ex.name}`);
+                                        }}
+                                      >
+                                        <Copy className="h-2.5 w-2.5" />
+                                      </Button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        );
+
                         return (
                           <div className="mt-3 space-y-4">
                             <p className="text-[10px] uppercase tracking-wider text-primary/60 font-medium">AI Suggestions</p>
@@ -2059,39 +2108,20 @@ Example format:
                                     variant="ghost"
                                     className="h-6 text-[10px] gap-1"
                                     onClick={() => {
+                                      const allExercises = [...(session.pre_exercises || []), ...(session.exercises || [])];
                                       const header = 'Exercise\tReps\tSets\tLoad\tRecovery';
-                                      const rows = session.exercises.map(ex =>
+                                      const rows = allExercises.map(ex =>
                                         `${ex.name}\t${ex.reps || 'N/A'}\t${ex.sets || 'N/A'}\t${ex.load || 'N/A'}\t${ex.recovery || 'N/A'}`
                                       ).join('\n');
                                       navigator.clipboard.writeText(`${session.name}\n${header}\n${rows}`);
                                       toast.success(`Copied ${session.name}`);
                                     }}
                                   >
-                                    <Copy className="h-3 w-3" /> Copy
+                                    <Copy className="h-3 w-3" /> Copy All
                                   </Button>
                                 </div>
-                                <table className="w-full text-xs">
-                                  <thead>
-                                    <tr className="border-b border-border/50 bg-muted/30">
-                                      <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Exercise</th>
-                                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground w-24">Reps</th>
-                                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground w-16">Sets</th>
-                                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground w-24">Load</th>
-                                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground w-20">Recovery</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {session.exercises.map((ex, eIdx) => (
-                                      <tr key={eIdx} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
-                                        <td className="px-3 py-1.5 font-medium">{ex.name}</td>
-                                        <td className="px-2 py-1.5 text-muted-foreground">{ex.reps || 'N/A'}</td>
-                                        <td className="px-2 py-1.5 text-muted-foreground">{ex.sets || 'N/A'}</td>
-                                        <td className="px-2 py-1.5 text-muted-foreground">{ex.load || 'N/A'}</td>
-                                        <td className="px-2 py-1.5 text-muted-foreground">{ex.recovery || 'N/A'}</td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
+                                {session.pre_exercises && session.pre_exercises.length > 0 && renderExerciseTable(session.pre_exercises, 'Pre-Session (Warmup / Activation)')}
+                                {session.exercises && session.exercises.length > 0 && renderExerciseTable(session.exercises, 'Main Session')}
                               </div>
                             ))}
                           </div>
