@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   ArrowLeft, Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight,
-  Save, Volume2, VolumeX, Plus, Trash2, Layers, Scissors, Clock, Timer,
-  Pause as PauseIcon, Lock, Unlock,
+  Save, Volume2, VolumeX, Trash2, Layers, Scissors, Clock, Timer,
+  Lock,
 } from "lucide-react";
 import { AnnotationProject, AnnotationElement, Klip, ElementKeyframe } from "./AnnotationProjects";
 import { AnnotationCanvas, TrackerState } from "./AnnotationCanvas";
@@ -24,7 +24,6 @@ export type AnnotationTool =
   | 'spotlight' | 'text' | 'freehand' | 'player-marker' | 'eraser'
   | 'vision-cone' | 'distance' | 'magnifier' | 'linked-line' | 'tracker';
 
-// Interpolate element position from keyframes at a given time
 const interpolateKeyframes = (keyframes: ElementKeyframe[], time: number): { x: number; y: number; opacity: number; scale: number } | null => {
   if (!keyframes || keyframes.length === 0) return null;
   if (time <= keyframes[0].time) return { x: keyframes[0].x, y: keyframes[0].y, opacity: keyframes[0].opacity ?? 1, scale: keyframes[0].scale ?? 1 };
@@ -32,7 +31,6 @@ const interpolateKeyframes = (keyframes: ElementKeyframe[], time: number): { x: 
     const last = keyframes[keyframes.length - 1];
     return { x: last.x, y: last.y, opacity: last.opacity ?? 1, scale: last.scale ?? 1 };
   }
-  // Find surrounding keyframes
   for (let i = 0; i < keyframes.length - 1; i++) {
     const a = keyframes[i], b = keyframes[i + 1];
     if (time >= a.time && time <= b.time) {
@@ -64,19 +62,20 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [cuttingKlip, setCuttingKlip] = useState(false);
   const [cutStart, setCutStart] = useState<number | null>(null);
 
-  // Klips
-  const [klips, setKlips] = useState<Klip[]>(project.klips || []);
+  // Auto-create a full-video segment on load if none exist
+  const [klips, setKlips] = useState<Klip[]>(() => {
+    if (project.klips && project.klips.length > 0) return project.klips;
+    // Will be created once duration is known
+    return [];
+  });
   const [activeKlipId, setActiveKlipId] = useState<string | null>(project.klips?.[0]?.id || null);
+  const [autoCreated, setAutoCreated] = useState(false);
 
-  // Trackers
   const [trackers, setTrackers] = useState<TrackerState[]>([]);
 
   const activeKlip = klips.find(k => k.id === activeKlipId);
-
-  // Timeline position relative to klip start
   const klipOffset = activeKlip ? currentTime - activeKlip.startTime : 0;
 
-  // Compute visible elements: filter by timing + interpolate keyframed positions
   const allElements = activeKlip?.elements || [];
 
   const visibleElements = useMemo(() => {
@@ -85,14 +84,10 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       const end = el.duration !== undefined ? start + el.duration : Infinity;
       return klipOffset >= start && klipOffset < end;
     }).map(el => {
-      // Apply keyframe interpolation
       if (el.keyframes && el.keyframes.length > 0) {
         const interp = interpolateKeyframes(el.keyframes, klipOffset);
-        if (interp) {
-          return { ...el, x: interp.x, y: interp.y, opacity: interp.opacity };
-        }
+        if (interp) return { ...el, x: interp.x, y: interp.y, opacity: interp.opacity };
       }
-      // Apply animate-in opacity
       if (el.animateIn && el.animateIn > 0) {
         const elapsed = klipOffset - el.appearAt;
         if (elapsed < el.animateIn) {
@@ -100,7 +95,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
           return { ...el, opacity };
         }
       }
-      // Apply animate-out opacity
       if (el.animateOut && el.animateOut > 0 && el.duration) {
         const remaining = (el.appearAt + el.duration) - klipOffset;
         if (remaining < el.animateOut) {
@@ -112,7 +106,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     });
   }, [allElements, klipOffset]);
 
-  // Check if we should hold frame (freeze-frame effect)
   const shouldHoldFrame = useMemo(() => {
     return visibleElements.some(el => el.holdFrame);
   }, [visibleElements]);
@@ -127,13 +120,28 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
 
   const klipColors = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#a855f7', '#ec4899', '#06b6d4', '#f97316'];
 
-  // Video events
+  // Auto-create segment once duration is known
+  useEffect(() => {
+    if (duration > 0 && klips.length === 0 && !autoCreated) {
+      const id = crypto.randomUUID();
+      const klip: Klip = {
+        id,
+        name: 'Full Video',
+        startTime: 0,
+        endTime: duration,
+        elements: [],
+        color: klipColors[0],
+      };
+      setKlips([klip]);
+      setActiveKlipId(id);
+      setAutoCreated(true);
+    }
+  }, [duration, klips.length, autoCreated]);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    const onTime = () => {
-      setCurrentTime(video.currentTime);
-    };
+    const onTime = () => setCurrentTime(video.currentTime);
     const onLoaded = () => setDuration(video.duration);
     const onEnded = () => setIsPlaying(false);
     video.addEventListener('timeupdate', onTime);
@@ -146,13 +154,10 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     };
   }, []);
 
-  // Freeze-frame: pause video when holdFrame elements are visible
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (shouldHoldFrame && !video.paused) {
-      video.pause();
-    }
+    if (shouldHoldFrame && !video.paused) video.pause();
   }, [shouldHoldFrame]);
 
   const togglePlay = useCallback(() => {
@@ -185,22 +190,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     if (videoRef.current) videoRef.current.playbackRate = next;
   }, [playbackRate]);
 
-  // Klip management
-  const addKlip = useCallback(() => {
-    const id = crypto.randomUUID();
-    const klip: Klip = {
-      id,
-      name: `Klip ${klips.length + 1}`,
-      startTime: currentTime,
-      endTime: Math.min(currentTime + 10, duration),
-      elements: [],
-      color: klipColors[klips.length % klipColors.length],
-    };
-    setKlips(prev => [...prev, klip]);
-    setActiveKlipId(id);
-    toast.success("Klip created");
-  }, [currentTime, duration, klips.length]);
-
   const handleCut = useCallback(() => {
     if (!cuttingKlip) {
       setCuttingKlip(true);
@@ -211,12 +200,12 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
         const start = Math.min(cutStart, currentTime);
         const end = Math.max(cutStart, currentTime);
         if (end - start < 0.1) {
-          toast.error("Klip too short");
+          toast.error("Segment too short");
         } else {
           const id = crypto.randomUUID();
           const klip: Klip = {
             id,
-            name: `Klip ${klips.length + 1}`,
+            name: `Segment ${klips.length + 1}`,
             startTime: start,
             endTime: end,
             elements: [],
@@ -224,7 +213,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
           };
           setKlips(prev => [...prev, klip]);
           setActiveKlipId(id);
-          toast.success(`Klip cut: ${formatTime(start)} → ${formatTime(end)}`);
+          toast.success(`Segment cut: ${formatTime(start)} → ${formatTime(end)}`);
         }
       }
       setCuttingKlip(false);
@@ -243,7 +232,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     setKlips(prev => prev.map(k => k.id === id ? { ...k, startTime: start, endTime: end } : k));
   }, []);
 
-  // Save
   const handleSave = () => {
     onSave({ ...project, klips });
     toast.success("Project saved");
@@ -260,7 +248,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     setElements(prev => prev.map(el => el.id === id ? { ...el, ...updates } : el));
   }, [setElements]);
 
-  // Add keyframe at current time for selected element
   const addKeyframe = useCallback(() => {
     if (!selectedId) return;
     const el = allElements.find(e => e.id === selectedId);
@@ -272,7 +259,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     toast.success(`Keyframe added at ${klipOffset.toFixed(1)}s`);
   }, [selectedId, allElements, klipOffset, updateElement]);
 
-  // Update tracker positions
   useEffect(() => {
     trackers.forEach(tracker => {
       if (!tracker.active) return;
@@ -289,7 +275,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     });
   }, [currentTime]);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -376,33 +361,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                   klipOffset={klipOffset}
                 />
               )}
-              {!activeKlip && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                  <Button
-                    variant="default"
-                    size="lg"
-                    className="gap-2"
-                    onClick={() => {
-                      // Auto-create a klip spanning the full video and activate drawing
-                      const id = crypto.randomUUID();
-                      const klip: Klip = {
-                        id,
-                        name: `Annotation ${klips.length + 1}`,
-                        startTime: 0,
-                        endTime: duration || 10,
-                        elements: [],
-                        color: klipColors[klips.length % klipColors.length],
-                      };
-                      setKlips(prev => [...prev, klip]);
-                      setActiveKlipId(id);
-                      setActiveTool('arrow');
-                      toast.success("Ready to draw. Select a tool and click on the video.");
-                    }}
-                  >
-                    <Plus className="w-5 h-5" /> Draw
-                  </Button>
-                </div>
-              )}
             </div>
             {linkSource && (
               <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-primary/80 text-white text-xs px-3 py-1 rounded-full">
@@ -433,7 +391,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                   onValueChange={([v]) => seek(v)}
                   className="[&_[role=slider]]:bg-primary [&_[role=slider]]:h-3 [&_[role=slider]]:w-3"
                 />
-                {/* Klip markers on timeline */}
                 {duration > 0 && klips.map(klip => (
                   <div
                     key={klip.id}
@@ -448,7 +405,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                     onClick={() => { setActiveKlipId(klip.id); seek(klip.startTime); }}
                   />
                 ))}
-                {/* Element timeline markers within active klip */}
                 {activeKlip && duration > 0 && allElements.map(el => {
                   const elStart = activeKlip.startTime + el.appearAt;
                   const elEnd = el.duration ? elStart + el.duration : activeKlip.endTime;
@@ -517,9 +473,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
               >
                 <Scissors className="w-3 h-3" /> {cuttingKlip ? 'Set End' : 'Cut Segment'}
               </Button>
-              <Button variant="ghost" size="sm" className="text-xs text-white/60 hover:text-white gap-1 h-6 px-2" onClick={addKlip}>
-                <Plus className="w-3 h-3" /> Draw
-              </Button>
               {selectedId && (
                 <Button variant="ghost" size="sm" className="text-xs text-amber-400/70 hover:text-amber-300 gap-1 h-6 px-2" onClick={addKeyframe} title="Add keyframe (Ctrl+K)">
                   <Clock className="w-3 h-3" /> Keyframe
@@ -529,15 +482,15 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
           </div>
         </div>
 
-        {/* Right sidebar: Klips, Elements, Timeline */}
+        {/* Right sidebar */}
         {showPanel && (
           <div className="w-60 bg-[#161a24] border-l border-white/10 shrink-0 flex flex-col overflow-hidden">
-            {/* Klips */}
+            {/* Segments */}
             <div className="p-3 border-b border-white/10">
               <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Segments</p>
               <div className="space-y-1 max-h-36 overflow-y-auto">
                 {klips.length === 0 && (
-                  <p className="text-xs text-white/30">Click Draw to start annotating.</p>
+                  <p className="text-xs text-white/30">Loading video...</p>
                 )}
                 {klips.map(klip => (
                   <div
@@ -550,43 +503,20 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                     <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: klip.color }} />
                     <span className="truncate flex-1 text-white/70">{klip.name}</span>
                     <span className="text-white/30 text-[10px]">{formatTime(klip.startTime)}</span>
-                    <button className="text-white/30 hover:text-red-400" onClick={(e) => { e.stopPropagation(); deleteKlip(klip.id); }}>
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                    {klips.length > 1 && (
+                      <button className="text-white/30 hover:text-red-400" onClick={(e) => { e.stopPropagation(); deleteKlip(klip.id); }}>
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
-              {activeKlip && (
-                <div className="mt-2 pt-2 border-t border-white/10 space-y-1">
-                  <div className="flex items-center gap-1 text-[10px] text-white/40">
-                    <Timer className="w-3 h-3" />
-                    <span>Segment Range</span>
-                  </div>
-                  <div className="flex gap-1">
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={activeKlip.startTime.toFixed(1)}
-                      onChange={e => updateKlipTimes(activeKlip.id, parseFloat(e.target.value) || 0, activeKlip.endTime)}
-                      className="h-6 text-[10px] bg-white/5 border-white/10 text-white"
-                    />
-                    <span className="text-white/30 text-xs self-center">→</span>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={activeKlip.endTime.toFixed(1)}
-                      onChange={e => updateKlipTimes(activeKlip.id, activeKlip.startTime, parseFloat(e.target.value) || 0)}
-                      className="h-6 text-[10px] bg-white/5 border-white/10 text-white"
-                    />
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Timeline Events (Elements) */}
             <div className="p-3 flex-1 overflow-y-auto">
               <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2">
-                Timeline Events {activeKlip ? `(${allElements.length})` : ''}
+                Annotations {activeKlip ? `(${allElements.length})` : ''}
               </p>
               {selectedId && (
                 <Button variant="destructive" size="sm" className="w-full text-xs mb-2 h-7" onClick={handleDeleteElement}>
@@ -621,7 +551,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
                   <div className="flex items-center gap-1 text-[10px] text-white/40">
                     <Clock className="w-3 h-3" />
-                    <span>Event Scripting</span>
+                    <span>Timing</span>
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -697,7 +627,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                     </Button>
                   </div>
 
-                  {/* Keyframes list */}
                   {selectedElement.keyframes && selectedElement.keyframes.length > 0 && (
                     <div className="pt-2 border-t border-white/10 space-y-1">
                       <p className="text-[10px] text-white/40">Keyframes ({selectedElement.keyframes.length})</p>
@@ -719,7 +648,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                     </div>
                   )}
 
-                  {/* Magnifier zoom */}
                   {selectedElement.type === 'magnifier' && (
                     <div className="space-y-1 pt-2 border-t border-white/10">
                       <Label className="text-[9px] text-white/40">Zoom Level</Label>
@@ -736,7 +664,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
               )}
             </div>
 
-            {/* Trackers */}
             {trackers.length > 0 && (
               <div className="p-3 border-t border-white/10">
                 <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Trackers ({trackers.length})</p>

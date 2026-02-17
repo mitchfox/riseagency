@@ -11,6 +11,8 @@ import { format } from "date-fns";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEditor";
+import type { AnnotationProject, Klip } from "@/components/staff/annotations/AnnotationProjects";
 
 interface Annotation {
   id: string;
@@ -103,6 +105,10 @@ export const VideoAnalysis = () => {
 
   // Half-time sync
   const [syncHalf, setSyncHalf] = useState<"1st" | "2nd">("1st");
+
+  // Inline annotation
+  const [annotatingClip, setAnnotatingClip] = useState<Clip | null>(null);
+  const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
 
   useEffect(() => {
     fetchVideos();
@@ -667,11 +673,30 @@ export const VideoAnalysis = () => {
                     size="icon"
                     className="h-6 w-6 opacity-0 group-hover/clip:opacity-100 text-primary hover:text-primary shrink-0"
                     onClick={() => {
-                      // Open annotations for this clip
-                      const url = new URL(window.location.href);
-                      url.searchParams.set('section', 'annotations');
-                      window.location.href = url.toString();
-                      toast.info("Opening Annotations — load the video there and draw on the clip segment.");
+                      // Create an inline annotation project from the clip's video
+                      const klip: Klip = {
+                        id: crypto.randomUUID(),
+                        name: clip.label || 'Clip',
+                        startTime: clip.start,
+                        endTime: clip.end,
+                        elements: [],
+                        color: '#3b82f6',
+                      };
+                      const proj: AnnotationProject = {
+                        id: `va-${selectedVideo.id}-${clip.id}`,
+                        name: `${selectedVideo.title} — ${clip.label || 'Clip'}`,
+                        videoUrl: selectedVideo.video_url,
+                        videoName: selectedVideo.title,
+                        createdAt: new Date().toISOString(),
+                        klips: [klip],
+                      };
+                      // Check if we have saved annotations for this clip
+                      try {
+                        const saved = JSON.parse(localStorage.getItem(`va_annotations_${clip.id}`) || 'null');
+                        if (saved?.klips) proj.klips = saved.klips;
+                      } catch {}
+                      setAnnotationProject(proj);
+                      setAnnotatingClip(clip);
                     }}
                     title="Annotate this clip"
                   >
@@ -711,6 +736,28 @@ export const VideoAnalysis = () => {
             )}
           </div>
         </div>
+
+        {/* Inline annotation dialog */}
+        <Dialog open={!!annotatingClip} onOpenChange={(open) => { if (!open) { setAnnotatingClip(null); setAnnotationProject(null); } }}>
+          <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 overflow-hidden">
+            {annotationProject && (
+              <AnnotationEditor
+                project={annotationProject}
+                onSave={(proj) => {
+                  // Save annotations to localStorage keyed by clip id
+                  if (annotatingClip) {
+                    try {
+                      localStorage.setItem(`va_annotations_${annotatingClip.id}`, JSON.stringify({ klips: proj.klips }));
+                    } catch {}
+                  }
+                  setAnnotationProject(proj);
+                  toast.success("Annotations saved to clip");
+                }}
+                onBack={() => { setAnnotatingClip(null); setAnnotationProject(null); }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Export dialog with player picker first */}
         <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
