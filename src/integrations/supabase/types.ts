@@ -519,6 +519,53 @@ export type Database = {
         }
         Relationships: []
       }
+      case_study_messages: {
+        Row: {
+          case_study_id: string
+          created_at: string
+          id: string
+          image_url: string | null
+          message_order: number
+          message_text: string | null
+          note: string | null
+          sender_name: string | null
+          sender_type: string
+          updated_at: string
+        }
+        Insert: {
+          case_study_id: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          message_order?: number
+          message_text?: string | null
+          note?: string | null
+          sender_name?: string | null
+          sender_type?: string
+          updated_at?: string
+        }
+        Update: {
+          case_study_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          message_order?: number
+          message_text?: string | null
+          note?: string | null
+          sender_name?: string | null
+          sender_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_study_messages_case_study_id_fkey"
+            columns: ["case_study_id"]
+            isOneToOne: false
+            referencedRelation: "messaging_case_studies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_map_positions: {
         Row: {
           club_name: string
@@ -1834,6 +1881,36 @@ export type Database = {
           id?: string
           name?: string
           steps?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      messaging_case_studies: {
+        Row: {
+          context_notes: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          context_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          context_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          title?: string
           updated_at?: string
         }
         Relationships: []

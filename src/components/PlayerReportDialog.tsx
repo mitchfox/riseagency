@@ -122,12 +122,11 @@ export const PlayerReportDialog = ({ children, open, onOpenChange }: PlayerRepor
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="age">{t("report.age", "Age")} *</Label>
+              <Label htmlFor="dob">{t("report.dob", "Date of Birth")} *</Label>
               <Input 
-                id="age" 
-                name="age" 
-                type="number" 
-                placeholder="22" 
+                id="dob" 
+                name="dob" 
+                type="date" 
                 required 
               />
             </div>
