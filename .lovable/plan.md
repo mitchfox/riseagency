@@ -1,43 +1,68 @@
 
 
-## Fix: Annotation Auto-Resume and Immediate Visibility
+## Fix: Annotation Fade Timing During Playback Freeze
 
-### Bug 1: Auto-resume timer gets cancelled immediately
+### Current behaviour
 
-**Root cause**: The playback freeze effect (line 178) sets a `setTimeout` to resume the video, but its cleanup function clears that timer. Because the effect depends on `currentTime`, `visibleElements`, `effectiveOffset`, and `playbackFreezeActive`, when `playbackFreezeActive` changes to `true`, React re-runs the effect. The new run hits the early return (`if (playbackFreezeActive) return`), but React also runs the *cleanup* from the previous render, which clears the timeout before it can fire.
+1. Annotation timestamp reached -- video pauses, freeze frame captured
+2. During the freeze, `currentTime` doesn't advance, so `effectiveOffset` stays right at `appearAt`
+3. The `animateIn` logic computes `elapsed = effectiveOffset - appearAt` which is near zero, keeping opacity very low throughout the freeze
+4. When the video resumes, time finally advances and the fade-in plays out -- but the moment has passed
 
-**Fix**: Move the `setTimeout` out of the effect entirely. Instead, start the timer in a *separate* `useEffect` that only runs when `playbackFreezeActive` becomes `true`. This way the timer lives independently and won't be cancelled by the detection effect re-running.
+### Desired behaviour
 
-New effect (roughly):
-```text
-useEffect:
-  if playbackFreezeActive is true:
-    start setTimeout for maxDuration
-    on fire: clear freeze state, resume video
-    cleanup: clearTimeout (only runs when playbackFreezeActive changes)
-```
-
-The detection effect keeps everything except the setTimeout -- it just sets the state and pauses the video.
-
-### Bug 2: Newly drawn annotations not visible on the freeze frame
-
-**Root cause**: Elements are created with `appearAt: klipOffset`, but during drawing mode, visibility is calculated using `effectiveOffset = drawingTimestamp - activeKlip.startTime`. If there's any tiny timing mismatch, the element sits just outside the visibility window.
-
-**Fix**: When in drawing mode, set `effectiveOffset` to exactly match `klipOffset` so newly placed elements are always within range. The simplest approach is to just use `klipOffset` in both modes during drawing, since the video is paused and `currentTime` is stable.
+1. Annotation fades in briefly as the freeze starts
+2. During the freeze, annotation shows at **full opacity** for the set duration
+3. When the freeze ends, annotation fades out quickly as the video resumes
 
 ### Changes (single file: `AnnotationEditor.tsx`)
 
-1. **Split the freeze effect into two**:
-   - Effect A (detection): monitors `currentTime` + `visibleElements`, captures frame, pauses video, sets `playbackFreezeActive = true`. Stores the duration in a ref. No timer here.
-   - Effect B (resume timer): watches `playbackFreezeActive`. When it becomes true, starts `setTimeout` using the stored duration. When it fires, clears freeze state and resumes playback. Cleanup only clears this single timer.
+**1. Override opacity during playback freeze**
 
-2. **Fix effectiveOffset**: In drawing mode, use `klipOffset` directly rather than recalculating from `drawingTimestamp`. This ensures new elements whose `appearAt` equals `klipOffset` are always visible.
+In the `visibleElements` memo (lines 91-117), add a check: when `playbackFreezeActive` is true, skip the `animateIn` and `animateOut` calculations entirely and return the element at full opacity. This ensures annotations are fully visible during the freeze frame.
 
-3. **Store freeze duration in a ref** (`playbackFreezeDurationRef`) so the resume effect can read it without needing it as a dependency.
+```text
+visibleElements memo:
+  if playbackFreezeActive:
+    return element at full opacity (skip animateIn/animateOut)
+  else:
+    existing animateIn/animateOut logic as-is
+```
+
+**2. Add a brief fade-out when the freeze ends**
+
+Instead of instantly hiding annotations when the timer fires, introduce a short fade-out transition:
+
+- New state: `playbackFreezePhase` with values `'idle' | 'showing' | 'fading'`
+- When freeze activates: set phase to `'showing'`
+- When the timer fires: set phase to `'fading'` (don't clear the freeze frame yet)
+- After a short delay (e.g. 400ms), clear everything and resume the video
+- The annotation overlay container gets a CSS transition on opacity, driven by the phase
+
+```text
+Effect B (resume timer):
+  setTimeout(duration):
+    set phase = 'fading'
+    setTimeout(400ms):
+      clear freeze frame
+      set phase = 'idle'
+      video.play()
+```
+
+**3. Render with transition**
+
+The annotation overlay wrapper during playback freeze gets:
+- `opacity: 1` when phase is `'showing'`
+- `opacity: 0` with `transition: opacity 0.4s` when phase is `'fading'`
+
+This gives a smooth fade-out as the video resumes.
+
+### Dependencies on `visibleElements` memo
+
+Add `playbackFreezeActive` to the memo's dependency array so it recalculates when the freeze starts/ends.
 
 ### What stays the same
 
-- Drawing mode workflow (freeze frame, toolbar, save/cancel) untouched
-- Element creation logic in AnnotationCanvas unchanged
-- Timeline dots, sidebar controls, keyframes all unchanged
-
+- Drawing mode workflow untouched
+- Effect A (detection) unchanged
+- Element creation, timeline dots, sidebar controls all unchanged
