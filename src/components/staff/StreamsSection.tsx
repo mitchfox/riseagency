@@ -32,11 +32,14 @@ const EMBEDDABLE_CHANNELS: StreamChannel[] = [
 const LINK_ONLY_CHANNELS: StreamChannel[] = [
   { id: "camel", label: "Camel International", url: "https://www.camel1.live/e/home", region: "International", embedMode: "link-only" },
   { id: "buffstreams", label: "Buffstreams US", url: "https://buffstreams.plus/index2", region: "US", embedMode: "link-only" },
-  { id: "youtube", label: "YouTube", url: "https://www.youtube.com", region: "Global", embedMode: "link-only" },
-  { id: "ytmusic", label: "YouTube Music", url: "https://music.youtube.com", region: "Global", embedMode: "link-only" },
 ];
 
-const ALL_CHANNELS = [...EMBEDDABLE_CHANNELS, ...LINK_ONLY_CHANNELS];
+const EMBED_EXTRA_CHANNELS: StreamChannel[] = [
+  { id: "youtube", label: "YouTube", url: "https://www.youtube.com", region: "Global", embedMode: "iframe" },
+  { id: "ytmusic", label: "YouTube Music", url: "https://music.youtube.com", region: "Global", embedMode: "iframe" },
+];
+
+const ALL_CHANNELS = [...EMBEDDABLE_CHANNELS, ...EMBED_EXTRA_CHANNELS, ...LINK_ONLY_CHANNELS];
 
 export const StreamsSection = () => {
   const [activeTab, setActiveTab] = useState(() => {
@@ -183,7 +186,7 @@ export const StreamsSection = () => {
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <div className="px-4 pb-2">
             <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
-              {EMBEDDABLE_CHANNELS.map((ch) => {
+              {[...EMBEDDABLE_CHANNELS, ...EMBED_EXTRA_CHANNELS].map((ch) => {
                 const creds = getCredentials(ch.id);
                 const hasCreds = creds.username || creds.password;
                 return (

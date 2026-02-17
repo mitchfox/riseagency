@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   ArrowLeft, Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight,
-  Save, Volume2, VolumeX, Trash2, Layers, Scissors, Clock, Timer,
+  Save, Volume2, VolumeX, Trash2, Layers, Clock, Timer,
   Lock,
 } from "lucide-react";
 import { AnnotationProject, AnnotationElement, Klip, ElementKeyframe } from "./AnnotationProjects";
@@ -59,13 +59,10 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showPanel, setShowPanel] = useState(true);
   const [linkSource, setLinkSource] = useState<string | null>(null);
-  const [cuttingKlip, setCuttingKlip] = useState(false);
-  const [cutStart, setCutStart] = useState<number | null>(null);
 
-  // Auto-create a full-video segment on load if none exist
+  // Single klip covering the full video — no segments UI
   const [klips, setKlips] = useState<Klip[]>(() => {
     if (project.klips && project.klips.length > 0) return project.klips;
-    // Will be created once duration is known
     return [];
   });
   const [activeKlipId, setActiveKlipId] = useState<string | null>(project.klips?.[0]?.id || null);
@@ -190,47 +187,12 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     if (videoRef.current) videoRef.current.playbackRate = next;
   }, [playbackRate]);
 
-  const handleCut = useCallback(() => {
-    if (!cuttingKlip) {
-      setCuttingKlip(true);
-      setCutStart(currentTime);
-      toast.info("Mark-in set. Scrub to end point and click Cut again.");
-    } else {
-      if (cutStart !== null) {
-        const start = Math.min(cutStart, currentTime);
-        const end = Math.max(cutStart, currentTime);
-        if (end - start < 0.1) {
-          toast.error("Segment too short");
-        } else {
-          const id = crypto.randomUUID();
-          const klip: Klip = {
-            id,
-            name: `Segment ${klips.length + 1}`,
-            startTime: start,
-            endTime: end,
-            elements: [],
-            color: klipColors[klips.length % klipColors.length],
-          };
-          setKlips(prev => [...prev, klip]);
-          setActiveKlipId(id);
-          toast.success(`Segment cut: ${formatTime(start)} → ${formatTime(end)}`);
-        }
-      }
-      setCuttingKlip(false);
-      setCutStart(null);
-    }
-  }, [cuttingKlip, cutStart, currentTime, klips.length]);
-
   const deleteKlip = useCallback((id: string) => {
     setKlips(prev => prev.filter(k => k.id !== id));
     if (activeKlipId === id) {
       setActiveKlipId(klips.find(k => k.id !== id)?.id || null);
     }
   }, [activeKlipId, klips]);
-
-  const updateKlipTimes = useCallback((id: string, start: number, end: number) => {
-    setKlips(prev => prev.map(k => k.id === id ? { ...k, startTime: start, endTime: end } : k));
-  }, []);
 
   const handleSave = () => {
     onSave({ ...project, klips });
@@ -284,7 +246,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       if (e.key === 'ArrowRight' && !e.shiftKey) { e.preventDefault(); stepFrame(1); }
       if (e.key === 'ArrowLeft' && e.shiftKey) { e.preventDefault(); stepFrame(-10); }
       if (e.key === 'ArrowRight' && e.shiftKey) { e.preventDefault(); stepFrame(10); }
-      if (e.key === 'Escape') { setActiveTool('select'); setSelectedId(null); setLinkSource(null); setCuttingKlip(false); setCutStart(null); }
+      if (e.key === 'Escape') { setActiveTool('select'); setSelectedId(null); setLinkSource(null); }
       if (e.key === 'v') setActiveTool('select');
       if (e.key === 'k' && e.ctrlKey) { e.preventDefault(); addKeyframe(); }
     };
@@ -367,11 +329,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 Click second element to link
               </div>
             )}
-            {cuttingKlip && (
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-red-500/80 text-white text-xs px-3 py-1 rounded-full animate-pulse">
-                Cutting: mark-in at {formatTime(cutStart || 0)} — scrub to end and click Cut again
-              </div>
-            )}
             {shouldHoldFrame && (
               <div className="absolute top-2 right-2 bg-amber-500/80 text-white text-[10px] px-2 py-0.5 rounded flex items-center gap-1">
                 <Lock className="w-3 h-3" /> Frame held
@@ -424,15 +381,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                     />
                   );
                 })}
-                {cuttingKlip && cutStart !== null && duration > 0 && (
-                  <div
-                    className="absolute top-full mt-0.5 h-1.5 rounded-full bg-red-500/40"
-                    style={{
-                      left: `${(Math.min(cutStart, currentTime) / duration) * 100}%`,
-                      width: `${(Math.abs(currentTime - cutStart) / duration) * 100}%`,
-                    }}
-                  />
-                )}
               </div>
               <span className="text-xs text-white/60 font-mono w-24 text-right">{formatTime(duration)}</span>
             </div>
@@ -463,16 +411,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
               </Button>
 
-              <div className="mx-3 border-l border-white/10 h-5" />
 
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`text-xs gap-1 h-6 px-2 ${cuttingKlip ? 'text-red-400 hover:text-red-300' : 'text-white/60 hover:text-white'}`}
-                onClick={handleCut}
-              >
-                <Scissors className="w-3 h-3" /> {cuttingKlip ? 'Set End' : 'Cut Segment'}
-              </Button>
               {selectedId && (
                 <Button variant="ghost" size="sm" className="text-xs text-amber-400/70 hover:text-amber-300 gap-1 h-6 px-2" onClick={addKeyframe} title="Add keyframe (Ctrl+K)">
                   <Clock className="w-3 h-3" /> Keyframe
@@ -485,33 +424,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
         {/* Right sidebar */}
         {showPanel && (
           <div className="w-60 bg-[#161a24] border-l border-white/10 shrink-0 flex flex-col overflow-hidden">
-            {/* Segments */}
-            <div className="p-3 border-b border-white/10">
-              <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Segments</p>
-              <div className="space-y-1 max-h-36 overflow-y-auto">
-                {klips.length === 0 && (
-                  <p className="text-xs text-white/30">Loading video...</p>
-                )}
-                {klips.map(klip => (
-                  <div
-                    key={klip.id}
-                    className={`flex items-center gap-1.5 text-xs px-2 py-1.5 rounded cursor-pointer ${
-                      klip.id === activeKlipId ? 'bg-white/10' : 'hover:bg-white/5'
-                    }`}
-                    onClick={() => { setActiveKlipId(klip.id); seek(klip.startTime); }}
-                  >
-                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: klip.color }} />
-                    <span className="truncate flex-1 text-white/70">{klip.name}</span>
-                    <span className="text-white/30 text-[10px]">{formatTime(klip.startTime)}</span>
-                    {klips.length > 1 && (
-                      <button className="text-white/30 hover:text-red-400" onClick={(e) => { e.stopPropagation(); deleteKlip(klip.id); }}>
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+
 
             {/* Timeline Events (Elements) */}
             <div className="p-3 flex-1 overflow-y-auto">
