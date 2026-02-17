@@ -494,6 +494,12 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     // Elements are already in the klip — just close drawing mode
     handleSave();
     toast.success("Annotation saved");
+    // Resume video playback
+    const video = videoRef.current;
+    if (video && video.currentTime < (video.duration || 0)) {
+      video.play();
+      setIsPlaying(true);
+    }
   }, [handleSave]);
 
   const cancelDrawing = useCallback(() => {
@@ -508,8 +514,9 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     setSelectedId(null);
   }, [activeKlipId, drawingStartElements]);
 
+  // Don't auto-switch tool after placement — allow multiple annotations
   const handleToolUsed = useCallback(() => {
-    setActiveTool('select');
+    // Keep the current tool active so user can place multiple annotations
   }, []);
 
   const handleDeleteElement = useCallback(() => {
@@ -688,6 +695,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                     setLinkSource={setLinkSource}
                     klipOffset={klipOffset}
                     onToolUsed={handleToolUsed}
+                    isDrawingMode={drawingMode}
                   />
                 </div>
               )}
@@ -718,8 +726,8 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                   value={[currentTime]}
                   max={duration || 1}
                   step={0.01}
-                  onValueChange={([v]) => seek(v)}
-                  className="[&_[role=slider]]:bg-primary [&_[role=slider]]:h-3 [&_[role=slider]]:w-3"
+                  onValueChange={([v]) => { if (!drawingMode) seek(v); }}
+                  className={`[&_[role=slider]]:bg-primary [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 ${drawingMode ? 'opacity-50 pointer-events-none' : ''}`}
                 />
                 {duration > 0 && klips.map(klip => (
                   <div
@@ -802,20 +810,20 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
               <span className="text-xs text-white/60 font-mono w-24 text-right">{formatTime(duration)}</span>
             </div>
 
-            <div className="flex items-center justify-center gap-1 pt-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70" onClick={() => seek(0)}>
+            <div className={`flex items-center justify-center gap-1 pt-1 ${drawingMode ? 'opacity-40 pointer-events-none' : ''}`}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70" onClick={() => seek(0)} disabled={drawingMode}>
                 <SkipBack className="w-3.5 h-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70" onClick={() => stepFrame(-1)}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70" onClick={() => stepFrame(-1)} disabled={drawingMode}>
                 <ChevronLeft className="w-3.5 h-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-white" onClick={togglePlay}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-white" onClick={togglePlay} disabled={drawingMode}>
                 {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70" onClick={() => stepFrame(1)}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70" onClick={() => stepFrame(1)} disabled={drawingMode}>
                 <ChevronRight className="w-3.5 h-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70" onClick={() => seek(duration)}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70" onClick={() => seek(duration)} disabled={drawingMode}>
                 <SkipForward className="w-3.5 h-3.5" />
               </Button>
 

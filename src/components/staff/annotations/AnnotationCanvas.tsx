@@ -17,6 +17,7 @@ interface AnnotationCanvasProps {
   setLinkSource: (id: string | null) => void;
   klipOffset?: number;
   onToolUsed?: () => void;
+  isDrawingMode?: boolean;
 }
 
 export interface TrackerState {
@@ -30,7 +31,7 @@ export interface TrackerState {
 export const AnnotationCanvas = ({
   elements, setElements, activeTool, activeColor, strokeWidth,
   selectedId, setSelectedId, videoRef, trackers, setTrackers, linkSource, setLinkSource, klipOffset = 0,
-  onToolUsed,
+  onToolUsed, isDrawingMode = false,
 }: AnnotationCanvasProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [drawing, setDrawing] = useState(false);
@@ -331,12 +332,8 @@ export const AnnotationCanvas = ({
       ? { ...baseStyle, filter: 'drop-shadow(0 0 4px rgba(168,85,247,0.9))' }
       : baseStyle;
 
-    // SVG animation attributes for visual entry effects
-    const animateChildren = (el.animateIn && el.animateIn > 0) ? (
-      <>
-        <animate attributeName="opacity" from="0" to={String(el.opacity ?? 1)} dur={`${el.animateIn}s`} fill="freeze" />
-      </>
-    ) : null;
+    // In drawing mode, skip all SVG animations so resizing updates instantly
+    const anim = !isDrawingMode;
 
     switch (el.type) {
       case 'line':
@@ -346,9 +343,8 @@ export const AnnotationCanvas = ({
               x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round"
             >
-              {/* Animated drawing effect */}
-              <animate attributeName="x2" from={`${el.x}%`} to={`${el.x2}%`} dur="0.3s" fill="freeze" />
-              <animate attributeName="y2" from={`${el.y}%`} to={`${el.y2}%`} dur="0.3s" fill="freeze" />
+              {anim && <animate attributeName="x2" from={`${el.x}%`} to={`${el.x2}%`} dur="0.3s" fill="freeze" />}
+              {anim && <animate attributeName="y2" from={`${el.y}%`} to={`${el.y2}%`} dur="0.3s" fill="freeze" />}
             </line>
           </g>
         );
@@ -358,15 +354,13 @@ export const AnnotationCanvas = ({
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
               <marker id={mid} markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-                <polygon points="0 0, 10 3.5, 0 7" fill={el.color}>
-                  <animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="0.2s" fill="freeze" />
-                </polygon>
+                <polygon points="0 0, 10 3.5, 0 7" fill={el.color} />
               </marker>
             </defs>
             <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round" markerEnd={`url(#${mid})`}>
-              <animate attributeName="x2" from={`${el.x}%`} to={`${el.x2}%`} dur="0.3s" fill="freeze" />
-              <animate attributeName="y2" from={`${el.y}%`} to={`${el.y2}%`} dur="0.3s" fill="freeze" />
+              {anim && <animate attributeName="x2" from={`${el.x}%`} to={`${el.x2}%`} dur="0.3s" fill="freeze" />}
+              {anim && <animate attributeName="y2" from={`${el.y}%`} to={`${el.y2}%`} dur="0.3s" fill="freeze" />}
             </line>
           </g>
         );
@@ -380,10 +374,10 @@ export const AnnotationCanvas = ({
             d={pathD}
             stroke={el.color} strokeWidth={el.strokeWidth} fill="none" strokeLinecap="round"
             style={selStyle}
-            strokeDasharray="500"
-            strokeDashoffset="500"
+            strokeDasharray={anim ? "500" : undefined}
+            strokeDashoffset={anim ? "0" : undefined}
           >
-            <animate attributeName="stroke-dashoffset" from="500" to="0" dur="0.5s" fill="freeze" />
+            {anim && <animate attributeName="stroke-dashoffset" from="500" to="0" dur="0.5s" fill="freeze" />}
           </path>
         );
       }
@@ -393,10 +387,8 @@ export const AnnotationCanvas = ({
             x={`${el.x}%`} y={`${el.y}%`} width={`${el.width}%`} height={`${el.height}%`}
             stroke={el.color} strokeWidth={el.strokeWidth} fill="none"
             style={selStyle}
-            strokeDasharray={`${((el.width || 0) + (el.height || 0)) * 4}`}
-            strokeDashoffset={`${((el.width || 0) + (el.height || 0)) * 4}`}
           >
-            <animate attributeName="stroke-dashoffset" from={`${((el.width || 0) + (el.height || 0)) * 4}`} to="0" dur="0.4s" fill="freeze" />
+            {anim && <animate attributeName="stroke-dashoffset" from={`${((el.width || 0) + (el.height || 0)) * 4}`} to="0" dur="0.4s" fill="freeze" />}
           </rect>
         );
       case 'circle':
@@ -406,9 +398,8 @@ export const AnnotationCanvas = ({
               cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} fill="none"
             >
-              {/* Spinning draw-in effect */}
-              <animate attributeName="r" from="0" to={`${el.radius}%`} dur="0.3s" fill="freeze" />
-              <animate attributeName="opacity" from="0" to="1" dur="0.3s" fill="freeze" />
+              {anim && <animate attributeName="r" from="0" to={`${el.radius}%`} dur="0.3s" fill="freeze" />}
+              {anim && <animate attributeName="opacity" from="0" to="1" dur="0.3s" fill="freeze" />}
             </circle>
           </g>
         );
@@ -419,18 +410,18 @@ export const AnnotationCanvas = ({
               cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius}%`}
               fill={el.color} fillOpacity={el.opacity || 0.3} stroke={el.color} strokeWidth={1}
             >
-              {/* Drop-in effect: scale from 0 */}
-              <animate attributeName="r" from="0" to={`${el.radius}%`} dur="0.4s" fill="freeze" calcMode="spline" keySplines="0.34 1.56 0.64 1" />
-              <animate attributeName="fill-opacity" from="0" to={String(el.opacity || 0.3)} dur="0.4s" fill="freeze" />
+              {anim && <animate attributeName="r" from="0" to={`${el.radius}%`} dur="0.4s" fill="freeze" calcMode="spline" keySplines="0.34 1.56 0.64 1" />}
+              {anim && <animate attributeName="fill-opacity" from="0" to={String(el.opacity || 0.3)} dur="0.4s" fill="freeze" />}
             </circle>
-            {/* Pulse ring for emphasis */}
-            <circle
-              cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius}%`}
-              fill="none" stroke={el.color} strokeWidth={2} strokeOpacity={0.5}
-            >
-              <animate attributeName="r" from={`${(el.radius || 5) * 0.5}%`} to={`${(el.radius || 5) * 1.3}%`} dur="0.6s" fill="freeze" />
-              <animate attributeName="stroke-opacity" from="0.8" to="0" dur="0.6s" fill="freeze" />
-            </circle>
+            {anim && (
+              <circle
+                cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius}%`}
+                fill="none" stroke={el.color} strokeWidth={2} strokeOpacity={0.5}
+              >
+                <animate attributeName="r" from={`${(el.radius || 5) * 0.5}%`} to={`${(el.radius || 5) * 1.3}%`} dur="0.6s" fill="freeze" />
+                <animate attributeName="stroke-opacity" from="0.8" to="0" dur="0.6s" fill="freeze" />
+              </circle>
+            )}
           </g>
         );
       case 'vision-cone': {
@@ -449,10 +440,10 @@ export const AnnotationCanvas = ({
               d={`M ${el.x}% ${el.y}% L ${x1}% ${y1}% A ${len} ${len} 0 0 1 ${x2}% ${y2}% Z`}
               fill={el.color} fillOpacity={el.opacity || 0.25} stroke={el.color} strokeWidth={1} strokeOpacity={0.5}
             >
-              <animate attributeName="fill-opacity" from="0" to={String(el.opacity || 0.25)} dur="0.4s" fill="freeze" />
+              {anim && <animate attributeName="fill-opacity" from="0" to={String(el.opacity || 0.25)} dur="0.4s" fill="freeze" />}
             </path>
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r="0.6%" fill={el.color}>
-              <animate attributeName="r" from="0" to="0.6%" dur="0.2s" fill="freeze" />
+              {anim && <animate attributeName="r" from="0" to="0.6%" dur="0.2s" fill="freeze" />}
             </circle>
           </g>
         );
@@ -467,16 +458,13 @@ export const AnnotationCanvas = ({
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
               stroke={el.color} strokeWidth={1.5} strokeDasharray="4 2">
-              <animate attributeName="x2" from={`${el.x}%`} to={`${el.x2}%`} dur="0.3s" fill="freeze" />
-              <animate attributeName="y2" from={`${el.y}%`} to={`${el.y2}%`} dur="0.3s" fill="freeze" />
+              {anim && <animate attributeName="x2" from={`${el.x}%`} to={`${el.x2}%`} dur="0.3s" fill="freeze" />}
+              {anim && <animate attributeName="y2" from={`${el.y}%`} to={`${el.y2}%`} dur="0.3s" fill="freeze" />}
             </line>
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r="0.5%" fill={el.color} />
-            <circle cx={`${el.x2}%`} cy={`${el.y2}%`} r="0.5%" fill={el.color}>
-              <animate attributeName="opacity" from="0" to="1" dur="0.3s" fill="freeze" />
-            </circle>
+            <circle cx={`${el.x2}%`} cy={`${el.y2}%`} r="0.5%" fill={el.color} />
             <text x={`${mx}%`} y={`${my - 1}%`} fill={el.color} fontSize="1.8%" textAnchor="middle" fontWeight="bold">
               {dist}
-              <animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="0.3s" fill="freeze" />
             </text>
           </g>
         );
@@ -522,7 +510,7 @@ export const AnnotationCanvas = ({
             )}
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`}
               fill="none" stroke="white" strokeWidth={2.5} strokeOpacity={0.9}>
-              <animate attributeName="r" from="0" to={`${r}%`} dur="0.3s" fill="freeze" />
+              {anim && <animate attributeName="r" from="0" to={`${r}%`} dur="0.3s" fill="freeze" />}
             </circle>
             <text x={`${el.x}%`} y={`${(el.y || 0) - r - 1}%`}
               fill="white" fontSize="1.5%" textAnchor="middle" opacity={0.7}>
@@ -543,8 +531,8 @@ export const AnnotationCanvas = ({
             <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeDasharray="6 3"
               markerStart={`url(#${mid})`} markerEnd={`url(#${mid})`}>
-              <animate attributeName="x2" from={`${el.x}%`} to={`${el.x2}%`} dur="0.3s" fill="freeze" />
-              <animate attributeName="y2" from={`${el.y}%`} to={`${el.y2}%`} dur="0.3s" fill="freeze" />
+              {anim && <animate attributeName="x2" from={`${el.x}%`} to={`${el.x2}%`} dur="0.3s" fill="freeze" />}
+              {anim && <animate attributeName="y2" from={`${el.y}%`} to={`${el.y2}%`} dur="0.3s" fill="freeze" />}
             </line>
           </g>
         );
@@ -556,18 +544,17 @@ export const AnnotationCanvas = ({
             fontSize={`${el.fontSize || 3}%`} fontFamily="sans-serif" fontWeight="bold"
             style={selStyle}>
             {el.text}
-            <animate attributeName="opacity" from="0" to="1" dur="0.3s" fill="freeze" />
+            {anim && <animate attributeName="opacity" from="0" to="1" dur="0.3s" fill="freeze" />}
           </text>
         );
       case 'player-marker':
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius || 2.5}%`} fill={el.color} fillOpacity={0.85} stroke="white" strokeWidth={1.5}>
-              <animate attributeName="r" from="0" to={`${el.radius || 2.5}%`} dur="0.25s" fill="freeze" calcMode="spline" keySplines="0.34 1.56 0.64 1" />
+              {anim && <animate attributeName="r" from="0" to={`${el.radius || 2.5}%`} dur="0.25s" fill="freeze" calcMode="spline" keySplines="0.34 1.56 0.64 1" />}
             </circle>
             <text x={`${el.x}%`} y={`${el.y}%`} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="2.2%" fontWeight="bold">
               {el.number}
-              <animate attributeName="opacity" from="0" to="1" dur="0.15s" begin="0.15s" fill="freeze" />
             </text>
           </g>
         );
@@ -578,9 +565,8 @@ export const AnnotationCanvas = ({
           <path key={el.id} data-element-id={el.id}
             d={d} stroke={el.color} strokeWidth={el.strokeWidth} fill="none" strokeLinecap="round" strokeLinejoin="round"
             style={selStyle}
-            strokeDasharray="1000" strokeDashoffset="1000"
           >
-            <animate attributeName="stroke-dashoffset" from="1000" to="0" dur="0.5s" fill="freeze" />
+            {anim && <animate attributeName="stroke-dashoffset" from="1000" to="0" dur="0.5s" fill="freeze" />}
           </path>
         );
       default:

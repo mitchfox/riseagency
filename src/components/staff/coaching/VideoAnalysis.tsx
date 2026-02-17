@@ -639,6 +639,21 @@ export const VideoAnalysis = () => {
                     <Play className="h-3 w-3" />
                     {fmtTime(clip.start)} → {fmtTime(clip.end)}
                   </button>
+                  {(() => {
+                    try {
+                      const saved = localStorage.getItem(`va_annotations_${clip.id}`);
+                      if (saved) {
+                        const parsed = JSON.parse(saved);
+                        const count = parsed?.klips?.reduce((sum: number, k: any) => sum + (k.elements?.length || 0), 0) || 0;
+                        if (count > 0) return (
+                          <span className="inline-flex items-center gap-0.5 text-[9px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full shrink-0">
+                            <Pencil className="h-2.5 w-2.5" /> {count}
+                          </span>
+                        );
+                      }
+                    } catch {}
+                    return null;
+                  })()}
                   <p className="text-[10px] text-muted-foreground shrink-0">
                     {getMatchMinute(clip.start, selectedVideo.match_minute_offset)}'
                   </p>
