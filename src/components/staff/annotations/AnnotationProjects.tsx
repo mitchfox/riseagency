@@ -178,7 +178,7 @@ export const AnnotationProjects = () => {
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">Name</th>
                   <th className="text-left p-3 font-medium">Video</th>
-                  <th className="text-left p-3 font-medium">Segments</th>
+                  <th className="text-left p-3 font-medium">Annotations</th>
                   <th className="text-left p-3 font-medium">Date</th>
                   <th className="text-right p-3 font-medium">Actions</th>
                 </tr>
@@ -212,7 +212,7 @@ export const AnnotationProjects = () => {
                       )}
                     </td>
                     <td className="p-3 text-muted-foreground">{project.videoName}</td>
-                    <td className="p-3 text-muted-foreground">{project.klips.length}</td>
+                    <td className="p-3 text-muted-foreground">{project.klips.reduce((sum, k) => sum + k.elements.length, 0)}</td>
                     <td className="p-3 text-muted-foreground">
                       {new Date(project.createdAt).toLocaleDateString('en-GB')}
                     </td>

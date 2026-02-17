@@ -133,7 +133,7 @@ import {
   Handshake,
   Database,
   Apple,
-  Zap,
+  LayoutGrid,
 } from "lucide-react";
 
 const Staff = () => {
@@ -767,7 +767,7 @@ const Staff = () => {
       {
         id: 'apps',
         title: 'Apps',
-        icon: Zap,
+        icon: LayoutGrid,
         locked: false,
         sections: [
           { id: 'docs', title: 'Docs', icon: FileText },
@@ -954,27 +954,22 @@ const Staff = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex items-center h-16 gap-0">
-            {/* Left side: open tabs - stops before centre logo */}
-            <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none min-w-0 flex-1 mr-3"
+            {/* Left side: open tabs - stops with padding before centre logo */}
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none min-w-0 pr-4" style={{ maxWidth: 'calc(50% - 80px)' }}
               onDragOver={(e) => e.preventDefault()}
             >
               {(() => {
                 const openTabs: string[] = (() => { try { return JSON.parse(localStorage.getItem('staff_open_tabs') || '[]'); } catch { return []; } })();
                 const allSections = categories.flatMap(c => c.sections.filter(s => !(s as any).isGroupLabel));
                 const tabs = Array.from(new Set([...(expandedSection ? [expandedSection] : []), ...openTabs]));
-                // Calculate condensed mode based on tab count
-                const maxFullTabs = isMobile ? 0 : 6;
-                const maxFirstWord = isMobile ? 0 : 10;
-                const condensed = tabs.length > maxFullTabs;
-                const iconOnly = tabs.length > maxFirstWord || isMobile;
+                // Max 3 full tabs on desktop, then icon-only. Mobile always icon-only.
+                const iconOnly = tabs.length > 3 || isMobile;
 
-                return tabs.map((tabId, tabIndex) => {
+                return tabs.map((tabId) => {
                   const sec = allSections.find(s => s.id === tabId);
                   if (!sec) return null;
                   const TabIcon = sec.icon;
                   const isActive = expandedSection === tabId;
-                  // Get first word of title for condensed mode
-                  const firstWord = sec.title.split(' ')[0];
 
                   return (
                     <button
@@ -999,19 +994,19 @@ const Staff = () => {
                         updated.splice(fromIdx, 1);
                         updated.splice(toIdx, 0, draggedId);
                         localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
-                        setExpandedSection(prev => prev); // force re-render
+                        setExpandedSection(prev => prev);
                       }}
                       onClick={() => handleSectionToggle(tabId as any)}
-                      className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium transition-all shrink-0 border-b-2 cursor-grab active:cursor-grabbing ${
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all shrink-0 rounded-md border cursor-grab active:cursor-grabbing ${
                         isActive 
-                          ? 'border-primary text-primary bg-primary/5' 
-                          : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                          ? 'border-primary/40 text-primary bg-primary/10' 
+                          : 'border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/50'
                       }`}
                       title={sec.title}
                     >
                       <TabIcon className="w-3.5 h-3.5 shrink-0" />
                       {!iconOnly && (
-                        <span className="truncate">{condensed ? firstWord : sec.title}</span>
+                        <span className="truncate max-w-[100px]">{sec.title}</span>
                       )}
                       {tabs.length > 1 && (
                         <span
@@ -1026,7 +1021,7 @@ const Staff = () => {
                             }
                             setExpandedSection(prev => prev);
                           }}
-                          className="ml-0.5 text-[10px] opacity-0 group-hover:opacity-100 hover:text-destructive cursor-pointer leading-none"
+                          className="text-[10px] hover:text-destructive cursor-pointer leading-none"
                           style={{ opacity: isActive ? 0.6 : 0 }}
                           onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
                           onMouseLeave={(e) => (e.currentTarget.style.opacity = isActive ? '0.6' : '0')}
