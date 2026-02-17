@@ -1,81 +1,68 @@
 
 
-# Staff Portal and Site-wide Improvements
+## Fix: Annotation Playback - Freeze Frame, Display, Auto-Resume
 
-## 1. Breadcrumb Navigation Bar
-**Where:** Staff portal main content area, below the header  
-**What:** Add a breadcrumb trail showing `Category > Section` so users always know where they are. Clicking the category name collapses back to category view. This replaces the generic card title with richer context.
+### Problem
 
-## 2. Sidebar Transition Animations
-**Where:** Staff sidebar section expansion  
-**What:** Animate the section list when a category expands -- stagger each item sliding in from the left with a slight delay between each. Currently sections just pop in; staggered Framer Motion `variants` with `staggerChildren` would add a premium feel.
+Three bugs are creating a broken playback experience:
 
-## 3. Keyboard Shortcuts Bar
-**Where:** Staff portal footer or floating tooltip  
-**What:** Add keyboard shortcuts beyond just Cmd+K search:
-- Arrow keys to navigate between sections
-- `Esc` to go back to overview
-- Number keys `1-9` to jump to categories  
+1. **No freeze frame captured** during playback. When an annotation's time is reached, the video pauses but no screenshot is taken, so the annotation may overlay an incorrect or blank frame.
+2. **Deadlock**: The auto-resume logic waits for `hasVisibleAnnotations` to become false, but since the video is paused, `currentTime` never advances, so visibility never changes. The video stays paused indefinitely.
+3. **No timer**: There is no `setTimeout` to resume playback after the annotation's duration (typically 3 seconds).
 
-Display a small shortcut hint strip at the bottom of the sidebar.
+### Solution
 
-## 4. Section Favourites / Pinning
-**Where:** Sidebar and overview  
-**What:** Let staff pin their most-used sections to the top of the sidebar as quick-access icons. Stored in localStorage per user. A small star icon on hover of each section button toggles the pin.
+Replace the current reactive pause/resume approach with an explicit freeze-frame-and-timer system during playback.
 
-## 5. Toasts with Undo Actions
-**Where:** Sitewide on destructive actions  
-**What:** When deleting or hiding items (e.g. hiding a visitor IP, removing a player), show a toast with an "Undo" button that reverses the action within a 5-second window. Uses sonner's built-in action support.
+### Changes (single file: `AnnotationEditor.tsx`)
 
-## 6. Overview Widget Transitions
-**Where:** StaffOverview dashboard  
-**What:** Add entrance animations to widgets when they load -- a subtle scale-up and fade-in. When dragging widgets, add a gentle rotation tilt to the dragged item for tactile feedback.
+**1. Add a "playback freeze" state**
 
-## 7. Global Loading Skeleton Screens
-**Where:** All data-heavy sections (Player Database, Recruitment, Analysis)  
-**What:** Replace the basic loading spinners with skeleton shimmer placeholders that match the layout of the content being loaded. This feels faster and more polished than a centred spinner.
+New state variables:
+- `playbackFreezeUrl` (string | null) - the captured frame image during playback
+- `playbackFreezeActive` (boolean) - whether we are currently in a playback freeze
 
-## 8. Contextual Quick Actions
-**Where:** Player Database rows, Recruitment table rows  
-**What:** Add a right-click context menu (or a "..." overflow menu) on table rows with common actions like "View Profile", "Send Message", "Add Note", "Copy Details". Uses Radix's existing ContextMenu component.
+This is separate from the existing `drawingMode` / `freezeFrameUrl` which is for the manual drawing workflow.
 
-## 9. Collapsible Section Memory
-**Where:** All accordion-style content within sections  
-**What:** Persist which sub-tabs or accordions are expanded within each section to localStorage, so the view state is preserved across visits.
+**2. Replace the pause/resume effects (lines 173-195)**
 
-## 10. Public Site: Scroll Progress Indicator
-**Where:** All public pages with long content (About, Players, etc.)  
-**What:** A thin gold progress bar fixed to the top of the viewport that fills as the user scrolls down. Subtle but adds a layer of polish.
+Remove the two `useEffect` hooks that check `hasVisibleAnnotations`. Replace with a single effect that:
 
----
+- Monitors `currentTime` during playback
+- When annotations become visible and the video is playing:
+  1. Captures a freeze frame (canvas screenshot of the video element)
+  2. Pauses the video
+  3. Sets `playbackFreezeActive = true`
+  4. Starts a `setTimeout` for the longest visible annotation's remaining duration
+- When the timer fires:
+  1. Clears `playbackFreezeUrl` and `playbackFreezeActive`
+  2. Resumes the video from where it was paused
 
-## Technical Details
+**3. Render the playback freeze frame**
 
-### Breadcrumb (Staff.tsx)
-Add a `Breadcrumb` component between the header and content card. Derive the label from the `expandedCategory` and `expandedSection` state. Render as:
+Add a conditional render block (similar to the drawing mode freeze frame) that shows the captured frame image when `playbackFreezeActive` is true. The annotation canvas overlay already renders when `visibleElements.length > 0`, so annotations will appear on top of this frozen image.
+
+**4. Prevent re-triggering**
+
+Track which annotation times have already been triggered during this playback session using a `Set` ref (`triggeredTimesRef`). Reset the set when the user manually seeks or starts a new playback session.
+
+### Technical Detail
+
 ```text
-[Category Icon] Category Name  >  Section Name
-```
-The category portion is clickable and collapses the section back to category view.
-
-### Sidebar Stagger Animation (Staff.tsx)
-Wrap the expanded sections list in a `motion.div` with `variants`:
-```text
-container: { transition: { staggerChildren: 0.04 } }
-item: { initial: { x: -10, opacity: 0 }, animate: { x: 0, opacity: 1 } }
+Playback Flow:
+  Video playing --> currentTime hits annotation.appearAt
+    --> Capture freeze frame (canvas.toDataURL)
+    --> video.pause()
+    --> Show freeze frame image + annotation overlay
+    --> setTimeout(annotation.duration)
+        --> Hide freeze frame
+        --> video.play() (resume from same point)
+        --> Continue until next annotation
 ```
 
-### Section Pinning (Staff.tsx + localStorage)
-- Store `pinnedSections: string[]` in localStorage keyed by userId
-- Render pinned sections as small icon buttons above the category list in the sidebar
-- Toggle pin via a star icon that appears on hover of any section button
+### What stays the same
 
-### Skeleton Screens
-Create a reusable `TableSkeleton` component with animated shimmer rows matching the table layout (avatar circle, text bars of varying width). Use Tailwind's `animate-pulse` on grey rectangles.
-
-### Scroll Progress (public pages)
-A fixed `div` at `top: 0` with `width` driven by `window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100`. Gold background, 2px height, z-50.
-
-### Keyboard Shortcuts (Staff.tsx)
-Extend the existing `useEffect` keyboard listener to handle additional keys. Show a `?` floating button that opens a shortcuts cheat sheet dialog.
+- Drawing mode workflow (manual freeze frame, toolbar, save/cancel) is untouched
+- Element visibility filtering logic remains the same
+- Timeline dots, keyframes, and all sidebar controls unchanged
 
