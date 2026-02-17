@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import {
   MousePointer2, Type, Square, Circle, Triangle, Star, Diamond, ArrowRight,
@@ -12,6 +13,7 @@ import {
   ChevronLeft, Upload, SlidersHorizontal,
   PanelLeftClose, Palette, LayoutTemplate, Wand2, Hexagon, Pentagon,
   Shapes, Wrench, FolderOpen, Sparkles, Pipette,
+  Plus, Copy, ChevronDown, FileText,
 } from 'lucide-react';
 import { useDesignCanvas } from './useDesignCanvas';
 import { CanvasElement } from './CanvasElement';
@@ -52,12 +54,13 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
   const [customW, setCustomW] = useState(String(initialProject.width));
   const [customH, setCustomH] = useState(String(initialProject.height));
 
-  const selectedElement = canvas.project.elements.find(el => canvas.selectedIds.includes(el.id)) || null;
+  const currentElements = canvas.currentPage?.elements || [];
+  const selectedElement = currentElements.find(el => canvas.selectedIds.includes(el.id)) || null;
 
   // Auto-show properties panel when element selected
   useEffect(() => {
     if (canvas.selectedIds.length > 0) {
-      if (selectedElement?.type === 'image' && leftPanel === 'filters') return; // keep filters open
+      if (selectedElement?.type === 'image' && leftPanel === 'filters') return;
       setLeftPanel('properties');
     }
   }, [canvas.selectedIds]);
@@ -100,20 +103,19 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
       if (e.key === 't' && !ctrl) canvas.setActiveTool('text');
       if (e.key === 'h' && !ctrl) canvas.setActiveTool('hand');
       if (e.key === 'l' && !ctrl) canvas.setActiveTool('line');
-      // Text formatting shortcuts
       if (ctrl && e.key === 'b') {
         e.preventDefault();
-        const sel = canvas.project.elements.find(el => canvas.selectedIds.includes(el.id));
+        const sel = currentElements.find(el => canvas.selectedIds.includes(el.id));
         if (sel?.type === 'text') canvas.updateElement(sel.id, { fontWeight: sel.fontWeight === 'bold' || sel.fontWeight === '700' ? '400' : 'bold' });
       }
       if (ctrl && e.key === 'i') {
         e.preventDefault();
-        const sel = canvas.project.elements.find(el => canvas.selectedIds.includes(el.id));
+        const sel = currentElements.find(el => canvas.selectedIds.includes(el.id));
         if (sel?.type === 'text') canvas.updateElement(sel.id, { fontStyle: sel.fontStyle === 'italic' ? 'normal' : 'italic' });
       }
       if (ctrl && e.key === 'u') {
         e.preventDefault();
-        const sel = canvas.project.elements.find(el => canvas.selectedIds.includes(el.id));
+        const sel = currentElements.find(el => canvas.selectedIds.includes(el.id));
         if (sel?.type === 'text') canvas.updateElement(sel.id, { textDecoration: sel.textDecoration === 'underline' ? 'none' : 'underline' });
       }
       if (e.key === '?' && !ctrl) setShowShortcuts(prev => !prev);
@@ -125,16 +127,24 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [canvas, onSave]);
+  }, [canvas, onSave, currentElements]);
 
-  // Wheel zoom
+  // Scroll wheel = pan vertically (not zoom)
   useEffect(() => {
     const el = canvasAreaRef.current;
     if (!el) return;
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const delta = e.ctrlKey || e.metaKey ? e.deltaY * 0.001 : e.deltaY * 0.002;
-      canvas.setZoom(z => Math.max(0.1, Math.min(3, z - delta)));
+      // Ctrl+scroll = zoom, normal scroll = pan
+      if (e.ctrlKey || e.metaKey) {
+        const delta = e.deltaY * 0.001;
+        canvas.setZoom(z => Math.max(0.05, Math.min(5, z - delta)));
+      } else {
+        canvas.setPanOffset(prev => ({
+          x: prev.x - e.deltaX,
+          y: prev.y - e.deltaY,
+        }));
+      }
     };
     el.addEventListener('wheel', handleWheel, { passive: false });
     return () => el.removeEventListener('wheel', handleWheel);
@@ -167,17 +177,17 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
   }, [isPanning, canvas]);
 
   const handleDrag = useCallback((id: string, x: number, y: number, ctrlKey?: boolean) => {
-    const el = canvas.project.elements.find(e => e.id === id);
+    const el = currentElements.find(e => e.id === id);
     if (!el) return;
     if (ctrlKey) {
       setActiveSnapLines([]);
       canvas.updateElement(id, { x, y });
       return;
     }
-    const result = canvas.calculateSnap({ ...el, x, y }, canvas.project.elements);
+    const result = canvas.calculateSnap({ ...el, x, y }, currentElements);
     setActiveSnapLines(result.lines);
     canvas.updateElement(id, { x: result.x, y: result.y });
-  }, [canvas]);
+  }, [canvas, currentElements]);
 
   const handleDragEnd = useCallback(() => setActiveSnapLines([]), []);
 
@@ -245,7 +255,6 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
     { type: 'pentagon', icon: Pentagon, label: 'Pentagon' },
   ];
 
-  // Canva-style sidebar items: icon + label, hover opens panel
   const sidebarItems: { key: PanelType; icon: any; label: string; desc: string; action?: () => void }[] = [
     { key: 'templates', icon: LayoutTemplate, label: 'Design', desc: 'Templates & presets' },
     { key: 'elements', icon: Shapes, label: 'Elements', desc: 'Shapes, lines & uploads' },
@@ -253,7 +262,7 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
     { key: 'brand', icon: Palette, label: 'Brand', desc: 'Colours, fonts & logos' },
     { key: 'assets', icon: FolderOpen, label: 'Assets', desc: 'Gallery & brand content' },
     { key: 'properties', icon: SlidersHorizontal, label: 'Tools', desc: 'Edit properties' },
-    { key: 'layers', icon: Layers, label: 'Layers', desc: 'Reorder & organise' },
+    { key: 'layers', icon: Layers, label: 'Position', desc: 'Arrange & layers' },
     { key: 'filters', icon: Wand2, label: 'Effects', desc: 'Filters & effects' },
   ];
 
@@ -261,7 +270,7 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
 
   const panelTitles: Record<string, string> = {
     assets: 'Uploads',
-    layers: 'Layers',
+    layers: 'Position',
     properties: 'Properties',
     brand: 'Brand Kit',
     templates: 'Design',
@@ -293,7 +302,6 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
 
           <div className="flex-1" />
 
-          {/* Canvas size */}
           <Select value={canvasPreset} onValueChange={handlePresetChange}>
             <SelectTrigger className="h-7 w-36 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -301,7 +309,6 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
             </SelectContent>
           </Select>
 
-          {/* Custom dimensions */}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="sm" className="h-7 text-[10px] font-mono px-2">
@@ -319,7 +326,12 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
             </PopoverContent>
           </Popover>
 
-          <input type="color" value={canvas.project.background} onChange={e => canvas.setProject(p => ({ ...p, background: e.target.value }))} className="w-7 h-7 rounded cursor-pointer border" title="Background" />
+          <input type="color" value={canvas.currentPage?.background || canvas.project.background} onChange={e => {
+            canvas.setProject(p => {
+              const newPages = (p.pages || []).map((pg, i) => i === canvas.currentPageIndex ? { ...pg, background: e.target.value } : pg);
+              return { ...p, background: e.target.value, pages: newPages };
+            });
+          }} className="w-7 h-7 rounded cursor-pointer border" title="Background" />
 
           <div className="w-px h-5 bg-border" />
 
@@ -340,7 +352,7 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
 
         {/* Main area */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Left toolbar - Canva style with icon + label */}
+          {/* Left toolbar */}
           <div className="w-[72px] border-r bg-muted/20 flex flex-col items-center py-2 gap-0.5 flex-shrink-0">
             {sidebarItems.map((item) => {
               const Icon = item.icon;
@@ -397,7 +409,7 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
                 {leftPanel === 'assets' && <SavedAssetsPanel onAddImage={canvas.addImage} />}
                 {leftPanel === 'layers' && (
                   <LayersPanel
-                    elements={canvas.project.elements}
+                    elements={currentElements}
                     selectedIds={canvas.selectedIds}
                     onSelect={(id, multi) => {
                       if (multi) canvas.setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -408,6 +420,9 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
                     onDelete={canvas.deleteSelected}
                     onDuplicate={canvas.duplicateSelected}
                     onReorder={canvas.reorderElements}
+                    onAlign={canvas.alignElement}
+                    canvasWidth={canvas.project.width}
+                    canvasHeight={canvas.project.height}
                   />
                 )}
                 {leftPanel === 'properties' && <PropertiesPanel element={selectedElement} onUpdate={canvas.updateElement} />}
@@ -460,109 +475,209 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
             </div>
           )}
 
-          {/* Canvas area */}
-          <div
-            ref={canvasAreaRef}
-            className="flex-1 overflow-hidden relative"
-            style={{
-              backgroundColor: 'hsl(var(--muted) / 0.3)',
-              cursor: isPanning ? 'grabbing' : canvas.activeTool === 'hand' ? 'grab' : 'default',
-            }}
-            onMouseDown={handleCanvasMouseDown}
-          >
+          {/* Canvas + bottom bar area */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Canvas area */}
             <div
+              ref={canvasAreaRef}
+              className="flex-1 overflow-hidden relative"
               style={{
-                transform: `translate(${canvas.panOffset.x}px, ${canvas.panOffset.y}px) scale(${canvas.zoom})`,
-                transformOrigin: 'center center',
-                position: 'absolute',
-                left: '50%',
-                top: '50%',
-                marginLeft: -canvas.project.width / 2,
-                marginTop: -canvas.project.height / 2,
+                backgroundColor: 'hsl(var(--muted) / 0.3)',
+                cursor: isPanning ? 'grabbing' : canvas.activeTool === 'hand' ? 'grab' : 'default',
               }}
+              onMouseDown={handleCanvasMouseDown}
             >
-              {/* Shadow */}
               <div
                 style={{
-                  position: 'absolute', left: 4, top: 4,
-                  width: canvas.project.width, height: canvas.project.height,
-                  backgroundColor: 'rgba(0,0,0,0.08)', borderRadius: 2,
-                }}
-              />
-              {/* Canvas */}
-              <div
-                ref={canvasRef}
-                style={{
-                  position: 'relative',
-                  width: canvas.project.width,
-                  height: canvas.project.height,
-                  backgroundColor: canvas.project.background,
-                  overflow: 'hidden',
-                  backgroundImage: canvas.showGrid
-                    ? `linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)`
-                    : undefined,
-                  backgroundSize: canvas.showGrid ? '20px 20px' : undefined,
+                  transform: `translate(${canvas.panOffset.x}px, ${canvas.panOffset.y}px) scale(${canvas.zoom})`,
+                  transformOrigin: 'center center',
+                  position: 'absolute',
+                  left: '50%',
+                  top: '50%',
+                  marginLeft: -canvas.project.width / 2,
+                  marginTop: -canvas.project.height / 2,
                 }}
               >
-                {/* Snap lines */}
-                {activeSnapLines.map((line, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      position: 'absolute',
-                      ...(line.type === 'vertical'
-                        ? { left: line.position, top: 0, width: 1, height: '100%' }
-                        : { top: line.position, left: 0, height: 1, width: '100%' }),
-                      backgroundColor: '#ec4899',
-                      zIndex: 9999,
-                      pointerEvents: 'none',
-                    }}
-                  />
-                ))}
+                {/* Shadow */}
+                <div
+                  style={{
+                    position: 'absolute', left: 4, top: 4,
+                    width: canvas.project.width, height: canvas.project.height,
+                    backgroundColor: 'rgba(0,0,0,0.08)', borderRadius: 2,
+                  }}
+                />
+                {/* Canvas */}
+                <div
+                  ref={canvasRef}
+                  style={{
+                    position: 'relative',
+                    width: canvas.project.width,
+                    height: canvas.project.height,
+                    backgroundColor: canvas.currentPage?.background || canvas.project.background,
+                    overflow: 'hidden',
+                    backgroundImage: canvas.showGrid
+                      ? `linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)`
+                      : undefined,
+                    backgroundSize: canvas.showGrid ? '20px 20px' : undefined,
+                  }}
+                >
+                  {/* Snap lines */}
+                  {activeSnapLines.map((line, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        position: 'absolute',
+                        ...(line.type === 'vertical'
+                          ? { left: line.position, top: 0, width: 1, height: '100%' }
+                          : { top: line.position, left: 0, height: 1, width: '100%' }),
+                        backgroundColor: '#ec4899',
+                        zIndex: 9999,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  ))}
 
-                {/* Floating toolbar for selected element */}
-                {selectedElement && canvas.selectedIds.length === 1 && (
-                  <FloatingToolbar
-                    element={selectedElement}
-                    zoom={canvas.zoom}
-                    onUpdate={canvas.updateElement}
-                    onDelete={canvas.deleteSelected}
-                    onDuplicate={canvas.duplicateSelected}
-                    onMoveLayer={canvas.moveLayer}
-                  />
-                )}
-                {canvas.project.elements.map(el => (
-                  <CanvasElement
-                    key={el.id}
-                    element={el}
-                    isSelected={canvas.selectedIds.includes(el.id)}
-                    zoom={canvas.zoom}
-                    onSelect={(id, multi) => {
-                      if (multi) canvas.setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-                      else canvas.setSelectedIds([id]);
-                    }}
-                    onUpdate={canvas.updateElement}
-                    onDragStart={() => {}}
-                    onDragEnd={handleDragEnd}
-                    onDrag={handleDrag}
-                  />
-                ))}
+                  {/* Floating toolbar for selected element */}
+                  {selectedElement && canvas.selectedIds.length === 1 && (
+                    <FloatingToolbar
+                      element={selectedElement}
+                      zoom={canvas.zoom}
+                      onUpdate={canvas.updateElement}
+                      onDelete={canvas.deleteSelected}
+                      onDuplicate={canvas.duplicateSelected}
+                      onMoveLayer={canvas.moveLayer}
+                    />
+                  )}
+                  {currentElements.map(el => (
+                    <CanvasElement
+                      key={el.id}
+                      element={el}
+                      isSelected={canvas.selectedIds.includes(el.id)}
+                      zoom={canvas.zoom}
+                      onSelect={(id, multi) => {
+                        if (multi) canvas.setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+                        else canvas.setSelectedIds([id]);
+                      }}
+                      onUpdate={canvas.updateElement}
+                      onDragStart={() => {}}
+                      onDragEnd={handleDragEnd}
+                      onDrag={handleDrag}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Canvas size label */}
+              <div className="absolute bottom-3 left-3 text-[10px] text-muted-foreground bg-card/80 backdrop-blur px-2 py-0.5 rounded shadow-sm">
+                {canvas.project.width} × {canvas.project.height}
               </div>
             </div>
 
-            {/* Zoom controls */}
-            <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-card/90 backdrop-blur border rounded-lg px-2 py-1 shadow-sm">
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => canvas.setZoom(z => Math.max(0.1, z - 0.1))}>
-                <ZoomOut className="h-3 w-3" />
-              </Button>
-              <span className="text-[10px] w-10 text-center font-mono">{Math.round(canvas.zoom * 100)}%</span>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => canvas.setZoom(z => Math.min(3, z + 0.1))}>
-                <ZoomIn className="h-3 w-3" />
-              </Button>
-            </div>
+            {/* Bottom bar: page thumbnails + zoom slider */}
+            <div className="border-t bg-muted/30 flex items-center gap-2 px-3 py-2">
+              {/* Page thumbnails */}
+              <div className="flex items-center gap-1.5 flex-1 overflow-x-auto">
+                {canvas.pages.map((page, idx) => {
+                  const isActive = idx === canvas.currentPageIndex;
+                  const thumbW = 64;
+                  const thumbH = Math.round(thumbW * (canvas.project.height / canvas.project.width));
+                  return (
+                    <Popover key={page.id}>
+                      <PopoverTrigger asChild>
+                        <button
+                          onClick={() => canvas.switchPage(idx)}
+                          onContextMenu={(e) => e.preventDefault()}
+                          className={`relative shrink-0 rounded border-2 transition-all overflow-hidden ${
+                            isActive ? 'border-primary shadow-md' : 'border-border/50 hover:border-border'
+                          }`}
+                          style={{ width: thumbW, height: thumbH }}
+                          title={page.name}
+                        >
+                          <div
+                            className="w-full h-full"
+                            style={{ backgroundColor: page.background }}
+                          >
+                            {/* Mini preview of elements */}
+                            <div className="relative w-full h-full" style={{ transform: `scale(${thumbW / canvas.project.width})`, transformOrigin: 'top left' }}>
+                              {page.elements.slice(0, 10).map(el => (
+                                <div
+                                  key={el.id}
+                                  className="absolute overflow-hidden"
+                                  style={{
+                                    left: el.x,
+                                    top: el.y,
+                                    width: el.width,
+                                    height: el.height,
+                                    opacity: el.opacity,
+                                    transform: `rotate(${el.rotation}deg)`,
+                                  }}
+                                >
+                                  {el.type === 'image' && el.src && <img src={el.src} className="w-full h-full object-cover" alt="" />}
+                                  {el.type === 'shape' && <div className="w-full h-full" style={{ backgroundColor: el.fill, borderRadius: el.shapeType === 'circle' ? '50%' : undefined }} />}
+                                  {el.type === 'text' && <div style={{ fontSize: Math.max(4, (el.fontSize || 16) * 0.06), color: el.color, fontWeight: el.fontWeight, lineHeight: 1 }} className="truncate">{el.text}</div>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="absolute bottom-0 left-0 right-0 bg-background/80 text-[7px] text-center py-0.5 font-medium truncate">
+                            {idx + 1}
+                          </div>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-1" side="top" align="start">
+                        <div className="flex gap-0.5">
+                          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => canvas.duplicatePage(idx)}>
+                            <Copy className="h-3 w-3" /> Duplicate
+                          </Button>
+                          {canvas.pages.length > 1 && (
+                            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-destructive" onClick={() => canvas.deletePage(idx)}>
+                              <Trash2 className="h-3 w-3" /> Delete
+                            </Button>
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  );
+                })}
 
-            <div className="absolute bottom-3 left-3 text-[10px] text-muted-foreground bg-card/80 backdrop-blur px-2 py-0.5 rounded shadow-sm">
-              {canvas.project.width} × {canvas.project.height}
+                {/* Add page button */}
+                <button
+                  onClick={canvas.addPage}
+                  className="shrink-0 w-16 h-10 rounded border-2 border-dashed border-border/50 hover:border-primary/50 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+                  title="Add page"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="w-px h-6 bg-border" />
+
+              {/* Zoom slider */}
+              <div className="flex items-center gap-2 shrink-0">
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => canvas.setZoom(z => Math.max(0.05, z - 0.1))}>
+                  <ZoomOut className="h-3 w-3" />
+                </Button>
+                <Slider
+                  value={[canvas.zoom * 100]}
+                  min={5}
+                  max={300}
+                  step={1}
+                  onValueChange={([v]) => canvas.setZoom(v / 100)}
+                  className="w-28"
+                />
+                <span className="text-[10px] w-10 text-center font-mono">{Math.round(canvas.zoom * 100)}%</span>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => canvas.setZoom(z => Math.min(3, z + 0.1))}>
+                  <ZoomIn className="h-3 w-3" />
+                </Button>
+              </div>
+
+              <div className="w-px h-6 bg-border" />
+
+              {/* Pages counter */}
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
+                <FileText className="h-3 w-3" />
+                Pages {canvas.currentPageIndex + 1} / {canvas.pages.length}
+              </div>
             </div>
           </div>
         </div>
@@ -577,7 +692,7 @@ export function DesignStudio({ initialProject, onBack, onSave }: DesignStudioPro
                   ['V', 'Select tool'], ['H', 'Hand / Pan'], ['T', 'Add text'], ['L', 'Add line'],
                   ['⌘C', 'Copy'], ['⌘V', 'Paste'], ['⌘D', 'Duplicate'], ['⌘S', 'Save'],
                   ['⌘Z', 'Undo'], ['⌘⇧Z', 'Redo'], ['⌘A', 'Select all'], ['Del', 'Delete'],
-                  ['+/-', 'Zoom in/out'], ['⌘0', 'Reset zoom'], ['⌘[/]', 'Layer order'], ['Scroll', 'Zoom'],
+                  ['+/-', 'Zoom in/out'], ['⌘0', 'Reset zoom'], ['⌘[/]', 'Layer order'], ['Scroll', 'Pan canvas'],
                 ].map(([key, desc]) => (
                   <div key={key} className="flex items-center gap-2">
                     <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">{key}</kbd>

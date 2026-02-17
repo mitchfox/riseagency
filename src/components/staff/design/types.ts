@@ -45,6 +45,14 @@ export interface DesignElement {
   y2?: number;
 }
 
+export interface DesignPage {
+  id: string;
+  name: string;
+  elements: DesignElement[];
+  background: string;
+  backgroundImage?: string;
+}
+
 export interface DesignProject {
   id: string;
   name: string;
@@ -53,6 +61,7 @@ export interface DesignProject {
   background: string;
   backgroundImage?: string;
   elements: DesignElement[];
+  pages?: DesignPage[];
   createdAt: string;
   updatedAt: string;
 }
