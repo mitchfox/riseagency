@@ -15,7 +15,7 @@ interface AnnotationCanvasProps {
   setTrackers: React.Dispatch<React.SetStateAction<TrackerState[]>>;
   linkSource: string | null;
   setLinkSource: (id: string | null) => void;
-  segmentOffset?: number;
+  klipOffset?: number;
 }
 
 export interface TrackerState {
@@ -28,7 +28,7 @@ export interface TrackerState {
 
 export const AnnotationCanvas = ({
   elements, setElements, activeTool, activeColor, strokeWidth,
-  selectedId, setSelectedId, videoRef, trackers, setTrackers, linkSource, setLinkSource, segmentOffset = 0,
+  selectedId, setSelectedId, videoRef, trackers, setTrackers, linkSource, setLinkSource, klipOffset = 0,
 }: AnnotationCanvasProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [drawing, setDrawing] = useState(false);
@@ -79,7 +79,7 @@ export const AnnotationCanvas = ({
       if (!text) return;
       setElements(prev => [...prev, {
         id: crypto.randomUUID(), type: 'text', x: pos.x, y: pos.y,
-        color: activeColor, strokeWidth, text, fontSize: 3, appearAt: segmentOffset,
+        color: activeColor, strokeWidth, text, fontSize: 3, appearAt: klipOffset,
       }]);
       return;
     }
@@ -89,7 +89,7 @@ export const AnnotationCanvas = ({
       if (!num) return;
       setElements(prev => [...prev, {
         id: crypto.randomUUID(), type: 'player-marker', x: pos.x, y: pos.y,
-        color: activeColor, strokeWidth, number: parseInt(num) || 0, radius: 2.5, appearAt: segmentOffset,
+        color: activeColor, strokeWidth, number: parseInt(num) || 0, radius: 2.5, appearAt: klipOffset,
       }]);
       return;
     }
@@ -100,7 +100,7 @@ export const AnnotationCanvas = ({
       const time = videoRef.current?.currentTime || 0;
       setElements(prev => [...prev, {
         id: elementId, type: 'circle', x: pos.x, y: pos.y,
-        color: activeColor, strokeWidth: 2, radius: 1.5, opacity: 0.9, appearAt: segmentOffset,
+        color: activeColor, strokeWidth: 2, radius: 1.5, opacity: 0.9, appearAt: klipOffset,
       }]);
       setTrackers(prev => [...prev, {
         id: trackerId, elementId, color: activeColor, active: true,
@@ -122,7 +122,7 @@ export const AnnotationCanvas = ({
             setElements(prev => [...prev, {
               id: crypto.randomUUID(), type: 'linked-line',
               x: el1.x, y: el1.y, x2: el2.x, y2: el2.y,
-              color: activeColor, strokeWidth, linkedTo: id, appearAt: segmentOffset,
+              color: activeColor, strokeWidth, linkedTo: id, appearAt: klipOffset,
             }]);
           }
           setLinkSource(null);
@@ -135,7 +135,7 @@ export const AnnotationCanvas = ({
       setElements(prev => [...prev, {
         id: crypto.randomUUID(), type: 'magnifier', x: pos.x, y: pos.y,
         color: '#ffffff', strokeWidth: 2, radius: 8, opacity: 1,
-        zoomLevel: 2, appearAt: segmentOffset,
+        zoomLevel: 2, appearAt: klipOffset,
       }]);
       return;
     }
@@ -146,7 +146,7 @@ export const AnnotationCanvas = ({
     if (activeTool === 'freehand') {
       setFreehandPoints([pos]);
     }
-  }, [activeTool, activeColor, strokeWidth, elements, getPos, setElements, setSelectedId, trackers, linkSource, setLinkSource, setTrackers, videoRef, segmentOffset]);
+  }, [activeTool, activeColor, strokeWidth, elements, getPos, setElements, setSelectedId, trackers, linkSource, setLinkSource, setTrackers, videoRef, klipOffset]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const pos = getPos(e);
@@ -169,7 +169,7 @@ export const AnnotationCanvas = ({
     setDrawing(false);
 
     const id = crypto.randomUUID();
-    const base = { id, color: activeColor, strokeWidth, opacity: 1, appearAt: segmentOffset };
+    const base = { id, color: activeColor, strokeWidth, opacity: 1, appearAt: klipOffset };
 
     switch (activeTool) {
       case 'line':
@@ -221,7 +221,7 @@ export const AnnotationCanvas = ({
         setFreehandPoints([]);
         break;
     }
-  }, [drawing, dragging, activeTool, startPos, currentPos, activeColor, strokeWidth, freehandPoints, setElements, segmentOffset]);
+  }, [drawing, dragging, activeTool, startPos, currentPos, activeColor, strokeWidth, freehandPoints, setElements, klipOffset]);
 
   const renderElement = (el: AnnotationElement) => {
     const isSelected = el.id === selectedId;

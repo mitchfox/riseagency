@@ -15,29 +15,26 @@ interface AnnotationToolbarProps {
   setStrokeWidth: (w: number) => void;
 }
 
-const tools: { id: AnnotationTool; icon: React.ComponentType<any>; label: string; group?: string }[] = [
-  { id: 'select', icon: MousePointer2, label: 'Select (V)', group: 'core' },
-  { id: 'line', icon: Minus, label: 'Line', group: 'draw' },
-  { id: 'arrow', icon: MoveRight, label: 'Arrow', group: 'draw' },
-  { id: 'curve', icon: Spline, label: 'Curve', group: 'draw' },
-  { id: 'freehand', icon: Pencil, label: 'Freehand', group: 'draw' },
-  { id: 'rect', icon: Square, label: 'Rectangle', group: 'shape' },
-  { id: 'circle', icon: Circle, label: 'Circle', group: 'shape' },
-  { id: 'text', icon: Type, label: 'Text', group: 'label' },
-  { id: 'player-marker', icon: UserCircle, label: 'Player Marker', group: 'label' },
-  { id: 'spotlight', icon: Sun, label: 'Spotlight', group: 'effect' },
-  { id: 'vision-cone', icon: Eye, label: 'Vision Cone', group: 'effect' },
-  { id: 'magnifier', icon: Search, label: 'Magnifier', group: 'effect' },
-  { id: 'distance', icon: Ruler, label: 'Distance Measure', group: 'effect' },
-  { id: 'linked-line', icon: Link2, label: 'Linked Line', group: 'effect' },
-  { id: 'tracker', icon: ScanEye, label: 'Motion Tracker', group: 'track' },
-  { id: 'eraser', icon: Eraser, label: 'Eraser', group: 'util' },
+const tools: { id: AnnotationTool; icon: React.ComponentType<any>; label: string; desc: string; group: string }[] = [
+  { id: 'select', icon: MousePointer2, label: 'Select', desc: 'Select & move elements (V)', group: 'core' },
+  { id: 'line', icon: Minus, label: 'Line', desc: 'Draw a straight line', group: 'draw' },
+  { id: 'arrow', icon: MoveRight, label: 'Arrow', desc: 'Directional arrow', group: 'draw' },
+  { id: 'curve', icon: Spline, label: 'Curve', desc: 'Curved path between points', group: 'draw' },
+  { id: 'freehand', icon: Pencil, label: 'Freehand', desc: 'Draw freely', group: 'draw' },
+  { id: 'rect', icon: Square, label: 'Rectangle', desc: 'Highlight an area', group: 'shape' },
+  { id: 'circle', icon: Circle, label: 'Circle', desc: 'Circle or ring', group: 'shape' },
+  { id: 'text', icon: Type, label: 'Text', desc: 'Add a text label', group: 'label' },
+  { id: 'player-marker', icon: UserCircle, label: 'Player', desc: 'Numbered player marker', group: 'label' },
+  { id: 'spotlight', icon: Sun, label: 'Spotlight', desc: 'Highlight focus area', group: 'effect' },
+  { id: 'vision-cone', icon: Eye, label: 'Vision Cone', desc: 'Show field of view', group: 'effect' },
+  { id: 'magnifier', icon: Search, label: 'Magnifier', desc: 'Zoom into an area', group: 'effect' },
+  { id: 'distance', icon: Ruler, label: 'Distance', desc: 'Measure between points', group: 'effect' },
+  { id: 'linked-line', icon: Link2, label: 'Link', desc: 'Connect two elements', group: 'effect' },
+  { id: 'tracker', icon: ScanEye, label: 'Tracker', desc: 'Track object through frames', group: 'track' },
+  { id: 'eraser', icon: Eraser, label: 'Eraser', desc: 'Remove an element', group: 'util' },
 ];
 
 const colors = ['#ff0000', '#ffff00', '#00ff00', '#00bfff', '#ffffff', '#ff8c00', '#ff00ff', '#000000'];
-
-const groupDividers = new Set(['draw', 'shape', 'label', 'effect', 'track', 'util']);
-let lastGroup = '';
 
 export const AnnotationToolbar = ({
   activeTool, setActiveTool, activeColor, setActiveColor, strokeWidth, setStrokeWidth,
@@ -63,7 +60,10 @@ export const AnnotationToolbar = ({
                     <tool.icon className="w-4 h-4" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="right" className="text-xs">{tool.label}</TooltipContent>
+                <TooltipContent side="right" className="text-xs space-y-0.5">
+                  <p className="font-medium">{tool.label}</p>
+                  <p className="text-muted-foreground text-[10px]">{tool.desc}</p>
+                </TooltipContent>
               </Tooltip>
             </div>
           );
@@ -72,7 +72,6 @@ export const AnnotationToolbar = ({
 
       <div className="my-2 w-8 border-t border-white/10" />
 
-      {/* Colour palette */}
       <div className="grid grid-cols-2 gap-1 px-1">
         {colors.map(c => (
           <button
@@ -88,7 +87,6 @@ export const AnnotationToolbar = ({
 
       <div className="my-2 w-8 border-t border-white/10" />
 
-      {/* Stroke width */}
       <div className="flex flex-col items-center gap-1">
         {[2, 3, 5, 8].map(w => (
           <button

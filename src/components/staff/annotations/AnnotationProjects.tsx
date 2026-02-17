@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Plus, Film, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,6 +7,14 @@ import { AnnotationEditor } from "./AnnotationEditor";
 import { toast } from "sonner";
 
 // ── Types ──
+
+export interface ElementKeyframe {
+  time: number;    // seconds into the klip
+  x: number;
+  y: number;
+  opacity?: number;
+  scale?: number;
+}
 
 export interface AnnotationElement {
   id: string;
@@ -26,32 +34,32 @@ export interface AnnotationElement {
   opacity?: number;
   points?: { x: number; y: number }[];
   number?: number;
-  // Vision cone
   angle?: number;
   coneLength?: number;
-  // Linked elements
   linkedTo?: string;
-  // Animation keyframes
-  keyframes?: Keyframe[];
-  // Frame timing: when this element appears and for how long (relative to segment start)
-  appearAt?: number;   // seconds into the segment
-  duration?: number;   // how long to show (seconds), undefined = forever
-  // Magnifier zoom
   zoomLevel?: number;
+
+  // ── Timeline event properties ──
+  // When this element first appears (seconds from klip start)
+  appearAt: number;
+  // How long it stays visible (seconds). undefined = until end of klip
+  duration?: number;
+  // Animation in/out duration (seconds)
+  animateIn?: number;
+  animateOut?: number;
+  // Keyframes for motion tracking or scripted movement
+  keyframes?: ElementKeyframe[];
+  // Whether this is a tracking event (follows object automatically)
+  isTrackingEvent?: boolean;
+  // Freeze-frame: hold the video at this point for the annotation duration
+  holdFrame?: boolean;
 }
 
-export interface Keyframe {
-  time: number; // seconds into segment
-  x: number;
-  y: number;
-  opacity?: number;
-}
-
-export interface VideoSegment {
+export interface Klip {
   id: string;
   name: string;
-  startTime: number;
-  endTime: number;
+  startTime: number;  // video timecode start
+  endTime: number;     // video timecode end
   elements: AnnotationElement[];
   color: string;
 }
@@ -62,7 +70,7 @@ export interface AnnotationProject {
   videoUrl: string;
   videoName: string;
   createdAt: string;
-  segments: VideoSegment[];
+  klips: Klip[];
 }
 
 // ── Projects Dashboard ──
@@ -70,7 +78,7 @@ export interface AnnotationProject {
 export const AnnotationProjects = () => {
   const [projects, setProjects] = useState<AnnotationProject[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('annotation_projects_v2') || '[]');
+      return JSON.parse(localStorage.getItem('annotation_projects_v3') || '[]');
     } catch { return []; }
   });
   const [activeProject, setActiveProject] = useState<AnnotationProject | null>(null);
@@ -79,7 +87,7 @@ export const AnnotationProjects = () => {
 
   const saveProjects = (updated: AnnotationProject[]) => {
     setProjects(updated);
-    localStorage.setItem('annotation_projects_v2', JSON.stringify(updated));
+    localStorage.setItem('annotation_projects_v3', JSON.stringify(updated));
   };
 
   const handleNewProject = () => {
@@ -96,7 +104,7 @@ export const AnnotationProjects = () => {
         videoUrl: url,
         videoName: file.name,
         createdAt: new Date().toISOString(),
-        segments: [],
+        klips: [],
       };
       setActiveProject(project);
       saveProjects([project, ...projects]);
@@ -145,7 +153,7 @@ export const AnnotationProjects = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Annotations</h2>
-        <p className="text-muted-foreground text-sm">Add spotlights, tracking and tactical effects to match videos and clips</p>
+        <p className="text-muted-foreground text-sm">KlipDraw-style tactical analysis with timeline events and motion tracking</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -170,7 +178,7 @@ export const AnnotationProjects = () => {
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">Name</th>
                   <th className="text-left p-3 font-medium">Video</th>
-                  <th className="text-left p-3 font-medium">Segments</th>
+                  <th className="text-left p-3 font-medium">Klips</th>
                   <th className="text-left p-3 font-medium">Date</th>
                   <th className="text-right p-3 font-medium">Actions</th>
                 </tr>
@@ -204,7 +212,7 @@ export const AnnotationProjects = () => {
                       )}
                     </td>
                     <td className="p-3 text-muted-foreground">{project.videoName}</td>
-                    <td className="p-3 text-muted-foreground">{project.segments.length}</td>
+                    <td className="p-3 text-muted-foreground">{project.klips.length}</td>
                     <td className="p-3 text-muted-foreground">
                       {new Date(project.createdAt).toLocaleDateString('en-GB')}
                     </td>
