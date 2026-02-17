@@ -224,9 +224,10 @@ export function CanvasElement({
             alt={element.name}
             className="w-full h-full pointer-events-none"
             style={{
-              objectFit: element.objectFit || 'cover',
+              objectFit: element.objectFit || 'contain',
               borderRadius: element.borderRadius ? `${element.borderRadius}px` : undefined,
               filter: element.filter && element.filter !== 'none' ? element.filter : undefined,
+              imageRendering: 'auto' as const,
             }}
             draggable={false}
           />
@@ -242,14 +243,14 @@ export function CanvasElement({
 
   const handles = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
   const handlePositions: Record<string, React.CSSProperties> = {
-    nw: { top: -4, left: -4, cursor: 'nwse-resize' },
-    n: { top: -4, left: '50%', transform: 'translateX(-50%)', cursor: 'ns-resize' },
-    ne: { top: -4, right: -4, cursor: 'nesw-resize' },
-    e: { top: '50%', right: -4, transform: 'translateY(-50%)', cursor: 'ew-resize' },
-    se: { bottom: -4, right: -4, cursor: 'nwse-resize' },
-    s: { bottom: -4, left: '50%', transform: 'translateX(-50%)', cursor: 'ns-resize' },
-    sw: { bottom: -4, left: -4, cursor: 'nesw-resize' },
-    w: { top: '50%', left: -4, transform: 'translateY(-50%)', cursor: 'ew-resize' },
+    nw: { top: -7, left: -7, cursor: 'nwse-resize' },
+    n: { top: -7, left: '50%', transform: 'translateX(-50%)', cursor: 'ns-resize' },
+    ne: { top: -7, right: -7, cursor: 'nesw-resize' },
+    e: { top: '50%', right: -7, transform: 'translateY(-50%)', cursor: 'ew-resize' },
+    se: { bottom: -7, right: -7, cursor: 'nwse-resize' },
+    s: { bottom: -7, left: '50%', transform: 'translateX(-50%)', cursor: 'ns-resize' },
+    sw: { bottom: -7, left: -7, cursor: 'nesw-resize' },
+    w: { top: '50%', left: -7, transform: 'translateY(-50%)', cursor: 'ew-resize' },
   };
 
   if (!element.visible) return null;
@@ -266,7 +267,7 @@ export function CanvasElement({
         opacity: element.opacity,
         cursor: element.locked ? 'default' : isDragging ? 'grabbing' : 'move',
         zIndex: isSelected ? 999 : 'auto',
-        outline: isSelected ? '3px solid #a855f7' : 'none',
+        outline: isSelected ? '4px solid #a855f7' : 'none',
         outlineOffset: '2px',
       }}
       onMouseDown={handleMouseDown}
@@ -281,11 +282,12 @@ export function CanvasElement({
               onMouseDown={e => handleResizeMouseDown(e, h)}
               style={{
                 position: 'absolute',
-                width: 10,
-                height: 10,
+                width: 14,
+                height: 14,
                 backgroundColor: '#a855f7',
-                border: '1px solid white',
+                border: '2px solid white',
                 borderRadius: '50%',
+                boxShadow: '0 0 4px rgba(0,0,0,0.3)',
                 ...handlePositions[h],
               }}
             />

@@ -106,14 +106,38 @@ export function useDesignCanvas(initial?: DesignProject) {
   }, [addElement, project.elements.length]);
 
   const addImage = useCallback((src: string, name?: string) => {
-    addElement({
-      type: 'image',
-      src,
-      width: 300,
-      height: 300,
-      objectFit: 'cover',
-      name: name ?? `Image ${project.elements.length + 1}`,
-    });
+    // Load the image to get natural dimensions, then add at full aspect ratio
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const maxDim = 500;
+      const ratio = img.naturalWidth / img.naturalHeight;
+      let w = img.naturalWidth;
+      let h = img.naturalHeight;
+      if (w > maxDim || h > maxDim) {
+        if (ratio > 1) { w = maxDim; h = maxDim / ratio; }
+        else { h = maxDim; w = maxDim * ratio; }
+      }
+      addElement({
+        type: 'image',
+        src,
+        width: Math.round(w),
+        height: Math.round(h),
+        objectFit: 'contain',
+        name: name ?? `Image ${project.elements.length + 1}`,
+      });
+    };
+    img.onerror = () => {
+      addElement({
+        type: 'image',
+        src,
+        width: 300,
+        height: 300,
+        objectFit: 'contain',
+        name: name ?? `Image ${project.elements.length + 1}`,
+      });
+    };
+    img.src = src;
   }, [addElement, project.elements.length]);
 
   const addLine = useCallback(() => {
