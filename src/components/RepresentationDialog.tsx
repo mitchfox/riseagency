@@ -20,6 +20,7 @@ const representationSchema = z.object({
   phone: z.string().trim().min(1, "Phone number is required").max(50),
   email: z.string().trim().email("Invalid email address").max(255).optional().or(z.literal("")),
   currentClub: z.string().trim().min(1, "Current club is required").max(100),
+  dob: z.string().trim().min(1, "Date of birth is required"),
   position: z.string().trim().max(100).optional().or(z.literal("")),
   message: z.string().trim().max(1000),
 });
@@ -32,6 +33,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
     phone: "",
     email: "",
     currentClub: "",
+    dob: "",
     position: "",
     message: "",
   });
@@ -54,7 +56,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
       });
       
       onOpenChange(false);
-      setFormData({ name: "", phone: "", email: "", currentClub: "", position: "", message: "" });
+      setFormData({ name: "", phone: "", email: "", currentClub: "", dob: "", position: "", message: "" });
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
@@ -146,15 +148,27 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="position">{t('representation.position', 'Position')}</Label>
+              <Label htmlFor="dob">{t('representation.dob', 'Date of Birth')} *</Label>
               <Input
-                id="position"
-                value={formData.position}
-                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                id="dob"
+                type="date"
+                value={formData.dob}
+                onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
                 onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
-                placeholder="e.g., Striker, Midfielder"
+                required
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="position">{t('representation.position', 'Position')}</Label>
+            <Input
+              id="position"
+              value={formData.position}
+              onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+              onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+              placeholder="e.g., Striker, Midfielder"
+            />
           </div>
 
           <div className="space-y-2">
