@@ -138,6 +138,16 @@ export function computeVisibleElements(
 
 // ── SVG string generator for export (no DOM dependency) ──
 
+function getDashArrayExport(pattern?: string, sw?: number): string {
+  const w = sw || 3;
+  switch (pattern) {
+    case 'dashed': return ` stroke-dasharray="${w * 4} ${w * 2}"`;
+    case 'dotted': return ` stroke-dasharray="${w} ${w * 2}"`;
+    case 'dash-dot': return ` stroke-dasharray="${w * 4} ${w * 1.5} ${w} ${w * 1.5}"`;
+    default: return '';
+  }
+}
+
 export function renderElementsToSVGString(
   elements: ComputedAnnotationElement[],
   width: number,
@@ -155,12 +165,13 @@ export function renderElementsToSVGString(
 
     const groupOpen = `<g opacity="${opacity}">`;
     const groupClose = '</g>';
+    const dash = getDashArrayExport(el.dashPattern, el.strokeWidth);
 
     switch (el.type) {
       case 'line':
         parts.push(
           groupOpen,
-          `<line x1="${x}%" y1="${y}%" x2="${el.x2}%" y2="${el.y2}%" stroke="${el.color}" stroke-width="${el.strokeWidth}" stroke-linecap="round"/>`,
+          `<line x1="${x}%" y1="${y}%" x2="${el.x2}%" y2="${el.y2}%" stroke="${el.color}" stroke-width="${el.strokeWidth}" stroke-linecap="round"${dash}/>`,
           groupClose
         );
         break;
@@ -170,7 +181,28 @@ export function renderElementsToSVGString(
         parts.push(
           groupOpen,
           `<defs><marker id="${mid}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="${el.color}"/></marker></defs>`,
-          `<line x1="${x}%" y1="${y}%" x2="${el.x2}%" y2="${el.y2}%" stroke="${el.color}" stroke-width="${el.strokeWidth}" stroke-linecap="round" marker-end="url(#${mid})"/>`,
+          `<line x1="${x}%" y1="${y}%" x2="${el.x2}%" y2="${el.y2}%" stroke="${el.color}" stroke-width="${el.strokeWidth}" stroke-linecap="round" marker-end="url(#${mid})"${dash}/>`,
+          groupClose
+        );
+        break;
+      }
+
+      case 'curved-arrow': {
+        const mid = `carrow-exp-${el.id}`;
+        const offset = el.curveOffset ?? -15;
+        const mx = (x + (el.x2 ?? x)) / 2;
+        const my = (y + (el.y2 ?? y)) / 2;
+        const dx = (el.x2 ?? x) - x;
+        const dy = (el.y2 ?? y) - y;
+        const len = Math.sqrt(dx * dx + dy * dy) || 1;
+        const nx = -dy / len;
+        const ny = dx / len;
+        const cx = mx + nx * offset;
+        const cy = my + ny * offset;
+        parts.push(
+          groupOpen,
+          `<defs><marker id="${mid}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="${el.color}"/></marker></defs>`,
+          `<path d="M ${x} ${y} Q ${cx} ${cy} ${el.x2 ?? x} ${el.y2 ?? y}" stroke="${el.color}" stroke-width="${el.strokeWidth}" fill="none" stroke-linecap="round" marker-end="url(#${mid})"${dash}/>`,
           groupClose
         );
         break;
@@ -193,11 +225,27 @@ export function renderElementsToSVGString(
         break;
 
       case 'semi-circle': {
-        const r = el.radius || 2;
-        const rotation = el.angle || 180;
+        const rx = el.width || el.radius || 4;
+        const ry = el.height || (rx * 0.35);
+        const rotation = el.angle || 0;
         parts.push(
           groupOpen,
-          `<path d="M ${x - r}% ${y}% A ${r} ${r} 0 0 1 ${x + r}% ${y}% Z" fill="${el.color}" fill-opacity="${el.fillOpacity || 0.5}" stroke="${el.color}" stroke-width="${el.strokeWidth}" stroke-opacity="0.8" transform="rotate(${rotation - 180}, ${x}%, ${y}%)"/>`,
+          `<g transform="rotate(${rotation}, ${x}%, ${y}%)">`,
+          `<ellipse cx="${x}%" cy="${y}%" rx="${rx}%" ry="${ry}%" fill="${el.color}" fill-opacity="${el.fillOpacity || 0.5}" stroke="${el.color}" stroke-width="${el.strokeWidth * 0.5}" stroke-opacity="0.9"/>`,
+          `</g>`,
+          groupClose
+        );
+        break;
+      }
+
+      case 'space-oval': {
+        const rx = (el.width || 15) / 2;
+        const ry = (el.height || 8) / 2;
+        const patId = `hatch-exp-${el.id}`;
+        parts.push(
+          groupOpen,
+          `<defs><pattern id="${patId}" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="4" stroke="${el.color}" stroke-width="1.5" stroke-opacity="${el.fillOpacity || 0.25}"/></pattern></defs>`,
+          `<ellipse cx="${x}%" cy="${y}%" rx="${rx}%" ry="${ry}%" fill="url(#${patId})" stroke="${el.color}" stroke-width="${el.strokeWidth * 0.5}" stroke-opacity="0.5" stroke-dasharray="3 2"/>`,
           groupClose
         );
         break;
@@ -298,6 +346,15 @@ export function renderElementsToSVGString(
         );
         break;
       }
+
+      case 'image-layer':
+        // Image layers are video-dependent; in export they just show as transparent region markers
+        parts.push(
+          groupOpen,
+          `<rect x="${x}%" y="${y}%" width="${el.width || 10}%" height="${el.height || 10}%" fill="none" stroke="white" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="4 2"/>`,
+          groupClose
+        );
+        break;
     }
   }
 
