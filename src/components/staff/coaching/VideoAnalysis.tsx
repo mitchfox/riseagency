@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download } from "lucide-react";
+import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -607,7 +607,7 @@ export const VideoAnalysis = () => {
               className="w-full aspect-video"
             />
             {/* Clip button overlay */}
-            <div className="absolute bottom-14 left-1/2 -translate-x-1/2 opacity-0 group-hover/player:opacity-100 transition-opacity">
+            <div className="absolute bottom-14 left-1/2 -translate-x-1/2 opacity-0 group-hover/player:opacity-100 transition-opacity flex gap-2">
               <Button onClick={handleInstantClip} size="sm" className="gap-1.5 shadow-lg bg-primary/90 backdrop-blur-sm">
                 <Scissors className="h-4 w-4" /> Clip (±5s)
               </Button>
@@ -662,6 +662,21 @@ export const VideoAnalysis = () => {
                     </Button>
                   </div>
 
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 opacity-0 group-hover/clip:opacity-100 text-primary hover:text-primary shrink-0"
+                    onClick={() => {
+                      // Open annotations for this clip
+                      const url = new URL(window.location.href);
+                      url.searchParams.set('section', 'annotations');
+                      window.location.href = url.toString();
+                      toast.info("Opening Annotations — load the video there and draw on the clip segment.");
+                    }}
+                    title="Annotate this clip"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
                   <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/clip:opacity-100 text-muted-foreground hover:text-destructive shrink-0" onClick={() => handleDeleteClip(clip.id)}>
                     <Trash2 className="h-3 w-3" />
                   </Button>

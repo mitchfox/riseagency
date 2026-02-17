@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tv, ExternalLink, Maximize2, Minimize2, ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
+import { Tv, ExternalLink, Maximize2, Minimize2, ArrowLeft, ArrowRight, RotateCcw, Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 interface StreamChannel {
   id: string;
@@ -12,19 +13,25 @@ interface StreamChannel {
   embedMode: 'iframe' | 'link-only';
 }
 
-const CHANNELS: StreamChannel[] = [
-  { id: "camel", label: "Camel International", url: "https://www.camel1.live/e/home", region: "International", embedMode: "link-only" },
-  { id: "sportsebooks", label: "Sportsebooks UK", url: "https://sportsebooks.eu", region: "UK", embedMode: "iframe" },
-  { id: "buffstreams", label: "Buffstreams US", url: "https://buffstreams.plus/index2", region: "US", embedMode: "link-only" },
+// Embeddable streams first, then link-only separated
+const EMBEDDABLE_CHANNELS: StreamChannel[] = [
   { id: "chnliga", label: "Chance Liga", url: "https://www.chnliga.tv/cze", region: "Czechia", embedMode: "iframe" },
   { id: "tvcom", label: "TVCom", url: "https://www.tvcom.cz/", region: "Czechia", embedMode: "iframe" },
   { id: "vidio", label: "Vidio Sports", url: "https://www.vidio.com/categories/sports", region: "Indonesia", embedMode: "iframe" },
+  { id: "sportsebooks", label: "Sportsebooks UK", url: "https://sportsebooks.eu", region: "UK", embedMode: "iframe" },
 ];
+
+const LINK_ONLY_CHANNELS: StreamChannel[] = [
+  { id: "camel", label: "Camel International", url: "https://www.camel1.live/e/home", region: "International", embedMode: "link-only" },
+  { id: "buffstreams", label: "Buffstreams US", url: "https://buffstreams.plus/index2", region: "US", embedMode: "link-only" },
+];
+
+const ALL_CHANNELS = [...EMBEDDABLE_CHANNELS, ...LINK_ONLY_CHANNELS];
 
 export const StreamsSection = () => {
   const [activeTab, setActiveTab] = useState(() => {
-    try { return localStorage.getItem('streams_active_tab') || CHANNELS[0].id; }
-    catch { return CHANNELS[0].id; }
+    try { return localStorage.getItem('streams_active_tab') || EMBEDDABLE_CHANNELS[0].id; }
+    catch { return EMBEDDABLE_CHANNELS[0].id; }
   });
   const [expanded, setExpanded] = useState(() => {
     try { return localStorage.getItem('streams_expanded') === 'true'; }
@@ -32,7 +39,7 @@ export const StreamsSection = () => {
   });
   const iframeRefs = useRef<Record<string, HTMLIFrameElement | null>>({});
 
-  const activeChannel = CHANNELS.find((c) => c.id === activeTab);
+  const activeChannel = ALL_CHANNELS.find((c) => c.id === activeTab);
 
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
@@ -111,7 +118,7 @@ export const StreamsSection = () => {
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <div className="px-4 pb-2">
             <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
-              {CHANNELS.map((ch) => (
+              {EMBEDDABLE_CHANNELS.map((ch) => (
                 <TabsTrigger
                   key={ch.id}
                   value={ch.id}
@@ -121,10 +128,23 @@ export const StreamsSection = () => {
                   <span className="ml-1.5 text-[10px] opacity-60">{ch.region}</span>
                 </TabsTrigger>
               ))}
+              {/* Divider */}
+              <Separator orientation="vertical" className="h-6 mx-1" />
+              {LINK_ONLY_CHANNELS.map((ch) => (
+                <TabsTrigger
+                  key={ch.id}
+                  value={ch.id}
+                  className="text-xs px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  <LinkIcon className="h-3 w-3 mr-1 opacity-60" />
+                  <span>{ch.label}</span>
+                  <span className="ml-1.5 text-[10px] opacity-60">{ch.region}</span>
+                </TabsTrigger>
+              ))}
             </TabsList>
           </div>
 
-          {CHANNELS.map((ch) => (
+          {ALL_CHANNELS.map((ch) => (
             <TabsContent key={ch.id} value={ch.id} className="mt-0 p-0">
               <div className="px-4 pb-4">
                 {ch.embedMode === 'link-only' ? (
