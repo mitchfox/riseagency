@@ -853,35 +853,42 @@ export const AnnotationCanvas = ({
         const clipId = `img-layer-${el.id}`;
 
         let layerDataUrl = '';
-        if (video && video.readyState >= 2 && svgRef.current) {
+        if (video && video.readyState >= 1 && svgRef.current) {
           try {
             const vw = video.videoWidth || 1;
             const vh = video.videoHeight || 1;
             // Source region in video-native pixels
-            const sx = (el.x / 100) * vw;
-            const sy = (el.y / 100) * vh;
-            const sw = (w / 100) * vw;
-            const sh = (h / 100) * vh;
+            const sx = Math.max(0, (el.x / 100) * vw);
+            const sy = Math.max(0, (el.y / 100) * vh);
+            const sw = Math.min(vw - sx, (w / 100) * vw);
+            const sh = Math.min(vh - sy, (h / 100) * vh);
             const canvas = document.createElement('canvas');
             canvas.width = Math.max(1, Math.round(sw));
             canvas.height = Math.max(1, Math.round(sh));
             const ctx = canvas.getContext('2d');
             if (ctx) {
               ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-              layerDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+              layerDataUrl = canvas.toDataURL('image/jpeg', 0.92);
             }
           } catch { /* cross-origin */ }
         }
 
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
-            {layerDataUrl && (
+            {/* Always render a filled rect so image layer covers annotations beneath */}
+            {layerDataUrl ? (
               <image
                 href={layerDataUrl}
                 x={`${el.x}%`} y={`${el.y}%`}
                 width={`${w}%`} height={`${h}%`}
                 preserveAspectRatio="none"
                 style={{ pointerEvents: 'none' }}
+              />
+            ) : (
+              <rect
+                x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`}
+                fill="black" fillOpacity={0.6}
+                pointerEvents="none"
               />
             )}
             {/* Drag handle overlay */}
@@ -893,7 +900,7 @@ export const AnnotationCanvas = ({
             {/* Selection border */}
             <rect
               x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`}
-              fill="none" stroke={isSelected ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.4)'} strokeWidth={1}
+              fill="none" stroke={isSelected ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.15)'} strokeWidth={0.5}
               strokeDasharray="4 2"
               pointerEvents="none"
             />
@@ -972,7 +979,8 @@ export const AnnotationCanvas = ({
     let handles: HandleDef[] = [];
     let bbox: { x: number; y: number; w: number; h: number } | null = null;
 
-    if ((el.type === 'rect' || el.type === 'space-oval' || el.type === 'image-layer') && el.width !== undefined && el.height !== undefined) {
+    if ((el.type === 'rect' || el.type === 'image-layer') && el.width !== undefined && el.height !== undefined) {
+      // Rect and image-layer use x,y as top-left corner
       const x = el.x, y = el.y, w = el.width, h = el.height;
       bbox = { x, y, w, h };
       handles = [
@@ -984,6 +992,21 @@ export const AnnotationCanvas = ({
         { handle: 's', x: x + w / 2, y: y + h, cursor: 'ns-resize' },
         { handle: 'e', x: x + w, y: y + h / 2, cursor: 'ew-resize' },
         { handle: 'w', x, y: y + h / 2, cursor: 'ew-resize' },
+      ];
+    } else if (el.type === 'space-oval' && el.width !== undefined && el.height !== undefined) {
+      // Space-oval uses x,y as CENTRE, width/height define the full ellipse size
+      const rx = (el.width || 15) / 2;
+      const ry = (el.height || 8) / 2;
+      bbox = { x: el.x - rx, y: el.y - ry, w: rx * 2, h: ry * 2 };
+      handles = [
+        { handle: 'nw', x: el.x - rx, y: el.y - ry, cursor: 'nwse-resize' },
+        { handle: 'ne', x: el.x + rx, y: el.y - ry, cursor: 'nesw-resize' },
+        { handle: 'sw', x: el.x - rx, y: el.y + ry, cursor: 'nesw-resize' },
+        { handle: 'se', x: el.x + rx, y: el.y + ry, cursor: 'nwse-resize' },
+        { handle: 'n', x: el.x, y: el.y - ry, cursor: 'ns-resize' },
+        { handle: 's', x: el.x, y: el.y + ry, cursor: 'ns-resize' },
+        { handle: 'e', x: el.x + rx, y: el.y, cursor: 'ew-resize' },
+        { handle: 'w', x: el.x - rx, y: el.y, cursor: 'ew-resize' },
       ];
     } else if ((el.type === 'circle' || el.type === 'spotlight' || el.type === 'player-marker' || el.type === 'semi-circle' || el.type === 'magnifier') && el.radius !== undefined) {
       const r = el.radius;
@@ -1034,10 +1057,10 @@ export const AnnotationCanvas = ({
               <circle
                 cx={`${ep.x}%`}
                 cy={`${ep.y}%`}
-                r="2"
+                r="0.35"
                 fill="white"
                 stroke="none"
-                style={{ cursor: 'move', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))' }}
+                style={{ cursor: 'move', filter: 'drop-shadow(0 0.5px 0.5px rgba(0,0,0,0.6))' }}
                 pointerEvents="none"
               />
             </g>
@@ -1080,10 +1103,10 @@ export const AnnotationCanvas = ({
             <circle
               cx={`${h.x}%`}
               cy={`${h.y}%`}
-              r="2"
+              r="0.35"
               fill="white"
               stroke="none"
-              style={{ cursor: h.cursor, filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))' }}
+              style={{ cursor: h.cursor, filter: 'drop-shadow(0 0.5px 0.5px rgba(0,0,0,0.6))' }}
               pointerEvents="none"
             />
           </g>
