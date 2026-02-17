@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import {
   ArrowLeft, Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight,
   Save, Volume2, VolumeX, Trash2, Layers, Clock, Timer,
-  Lock,
+  Lock, Pencil, X,
 } from "lucide-react";
 import { AnnotationProject, AnnotationElement, Klip, ElementKeyframe } from "./AnnotationProjects";
 import { AnnotationCanvas, TrackerState } from "./AnnotationCanvas";
@@ -69,6 +69,8 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [autoCreated, setAutoCreated] = useState(false);
 
   const [trackers, setTrackers] = useState<TrackerState[]>([]);
+  const [drawingMode, setDrawingMode] = useState(false);
+  const [freezeFrameUrl, setFreezeFrameUrl] = useState<string | null>(null);
 
   const activeKlip = klips.find(k => k.id === activeKlipId);
   const klipOffset = activeKlip ? currentTime - activeKlip.startTime : 0;
@@ -199,6 +201,34 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     toast.success("Project saved");
   };
 
+  const startDrawing = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.pause();
+    setIsPlaying(false);
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        setFreezeFrameUrl(canvas.toDataURL('image/jpeg', 0.85));
+      }
+    } catch {
+      // Fallback if canvas export fails (CORS)
+      setFreezeFrameUrl(null);
+    }
+    setDrawingMode(true);
+    setActiveTool('select');
+  }, []);
+
+  const stopDrawing = useCallback(() => {
+    setDrawingMode(false);
+    setFreezeFrameUrl(null);
+    setActiveTool('select');
+  }, []);
+
   const handleDeleteElement = useCallback(() => {
     if (selectedId) {
       setElements(prev => prev.filter(el => el.id !== selectedId));
@@ -282,15 +312,17 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       </div>
 
       <div className="flex flex-1 min-h-0">
-        {/* Left tools */}
-        <AnnotationToolbar
-          activeTool={activeTool}
-          setActiveTool={setActiveTool}
-          activeColor={activeColor}
-          setActiveColor={setActiveColor}
-          strokeWidth={strokeWidth}
-          setStrokeWidth={setStrokeWidth}
-        />
+        {/* Left tools - only visible in drawing mode */}
+        {drawingMode && (
+          <AnnotationToolbar
+            activeTool={activeTool}
+            setActiveTool={setActiveTool}
+            activeColor={activeColor}
+            setActiveColor={setActiveColor}
+            strokeWidth={strokeWidth}
+            setStrokeWidth={setStrokeWidth}
+          />
+        )}
 
         {/* Main area */}
         <div className="flex-1 flex flex-col min-w-0">
@@ -300,13 +332,16 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
               <video
                 ref={videoRef}
                 src={project.videoUrl}
-                className="max-w-full max-h-full"
+                className={`max-w-full max-h-full ${drawingMode ? 'invisible' : ''}`}
                 muted={muted}
                 playsInline
                 preload="auto"
-                onClick={togglePlay}
+                onClick={drawingMode ? undefined : togglePlay}
               />
-              {activeKlip && (
+              {drawingMode && freezeFrameUrl && (
+                <img src={freezeFrameUrl} className="max-w-full max-h-full absolute inset-0 m-auto" alt="Freeze frame" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+              )}
+              {activeKlip && drawingMode && (
                 <AnnotationCanvas
                   elements={visibleElements}
                   setElements={setElements}
@@ -324,12 +359,17 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 />
               )}
             </div>
-            {linkSource && (
+            {drawingMode && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-primary/90 text-white text-xs px-3 py-1 rounded-full flex items-center gap-1.5 z-10">
+                <Pencil className="w-3 h-3" /> Drawing Mode — use tools on the left
+              </div>
+            )}
+            {linkSource && !drawingMode && (
               <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-primary/80 text-white text-xs px-3 py-1 rounded-full">
                 Click second element to link
               </div>
             )}
-            {shouldHoldFrame && (
+            {shouldHoldFrame && !drawingMode && (
               <div className="absolute top-2 right-2 bg-amber-500/80 text-white text-[10px] px-2 py-0.5 rounded flex items-center gap-1">
                 <Lock className="w-3 h-3" /> Frame held
               </div>
@@ -424,7 +464,28 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
         {/* Right sidebar */}
         {showPanel && (
           <div className="w-60 bg-[#161a24] border-l border-white/10 shrink-0 flex flex-col overflow-hidden">
-
+            {/* Draw / Stop Drawing button */}
+            <div className="p-3 border-b border-white/10">
+              {drawingMode ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs gap-1.5 border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                  onClick={stopDrawing}
+                >
+                  <X className="w-3.5 h-3.5" /> Exit Drawing
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs gap-1.5 border-primary/50 text-primary hover:bg-primary/10"
+                  onClick={startDrawing}
+                >
+                  <Pencil className="w-3.5 h-3.5" /> Draw on Frame
+                </Button>
+              )}
+            </div>
 
             {/* Timeline Events (Elements) */}
             <div className="p-3 flex-1 overflow-y-auto">
