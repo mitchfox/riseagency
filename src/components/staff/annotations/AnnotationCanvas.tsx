@@ -169,7 +169,7 @@ export const AnnotationCanvas = ({
         if (el.id !== resizing.id) return el;
 
         // Circle/spotlight/player-marker/semi-circle: resize radius
-        if (el.radius !== undefined && (el.type === 'circle' || el.type === 'spotlight' || el.type === 'player-marker' || el.type === 'semi-circle')) {
+        if (el.radius !== undefined && (el.type === 'circle' || el.type === 'spotlight' || el.type === 'player-marker' || el.type === 'semi-circle' || el.type === 'magnifier')) {
           const delta = h.includes('e') || h.includes('s') ? Math.max(dx, dy) : Math.min(dx, dy);
           const isCorner = h.length === 2;
           const scaleFactor = isCorner ? delta : (h === 'e' || h === 'w' ? dx : dy);
@@ -354,12 +354,11 @@ export const AnnotationCanvas = ({
     return luminance > 0.5 ? '#000000' : '#ffffff';
   };
 
-  // Sort elements so image-layer types ALWAYS render last (on top of everything)
-  const sortedElements = [...elements].sort((a, b) => {
-    const isALayer = a.type === 'image-layer' ? 1 : 0;
-    const isBLayer = b.type === 'image-layer' ? 1 : 0;
-    return isALayer - isBLayer;
-  });
+  // Split elements: render non-image-layer first, then image-layers on top
+  const regularElements = elements.filter(el => el.type !== 'image-layer');
+  const imageLayerElements = [...elements.filter(el => el.type === 'image-layer')]
+    .sort((a, b) => (a.layerZIndex ?? 100) - (b.layerZIndex ?? 100));
+  const sortedElements = [...regularElements, ...imageLayerElements];
 
   const renderElement = (el: AnnotationElement) => {
     const isSelected = el.id === selectedId;
@@ -741,11 +740,39 @@ export const AnnotationCanvas = ({
         const zoom = el.zoomLevel || 2;
         const r = el.radius || 8;
         const clipId = `mag-clip-${el.id}`;
+        const imgId = `mag-img-${el.id}`;
         const video = videoRef.current;
-        let videoSrc = '';
-        if (video) {
-          try { videoSrc = video.currentSrc || ''; } catch { /* no-op */ }
+
+        // Canvas-based snapshot: capture current frame and crop/zoom around magnifier centre
+        let dataUrl = '';
+        if (video && video.readyState >= 2 && svgRef.current) {
+          try {
+            const svgRect = svgRef.current.getBoundingClientRect();
+            const svgW = svgRect.width;
+            const svgH = svgRect.height;
+            const vw = video.videoWidth || svgW;
+            const vh = video.videoHeight || svgH;
+
+            // Source region on the video (in video-native pixels)
+            const centreVX = (el.x / 100) * vw;
+            const centreVY = (el.y / 100) * vh;
+            const regionW = vw / zoom;
+            const regionH = vh / zoom;
+            const sx = Math.max(0, Math.min(vw - regionW, centreVX - regionW / 2));
+            const sy = Math.max(0, Math.min(vh - regionH, centreVY - regionH / 2));
+
+            const canvas = document.createElement('canvas');
+            const outSize = 256; // render at fixed resolution for perf
+            canvas.width = outSize;
+            canvas.height = outSize;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(video, sx, sy, regionW, regionH, 0, 0, outSize, outSize);
+              dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            }
+          } catch { /* cross-origin or other error — show empty */ }
         }
+
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
@@ -753,52 +780,18 @@ export const AnnotationCanvas = ({
                 <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`} />
               </clipPath>
             </defs>
-            {video && svgRef.current && (() => {
-              const svgRect = svgRef.current!.getBoundingClientRect();
-              const svgW = svgRect.width;
-              const svgH = svgRect.height;
-              // Magnifier centre in pixels
-              const cxPx = (el.x / 100) * svgW;
-              const cyPx = (el.y / 100) * svgH;
-              // Magnifier radius in pixels
-              const rPx = (r / 100) * svgW;
-              const diameter = rPx * 2;
-              // Video natural dimensions
-              const vw = video.videoWidth || svgW;
-              const vh = video.videoHeight || svgH;
-              // Scale video so it covers the SVG area, then apply zoom
-              const scaleX = (svgW / vw) * zoom;
-              const scaleY = (svgH / vh) * zoom;
-              const vidW = vw * scaleX;
-              const vidH = vh * scaleY;
-              // Offset so the magnifier centre maps to the centre of the circle
-              const left = diameter / 2 - cxPx * (svgW / vw) * zoom;
-              const top = diameter / 2 - cyPx * (svgH / vh) * zoom;
-              return (
-                <foreignObject
-                  x={`${el.x - r}%`} y={`${el.y - r}%`}
-                  width={`${r * 2}%`} height={`${r * 2}%`}
-                  clipPath={`url(#${clipId})`}
-                  style={{ pointerEvents: 'none' }}
-                >
-                  <div style={{ width: '100%', height: '100%', overflow: 'hidden', borderRadius: '50%', position: 'relative' }}>
-                    <video
-                      src={videoSrc} muted playsInline
-                      style={{
-                        position: 'absolute',
-                        width: `${vidW}px`, height: `${vidH}px`,
-                        left: `${left}px`,
-                        top: `${top}px`,
-                        pointerEvents: 'none',
-                      }}
-                      ref={(v) => { if (v && video) v.currentTime = video.currentTime; }}
-                    />
-                  </div>
-                </foreignObject>
-              );
-            })()}
+            {dataUrl && (
+              <image
+                href={dataUrl}
+                x={`${el.x - r}%`} y={`${el.y - r}%`}
+                width={`${r * 2}%`} height={`${r * 2}%`}
+                clipPath={`url(#${clipId})`}
+                preserveAspectRatio="xMidYMid slice"
+                style={{ pointerEvents: 'none' }}
+              />
+            )}
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`}
-              fill="none" stroke="white" strokeWidth={1.5} strokeOpacity={0.9}>
+              fill={dataUrl ? 'none' : 'rgba(0,0,0,0.3)'} stroke="white" strokeWidth={1.5} strokeOpacity={0.9}>
               {anim && <animate attributeName="r" from="0" to={`${r}%`} dur="0.3s" fill="freeze" />}
             </circle>
             <text x={`${el.x}%`} y={`${(el.y || 0) - r - 1}%`}
@@ -853,45 +846,45 @@ export const AnnotationCanvas = ({
           </g>
         );
       case 'image-layer': {
-        // Image layer: clips part of the video frame and renders it on top (always highest z)
+        // Image layer: captures video frame via canvas and renders on top
         const video = videoRef.current;
         const w = el.width || 10;
         const h = el.height || 10;
         const clipId = `img-layer-${el.id}`;
-        let videoSrc = '';
-        if (video) {
-          try { videoSrc = video.currentSrc || ''; } catch { /* no-op */ }
+
+        let layerDataUrl = '';
+        if (video && video.readyState >= 2 && svgRef.current) {
+          try {
+            const vw = video.videoWidth || 1;
+            const vh = video.videoHeight || 1;
+            // Source region in video-native pixels
+            const sx = (el.x / 100) * vw;
+            const sy = (el.y / 100) * vh;
+            const sw = (w / 100) * vw;
+            const sh = (h / 100) * vh;
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(sw));
+            canvas.height = Math.max(1, Math.round(sh));
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+              layerDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            }
+          } catch { /* cross-origin */ }
         }
+
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
-            <defs>
-              <clipPath id={clipId}>
-                <rect x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`} />
-              </clipPath>
-            </defs>
-            {video && (
-              <foreignObject
+            {layerDataUrl && (
+              <image
+                href={layerDataUrl}
                 x={`${el.x}%`} y={`${el.y}%`}
                 width={`${w}%`} height={`${h}%`}
+                preserveAspectRatio="none"
                 style={{ pointerEvents: 'none' }}
-              >
-                <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}>
-                  <video
-                    src={videoSrc} muted playsInline
-                    style={{
-                      position: 'absolute',
-                      width: `${100 / (w / 100)}%`,
-                      height: `${100 / (h / 100)}%`,
-                      left: `${-(el.x / w) * 100}%`,
-                      top: `${-(el.y / h) * 100}%`,
-                      pointerEvents: 'none',
-                    }}
-                    ref={(v) => { if (v && video) v.currentTime = video.currentTime; }}
-                  />
-                </div>
-              </foreignObject>
+              />
             )}
-            {/* Drag handle overlay — transparent but receives pointer events */}
+            {/* Drag handle overlay */}
             <rect
               x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`}
               fill="transparent" stroke="none"
@@ -992,7 +985,7 @@ export const AnnotationCanvas = ({
         { handle: 'e', x: x + w, y: y + h / 2, cursor: 'ew-resize' },
         { handle: 'w', x, y: y + h / 2, cursor: 'ew-resize' },
       ];
-    } else if ((el.type === 'circle' || el.type === 'spotlight' || el.type === 'player-marker' || el.type === 'semi-circle') && el.radius !== undefined) {
+    } else if ((el.type === 'circle' || el.type === 'spotlight' || el.type === 'player-marker' || el.type === 'semi-circle' || el.type === 'magnifier') && el.radius !== undefined) {
       const r = el.radius;
       bbox = { x: el.x - r, y: el.y - r, w: r * 2, h: r * 2 };
       handles = [
