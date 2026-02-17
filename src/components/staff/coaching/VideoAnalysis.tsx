@@ -12,7 +12,8 @@ import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEditor";
-import type { AnnotationProject, Klip } from "@/components/staff/annotations/AnnotationProjects";
+import { AnnotationCanvas } from "@/components/staff/annotations/AnnotationCanvas";
+import type { AnnotationProject, Klip, AnnotationElement } from "@/components/staff/annotations/AnnotationProjects";
 
 interface Annotation {
   id: string;
@@ -64,88 +65,7 @@ const ACTION_COLOURS: Record<string, string> = {
   attacking: "bg-orange-500/20 text-orange-400 border-orange-500/30",
   individual: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
 };
-// Simple SVG overlay that renders annotation elements on top of the video during clip playback
-const AnnotationOverlay = ({ elements, klipStart, videoRef }: {
-  elements: any[];
-  klipStart: number;
-  videoRef: React.RefObject<HTMLVideoElement>;
-}) => {
-  const [, forceUpdate] = useState(0);
 
-  useEffect(() => {
-    let raf: number;
-    const tick = () => {
-      forceUpdate(n => n + 1);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
-  const currentTime = videoRef.current?.currentTime ?? 0;
-  const offset = currentTime - klipStart;
-
-  const visible = elements.filter((el: any) => {
-    const start = el.appearAt ?? 0;
-    const end = el.duration !== undefined ? start + el.duration : Infinity;
-    return offset >= start - 0.05 && offset < end;
-  });
-
-  if (visible.length === 0) return null;
-
-  const renderEl = (el: any) => {
-    switch (el.type) {
-      case 'line':
-        return <line key={el.id} x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`} stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round" />;
-      case 'arrow': {
-        const mid = `ov-arrow-${el.id}`;
-        return <g key={el.id}><defs><marker id={mid} markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill={el.color} /></marker></defs><line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`} stroke={el.color} strokeWidth={el.strokeWidth} markerEnd={`url(#${mid})`} /></g>;
-      }
-      case 'curve': {
-        const mx = (el.x + (el.x2 || 0)) / 2;
-        const my = Math.min(el.y, el.y2 || 0) - 10;
-        return <path key={el.id} d={`M ${el.x}% ${el.y}% Q ${mx}% ${my}% ${el.x2}% ${el.y2}%`} stroke={el.color} strokeWidth={el.strokeWidth} fill="none" />;
-      }
-      case 'rect':
-        return <rect key={el.id} x={`${el.x}%`} y={`${el.y}%`} width={`${el.width}%`} height={`${el.height}%`} stroke={el.color} strokeWidth={el.strokeWidth} fill="none" />;
-      case 'circle':
-        return <circle key={el.id} cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius}%`} stroke={el.color} strokeWidth={el.strokeWidth} fill="none" />;
-      case 'spotlight':
-        return <circle key={el.id} cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius}%`} fill={el.color} fillOpacity={el.opacity || 0.3} stroke={el.color} strokeWidth={2} />;
-      case 'text':
-        return <g key={el.id}><text x={`${el.x}%`} y={`${el.y}%`} fill="black" fontSize={`${el.fontSize || 3}%`} fontFamily="sans-serif" fontWeight="bold" stroke="black" strokeWidth={3} strokeOpacity={0.5} paintOrder="stroke">{el.text}</text><text x={`${el.x}%`} y={`${el.y}%`} fill={el.color} fontSize={`${el.fontSize || 3}%`} fontFamily="sans-serif" fontWeight="bold">{el.text}</text></g>;
-      case 'player-marker':
-        return <g key={el.id}><circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius || 2.5}%`} fill={el.color} fillOpacity={0.85} stroke="white" strokeWidth={1.5} /><text x={`${el.x}%`} y={`${el.y}%`} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="2.2%" fontWeight="bold">{el.number}</text></g>;
-      case 'freehand':
-        if (!el.points || el.points.length < 2) return null;
-        return <path key={el.id} d={el.points.map((p: any, i: number) => `${i === 0 ? 'M' : 'L'} ${p.x}% ${p.y}%`).join(' ')} stroke={el.color} strokeWidth={el.strokeWidth} fill="none" strokeLinecap="round" />;
-      case 'distance': {
-        const dx = (el.x2 || 0) - el.x;
-        const dy = (el.y2 || 0) - el.y;
-        const dist = Math.sqrt(dx * dx + dy * dy).toFixed(1);
-        const mx2 = (el.x + (el.x2 || 0)) / 2;
-        const my2 = (el.y + (el.y2 || 0)) / 2;
-        return <g key={el.id}><line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`} stroke={el.color} strokeWidth={1.5} strokeDasharray="4 2" /><text x={`${mx2}%`} y={`${my2 - 1}%`} fill={el.color} fontSize="1.8%" textAnchor="middle" fontWeight="bold">{dist}</text></g>;
-      }
-      case 'vision-cone': {
-        const len = el.coneLength || 15;
-        const angle = el.angle || 0;
-        const spread = 30;
-        const r1 = ((angle - spread) * Math.PI) / 180;
-        const r2 = ((angle + spread) * Math.PI) / 180;
-        return <path key={el.id} d={`M ${el.x}% ${el.y}% L ${el.x + len * Math.cos(r1)}% ${el.y + len * Math.sin(r1)}% A ${len} ${len} 0 0 1 ${el.x + len * Math.cos(r2)}% ${el.y + len * Math.sin(r2)}% Z`} fill={el.color} fillOpacity={el.opacity || 0.25} />;
-      }
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 10 }}>
-      {visible.map(renderEl)}
-    </svg>
-  );
-};
 
 export const VideoAnalysis = () => {
   const [videos, setVideos] = useState<VideoAnalysisEntry[]>([]);
@@ -192,10 +112,16 @@ export const VideoAnalysis = () => {
   const [annotatingClip, setAnnotatingClip] = useState<Clip | null>(null);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
 
-  // Active clip overlay annotations
+  // Clip playback annotation freeze system (mirrors AnnotationEditor)
   const [overlayElements, setOverlayElements] = useState<any[]>([]);
   const [overlayKlipStart, setOverlayKlipStart] = useState(0);
-  const overlayRafRef = useRef<number | null>(null);
+  const [overlayFreezeUrl, setOverlayFreezeUrl] = useState<string | null>(null);
+  const [overlayFreezeActive, setOverlayFreezeActive] = useState(false);
+  const [overlayFreezePhase, setOverlayFreezePhase] = useState<'idle' | 'showing' | 'fading'>('idle');
+  const overlayTriggeredRef = useRef<Set<number>>(new Set());
+  const overlayFreezeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const overlayClipEndRef = useRef<number>(0);
+  const [overlayCurrentTime, setOverlayCurrentTime] = useState(0);
 
   useEffect(() => {
     fetchVideos();
@@ -474,8 +400,16 @@ export const VideoAnalysis = () => {
         klipStart = saved.klips[0].startTime ?? clip.start;
       }
     } catch {}
+
+    // Reset freeze state
+    overlayTriggeredRef.current.clear();
+    if (overlayFreezeTimerRef.current) clearTimeout(overlayFreezeTimerRef.current);
+    setOverlayFreezeActive(false);
+    setOverlayFreezePhase('idle');
+    setOverlayFreezeUrl(null);
     setOverlayElements(allEls);
     setOverlayKlipStart(klipStart);
+    overlayClipEndRef.current = clip.end;
 
     videoRef.current.currentTime = clip.start;
     videoRef.current.play();
@@ -484,10 +418,94 @@ export const VideoAnalysis = () => {
         videoRef.current.pause();
         videoRef.current.removeEventListener('timeupdate', checkEnd);
         setOverlayElements([]);
+        setOverlayFreezeActive(false);
+        setOverlayFreezeUrl(null);
       }
     };
     videoRef.current.addEventListener('timeupdate', checkEnd);
   };
+
+  // Effect: detect annotation timestamps during clip playback, pause and freeze
+  useEffect(() => {
+    if (overlayElements.length === 0 || overlayFreezeActive) return;
+    const video = videoRef.current;
+    if (!video || video.paused) return;
+
+    const offset = video.currentTime - overlayKlipStart;
+    const nowVisible = overlayElements.filter(el => {
+      const start = el.appearAt ?? 0;
+      const end = el.duration !== undefined ? start + el.duration : Infinity;
+      const roundedTime = Math.round(el.appearAt * 100) / 100;
+      return offset >= start - 0.05 && offset < end && !overlayTriggeredRef.current.has(roundedTime);
+    });
+
+    if (nowVisible.length === 0) return;
+
+    // Mark as triggered
+    nowVisible.forEach(el => {
+      overlayTriggeredRef.current.add(Math.round(el.appearAt * 100) / 100);
+    });
+
+    // Get all visible elements at this offset (including previously triggered ones still in range)
+    const allVisible = overlayElements.filter(el => {
+      const start = el.appearAt ?? 0;
+      const end = el.duration !== undefined ? start + el.duration : Infinity;
+      return offset >= start - 0.05 && offset < end;
+    });
+
+    // Calculate the longest remaining display duration
+    const maxDuration = Math.max(
+      ...allVisible.map(el => {
+        const elDur = el.duration ?? 3;
+        const elapsed = offset - (el.appearAt ?? 0);
+        return Math.max(elDur - elapsed, 0.5);
+      })
+    );
+
+    // Capture freeze frame
+    let frameUrl: string | null = null;
+    try {
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      if (vw > 0 && vh > 0) {
+        const canvas = document.createElement('canvas');
+        canvas.width = vw;
+        canvas.height = vh;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, vw, vh);
+          frameUrl = canvas.toDataURL('image/jpeg', 0.85);
+        }
+      }
+    } catch {}
+
+    // Pause and show freeze frame with annotations
+    video.pause();
+    setOverlayFreezeUrl(frameUrl);
+    setOverlayFreezeActive(true);
+    setOverlayFreezePhase('showing');
+    setOverlayCurrentTime(video.currentTime);
+
+    // After duration, fade out then resume
+    const timer = setTimeout(() => {
+      setOverlayFreezePhase('fading');
+      const fadeTimer = setTimeout(() => {
+        setOverlayFreezeUrl(null);
+        setOverlayFreezeActive(false);
+        setOverlayFreezePhase('idle');
+        if (video && video.currentTime < overlayClipEndRef.current) {
+          video.play();
+        }
+      }, 400);
+      overlayFreezeTimerRef.current = fadeTimer;
+    }, maxDuration * 1000);
+
+    overlayFreezeTimerRef.current = timer;
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [overlayCurrentTime, overlayElements, overlayKlipStart, overlayFreezeActive]);
 
   const handleDeleteVideo = async (id: string) => {
     const video = videos.find(v => v.id === id);
@@ -712,22 +730,60 @@ export const VideoAnalysis = () => {
               ref={videoRef}
               src={selectedVideo.video_url}
               controls
-              className="w-full aspect-video"
+              className={`w-full aspect-video ${overlayFreezeActive ? 'invisible' : ''}`}
               onTimeUpdate={() => {
-                // Force re-render for overlay visibility
                 if (overlayElements.length > 0) {
-                  setOverlayKlipStart(prev => prev);
+                  setOverlayCurrentTime(videoRef.current?.currentTime ?? 0);
                 }
               }}
             />
-            {/* Annotation overlay during clip playback */}
-            {overlayElements.length > 0 && videoRef.current && (
-              <AnnotationOverlay
-                elements={overlayElements}
-                klipStart={overlayKlipStart}
-                videoRef={videoRef}
+            {/* Freeze frame shown during annotation pause */}
+            {overlayFreezeActive && overlayFreezeUrl && (
+              <img
+                src={overlayFreezeUrl}
+                className="absolute inset-0 w-full h-full object-contain"
+                alt="Freeze frame"
+                style={{ zIndex: 10 }}
               />
             )}
+            {/* Annotation canvas overlay during freeze */}
+            {overlayFreezeActive && (() => {
+              const offset = (videoRef.current?.currentTime ?? 0) - overlayKlipStart;
+              const visible = overlayElements.filter((el: any) => {
+                const start = el.appearAt ?? 0;
+                const end = el.duration !== undefined ? start + el.duration : Infinity;
+                return offset >= start - 0.05 && offset < end;
+              });
+              if (visible.length === 0) return null;
+              return (
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    zIndex: 20,
+                    pointerEvents: 'none',
+                    opacity: overlayFreezePhase === 'fading' ? 0 : 1,
+                    transition: overlayFreezePhase === 'fading' ? 'opacity 0.4s ease-out' : 'none',
+                  }}
+                >
+                  <AnnotationCanvas
+                    elements={visible as AnnotationElement[]}
+                    setElements={() => {}}
+                    activeTool="select"
+                    activeColor="#ff0000"
+                    strokeWidth={3}
+                    selectedId={null}
+                    setSelectedId={() => {}}
+                    videoRef={videoRef}
+                    trackers={[]}
+                    setTrackers={() => {}}
+                    linkSource={null}
+                    setLinkSource={() => {}}
+                    klipOffset={offset}
+                    isDrawingMode={false}
+                  />
+                </div>
+              );
+            })()}
             {/* Clip button overlay */}
             <div className="absolute bottom-14 left-1/2 -translate-x-1/2 opacity-0 group-hover/player:opacity-100 transition-opacity flex gap-2">
               <Button onClick={handleInstantClip} size="sm" className="gap-1.5 shadow-lg bg-primary/90 backdrop-blur-sm">
