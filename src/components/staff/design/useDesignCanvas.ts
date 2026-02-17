@@ -204,6 +204,13 @@ export function useDesignCanvas(initial?: DesignProject) {
     updateElements(elements);
   }, [project.elements, updateElements]);
 
+  const reorderElements = useCallback((fromIndex: number, toIndex: number) => {
+    const elements = [...project.elements];
+    const [moved] = elements.splice(fromIndex, 1);
+    elements.splice(toIndex, 0, moved);
+    updateElements(elements);
+  }, [project.elements, updateElements]);
+
   const selectAll = useCallback(() => {
     setSelectedIds(project.elements.map(el => el.id));
   }, [project.elements]);
@@ -276,7 +283,7 @@ export function useDesignCanvas(initial?: DesignProject) {
     addText, addShape, addImage, addLine,
     updateElement, deleteSelected, duplicateSelected,
     copySelected, paste,
-    moveLayer, selectAll, deselectAll,
+    moveLayer, reorderElements, selectAll, deselectAll,
     undo, redo, historyIndex, historyLength: history.length,
     calculateSnap,
   };

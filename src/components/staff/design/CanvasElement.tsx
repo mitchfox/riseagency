@@ -23,14 +23,18 @@ export function CanvasElement({
   const resizeStart = useRef({ x: 0, y: 0, w: 0, h: 0, elX: 0, elY: 0 });
   const textRef = useRef<HTMLDivElement>(null);
 
+  const [bgUnlocked, setBgUnlocked] = useState(false);
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (element.locked || isEditing) return;
+    // Background elements require double-click to unlock first
+    if (element.isBackground && !bgUnlocked) return;
     e.stopPropagation();
     onSelect(element.id, e.shiftKey);
     setIsDragging(true);
     onDragStart();
     dragStart.current = { x: e.clientX, y: e.clientY, elX: element.x, elY: element.y };
-  }, [element, isEditing, onSelect, onDragStart]);
+  }, [element, isEditing, onSelect, onDragStart, bgUnlocked]);
 
   const handleResizeMouseDown = useCallback((e: React.MouseEvent, handle: string) => {
     e.stopPropagation();
@@ -97,11 +101,16 @@ export function CanvasElement({
 
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
+    if (element.isBackground && !bgUnlocked) {
+      setBgUnlocked(true);
+      onSelect(element.id, false);
+      return;
+    }
     if (element.type === 'text' && !element.locked) {
       setIsEditing(true);
       setTimeout(() => textRef.current?.focus(), 50);
     }
-  }, [element]);
+  }, [element, bgUnlocked, onSelect]);
 
   const handleTextBlur = useCallback(() => {
     setIsEditing(false);
@@ -203,6 +212,7 @@ export function CanvasElement({
               fontStyle: element.fontStyle,
               textAlign: element.textAlign,
               textDecoration: element.textDecoration,
+              textTransform: element.textTransform || 'none',
               color: element.color,
               letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
               lineHeight: element.lineHeight || 1.2,

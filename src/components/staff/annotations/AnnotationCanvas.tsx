@@ -15,6 +15,7 @@ interface AnnotationCanvasProps {
   setTrackers: React.Dispatch<React.SetStateAction<TrackerState[]>>;
   linkSource: string | null;
   setLinkSource: (id: string | null) => void;
+  segmentOffset?: number;
 }
 
 export interface TrackerState {
@@ -27,7 +28,7 @@ export interface TrackerState {
 
 export const AnnotationCanvas = ({
   elements, setElements, activeTool, activeColor, strokeWidth,
-  selectedId, setSelectedId, videoRef, trackers, setTrackers, linkSource, setLinkSource,
+  selectedId, setSelectedId, videoRef, trackers, setTrackers, linkSource, setLinkSource, segmentOffset = 0,
 }: AnnotationCanvasProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [drawing, setDrawing] = useState(false);
@@ -78,7 +79,7 @@ export const AnnotationCanvas = ({
       if (!text) return;
       setElements(prev => [...prev, {
         id: crypto.randomUUID(), type: 'text', x: pos.x, y: pos.y,
-        color: activeColor, strokeWidth, text, fontSize: 3,
+        color: activeColor, strokeWidth, text, fontSize: 3, appearAt: segmentOffset,
       }]);
       return;
     }
@@ -88,19 +89,18 @@ export const AnnotationCanvas = ({
       if (!num) return;
       setElements(prev => [...prev, {
         id: crypto.randomUUID(), type: 'player-marker', x: pos.x, y: pos.y,
-        color: activeColor, strokeWidth, number: parseInt(num) || 0, radius: 2.5,
+        color: activeColor, strokeWidth, number: parseInt(num) || 0, radius: 2.5, appearAt: segmentOffset,
       }]);
       return;
     }
 
     if (activeTool === 'tracker') {
-      // Place a tracker point
       const trackerId = crypto.randomUUID();
       const elementId = crypto.randomUUID();
       const time = videoRef.current?.currentTime || 0;
       setElements(prev => [...prev, {
         id: elementId, type: 'circle', x: pos.x, y: pos.y,
-        color: activeColor, strokeWidth: 2, radius: 1.5, opacity: 0.9,
+        color: activeColor, strokeWidth: 2, radius: 1.5, opacity: 0.9, appearAt: segmentOffset,
       }]);
       setTrackers(prev => [...prev, {
         id: trackerId, elementId, color: activeColor, active: true,
@@ -116,14 +116,13 @@ export const AnnotationCanvas = ({
         if (!linkSource) {
           setLinkSource(id);
         } else {
-          // Create linked line between two elements
           const el1 = elements.find(el => el.id === linkSource);
           const el2 = elements.find(el => el.id === id);
           if (el1 && el2) {
             setElements(prev => [...prev, {
               id: crypto.randomUUID(), type: 'linked-line',
               x: el1.x, y: el1.y, x2: el2.x, y2: el2.y,
-              color: activeColor, strokeWidth, linkedTo: id,
+              color: activeColor, strokeWidth, linkedTo: id, appearAt: segmentOffset,
             }]);
           }
           setLinkSource(null);
@@ -136,6 +135,7 @@ export const AnnotationCanvas = ({
       setElements(prev => [...prev, {
         id: crypto.randomUUID(), type: 'magnifier', x: pos.x, y: pos.y,
         color: '#ffffff', strokeWidth: 2, radius: 8, opacity: 1,
+        zoomLevel: 2, appearAt: segmentOffset,
       }]);
       return;
     }
@@ -146,7 +146,7 @@ export const AnnotationCanvas = ({
     if (activeTool === 'freehand') {
       setFreehandPoints([pos]);
     }
-  }, [activeTool, activeColor, strokeWidth, elements, getPos, setElements, setSelectedId, trackers, linkSource, setLinkSource, setTrackers, videoRef]);
+  }, [activeTool, activeColor, strokeWidth, elements, getPos, setElements, setSelectedId, trackers, linkSource, setLinkSource, setTrackers, videoRef, segmentOffset]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const pos = getPos(e);
@@ -169,7 +169,7 @@ export const AnnotationCanvas = ({
     setDrawing(false);
 
     const id = crypto.randomUUID();
-    const base = { id, color: activeColor, strokeWidth, opacity: 1 };
+    const base = { id, color: activeColor, strokeWidth, opacity: 1, appearAt: segmentOffset };
 
     switch (activeTool) {
       case 'line':
@@ -221,12 +221,12 @@ export const AnnotationCanvas = ({
         setFreehandPoints([]);
         break;
     }
-  }, [drawing, dragging, activeTool, startPos, currentPos, activeColor, strokeWidth, freehandPoints, setElements]);
+  }, [drawing, dragging, activeTool, startPos, currentPos, activeColor, strokeWidth, freehandPoints, setElements, segmentOffset]);
 
   const renderElement = (el: AnnotationElement) => {
     const isSelected = el.id === selectedId;
     const selStyle: React.CSSProperties = isSelected
-      ? { filter: 'drop-shadow(0 0 4px rgba(168,85,247,0.9))', strokeDasharray: undefined }
+      ? { filter: 'drop-shadow(0 0 4px rgba(168,85,247,0.9))' }
       : {};
 
     switch (el.type) {
@@ -285,7 +285,7 @@ export const AnnotationCanvas = ({
       case 'vision-cone': {
         const len = el.coneLength || 15;
         const angle = el.angle || 0;
-        const spread = 30; // degrees
+        const spread = 30;
         const rad1 = ((angle - spread) * Math.PI) / 180;
         const rad2 = ((angle + spread) * Math.PI) / 180;
         const x1 = el.x + len * Math.cos(rad1);
@@ -320,17 +320,81 @@ export const AnnotationCanvas = ({
           </g>
         );
       }
-      case 'magnifier':
+      case 'magnifier': {
+        // Real magnifier: uses a clipPath with the video as a foreignObject to zoom into the area
+        const zoom = el.zoomLevel || 2;
+        const r = el.radius || 8;
+        const clipId = `mag-clip-${el.id}`;
+        const video = videoRef.current;
+        const svg = svgRef.current;
+        
+        // Get video source for the magnifier
+        let videoSrc = '';
+        if (video) {
+          try {
+            // We'll render a zoomed circle using CSS clip-path on video snapshot
+            videoSrc = video.currentSrc || '';
+          } catch { /* no-op */ }
+        }
+        
         return (
           <g key={el.id} data-element-id={el.id} style={{ cursor: 'pointer', ...selStyle }}>
-            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius || 8}%`}
-              fill="none" stroke="white" strokeWidth={2.5} strokeOpacity={0.8} />
-            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius || 8}%`}
-              fill="white" fillOpacity={0.08} />
-            <text x={`${el.x}%`} y={`${(el.y || 0) - (el.radius || 8) - 1}%`}
-              fill="white" fontSize="1.5%" textAnchor="middle" opacity={0.6}>🔍</text>
+            <defs>
+              <clipPath id={clipId}>
+                <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`} />
+              </clipPath>
+            </defs>
+            {/* Magnified region - uses a larger copy of the video area */}
+            {video && svg && (
+              <foreignObject
+                x={`${el.x - r}%`}
+                y={`${el.y - r}%`}
+                width={`${r * 2}%`}
+                height={`${r * 2}%`}
+                clipPath={`url(#${clipId})`}
+                style={{ pointerEvents: 'none' }}
+              >
+                <div
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    overflow: 'hidden',
+                    borderRadius: '50%',
+                    position: 'relative',
+                  }}
+                >
+                  <video
+                    src={videoSrc}
+                    muted
+                    playsInline
+                    style={{
+                      position: 'absolute',
+                      width: `${zoom * 100}%`,
+                      height: `${zoom * 100}%`,
+                      left: `${50 - (el.x / 100) * zoom * 100}%`,
+                      top: `${50 - (el.y / 100) * zoom * 100}%`,
+                      pointerEvents: 'none',
+                    }}
+                    ref={(v) => {
+                      if (v && video) {
+                        v.currentTime = video.currentTime;
+                      }
+                    }}
+                  />
+                </div>
+              </foreignObject>
+            )}
+            {/* Border ring */}
+            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`}
+              fill="none" stroke="white" strokeWidth={2.5} strokeOpacity={0.9} />
+            {/* Zoom label */}
+            <text x={`${el.x}%`} y={`${(el.y || 0) - r - 1}%`}
+              fill="white" fontSize="1.5%" textAnchor="middle" opacity={0.7}>
+              🔍 {zoom}x
+            </text>
           </g>
         );
+      }
       case 'linked-line': {
         const mid = `lnk-${el.id}`;
         return (

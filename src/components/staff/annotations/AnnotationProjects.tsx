@@ -33,6 +33,11 @@ export interface AnnotationElement {
   linkedTo?: string;
   // Animation keyframes
   keyframes?: Keyframe[];
+  // Frame timing: when this element appears and for how long (relative to segment start)
+  appearAt?: number;   // seconds into the segment
+  duration?: number;   // how long to show (seconds), undefined = forever
+  // Magnifier zoom
+  zoomLevel?: number;
 }
 
 export interface Keyframe {

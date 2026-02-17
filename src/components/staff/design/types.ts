@@ -27,6 +27,8 @@ export interface DesignElement {
   lineHeight?: number;
   textShadow?: string;
   textOutline?: string;
+  textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
+  isBackground?: boolean;
   // Shape props
   shapeType?: ShapeType;
   fill?: string;
