@@ -36,9 +36,24 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [duration, setDuration] = useState(0);
   const [muted, setMuted] = useState(true);
   const [activeTool, setActiveTool] = useState<AnnotationTool>('select');
-  const [activeColor, setActiveColor] = useState('#ff0000');
-  const [strokeWidth, setStrokeWidth] = useState(3);
+  // Persist last-used colour and stroke per tool type
+  const [activeColor, setActiveColor] = useState(() => {
+    try { return localStorage.getItem('annotation-last-colour') || '#ff0000'; } catch { return '#ff0000'; }
+  });
+  const [strokeWidth, setStrokeWidth] = useState(() => {
+    try { return parseInt(localStorage.getItem('annotation-last-stroke') || '3') || 3; } catch { return 3; }
+  });
   const [fillOpacity, setFillOpacity] = useState(0.3);
+
+  // Persist colour and stroke changes
+  const handleSetActiveColor = useCallback((c: string) => {
+    setActiveColor(c);
+    try { localStorage.setItem('annotation-last-colour', c); } catch {}
+  }, []);
+  const handleSetStrokeWidth = useCallback((w: number) => {
+    setStrokeWidth(w);
+    try { localStorage.setItem('annotation-last-stroke', String(w)); } catch {}
+  }, []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showPanel, setShowPanel] = useState(true);
@@ -88,15 +103,24 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     let computed = computeVisibleElements(allElements, effectiveOffset, { forceOpacity });
 
     // During playback freeze, only show the elements that triggered it
-    // This prevents previous annotations from re-appearing
     if (playbackFreezeActive && freezeElementIdsRef.current.size > 0 && !drawingMode) {
       computed = computed.filter(el => freezeElementIdsRef.current.has(el.id));
     }
 
-    // In drawing mode, also include the selected element even if not in time window
-    if (drawingMode && selectedId) {
-      const alreadyIncluded = computed.some(el => el.id === selectedId);
-      if (!alreadyIncluded) {
+    // In drawing mode, ONLY show elements whose appearAt matches the drawing timestamp
+    // This prevents previous annotations at different times from bleeding through
+    if (drawingMode) {
+      const drawOffset = drawingTimestamp - (activeKlip?.startTime ?? 0);
+      computed = computed.filter(el => {
+        // Show elements that start at this exact drawing time (within 0.15s tolerance)
+        if (Math.abs(el.appearAt - drawOffset) < 0.15) return true;
+        // Also show the currently selected element regardless
+        if (el.id === selectedId) return true;
+        return false;
+      });
+
+      // Include selected element even if not computed
+      if (selectedId && !computed.some(el => el.id === selectedId)) {
         const selectedEl = allElements.find(el => el.id === selectedId);
         if (selectedEl) {
           computed.push({
@@ -117,7 +141,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       y: el.computedY,
       opacity: el.computedOpacity,
     }));
-  }, [allElements, effectiveOffset, playbackFreezeActive, drawingMode, selectedId]);
+  }, [allElements, effectiveOffset, playbackFreezeActive, drawingMode, selectedId, drawingTimestamp, activeKlip]);
 
   const hasVisibleAnnotations = visibleElements.length > 0 && !drawingMode;
 
@@ -674,9 +698,9 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
             activeTool={activeTool}
             setActiveTool={setActiveTool}
             activeColor={activeColor}
-            setActiveColor={setActiveColor}
+            setActiveColor={handleSetActiveColor}
             strokeWidth={strokeWidth}
-            setStrokeWidth={setStrokeWidth}
+            setStrokeWidth={handleSetStrokeWidth}
             fillOpacity={fillOpacity}
             setFillOpacity={setFillOpacity}
           />
@@ -1165,56 +1189,71 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                       <span>Size</span>
                     </div>
                     {(selectedElement.type === 'circle' || selectedElement.type === 'spotlight' || selectedElement.type === 'player-marker' || selectedElement.type === 'semi-circle') && (
-                      <div className="flex items-center gap-2">
-                        <Label className="text-[9px] text-white/40 w-14">Radius</Label>
-                        <Input
-                          type="number" step="0.5" min="0.5"
-                          value={selectedElement.radius?.toFixed(1) ?? ''}
-                          onChange={e => updateElement(selectedElement.id, { radius: parseFloat(e.target.value) || 1 })}
-                          className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[9px] text-white/40">Radius</Label>
+                          <span className="text-[9px] text-white/30">{(selectedElement.radius ?? 2.5).toFixed(1)}</span>
+                        </div>
+                        <Slider
+                          value={[selectedElement.radius ?? 2.5]}
+                          min={0.5} max={20} step={0.5}
+                          onValueChange={([v]) => updateElement(selectedElement.id, { radius: v })}
+                          className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
                         />
                       </div>
                     )}
                     {(selectedElement.type === 'rect' || selectedElement.type === 'space-oval' || selectedElement.type === 'image-layer') && (
                       <>
-                        <div className="flex items-center gap-2">
-                          <Label className="text-[9px] text-white/40 w-14">Width</Label>
-                          <Input
-                            type="number" step="0.5" min="0.5"
-                            value={selectedElement.width?.toFixed(1) ?? ''}
-                            onChange={e => updateElement(selectedElement.id, { width: parseFloat(e.target.value) || 1 })}
-                            className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-[9px] text-white/40">Width</Label>
+                            <span className="text-[9px] text-white/30">{(selectedElement.width ?? 10).toFixed(1)}</span>
+                          </div>
+                          <Slider
+                            value={[selectedElement.width ?? 10]}
+                            min={0.5} max={50} step={0.5}
+                            onValueChange={([v]) => updateElement(selectedElement.id, { width: v })}
+                            className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
                           />
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Label className="text-[9px] text-white/40 w-14">Height</Label>
-                          <Input
-                            type="number" step="0.5" min="0.5"
-                            value={selectedElement.height?.toFixed(1) ?? ''}
-                            onChange={e => updateElement(selectedElement.id, { height: parseFloat(e.target.value) || 1 })}
-                            className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-[9px] text-white/40">Height</Label>
+                            <span className="text-[9px] text-white/30">{(selectedElement.height ?? 10).toFixed(1)}</span>
+                          </div>
+                          <Slider
+                            value={[selectedElement.height ?? 10]}
+                            min={0.5} max={50} step={0.5}
+                            onValueChange={([v]) => updateElement(selectedElement.id, { height: v })}
+                            className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
                           />
                         </div>
                       </>
                     )}
                     {(selectedElement.type === 'text') && (
-                      <div className="flex items-center gap-2">
-                        <Label className="text-[9px] text-white/40 w-14">Font size</Label>
-                        <Input
-                          type="number" step="0.5" min="1"
-                          value={selectedElement.fontSize?.toFixed(1) ?? '3'}
-                          onChange={e => updateElement(selectedElement.id, { fontSize: parseFloat(e.target.value) || 3 })}
-                          className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[9px] text-white/40">Font Size</Label>
+                          <span className="text-[9px] text-white/30">{(selectedElement.fontSize ?? 3).toFixed(1)}</span>
+                        </div>
+                        <Slider
+                          value={[selectedElement.fontSize ?? 3]}
+                          min={1} max={20} step={0.5}
+                          onValueChange={([v]) => updateElement(selectedElement.id, { fontSize: v })}
+                          className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
                         />
                       </div>
                     )}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-[9px] text-white/40 w-14">Stroke</Label>
-                      <Input
-                        type="number" step="1" min="1" max="20"
-                        value={selectedElement.strokeWidth}
-                        onChange={e => updateElement(selectedElement.id, { strokeWidth: parseInt(e.target.value) || 2 })}
-                        className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[9px] text-white/40">Line Thickness</Label>
+                        <span className="text-[9px] text-white/30">{selectedElement.strokeWidth}px</span>
+                      </div>
+                      <Slider
+                        value={[selectedElement.strokeWidth]}
+                        min={1} max={20} step={1}
+                        onValueChange={([v]) => updateElement(selectedElement.id, { strokeWidth: v })}
+                        className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
                       />
                     </div>
                   </div>

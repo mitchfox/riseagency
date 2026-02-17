@@ -95,18 +95,33 @@ export const AnnotationToolbar = ({
 
       <div className="my-2 w-8 border-t border-white/10" />
 
-      <div className="flex flex-col items-center gap-1">
-        {[2, 3, 5, 8].map(w => (
-          <button
-            key={w}
-            className={`flex items-center justify-center w-8 h-6 rounded ${
-              strokeWidth === w ? 'bg-white/20' : 'hover:bg-white/10'
-            }`}
-            onClick={() => setStrokeWidth(w)}
-          >
-            <div className="rounded-full bg-white" style={{ width: `${w * 3}px`, height: `${Math.max(w, 2)}px` }} />
-          </button>
-        ))}
+      <div className="flex flex-col items-center gap-1 px-1 w-full">
+        <Label className="text-[8px] text-white/40 uppercase">Thickness</Label>
+        <div className="flex items-center justify-center w-full px-0.5">
+          <span className="text-[9px] text-white/30 font-mono w-4 text-center">{strokeWidth}</span>
+        </div>
+        <div className="w-10 py-1">
+          <Slider
+            value={[strokeWidth]}
+            min={1} max={20} step={1}
+            onValueChange={([v]) => setStrokeWidth(v)}
+            className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
+          />
+        </div>
+        <div className="flex items-center justify-center gap-0.5 mt-0.5">
+          {[1, 3, 5, 8].map(w => (
+            <button
+              key={w}
+              className={`flex items-center justify-center w-6 h-5 rounded ${
+                strokeWidth === w ? 'bg-white/20' : 'hover:bg-white/10'
+              }`}
+              onClick={() => setStrokeWidth(w)}
+              title={`${w}px`}
+            >
+              <div className="rounded-full bg-white" style={{ width: `${Math.min(w * 2, 12)}px`, height: `${Math.max(w, 2)}px` }} />
+            </button>
+          ))}
+        </div>
       </div>
 
       {showFillOpacity && (
