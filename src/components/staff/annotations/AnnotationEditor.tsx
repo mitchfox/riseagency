@@ -691,25 +691,46 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                         el.id === selectedId ? 'bg-primary/20 text-primary' : isVisible ? 'text-white/50 hover:bg-white/5' : 'text-white/20 hover:bg-white/5'
                       }`}
                       onClick={() => {
-                        setSelectedId(el.id);
                         if (activeKlip) {
                           const seekTime = activeKlip.startTime + el.appearAt;
                           const video = videoRef.current;
                           if (video) {
-                            // Clear any existing freeze state
+                            // Clear any existing playback freeze
                             if (playbackFreezeTimerRef.current) clearTimeout(playbackFreezeTimerRef.current);
+                            setPlaybackFreezeActive(false);
+                            setPlaybackFreezePhase('idle');
                             triggeredTimesRef.current.clear();
+
+                            // Seek to annotation timestamp
                             video.currentTime = seekTime;
                             setCurrentTime(seekTime);
                             video.pause();
                             setIsPlaying(false);
 
-                            // Trigger a manual freeze to show the annotation
-                            const elDuration = el.duration ?? 3;
-                            playbackFreezeDurationRef.current = elDuration;
-                            setPlaybackFreezeActive(true);
-                            setPlaybackFreezePhase('showing');
-                            setPlaybackFreezeUrl(null); // video itself is paused at the right frame
+                            // Enter drawing mode so elements are editable
+                            setDrawingTimestamp(seekTime);
+                            setDrawingStartElements(activeKlip.elements || []);
+                            try {
+                              const canvas = document.createElement('canvas');
+                              const vw = video.videoWidth;
+                              const vh = video.videoHeight;
+                              if (vw > 0 && vh > 0) {
+                                canvas.width = vw;
+                                canvas.height = vh;
+                                const ctx = canvas.getContext('2d');
+                                if (ctx) {
+                                  ctx.drawImage(video, 0, 0);
+                                  setFreezeFrameUrl(canvas.toDataURL('image/jpeg', 0.85));
+                                }
+                              } else {
+                                setFreezeFrameUrl(null);
+                              }
+                            } catch {
+                              setFreezeFrameUrl(null);
+                            }
+                            setDrawingMode(true);
+                            setActiveTool('select');
+                            setSelectedId(el.id);
                           }
                         }
                       }}
