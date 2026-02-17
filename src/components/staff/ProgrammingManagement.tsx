@@ -2026,10 +2026,84 @@ Example format:
                         catch { return ''; }
                       })();
                       if (!suggestion) return null;
+
+                      // Try to parse as JSON sessions array
+                      let parsedSessions: { name: string; exercises: { name: string; reps: string; sets: string; load: string; recovery: string }[] }[] | null = null;
+                      try {
+                        // Strip any markdown fences or leading text before the JSON
+                        let cleaned = suggestion.trim();
+                        const jsonStart = cleaned.indexOf('[');
+                        const jsonEnd = cleaned.lastIndexOf(']');
+                        if (jsonStart !== -1 && jsonEnd !== -1) {
+                          cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
+                        }
+                        const parsed = JSON.parse(cleaned);
+                        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].exercises) {
+                          parsedSessions = parsed;
+                        }
+                      } catch {
+                        // Not valid JSON, fall through to plain text
+                      }
+
+                      if (parsedSessions) {
+                        return (
+                          <div className="mt-3 space-y-4">
+                            <p className="text-[10px] uppercase tracking-wider text-primary/60 font-medium">AI Suggestions</p>
+                            {parsedSessions.map((session, sIdx) => (
+                              <div key={sIdx} className="rounded-lg border border-primary/20 overflow-hidden">
+                                <div className="flex items-center justify-between px-3 py-2 bg-primary/5 border-b border-primary/10">
+                                  <span className="text-xs font-semibold text-foreground">{session.name}</span>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 text-[10px] gap-1"
+                                    onClick={() => {
+                                      const header = 'Exercise\tReps\tSets\tLoad\tRecovery';
+                                      const rows = session.exercises.map(ex =>
+                                        `${ex.name}\t${ex.reps || 'N/A'}\t${ex.sets || 'N/A'}\t${ex.load || 'N/A'}\t${ex.recovery || 'N/A'}`
+                                      ).join('\n');
+                                      navigator.clipboard.writeText(`${session.name}\n${header}\n${rows}`);
+                                      toast.success(`Copied ${session.name}`);
+                                    }}
+                                  >
+                                    <Copy className="h-3 w-3" /> Copy
+                                  </Button>
+                                </div>
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="border-b border-border/50 bg-muted/30">
+                                      <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Exercise</th>
+                                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground w-24">Reps</th>
+                                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground w-16">Sets</th>
+                                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground w-24">Load</th>
+                                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground w-20">Recovery</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {session.exercises.map((ex, eIdx) => (
+                                      <tr key={eIdx} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
+                                        <td className="px-3 py-1.5 font-medium">{ex.name}</td>
+                                        <td className="px-2 py-1.5 text-muted-foreground">{ex.reps || 'N/A'}</td>
+                                        <td className="px-2 py-1.5 text-muted-foreground">{ex.sets || 'N/A'}</td>
+                                        <td className="px-2 py-1.5 text-muted-foreground">{ex.load || 'N/A'}</td>
+                                        <td className="px-2 py-1.5 text-muted-foreground">{ex.recovery || 'N/A'}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      }
+
+                      // Fallback: render as plain text with markdown stripped
+                      const cleanedText = suggestion.replace(/\*\*/g, '').replace(/###?\s?/g, '').replace(/```json\n?/g, '').replace(/```\n?/g, '');
                       return (
                         <div className="mt-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
                           <p className="text-[10px] uppercase tracking-wider text-primary/60 mb-2 font-medium">AI Suggestions</p>
-                          <div className="text-sm whitespace-pre-wrap leading-relaxed text-foreground/80">{suggestion}</div>
+                          <div className="text-sm whitespace-pre-wrap leading-relaxed text-foreground/80">{cleanedText}</div>
                         </div>
                       );
                     })()}
