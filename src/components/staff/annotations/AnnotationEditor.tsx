@@ -342,83 +342,125 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       return;
     }
 
-    // Find the SVG overlay element for annotations
     const container = video.closest('.relative');
     const svgEl = container?.querySelector('svg');
 
-    if (!svgEl) {
-      // Fallback: just download the video
-      const a = document.createElement('a');
-      a.href = video.currentSrc || project.videoUrl;
-      a.download = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}.mp4`;
-      a.click();
-      toast.info("Exported source video (no annotations overlay available)");
-      return;
-    }
-
-    toast.info("Preparing export with annotations...");
+    toast.info("Recording clip with annotations — this may take a moment...");
 
     try {
-      // Pause and save current state
       const wasPlaying = !video.paused;
       const savedTime = video.currentTime;
       video.pause();
+      setIsPlaying(false);
 
-      // Export as annotated frames to a canvas, then download as images or video
-      const canvas = document.createElement('canvas');
       const vw = video.videoWidth || 1920;
       const vh = video.videoHeight || 1080;
+      const canvas = document.createElement('canvas');
       canvas.width = vw;
       canvas.height = vh;
       const ctx = canvas.getContext('2d')!;
 
-      // Seek to the klip start and capture a single annotated frame as PNG
-      // (Full video export with annotations would require MediaRecorder API)
-      const captureFrame = (time: number): Promise<string> => {
+      const fps = 30;
+      const klipStart = activeKlip.startTime;
+      const klipEnd = activeKlip.endTime;
+      const klipDuration = klipEnd - klipStart;
+      const totalFrames = Math.ceil(klipDuration * fps);
+
+      // Use MediaRecorder to capture canvas as video
+      const stream = canvas.captureStream(fps);
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm',
+        videoBitsPerSecond: 8_000_000,
+      });
+      const chunks: Blob[] = [];
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+
+      const recordingDone = new Promise<Blob>(resolve => {
+        mediaRecorder.onstop = () => {
+          resolve(new Blob(chunks, { type: 'video/webm' }));
+        };
+      });
+
+      mediaRecorder.start();
+
+      // Render each frame by seeking, drawing video + SVG
+      const renderFrame = (frameIndex: number): Promise<void> => {
         return new Promise(resolve => {
+          const time = klipStart + (frameIndex / fps);
           video.currentTime = time;
           const onSeeked = () => {
             video.removeEventListener('seeked', onSeeked);
             ctx.clearRect(0, 0, vw, vh);
             ctx.drawImage(video, 0, 0, vw, vh);
 
-            // Render SVG annotations onto canvas
-            const svgData = new XMLSerializer().serializeToString(svgEl);
-            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-            const svgUrl = URL.createObjectURL(svgBlob);
-            const img = new Image();
-            img.onload = () => {
-              ctx.drawImage(img, 0, 0, vw, vh);
-              URL.revokeObjectURL(svgUrl);
-              resolve(canvas.toDataURL('image/png'));
-            };
-            img.onerror = () => {
-              URL.revokeObjectURL(svgUrl);
-              resolve(canvas.toDataURL('image/png'));
-            };
-            img.src = svgUrl;
+            // Determine which annotations are visible at this offset
+            const offset = time - klipStart;
+            const visibleEls = allElements.filter(el => {
+              const start = el.appearAt;
+              const end = el.duration !== undefined ? start + el.duration : Infinity;
+              return offset >= start - 0.05 && offset < end;
+            });
+
+            if (svgEl && visibleEls.length > 0) {
+              // Clone the SVG, serialise, and draw onto the canvas
+              const svgClone = svgEl.cloneNode(true) as SVGElement;
+              svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+              svgClone.setAttribute('width', String(vw));
+              svgClone.setAttribute('height', String(vh));
+              const svgData = new XMLSerializer().serializeToString(svgClone);
+              const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+              const svgUrl = URL.createObjectURL(svgBlob);
+              const img = new Image();
+              img.onload = () => {
+                ctx.drawImage(img, 0, 0, vw, vh);
+                URL.revokeObjectURL(svgUrl);
+                // Brief delay to give MediaRecorder time to capture the frame
+                setTimeout(resolve, 1000 / fps);
+              };
+              img.onerror = () => {
+                URL.revokeObjectURL(svgUrl);
+                setTimeout(resolve, 1000 / fps);
+              };
+              img.src = svgUrl;
+            } else {
+              setTimeout(resolve, 1000 / fps);
+            }
           };
           video.addEventListener('seeked', onSeeked);
         });
       };
 
-      // Export the current frame with annotations
-      const frameData = await captureFrame(savedTime);
-      const a = document.createElement('a');
-      a.href = frameData;
-      a.download = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}_annotated.png`;
-      a.click();
+      // Render frames sequentially
+      for (let i = 0; i < totalFrames; i++) {
+        await renderFrame(i);
+        // Update progress every 30 frames
+        if (i % 30 === 0) {
+          const pct = Math.round((i / totalFrames) * 100);
+          toast.info(`Exporting... ${pct}%`, { id: 'export-progress' });
+        }
+      }
 
-      // Restore video position
+      mediaRecorder.stop();
+      const blob = await recordingDone;
+
+      // Download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}.webm`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      // Restore
       video.currentTime = savedTime;
       if (wasPlaying) video.play();
 
-      toast.success("Annotated frame exported as PNG");
+      toast.success("Clip exported with annotations", { id: 'export-progress' });
     } catch (err) {
       console.error('Export error:', err);
       toast.error("Export failed — try again");
     }
-  }, [activeKlip, projectName, project.videoUrl]);
+  }, [activeKlip, projectName, allElements]);
 
   const startDrawing = useCallback(() => {
     const video = videoRef.current;
@@ -709,7 +751,49 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                         backgroundColor: el.color,
                         transform: `translateX(-4px)${el.id === selectedId ? ' scale(1.25)' : ''}`,
                       }}
-                      onClick={() => { setSelectedId(el.id); seek(elTime); }}
+                      onClick={() => {
+                        if (activeKlip) {
+                          const seekTime = activeKlip.startTime + el.appearAt;
+                          const video = videoRef.current;
+                          if (video) {
+                            if (playbackFreezeTimerRef.current) clearTimeout(playbackFreezeTimerRef.current);
+                            setPlaybackFreezeActive(false);
+                            setPlaybackFreezePhase('idle');
+                            triggeredTimesRef.current.clear();
+                            video.pause();
+                            setIsPlaying(false);
+                            setDrawingTimestamp(seekTime);
+                            setCurrentTime(seekTime);
+                            setDrawingStartElements(activeKlip.elements || []);
+                            const onSeeked = () => {
+                              video.removeEventListener('seeked', onSeeked);
+                              try {
+                                const canvas = document.createElement('canvas');
+                                const vw = video.videoWidth;
+                                const vh = video.videoHeight;
+                                if (vw > 0 && vh > 0) {
+                                  canvas.width = vw;
+                                  canvas.height = vh;
+                                  const ctx = canvas.getContext('2d');
+                                  if (ctx) {
+                                    ctx.drawImage(video, 0, 0);
+                                    setFreezeFrameUrl(canvas.toDataURL('image/jpeg', 0.85));
+                                  }
+                                } else {
+                                  setFreezeFrameUrl(null);
+                                }
+                              } catch {
+                                setFreezeFrameUrl(null);
+                              }
+                              setDrawingMode(true);
+                              setActiveTool('select');
+                              setSelectedId(el.id);
+                            };
+                            video.addEventListener('seeked', onSeeked);
+                            video.currentTime = seekTime;
+                          }
+                        }
+                      }}
                       title={`${el.type} at ${el.appearAt.toFixed(1)}s`}
                     />
                   );
