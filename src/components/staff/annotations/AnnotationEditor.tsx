@@ -67,6 +67,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [playbackFreezePhase, setPlaybackFreezePhase] = useState<'idle' | 'showing' | 'fading'>('idle');
   const triggeredTimesRef = useRef<Set<number>>(new Set());
   const playbackFreezeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isExportingRef = useRef(false);
   const playbackFreezeDurationRef = useRef(3);
 
   const activeKlip = klips.find(k => k.id === activeKlipId);
@@ -168,6 +169,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
 
   // Effect A: Detect annotation timestamps, capture freeze frame, pause video
   useEffect(() => {
+    if (isExportingRef.current) return;
     if (drawingMode || !activeKlip || playbackFreezeActive) return;
     const video = videoRef.current;
     if (!video || video.paused) return;
@@ -225,6 +227,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
 
   // Effect B: Resume timer — two-stage: showing → fading → idle
   useEffect(() => {
+    if (isExportingRef.current) return;
     if (!playbackFreezeActive) return;
 
     const timer = setTimeout(() => {
@@ -319,14 +322,30 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
 
     toast.info("Recording clip with annotations — this may take a moment...");
 
+    isExportingRef.current = true;
     try {
       const wasPlaying = !video.paused;
       const savedTime = video.currentTime;
       video.pause();
       setIsPlaying(false);
 
-      const vw = video.videoWidth || 1920;
-      const vh = video.videoHeight || 1080;
+      // Ensure metadata is loaded before reading dimensions
+      if (video.readyState < 1) {
+        await new Promise<void>((resolve, reject) => {
+          const onMeta = () => { video.removeEventListener('loadedmetadata', onMeta); clearTimeout(t); resolve(); };
+          const t = setTimeout(() => { video.removeEventListener('loadedmetadata', onMeta); reject(new Error('Metadata timeout')); }, 5000);
+          video.addEventListener('loadedmetadata', onMeta);
+        });
+      }
+
+      // Fail explicitly if dimensions are zero
+      if (!video.videoWidth || !video.videoHeight) {
+        toast.error("Cannot read video dimensions — export aborted");
+        return;
+      }
+
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
       const canvas = document.createElement('canvas');
       canvas.width = vw;
       canvas.height = vh;
@@ -359,11 +378,10 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
         const time = klipStart + (i / fps);
         const offset = time - klipStart;
 
-        // Seek and wait for decoded frame
+        // Seek and wait for decoded frame (includes readyState + rAF gate)
         await waitForSeek(video, time);
 
-        // Draw video frame
-        ctx.clearRect(0, 0, vw, vh);
+        // Draw video frame (overwrites entire buffer, no clearRect needed)
         ctx.drawImage(video, 0, 0, vw, vh);
 
         // Compute visible elements using the shared pure function
@@ -390,8 +408,8 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
           });
         }
 
-        // Give MediaRecorder time to capture
-        await new Promise(r => setTimeout(r, 1000 / fps));
+        // Fixed delay for MediaRecorder ingestion (not wall-clock pacing)
+        await new Promise(r => setTimeout(r, 50));
 
         if (i % 30 === 0) {
           const pct = Math.round((i / totalFrames) * 100);
@@ -416,6 +434,8 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     } catch (err) {
       console.error('Export error:', err);
       toast.error("Export failed — try again");
+    } finally {
+      isExportingRef.current = false;
     }
   }, [activeKlip, projectName, allElements]);
 

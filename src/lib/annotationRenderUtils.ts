@@ -318,13 +318,27 @@ export function waitForSeek(video: HTMLVideoElement, targetTime: number): Promis
     const onSeeked = () => {
       video.removeEventListener('seeked', onSeeked);
       clearTimeout(fallback);
-      // Short delay for decode stability
-      setTimeout(resolve, 16);
+
+      // Poll readyState >= 2 (HAVE_CURRENT_DATA) for up to 100ms
+      const pollStart = performance.now();
+      const pollReady = () => {
+        if (video.readyState >= 2 || performance.now() - pollStart > 100) {
+          // 50ms decode safety delay then rAF compositor flush
+          setTimeout(() => {
+            requestAnimationFrame(() => resolve());
+          }, 50);
+        } else {
+          setTimeout(pollReady, 10);
+        }
+      };
+      pollReady();
     };
+
     const fallback = setTimeout(() => {
       video.removeEventListener('seeked', onSeeked);
       resolve();
-    }, 200);
+    }, 300);
+
     video.addEventListener('seeked', onSeeked);
     video.currentTime = targetTime;
   });
