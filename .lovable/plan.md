@@ -1,68 +1,43 @@
 
 
-## Fix: Annotation Fade Timing During Playback Freeze
+## Fix: Annotations Randomly Reappearing After Freeze
 
-### Current behaviour
+### Root cause
 
-1. Annotation timestamp reached -- video pauses, freeze frame captured
-2. During the freeze, `currentTime` doesn't advance, so `effectiveOffset` stays right at `appearAt`
-3. The `animateIn` logic computes `elapsed = effectiveOffset - appearAt` which is near zero, keeping opacity very low throughout the freeze
-4. When the video resumes, time finally advances and the fade-in plays out -- but the moment has passed
+When the freeze cycle completes (showing -> fading -> idle), the video resumes from the same `currentTime`. Since the annotation's time window spans `appearAt` to `appearAt + duration`, `currentTime` is still within that window. The `visibleElements` memo still includes those elements, and the render condition `visibleElements.length > 0` evaluates true, so the annotations reappear on the live video.
 
-### Desired behaviour
+The `triggeredTimesRef` only prevents the freeze from re-triggering -- it doesn't prevent the annotations from rendering.
 
-1. Annotation fades in briefly as the freeze starts
-2. During the freeze, annotation shows at **full opacity** for the set duration
-3. When the freeze ends, annotation fades out quickly as the video resumes
+### Fix
 
-### Changes (single file: `AnnotationEditor.tsx`)
+During normal playback (not drawing mode, not in a playback freeze), annotations should only render while a freeze is active. They should never appear floating over a playing video.
 
-**1. Override opacity during playback freeze**
+**Change the render condition** on line 501 from:
 
-In the `visibleElements` memo (lines 91-117), add a check: when `playbackFreezeActive` is true, skip the `animateIn` and `animateOut` calculations entirely and return the element at full opacity. This ensures annotations are fully visible during the freeze frame.
-
-```text
-visibleElements memo:
-  if playbackFreezeActive:
-    return element at full opacity (skip animateIn/animateOut)
-  else:
-    existing animateIn/animateOut logic as-is
+```
+{activeKlip && (drawingMode || visibleElements.length > 0) && (
 ```
 
-**2. Add a brief fade-out when the freeze ends**
+to:
 
-Instead of instantly hiding annotations when the timer fires, introduce a short fade-out transition:
-
-- New state: `playbackFreezePhase` with values `'idle' | 'showing' | 'fading'`
-- When freeze activates: set phase to `'showing'`
-- When the timer fires: set phase to `'fading'` (don't clear the freeze frame yet)
-- After a short delay (e.g. 400ms), clear everything and resume the video
-- The annotation overlay container gets a CSS transition on opacity, driven by the phase
-
-```text
-Effect B (resume timer):
-  setTimeout(duration):
-    set phase = 'fading'
-    setTimeout(400ms):
-      clear freeze frame
-      set phase = 'idle'
-      video.play()
+```
+{activeKlip && (drawingMode || (visibleElements.length > 0 && playbackFreezeActive)) && (
 ```
 
-**3. Render with transition**
+This ensures the annotation canvas overlay only renders in two cases:
+1. Drawing mode (manual editing)
+2. During a playback freeze (the intended display window)
 
-The annotation overlay wrapper during playback freeze gets:
-- `opacity: 1` when phase is `'showing'`
-- `opacity: 0` with `transition: opacity 0.4s` when phase is `'fading'`
-
-This gives a smooth fade-out as the video resumes.
-
-### Dependencies on `visibleElements` memo
-
-Add `playbackFreezeActive` to the memo's dependency array so it recalculates when the freeze starts/ends.
+Once the freeze ends and `playbackFreezeActive` becomes false, the overlay disappears regardless of whether `visibleElements` still contains elements.
 
 ### What stays the same
 
-- Drawing mode workflow untouched
-- Effect A (detection) unchanged
-- Element creation, timeline dots, sidebar controls all unchanged
+- All freeze detection, timing, and phase logic unchanged
+- Drawing mode workflow unaffected
+- The `visibleElements` memo itself unchanged
+- Timeline dots, sidebar, keyframes all unchanged
+
+### Single change
+
+One line in `AnnotationEditor.tsx` (line 501).
+
