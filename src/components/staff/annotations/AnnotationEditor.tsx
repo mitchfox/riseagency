@@ -74,6 +74,12 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [drawingStartElements, setDrawingStartElements] = useState<AnnotationElement[]>([]);
   const [drawingTimestamp, setDrawingTimestamp] = useState(0);
 
+  // Playback freeze state (separate from drawing mode freeze)
+  const [playbackFreezeUrl, setPlaybackFreezeUrl] = useState<string | null>(null);
+  const [playbackFreezeActive, setPlaybackFreezeActive] = useState(false);
+  const triggeredTimesRef = useRef<Set<number>>(new Set());
+  const playbackFreezeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const activeKlip = klips.find(k => k.id === activeKlipId);
   const klipOffset = activeKlip ? currentTime - activeKlip.startTime : 0;
   // In drawing mode, use the frozen timestamp for visibility so new elements show immediately
@@ -109,9 +115,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     });
   }, [allElements, effectiveOffset]);
 
-  // Pause video whenever any annotation is visible during playback
   const hasVisibleAnnotations = visibleElements.length > 0 && !drawingMode;
-  const wasPlayingRef = useRef(false);
 
   const setElements = useCallback((updater: React.SetStateAction<AnnotationElement[]>) => {
     setKlips(prev => prev.map(k => {
@@ -170,40 +174,98 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     };
   }, []);
 
-  // Pause when annotation becomes visible during playback
+  // Playback freeze-frame system: capture frame, pause, show overlay, auto-resume after duration
   useEffect(() => {
+    if (drawingMode || !activeKlip || playbackFreezeActive) return;
     const video = videoRef.current;
-    if (!video || drawingMode) return;
-    if (hasVisibleAnnotations && !video.paused) {
-      wasPlayingRef.current = true;
-      video.pause();
-      setIsPlaying(false);
-    }
-  }, [hasVisibleAnnotations, drawingMode]);
+    if (!video || video.paused) return;
 
-  // Auto-resume: find the latest ending annotation and wait for it to finish
-  useEffect(() => {
-    if (drawingMode || !activeKlip) return;
-    if (hasVisibleAnnotations || !wasPlayingRef.current) return;
-    // All annotations have passed, resume playback
-    wasPlayingRef.current = false;
-    const video = videoRef.current;
-    if (video && video.paused && video.currentTime > 0 && video.currentTime < duration) {
-      video.play();
-      setIsPlaying(true);
+    // Check if any annotations just became visible that we haven't triggered yet
+    const newVisible = visibleElements.filter(el => {
+      const roundedTime = Math.round(el.appearAt * 100) / 100;
+      return !triggeredTimesRef.current.has(roundedTime);
+    });
+
+    if (newVisible.length === 0) return;
+
+    // Mark these as triggered
+    newVisible.forEach(el => {
+      const roundedTime = Math.round(el.appearAt * 100) / 100;
+      triggeredTimesRef.current.add(roundedTime);
+    });
+
+    // Capture freeze frame
+    let frameUrl: string | null = null;
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        frameUrl = canvas.toDataURL('image/jpeg', 0.85);
+      }
+    } catch {
+      // CORS or other issue - proceed without freeze frame image
     }
-  }, [hasVisibleAnnotations, drawingMode, activeKlip, duration]);
+
+    // Pause video and activate freeze
+    video.pause();
+    setIsPlaying(false);
+    setPlaybackFreezeUrl(frameUrl);
+    setPlaybackFreezeActive(true);
+
+    // Find the longest remaining duration among visible annotations
+    const maxDuration = Math.max(
+      ...visibleElements.map(el => {
+        const elDuration = el.duration ?? 3;
+        const elapsed = effectiveOffset - el.appearAt;
+        return Math.max(elDuration - elapsed, 0.5);
+      })
+    );
+
+    // Auto-resume after duration
+    playbackFreezeTimerRef.current = setTimeout(() => {
+      setPlaybackFreezeUrl(null);
+      setPlaybackFreezeActive(false);
+      const v = videoRef.current;
+      if (v && v.currentTime < (v.duration || 0)) {
+        v.play();
+        setIsPlaying(true);
+      }
+    }, maxDuration * 1000);
+
+    return () => {
+      if (playbackFreezeTimerRef.current) {
+        clearTimeout(playbackFreezeTimerRef.current);
+      }
+    };
+  }, [currentTime, drawingMode, activeKlip, playbackFreezeActive, visibleElements, effectiveOffset]);
 
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (video.paused) { video.play(); setIsPlaying(true); }
-    else { video.pause(); setIsPlaying(false); }
+    if (video.paused) {
+      // Clear playback freeze if manually resuming
+      if (playbackFreezeTimerRef.current) clearTimeout(playbackFreezeTimerRef.current);
+      setPlaybackFreezeUrl(null);
+      setPlaybackFreezeActive(false);
+      video.play();
+      setIsPlaying(true);
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
   }, []);
 
   const seek = useCallback((time: number) => {
     const video = videoRef.current;
     if (!video) return;
+    // Clear any active playback freeze on manual seek
+    if (playbackFreezeTimerRef.current) clearTimeout(playbackFreezeTimerRef.current);
+    setPlaybackFreezeUrl(null);
+    setPlaybackFreezeActive(false);
+    triggeredTimesRef.current.clear();
     video.currentTime = time;
     setCurrentTime(time);
   }, []);
@@ -389,17 +451,28 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
               <video
                 ref={videoRef}
                 src={project.videoUrl}
-                className={`max-w-full max-h-[calc(100vh-16rem)] block ${drawingMode ? 'invisible' : ''}`}
+                crossOrigin="anonymous"
+                className={`max-w-full max-h-[calc(100vh-16rem)] block ${drawingMode || playbackFreezeActive ? 'invisible' : ''}`}
                 muted={muted}
                 playsInline
                 preload="auto"
                 onClick={drawingMode ? undefined : togglePlay}
               />
+              {/* Drawing mode freeze frame */}
               {drawingMode && freezeFrameUrl && (
                 <img
                   src={freezeFrameUrl}
                   className="absolute inset-0 w-full h-full object-contain"
                   alt="Freeze frame"
+                  style={{ zIndex: 10 }}
+                />
+              )}
+              {/* Playback freeze frame - shows captured frame during annotation display */}
+              {playbackFreezeActive && playbackFreezeUrl && (
+                <img
+                  src={playbackFreezeUrl}
+                  className="absolute inset-0 w-full h-full object-contain"
+                  alt="Playback freeze frame"
                   style={{ zIndex: 10 }}
                 />
               )}
