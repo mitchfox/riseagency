@@ -651,12 +651,10 @@ export const AnnotationCanvas = ({
     const el = elements.find(e => e.id === selectedId);
     if (!el) return null;
 
-    const handleSize = 1.4; // percentage - larger for easier grabbing
-    const hitSize = 2.2; // even larger invisible hit area
+    const handleSize = 8; // pixels via SVG units - much more visible
+    const hitSize = 20; // large hit target in pixels
     type HandleDef = { handle: 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w'; x: number; y: number; cursor: string };
     let handles: HandleDef[] = [];
-
-    // Also render a bounding box outline
     let bbox: { x: number; y: number; w: number; h: number } | null = null;
 
     if (el.type === 'rect' && el.width !== undefined && el.height !== undefined) {
@@ -690,30 +688,44 @@ export const AnnotationCanvas = ({
         { handle: 'nw', x: el.x, y: el.y, cursor: 'move' },
         { handle: 'se', x: el.x2, y: el.y2, cursor: 'move' },
       ];
+    } else if (el.type === 'text') {
+      // Text: show a single handle below-right for font scaling
+      handles = [
+        { handle: 'se', x: el.x + 5, y: el.y + 2, cursor: 'nwse-resize' },
+      ];
     }
 
     if (handles.length === 0) return null;
 
+    // We use pixel-based handle sizes via viewBox-relative sizing
+    // Get SVG dimensions for converting % to pixels
+    const svgRect = svgRef.current?.getBoundingClientRect();
+    const svgW = svgRect?.width || 1;
+    const svgH = svgRect?.height || 1;
+    const hSizePctX = (handleSize / svgW) * 100;
+    const hSizePctY = (handleSize / svgH) * 100;
+    const hitSizePctX = (hitSize / svgW) * 100;
+    const hitSizePctY = (hitSize / svgH) * 100;
+
     return (
       <g>
-        {/* Bounding box outline */}
         {bbox && (
           <rect
             x={`${bbox.x}%`} y={`${bbox.y}%`}
             width={`${bbox.w}%`} height={`${bbox.h}%`}
-            fill="none" stroke="hsl(var(--primary))" strokeWidth={1}
-            strokeDasharray="4 2" opacity={0.7}
+            fill="none" stroke="#a855f7" strokeWidth={1.5}
+            strokeDasharray="6 3" opacity={0.8}
             pointerEvents="none"
           />
         )}
         {handles.map(h => (
           <g key={h.handle}>
-            {/* Invisible larger hit area */}
+            {/* Large invisible hit area for easy grabbing */}
             <rect
-              x={`${h.x - hitSize / 2}%`}
-              y={`${h.y - hitSize / 2}%`}
-              width={`${hitSize}%`}
-              height={`${hitSize}%`}
+              x={`${h.x - hitSizePctX / 2}%`}
+              y={`${h.y - hitSizePctY / 2}%`}
+              width={`${hitSizePctX}%`}
+              height={`${hitSizePctY}%`}
               fill="transparent"
               style={{ cursor: h.cursor }}
               onMouseDown={(e) => {
@@ -726,17 +738,17 @@ export const AnnotationCanvas = ({
                 });
               }}
             />
-            {/* Visible handle */}
+            {/* Visible handle - white square with purple border */}
             <rect
-              x={`${h.x - handleSize / 2}%`}
-              y={`${h.y - handleSize / 2}%`}
-              width={`${handleSize}%`}
-              height={`${handleSize}%`}
-              rx="2" ry="2"
+              x={`${h.x - hSizePctX / 2}%`}
+              y={`${h.y - hSizePctY / 2}%`}
+              width={`${hSizePctX}%`}
+              height={`${hSizePctY}%`}
+              rx="1" ry="1"
               fill="white"
-              stroke="hsl(var(--primary))"
+              stroke="#a855f7"
               strokeWidth={2}
-              style={{ cursor: h.cursor, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}
+              style={{ cursor: h.cursor, filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))' }}
               pointerEvents="none"
             />
           </g>
