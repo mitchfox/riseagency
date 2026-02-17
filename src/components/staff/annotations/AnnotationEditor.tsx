@@ -84,8 +84,8 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
 
   const activeKlip = klips.find(k => k.id === activeKlipId);
   const klipOffset = activeKlip ? currentTime - activeKlip.startTime : 0;
-  // In drawing mode, use the frozen timestamp for visibility so new elements show immediately
-  const effectiveOffset = drawingMode ? klipOffset : klipOffset;
+  // In drawing mode, use the frozen drawingTimestamp for visibility so the correct elements show
+  const effectiveOffset = drawingMode && drawingTimestamp !== null ? drawingTimestamp - (activeKlip?.startTime ?? 0) : klipOffset;
 
   const allElements = activeKlip?.elements || [];
 
