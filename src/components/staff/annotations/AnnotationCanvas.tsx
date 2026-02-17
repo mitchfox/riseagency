@@ -16,6 +16,7 @@ interface AnnotationCanvasProps {
   linkSource: string | null;
   setLinkSource: (id: string | null) => void;
   klipOffset?: number;
+  onToolUsed?: () => void;
 }
 
 export interface TrackerState {
@@ -29,6 +30,7 @@ export interface TrackerState {
 export const AnnotationCanvas = ({
   elements, setElements, activeTool, activeColor, strokeWidth,
   selectedId, setSelectedId, videoRef, trackers, setTrackers, linkSource, setLinkSource, klipOffset = 0,
+  onToolUsed,
 }: AnnotationCanvasProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [drawing, setDrawing] = useState(false);
@@ -82,6 +84,7 @@ export const AnnotationCanvas = ({
         id: crypto.randomUUID(), type: 'text', x: pos.x, y: pos.y,
         color: activeColor, strokeWidth, text, fontSize: 3, appearAt: klipOffset, ...defaultTiming,
       }]);
+      onToolUsed?.();
       return;
     }
 
@@ -92,6 +95,7 @@ export const AnnotationCanvas = ({
         id: crypto.randomUUID(), type: 'player-marker', x: pos.x, y: pos.y,
         color: activeColor, strokeWidth, number: parseInt(num) || 0, radius: 2.5, appearAt: klipOffset, ...defaultTiming,
       }]);
+      onToolUsed?.();
       return;
     }
 
@@ -107,6 +111,7 @@ export const AnnotationCanvas = ({
         id: trackerId, elementId, color: activeColor, active: true,
         positions: [{ time, x: pos.x, y: pos.y }],
       }]);
+      onToolUsed?.();
       return;
     }
 
@@ -138,6 +143,7 @@ export const AnnotationCanvas = ({
         color: '#ffffff', strokeWidth: 2, radius: 8, opacity: 1,
         zoomLevel: 2, appearAt: klipOffset, ...defaultTiming,
       }]);
+      onToolUsed?.();
       return;
     }
 
@@ -175,12 +181,15 @@ export const AnnotationCanvas = ({
     switch (activeTool) {
       case 'line':
         setElements(prev => [...prev, { ...base, type: 'line' as const, x: startPos.x, y: startPos.y, x2: currentPos.x, y2: currentPos.y }]);
+        onToolUsed?.();
         break;
       case 'arrow':
         setElements(prev => [...prev, { ...base, type: 'arrow' as const, x: startPos.x, y: startPos.y, x2: currentPos.x, y2: currentPos.y }]);
+        onToolUsed?.();
         break;
       case 'curve':
         setElements(prev => [...prev, { ...base, type: 'curve' as const, x: startPos.x, y: startPos.y, x2: currentPos.x, y2: currentPos.y }]);
+        onToolUsed?.();
         break;
       case 'rect':
         setElements(prev => [...prev, {
@@ -188,15 +197,23 @@ export const AnnotationCanvas = ({
           x: Math.min(startPos.x, currentPos.x), y: Math.min(startPos.y, currentPos.y),
           width: Math.abs(currentPos.x - startPos.x), height: Math.abs(currentPos.y - startPos.y),
         }]);
+        onToolUsed?.();
         break;
       case 'circle': {
-        const r = Math.sqrt(Math.pow(currentPos.x - startPos.x, 2) + Math.pow(currentPos.y - startPos.y, 2));
-        setElements(prev => [...prev, { ...base, type: 'circle' as const, x: startPos.x, y: startPos.y, radius: r }]);
+        // Draw as ellipse bounded by drag rect, rendered as circle using average radius
+        const cx = (startPos.x + currentPos.x) / 2;
+        const cy = (startPos.y + currentPos.y) / 2;
+        const r = Math.max(Math.abs(currentPos.x - startPos.x), Math.abs(currentPos.y - startPos.y)) / 2;
+        setElements(prev => [...prev, { ...base, type: 'circle' as const, x: cx, y: cy, radius: r }]);
+        onToolUsed?.();
         break;
       }
       case 'spotlight': {
-        const sr = Math.sqrt(Math.pow(currentPos.x - startPos.x, 2) + Math.pow(currentPos.y - startPos.y, 2));
-        setElements(prev => [...prev, { ...base, type: 'spotlight' as const, x: startPos.x, y: startPos.y, radius: sr, color: '#ffff00', opacity: 0.3 }]);
+        const cx = (startPos.x + currentPos.x) / 2;
+        const cy = (startPos.y + currentPos.y) / 2;
+        const sr = Math.max(Math.abs(currentPos.x - startPos.x), Math.abs(currentPos.y - startPos.y)) / 2;
+        setElements(prev => [...prev, { ...base, type: 'spotlight' as const, x: cx, y: cy, radius: sr, color: '#ffff00', opacity: 0.3 }]);
+        onToolUsed?.();
         break;
       }
       case 'vision-cone': {
@@ -208,16 +225,19 @@ export const AnnotationCanvas = ({
           ...base, type: 'vision-cone' as const, x: startPos.x, y: startPos.y,
           coneLength, angle, opacity: 0.25,
         }]);
+        onToolUsed?.();
         break;
       }
       case 'distance':
         setElements(prev => [...prev, {
           ...base, type: 'distance' as const, x: startPos.x, y: startPos.y, x2: currentPos.x, y2: currentPos.y,
         }]);
+        onToolUsed?.();
         break;
       case 'freehand':
         if (freehandPoints.length > 2) {
           setElements(prev => [...prev, { ...base, type: 'freehand' as const, x: 0, y: 0, points: freehandPoints }]);
+          onToolUsed?.();
         }
         setFreehandPoints([]);
         break;
@@ -516,8 +536,10 @@ export const AnnotationCanvas = ({
       }
       case 'circle':
       case 'spotlight': {
-        const r = Math.sqrt(Math.pow(currentPos.x - startPos.x, 2) + Math.pow(currentPos.y - startPos.y, 2));
-        return <circle cx={`${startPos.x}%`} cy={`${startPos.y}%`} r={`${r}%`}
+        const cx = (startPos.x + currentPos.x) / 2;
+        const cy = (startPos.y + currentPos.y) / 2;
+        const r = Math.max(Math.abs(currentPos.x - startPos.x), Math.abs(currentPos.y - startPos.y)) / 2;
+        return <circle cx={`${cx}%`} cy={`${cy}%`} r={`${r}%`}
           stroke={activeTool === 'spotlight' ? '#ffff00' : activeColor} strokeWidth={strokeWidth}
           fill={activeTool === 'spotlight' ? '#ffff00' : 'none'} fillOpacity={activeTool === 'spotlight' ? 0.15 : 0}
           strokeDasharray="4" opacity={0.7} />;
@@ -560,7 +582,7 @@ export const AnnotationCanvas = ({
     <svg
       ref={svgRef}
       className="absolute inset-0 w-full h-full"
-      style={{ cursor: activeTool === 'select' ? 'default' : 'crosshair' }}
+      style={{ cursor: activeTool === 'select' ? 'default' : 'crosshair', zIndex: 20 }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
