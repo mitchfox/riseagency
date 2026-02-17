@@ -90,13 +90,19 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const allElements = activeKlip?.elements || [];
 
   const visibleElements = useMemo(() => {
-    return allElements.filter(el => {
-      const start = el.appearAt;
-      const end = el.duration !== undefined ? start + el.duration : Infinity;
-      return effectiveOffset >= start && effectiveOffset < end;
-    }).map(el => {
-      // During playback freeze, show at full opacity (skip animateIn/animateOut)
-      if (playbackFreezeActive) {
+    // In drawing mode, show all elements at the drawing timestamp offset
+    // so newly added and existing elements are always visible and editable
+    const filtered = drawingMode
+      ? allElements
+      : allElements.filter(el => {
+          const start = el.appearAt;
+          const end = el.duration !== undefined ? start + el.duration : Infinity;
+          return effectiveOffset >= start && effectiveOffset < end;
+        });
+
+    return filtered.map(el => {
+      // During playback freeze or drawing mode, show at full opacity
+      if (playbackFreezeActive || drawingMode) {
         return { ...el, opacity: el.opacity ?? 1 };
       }
       if (el.keyframes && el.keyframes.length > 0) {
@@ -119,7 +125,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       }
       return el;
     });
-  }, [allElements, effectiveOffset, playbackFreezeActive]);
+  }, [allElements, effectiveOffset, playbackFreezeActive, drawingMode]);
 
   const hasVisibleAnnotations = visibleElements.length > 0 && !drawingMode;
 
