@@ -316,6 +316,8 @@ const Staff = () => {
   const [tabOverflowOpen, setTabOverflowOpen] = useState(false);
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
   const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
+  const dragStartXRef = useRef<number>(0);
+  const isDragConfirmedRef = useRef(false);
 
   // Load saved email and remember me preference on mount
   useEffect(() => {
@@ -985,7 +987,7 @@ const Staff = () => {
           <div className="flex items-center gap-1.5 overflow-hidden min-w-0 mr-4"
             style={{ maxWidth: 'calc(50% - 60px)' }}
             onDragOver={(e) => e.preventDefault()}
-            onDragEnd={() => { setDraggingTabId(null); setDragOverTabId(null); }}
+            onDragEnd={() => { setDraggingTabId(null); setDragOverTabId(null); isDragConfirmedRef.current = false; }}
           >
             {(() => {
               const openTabs: string[] = (() => { try { return JSON.parse(localStorage.getItem('staff_open_tabs') || '[]'); } catch { return []; } })();
@@ -1028,22 +1030,28 @@ const Staff = () => {
                       >
                         <Popover>
                           <PopoverTrigger asChild>
-                            <button
+                          <button
                               draggable
                               onDragStart={(e) => {
                                 e.dataTransfer.setData('text/plain', tabId);
                                 e.dataTransfer.effectAllowed = 'move';
+                                dragStartXRef.current = e.clientX;
+                                isDragConfirmedRef.current = false;
                                 setDraggingTabId(tabId);
                               }}
                               onDragOver={(e) => {
                                 e.preventDefault();
                                 e.dataTransfer.dropEffect = 'move';
+                                // Only consider reorder after dragging 30px+
+                                if (!isDragConfirmedRef.current && Math.abs(e.clientX - dragStartXRef.current) < 30) return;
+                                isDragConfirmedRef.current = true;
                                 if (dragOverTabId !== tabId) setDragOverTabId(tabId);
                               }}
                               onDrop={(e) => {
                                 e.preventDefault();
                                 const draggedId = e.dataTransfer.getData('text/plain');
-                                if (draggedId === tabId) { setDraggingTabId(null); setDragOverTabId(null); return; }
+                                if (draggedId === tabId) { setDraggingTabId(null); setDragOverTabId(null); isDragConfirmedRef.current = false; return; }
+                                if (!isDragConfirmedRef.current) { setDraggingTabId(null); setDragOverTabId(null); return; }
                                 const updated = [...openTabs];
                                 const fromIdx = updated.indexOf(draggedId);
                                 const toIdx = updated.indexOf(tabId);
@@ -1053,6 +1061,7 @@ const Staff = () => {
                                 localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
                                 setDraggingTabId(null);
                                 setDragOverTabId(null);
+                                isDragConfirmedRef.current = false;
                                 setExpandedSection(prev => prev);
                               }}
                               onClick={() => handleSectionToggle(tabId as any)}
@@ -1120,7 +1129,7 @@ const Staff = () => {
                   {/* Add tab button — navigates to overview */}
                   <button
                     className="flex items-center justify-center w-7 h-7 rounded-full border border-dashed border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40 shrink-0 transition-colors"
-                    onClick={() => handleSectionToggle('overview')}
+                    onClick={() => addSectionAsTab('overview')}
                     title="Open new tab"
                   >
                     <Plus className="w-3.5 h-3.5" />
