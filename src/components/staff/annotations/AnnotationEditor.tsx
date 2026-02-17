@@ -41,9 +41,9 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     try { return localStorage.getItem('annotation-last-colour') || '#ff0000'; } catch { return '#ff0000'; }
   });
   const [strokeWidth, setStrokeWidth] = useState(() => {
-    try { return parseInt(localStorage.getItem('annotation-last-stroke') || '2') || 2; } catch { return 2; }
+    try { return parseInt(localStorage.getItem('annotation-last-stroke') || '1') || 1; } catch { return 1; }
   });
-  const [fillOpacity, setFillOpacity] = useState(0.3);
+  const [fillOpacity, setFillOpacity] = useState(0.15);
 
   // Persist colour and stroke changes
   const handleSetActiveColor = useCallback((c: string) => {
