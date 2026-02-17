@@ -19,7 +19,8 @@ export interface ElementKeyframe {
 export interface AnnotationElement {
   id: string;
   type: 'line' | 'arrow' | 'curve' | 'rect' | 'circle' | 'spotlight' | 'text' | 'freehand'
-    | 'player-marker' | 'vision-cone' | 'distance' | 'magnifier' | 'linked-line';
+    | 'player-marker' | 'vision-cone' | 'distance' | 'magnifier' | 'linked-line'
+    | 'semi-circle' | 'point';
   x: number;
   y: number;
   x2?: number;
@@ -32,10 +33,12 @@ export interface AnnotationElement {
   text?: string;
   fontSize?: number;
   opacity?: number;
+  fillOpacity?: number;
   points?: { x: number; y: number }[];
   number?: number;
   angle?: number;
   coneLength?: number;
+  coneSpread?: number;
   linkedTo?: string;
   zoomLevel?: number;
 

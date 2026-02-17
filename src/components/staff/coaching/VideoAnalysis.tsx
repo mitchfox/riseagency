@@ -767,11 +767,10 @@ export const VideoAnalysis = () => {
                     activeTool="select"
                     activeColor="#ff0000"
                     strokeWidth={3}
+                    fillOpacity={0}
                     selectedId={null}
                     setSelectedId={() => {}}
                     videoRef={videoRef}
-                    trackers={[]}
-                    setTrackers={() => {}}
                     linkSource={null}
                     setLinkSource={() => {}}
                     klipOffset={offset}

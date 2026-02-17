@@ -8,11 +8,10 @@ interface AnnotationCanvasProps {
   activeTool: AnnotationTool;
   activeColor: string;
   strokeWidth: number;
+  fillOpacity: number;
   selectedId: string | null;
   setSelectedId: (id: string | null) => void;
   videoRef: React.RefObject<HTMLVideoElement>;
-  trackers: TrackerState[];
-  setTrackers: React.Dispatch<React.SetStateAction<TrackerState[]>>;
   linkSource: string | null;
   setLinkSource: (id: string | null) => void;
   klipOffset?: number;
@@ -20,24 +19,15 @@ interface AnnotationCanvasProps {
   isDrawingMode?: boolean;
 }
 
-export interface TrackerState {
-  id: string;
-  elementId: string;
-  color: string;
-  positions: { time: number; x: number; y: number }[];
-  active: boolean;
-}
-
 export const AnnotationCanvas = ({
-  elements, setElements, activeTool, activeColor, strokeWidth,
-  selectedId, setSelectedId, videoRef, trackers, setTrackers, linkSource, setLinkSource, klipOffset = 0,
+  elements, setElements, activeTool, activeColor, strokeWidth, fillOpacity,
+  selectedId, setSelectedId, videoRef, linkSource, setLinkSource, klipOffset = 0,
   onToolUsed, isDrawingMode = false,
 }: AnnotationCanvasProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [drawing, setDrawing] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [currentPos, setCurrentPos] = useState({ x: 0, y: 0 });
-  const [freehandPoints, setFreehandPoints] = useState<{ x: number; y: number }[]>([]);
   const [dragging, setDragging] = useState<{ id: string; offX: number; offY: number } | null>(null);
   const [resizing, setResizing] = useState<{
     id: string;
@@ -84,17 +74,6 @@ export const AnnotationCanvas = ({
       return;
     }
 
-    if (activeTool === 'text') {
-      const text = prompt('Enter text:');
-      if (!text) return;
-      setElements(prev => [...prev, {
-        id: crypto.randomUUID(), type: 'text', x: pos.x, y: pos.y,
-        color: activeColor, strokeWidth, text, fontSize: 3, appearAt: klipOffset, ...defaultTiming,
-      }]);
-      onToolUsed?.();
-      return;
-    }
-
     if (activeTool === 'player-marker') {
       const num = prompt('Player number:');
       if (!num) return;
@@ -106,17 +85,10 @@ export const AnnotationCanvas = ({
       return;
     }
 
-    if (activeTool === 'tracker') {
-      const trackerId = crypto.randomUUID();
-      const elementId = crypto.randomUUID();
-      const time = videoRef.current?.currentTime || 0;
+    if (activeTool === 'point') {
       setElements(prev => [...prev, {
-        id: elementId, type: 'circle', x: pos.x, y: pos.y,
-        color: activeColor, strokeWidth: 2, radius: 1.5, opacity: 0.9, appearAt: klipOffset, ...defaultTiming,
-      }]);
-      setTrackers(prev => [...prev, {
-        id: trackerId, elementId, color: activeColor, active: true,
-        positions: [{ time, x: pos.x, y: pos.y }],
+        id: crypto.randomUUID(), type: 'point', x: pos.x, y: pos.y,
+        color: activeColor, strokeWidth, radius: 1, appearAt: klipOffset, ...defaultTiming,
       }]);
       onToolUsed?.();
       return;
@@ -148,7 +120,7 @@ export const AnnotationCanvas = ({
       setElements(prev => [...prev, {
         id: crypto.randomUUID(), type: 'magnifier', x: pos.x, y: pos.y,
         color: '#ffffff', strokeWidth: 2, radius: 8, opacity: 1,
-        zoomLevel: 2, appearAt: klipOffset, ...defaultTiming,
+        zoomLevel: 2, fillOpacity: 0.9, appearAt: klipOffset, ...defaultTiming,
       }]);
       onToolUsed?.();
       return;
@@ -157,10 +129,7 @@ export const AnnotationCanvas = ({
     setDrawing(true);
     setStartPos(pos);
     setCurrentPos(pos);
-    if (activeTool === 'freehand') {
-      setFreehandPoints([pos]);
-    }
-  }, [activeTool, activeColor, strokeWidth, elements, getPos, setElements, setSelectedId, trackers, linkSource, setLinkSource, setTrackers, videoRef, klipOffset]);
+  }, [activeTool, activeColor, strokeWidth, fillOpacity, elements, getPos, setElements, setSelectedId, linkSource, setLinkSource, videoRef, klipOffset]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const pos = getPos(e);
@@ -173,8 +142,8 @@ export const AnnotationCanvas = ({
       setElements(prev => prev.map(el => {
         if (el.id !== resizing.id) return el;
 
-        // Circle/spotlight/player-marker: resize radius
-        if (el.radius !== undefined && (el.type === 'circle' || el.type === 'spotlight' || el.type === 'player-marker')) {
+        // Circle/spotlight/player-marker/semi-circle: resize radius
+        if (el.radius !== undefined && (el.type === 'circle' || el.type === 'spotlight' || el.type === 'player-marker' || el.type === 'semi-circle')) {
           const delta = h.includes('e') || h.includes('s') ? Math.max(dx, dy) : Math.min(dx, dy);
           const isCorner = h.length === 2;
           const scaleFactor = isCorner ? delta : (h === 'e' || h === 'w' ? dx : dy);
@@ -216,11 +185,6 @@ export const AnnotationCanvas = ({
           }
         }
 
-        // Text: resize font
-        if (el.type === 'text') {
-          return { ...el, fontSize: Math.max(1, (s.fontSize ?? 3) + dy * 0.1) };
-        }
-
         return el;
       }));
       return;
@@ -233,9 +197,6 @@ export const AnnotationCanvas = ({
     }
     if (!drawing) return;
     setCurrentPos(pos);
-    if (activeTool === 'freehand') {
-      setFreehandPoints(prev => [...prev, pos]);
-    }
   }, [drawing, dragging, resizing, activeTool, getPos, setElements]);
 
   const handleMouseUp = useCallback(() => {
@@ -256,24 +217,32 @@ export const AnnotationCanvas = ({
         setElements(prev => [...prev, { ...base, type: 'arrow' as const, x: startPos.x, y: startPos.y, x2: currentPos.x, y2: currentPos.y }]);
         onToolUsed?.();
         break;
-      case 'curve':
-        setElements(prev => [...prev, { ...base, type: 'curve' as const, x: startPos.x, y: startPos.y, x2: currentPos.x, y2: currentPos.y }]);
-        onToolUsed?.();
-        break;
       case 'rect':
         setElements(prev => [...prev, {
           ...base, type: 'rect' as const,
           x: Math.min(startPos.x, currentPos.x), y: Math.min(startPos.y, currentPos.y),
           width: Math.abs(currentPos.x - startPos.x), height: Math.abs(currentPos.y - startPos.y),
+          fillOpacity,
         }]);
         onToolUsed?.();
         break;
       case 'circle': {
-        // Draw as ellipse bounded by drag rect, rendered as circle using average radius
         const cx = (startPos.x + currentPos.x) / 2;
         const cy = (startPos.y + currentPos.y) / 2;
         const r = Math.max(Math.abs(currentPos.x - startPos.x), Math.abs(currentPos.y - startPos.y)) / 2;
-        setElements(prev => [...prev, { ...base, type: 'circle' as const, x: cx, y: cy, radius: r }]);
+        setElements(prev => [...prev, { ...base, type: 'circle' as const, x: cx, y: cy, radius: r, fillOpacity }]);
+        onToolUsed?.();
+        break;
+      }
+      case 'semi-circle': {
+        const cx = (startPos.x + currentPos.x) / 2;
+        const cy = (startPos.y + currentPos.y) / 2;
+        const sr = Math.max(Math.abs(currentPos.x - startPos.x), Math.abs(currentPos.y - startPos.y)) / 2;
+        setElements(prev => [...prev, {
+          ...base, type: 'semi-circle' as const, x: cx, y: cy, radius: sr || 2,
+          fillOpacity: fillOpacity || 0.5,
+          angle: 180, // faces down by default (placed under a player)
+        }]);
         onToolUsed?.();
         break;
       }
@@ -281,7 +250,10 @@ export const AnnotationCanvas = ({
         const cx = (startPos.x + currentPos.x) / 2;
         const cy = (startPos.y + currentPos.y) / 2;
         const sr = Math.max(Math.abs(currentPos.x - startPos.x), Math.abs(currentPos.y - startPos.y)) / 2;
-        setElements(prev => [...prev, { ...base, type: 'spotlight' as const, x: cx, y: cy, radius: sr, color: '#ffff00', opacity: 0.3 }]);
+        setElements(prev => [...prev, {
+          ...base, type: 'spotlight' as const, x: cx, y: cy, radius: sr || 5,
+          color: '#ffff00', fillOpacity: fillOpacity || 0.3,
+        }]);
         onToolUsed?.();
         break;
       }
@@ -292,7 +264,8 @@ export const AnnotationCanvas = ({
         const angle = Math.atan2(dy, dx) * (180 / Math.PI);
         setElements(prev => [...prev, {
           ...base, type: 'vision-cone' as const, x: startPos.x, y: startPos.y,
-          coneLength, angle, opacity: 0.25,
+          coneLength: coneLength || 15, angle, coneSpread: 40,
+          fillOpacity: fillOpacity || 0.2,
         }]);
         onToolUsed?.();
         break;
@@ -303,26 +276,25 @@ export const AnnotationCanvas = ({
         }]);
         onToolUsed?.();
         break;
-      case 'freehand':
-        if (freehandPoints.length > 2) {
-          setElements(prev => [...prev, { ...base, type: 'freehand' as const, x: 0, y: 0, points: freehandPoints }]);
-          onToolUsed?.();
-        }
-        setFreehandPoints([]);
-        break;
     }
-  }, [drawing, dragging, activeTool, startPos, currentPos, activeColor, strokeWidth, freehandPoints, setElements, klipOffset]);
+  }, [drawing, dragging, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, klipOffset]);
 
   // Compute animation CSS for elements
   const getAnimStyle = (el: AnnotationElement): React.CSSProperties => {
     const style: React.CSSProperties = { cursor: 'pointer' };
-    
-    // Animate opacity
     if (el.opacity !== undefined && el.opacity < 1) {
       style.opacity = el.opacity;
     }
-    
     return style;
+  };
+
+  // Choose contrasting text colour for player marker
+  const getContrastColor = (hex: string): string => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? '#000000' : '#ffffff';
   };
 
   const renderElement = (el: AnnotationElement) => {
@@ -332,7 +304,6 @@ export const AnnotationCanvas = ({
       ? { ...baseStyle, filter: 'drop-shadow(0 0 4px rgba(168,85,247,0.9))' }
       : baseStyle;
 
-    // In drawing mode, skip all SVG animations so resizing updates instantly
     const anim = !isDrawingMode;
 
     switch (el.type) {
@@ -365,23 +336,12 @@ export const AnnotationCanvas = ({
           </g>
         );
       }
-      case 'curve': {
-        const midX = (el.x + (el.x2 || 0)) / 2;
-        const midY = Math.min(el.y, el.y2 || 0) - 10;
-        const pathD = `M ${el.x}% ${el.y}% Q ${midX}% ${midY}% ${el.x2}% ${el.y2}%`;
-        return (
-          <path key={el.id} data-element-id={el.id}
-            d={pathD}
-            stroke={el.color} strokeWidth={el.strokeWidth} fill="none" strokeLinecap="round"
-            style={selStyle}
-          />
-        );
-      }
       case 'rect':
         return (
           <rect key={el.id} data-element-id={el.id}
             x={`${el.x}%`} y={`${el.y}%`} width={`${el.width}%`} height={`${el.height}%`}
-            stroke={el.color} strokeWidth={el.strokeWidth} fill="none"
+            stroke={el.color} strokeWidth={el.strokeWidth}
+            fill={el.fillOpacity ? el.color : 'none'} fillOpacity={el.fillOpacity || 0}
             style={selStyle}
           >
             {anim && <animate attributeName="stroke-dashoffset" from={`${((el.width || 0) + (el.height || 0)) * 4}`} to="0" dur="0.4s" fill="freeze" />}
@@ -392,49 +352,103 @@ export const AnnotationCanvas = ({
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <circle
               cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius}%`}
-              stroke={el.color} strokeWidth={el.strokeWidth} fill="none"
+              stroke={el.color} strokeWidth={el.strokeWidth}
+              fill={el.fillOpacity ? el.color : 'none'} fillOpacity={el.fillOpacity || 0}
             >
               {anim && <animate attributeName="r" from="0" to={`${el.radius}%`} dur="0.3s" fill="freeze" />}
-              {anim && <animate attributeName="opacity" from="0" to="1" dur="0.3s" fill="freeze" />}
             </circle>
           </g>
         );
-      case 'spotlight':
+      case 'semi-circle': {
+        // Semi-circle disc: a half-circle that can be placed under players
+        const r = el.radius || 2;
+        const rotation = el.angle || 180;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
-            {/* Dark overlay with cut-out circle for spotlight effect */}
-            <circle
-              cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius}%`}
-              fill={el.color} fillOpacity={el.opacity || 0.3} stroke={el.color} strokeWidth={2} strokeOpacity={0.6}
+            <path
+              d={`M ${el.x - r}% ${el.y}% A ${r} ${r} 0 0 1 ${el.x + r}% ${el.y}% Z`}
+              fill={el.color} fillOpacity={el.fillOpacity || 0.5}
+              stroke={el.color} strokeWidth={el.strokeWidth} strokeOpacity={0.8}
+              transform={`rotate(${rotation - 180}, ${el.x}%, ${el.y}%)`}
+            >
+              {anim && <animate attributeName="fill-opacity" from="0" to={String(el.fillOpacity || 0.5)} dur="0.3s" fill="freeze" />}
+            </path>
+          </g>
+        );
+      }
+      case 'spotlight': {
+        // Spotlight: darkens surrounding area, brightens inside circle
+        const r = el.radius || 5;
+        const maskId = `spot-mask-${el.id}`;
+        return (
+          <g key={el.id} data-element-id={el.id} style={selStyle}>
+            <defs>
+              <mask id={maskId}>
+                <rect x="0" y="0" width="100%" height="100%" fill="white" />
+                <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`} fill="black" />
+              </mask>
+            </defs>
+            {/* Dark overlay everywhere except the spotlight area */}
+            <rect x="0" y="0" width="100%" height="100%" fill="black" fillOpacity={el.fillOpacity || 0.3} mask={`url(#${maskId})`} />
+            {/* Bright ring around the spotlight edge */}
+            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`}
+              fill="none" stroke={el.color} strokeWidth={2} strokeOpacity={0.6}
             />
-            {/* Glow ring */}
-            <circle
-              cx={`${el.x}%`} cy={`${el.y}%`} r={`${(el.radius || 5) * 1.1}%`}
+            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r * 1.05}%`}
               fill="none" stroke={el.color} strokeWidth={1} strokeOpacity={0.3}
             />
           </g>
         );
+      }
       case 'vision-cone': {
+        // Proper vision cone: fan/wedge shape from a point
         const len = el.coneLength || 15;
         const angle = el.angle || 0;
-        const spread = 30;
-        const rad1 = ((angle - spread) * Math.PI) / 180;
-        const rad2 = ((angle + spread) * Math.PI) / 180;
+        const spread = el.coneSpread || 40;
+        const halfSpread = spread / 2;
+        const rad1 = ((angle - halfSpread) * Math.PI) / 180;
+        const rad2 = ((angle + halfSpread) * Math.PI) / 180;
+
+        // Calculate arc points in percentage coordinates
         const x1 = el.x + len * Math.cos(rad1);
         const y1 = el.y + len * Math.sin(rad1);
         const x2 = el.x + len * Math.cos(rad2);
         const y2 = el.y + len * Math.sin(rad2);
+
+        // For the arc, we need to determine if it's a large arc (> 180 degrees)
+        const largeArc = spread > 180 ? 1 : 0;
+
+        // Create gradient-like transparency with multiple concentric arcs
+        const gradientId = `vc-grad-${el.id}`;
+
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
+            <defs>
+              <radialGradient id={gradientId}
+                gradientUnits="userSpaceOnUse"
+                cx={`${el.x}%`} cy={`${el.y}%`} r={`${len}%`}>
+                <stop offset="0%" stopColor={el.color} stopOpacity={el.fillOpacity || 0.3} />
+                <stop offset="70%" stopColor={el.color} stopOpacity={(el.fillOpacity || 0.3) * 0.6} />
+                <stop offset="100%" stopColor={el.color} stopOpacity={0.05} />
+              </radialGradient>
+            </defs>
+            {/* Vision cone wedge */}
             <path
-              d={`M ${el.x}% ${el.y}% L ${x1}% ${y1}% A ${len} ${len} 0 0 1 ${x2}% ${y2}% Z`}
-              fill={el.color} fillOpacity={el.opacity || 0.25} stroke={el.color} strokeWidth={1} strokeOpacity={0.5}
+              d={`M ${el.x}% ${el.y}% L ${x1}% ${y1}% A ${len} ${len} 0 ${largeArc} 1 ${x2}% ${y2}% Z`}
+              fill={`url(#${gradientId})`}
+              stroke={el.color} strokeWidth={1} strokeOpacity={0.4}
             >
-              {anim && <animate attributeName="fill-opacity" from="0" to={String(el.opacity || 0.25)} dur="0.4s" fill="freeze" />}
+              {anim && <animate attributeName="opacity" from="0" to="1" dur="0.4s" fill="freeze" />}
             </path>
-            <circle cx={`${el.x}%`} cy={`${el.y}%`} r="0.6%" fill={el.color}>
-              {anim && <animate attributeName="r" from="0" to="0.6%" dur="0.2s" fill="freeze" />}
+            {/* Origin dot */}
+            <circle cx={`${el.x}%`} cy={`${el.y}%`} r="0.8%" fill={el.color} fillOpacity={0.8}>
+              {anim && <animate attributeName="r" from="0" to="0.8%" dur="0.2s" fill="freeze" />}
             </circle>
+            {/* Edge lines for clarity */}
+            <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${x1}%`} y2={`${y1}%`}
+              stroke={el.color} strokeWidth={1} strokeOpacity={0.3} strokeDasharray="3 2" />
+            <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${x2}%`} y2={`${y2}%`}
+              stroke={el.color} strokeWidth={1} strokeOpacity={0.3} strokeDasharray="3 2" />
           </g>
         );
       }
@@ -527,45 +541,27 @@ export const AnnotationCanvas = ({
           </g>
         );
       }
-      case 'text':
-        return (
-          <g key={el.id} data-element-id={el.id} style={selStyle}>
-            {/* Background for visibility */}
-            <text
-              x={`${el.x}%`} y={`${el.y}%`} fill="black"
-              fontSize={`${el.fontSize || 3}%`} fontFamily="sans-serif" fontWeight="bold"
-              stroke="black" strokeWidth={3} strokeOpacity={0.5}
-              paintOrder="stroke"
-            >
-              {el.text}
-            </text>
-            <text
-              x={`${el.x}%`} y={`${el.y}%`} fill={el.color}
-              fontSize={`${el.fontSize || 3}%`} fontFamily="sans-serif" fontWeight="bold"
-            >
-              {el.text}
-            </text>
-          </g>
-        );
-      case 'player-marker':
+      case 'player-marker': {
+        const textColor = getContrastColor(el.color);
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius || 2.5}%`} fill={el.color} fillOpacity={0.85} stroke="white" strokeWidth={1.5}>
               {anim && <animate attributeName="r" from="0" to={`${el.radius || 2.5}%`} dur="0.25s" fill="freeze" calcMode="spline" keySplines="0.34 1.56 0.64 1" />}
             </circle>
-            <text x={`${el.x}%`} y={`${el.y}%`} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="2.2%" fontWeight="bold">
+            <text x={`${el.x}%`} y={`${el.y}%`} fill={textColor} textAnchor="middle" dominantBaseline="central" fontSize="2.2%" fontWeight="bold">
               {el.number}
             </text>
           </g>
         );
-      case 'freehand':
-        if (!el.points || el.points.length < 2) return null;
-        const fhD = el.points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x}% ${p.y}%`).join(' ');
+      }
+      case 'point':
         return (
-          <path key={el.id} data-element-id={el.id}
-            d={fhD} stroke={el.color} strokeWidth={el.strokeWidth} fill="none" strokeLinecap="round" strokeLinejoin="round"
-            style={selStyle}
-          />
+          <g key={el.id} data-element-id={el.id} style={selStyle}>
+            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius || 1}%`} fill={el.color} fillOpacity={0.9}
+              stroke="white" strokeWidth={1.5}>
+              {anim && <animate attributeName="r" from="0" to={`${el.radius || 1}%`} dur="0.2s" fill="freeze" />}
+            </circle>
+          </g>
         );
       default:
         return null;
@@ -584,50 +580,36 @@ export const AnnotationCanvas = ({
         const x = Math.min(startPos.x, currentPos.x), y = Math.min(startPos.y, currentPos.y);
         const w = Math.abs(currentPos.x - startPos.x), h = Math.abs(currentPos.y - startPos.y);
         return <rect x={`${x}%`} y={`${y}%`} width={`${w}%`} height={`${h}%`}
-          stroke={activeColor} strokeWidth={strokeWidth} fill="none" strokeDasharray="4" opacity={0.7} />;
+          stroke={activeColor} strokeWidth={strokeWidth} fill={activeColor} fillOpacity={fillOpacity * 0.5}
+          strokeDasharray="4" opacity={0.7} />;
       }
       case 'circle':
-      case 'spotlight': {
+      case 'spotlight':
+      case 'semi-circle': {
         const cx = (startPos.x + currentPos.x) / 2;
         const cy = (startPos.y + currentPos.y) / 2;
         const r = Math.max(Math.abs(currentPos.x - startPos.x), Math.abs(currentPos.y - startPos.y)) / 2;
+        const previewColor = activeTool === 'spotlight' ? '#ffff00' : activeColor;
         return <circle cx={`${cx}%`} cy={`${cy}%`} r={`${r}%`}
-          stroke={activeTool === 'spotlight' ? '#ffff00' : activeColor} strokeWidth={strokeWidth}
-          fill={activeTool === 'spotlight' ? '#ffff00' : 'none'} fillOpacity={activeTool === 'spotlight' ? 0.15 : 0}
+          stroke={previewColor} strokeWidth={strokeWidth}
+          fill={previewColor} fillOpacity={fillOpacity * 0.3}
           strokeDasharray="4" opacity={0.7} />;
       }
       case 'vision-cone': {
         const dx = currentPos.x - startPos.x, dy = currentPos.y - startPos.y;
         const len = Math.sqrt(dx * dx + dy * dy);
         const angle = Math.atan2(dy, dx);
-        const spread = 30 * Math.PI / 180;
+        const spread = 40 * Math.PI / 180 / 2;
         const x1 = startPos.x + len * Math.cos(angle - spread);
         const y1 = startPos.y + len * Math.sin(angle - spread);
         const x2 = startPos.x + len * Math.cos(angle + spread);
         const y2 = startPos.y + len * Math.sin(angle + spread);
-        return <path d={`M ${startPos.x}% ${startPos.y}% L ${x1}% ${y1}% L ${x2}% ${y2}% Z`}
+        return <path d={`M ${startPos.x}% ${startPos.y}% L ${x1}% ${y1}% A ${len} ${len} 0 0 1 ${x2}% ${y2}% Z`}
           fill={activeColor} fillOpacity={0.15} stroke={activeColor} strokeWidth={1} opacity={0.7} />;
-      }
-      case 'freehand': {
-        if (freehandPoints.length < 2) return null;
-        const d = freehandPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x}% ${p.y}%`).join(' ');
-        return <path d={d} stroke={activeColor} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" opacity={0.7} />;
       }
       default:
         return null;
     }
-  };
-
-  const renderTrackers = () => {
-    return trackers.map(tracker => {
-      if (tracker.positions.length < 2) return null;
-      const d = tracker.positions.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x}% ${p.y}%`).join(' ');
-      return (
-        <path key={tracker.id} d={d}
-          stroke={tracker.color} strokeWidth={1.5} fill="none" strokeLinecap="round"
-          strokeDasharray="3 2" opacity={0.5} />
-      );
-    });
   };
 
   const renderResizeHandles = () => {
@@ -635,8 +617,8 @@ export const AnnotationCanvas = ({
     const el = elements.find(e => e.id === selectedId);
     if (!el) return null;
 
-    const handleSize = 8; // pixels via SVG units - much more visible
-    const hitSize = 20; // large hit target in pixels
+    const handleSize = 8;
+    const hitSize = 20;
     type HandleDef = { handle: 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w'; x: number; y: number; cursor: string };
     let handles: HandleDef[] = [];
     let bbox: { x: number; y: number; w: number; h: number } | null = null;
@@ -654,7 +636,7 @@ export const AnnotationCanvas = ({
         { handle: 'e', x: x + w, y: y + h / 2, cursor: 'ew-resize' },
         { handle: 'w', x, y: y + h / 2, cursor: 'ew-resize' },
       ];
-    } else if ((el.type === 'circle' || el.type === 'spotlight' || el.type === 'player-marker') && el.radius !== undefined) {
+    } else if ((el.type === 'circle' || el.type === 'spotlight' || el.type === 'player-marker' || el.type === 'semi-circle') && el.radius !== undefined) {
       const r = el.radius;
       bbox = { x: el.x - r, y: el.y - r, w: r * 2, h: r * 2 };
       handles = [
@@ -672,17 +654,10 @@ export const AnnotationCanvas = ({
         { handle: 'nw', x: el.x, y: el.y, cursor: 'move' },
         { handle: 'se', x: el.x2, y: el.y2, cursor: 'move' },
       ];
-    } else if (el.type === 'text') {
-      // Text: show a single handle below-right for font scaling
-      handles = [
-        { handle: 'se', x: el.x + 5, y: el.y + 2, cursor: 'nwse-resize' },
-      ];
     }
 
     if (handles.length === 0) return null;
 
-    // We use pixel-based handle sizes via viewBox-relative sizing
-    // Get SVG dimensions for converting % to pixels
     const svgRect = svgRef.current?.getBoundingClientRect();
     const svgW = svgRect?.width || 1;
     const svgH = svgRect?.height || 1;
@@ -704,7 +679,6 @@ export const AnnotationCanvas = ({
         )}
         {handles.map(h => (
           <g key={h.handle}>
-            {/* Large invisible hit area for easy grabbing */}
             <rect
               x={`${h.x - hitSizePctX / 2}%`}
               y={`${h.y - hitSizePctY / 2}%`}
@@ -722,7 +696,6 @@ export const AnnotationCanvas = ({
                 });
               }}
             />
-            {/* Visible handle - white square with purple border */}
             <rect
               x={`${h.x - hSizePctX / 2}%`}
               y={`${h.y - hSizePctY / 2}%`}
@@ -751,7 +724,6 @@ export const AnnotationCanvas = ({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      {renderTrackers()}
       {elements.map(renderElement)}
       {renderPreview()}
       {renderResizeHandles()}
