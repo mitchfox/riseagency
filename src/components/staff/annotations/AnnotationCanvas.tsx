@@ -40,6 +40,7 @@ export const AnnotationCanvas = ({
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [currentPos, setCurrentPos] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState<{ id: string; offX: number; offY: number } | null>(null);
+  const [draggingEndpoint, setDraggingEndpoint] = useState<{ id: string; endpoint: 'start' | 'end' } | null>(null);
   const [resizing, setResizing] = useState<{
     id: string;
     handle: 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w';
@@ -213,6 +214,17 @@ export const AnnotationCanvas = ({
       }));
       return;
     }
+    if (draggingEndpoint) {
+      setElements(prev => prev.map(el => {
+        if (el.id !== draggingEndpoint.id) return el;
+        if (draggingEndpoint.endpoint === 'start') {
+          return { ...el, x: pos.x, y: pos.y };
+        } else {
+          return { ...el, x2: pos.x, y2: pos.y };
+        }
+      }));
+      return;
+    }
     if (dragging) {
       setElements(prev => prev.map(el =>
         el.id === dragging.id ? { ...el, x: pos.x - dragging.offX, y: pos.y - dragging.offY } : el
@@ -221,10 +233,11 @@ export const AnnotationCanvas = ({
     }
     if (!drawing) return;
     setCurrentPos(pos);
-  }, [drawing, dragging, resizing, activeTool, getPos, setElements]);
+  }, [drawing, dragging, draggingEndpoint, resizing, activeTool, getPos, setElements]);
 
   const handleMouseUp = useCallback(() => {
     if (resizing) { setResizing(null); return; }
+    if (draggingEndpoint) { setDraggingEndpoint(null); return; }
     if (dragging) { setDragging(null); return; }
     if (!drawing) return;
     setDrawing(false);
@@ -346,11 +359,11 @@ export const AnnotationCanvas = ({
     return luminance > 0.5 ? '#000000' : '#ffffff';
   };
 
-  // Sort elements so image-layer types render last (on top)
+  // Sort elements so image-layer types ALWAYS render last (on top of everything)
   const sortedElements = [...elements].sort((a, b) => {
-    const zA = a.type === 'image-layer' ? (a.layerZIndex ?? 100) : 0;
-    const zB = b.type === 'image-layer' ? (b.layerZIndex ?? 100) : 0;
-    return zA - zB;
+    const isALayer = a.type === 'image-layer' ? 1 : 0;
+    const isBLayer = b.type === 'image-layer' ? 1 : 0;
+    return isALayer - isBLayer;
   });
 
   const renderElement = (el: AnnotationElement) => {
@@ -378,11 +391,13 @@ export const AnnotationCanvas = ({
         );
       case 'arrow': {
         const mid = `arrow-${el.id}`;
+        const mw = Math.max(6, el.strokeWidth * 2.5);
+        const mh = Math.max(4, el.strokeWidth * 1.8);
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
-              <marker id={mid} markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-                <polygon points="0 0, 10 3.5, 0 7" fill={el.color} />
+              <marker id={mid} markerWidth={mw} markerHeight={mh} refX={mw} refY={mh / 2} orient="auto">
+                <polygon points={`0 0, ${mw} ${mh / 2}, 0 ${mh}`} fill={el.color} />
               </marker>
             </defs>
             <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
@@ -397,6 +412,8 @@ export const AnnotationCanvas = ({
       }
       case 'curved-arrow': {
         const mid = `carrow-${el.id}`;
+        const cmw = Math.max(6, el.strokeWidth * 2.5);
+        const cmh = Math.max(4, el.strokeWidth * 1.8);
         const offset = el.curveOffset ?? -15;
         // Control point perpendicular to midpoint
         const mx = ((el.x) + (el.x2 ?? el.x)) / 2;
@@ -411,8 +428,8 @@ export const AnnotationCanvas = ({
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
-              <marker id={mid} markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-                <polygon points="0 0, 10 3.5, 0 7" fill={el.color} />
+              <marker id={mid} markerWidth={cmw} markerHeight={cmh} refX={cmw} refY={cmh / 2} orient="auto">
+                <polygon points={`0 0, ${cmw} ${cmh / 2}, 0 ${cmh}`} fill={el.color} />
               </marker>
             </defs>
             <path
@@ -527,33 +544,91 @@ export const AnnotationCanvas = ({
         );
       }
       case 'space-oval': {
-        // Hatched/striped oval for highlighting space on the pitch
+        // Hatched/striped oval with glossy highlight animation
         const rx = (el.width || 15) / 2;
         const ry = (el.height || 8) / 2;
         const patId = `hatch-${el.id}`;
+        const sGradId = `space-grad-${el.id}`;
+        const sGlowId = `space-glow-${el.id}`;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
               <pattern id={patId} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <line x1="0" y1="0" x2="0" y2="4" stroke={el.color} strokeWidth="1.5" strokeOpacity={el.fillOpacity || 0.25} />
               </pattern>
+              <linearGradient id={sGradId} gradientUnits="userSpaceOnUse"
+                x1={`${el.x - rx}`} y1={`${el.y}`} x2={`${el.x + rx}`} y2={`${el.y}`}>
+                <stop offset="0%" stopColor={el.color} stopOpacity={0.4}>
+                  <animate attributeName="stop-opacity" values="0.4;0.8;0.4" dur="1.8s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="30%" stopColor="white" stopOpacity={0.6}>
+                  <animate attributeName="offset" values="0.05;0.45;0.85;0.45;0.05" dur="2.4s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="60%" stopColor={el.color} stopOpacity={0.7}>
+                  <animate attributeName="stop-opacity" values="0.7;0.4;0.7" dur="1.8s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="100%" stopColor={el.color} stopOpacity={0.4}>
+                  <animate attributeName="stop-opacity" values="0.4;0.8;0.4" dur="1.8s" repeatCount="indefinite" />
+                </stop>
+              </linearGradient>
+              <filter id={sGlowId} x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="1" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
             </defs>
+            {/* Ground shadow */}
+            <ellipse
+              cx={el.x} cy={el.y + ry * 0.15}
+              rx={rx * 0.85} ry={ry * 0.5}
+              fill="rgba(0,0,0,0.12)" stroke="none"
+            />
+            {/* Hatched fill */}
             <ellipse
               cx={el.x} cy={el.y}
               rx={rx} ry={ry}
               fill={`url(#${patId})`}
-              stroke={el.color} strokeWidth={el.strokeWidth * 0.5}
-              strokeOpacity={0.5} strokeDasharray="3 2"
+              stroke="none"
             >
               {anim && <animate attributeName="rx" from="0" to={String(rx)} dur="0.3s" fill="freeze" />}
               {anim && <animate attributeName="ry" from="0" to={String(ry)} dur="0.3s" fill="freeze" />}
             </ellipse>
+            {/* Outer glow */}
+            <ellipse
+              cx={el.x} cy={el.y}
+              rx={rx} ry={ry}
+              fill="none"
+              stroke={el.color} strokeWidth={el.strokeWidth * 2}
+              strokeOpacity={0.1}
+            />
+            {/* Glossy border */}
+            <ellipse
+              cx={el.x} cy={el.y}
+              rx={rx} ry={ry}
+              fill="none"
+              stroke={`url(#${sGradId})`}
+              strokeWidth={el.strokeWidth * 0.5}
+              strokeDasharray="3 2"
+              filter={`url(#${sGlowId})`}
+            />
+            {/* Inner highlight */}
+            <ellipse
+              cx={el.x} cy={el.y}
+              rx={rx * 0.85} ry={ry * 0.7}
+              fill="none"
+              stroke="white" strokeWidth={0.5}
+              strokeOpacity={0.15}
+            />
           </g>
         );
       }
       case 'spotlight': {
         const r = el.radius || 5;
         const maskId = `spot-mask-${el.id}`;
+        const spotGradId = `spot-grad-${el.id}`;
+        const spotGlowId = `spot-glow-${el.id}`;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
@@ -561,13 +636,45 @@ export const AnnotationCanvas = ({
                 <rect x="0" y="0" width="100%" height="100%" fill="white" />
                 <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`} fill="black" />
               </mask>
+              <linearGradient id={spotGradId} gradientUnits="userSpaceOnUse"
+                x1={`${el.x - r}%`} y1={`${el.y}%`} x2={`${el.x + r}%`} y2={`${el.y}%`}>
+                <stop offset="0%" stopColor={el.color} stopOpacity={0.5}>
+                  <animate attributeName="stop-opacity" values="0.5;0.9;0.5" dur="1.8s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="25%" stopColor="white" stopOpacity={0.8}>
+                  <animate attributeName="offset" values="0.05;0.45;0.85;0.45;0.05" dur="2.4s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="50%" stopColor={el.color} stopOpacity={0.9}>
+                  <animate attributeName="stop-opacity" values="0.9;0.5;0.9" dur="1.8s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="75%" stopColor="white" stopOpacity={0.6}>
+                  <animate attributeName="offset" values="0.85;0.55;0.15;0.55;0.85" dur="2.4s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="100%" stopColor={el.color} stopOpacity={0.5}>
+                  <animate attributeName="stop-opacity" values="0.5;0.9;0.5" dur="1.8s" repeatCount="indefinite" />
+                </stop>
+              </linearGradient>
+              <filter id={spotGlowId} x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="1.5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
             </defs>
             <rect x="0" y="0" width="100%" height="100%" fill="black" fillOpacity={el.fillOpacity || 0.3} mask={`url(#${maskId})`} />
-            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`}
-              fill="none" stroke={el.color} strokeWidth={2} strokeOpacity={0.6}
+            {/* Outer glow ring */}
+            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r * 1.08}%`}
+              fill="none" stroke={el.color} strokeWidth={3} strokeOpacity={0.1}
             />
-            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r * 1.05}%`}
-              fill="none" stroke={el.color} strokeWidth={1} strokeOpacity={0.3}
+            {/* Main glossy ring */}
+            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`}
+              fill="none" stroke={`url(#${spotGradId})`} strokeWidth={2}
+              filter={`url(#${spotGlowId})`}
+            />
+            {/* Inner highlight */}
+            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r * 0.95}%`}
+              fill="none" stroke="white" strokeWidth={0.8} strokeOpacity={0.2}
             />
           </g>
         );
@@ -728,7 +835,7 @@ export const AnnotationCanvas = ({
           </g>
         );
       case 'image-layer': {
-        // Image layer: clips part of the video frame and renders it on top
+        // Image layer: clips part of the video frame and renders it on top (always highest z)
         const video = videoRef.current;
         const w = el.width || 10;
         const h = el.height || 10;
@@ -738,7 +845,7 @@ export const AnnotationCanvas = ({
           try { videoSrc = video.currentSrc || ''; } catch { /* no-op */ }
         }
         return (
-          <g key={el.id} data-element-id={el.id} style={{...selStyle, zIndex: el.layerZIndex || 100 }}>
+          <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
               <clipPath id={clipId}>
                 <rect x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`} />
@@ -766,11 +873,18 @@ export const AnnotationCanvas = ({
                 </div>
               </foreignObject>
             )}
+            {/* Drag handle overlay — transparent but receives pointer events */}
+            <rect
+              x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`}
+              fill="transparent" stroke="none"
+              style={{ cursor: 'move' }}
+            />
             {/* Selection border */}
             <rect
               x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`}
               fill="none" stroke={isSelected ? '#a855f7' : 'rgba(255,255,255,0.4)'} strokeWidth={isSelected ? 2 : 1}
               strokeDasharray={isSelected ? undefined : '4 2'}
+              pointerEvents="none"
             />
           </g>
         );
@@ -873,10 +987,54 @@ export const AnnotationCanvas = ({
         { handle: 's', x: el.x, y: el.y + r, cursor: 'ns-resize' },
       ];
     } else if (el.x2 !== undefined && el.y2 !== undefined) {
-      handles = [
-        { handle: 'nw', x: el.x, y: el.y, cursor: 'move' },
-        { handle: 'se', x: el.x2, y: el.y2, cursor: 'move' },
+      // Line/arrow endpoint handles — these use draggingEndpoint for proper click-release
+      const epHandleSize = handleSize;
+      const epHitSize = hitSize;
+      const svgRect2 = svgRef.current?.getBoundingClientRect();
+      const sw2 = svgRect2?.width || 1;
+      const sh2 = svgRect2?.height || 1;
+      const epHSX = (epHandleSize / sw2) * 100;
+      const epHSY = (epHandleSize / sh2) * 100;
+      const epHitX = (epHitSize / sw2) * 100;
+      const epHitY = (epHitSize / sh2) * 100;
+
+      const endpoints = [
+        { key: 'start' as const, x: el.x, y: el.y },
+        { key: 'end' as const, x: el.x2, y: el.y2 },
       ];
+
+      return (
+        <g>
+          {endpoints.map(ep => (
+            <g key={ep.key}>
+              <rect
+                x={`${ep.x - epHitX / 2}%`}
+                y={`${ep.y - epHitY / 2}%`}
+                width={`${epHitX}%`}
+                height={`${epHitY}%`}
+                fill="transparent"
+                style={{ cursor: 'move' }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  setDraggingEndpoint({ id: el.id, endpoint: ep.key });
+                }}
+              />
+              <rect
+                x={`${ep.x - epHSX / 2}%`}
+                y={`${ep.y - epHSY / 2}%`}
+                width={`${epHSX}%`}
+                height={`${epHSY}%`}
+                rx="1" ry="1"
+                fill="white"
+                stroke="#a855f7"
+                strokeWidth={2}
+                style={{ cursor: 'move', filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))' }}
+                pointerEvents="none"
+              />
+            </g>
+          ))}
+        </g>
+      );
     }
 
     if (handles.length === 0) return null;
@@ -943,7 +1101,7 @@ export const AnnotationCanvas = ({
       viewBox="0 0 100 100"
       preserveAspectRatio="none"
       className="absolute inset-0 w-full h-full"
-      style={{ cursor: resizing ? 'grabbing' : activeTool === 'select' ? 'default' : 'crosshair' }}
+      style={{ cursor: resizing || draggingEndpoint ? 'grabbing' : activeTool === 'select' ? 'default' : 'crosshair' }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
