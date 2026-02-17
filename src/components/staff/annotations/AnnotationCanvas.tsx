@@ -131,8 +131,8 @@ export const AnnotationCanvas = ({
     if (activeTool === 'magnifier') {
       setElements(prev => [...prev, {
         id: crypto.randomUUID(), type: 'magnifier', x: pos.x, y: pos.y,
-        color: '#ffffff', strokeWidth: 1.5, radius: 6, opacity: 1,
-        zoomLevel: 2, fillOpacity: 0.9, appearAt: klipOffset, ...defaultTiming,
+        color: '#ffffff', strokeWidth: 0.8, radius: 3, opacity: 1,
+        zoomLevel: 1.5, fillOpacity: 0.9, appearAt: klipOffset, ...defaultTiming,
       }]);
       onToolUsed?.();
       return;
@@ -368,23 +368,30 @@ export const AnnotationCanvas = ({
     const anim = !isDrawingMode;
 
     switch (el.type) {
-      case 'line':
+      case 'line': {
+        const ldx = (el.x2 ?? el.x) - el.x;
+        const ldy = (el.y2 ?? el.y) - el.y;
+        const lineLen = Math.sqrt(ldx * ldx + ldy * ldy) || 1;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <line
               x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round"
-              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth)}
+              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${lineLen}`}
+              strokeDashoffset={anim ? undefined : 0}
             >
-              {anim && <animate attributeName="x2" from={`${el.x}%`} to={`${el.x2}%`} dur="0.3s" fill="freeze" />}
-              {anim && <animate attributeName="y2" from={`${el.y}%`} to={`${el.y2}%`} dur="0.3s" fill="freeze" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${lineLen}`} to="0" dur="0.4s" fill="freeze" />}
             </line>
           </g>
         );
+      }
       case 'arrow': {
         const mid = `arrow-${el.id}`;
         const mw = Math.max(6, el.strokeWidth * 2.5);
         const mh = Math.max(4, el.strokeWidth * 1.8);
+        const adx = (el.x2 ?? el.x) - el.x;
+        const ady = (el.y2 ?? el.y) - el.y;
+        const arrowLen = Math.sqrt(adx * adx + ady * ady) || 1;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
@@ -394,10 +401,10 @@ export const AnnotationCanvas = ({
             </defs>
             <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round" markerEnd={`url(#${mid})`}
-              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth)}
+              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${arrowLen}`}
+              strokeDashoffset={anim ? undefined : 0}
             >
-              {anim && <animate attributeName="x2" from={`${el.x}%`} to={`${el.x2}%`} dur="0.3s" fill="freeze" />}
-              {anim && <animate attributeName="y2" from={`${el.y}%`} to={`${el.y2}%`} dur="0.3s" fill="freeze" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${arrowLen}`} to="0" dur="0.4s" fill="freeze" />}
             </line>
           </g>
         );
@@ -407,7 +414,6 @@ export const AnnotationCanvas = ({
         const cmw = Math.max(6, el.strokeWidth * 2.5);
         const cmh = Math.max(4, el.strokeWidth * 1.8);
         const offset = el.curveOffset ?? -15;
-        // Control point perpendicular to midpoint
         const mx = ((el.x) + (el.x2 ?? el.x)) / 2;
         const my = ((el.y) + (el.y2 ?? el.y)) / 2;
         const dx = (el.x2 ?? el.x) - el.x;
@@ -417,6 +423,8 @@ export const AnnotationCanvas = ({
         const ny = dx / len;
         const cx = mx + nx * offset;
         const cy = my + ny * offset;
+        // Approximate curve length for draw-on
+        const curveLen = len * 1.3;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
@@ -428,34 +436,47 @@ export const AnnotationCanvas = ({
               d={`M ${el.x} ${el.y} Q ${cx} ${cy} ${el.x2 ?? el.x} ${el.y2 ?? el.y}`}
               stroke={el.color} strokeWidth={el.strokeWidth} fill="none" strokeLinecap="round"
               markerEnd={`url(#${mid})`}
-              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth)}
-            />
+              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${curveLen}`}
+              strokeDashoffset={anim ? undefined : 0}
+            >
+              {anim && <animate attributeName="stroke-dashoffset" from={`${curveLen}`} to="0" dur="0.4s" fill="freeze" />}
+            </path>
           </g>
         );
       }
-      case 'rect':
+      case 'rect': {
+        const rectPerim = ((el.width || 0) + (el.height || 0)) * 2;
+        const rectDash = `${rectPerim * 0.08} ${rectPerim * 0.04}`;
         return (
-          <rect key={el.id} data-element-id={el.id}
-            x={`${el.x}%`} y={`${el.y}%`} width={`${el.width}%`} height={`${el.height}%`}
-            stroke={el.color} strokeWidth={el.strokeWidth}
-            fill={el.fillOpacity ? el.color : 'none'} fillOpacity={el.fillOpacity || 0}
-            style={selStyle}
-          >
-            {anim && <animate attributeName="stroke-dashoffset" from={`${((el.width || 0) + (el.height || 0)) * 4}`} to="0" dur="0.4s" fill="freeze" />}
-          </rect>
+          <g key={el.id} data-element-id={el.id} style={selStyle}>
+            <rect
+              x={`${el.x}%`} y={`${el.y}%`} width={`${el.width}%`} height={`${el.height}%`}
+              stroke={el.color} strokeWidth={el.strokeWidth}
+              fill={el.fillOpacity ? el.color : 'none'} fillOpacity={el.fillOpacity || 0}
+              strokeDasharray={rectDash}
+            >
+              {anim && <animate attributeName="stroke-dashoffset" from={`${rectPerim}`} to="0" dur="1.5s" repeatCount="indefinite" />}
+            </rect>
+          </g>
         );
-      case 'circle':
+      }
+      case 'circle': {
+        const circPerim = 2 * Math.PI * (el.radius || 1);
+        const circDash = `${circPerim * 0.08} ${circPerim * 0.04}`;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <circle
               cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius}%`}
               stroke={el.color} strokeWidth={el.strokeWidth}
               fill={el.fillOpacity ? el.color : 'none'} fillOpacity={el.fillOpacity || 0}
+              strokeDasharray={circDash}
             >
               {anim && <animate attributeName="r" from="0" to={`${el.radius}%`} dur="0.3s" fill="freeze" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${circPerim}`} to="0" dur="1.5s" repeatCount="indefinite" />}
             </circle>
           </g>
         );
+      }
       case 'semi-circle': {
         const rx = el.width || el.radius || 4;
         const ry = el.height || (rx * 0.35);
@@ -737,32 +758,26 @@ export const AnnotationCanvas = ({
         );
       }
       case 'magnifier': {
-        const zoom = el.zoomLevel || 2;
-        const r = el.radius || 8;
+        const zoom = el.zoomLevel || 1.5;
+        const r = el.radius || 3;
         const clipId = `mag-clip-${el.id}`;
-        const imgId = `mag-img-${el.id}`;
         const video = videoRef.current;
+        const magCircPerim = 2 * Math.PI * r;
+        const magDash = `${magCircPerim * 0.12} ${magCircPerim * 0.06}`;
 
-        // Canvas-based snapshot: capture current frame and crop/zoom around magnifier centre
         let dataUrl = '';
         if (video && video.readyState >= 2 && svgRef.current) {
           try {
-            const svgRect = svgRef.current.getBoundingClientRect();
-            const svgW = svgRect.width;
-            const svgH = svgRect.height;
-            const vw = video.videoWidth || svgW;
-            const vh = video.videoHeight || svgH;
-
-            // Source region on the video (in video-native pixels)
+            const vw = video.videoWidth || 1;
+            const vh = video.videoHeight || 1;
             const centreVX = (el.x / 100) * vw;
             const centreVY = (el.y / 100) * vh;
             const regionW = vw / zoom;
             const regionH = vh / zoom;
             const sx = Math.max(0, Math.min(vw - regionW, centreVX - regionW / 2));
             const sy = Math.max(0, Math.min(vh - regionH, centreVY - regionH / 2));
-
             const canvas = document.createElement('canvas');
-            const outSize = 256; // render at fixed resolution for perf
+            const outSize = 256;
             canvas.width = outSize;
             canvas.height = outSize;
             const ctx = canvas.getContext('2d');
@@ -770,7 +785,7 @@ export const AnnotationCanvas = ({
               ctx.drawImage(video, sx, sy, regionW, regionH, 0, 0, outSize, outSize);
               dataUrl = canvas.toDataURL('image/jpeg', 0.85);
             }
-          } catch { /* cross-origin or other error — show empty */ }
+          } catch { /* cross-origin */ }
         }
 
         return (
@@ -790,12 +805,16 @@ export const AnnotationCanvas = ({
                 style={{ pointerEvents: 'none' }}
               />
             )}
+            {/* Flywheel running border */}
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`}
-              fill={dataUrl ? 'none' : 'rgba(0,0,0,0.3)'} stroke="white" strokeWidth={1.5} strokeOpacity={0.9}>
+              fill={dataUrl ? 'none' : 'rgba(0,0,0,0.3)'} stroke="white" strokeWidth={0.8} strokeOpacity={0.9}
+              strokeDasharray={magDash}
+            >
               {anim && <animate attributeName="r" from="0" to={`${r}%`} dur="0.3s" fill="freeze" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${magCircPerim}`} to="0" dur="1.2s" repeatCount="indefinite" />}
             </circle>
-            <text x={`${el.x}%`} y={`${(el.y || 0) - r - 1}%`}
-              fill="white" fontSize="1.5%" textAnchor="middle" opacity={0.7}>
+            <text x={`${el.x}%`} y={`${(el.y || 0) - r - 0.8}%`}
+              fill="white" fontSize="1.2%" textAnchor="middle" opacity={0.6}>
               🔍 {zoom}x
             </text>
           </g>
@@ -806,6 +825,11 @@ export const AnnotationCanvas = ({
         const sw = el.strokeWidth || 1;
         const dotR = Math.max(1.5, sw * 1.2);
         const mSize = dotR * 2 + 1;
+        const lnkDx = (el.x2 ?? el.x) - el.x;
+        const lnkDy = (el.y2 ?? el.y) - el.y;
+        const lnkLen = Math.sqrt(lnkDx * lnkDx + lnkDy * lnkDy) || 1;
+        const lnkDash = `${sw * 3} ${sw * 1.5}`;
+        const lnkTotalDash = sw * 3 + sw * 1.5;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
@@ -814,10 +838,9 @@ export const AnnotationCanvas = ({
               </marker>
             </defs>
             <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
-              stroke={el.color} strokeWidth={sw} strokeDasharray={`${sw * 3} ${sw * 1.5}`}
+              stroke={el.color} strokeWidth={sw} strokeDasharray={lnkDash}
               markerStart={`url(#${mid})`} markerEnd={`url(#${mid})`}>
-              {anim && <animate attributeName="x2" from={`${el.x}%`} to={`${el.x2}%`} dur="0.3s" fill="freeze" />}
-              {anim && <animate attributeName="y2" from={`${el.y}%`} to={`${el.y2}%`} dur="0.3s" fill="freeze" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${lnkTotalDash}`} to="0" dur="0.6s" repeatCount="indefinite" />}
             </line>
           </g>
         );
