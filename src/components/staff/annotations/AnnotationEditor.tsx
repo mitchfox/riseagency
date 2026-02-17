@@ -75,6 +75,11 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [drawingTimestamp, setDrawingTimestamp] = useState(0);
   const [projectName, setProjectName] = useState(project.name);
   const [isRenaming, setIsRenaming] = useState(false);
+  const [recentColours, setRecentColours] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('annotation-recent-colours') || '[]');
+    } catch { return []; }
+  });
   // Playback freeze state (separate from drawing mode freeze)
   const [playbackFreezeUrl, setPlaybackFreezeUrl] = useState<string | null>(null);
   const [playbackFreezeActive, setPlaybackFreezeActive] = useState(false);
@@ -330,18 +335,89 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     toast.success("Project saved");
   };
 
-  const exportClip = useCallback(() => {
+  const exportClip = useCallback(async () => {
     const video = videoRef.current;
     if (!video || !activeKlip) {
       toast.error("No clip to export");
       return;
     }
-    // Download the source video file as MP4
-    const a = document.createElement('a');
-    a.href = video.currentSrc || project.videoUrl;
-    a.download = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}.mp4`;
-    a.click();
-    toast.success("Export started — video will download shortly");
+
+    // Find the SVG overlay element for annotations
+    const container = video.closest('.relative');
+    const svgEl = container?.querySelector('svg');
+
+    if (!svgEl) {
+      // Fallback: just download the video
+      const a = document.createElement('a');
+      a.href = video.currentSrc || project.videoUrl;
+      a.download = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}.mp4`;
+      a.click();
+      toast.info("Exported source video (no annotations overlay available)");
+      return;
+    }
+
+    toast.info("Preparing export with annotations...");
+
+    try {
+      // Pause and save current state
+      const wasPlaying = !video.paused;
+      const savedTime = video.currentTime;
+      video.pause();
+
+      // Export as annotated frames to a canvas, then download as images or video
+      const canvas = document.createElement('canvas');
+      const vw = video.videoWidth || 1920;
+      const vh = video.videoHeight || 1080;
+      canvas.width = vw;
+      canvas.height = vh;
+      const ctx = canvas.getContext('2d')!;
+
+      // Seek to the klip start and capture a single annotated frame as PNG
+      // (Full video export with annotations would require MediaRecorder API)
+      const captureFrame = (time: number): Promise<string> => {
+        return new Promise(resolve => {
+          video.currentTime = time;
+          const onSeeked = () => {
+            video.removeEventListener('seeked', onSeeked);
+            ctx.clearRect(0, 0, vw, vh);
+            ctx.drawImage(video, 0, 0, vw, vh);
+
+            // Render SVG annotations onto canvas
+            const svgData = new XMLSerializer().serializeToString(svgEl);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const svgUrl = URL.createObjectURL(svgBlob);
+            const img = new Image();
+            img.onload = () => {
+              ctx.drawImage(img, 0, 0, vw, vh);
+              URL.revokeObjectURL(svgUrl);
+              resolve(canvas.toDataURL('image/png'));
+            };
+            img.onerror = () => {
+              URL.revokeObjectURL(svgUrl);
+              resolve(canvas.toDataURL('image/png'));
+            };
+            img.src = svgUrl;
+          };
+          video.addEventListener('seeked', onSeeked);
+        });
+      };
+
+      // Export the current frame with annotations
+      const frameData = await captureFrame(savedTime);
+      const a = document.createElement('a');
+      a.href = frameData;
+      a.download = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}_annotated.png`;
+      a.click();
+
+      // Restore video position
+      video.currentTime = savedTime;
+      if (wasPlaying) video.play();
+
+      toast.success("Annotated frame exported as PNG");
+    } catch (err) {
+      console.error('Export error:', err);
+      toast.error("Export failed — try again");
+    }
   }, [activeKlip, projectName, project.videoUrl]);
 
   const startDrawing = useCallback(() => {
@@ -837,9 +913,31 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                   </div>
 
                   {/* Colour */}
-                  <div className="space-y-1 pt-2 border-t border-white/10">
+                  <div className="space-y-1.5 pt-2 border-t border-white/10">
                     <div className="flex items-center gap-1 text-[10px] text-white/40">
                       <span>Colour</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="color"
+                        value={selectedElement.color}
+                        onChange={e => {
+                          const c = e.target.value;
+                          updateElement(selectedElement.id, { color: c });
+                          setRecentColours(prev => {
+                            const updated = [c, ...prev.filter(x => x !== c)].slice(0, 8);
+                            localStorage.setItem('annotation-recent-colours', JSON.stringify(updated));
+                            return updated;
+                          });
+                        }}
+                        className="w-8 h-8 rounded cursor-pointer border border-white/20 bg-transparent p-0"
+                        title="Pick any colour"
+                      />
+                      <div
+                        className="w-8 h-8 rounded border border-white/20"
+                        style={{ backgroundColor: selectedElement.color }}
+                      />
+                      <span className="text-[9px] text-white/30 font-mono">{selectedElement.color}</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {['#ff0000', '#ffff00', '#00ff00', '#00bfff', '#ffffff', '#ff8c00', '#ff00ff', '#000000'].map(c => (
@@ -849,10 +947,34 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                             selectedElement.color === c ? 'border-white scale-110' : 'border-transparent hover:scale-105'
                           }`}
                           style={{ backgroundColor: c }}
-                          onClick={() => updateElement(selectedElement.id, { color: c })}
+                          onClick={() => {
+                            updateElement(selectedElement.id, { color: c });
+                            setRecentColours(prev => {
+                              const updated = [c, ...prev.filter(x => x !== c)].slice(0, 8);
+                              localStorage.setItem('annotation-recent-colours', JSON.stringify(updated));
+                              return updated;
+                            });
+                          }}
                         />
                       ))}
                     </div>
+                    {recentColours.length > 0 && (
+                      <div>
+                        <span className="text-[9px] text-white/25">Recent</span>
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {recentColours.map(c => (
+                            <button
+                              key={c}
+                              className={`w-4 h-4 rounded-full border transition-transform ${
+                                selectedElement.color === c ? 'border-white scale-110' : 'border-white/20 hover:scale-105'
+                              }`}
+                              style={{ backgroundColor: c }}
+                              onClick={() => updateElement(selectedElement.id, { color: c })}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Size */}
