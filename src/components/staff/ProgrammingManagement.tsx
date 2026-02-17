@@ -1976,14 +1976,14 @@ Return a JSON array of session objects. Each session has a "name" (e.g. "Session
 
 RULES:
 - Use exercises from my database wherever possible, using the EXACT names, reps, sets, and load formats as they appear (e.g. "12 (6 each side)" not "6 per side")
-- Only suggest new exercises if the database genuinely lacks something needed
 - Do not truncate or cut short. Include all exercises needed for complete sessions
 - No markdown formatting, no asterisks, no hashes
 - Reps/sets/load must match the style in my database exactly
-- Return 2-4 sessions depending on what makes sense
+- Return 3-5 sessions depending on what makes sense
+- IMPORTANT: After the database-based sessions, also include 1-2 extra sessions that use ONLY exercises NOT in my database. Label these clearly e.g. "Session 4 - Additional Ideas (Non-Database)". These are for inspiration and should use exercises the database does not contain.
 
 Example format:
-[{"name":"Session 1 - Lower Body Power","exercises":[{"name":"Sumo Deadlifts","reps":"12","sets":"3","load":"80% 1RM","recovery":"90s"}]}]`
+[{"name":"Session 1 - Lower Body Power","exercises":[{"name":"Sumo Deadlifts","reps":"12","sets":"3","load":"80% 1RM","recovery":"90s"}]},{"name":"Session 4 - Additional Ideas (Non-Database)","exercises":[{"name":"Nordic Hamstring Curl","reps":"6","sets":"3","load":"Bodyweight","recovery":"90s"}]}]`
                                 }),
                               }
                             );
