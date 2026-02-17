@@ -1,95 +1,87 @@
 
 
-# Export Pipeline Hardening
+# Export Performance: Replace Seek-Per-Frame with Playback-Driven Capture
 
-## Summary
+## Problem
 
-Apply six targeted refinements to the export pipeline to eliminate flicker, ensure frame accuracy, and isolate export from playback state.
+A 20-second clip at 30fps requires 600 frames. The current approach seeks to each frame individually, waits for decode, waits 50ms, then gates through `requestAnimationFrame`. Each frame costs roughly 150-200ms, producing a 90-140 second export for 20 seconds of footage. This is because every seek resets the hardware decoder pipeline.
 
----
+## Solution
+
+Replace the seek-per-frame loop with `requestVideoFrameCallback`. Instead of fighting the decoder, let the video play naturally at 1x speed. Each decoded frame triggers a callback with the exact `mediaTime`, which is used to compute annotations and composite to the canvas. A 20-second clip then takes roughly 20 seconds to export.
 
 ## Changes
 
-### 1. Frame decode readiness check (`annotationRenderUtils.ts`)
+### 1. Rewrite `exportClip` in `AnnotationEditor.tsx`
 
-Update `waitForSeek` to check `video.readyState >= 2` (HAVE_CURRENT_DATA) after the `seeked` event fires, polling briefly if needed. Increase post-seek delay to 50ms and add a `requestAnimationFrame` gate for compositor flush. Increase fallback timeout to 300ms.
+Replace the `for` loop with a playback-driven approach:
 
-```
-Current flow:
-  seeked -> 16ms delay -> resolve (200ms fallback)
+```text
+Current flow (per frame):
+  set currentTime -> await seeked -> poll readyState -> 50ms -> rAF -> draw -> 50ms
+  ~150ms per frame, 600 frames = 90-140 seconds
 
 New flow:
-  seeked -> poll readyState >= 2 (up to 100ms) -> 50ms delay -> rAF -> resolve (300ms fallback)
+  video.play() from klipStart
+  requestVideoFrameCallback fires per decoded frame:
+    draw video frame
+    compute annotations at metadata.mediaTime
+    composite SVG
+  stop when mediaTime >= klipEnd
+  ~20 seconds for 20 seconds of footage
 ```
 
-### 2. Frame stepping precision (`AnnotationEditor.tsx`)
+Specific steps:
+- Keep the metadata readiness check and dimension validation (already correct)
+- Keep MediaRecorder setup with explicit `videoBitsPerSecond: 8_000_000`
+- Set `video.currentTime = klipStart`, await seeked once (just the starting position)
+- Start MediaRecorder
+- Start playback with `video.play()`
+- Register `requestVideoFrameCallback` handler that:
+  - Checks if `metadata.mediaTime >= klipEnd`, if so stops
+  - Draws the video frame to the export canvas
+  - Calls `computeVisibleElements(allElements, metadata.mediaTime - klipStart)`
+  - Renders SVG overlay if elements exist
+  - Re-registers itself for the next frame
+- On completion, stop MediaRecorder and trigger download
 
-Replace floating-point accumulation with index-based time calculation to prevent drift:
+### 2. Fallback for unsupported browsers
 
-```
-Current:  time = klipStart + (i / fps)    // already index-based, correct
-Verify:   offset = i / fps                // not i * frameStep
-```
+`requestVideoFrameCallback` is supported in Chrome 83+, Edge 83+, and Safari 15.4+. Firefox added it in version 130. For older browsers, fall back to the existing seek-per-frame method but with reduced delays. Check via:
 
-The current code already uses `i / fps` which is correct. Will verify no `t += frameStep` pattern exists elsewhere.
-
-### 3. Metadata readiness before export (`AnnotationEditor.tsx`)
-
-Before reading `videoWidth`/`videoHeight`, await `loadedmetadata` if `readyState < 1`. Fail explicitly if dimensions are zero rather than silently falling back to 1920x1080.
-
-```
-Current:  const vw = video.videoWidth || 1920
-
-New:
-  if (video.readyState < 1) await loadedmetadata event
-  if (!video.videoWidth || !video.videoHeight) throw + toast error
-  const vw = video.videoWidth
-  const vh = video.videoHeight
-```
-
-### 4. Frame pacing adjustment (`AnnotationEditor.tsx`)
-
-Replace `setTimeout(r, 1000 / fps)` with `setTimeout(r, 50)`. This is a pragmatic compromise -- enough for MediaRecorder to ingest each frame without tying pacing to wall-clock time. Effective FPS won't be mathematically exact but will be stable enough for analysis output.
-
-### 5. Isolate export from playback state (`AnnotationEditor.tsx`)
-
-Add an `isExportingRef` guard. When true:
-- Effect A (freeze detection) short-circuits immediately
-- Effect B (freeze resume timer) short-circuits immediately
-- No playback freeze state is set or cleared during export
-
-This prevents any playback listener from interfering with the export's explicit time control.
-
-```
-const isExportingRef = useRef(false);
-
-// In exportClip:
-isExportingRef.current = true;
-try { ... } finally { isExportingRef.current = false; }
-
-// In Effect A:
-if (isExportingRef.current) return;
-
-// In Effect B:
-if (isExportingRef.current) return;
+```text
+if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
+  // fast path
+} else {
+  // existing seek loop as fallback
+}
 ```
 
-### 6. Remove redundant `clearRect` (`AnnotationEditor.tsx`)
+### 3. Progress reporting
 
-Remove `ctx.clearRect(0, 0, vw, vh)` before `ctx.drawImage(video, ...)` since the video frame draw overwrites the entire buffer.
+Replace the frame-index-based progress (`i / totalFrames`) with time-based progress:
 
----
+```text
+progress = (metadata.mediaTime - klipStart) / klipDuration
+```
+
+Toast updates at roughly 10% intervals.
+
+### 4. Keep `waitForSeek` for the initial seek only
+
+The hardened `waitForSeek` is still needed for the single initial seek to `klipStart`. It remains unchanged in `annotationRenderUtils.ts`.
+
+### 5. Keep `isExportingRef` isolation
+
+The playback-driven approach still needs the export guard. Playback effects must not interfere. The `isExportingRef` pattern stays as-is.
 
 ## Files affected
 
-- **`src/lib/annotationRenderUtils.ts`** -- harden `waitForSeek` with readyState polling, longer delay, rAF gate, 300ms fallback
-- **`src/components/staff/annotations/AnnotationEditor.tsx`** -- metadata check, explicit dimension failure, frame pacing fix, isExportingRef isolation, remove clearRect
+- **`src/components/staff/annotations/AnnotationEditor.tsx`** -- rewrite `exportClip` to use `requestVideoFrameCallback` with seek-loop fallback
 
-## What this does not change
+## What does not change
 
-- `computeVisibleElements` -- already pure, already deterministic
-- `renderElementsToSVGString` -- already DOM-free
-- Playback rendering -- untouched
-- Drawing mode -- untouched
-- localStorage persistence -- separate concern for a future migration
+- `annotationRenderUtils.ts` -- `waitForSeek`, `computeVisibleElements`, `renderElementsToSVGString` all stay as they are
+- `AnnotationCanvas.tsx` -- playback rendering untouched
+- `VideoAnalysis.tsx` -- untouched
 
