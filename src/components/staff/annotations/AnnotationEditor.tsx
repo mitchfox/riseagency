@@ -12,6 +12,7 @@ import { AnnotationProject, AnnotationElement, Klip, ElementKeyframe } from "./A
 import { AnnotationCanvas } from "./AnnotationCanvas";
 import { AnnotationToolbar } from "./AnnotationToolbar";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { computeVisibleElements, renderElementsToSVGString, waitForSeek } from "@/lib/annotationRenderUtils";
 
 interface AnnotationEditorProps {
@@ -685,7 +686,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
               {/* Re-upload overlay when video expired */}
               {videoError && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-30 gap-3">
-                  <p className="text-white/70 text-sm">Video file expired (blob URLs don't persist between sessions)</p>
+                  <p className="text-white/70 text-sm">Video file expired. Please re-upload to save it permanently.</p>
                   <Button
                     variant="outline"
                     size="sm"
@@ -694,13 +695,26 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                       const input = document.createElement('input');
                       input.type = 'file';
                       input.accept = 'video/*';
-                      input.onchange = (ev) => {
+                      input.onchange = async (ev) => {
                         const file = (ev.target as HTMLInputElement).files?.[0];
                         if (!file) return;
-                        const url = URL.createObjectURL(file);
-                        onSave({ ...project, name: projectName, videoUrl: url, videoName: file.name, klips });
+                        toast.loading('Uploading video...', { id: 'video-upload' });
+                        const ext = file.name.split('.').pop() || 'mp4';
+                        const storagePath = `${project.id}.${ext}`;
+                        const { error } = await supabase.storage
+                          .from('annotation-videos')
+                          .upload(storagePath, file, { upsert: true });
+                        if (error) {
+                          toast.error('Upload failed: ' + error.message, { id: 'video-upload' });
+                          return;
+                        }
+                        const { data: urlData } = supabase.storage
+                          .from('annotation-videos')
+                          .getPublicUrl(storagePath);
+                        onSave({ ...project, name: projectName, videoUrl: urlData.publicUrl, videoName: file.name, klips });
                         setVideoError(false);
-                        if (videoRef.current) videoRef.current.src = url;
+                        if (videoRef.current) videoRef.current.src = urlData.publicUrl;
+                        toast.success('Video uploaded successfully', { id: 'video-upload' });
                       };
                       input.click();
                     }}

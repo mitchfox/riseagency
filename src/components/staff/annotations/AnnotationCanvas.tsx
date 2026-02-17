@@ -662,13 +662,14 @@ export const AnnotationCanvas = ({
       }
       case 'player-marker': {
         const textColor = getContrastColor(el.color);
+        const markerR = el.radius || 2.5;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
-            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius || 2.5}%`} fill={el.color} fillOpacity={0.85} stroke="white" strokeWidth={1.5}>
-              {anim && <animate attributeName="r" from="0" to={`${el.radius || 2.5}%`} dur="0.25s" fill="freeze" calcMode="spline" keySplines="0.34 1.56 0.64 1" />}
+            <circle cx={el.x} cy={el.y} r={markerR} fill={el.color} fillOpacity={0.85} stroke="white" strokeWidth={0.3}>
+              {anim && <animate attributeName="r" from="0" to={String(markerR)} dur="0.25s" fill="freeze" calcMode="spline" keySplines="0.34 1.56 0.64 1" />}
             </circle>
-            <text x={`${el.x}%`} y={`${el.y}%`} fill={textColor} textAnchor="middle" dominantBaseline="central" fontSize="2.2%" fontWeight="bold">
-              {el.number}
+            <text x={el.x} y={el.y} fill={textColor} textAnchor="middle" dominantBaseline="central" fontSize={markerR * 1.2} fontWeight="bold">
+              {el.number ?? ''}
             </text>
           </g>
         );
@@ -676,9 +677,9 @@ export const AnnotationCanvas = ({
       case 'point':
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
-            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius || 1}%`} fill={el.color} fillOpacity={0.9}
-              stroke="white" strokeWidth={1.5}>
-              {anim && <animate attributeName="r" from="0" to={`${el.radius || 1}%`} dur="0.2s" fill="freeze" />}
+            <circle cx={el.x} cy={el.y} r={el.radius || 1} fill={el.color} fillOpacity={0.9}
+              stroke="white" strokeWidth={0.3}>
+              {anim && <animate attributeName="r" from="0" to={String(el.radius || 1)} dur="0.2s" fill="freeze" />}
             </circle>
           </g>
         );
