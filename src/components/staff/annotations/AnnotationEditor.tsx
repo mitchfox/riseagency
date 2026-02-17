@@ -701,36 +701,39 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                             setPlaybackFreezePhase('idle');
                             triggeredTimesRef.current.clear();
 
-                            // Seek to annotation timestamp
-                            video.currentTime = seekTime;
-                            setCurrentTime(seekTime);
                             video.pause();
                             setIsPlaying(false);
-
-                            // Enter drawing mode so elements are editable
                             setDrawingTimestamp(seekTime);
+                            setCurrentTime(seekTime);
                             setDrawingStartElements(activeKlip.elements || []);
-                            try {
-                              const canvas = document.createElement('canvas');
-                              const vw = video.videoWidth;
-                              const vh = video.videoHeight;
-                              if (vw > 0 && vh > 0) {
-                                canvas.width = vw;
-                                canvas.height = vh;
-                                const ctx = canvas.getContext('2d');
-                                if (ctx) {
-                                  ctx.drawImage(video, 0, 0);
-                                  setFreezeFrameUrl(canvas.toDataURL('image/jpeg', 0.85));
+
+                            // Wait for the video to actually seek before capturing the frame
+                            const onSeeked = () => {
+                              video.removeEventListener('seeked', onSeeked);
+                              try {
+                                const canvas = document.createElement('canvas');
+                                const vw = video.videoWidth;
+                                const vh = video.videoHeight;
+                                if (vw > 0 && vh > 0) {
+                                  canvas.width = vw;
+                                  canvas.height = vh;
+                                  const ctx = canvas.getContext('2d');
+                                  if (ctx) {
+                                    ctx.drawImage(video, 0, 0);
+                                    setFreezeFrameUrl(canvas.toDataURL('image/jpeg', 0.85));
+                                  }
+                                } else {
+                                  setFreezeFrameUrl(null);
                                 }
-                              } else {
+                              } catch {
                                 setFreezeFrameUrl(null);
                               }
-                            } catch {
-                              setFreezeFrameUrl(null);
-                            }
-                            setDrawingMode(true);
-                            setActiveTool('select');
-                            setSelectedId(el.id);
+                              setDrawingMode(true);
+                              setActiveTool('select');
+                              setSelectedId(el.id);
+                            };
+                            video.addEventListener('seeked', onSeeked);
+                            video.currentTime = seekTime;
                           }
                         }
                       }}
