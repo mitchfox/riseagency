@@ -79,11 +79,12 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const [playbackFreezeActive, setPlaybackFreezeActive] = useState(false);
   const triggeredTimesRef = useRef<Set<number>>(new Set());
   const playbackFreezeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playbackFreezeDurationRef = useRef(3);
 
   const activeKlip = klips.find(k => k.id === activeKlipId);
   const klipOffset = activeKlip ? currentTime - activeKlip.startTime : 0;
   // In drawing mode, use the frozen timestamp for visibility so new elements show immediately
-  const effectiveOffset = drawingMode && activeKlip ? drawingTimestamp - activeKlip.startTime : klipOffset;
+  const effectiveOffset = drawingMode ? klipOffset : klipOffset;
 
   const allElements = activeKlip?.elements || [];
 
@@ -174,7 +175,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     };
   }, []);
 
-  // Playback freeze-frame system: capture frame, pause, show overlay, auto-resume after duration
+  // Effect A: Detect annotation timestamps, capture freeze frame, pause video
   useEffect(() => {
     if (drawingMode || !activeKlip || playbackFreezeActive) return;
     const video = videoRef.current;
@@ -194,6 +195,16 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       triggeredTimesRef.current.add(roundedTime);
     });
 
+    // Calculate the longest remaining duration among visible annotations
+    const maxDuration = Math.max(
+      ...visibleElements.map(el => {
+        const elDuration = el.duration ?? 3;
+        const elapsed = effectiveOffset - el.appearAt;
+        return Math.max(elDuration - elapsed, 0.5);
+      })
+    );
+    playbackFreezeDurationRef.current = maxDuration;
+
     // Capture freeze frame
     let frameUrl: string | null = null;
     try {
@@ -209,23 +220,18 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       // CORS or other issue - proceed without freeze frame image
     }
 
-    // Pause video and activate freeze
+    // Pause video and activate freeze (timer is handled by Effect B)
     video.pause();
     setIsPlaying(false);
     setPlaybackFreezeUrl(frameUrl);
     setPlaybackFreezeActive(true);
+  }, [currentTime, drawingMode, activeKlip, playbackFreezeActive, visibleElements, effectiveOffset]);
 
-    // Find the longest remaining duration among visible annotations
-    const maxDuration = Math.max(
-      ...visibleElements.map(el => {
-        const elDuration = el.duration ?? 3;
-        const elapsed = effectiveOffset - el.appearAt;
-        return Math.max(elDuration - elapsed, 0.5);
-      })
-    );
+  // Effect B: Resume timer — only watches playbackFreezeActive, so cleanup won't cancel prematurely
+  useEffect(() => {
+    if (!playbackFreezeActive) return;
 
-    // Auto-resume after duration
-    playbackFreezeTimerRef.current = setTimeout(() => {
+    const timer = setTimeout(() => {
       setPlaybackFreezeUrl(null);
       setPlaybackFreezeActive(false);
       const v = videoRef.current;
@@ -233,14 +239,10 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
         v.play();
         setIsPlaying(true);
       }
-    }, maxDuration * 1000);
+    }, playbackFreezeDurationRef.current * 1000);
 
-    return () => {
-      if (playbackFreezeTimerRef.current) {
-        clearTimeout(playbackFreezeTimerRef.current);
-      }
-    };
-  }, [currentTime, drawingMode, activeKlip, playbackFreezeActive, visibleElements, effectiveOffset]);
+    return () => clearTimeout(timer);
+  }, [playbackFreezeActive]);
 
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
