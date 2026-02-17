@@ -77,6 +77,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   // Playback freeze state (separate from drawing mode freeze)
   const [playbackFreezeUrl, setPlaybackFreezeUrl] = useState<string | null>(null);
   const [playbackFreezeActive, setPlaybackFreezeActive] = useState(false);
+  const [playbackFreezePhase, setPlaybackFreezePhase] = useState<'idle' | 'showing' | 'fading'>('idle');
   const triggeredTimesRef = useRef<Set<number>>(new Set());
   const playbackFreezeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playbackFreezeDurationRef = useRef(3);
@@ -94,6 +95,10 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       const end = el.duration !== undefined ? start + el.duration : Infinity;
       return effectiveOffset >= start && effectiveOffset < end;
     }).map(el => {
+      // During playback freeze, show at full opacity (skip animateIn/animateOut)
+      if (playbackFreezeActive) {
+        return { ...el, opacity: el.opacity ?? 1 };
+      }
       if (el.keyframes && el.keyframes.length > 0) {
         const interp = interpolateKeyframes(el.keyframes, effectiveOffset);
         if (interp) return { ...el, x: interp.x, y: interp.y, opacity: interp.opacity };
@@ -114,7 +119,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       }
       return el;
     });
-  }, [allElements, effectiveOffset]);
+  }, [allElements, effectiveOffset, playbackFreezeActive]);
 
   const hasVisibleAnnotations = visibleElements.length > 0 && !drawingMode;
 
@@ -225,23 +230,36 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     setIsPlaying(false);
     setPlaybackFreezeUrl(frameUrl);
     setPlaybackFreezeActive(true);
+    setPlaybackFreezePhase('showing');
   }, [currentTime, drawingMode, activeKlip, playbackFreezeActive, visibleElements, effectiveOffset]);
 
-  // Effect B: Resume timer — only watches playbackFreezeActive, so cleanup won't cancel prematurely
+  // Effect B: Resume timer — two-stage: showing → fading → idle
   useEffect(() => {
     if (!playbackFreezeActive) return;
 
     const timer = setTimeout(() => {
-      setPlaybackFreezeUrl(null);
-      setPlaybackFreezeActive(false);
-      const v = videoRef.current;
-      if (v && v.currentTime < (v.duration || 0)) {
-        v.play();
-        setIsPlaying(true);
-      }
+      // Stage 1: start fading out
+      setPlaybackFreezePhase('fading');
+
+      // Stage 2: after fade-out completes, clear everything and resume
+      const fadeTimer = setTimeout(() => {
+        setPlaybackFreezeUrl(null);
+        setPlaybackFreezeActive(false);
+        setPlaybackFreezePhase('idle');
+        const v = videoRef.current;
+        if (v && v.currentTime < (v.duration || 0)) {
+          v.play();
+          setIsPlaying(true);
+        }
+      }, 400);
+
+      playbackFreezeTimerRef.current = fadeTimer;
     }, playbackFreezeDurationRef.current * 1000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (playbackFreezeTimerRef.current) clearTimeout(playbackFreezeTimerRef.current);
+    };
   }, [playbackFreezeActive]);
 
   const togglePlay = useCallback(() => {
@@ -252,6 +270,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       if (playbackFreezeTimerRef.current) clearTimeout(playbackFreezeTimerRef.current);
       setPlaybackFreezeUrl(null);
       setPlaybackFreezeActive(false);
+      setPlaybackFreezePhase('idle');
       video.play();
       setIsPlaying(true);
     } else {
@@ -267,6 +286,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     if (playbackFreezeTimerRef.current) clearTimeout(playbackFreezeTimerRef.current);
     setPlaybackFreezeUrl(null);
     setPlaybackFreezeActive(false);
+    setPlaybackFreezePhase('idle');
     triggeredTimesRef.current.clear();
     video.currentTime = time;
     setCurrentTime(time);
@@ -479,7 +499,15 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 />
               )}
               {activeKlip && (drawingMode || visibleElements.length > 0) && (
-                <div className="absolute inset-0" style={{ zIndex: 20, pointerEvents: drawingMode ? 'auto' : 'none' }}>
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    zIndex: 20,
+                    pointerEvents: drawingMode ? 'auto' : 'none',
+                    opacity: playbackFreezePhase === 'fading' ? 0 : 1,
+                    transition: playbackFreezePhase === 'fading' ? 'opacity 0.4s ease-out' : 'none',
+                  }}
+                >
                   <AnnotationCanvas
                     elements={visibleElements}
                     setElements={setElements}
