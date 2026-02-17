@@ -1,9 +1,12 @@
 import { useState, useRef, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tv, ExternalLink, Maximize2, Minimize2, ArrowLeft, ArrowRight, RotateCcw, Link as LinkIcon } from "lucide-react";
+import { Tv, ExternalLink, Maximize2, Minimize2, ArrowLeft, ArrowRight, RotateCcw, Link as LinkIcon, Settings, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface StreamChannel {
   id: string;
@@ -11,6 +14,11 @@ interface StreamChannel {
   url: string;
   region: string;
   embedMode: 'iframe' | 'link-only';
+}
+
+interface StreamCredentials {
+  username: string;
+  password: string;
 }
 
 // Embeddable streams first, then link-only separated
@@ -24,6 +32,8 @@ const EMBEDDABLE_CHANNELS: StreamChannel[] = [
 const LINK_ONLY_CHANNELS: StreamChannel[] = [
   { id: "camel", label: "Camel International", url: "https://www.camel1.live/e/home", region: "International", embedMode: "link-only" },
   { id: "buffstreams", label: "Buffstreams US", url: "https://buffstreams.plus/index2", region: "US", embedMode: "link-only" },
+  { id: "youtube", label: "YouTube", url: "https://www.youtube.com", region: "Global", embedMode: "link-only" },
+  { id: "ytmusic", label: "YouTube Music", url: "https://music.youtube.com", region: "Global", embedMode: "link-only" },
 ];
 
 const ALL_CHANNELS = [...EMBEDDABLE_CHANNELS, ...LINK_ONLY_CHANNELS];
@@ -37,6 +47,11 @@ export const StreamsSection = () => {
     try { return localStorage.getItem('streams_expanded') === 'true'; }
     catch { return false; }
   });
+  const [credentials, setCredentials] = useState<Record<string, StreamCredentials>>(() => {
+    try { return JSON.parse(localStorage.getItem('streams_credentials') || '{}'); }
+    catch { return {}; }
+  });
+  const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
   const iframeRefs = useRef<Record<string, HTMLIFrameElement | null>>({});
 
   const activeChannel = ALL_CHANNELS.find((c) => c.id === activeTab);
@@ -62,7 +77,6 @@ export const StreamsSection = () => {
       else if (direction === 'forward') iframe.contentWindow.history.forward();
       else iframe.contentWindow.location.reload();
     } catch {
-      // Cross-origin restriction — reload by resetting src
       if (direction === 'reload' && iframe) {
         const src = iframe.src;
         iframe.src = '';
@@ -70,6 +84,18 @@ export const StreamsSection = () => {
       }
     }
   }, [activeTab]);
+
+  const saveCredentials = useCallback((channelId: string, creds: StreamCredentials) => {
+    setCredentials(prev => {
+      const updated = { ...prev, [channelId]: creds };
+      try { localStorage.setItem('streams_credentials', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  }, []);
+
+  const getCredentials = (channelId: string): StreamCredentials => {
+    return credentials[channelId] || { username: '', password: '' };
+  };
 
   return (
     <Card className="border-border/50">
@@ -92,6 +118,45 @@ export const StreamsSection = () => {
                   <RotateCcw className="h-3.5 w-3.5" />
                 </Button>
               </>
+            )}
+            {/* Credentials settings */}
+            {activeChannel && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" title="Stream credentials">
+                    <Settings className="h-3.5 w-3.5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64" align="end">
+                  <div className="space-y-3">
+                    <p className="text-xs font-medium">{activeChannel.label} Credentials</p>
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Username / email"
+                        value={getCredentials(activeChannel.id).username}
+                        onChange={e => saveCredentials(activeChannel.id, { ...getCredentials(activeChannel.id), username: e.target.value })}
+                        className="h-7 text-xs"
+                      />
+                      <div className="relative">
+                        <Input
+                          type={showPassword[activeChannel.id] ? "text" : "password"}
+                          placeholder="Password"
+                          value={getCredentials(activeChannel.id).password}
+                          onChange={e => saveCredentials(activeChannel.id, { ...getCredentials(activeChannel.id), password: e.target.value })}
+                          className="h-7 text-xs pr-8"
+                        />
+                        <button
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          onClick={() => setShowPassword(prev => ({ ...prev, [activeChannel.id]: !prev[activeChannel.id] }))}
+                        >
+                          {showPassword[activeChannel.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">Saved locally for quick reference when logging in.</p>
+                  </div>
+                </PopoverContent>
+              </Popover>
             )}
             <Button
               variant="ghost"
@@ -118,29 +183,59 @@ export const StreamsSection = () => {
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <div className="px-4 pb-2">
             <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
-              {EMBEDDABLE_CHANNELS.map((ch) => (
-                <TabsTrigger
-                  key={ch.id}
-                  value={ch.id}
-                  className="text-xs px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                >
-                  <span>{ch.label}</span>
-                  <span className="ml-1.5 text-[10px] opacity-60">{ch.region}</span>
-                </TabsTrigger>
-              ))}
+              {EMBEDDABLE_CHANNELS.map((ch) => {
+                const creds = getCredentials(ch.id);
+                const hasCreds = creds.username || creds.password;
+                return (
+                  <TooltipProvider key={ch.id} delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <TabsTrigger
+                          value={ch.id}
+                          className="text-xs px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                        >
+                          <span>{ch.label}</span>
+                          <span className="ml-1.5 text-[10px] opacity-60">{ch.region}</span>
+                        </TabsTrigger>
+                      </TooltipTrigger>
+                      {hasCreds && (
+                        <TooltipContent side="bottom" className="text-xs space-y-0.5">
+                          {creds.username && <p>User: {creds.username}</p>}
+                          {creds.password && <p>Pass: {'•'.repeat(Math.min(creds.password.length, 12))}</p>}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              })}
               {/* Divider */}
               <Separator orientation="vertical" className="h-6 mx-1" />
-              {LINK_ONLY_CHANNELS.map((ch) => (
-                <TabsTrigger
-                  key={ch.id}
-                  value={ch.id}
-                  className="text-xs px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                >
-                  <LinkIcon className="h-3 w-3 mr-1 opacity-60" />
-                  <span>{ch.label}</span>
-                  <span className="ml-1.5 text-[10px] opacity-60">{ch.region}</span>
-                </TabsTrigger>
-              ))}
+              {LINK_ONLY_CHANNELS.map((ch) => {
+                const creds = getCredentials(ch.id);
+                const hasCreds = creds.username || creds.password;
+                return (
+                  <TooltipProvider key={ch.id} delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <TabsTrigger
+                          value={ch.id}
+                          className="text-xs px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                        >
+                          <LinkIcon className="h-3 w-3 mr-1 opacity-60" />
+                          <span>{ch.label}</span>
+                          <span className="ml-1.5 text-[10px] opacity-60">{ch.region}</span>
+                        </TabsTrigger>
+                      </TooltipTrigger>
+                      {hasCreds && (
+                        <TooltipContent side="bottom" className="text-xs space-y-0.5">
+                          {creds.username && <p>User: {creds.username}</p>}
+                          {creds.password && <p>Pass: {'•'.repeat(Math.min(creds.password.length, 12))}</p>}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              })}
             </TabsList>
           </div>
 
@@ -165,7 +260,8 @@ export const StreamsSection = () => {
                     src={ch.url}
                     title={ch.label}
                     className={`w-full rounded-lg border border-border/50 bg-black ${expanded ? "h-[85vh]" : "h-[600px]"}`}
-                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-storage-access-by-user-activation"
+                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-storage-access-by-user-activation allow-popups-to-escape-sandbox"
+                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
                     allowFullScreen
                     referrerPolicy="no-referrer"
                   />
