@@ -102,7 +102,7 @@ export const AnnotationCanvas = ({
         id: crypto.randomUUID(), type: 'point', x: pos.x, y: pos.y,
         color: activeColor, strokeWidth, radius: 1, appearAt: klipOffset, ...defaultTiming,
       }]);
-      onToolUsed?.();
+      // Don't call onToolUsed — keep point tool active for rapid placement
       return;
     }
 
@@ -307,10 +307,11 @@ export const AnnotationCanvas = ({
       case 'spotlight': {
         const cx = (startPos.x + currentPos.x) / 2;
         const cy = (startPos.y + currentPos.y) / 2;
+        // Use the larger dimension so it's always a circle by default
         const sr = Math.max(Math.abs(currentPos.x - startPos.x), Math.abs(currentPos.y - startPos.y)) / 2;
         setElements(prev => [...prev, {
           ...base, type: 'spotlight' as const, x: cx, y: cy, radius: sr || 5,
-          color: '#ffff00', fillOpacity: fillOpacity || 0.3,
+          color: '#ffff00', fillOpacity: fillOpacity || 0.15,
         }]);
         onToolUsed?.();
         break;
@@ -365,9 +366,7 @@ export const AnnotationCanvas = ({
   const renderElement = (el: AnnotationElement) => {
     const isSelected = el.id === selectedId;
     const baseStyle = getAnimStyle(el);
-    const selStyle: React.CSSProperties = isSelected
-      ? { ...baseStyle, filter: 'drop-shadow(0 0 4px rgba(168,85,247,0.9))' }
-      : baseStyle;
+    const selStyle = baseStyle;
 
     const anim = !isDrawingMode;
 
@@ -658,19 +657,19 @@ export const AnnotationCanvas = ({
                 </feMerge>
               </filter>
             </defs>
-            <rect x="0" y="0" width="100%" height="100%" fill="black" fillOpacity={el.fillOpacity || 0.3} mask={`url(#${maskId})`} />
+            <rect x="0" y="0" width="100%" height="100%" fill="black" fillOpacity={el.fillOpacity || 0.15} mask={`url(#${maskId})`} />
             {/* Outer glow ring */}
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r * 1.08}%`}
-              fill="none" stroke={el.color} strokeWidth={3} strokeOpacity={0.1}
+              fill="none" stroke={el.color} strokeWidth={el.strokeWidth || 1} strokeOpacity={0.1}
             />
             {/* Main glossy ring */}
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`}
-              fill="none" stroke={`url(#${spotGradId})`} strokeWidth={2}
+              fill="none" stroke={`url(#${spotGradId})`} strokeWidth={el.strokeWidth || 1}
               filter={`url(#${spotGlowId})`}
             />
             {/* Inner highlight */}
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r * 0.95}%`}
-              fill="none" stroke="white" strokeWidth={0.8} strokeOpacity={0.2}
+              fill="none" stroke="white" strokeWidth={Math.max((el.strokeWidth || 1) * 0.3, 0.3)} strokeOpacity={0.2}
             />
           </g>
         );
@@ -756,30 +755,52 @@ export const AnnotationCanvas = ({
                 <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`} />
               </clipPath>
             </defs>
-            {video && svgRef.current && (
-              <foreignObject
-                x={`${el.x - r}%`} y={`${el.y - r}%`}
-                width={`${r * 2}%`} height={`${r * 2}%`}
-                clipPath={`url(#${clipId})`}
-                style={{ pointerEvents: 'none' }}
-              >
-                <div style={{ width: '100%', height: '100%', overflow: 'hidden', borderRadius: '50%', position: 'relative' }}>
-                  <video
-                    src={videoSrc} muted playsInline
-                    style={{
-                      position: 'absolute',
-                      width: `${zoom * 100}%`, height: `${zoom * 100}%`,
-                      left: `${50 - (el.x / 100) * zoom * 100}%`,
-                      top: `${50 - (el.y / 100) * zoom * 100}%`,
-                      pointerEvents: 'none',
-                    }}
-                    ref={(v) => { if (v && video) v.currentTime = video.currentTime; }}
-                  />
-                </div>
-              </foreignObject>
-            )}
+            {video && svgRef.current && (() => {
+              const svgRect = svgRef.current!.getBoundingClientRect();
+              const svgW = svgRect.width;
+              const svgH = svgRect.height;
+              // Magnifier centre in pixels
+              const cxPx = (el.x / 100) * svgW;
+              const cyPx = (el.y / 100) * svgH;
+              // Magnifier radius in pixels
+              const rPx = (r / 100) * svgW;
+              const diameter = rPx * 2;
+              // Video natural dimensions
+              const vw = video.videoWidth || svgW;
+              const vh = video.videoHeight || svgH;
+              // Scale video so it covers the SVG area, then apply zoom
+              const scaleX = (svgW / vw) * zoom;
+              const scaleY = (svgH / vh) * zoom;
+              const vidW = vw * scaleX;
+              const vidH = vh * scaleY;
+              // Offset so the magnifier centre maps to the centre of the circle
+              const left = diameter / 2 - cxPx * (svgW / vw) * zoom;
+              const top = diameter / 2 - cyPx * (svgH / vh) * zoom;
+              return (
+                <foreignObject
+                  x={`${el.x - r}%`} y={`${el.y - r}%`}
+                  width={`${r * 2}%`} height={`${r * 2}%`}
+                  clipPath={`url(#${clipId})`}
+                  style={{ pointerEvents: 'none' }}
+                >
+                  <div style={{ width: '100%', height: '100%', overflow: 'hidden', borderRadius: '50%', position: 'relative' }}>
+                    <video
+                      src={videoSrc} muted playsInline
+                      style={{
+                        position: 'absolute',
+                        width: `${vidW}px`, height: `${vidH}px`,
+                        left: `${left}px`,
+                        top: `${top}px`,
+                        pointerEvents: 'none',
+                      }}
+                      ref={(v) => { if (v && video) v.currentTime = video.currentTime; }}
+                    />
+                  </div>
+                </foreignObject>
+              );
+            })()}
             <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`}
-              fill="none" stroke="white" strokeWidth={2.5} strokeOpacity={0.9}>
+              fill="none" stroke="white" strokeWidth={1.5} strokeOpacity={0.9}>
               {anim && <animate attributeName="r" from="0" to={`${r}%`} dur="0.3s" fill="freeze" />}
             </circle>
             <text x={`${el.x}%`} y={`${(el.y || 0) - r - 1}%`}
