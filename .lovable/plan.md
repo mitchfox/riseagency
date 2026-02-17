@@ -1,63 +1,51 @@
 
 
-## Annotation Fixes: Persistence and Visibility
+## Magnifier and Image Layer Fixes
 
-### Problem 1: Video and annotations disappear on new session
+### Problem 1: Magnifier - No Resize and No Zoom Content
 
-Annotation projects are currently stored entirely in `localStorage`. There is no database table backing them, so when a new browser session starts or localStorage is cleared, everything is gone. The video URL from cloud storage is fine, but the project metadata (name, klips, elements) vanishes.
+**Root cause (resize):** The magnifier uses `radius` for its size, but it's not included in the resize handle logic. The resize code at line 995 only handles `circle`, `spotlight`, `player-marker`, and `semi-circle` -- magnifier is missing from that list.
 
-### Problem 2: Previous annotations reappearing
+**Root cause (no zoom content):** The magnifier uses a `foreignObject` with a nested `<video>` element to show zoomed content. The issue is that the inner video element is created via a ref callback that sets `currentTime`, but the video never actually loads/plays. The `<video>` element needs to have its data loaded before it can display a frame. Without waiting for the video to be ready, it shows nothing.
 
-When a new annotation triggers a playback freeze, the code currently adds ALL visible elements to the freeze display set, not just the newly triggered ones. This means an earlier annotation that is still technically "visible" at that moment gets shown again during the freeze, even though it has already been displayed.
+### Problem 2: Image Layer Not Staying on Top
+
+**Root cause:** While `sortedElements` sorts image-layer to render last in the array, the SVG rendering order is correct. However, the issue is likely that the `foreignObject` video inside the image-layer isn't syncing properly with the main video, making it appear invisible or broken. Additionally, the sort only uses a simple 0/1 comparison which doesn't account for multiple image layers or their `layerZIndex` property.
 
 ---
 
-### Fix 1: Database persistence for annotation projects
+### Changes (all in `AnnotationCanvas.tsx`)
 
-Create a new `annotation_projects` table in the database and update the save/load logic to use it instead of localStorage.
+**1. Magnifier resize support**
+- Add `'magnifier'` to the radius-based resize condition at line 172 and the handle generation at line 995, so it gets the same corner/edge resize handles as circle and spotlight.
 
-**Database table:**
-- `id` (uuid, primary key)
-- `name` (text)
-- `video_url` (text)
-- `video_name` (text)
-- `klips` (jsonb) -- stores the full klips array including all elements
-- `created_at` (timestamptz)
-- `updated_at` (timestamptz)
-- `user_id` (uuid, references auth.users)
+**2. Magnifier video rendering fix**
+- Replace the current approach of creating a new `<video>` element (which never loads) with a **canvas-based snapshot**. When the magnifier renders, grab the current frame from the main video using `canvas.drawImage(video, ...)`, then use the canvas data as an `<image>` inside the SVG clip. This is reliable and doesn't depend on a second video loading.
+- Alternatively, use `video.poster` or ensure the nested video fires `loadeddata` before displaying. The canvas approach is more robust.
 
-**RLS:** Authenticated users can read/write their own projects.
+**3. Image layer z-index fix**
+- Separate the rendering: render all non-image-layer elements first, then render image-layer elements in a second pass, ensuring they are truly always on top in the SVG DOM order.
+- Use the `layerZIndex` property to sort multiple image layers relative to each other.
+- Ensure the inner video of image-layer elements properly syncs by also using a canvas snapshot approach or adding `preload="auto"` and waiting for load.
 
-**Code changes in `AnnotationProjects.tsx`:**
-- Replace `localStorage` read with a database query on mount
-- Replace `saveProjects` localStorage write with database upsert
-- Keep localStorage as a fast local cache but treat the database as the source of truth
-- On project open, load from database (not localStorage)
+### Technical Details
 
-**Code changes in `AnnotationEditor.tsx` (`handleSave`):**
-- When saving, persist to the database table as well as calling `onSave`
-
-### Fix 2: Previous annotation visibility during freeze
-
-**In `AnnotationEditor.tsx`, Effect A (around line 228):**
-
-Currently the code does:
-```typescript
-// Also include any other elements that are newly visible at this exact time
-visibleElements.forEach(el => freezeIds.add(el.id));
 ```
+Resize condition (line ~172):
+  Add 'magnifier' to: el.type === 'circle' || el.type === 'spotlight' || ... || el.type === 'magnifier'
 
-This line adds ALL visible elements to the freeze set, which is the root cause. It should only include the newly triggered elements, not everything that happens to be visible.
+Handle generation (line ~995):
+  Add 'magnifier' to the same condition
 
-**Fix:** Remove the line that adds all `visibleElements` to `freezeIds`. Only the `newVisible` elements (the ones that just appeared and haven't been triggered yet) should be in the freeze set.
+Magnifier rendering (lines ~740-810):
+  Replace foreignObject+video with canvas-based frame capture:
+  - On render, draw video.currentTime frame to an offscreen canvas
+  - Crop and zoom the region around the magnifier centre
+  - Use the canvas as a data URL for an SVG <image> element inside the clip path
 
----
-
-### Technical summary
-
-| File | Change |
-|------|--------|
-| Database migration | Create `annotation_projects` table with RLS |
-| `AnnotationProjects.tsx` | Load/save projects from database instead of localStorage |
-| `AnnotationEditor.tsx` | Fix freeze visibility: only show newly triggered elements, not all visible ones |
+Image layer rendering (lines ~855-910):
+  - Split sortedElements into two arrays: regular + image-layers
+  - Render regular elements first, then image-layers
+  - Apply same canvas snapshot fix for reliable frame display
+```
 
