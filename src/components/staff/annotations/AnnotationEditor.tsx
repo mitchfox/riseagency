@@ -76,6 +76,8 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
 
   const activeKlip = klips.find(k => k.id === activeKlipId);
   const klipOffset = activeKlip ? currentTime - activeKlip.startTime : 0;
+  // In drawing mode, use the frozen timestamp for visibility so new elements show immediately
+  const effectiveOffset = drawingMode && activeKlip ? drawingTimestamp - activeKlip.startTime : klipOffset;
 
   const allElements = activeKlip?.elements || [];
 
@@ -83,21 +85,21 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     return allElements.filter(el => {
       const start = el.appearAt;
       const end = el.duration !== undefined ? start + el.duration : Infinity;
-      return klipOffset >= start && klipOffset < end;
+      return effectiveOffset >= start && effectiveOffset < end;
     }).map(el => {
       if (el.keyframes && el.keyframes.length > 0) {
-        const interp = interpolateKeyframes(el.keyframes, klipOffset);
+        const interp = interpolateKeyframes(el.keyframes, effectiveOffset);
         if (interp) return { ...el, x: interp.x, y: interp.y, opacity: interp.opacity };
       }
       if (el.animateIn && el.animateIn > 0) {
-        const elapsed = klipOffset - el.appearAt;
+        const elapsed = effectiveOffset - el.appearAt;
         if (elapsed < el.animateIn) {
           const opacity = (elapsed / el.animateIn) * (el.opacity ?? 1);
           return { ...el, opacity };
         }
       }
       if (el.animateOut && el.animateOut > 0 && el.duration) {
-        const remaining = (el.appearAt + el.duration) - klipOffset;
+        const remaining = (el.appearAt + el.duration) - effectiveOffset;
         if (remaining < el.animateOut) {
           const opacity = (remaining / el.animateOut) * (el.opacity ?? 1);
           return { ...el, opacity };
@@ -105,11 +107,10 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       }
       return el;
     });
-  }, [allElements, klipOffset]);
+  }, [allElements, effectiveOffset]);
 
-  const shouldHoldFrame = useMemo(() => {
-    return visibleElements.some(el => el.holdFrame);
-  }, [visibleElements]);
+  // Pause video whenever any annotation is visible during playback
+  const hasVisibleAnnotations = visibleElements.length > 0 && !drawingMode;
 
   const setElements = useCallback((updater: React.SetStateAction<AnnotationElement[]>) => {
     setKlips(prev => prev.map(k => {
@@ -158,8 +159,25 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (shouldHoldFrame && !video.paused) video.pause();
-  }, [shouldHoldFrame]);
+    if (hasVisibleAnnotations && !video.paused) {
+      video.pause();
+      setIsPlaying(false);
+    }
+  }, [hasVisibleAnnotations]);
+
+  // Auto-resume when annotations end
+  useEffect(() => {
+    if (drawingMode || !activeKlip) return;
+    if (!hasVisibleAnnotations && !isPlaying && videoRef.current?.paused) {
+      // Check if we were playing before annotations paused us
+      const wasPlayingBeforePause = videoRef.current.currentTime > 0 && videoRef.current.currentTime < duration;
+      // Only auto-resume if there are annotations in this klip (meaning we likely paused for one)
+      if (allElements.length > 0 && wasPlayingBeforePause) {
+        videoRef.current.play();
+        setIsPlaying(true);
+      }
+    }
+  }, [hasVisibleAnnotations, drawingMode]);
 
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
@@ -401,9 +419,9 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                 Click second element to link
               </div>
             )}
-            {shouldHoldFrame && !drawingMode && (
+            {hasVisibleAnnotations && !drawingMode && (
               <div className="absolute top-2 right-2 bg-amber-500/80 text-white text-[10px] px-2 py-0.5 rounded flex items-center gap-1">
-                <Lock className="w-3 h-3" /> Frame held
+                <Lock className="w-3 h-3" /> Annotation visible
               </div>
             )}
           </div>
