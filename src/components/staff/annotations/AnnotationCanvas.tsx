@@ -897,13 +897,15 @@ export const AnnotationCanvas = ({
               fill="transparent" stroke="none"
               style={{ cursor: 'move' }}
             />
-            {/* Selection border */}
-            <rect
-              x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`}
-              fill="none" stroke={isSelected ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.15)'} strokeWidth={0.5}
-              strokeDasharray="4 2"
-              pointerEvents="none"
-            />
+            {/* Selection border — only when selected in editing */}
+            {isSelected && (
+              <rect
+                x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`}
+                fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth={0.5}
+                strokeDasharray="4 2"
+                pointerEvents="none"
+              />
+            )}
           </g>
         );
       }

@@ -31,6 +31,9 @@ export type AnnotationTool =
 
 export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [zoomOrigin, setZoomOrigin] = useState({ x: 50, y: 50 });
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -626,12 +629,49 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       if (e.key === 'ArrowLeft' && e.shiftKey) { e.preventDefault(); stepFrame(-10); }
       if (e.key === 'ArrowRight' && e.shiftKey) { e.preventDefault(); stepFrame(10); }
       if (e.key === 'Escape') { setActiveTool('select'); setSelectedId(null); setLinkSource(null); }
-      if (e.key === 'v') setActiveTool('select');
       if (e.key === 'k' && e.ctrlKey) { e.preventDefault(); addKeyframe(); }
+      // Tool hotkeys (only when not holding modifiers except ctrl for select)
+      if (!e.altKey && !e.metaKey && !e.shiftKey) {
+        if (e.key === 'Control') { setActiveTool('select'); return; }
+        if (e.key === '1') setActiveTool('line');
+        if (e.key === '2') setActiveTool('arrow');
+        if (e.key === '3') setActiveTool('curved-arrow');
+        if (e.key === 'l') setActiveTool('linked-line');
+        if (e.key === 'c') setActiveTool('circle');
+        if (e.key === 'd') setActiveTool('semi-circle');
+        if (e.key === 's') setActiveTool('space-oval');
+        if (e.key === 'p') setActiveTool('point');
+        if (e.key === 'h') setActiveTool('spotlight');
+        if (e.key === 'r') setActiveTool('distance');
+        if (e.key === 'm') setActiveTool('magnifier');
+        if (e.key === 'v') setActiveTool('vision-cone');
+        if (e.key === 'b') setActiveTool('image-layer');
+        if (e.key === 'e') setActiveTool('eraser');
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [handleDeleteElement, togglePlay, stepFrame, addKeyframe]);
+
+  // Scroll-wheel zoom on the video container
+  useEffect(() => {
+    const container = videoContainerRef.current;
+    if (!container) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const pctX = ((e.clientX - rect.left) / rect.width) * 100;
+      const pctY = ((e.clientY - rect.top) / rect.height) * 100;
+      setZoomLevel(prev => {
+        const next = Math.min(10, Math.max(1, prev - e.deltaY * 0.002));
+        if (next === 1) setZoomOrigin({ x: 50, y: 50 });
+        else setZoomOrigin({ x: pctX, y: pctY });
+        return next;
+      });
+    };
+    container.addEventListener('wheel', onWheel, { passive: false });
+    return () => container.removeEventListener('wheel', onWheel);
+  }, []);
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
@@ -701,8 +741,13 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
         {/* Main area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Canvas */}
-          <div className="flex-1 relative bg-[#12151e] flex items-center justify-center overflow-hidden">
-            <div className="relative" style={{ display: 'inline-block' }}>
+          <div ref={videoContainerRef} className="flex-1 relative bg-[#12151e] flex items-center justify-center overflow-hidden">
+            <div className="relative" style={{
+              display: 'inline-block',
+              transform: `scale(${zoomLevel})`,
+              transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
+              transition: 'transform 0.1s ease-out',
+            }}>
               <video
                 ref={videoRef}
                 src={project.videoUrl}
