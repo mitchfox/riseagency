@@ -352,40 +352,47 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
         <div className="flex-1 flex flex-col min-w-0">
           {/* Canvas */}
           <div className="flex-1 relative bg-[#12151e] flex items-center justify-center overflow-hidden">
-            <div className="relative w-full h-full flex items-center justify-center">
+            <div className="relative" style={{ display: 'inline-block' }}>
               <video
                 ref={videoRef}
                 src={project.videoUrl}
-                className={`max-w-full max-h-full ${drawingMode ? 'invisible' : ''}`}
+                className={`max-w-full max-h-[calc(100vh-16rem)] block ${drawingMode ? 'invisible' : ''}`}
                 muted={muted}
                 playsInline
                 preload="auto"
                 onClick={drawingMode ? undefined : togglePlay}
               />
               {drawingMode && freezeFrameUrl && (
-                <img src={freezeFrameUrl} className="max-w-full max-h-full absolute inset-0 m-auto" alt="Freeze frame" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', zIndex: 10 }} />
+                <img
+                  src={freezeFrameUrl}
+                  className="absolute inset-0 w-full h-full object-contain"
+                  alt="Freeze frame"
+                  style={{ zIndex: 10 }}
+                />
               )}
               {activeKlip && drawingMode && (
-                <AnnotationCanvas
-                  elements={visibleElements}
-                  setElements={setElements}
-                  activeTool={activeTool}
-                  activeColor={activeColor}
-                  strokeWidth={strokeWidth}
-                  selectedId={selectedId}
-                  setSelectedId={setSelectedId}
-                  videoRef={videoRef}
-                  trackers={trackers}
-                  setTrackers={setTrackers}
-                  linkSource={linkSource}
-                  setLinkSource={setLinkSource}
-                  klipOffset={klipOffset}
-                  onToolUsed={handleToolUsed}
-                />
+                <div className="absolute inset-0" style={{ zIndex: 20 }}>
+                  <AnnotationCanvas
+                    elements={visibleElements}
+                    setElements={setElements}
+                    activeTool={activeTool}
+                    activeColor={activeColor}
+                    strokeWidth={strokeWidth}
+                    selectedId={selectedId}
+                    setSelectedId={setSelectedId}
+                    videoRef={videoRef}
+                    trackers={trackers}
+                    setTrackers={setTrackers}
+                    linkSource={linkSource}
+                    setLinkSource={setLinkSource}
+                    klipOffset={klipOffset}
+                    onToolUsed={handleToolUsed}
+                  />
+                </div>
               )}
             </div>
             {drawingMode && (
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-primary/90 text-white text-xs px-3 py-1 rounded-full flex items-center gap-1.5 z-10">
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-primary/90 text-white text-xs px-3 py-1 rounded-full flex items-center gap-1.5 z-30">
                 <Pencil className="w-3 h-3" /> Drawing Mode — use tools on the left
               </div>
             )}
@@ -589,46 +596,8 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                       />
                       <span className="text-[9px] text-white/30">s</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-[9px] text-white/40 w-14">Fade in</Label>
-                      <Input
-                        type="number" step="0.1" min="0"
-                        value={selectedElement.animateIn ?? ''}
-                        placeholder="0"
-                        onChange={e => {
-                          const v = e.target.value === '' ? undefined : parseFloat(e.target.value);
-                          updateElement(selectedElement.id, { animateIn: v });
-                        }}
-                        className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
-                      />
-                      <span className="text-[9px] text-white/30">s</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-[9px] text-white/40 w-14">Fade out</Label>
-                      <Input
-                        type="number" step="0.1" min="0"
-                        value={selectedElement.animateOut ?? ''}
-                        placeholder="0"
-                        onChange={e => {
-                          const v = e.target.value === '' ? undefined : parseFloat(e.target.value);
-                          updateElement(selectedElement.id, { animateOut: v });
-                        }}
-                        className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
-                      />
-                      <span className="text-[9px] text-white/30">s</span>
-                    </div>
-                    <div className="flex items-center gap-2 pt-1">
-                      <label className="flex items-center gap-1.5 text-[10px] text-white/50 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedElement.holdFrame ?? false}
-                          onChange={e => updateElement(selectedElement.id, { holdFrame: e.target.checked })}
-                          className="w-3 h-3 rounded"
-                        />
-                        Hold frame (freeze video)
-                      </label>
-                    </div>
                     <Button
+
                       variant="ghost"
                       size="sm"
                       className="w-full h-6 text-[10px] text-white/40"

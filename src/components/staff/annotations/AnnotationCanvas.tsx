@@ -582,7 +582,7 @@ export const AnnotationCanvas = ({
     <svg
       ref={svgRef}
       className="absolute inset-0 w-full h-full"
-      style={{ cursor: activeTool === 'select' ? 'default' : 'crosshair', zIndex: 20 }}
+      style={{ cursor: activeTool === 'select' ? 'default' : 'crosshair' }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
