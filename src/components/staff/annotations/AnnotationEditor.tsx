@@ -314,6 +314,24 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     toast.success("Project saved");
   };
 
+  const drawSvgOverlay = useCallback(async (
+    ctx: CanvasRenderingContext2D,
+    elements: ReturnType<typeof computeVisibleElements>,
+    vw: number,
+    vh: number
+  ) => {
+    if (elements.length === 0) return;
+    const svgString = renderElementsToSVGString(elements, vw, vh);
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const svgUrl = URL.createObjectURL(svgBlob);
+    await new Promise<void>((resolve) => {
+      const img = new Image();
+      img.onload = () => { ctx.drawImage(img, 0, 0, vw, vh); URL.revokeObjectURL(svgUrl); resolve(); };
+      img.onerror = () => { URL.revokeObjectURL(svgUrl); resolve(); };
+      img.src = svgUrl;
+    });
+  }, []);
+
   const exportClip = useCallback(async () => {
     const video = videoRef.current;
     if (!video || !activeKlip) {
@@ -321,12 +339,11 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       return;
     }
 
-    toast.info("Recording clip with annotations — this may take a moment...");
-
     isExportingRef.current = true;
     try {
       const wasPlaying = !video.paused;
       const savedTime = video.currentTime;
+      const savedRate = video.playbackRate;
       video.pause();
       setIsPlaying(false);
 
@@ -339,7 +356,6 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
         });
       }
 
-      // Fail explicitly if dimensions are zero
       if (!video.videoWidth || !video.videoHeight) {
         toast.error("Cannot read video dimensions — export aborted");
         return;
@@ -352,69 +368,98 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       canvas.height = vh;
       const ctx = canvas.getContext('2d')!;
 
-      const fps = 30;
       const klipStart = activeKlip.startTime;
       const klipEnd = activeKlip.endTime;
       const klipDuration = klipEnd - klipStart;
-      const totalFrames = Math.ceil(klipDuration * fps);
 
-      const stream = canvas.captureStream(fps);
+      const stream = canvas.captureStream();
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm',
         videoBitsPerSecond: 8_000_000,
       });
       const chunks: Blob[] = [];
       mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-
       const recordingDone = new Promise<Blob>(resolve => {
-        mediaRecorder.onstop = () => {
-          resolve(new Blob(chunks, { type: 'video/webm' }));
-        };
+        mediaRecorder.onstop = () => resolve(new Blob(chunks, { type: 'video/webm' }));
       });
 
+      // Seek to start position once
+      await waitForSeek(video, klipStart);
+
+      toast.info("Exporting clip at real-time speed...", { id: 'export-progress' });
       mediaRecorder.start();
 
-      // Render each frame deterministically — no DOM SVG cloning
-      for (let i = 0; i < totalFrames; i++) {
-        const time = klipStart + (i / fps);
-        const offset = time - klipStart;
+      const supportsRVFC = 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
 
-        // Seek and wait for decoded frame (includes readyState + rAF gate)
-        await waitForSeek(video, time);
+      if (supportsRVFC) {
+        // ── Fast path: playback-driven capture ──
+        video.playbackRate = 1;
+        let lastProgressBucket = -1;
 
-        // Draw video frame (overwrites entire buffer, no clearRect needed)
-        ctx.drawImage(video, 0, 0, vw, vh);
+        await new Promise<void>((resolve) => {
+          const handleFrame = (_now: number, metadata: { mediaTime: number }) => {
+            const mediaTime = metadata.mediaTime;
 
-        // Compute visible elements using the shared pure function
-        const computed = computeVisibleElements(allElements, offset);
-
-        if (computed.length > 0) {
-          // Generate SVG from computed state (no DOM dependency)
-          const svgString = renderElementsToSVGString(computed, vw, vh);
-          const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-          const svgUrl = URL.createObjectURL(svgBlob);
-
-          await new Promise<void>((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-              ctx.drawImage(img, 0, 0, vw, vh);
-              URL.revokeObjectURL(svgUrl);
+            if (mediaTime >= klipEnd) {
+              video.pause();
               resolve();
-            };
-            img.onerror = () => {
-              URL.revokeObjectURL(svgUrl);
-              resolve();
-            };
-            img.src = svgUrl;
-          });
-        }
+              return;
+            }
 
-        // Fixed delay for MediaRecorder ingestion (not wall-clock pacing)
-        await new Promise(r => setTimeout(r, 50));
+            // Draw video frame (overwrites entire buffer)
+            ctx.drawImage(video, 0, 0, vw, vh);
 
-        if (i % 30 === 0) {
-          const pct = Math.round((i / totalFrames) * 100);
-          toast.info(`Exporting... ${pct}%`, { id: 'export-progress' });
+            // Compute and draw annotations synchronously-ish
+            const offset = mediaTime - klipStart;
+            const computed = computeVisibleElements(allElements, offset);
+            if (computed.length > 0) {
+              // For the fast path we draw SVG overlay synchronously via a pre-rendered approach
+              // We queue the SVG draw but don't await it per-frame to keep up with playback
+              const svgString = renderElementsToSVGString(computed, vw, vh);
+              const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+              const svgUrl = URL.createObjectURL(svgBlob);
+              const img = new Image();
+              img.onload = () => {
+                ctx.drawImage(img, 0, 0, vw, vh);
+                URL.revokeObjectURL(svgUrl);
+              };
+              img.onerror = () => URL.revokeObjectURL(svgUrl);
+              img.src = svgUrl;
+            }
+
+            // Progress reporting at ~10% intervals
+            const progressBucket = Math.floor(((mediaTime - klipStart) / klipDuration) * 10);
+            if (progressBucket > lastProgressBucket) {
+              lastProgressBucket = progressBucket;
+              toast.info(`Exporting... ${progressBucket * 10}%`, { id: 'export-progress' });
+            }
+
+            (video as any).requestVideoFrameCallback(handleFrame);
+          };
+
+          (video as any).requestVideoFrameCallback(handleFrame);
+          video.play();
+        });
+      } else {
+        // ── Fallback: seek-per-frame (slower but universal) ──
+        const fps = 30;
+        const totalFrames = Math.ceil(klipDuration * fps);
+
+        for (let i = 0; i < totalFrames; i++) {
+          const time = klipStart + (i / fps);
+          const offset = i / fps;
+
+          await waitForSeek(video, time);
+          ctx.drawImage(video, 0, 0, vw, vh);
+
+          const computed = computeVisibleElements(allElements, offset);
+          await drawSvgOverlay(ctx, computed, vw, vh);
+
+          await new Promise(r => setTimeout(r, 50));
+
+          if (i % 30 === 0) {
+            toast.info(`Exporting... ${Math.round((i / totalFrames) * 100)}%`, { id: 'export-progress' });
+          }
         }
       }
 
@@ -428,6 +473,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
       a.click();
       URL.revokeObjectURL(url);
 
+      video.playbackRate = savedRate;
       video.currentTime = savedTime;
       if (wasPlaying) video.play();
 
@@ -438,7 +484,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     } finally {
       isExportingRef.current = false;
     }
-  }, [activeKlip, projectName, allElements]);
+  }, [activeKlip, projectName, allElements, drawSvgOverlay]);
 
   const startDrawing = useCallback(() => {
     const video = videoRef.current;
