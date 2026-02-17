@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb, Star, HelpCircle } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb, Star, HelpCircle, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
 import { KeyboardShortcutsDialog } from "@/components/staff/KeyboardShortcutsDialog";
@@ -281,22 +282,42 @@ const Staff = () => {
   const handleSectionToggle = (section: string) => {
     const newSection = expandedSection === section ? null : section;
     setExpandedSection(newSection as any);
-    // Update URL
     if (newSection) {
       setSearchParams({ section: newSection });
-      // Add to open tabs
-      try {
-        const tabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
-        if (!tabs.includes(newSection)) {
-          const updated = [...tabs, newSection].slice(-8); // Max 8 tabs
-          localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
-        }
-      } catch {}
     } else {
       setSearchParams({});
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const addSectionAsTab = (section: string) => {
+    try {
+      const tabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
+      if (!tabs.includes(section)) {
+        const updated = [...tabs, section].slice(-12);
+        localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
+      }
+    } catch {}
+    handleSectionToggle(section);
+  };
+
+  const removeTab = (tabId: string) => {
+    try {
+      const tabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
+      const updated = tabs.filter(t => t !== tabId);
+      localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
+      if (expandedSection === tabId) {
+        if (updated.length > 0) {
+          handleSectionToggle(updated[updated.length - 1]);
+        } else {
+          handleSectionToggle('overview');
+        }
+      }
+      setExpandedSection(prev => prev); // force re-render
+    } catch {}
+  };
+
+  const [tabOverflowOpen, setTabOverflowOpen] = useState(false);
 
   // Load saved email and remember me preference on mount
   useEffect(() => {
@@ -951,110 +972,159 @@ const Staff = () => {
       />
 
       {/* Header with Logo - always visible */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center h-16 gap-0">
-            {/* Left side: open tabs - stops with padding before centre logo */}
-            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none min-w-0 pr-4" style={{ maxWidth: 'calc(50% - 80px)' }}
-              onDragOver={(e) => e.preventDefault()}
+       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+        <div className="flex items-center h-16 px-4">
+          {/* Left side: open tabs */}
+          <div className="flex items-center gap-1.5 overflow-hidden min-w-0 flex-1 mr-4"
+            onDragOver={(e) => e.preventDefault()}
+          >
+            {(() => {
+              const openTabs: string[] = (() => { try { return JSON.parse(localStorage.getItem('staff_open_tabs') || '[]'); } catch { return []; } })();
+              const allSections = categories.flatMap(c => c.sections.filter(s => !(s as any).isGroupLabel));
+              const MAX_VISIBLE = isMobile ? 2 : 4;
+              const visibleTabs = openTabs.slice(0, MAX_VISIBLE);
+              const overflowTabs = openTabs.slice(MAX_VISIBLE);
+
+              return (
+                <>
+                  {visibleTabs.map((tabId) => {
+                    const sec = allSections.find(s => s.id === tabId);
+                    if (!sec) return null;
+                    const TabIcon = sec.icon;
+                    const isActive = expandedSection === tabId;
+
+                    return (
+                      <Popover key={tabId}>
+                        <PopoverTrigger asChild>
+                          <button
+                            draggable
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('text/plain', tabId);
+                              e.dataTransfer.effectAllowed = 'move';
+                            }}
+                            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              const draggedId = e.dataTransfer.getData('text/plain');
+                              if (draggedId === tabId) return;
+                              const updated = [...openTabs];
+                              const fromIdx = updated.indexOf(draggedId);
+                              const toIdx = updated.indexOf(tabId);
+                              if (fromIdx === -1 || toIdx === -1) return;
+                              updated.splice(fromIdx, 1);
+                              updated.splice(toIdx, 0, draggedId);
+                              localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
+                              setExpandedSection(prev => prev);
+                            }}
+                            onClick={() => handleSectionToggle(tabId as any)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-lg border cursor-grab active:cursor-grabbing ${
+                              isActive
+                                ? 'border-primary/40 text-primary bg-primary/10'
+                                : 'border-border/40 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40'
+                            }`}
+                          >
+                            <TabIcon className="w-3.5 h-3.5 shrink-0" />
+                            {!isMobile && <span className="truncate max-w-[90px]">{sec.title}</span>}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent side="bottom" align="start" className="w-auto p-2 flex items-center gap-2">
+                          <span className="text-xs font-medium">{sec.title}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5 text-muted-foreground hover:text-destructive"
+                            onClick={() => removeTab(tabId)}
+                          >
+                            <span className="text-sm">×</span>
+                          </Button>
+                        </PopoverContent>
+                      </Popover>
+                    );
+                  })}
+
+                  {overflowTabs.length > 0 && (
+                    <>
+                      <button
+                        onClick={() => setTabOverflowOpen(true)}
+                        className="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg border border-border/40 text-muted-foreground hover:text-foreground hover:bg-muted/40 shrink-0"
+                      >
+                        +{overflowTabs.length}
+                      </button>
+                      <Dialog open={tabOverflowOpen} onOpenChange={setTabOverflowOpen}>
+                        <DialogContent className="max-w-sm">
+                          <div className="space-y-3">
+                            <p className="text-sm font-semibold">Open Tabs</p>
+                            <div className="space-y-1 max-h-80 overflow-y-auto">
+                              {openTabs.map(tId => {
+                                const s = allSections.find(x => x.id === tId);
+                                if (!s) return null;
+                                const TIcon = s.icon;
+                                const active = expandedSection === tId;
+                                return (
+                                  <div key={tId} className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer ${active ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50'}`}>
+                                    <TIcon className="w-4 h-4 shrink-0" />
+                                    <span className="text-sm flex-1 truncate" onClick={() => { handleSectionToggle(tId as any); setTabOverflowOpen(false); }}>{s.title}</span>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0" onClick={() => removeTab(tId)}>
+                                      <span className="text-xs">×</span>
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </>
+                  )}
+
+                  {/* Add tab button */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="flex items-center justify-center w-7 h-7 rounded-lg border border-dashed border-border/40 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40 shrink-0 transition-colors">
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent side="bottom" align="start" className="w-56 p-2">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 px-1">Pin a section</p>
+                      <div className="space-y-0.5 max-h-60 overflow-y-auto">
+                        {allSections.filter(s => !openTabs.includes(s.id)).map(s => {
+                          const SIcon = s.icon;
+                          return (
+                            <button
+                              key={s.id}
+                              className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded-md hover:bg-muted/50 text-left"
+                              onClick={() => { addSectionAsTab(s.id); }}
+                            >
+                              <SIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span>{s.title}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </>
+              );
+            })()}
+          </div>
+
+          {/* Right side: logo + theme toggle + notifications — always far right */}
+          <div className="flex items-center gap-3 shrink-0">
+            <img
+              src={theme === 'light' ? '/RISEBlack.png' : '/RISEWhite.png'}
+              alt="RISE"
+              className="h-9 w-auto"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="h-9 w-9 group"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              {(() => {
-                const openTabs: string[] = (() => { try { return JSON.parse(localStorage.getItem('staff_open_tabs') || '[]'); } catch { return []; } })();
-                const allSections = categories.flatMap(c => c.sections.filter(s => !(s as any).isGroupLabel));
-                const tabs = Array.from(new Set([...(expandedSection ? [expandedSection] : []), ...openTabs]));
-                // Max 3 full tabs on desktop, then icon-only. Mobile always icon-only.
-                const iconOnly = tabs.length > 3 || isMobile;
-
-                return tabs.map((tabId) => {
-                  const sec = allSections.find(s => s.id === tabId);
-                  if (!sec) return null;
-                  const TabIcon = sec.icon;
-                  const isActive = expandedSection === tabId;
-
-                  return (
-                    <button
-                      key={tabId}
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData('text/plain', tabId);
-                        e.dataTransfer.effectAllowed = 'move';
-                      }}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.dataTransfer.dropEffect = 'move';
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        const draggedId = e.dataTransfer.getData('text/plain');
-                        if (draggedId === tabId) return;
-                        const updated = [...tabs];
-                        const fromIdx = updated.indexOf(draggedId);
-                        const toIdx = updated.indexOf(tabId);
-                        if (fromIdx === -1 || toIdx === -1) return;
-                        updated.splice(fromIdx, 1);
-                        updated.splice(toIdx, 0, draggedId);
-                        localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
-                        setExpandedSection(prev => prev);
-                      }}
-                      onClick={() => handleSectionToggle(tabId as any)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all shrink-0 rounded-md border cursor-grab active:cursor-grabbing ${
-                        isActive 
-                          ? 'border-primary/40 text-primary bg-primary/10' 
-                          : 'border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/50'
-                      }`}
-                      title={sec.title}
-                    >
-                      <TabIcon className="w-3.5 h-3.5 shrink-0" />
-                      {!iconOnly && (
-                        <span className="truncate max-w-[100px]">{sec.title}</span>
-                      )}
-                      {tabs.length > 1 && (
-                        <span
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const updated = openTabs.filter(t => t !== tabId);
-                            localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
-                            if (isActive && updated.length > 0) {
-                              handleSectionToggle(updated[updated.length - 1] as any);
-                            } else if (isActive) {
-                              handleSectionToggle('overview');
-                            }
-                            setExpandedSection(prev => prev);
-                          }}
-                          className="text-[10px] hover:text-destructive cursor-pointer leading-none"
-                          style={{ opacity: isActive ? 0.6 : 0 }}
-                          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-                          onMouseLeave={(e) => (e.currentTarget.style.opacity = isActive ? '0.6' : '0')}
-                        >
-                          ×
-                        </span>
-                      )}
-                    </button>
-                  );
-                });
-              })()}
-            </div>
-            {/* Centre logo - absolutely positioned to stay central */}
-            <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none">
-              <img 
-                src={theme === 'light' ? '/RISEBlack.png' : '/RISEWhite.png'}
-                alt="RISE"
-                className="h-10 w-auto"
-              />
-            </div>
-            {/* Right side: theme toggle + notifications */}
-            <div className="flex items-center gap-1 shrink-0 ml-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="h-9 w-9 group"
-                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              >
-                <Lightbulb className={`h-5 w-5 transition-colors ${theme === 'dark' ? 'text-primary group-hover:text-foreground' : 'text-primary fill-primary group-hover:text-foreground group-hover:fill-foreground'}`} />
-              </Button>
-              {user && <StaffNotificationsDropdown userId={user.id} />}
-            </div>
+              <Lightbulb className={`h-5 w-5 transition-colors ${theme === 'dark' ? 'text-primary group-hover:text-foreground' : 'text-primary fill-primary group-hover:text-foreground group-hover:fill-foreground'}`} />
+            </Button>
+            {user && <StaffNotificationsDropdown userId={user.id} />}
           </div>
         </div>
       </header>
