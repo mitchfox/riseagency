@@ -91,7 +91,7 @@ export const AnnotationCanvas = ({
       if (!num) return;
       setElements(prev => [...prev, {
         id: crypto.randomUUID(), type: 'player-marker', x: pos.x, y: pos.y,
-        color: activeColor, strokeWidth, number: parseInt(num) || 0, radius: 2.5, appearAt: klipOffset, ...defaultTiming,
+        color: activeColor, strokeWidth, number: parseInt(num) || 0, radius: 1.8, appearAt: klipOffset, ...defaultTiming,
       }]);
       onToolUsed?.();
       return;
@@ -131,7 +131,7 @@ export const AnnotationCanvas = ({
     if (activeTool === 'magnifier') {
       setElements(prev => [...prev, {
         id: crypto.randomUUID(), type: 'magnifier', x: pos.x, y: pos.y,
-        color: '#ffffff', strokeWidth: 2, radius: 8, opacity: 1,
+        color: '#ffffff', strokeWidth: 1.5, radius: 6, opacity: 1,
         zoomLevel: 2, fillOpacity: 0.9, appearAt: klipOffset, ...defaultTiming,
       }]);
       onToolUsed?.();
@@ -144,7 +144,7 @@ export const AnnotationCanvas = ({
         id: crypto.randomUUID(), type: 'image-layer',
         x: pos.x - 5, y: pos.y - 5,
         width: 10, height: 10,
-        color: '#ffffff', strokeWidth: 2, opacity: 1, fillOpacity: 1,
+        color: '#ffffff', strokeWidth: 1, opacity: 1, fillOpacity: 1,
         layerZIndex: 100,
         appearAt: klipOffset, ...defaultTiming,
       }]);
@@ -189,13 +189,9 @@ export const AnnotationCanvas = ({
           if (h.includes('s')) newH = Math.max(1, (s.height ?? 1) + dy);
           if (h.includes('n')) { newH = Math.max(1, (s.height ?? 1) - dy); newY = s.y + dy; }
 
+          // Corner handles: allow independent width/height (no aspect ratio lock)
           if (isCorner) {
-            const ratio = (s.width ?? 1) / (s.height ?? 1);
-            if (Math.abs(dx) > Math.abs(dy)) {
-              newH = newW / ratio;
-            } else {
-              newW = newH * ratio;
-            }
+            // Both dimensions change freely based on mouse delta
           }
           return { ...el, x: newX, y: newY, width: newW, height: newH };
         }
@@ -795,15 +791,18 @@ export const AnnotationCanvas = ({
       }
       case 'linked-line': {
         const mid = `lnk-${el.id}`;
+        const sw = el.strokeWidth || 1;
+        const dotR = Math.max(1.5, sw * 1.2);
+        const mSize = dotR * 2 + 1;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
-              <marker id={mid} markerWidth="6" markerHeight="6" refX="3" refY="3">
-                <circle cx="3" cy="3" r="2.5" fill={el.color} />
+              <marker id={mid} markerWidth={mSize} markerHeight={mSize} refX={mSize / 2} refY={mSize / 2}>
+                <circle cx={mSize / 2} cy={mSize / 2} r={dotR} fill={el.color} />
               </marker>
             </defs>
             <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
-              stroke={el.color} strokeWidth={el.strokeWidth} strokeDasharray="6 3"
+              stroke={el.color} strokeWidth={sw} strokeDasharray={`${sw * 3} ${sw * 1.5}`}
               markerStart={`url(#${mid})`} markerEnd={`url(#${mid})`}>
               {anim && <animate attributeName="x2" from={`${el.x}%`} to={`${el.x2}%`} dur="0.3s" fill="freeze" />}
               {anim && <animate attributeName="y2" from={`${el.y}%`} to={`${el.y2}%`} dur="0.3s" fill="freeze" />}
