@@ -287,6 +287,39 @@ export type Database = {
         }
         Relationships: []
       }
+      annotation_projects: {
+        Row: {
+          created_at: string
+          id: string
+          klips: Json
+          name: string
+          updated_at: string
+          user_id: string
+          video_name: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          klips?: Json
+          name: string
+          updated_at?: string
+          user_id: string
+          video_name: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          klips?: Json
+          name?: string
+          updated_at?: string
+          user_id?: string
+          video_name?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       available_roles: {
         Row: {
           created_at: string

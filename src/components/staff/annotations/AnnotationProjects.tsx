@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Film, Trash2, Copy, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { AnnotationEditor } from "./AnnotationEditor";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 // ── Types ──
 
@@ -50,26 +51,20 @@ export interface AnnotationElement {
   layerZIndex?: number;
 
   // ── Timeline event properties ──
-  // When this element first appears (seconds from klip start)
   appearAt: number;
-  // How long it stays visible (seconds). undefined = until end of klip
   duration?: number;
-  // Animation in/out duration (seconds)
   animateIn?: number;
   animateOut?: number;
-  // Keyframes for motion tracking or scripted movement
   keyframes?: ElementKeyframe[];
-  // Whether this is a tracking event (follows object automatically)
   isTrackingEvent?: boolean;
-  // Freeze-frame: hold the video at this point for the annotation duration
   holdFrame?: boolean;
 }
 
 export interface Klip {
   id: string;
   name: string;
-  startTime: number;  // video timecode start
-  endTime: number;     // video timecode end
+  startTime: number;
+  endTime: number;
   elements: AnnotationElement[];
   color: string;
 }
@@ -86,23 +81,44 @@ export interface AnnotationProject {
 // ── Projects Dashboard ──
 
 export const AnnotationProjects = () => {
-  const [projects, setProjects] = useState<AnnotationProject[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem('annotation_projects_v3') || '[]');
-    } catch { return []; }
-  });
+  const { user } = useAuth();
+  const [projects, setProjects] = useState<AnnotationProject[]>([]);
   const [activeProject, setActiveProject] = useState<AnnotationProject | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
-
-  const saveProjects = (updated: AnnotationProject[]) => {
-    setProjects(updated);
-    localStorage.setItem('annotation_projects_v3', JSON.stringify(updated));
-  };
-
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load projects from database on mount
+  useEffect(() => {
+    if (!user) { setLoading(false); return; }
+    const load = async () => {
+      const { data, error } = await supabase
+        .from('annotation_projects')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Failed to load annotation projects:', error);
+        toast.error('Failed to load projects');
+      } else if (data) {
+        setProjects(data.map(row => ({
+          id: row.id,
+          name: row.name,
+          videoUrl: row.video_url,
+          videoName: row.video_name,
+          createdAt: row.created_at,
+          klips: (row.klips as unknown as Klip[]) || [],
+        })));
+      }
+      setLoading(false);
+    };
+    load();
+  }, [user]);
 
   const handleNewProject = () => {
+    if (!user) { toast.error('You must be logged in'); return; }
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'video/*';
@@ -136,38 +152,76 @@ export const AnnotationProjects = () => {
         createdAt: new Date().toISOString(),
         klips: [],
       };
+
+      // Save to database
+      const { error: dbError } = await supabase
+        .from('annotation_projects')
+        .insert({
+          id: project.id,
+          name: project.name,
+          video_url: project.videoUrl,
+          video_name: project.videoName,
+          klips: JSON.parse(JSON.stringify(project.klips)),
+          user_id: user.id,
+        } as any);
+
+      if (dbError) {
+        toast.error('Failed to save project: ' + dbError.message);
+        setUploading(false);
+        return;
+      }
+
       setActiveProject(project);
-      saveProjects([project, ...projects]);
+      setProjects(prev => [project, ...prev]);
       setUploading(false);
     };
     input.click();
   };
 
-  const handleDelete = (id: string) => {
-    saveProjects(projects.filter(p => p.id !== id));
+  const handleDelete = async (id: string) => {
+    await supabase.from('annotation_projects').delete().eq('id', id);
+    setProjects(prev => prev.filter(p => p.id !== id));
     toast.success("Project deleted");
   };
 
-  const handleDuplicate = (project: AnnotationProject) => {
+  const handleDuplicate = async (project: AnnotationProject) => {
+    if (!user) return;
     const dup: AnnotationProject = {
       ...project,
       id: crypto.randomUUID(),
       name: `${project.name} (copy)`,
       createdAt: new Date().toISOString(),
     };
-    saveProjects([dup, ...projects]);
+    await supabase.from('annotation_projects').insert({
+      id: dup.id,
+      name: dup.name,
+      video_url: dup.videoUrl,
+      video_name: dup.videoName,
+      klips: JSON.parse(JSON.stringify(dup.klips)),
+      user_id: user.id,
+    } as any);
+    setProjects(prev => [dup, ...prev]);
     toast.success("Project duplicated");
   };
 
-  const handleRename = (id: string) => {
-    saveProjects(projects.map(p => p.id === id ? { ...p, name: renameValue } : p));
+  const handleRename = async (id: string) => {
+    await supabase.from('annotation_projects').update({ name: renameValue }).eq('id', id);
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, name: renameValue } : p));
     setRenaming(null);
   };
 
-  const handleSave = (project: AnnotationProject) => {
-    const updated = projects.map(p => p.id === project.id ? project : p);
-    saveProjects(updated);
+  const handleSave = async (project: AnnotationProject) => {
+    // Update local state
+    setProjects(prev => prev.map(p => p.id === project.id ? project : p));
     setActiveProject(project);
+
+    // Persist to database
+    await supabase.from('annotation_projects').update({
+      name: project.name,
+      video_url: project.videoUrl,
+      video_name: project.videoName,
+      klips: JSON.parse(JSON.stringify(project.klips)),
+    } as any).eq('id', project.id);
   };
 
   if (activeProject) {
@@ -177,6 +231,14 @@ export const AnnotationProjects = () => {
         onSave={handleSave}
         onBack={() => setActiveProject(null)}
       />
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
     );
   }
 
