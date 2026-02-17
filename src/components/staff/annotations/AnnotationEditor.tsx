@@ -370,16 +370,16 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
                   style={{ zIndex: 10 }}
                 />
               )}
-              {activeKlip && drawingMode && (
-                <div className="absolute inset-0" style={{ zIndex: 20 }}>
+              {activeKlip && (drawingMode || visibleElements.length > 0) && (
+                <div className="absolute inset-0" style={{ zIndex: 20, pointerEvents: drawingMode ? 'auto' : 'none' }}>
                   <AnnotationCanvas
                     elements={visibleElements}
                     setElements={setElements}
-                    activeTool={activeTool}
+                    activeTool={drawingMode ? activeTool : 'select'}
                     activeColor={activeColor}
                     strokeWidth={strokeWidth}
-                    selectedId={selectedId}
-                    setSelectedId={setSelectedId}
+                    selectedId={drawingMode ? selectedId : null}
+                    setSelectedId={drawingMode ? setSelectedId : () => {}}
                     videoRef={videoRef}
                     trackers={trackers}
                     setTrackers={setTrackers}

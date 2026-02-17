@@ -1987,7 +1987,7 @@ Keep it practical and concise. Format with clear headings.`
 
                             if (!response.ok) throw new Error('AI request failed');
                             const data = await response.json();
-                            const suggestion = data.content || data.message || 'No suggestions generated.';
+                            const suggestion = data.response || data.content || data.message || 'No suggestions generated.';
                             
                             // Store suggestion
                             localStorage.setItem(`freeplan_suggestion_${playerId}_${selectedProgram?.id}`, suggestion);
