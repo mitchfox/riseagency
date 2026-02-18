@@ -17,7 +17,7 @@ import { NotificationPermission } from "@/components/NotificationPermission";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
-import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List, RefreshCw, CheckCircle2, WifiOff, Bell } from "lucide-react";
+import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List, RefreshCw, CheckCircle2, WifiOff, Bell, BarChart3 } from "lucide-react";
 import { ClipNameEditor } from "@/components/ClipNameEditor";
 import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { SEO } from "@/components/SEO";
@@ -1656,68 +1656,34 @@ const Dashboard = () => {
                   <ChevronDown className="ml-2 h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" sideOffset={0} className="w-[96vw] max-w-[900px] bg-card border-2 border-gold shadow-lg shadow-gold/20 z-50 p-4 rounded-xl">
-                {/* 3x3 Grid Navigation */}
-                <div className="grid grid-cols-3 gap-2">
+              <DropdownMenuContent align="center" sideOffset={0} className="w-[100vw] max-w-[100vw] bg-card border-2 border-gold shadow-lg shadow-gold/20 z-50 p-3 sm:p-5 rounded-none">
+                {/* 3x3 Grid Navigation - square cells with icons */}
+                <div className="grid grid-cols-3 gap-2 sm:gap-3 aspect-square max-h-[70vh]">
                   {/* Row 1: Analysis, Programming, Nutrition */}
-                  <DropdownMenuItem 
-                    onClick={() => setActiveTab("analysis")}
-                    className={`font-bebas uppercase text-lg py-6 cursor-pointer justify-center text-center rounded-lg transition-all ${activeTab === "analysis" ? "bg-gold/20 text-gold border border-gold" : "text-gold/80 hover:text-gold hover:bg-gold/10"}`}
-                  >
-                    Analysis
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setActiveTab("physical")}
-                    className={`font-bebas uppercase text-lg py-6 cursor-pointer justify-center text-center rounded-lg transition-all ${activeTab === "physical" ? "bg-gold/20 text-gold border border-gold" : "text-gold/80 hover:text-gold hover:bg-gold/10"}`}
-                  >
-                    Programming
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setActiveTab("nutrition")}
-                    className={`font-bebas uppercase text-lg py-6 cursor-pointer justify-center text-center rounded-lg transition-all ${activeTab === "nutrition" ? "bg-gold/20 text-gold border border-gold" : "text-gold/80 hover:text-gold hover:bg-gold/10"}`}
-                  >
-                    Nutrition
-                  </DropdownMenuItem>
-
-                  {/* Row 2: Key Documents, Hub (wider), Updates */}
-                  <DropdownMenuItem 
-                    onClick={() => setActiveTab("invoices")}
-                    className={`font-bebas uppercase text-lg py-6 cursor-pointer justify-center text-center rounded-lg transition-all ${activeTab === "invoices" ? "bg-gold/20 text-gold border border-gold" : "text-gold/80 hover:text-gold hover:bg-gold/10"}`}
-                  >
-                    Key Documents
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setActiveTab("hub")}
-                    className={`font-bebas uppercase text-xl py-8 cursor-pointer justify-center text-center rounded-lg transition-all border-2 ${activeTab === "hub" ? "bg-gold/20 text-gold border-gold" : "text-gold border-gold/30 hover:bg-gold/10 hover:border-gold/60"}`}
-                  >
-                    Hub
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setActiveTab("updates")}
-                    className={`font-bebas uppercase text-lg py-6 cursor-pointer justify-center text-center rounded-lg transition-all ${activeTab === "updates" ? "bg-gold/20 text-gold border border-gold" : "text-gold/80 hover:text-gold hover:bg-gold/10"}`}
-                  >
-                    Updates
-                  </DropdownMenuItem>
-
-                  {/* Row 3: Highlights, Transfer Hub, View Profile */}
-                  <DropdownMenuItem 
-                    onClick={() => setActiveTab("highlights")}
-                    className={`font-bebas uppercase text-lg py-6 cursor-pointer justify-center text-center rounded-lg transition-all ${activeTab === "highlights" ? "bg-gold/20 text-gold border border-gold" : "text-gold/80 hover:text-gold hover:bg-gold/10"}`}
-                  >
-                    Highlights
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setActiveTab("transfer-hub")}
-                    className={`font-bebas uppercase text-lg py-6 cursor-pointer justify-center text-center rounded-lg transition-all ${activeTab === "transfer-hub" ? "bg-gold/20 text-gold border border-gold" : "text-gold/80 hover:text-gold hover:bg-gold/10"}`}
-                  >
-                    Transfer Hub
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setShowProfileModal(true)}
-                    className="font-bebas uppercase text-lg py-6 cursor-pointer justify-center text-center rounded-lg transition-all text-gold/80 hover:text-gold hover:bg-gold/10"
-                  >
-                    View Profile
-                  </DropdownMenuItem>
+                  {[
+                    { tab: "analysis", label: "Analysis", icon: <BarChart3 className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                    { tab: "physical", label: "Programming", icon: <Calendar className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                    { tab: "nutrition", label: "Nutrition", icon: <Trophy className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                    { tab: "invoices", label: "Key Documents", icon: <FileText className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                    { tab: "hub", label: "Hub", icon: <TrendingUp className="h-7 w-7 sm:h-8 sm:w-8" />, isHub: true },
+                    { tab: "updates", label: "Updates", icon: <Bell className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                    { tab: "highlights", label: "Highlights", icon: <Play className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                    { tab: "transfer-hub", label: "Transfer Hub", icon: <RefreshCw className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                    { tab: "profile", label: "View Profile", icon: <Eye className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                  ].map((item) => (
+                    <DropdownMenuItem
+                      key={item.tab}
+                      onClick={() => item.tab === "profile" ? setShowProfileModal(true) : setActiveTab(item.tab)}
+                      className={`flex flex-col items-center justify-center gap-2 cursor-pointer rounded-lg transition-all aspect-square ${
+                        item.isHub 
+                          ? `font-bebas uppercase text-xl sm:text-2xl border-2 ${activeTab === "hub" ? "bg-gold/20 text-gold border-gold" : "text-gold border-gold/30 hover:bg-gold/10 hover:border-gold/60"}`
+                          : `font-bebas uppercase text-base sm:text-lg ${activeTab === item.tab ? "bg-gold/20 text-gold border border-gold" : "text-gold/80 hover:text-gold hover:bg-gold/10"}`
+                      }`}
+                    >
+                      {item.icon}
+                      {item.label}
+                    </DropdownMenuItem>
+                  ))}
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -1807,55 +1773,28 @@ const Dashboard = () => {
               <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-0 border-b-0">
                 <CardContent className="container mx-auto px-4">
                   <Tabs value={activeAnalysisTab} onValueChange={setActiveAnalysisTab} className="w-full">
-                    <TabsList className="flex flex-col w-full h-auto bg-muted p-3 gap-2 mb-0">
-                      {/* Row 1: Performance Analysis, Form, Video Reports */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
-                        <TabsTrigger value="performance" className="font-bebas uppercase text-sm sm:text-base">
-                          Performance Analysis
+                    <TabsList className="grid grid-cols-3 sm:grid-cols-4 w-full h-auto bg-transparent p-0 gap-0 mb-0 rounded-none">
+                      {[
+                        { value: "performance", label: "Performance" },
+                        { value: "form", label: "Form" },
+                        { value: "video-reports", label: "Video Reports" },
+                        { value: "data", label: "Data" },
+                        { value: "comparisons", label: "Comparisons" },
+                        { value: "scouting", label: "Scouting" },
+                        { value: "positional-guides", label: "Positional" },
+                        { value: "schemes", label: "Schemes" },
+                        { value: "concepts", label: "Concepts" },
+                        { value: "cognisance", label: "Cognisance" },
+                        { value: "other", label: "Other" },
+                      ].map((tab) => (
+                        <TabsTrigger
+                          key={tab.value}
+                          value={tab.value}
+                          className="font-bebas uppercase text-xs sm:text-sm py-2.5 px-1 sm:px-3 rounded-none border-b-2 border-transparent data-[state=active]:border-gold data-[state=active]:bg-transparent data-[state=active]:text-gold data-[state=active]:shadow-none text-muted-foreground hover:text-gold/70 transition-colors"
+                        >
+                          {tab.label}
                         </TabsTrigger>
-                        <TabsTrigger value="form" className="font-bebas uppercase text-sm sm:text-base">
-                          Form
-                        </TabsTrigger>
-                        <TabsTrigger value="video-reports" className="font-bebas uppercase text-sm sm:text-base">
-                          Video Reports
-                        </TabsTrigger>
-                      </div>
-                      <div className="border-t border-border/50 w-full" />
-                      {/* Row 2: Data, Comparisons, Scouting Reports */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
-                        <TabsTrigger value="data" className="font-bebas uppercase text-sm sm:text-base">
-                          Data
-                        </TabsTrigger>
-                        <TabsTrigger value="comparisons" className="font-bebas uppercase text-sm sm:text-base">
-                          Comparisons
-                        </TabsTrigger>
-                        <TabsTrigger value="scouting" className="font-bebas uppercase text-sm sm:text-base">
-                          Scouting Reports
-                        </TabsTrigger>
-                      </div>
-                      <div className="border-t border-border/50 w-full" />
-                      {/* Row 3: Positional Guides, Schemes, Concepts */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
-                        <TabsTrigger value="positional-guides" className="font-bebas uppercase text-sm sm:text-base">
-                          Positional Guides
-                        </TabsTrigger>
-                        <TabsTrigger value="schemes" className="font-bebas uppercase text-sm sm:text-base">
-                          Schemes
-                        </TabsTrigger>
-                        <TabsTrigger value="concepts" className="font-bebas uppercase text-sm sm:text-base">
-                          Concepts
-                        </TabsTrigger>
-                      </div>
-                      <div className="border-t border-border/50 w-full" />
-                      {/* Row 4: Cognisance, Other Analysis */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
-                        <TabsTrigger value="cognisance" className="font-bebas uppercase text-sm sm:text-base">
-                          Cognisance
-                        </TabsTrigger>
-                        <TabsTrigger value="other" className="font-bebas uppercase text-sm sm:text-base">
-                          Other Analysis
-                        </TabsTrigger>
-                      </div>
+                      ))}
                     </TabsList>
 
                 <TabsContent value="performance">
