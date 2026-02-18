@@ -147,6 +147,9 @@ export const AnalysisQuickLink = ({
       playerTeam = "away";
     }
 
+    // Determine opponent name for opposition analysis default title
+    const opponentName = playerTeam === "home" ? fixture.away_team : playerTeam === "away" ? fixture.home_team : fixture.away_team;
+
     const updateData: any = {
       ...formData,
       match_date: fixture.match_date,
@@ -156,8 +159,14 @@ export const AnalysisQuickLink = ({
       away_score: fixture.away_score,
     };
 
-    if (analysisType === "pre-match" && playerTeam) {
-      updateData.player_team = playerTeam;
+    if (analysisType === "pre-match") {
+      if (playerTeam) {
+        updateData.player_team = playerTeam;
+      }
+      // Default title for opposition analysis
+      if (!formData.title || formData.title === "") {
+        updateData.title = `Opposition Analysis - ${opponentName}`;
+      }
     }
 
     if (analysisType === "post-match") {

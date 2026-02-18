@@ -263,6 +263,22 @@ const Staff = () => {
         }
         return;
       }
+      // Letter shortcuts for quick section access
+      const sectionShortcuts: Record<string, string> = {
+        'a': 'analysis',
+        'r': 'coachingdata',
+        'p': 'players',
+        'd': 'playerdatabase',
+        'm': 'contentcreator',
+        't': 'tacticsboard',
+        'c': 'meetings',
+      };
+      const lowerKey = e.key.toLowerCase();
+      if (sectionShortcuts[lowerKey] && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        handleSectionToggle(sectionShortcuts[lowerKey]);
+        return;
+      }
       // Arrow keys to navigate sections within expanded category
       if ((e.key === "ArrowUp" || e.key === "ArrowDown") && expandedCategory) {
         e.preventDefault();
@@ -284,6 +300,22 @@ const Staff = () => {
     // Always navigate to the section - never toggle off by clicking the same one
     setExpandedSection(section as any);
     setSearchParams({ section });
+    // Update the active tab to reflect the new section
+    try {
+      const tabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
+      if (tabs.length > 0) {
+        // Find the currently active tab and replace it with the new section
+        const activeIdx = tabs.indexOf(expandedSection as string);
+        if (activeIdx !== -1 && !tabs.includes(section)) {
+          tabs[activeIdx] = section;
+          localStorage.setItem('staff_open_tabs', JSON.stringify(tabs));
+        } else if (!tabs.includes(section)) {
+          // If current section isn't in tabs, add this one
+          tabs.push(section);
+          localStorage.setItem('staff_open_tabs', JSON.stringify(tabs.slice(-12)));
+        }
+      }
+    } catch {}
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -1068,9 +1100,9 @@ const Staff = () => {
                                 setExpandedSection(prev => prev);
                               }}
                               onClick={() => handleSectionToggle(tabId as any)}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-full border cursor-grab active:cursor-grabbing ${
+                              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-full border-2 cursor-grab active:cursor-grabbing ${
                                 isActive
-                                  ? 'border-primary/40 text-primary bg-primary/10'
+                                  ? 'border-risegold text-risegold bg-risegold/10'
                                   : 'border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40'
                               } ${isDragging ? 'opacity-50 scale-95' : ''}`}
                             >

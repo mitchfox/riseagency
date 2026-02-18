@@ -11,6 +11,13 @@ const shortcuts = [
   { keys: ["↑", "↓"], description: "Navigate sections" },
   { keys: ["1-9"], description: "Jump to category" },
   { keys: ["?"], description: "Show shortcuts" },
+  { keys: ["A"], description: "Analysis" },
+  { keys: ["R"], description: "Data" },
+  { keys: ["P"], description: "Player Management" },
+  { keys: ["D"], description: "Player Database" },
+  { keys: ["M"], description: "Content Creator" },
+  { keys: ["T"], description: "Tactics Board" },
+  { keys: ["C"], description: "Meeting" },
 ];
 
 export const KeyboardShortcutsDialog = ({ open, onOpenChange }: KeyboardShortcutsDialogProps) => {
