@@ -14,8 +14,24 @@ export const normalizeClubName = (name: string): string => {
     .trim();
 };
 
+// Common youth team suffixes
+const YOUTH_SUFFIXES = ['u19', 'u21', 'u23', 'u18', 'u17', 'u16', 'u15', 'b team', 'b', 'ii', 'reserves', 'youth', 'academy', 'juniors', 'jong', 'primavera', 'juvenil', 'castilla'];
+
+/**
+ * Extract the parent club name from a youth/reserve team name.
+ */
+const getParentName = (norm: string): string | null => {
+  for (const suffix of YOUTH_SUFFIXES) {
+    if (norm.endsWith(` ${suffix}`)) {
+      return norm.slice(0, norm.length - suffix.length - 1).trim();
+    }
+  }
+  return null;
+};
+
 /**
  * Find a club's country from the country map using fuzzy matching.
+ * Also checks youth team parent clubs.
  */
 export const findClubCountry = (clubName: string | null, clubCountryMap: Record<string, string>): string | null => {
   if (!clubName) return null;
@@ -25,11 +41,26 @@ export const findClubCountry = (clubName: string | null, clubCountryMap: Record<
   const normalized = normalizeClubName(clubName);
   if (!normalized) return null;
 
+  // Check normalised key in map
+  if (clubCountryMap[normalized]) return clubCountryMap[normalized];
+
+  // Fuzzy match
   for (const [key, country] of Object.entries(clubCountryMap)) {
     const normKey = normalizeClubName(key);
     if (normKey === normalized) return country;
-    if (normKey.includes(normalized) || normalized.includes(normKey)) return country;
+    if (normKey.length > 3 && normalized.length > 3 && (normKey.includes(normalized) || normalized.includes(normKey))) return country;
   }
+
+  // Try parent club name for youth teams
+  const parentName = getParentName(normalized);
+  if (parentName) {
+    for (const [key, country] of Object.entries(clubCountryMap)) {
+      const normKey = normalizeClubName(key);
+      if (normKey === parentName) return country;
+      if (normKey.length > 3 && parentName.length > 3 && (normKey.includes(parentName) || parentName.includes(normKey))) return country;
+    }
+  }
+
   return null;
 };
 

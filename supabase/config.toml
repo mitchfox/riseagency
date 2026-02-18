@@ -92,3 +92,6 @@ verify_jwt = true
 
 [functions.parse-case-study-images]
 verify_jwt = false
+
+[functions.detect-club-countries]
+verify_jwt = true

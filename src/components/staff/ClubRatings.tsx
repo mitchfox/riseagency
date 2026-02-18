@@ -5,11 +5,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Building2, Upload, Search, ImagePlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Building2, Upload, Search, ImagePlus, Wand2, Merge } from "lucide-react";
 import { toast } from "sonner";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { normalizeClubName } from "@/lib/clubNameUtils";
+import { findDuplicateClubs, inferYouthTeamCountry } from "@/lib/clubDeduplication";
 
 interface ClubRating {
   id: string;
@@ -47,8 +49,10 @@ export const ClubRatings = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [clubLogos, setClubLogos] = useState<Record<string, string>>({});
   const [uploadingClubId, setUploadingClubId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedClubForUpload, setSelectedClubForUpload] = useState<string | null>(null);
+  const [detectingCountries, setDetectingCountries] = useState(false);
+  const [mergingDuplicates, setMergingDuplicates] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchRatings();
@@ -56,7 +60,6 @@ export const ClubRatings = () => {
 
   const fetchRatings = async () => {
     try {
-      // Fetch everything in parallel
       const [ratingsResult, logosResult, youthClubs, proClubs, scoutingClubs] = await Promise.all([
         supabase.from('club_ratings').select('*').order('country').order('club_name'),
         supabase.from('club_map_positions').select('club_name, image_url, country'),
@@ -68,7 +71,6 @@ export const ClubRatings = () => {
       if (ratingsResult.error) throw ratingsResult.error;
       const existingRatings = ratingsResult.data || [];
 
-      // Build logo lookup
       const logos: Record<string, string> = {};
       const clubCountryLookup: Record<string, string> = {};
       logosResult.data?.forEach(club => {
@@ -80,10 +82,8 @@ export const ClubRatings = () => {
       });
       setClubLogos(logos);
 
-      // Build set of normalised existing club names in ratings
       const existingNorms = new Set(existingRatings.map(r => normalizeClubName(r.club_name)));
 
-      // Collect all unique club names from outreach + scouting
       const allClubNames = new Set<string>();
       [youthClubs.data, proClubs.data, scoutingClubs.data].forEach(dataset => {
         dataset?.forEach((row: any) => {
@@ -94,13 +94,11 @@ export const ClubRatings = () => {
         });
       });
 
-      // Find clubs not yet in club_ratings (using normalised comparison)
       const missingClubs: { name: string; country: string }[] = [];
       allClubNames.forEach(clubName => {
         const norm = normalizeClubName(clubName);
         if (!norm) return;
 
-        // Check if any existing rating matches
         let found = false;
         for (const existingNorm of existingNorms) {
           if (existingNorm === norm || existingNorm.includes(norm) || norm.includes(existingNorm)) {
@@ -109,19 +107,23 @@ export const ClubRatings = () => {
           }
         }
         if (!found) {
-          // Try to find country from club_map_positions
           let country = 'Unknown';
-          for (const [key, ctry] of Object.entries(clubCountryLookup)) {
-            if (key === norm || key.includes(norm) || norm.includes(key)) {
-              country = ctry;
-              break;
+          // Try youth team inference first
+          const youthCountry = inferYouthTeamCountry(clubName, existingRatings);
+          if (youthCountry) {
+            country = youthCountry;
+          } else {
+            for (const [key, ctry] of Object.entries(clubCountryLookup)) {
+              if (key === norm || key.includes(norm) || norm.includes(key)) {
+                country = ctry;
+                break;
+              }
             }
           }
           missingClubs.push({ name: clubName, country });
         }
       });
 
-      // Auto-insert missing clubs into club_ratings
       if (missingClubs.length > 0) {
         const inserts = missingClubs.map(c => ({
           club_name: c.name,
@@ -149,6 +151,88 @@ export const ClubRatings = () => {
       toast.error('Failed to load club ratings');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const detectCountriesWithAI = async () => {
+    const unknownClubs = ratings.filter(r => r.country === 'Unknown');
+    if (unknownClubs.length === 0) {
+      toast.info('No clubs with unknown countries');
+      return;
+    }
+
+    setDetectingCountries(true);
+    try {
+      const clubNames = unknownClubs.map(c => c.club_name);
+      const { data, error } = await supabase.functions.invoke('detect-club-countries', {
+        body: { clubs: clubNames }
+      });
+
+      if (error) throw error;
+      
+      const results = data?.results || [];
+      let updated = 0;
+
+      for (const result of results) {
+        if (result.country && result.country !== 'Unknown') {
+          const club = unknownClubs.find(c => c.club_name === result.name);
+          if (club) {
+            const { error: updateError } = await supabase
+              .from('club_ratings')
+              .update({ country: result.country })
+              .eq('id', club.id);
+            
+            if (!updateError) {
+              updated++;
+            }
+          }
+        }
+      }
+
+      if (updated > 0) {
+        toast.success(`Assigned countries to ${updated} club(s)`);
+        await fetchRatings();
+      } else {
+        toast.info('Could not identify any additional countries');
+      }
+    } catch (error: any) {
+      console.error('Error detecting countries:', error);
+      toast.error(error.message || 'Failed to detect countries');
+    } finally {
+      setDetectingCountries(false);
+    }
+  };
+
+  const mergeDuplicateClubs = async () => {
+    const dupes = findDuplicateClubs(ratings);
+    if (dupes.size === 0) {
+      toast.info('No duplicate clubs found');
+      return;
+    }
+
+    setMergingDuplicates(true);
+    try {
+      let merged = 0;
+      for (const [, group] of dupes) {
+        // Keep the one with a known country, or the first one
+        const primary = group.find(c => c.country !== 'Unknown') || group[0];
+        const duplicates = group.filter(c => c.id !== primary.id);
+        
+        for (const dupe of duplicates) {
+          await supabase.from('club_ratings').delete().eq('id', dupe.id);
+          merged++;
+        }
+      }
+
+      if (merged > 0) {
+        toast.success(`Merged ${merged} duplicate club(s)`);
+        await fetchRatings();
+      }
+    } catch (error) {
+      console.error('Error merging duplicates:', error);
+      toast.error('Failed to merge duplicates');
+    } finally {
+      setMergingDuplicates(false);
     }
   };
 
@@ -223,6 +307,14 @@ export const ClubRatings = () => {
     setTimeout(() => fileInputRef.current?.click(), 50);
   };
 
+  const unknownCount = useMemo(() => ratings.filter(r => r.country === 'Unknown').length, [ratings]);
+  const duplicateCount = useMemo(() => {
+    let count = 0;
+    const dupes = findDuplicateClubs(ratings);
+    for (const [, group] of dupes) count += group.length - 1;
+    return count;
+  }, [ratings]);
+
   const ratingsByCountry = useMemo(() => {
     let filtered = ratings;
     if (searchQuery) {
@@ -273,6 +365,30 @@ export const ClubRatings = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Search clubs or countries..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 h-9" />
           </div>
+          {unknownCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={detectCountriesWithAI}
+              disabled={detectingCountries}
+              className="gap-1.5 text-xs"
+            >
+              {detectingCountries ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+              Auto-detect {unknownCount} countries
+            </Button>
+          )}
+          {duplicateCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={mergeDuplicateClubs}
+              disabled={mergingDuplicates}
+              className="gap-1.5 text-xs"
+            >
+              {mergingDuplicates ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Merge className="w-3.5 h-3.5" />}
+              Merge {duplicateCount} duplicates
+            </Button>
+          )}
           {missingLogoCount > 0 && (
             <Badge variant="outline" className="text-xs text-amber-600 border-amber-500/30">
               <ImagePlus className="w-3 h-3 mr-1" />
