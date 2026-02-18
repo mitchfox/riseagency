@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2 } from "lucide-react";
+import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -15,6 +15,7 @@ import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEdito
 import { AnnotationCanvas } from "@/components/staff/annotations/AnnotationCanvas";
 import type { AnnotationProject, Klip, AnnotationElement } from "@/components/staff/annotations/AnnotationProjects";
 import { computeVisibleElements } from "@/lib/annotationRenderUtils";
+import { sortPlayersByRepresentation, getStatusLabel, groupPlayersByStatus } from "@/lib/playerSorting";
 
 interface Annotation {
   id: string;
@@ -70,7 +71,7 @@ const ACTION_COLOURS: Record<string, string> = {
 
 export const VideoAnalysis = () => {
   const [videos, setVideos] = useState<VideoAnalysisEntry[]>([]);
-  const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
+  const [players, setPlayers] = useState<{ id: string; name: string; representation_status?: string | null; image_url?: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<VideoAnalysisEntry | null>(null);
   const [showUpload, setShowUpload] = useState(false);
@@ -108,6 +109,17 @@ export const VideoAnalysis = () => {
 
   // Half-time sync
   const [syncHalf, setSyncHalf] = useState<"1st" | "2nd">("1st");
+
+  // Clip-to-report attachment
+  const [showAttachDialog, setShowAttachDialog] = useState(false);
+  const [attachClip, setAttachClip] = useState<Clip | null>(null);
+  const [linkedReportIds, setLinkedReportIds] = useState<string[]>([]);
+  const [linkedReportActions, setLinkedReportActions] = useState<{ id: string; action_number: number; action_type: string; action_description: string; report_title: string }[]>([]);
+  const [loadingAttachActions, setLoadingAttachActions] = useState(false);
+
+  // Clip saved toast
+  const [clipSavedToast, setClipSavedToast] = useState(false);
+  const clipSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Inline annotation
   const [annotatingClip, setAnnotatingClip] = useState<Clip | null>(null);
@@ -152,8 +164,8 @@ export const VideoAnalysis = () => {
   };
 
   const fetchPlayers = async () => {
-    const { data } = await supabase.from("players").select("id, name").order("name");
-    if (data) setPlayers(data);
+    const { data } = await supabase.from("players").select("id, name, representation_status, image_url").order("name");
+    if (data) setPlayers(sortPlayersByRepresentation(data));
   };
 
   const fetchKnownActionTypes = async () => {
@@ -240,7 +252,7 @@ export const VideoAnalysis = () => {
     setCreating(false);
   };
 
-  const handleInstantClip = async () => {
+  const handleInstantClip = useCallback(async () => {
     if (!selectedVideo || !videoRef.current) return;
 
     const currentTime = videoRef.current.currentTime;
@@ -260,8 +272,12 @@ export const VideoAnalysis = () => {
 
     const updatedClips = [...selectedVideo.clips, newClip];
     await saveClips(updatedClips);
-    toast.success(`Clip created: ${fmtTime(clipStart)} → ${fmtTime(clipEnd)}`);
-  };
+
+    // Show persistent clip saved toast (works in fullscreen too)
+    if (clipSavedTimerRef.current) clearTimeout(clipSavedTimerRef.current);
+    setClipSavedToast(true);
+    clipSavedTimerRef.current = setTimeout(() => setClipSavedToast(false), 2500);
+  }, [selectedVideo]);
 
   const handleExtendClip = async (clipId: string, side: 'start' | 'end', seconds: number) => {
     if (!selectedVideo) return;
@@ -683,6 +699,107 @@ export const VideoAnalysis = () => {
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [selectedVideo]);
 
+  // Hotkeys: arrow keys for seeking, Del for clip
+  useEffect(() => {
+    if (!selectedVideo) return;
+    const handleHotkey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      const video = videoRef.current;
+      if (!video) return;
+
+      if (e.key === 'ArrowRight' && !e.shiftKey) {
+        e.preventDefault();
+        video.currentTime = Math.min(video.duration, video.currentTime + 10);
+      } else if (e.key === 'ArrowLeft' && !e.shiftKey) {
+        e.preventDefault();
+        video.currentTime = Math.max(0, video.currentTime - 10);
+      } else if (e.key === 'Shift') {
+        e.preventDefault();
+        video.currentTime = Math.min(video.duration, video.currentTime + 30);
+      } else if (e.key === 'Delete') {
+        e.preventDefault();
+        handleInstantClip();
+      }
+    };
+    window.addEventListener('keydown', handleHotkey);
+    return () => window.removeEventListener('keydown', handleHotkey);
+  }, [selectedVideo, handleInstantClip]);
+
+  // Fetch linked report IDs for clip-to-report attachment
+  const fetchLinkedReports = useCallback(async () => {
+    if (!selectedVideo) return;
+    const { data } = await supabase
+      .from("player_analysis")
+      .select("id, linked_video_analysis_ids")
+      .contains("linked_video_analysis_ids", [selectedVideo.id]);
+    if (data && data.length > 0) {
+      setLinkedReportIds(data.map(d => d.id));
+    } else {
+      setLinkedReportIds([]);
+    }
+  }, [selectedVideo]);
+
+  useEffect(() => {
+    fetchLinkedReports();
+  }, [fetchLinkedReports]);
+
+  const handleOpenAttachClip = async (clip: Clip) => {
+    setAttachClip(clip);
+    setShowAttachDialog(true);
+    setLoadingAttachActions(true);
+    try {
+      if (linkedReportIds.length === 0) {
+        setLinkedReportActions([]);
+        setLoadingAttachActions(false);
+        return;
+      }
+      const { data: reports } = await supabase
+        .from("player_analysis")
+        .select("id, opponent, analysis_date")
+        .in("id", linkedReportIds);
+
+      const { data: actions } = await supabase
+        .from("performance_report_actions")
+        .select("id, action_number, action_type, action_description, analysis_id")
+        .in("analysis_id", linkedReportIds)
+        .order("action_number");
+
+      if (actions && reports) {
+        setLinkedReportActions(actions.map(a => ({
+          id: a.id,
+          action_number: a.action_number,
+          action_type: a.action_type || '',
+          action_description: a.action_description || '',
+          report_title: reports.find(r => r.id === a.analysis_id)?.opponent
+            ? `vs ${reports.find(r => r.id === a.analysis_id)!.opponent}`
+            : `Report ${reports.find(r => r.id === a.analysis_id)?.analysis_date || ''}`,
+        })));
+      }
+    } catch (err) {
+      console.error('Error fetching actions:', err);
+    }
+    setLoadingAttachActions(false);
+  };
+
+  const handleAttachClipToAction = async (actionId: string) => {
+    if (!attachClip || !selectedVideo) return;
+    const clipUrl = `${selectedVideo.video_url}#t=${attachClip.start},${attachClip.end}`;
+    try {
+      const { error } = await supabase
+        .from("performance_report_actions")
+        .update({ video_url: clipUrl })
+        .eq("id", actionId);
+      if (error) throw error;
+      toast.success("Clip attached to action");
+      setShowAttachDialog(false);
+      setAttachClip(null);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to attach clip");
+    }
+  };
+
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
   }
@@ -814,6 +931,13 @@ export const VideoAnalysis = () => {
                 <Scissors className="h-4 w-4" /> Clip (±5s)
               </Button>
             </div>
+            {/* Clip saved toast - visible even in fullscreen */}
+            {clipSavedToast && (
+              <div className="absolute bottom-4 right-4 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <Scissors className="h-4 w-4" />
+                Clip saved
+              </div>
+            )}
           </div>
         ) : (
           <Card>
@@ -913,6 +1037,17 @@ export const VideoAnalysis = () => {
                   >
                     <Pencil className="h-3 w-3" />
                   </Button>
+                  {linkedReportIds.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover/clip:opacity-100 text-muted-foreground hover:text-primary shrink-0"
+                      onClick={() => handleOpenAttachClip(clip)}
+                      title="Attach to report action"
+                    >
+                      <Paperclip className="h-3 w-3" />
+                    </Button>
+                  )}
                   <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/clip:opacity-100 text-muted-foreground hover:text-destructive shrink-0" onClick={() => handleDeleteClip(clip.id)}>
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -985,8 +1120,13 @@ export const VideoAnalysis = () => {
               <Select value={exportPlayerId} onValueChange={handleExportPlayerChange}>
                 <SelectTrigger><SelectValue placeholder="Select player first" /></SelectTrigger>
                 <SelectContent>
-                  {players.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  {groupPlayersByStatus(players).map(group => (
+                    <SelectGroup key={group.status}>
+                      <SelectLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">{group.label}</SelectLabel>
+                      {group.players.map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectGroup>
                   ))}
                 </SelectContent>
               </Select>
@@ -1014,6 +1154,46 @@ export const VideoAnalysis = () => {
                   Export as Actions
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Attach clip to report action dialog */}
+        <Dialog open={showAttachDialog} onOpenChange={setShowAttachDialog}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Attach Clip to Action</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {loadingAttachActions ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : linkedReportActions.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Paperclip className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">No actions found on linked reports.</p>
+                  <p className="text-xs mt-1">Add actions to the performance report first.</p>
+                </div>
+              ) : (
+                linkedReportActions.map(action => (
+                  <button
+                    key={action.id}
+                    onClick={() => handleAttachClipToAction(action.id)}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/30 transition-colors text-left"
+                  >
+                    <span className="text-xs font-mono text-muted-foreground shrink-0">#{action.action_number}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{action.action_description || action.action_type || 'Untitled action'}</p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {action.action_type && <span>{action.action_type}</span>}
+                        <span className="ml-2 opacity-60">{action.report_title}</span>
+                      </p>
+                    </div>
+                    <Paperclip className="h-3.5 w-3.5 text-primary shrink-0" />
+                  </button>
+                ))
+              )}
             </div>
           </DialogContent>
         </Dialog>
