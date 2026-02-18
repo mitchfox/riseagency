@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil } from "lucide-react";
+import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -539,21 +539,50 @@ export const VideoAnalysis = () => {
   const handleExportPlayerChange = async (playerId: string) => {
     setExportPlayerId(playerId);
     setSelectedReportId("");
+    // Fetch from player_analysis (performance reports)
     const { data } = await supabase
-      .from("analyses")
-      .select("id, title, player_name")
-      .eq("analysis_type", "performance")
-      .eq("player_name", players.find(p => p.id === playerId)?.name || "")
-      .order("created_at", { ascending: false })
+      .from("player_analysis")
+      .select("id, opponent, analysis_date")
+      .eq("player_id", playerId)
+      .order("analysis_date", { ascending: false })
       .limit(50);
 
     if (data) {
       setAvailableReports(data.map(d => ({
         id: d.id,
-        title: d.title || "Untitled Report",
-        player_name: d.player_name || "Unknown",
+        title: d.opponent ? `vs ${d.opponent} (${d.analysis_date})` : `Report ${d.analysis_date}`,
+        player_name: players.find(p => p.id === playerId)?.name || "Unknown",
       })));
     }
+  };
+
+  // Link clips to a report (makes them available for selection, doesn't add as actions)
+  const handleLinkToReport = async () => {
+    if (!selectedVideo || !selectedReportId) return;
+    setExporting(true);
+    try {
+      // Get current linked IDs
+      const { data: report } = await supabase
+        .from("player_analysis")
+        .select("linked_video_analysis_ids")
+        .eq("id", selectedReportId)
+        .single();
+
+      const existing = (report?.linked_video_analysis_ids || []) as string[];
+      if (!existing.includes(selectedVideo.id)) {
+        const { error } = await supabase
+          .from("player_analysis")
+          .update({ linked_video_analysis_ids: [...existing, selectedVideo.id] })
+          .eq("id", selectedReportId);
+        if (error) throw error;
+      }
+
+      toast.success(`Clips linked to report. They'll be available for selection when editing.`);
+      setShowExportDialog(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to link clips");
+    }
+    setExporting(false);
   };
 
   const handleExportToReport = async () => {
@@ -686,7 +715,7 @@ export const VideoAnalysis = () => {
             </Button>
             {selectedVideo.clips.length > 0 && (
               <Button onClick={handleOpenExport} variant="outline" size="sm" className="gap-1">
-                <Download className="h-3.5 w-3.5" /> Export to Report
+                <Link2 className="h-3.5 w-3.5" /> Link / Export
               </Button>
             )}
           </div>
@@ -922,34 +951,36 @@ export const VideoAnalysis = () => {
         {/* Inline annotation dialog */}
         <Dialog open={!!annotatingClip} onOpenChange={(open) => { if (!open) { setAnnotatingClip(null); setAnnotationProject(null); } }}>
           <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 overflow-hidden">
-            {annotationProject && (
-              <AnnotationEditor
-                project={annotationProject}
-                onSave={(proj) => {
-                  // Save annotations to localStorage keyed by clip id
-                  if (annotatingClip) {
-                    try {
-                      localStorage.setItem(`va_annotations_${annotatingClip.id}`, JSON.stringify({ klips: proj.klips }));
-                    } catch {}
-                  }
-                  setAnnotationProject(proj);
-                  toast.success("Annotations saved to clip");
-                }}
-                onBack={() => { setAnnotatingClip(null); setAnnotationProject(null); }}
-              />
-            )}
+             {annotationProject && annotatingClip && (
+               <AnnotationEditor
+                 project={annotationProject}
+                 clipConstraint={{ start: annotatingClip.start, end: annotatingClip.end }}
+                 onSave={(proj) => {
+                   // Save annotations to localStorage keyed by clip id
+                   if (annotatingClip) {
+                     try {
+                       localStorage.setItem(`va_annotations_${annotatingClip.id}`, JSON.stringify({ klips: proj.klips }));
+                     } catch {}
+                   }
+                   setAnnotationProject(proj);
+                   toast.success("Annotations saved to clip");
+                 }}
+                 onBack={() => { setAnnotatingClip(null); setAnnotationProject(null); }}
+               />
+             )}
           </DialogContent>
         </Dialog>
 
-        {/* Export dialog with player picker first */}
         <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Export Clips to Performance Report</DialogTitle>
+              <DialogTitle>Link or Export Clips to Report</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
               <p className="text-sm text-muted-foreground">
-                {selectedVideo.clips.length} clip(s) will be added as additional actions to the selected report.
+                <strong>Link:</strong> Makes {selectedVideo.clips.length} clip(s) available for selection on the report.
+                <br />
+                <strong>Export:</strong> Adds them directly as actions.
               </p>
               <Select value={exportPlayerId} onValueChange={handleExportPlayerChange}>
                 <SelectTrigger><SelectValue placeholder="Select player first" /></SelectTrigger>
@@ -973,9 +1004,16 @@ export const VideoAnalysis = () => {
                   </SelectContent>
                 </Select>
               )}
-              <Button onClick={handleExportToReport} disabled={!selectedReportId || exporting} className="w-full">
-                {exporting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Exporting...</> : <><Download className="h-4 w-4 mr-2" /> Export Actions</>}
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleLinkToReport} disabled={!selectedReportId || exporting} variant="outline" className="flex-1">
+                  {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Link2 className="h-4 w-4 mr-2" />}
+                  Link Clips
+                </Button>
+                <Button onClick={handleExportToReport} disabled={!selectedReportId || exporting} className="flex-1">
+                  {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                  Export as Actions
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

@@ -19,6 +19,8 @@ interface AnnotationEditorProps {
   project: AnnotationProject;
   onSave: (project: AnnotationProject) => void;
   onBack: () => void;
+  /** When set, constrains video playback to this time range (clip-only mode) */
+  clipConstraint?: { start: number; end: number };
 }
 
 export type AnnotationTool =
@@ -29,7 +31,7 @@ export type AnnotationTool =
 
 // interpolateKeyframes moved to annotationRenderUtils.ts
 
-export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorProps) => {
+export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint }: AnnotationEditorProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -185,11 +187,17 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
     let rafId: number;
     const updateTime = () => {
       setCurrentTime(video.currentTime);
+      // Enforce clip constraint end boundary during playback
+      if (clipConstraint && video.currentTime >= clipConstraint.end) {
+        video.pause();
+        video.currentTime = clipConstraint.end;
+        setIsPlaying(false);
+      }
       if (!video.paused) rafId = requestAnimationFrame(updateTime);
     };
     const onPlay = () => { rafId = requestAnimationFrame(updateTime); };
     const onPause = () => { cancelAnimationFrame(rafId); setCurrentTime(video.currentTime); };
-    const onLoaded = () => setDuration(video.duration);
+    const onLoaded = () => setDuration(clipConstraint ? clipConstraint.end - clipConstraint.start : video.duration);
     const onEnded = () => { setIsPlaying(false); cancelAnimationFrame(rafId); };
     const onTime = () => setCurrentTime(video.currentTime);
     video.addEventListener('play', onPlay);
@@ -319,23 +327,29 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
   const seek = useCallback((time: number) => {
     const video = videoRef.current;
     if (!video) return;
+    // Clamp to clip constraint if set
+    const clampedTime = clipConstraint
+      ? Math.max(clipConstraint.start, Math.min(clipConstraint.end, time))
+      : time;
     // Clear any active playback freeze on manual seek
     if (playbackFreezeTimerRef.current) clearTimeout(playbackFreezeTimerRef.current);
     setPlaybackFreezeUrl(null);
     setPlaybackFreezeActive(false);
     setPlaybackFreezePhase('idle');
     triggeredTimesRef.current.clear();
-    video.currentTime = time;
-    setCurrentTime(time);
-  }, []);
+    video.currentTime = clampedTime;
+    setCurrentTime(clampedTime);
+  }, [clipConstraint]);
 
   const stepFrame = useCallback((dir: number) => {
     const video = videoRef.current;
     if (!video) return;
     video.pause();
     setIsPlaying(false);
-    video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + dir * (1 / 30)));
-  }, []);
+    const minT = clipConstraint?.start ?? 0;
+    const maxT = clipConstraint?.end ?? video.duration;
+    video.currentTime = Math.max(minT, Math.min(maxT, video.currentTime + dir * (1 / 30)));
+  }, [clipConstraint]);
 
   const cycleSpeed = useCallback(() => {
     const speeds = [0.25, 0.5, 1, 1.5, 2];
@@ -773,7 +787,7 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
             }}>
               <video
                 ref={videoRef}
-                src={project.videoUrl}
+                src={clipConstraint ? `${project.videoUrl}#t=${clipConstraint.start},${clipConstraint.end}` : project.videoUrl}
                 crossOrigin="anonymous"
                 className={`max-w-full max-h-[calc(100vh-16rem)] block ${drawingMode ? 'invisible' : ''}`}
                 muted={muted}
@@ -894,11 +908,14 @@ export const AnnotationEditor = ({ project, onSave, onBack }: AnnotationEditorPr
           {/* Transport controls */}
           <div className="bg-[#161a24] border-t border-white/10 px-4 py-2 shrink-0 space-y-1">
             <div className="flex items-center gap-3">
-              <span className="text-xs text-white/60 font-mono w-24">{formatTime(currentTime)}</span>
+              <span className="text-xs text-white/60 font-mono w-24">
+                {clipConstraint ? formatTime(currentTime - clipConstraint.start) : formatTime(currentTime)}
+              </span>
               <div className="flex-1 relative">
                 <Slider
                   value={[currentTime]}
-                  max={duration || 1}
+                  min={clipConstraint?.start ?? 0}
+                  max={clipConstraint?.end ?? (duration || 1)}
                   step={0.01}
                   onValueChange={([v]) => { if (!drawingMode) seek(v); }}
                   className={`[&_[role=slider]]:bg-primary [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 ${drawingMode ? 'opacity-50 pointer-events-none' : ''}`}
