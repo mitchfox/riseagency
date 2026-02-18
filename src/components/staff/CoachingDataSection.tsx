@@ -7,6 +7,7 @@ import { AnalysisComparisons } from "@/components/portal/AnalysisComparisons";
 import { CreatePerformanceReportDialog } from "@/components/staff/CreatePerformanceReportDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { ClipboardList, BarChart3, Database, User } from "lucide-react";
+import { sortPlayersByRepresentation, getStatusLabel } from "@/lib/playerSorting";
 
 interface PlayerAnalysis {
   id: string;
@@ -28,7 +29,7 @@ interface InlineReportState {
 export const CoachingDataSection = () => {
   const [activeTab, setActiveTab] = useState("reports");
   const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
-  const [players, setPlayers] = useState<{ id: string; name: string; position: string; image_url: string | null }[]>([]);
+  const [players, setPlayers] = useState<{ id: string; name: string; position: string; image_url: string | null; representation_status?: string | null }[]>([]);
   const [analyses, setAnalyses] = useState<PlayerAnalysis[]>([]);
   const [inlineReport, setInlineReport] = useState<InlineReportState | null>(null);
 
@@ -45,7 +46,7 @@ export const CoachingDataSection = () => {
   const fetchPlayers = async () => {
     const { data } = await supabase
       .from("players")
-      .select("id, name, position, image_url")
+      .select("id, name, position, image_url, representation_status")
       .order("name");
     setPlayers(data || []);
   };
@@ -135,7 +136,7 @@ export const CoachingDataSection = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Select a player...</SelectItem>
-              {players.map((player) => (
+              {sortPlayersByRepresentation(players).map((player) => (
                 <SelectItem key={player.id} value={player.id}>
                   {player.name} ({player.position})
                 </SelectItem>
@@ -159,7 +160,7 @@ export const CoachingDataSection = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Select a player...</SelectItem>
-              {players.map((player) => (
+              {sortPlayersByRepresentation(players).map((player) => (
                 <SelectItem key={player.id} value={player.id}>
                   {player.name} ({player.position})
                 </SelectItem>

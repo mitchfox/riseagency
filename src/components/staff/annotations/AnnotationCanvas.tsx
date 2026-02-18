@@ -380,7 +380,7 @@ export const AnnotationCanvas = ({
               strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${lineLen}`}
               strokeDashoffset={anim ? undefined : 0}
             >
-              {anim && <animate attributeName="stroke-dashoffset" from={`${lineLen}`} to="0" dur="6s" fill="freeze" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${lineLen}`} to="0" dur="3s" fill="freeze" />}
             </line>
           </g>
         );
@@ -404,7 +404,7 @@ export const AnnotationCanvas = ({
               strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${arrowLen}`}
               strokeDashoffset={anim ? undefined : 0}
             >
-              {anim && <animate attributeName="stroke-dashoffset" from={`${arrowLen}`} to="0" dur="6s" fill="freeze" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${arrowLen}`} to="0" dur="3s" fill="freeze" />}
             </line>
           </g>
         );
@@ -439,7 +439,7 @@ export const AnnotationCanvas = ({
               strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${curveLen}`}
               strokeDashoffset={anim ? undefined : 0}
             >
-              {anim && <animate attributeName="stroke-dashoffset" from={`${curveLen}`} to="0" dur="6s" fill="freeze" />}
+              {anim && <animate attributeName="stroke-dashoffset" from={`${curveLen}`} to="0" dur="3s" fill="freeze" />}
             </path>
           </g>
         );
@@ -915,13 +915,12 @@ export const AnnotationCanvas = ({
             ) : (
               /* Fallback: use a foreignObject with the video element clipped to this region
                  so annotations are still hidden even when canvas capture is unavailable */
-              <foreignObject x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`} style={{ pointerEvents: 'none', overflow: 'hidden' }}>
-                <div style={{
-                  width: '100%', height: '100%',
-                  background: 'black',
-                  opacity: 1,
-                }} />
-              </foreignObject>
+              /* No frame captured yet — render transparent placeholder (invisible until frame is available) */
+              <rect
+                x={`${el.x}%`} y={`${el.y}%`} width={`${w}%`} height={`${h}%`}
+                fill="transparent" stroke="none"
+                style={{ pointerEvents: 'none' }}
+              />
             )}
             {/* Invisible drag handle */}
             <rect

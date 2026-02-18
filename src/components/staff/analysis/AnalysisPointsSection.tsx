@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors } from "lucide-react";
+import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors, PenLine } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -16,8 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import { useState } from "react";
 import { VideoTrimmerDialog } from "./VideoTrimmerDialog";
+import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEditor";
+import type { AnnotationProject } from "@/components/staff/annotations/AnnotationProjects";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   DndContext,
   closestCenter,
@@ -116,6 +124,52 @@ const VideoItem = ({
   onTrimComplete: (newUrl: string) => void;
 }) => {
   const [trimOpen, setTrimOpen] = useState(false);
+  const [annotateOpen, setAnnotateOpen] = useState(false);
+  const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
+
+  const handleOpenAnnotate = () => {
+    // Create a temporary annotation project for this video
+    const project: AnnotationProject = {
+      id: crypto.randomUUID(),
+      name: "Point Video Annotation",
+      videoUrl: url,
+      videoName: "clip",
+      createdAt: new Date().toISOString(),
+      klips: [],
+    };
+    setAnnotationProject(project);
+    setAnnotateOpen(true);
+  };
+
+  const handleSaveAnnotation = async (proj: AnnotationProject) => {
+    try {
+      // Save annotation project to database
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Must be logged in to save annotations");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("annotation_projects")
+        .upsert({
+          id: proj.id,
+          name: proj.name,
+          video_url: proj.videoUrl,
+          video_name: proj.videoName,
+          klips: JSON.parse(JSON.stringify(proj.klips)),
+          user_id: user.id,
+        });
+
+      if (error) throw error;
+
+      setAnnotationProject(proj);
+      toast.success("Annotations saved");
+      setAnnotateOpen(false);
+    } catch (err: any) {
+      toast.error("Failed to save annotations: " + err.message);
+    }
+  };
 
   return (
     <div className="relative">
@@ -128,6 +182,15 @@ const VideoItem = ({
         className="max-w-xs rounded"
       />
       <div className="absolute top-1 right-1 flex gap-1">
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-6 w-6 p-0"
+          onClick={handleOpenAnnotate}
+          title="Annotate video"
+        >
+          <PenLine className="w-3 h-3" />
+        </Button>
         <Button
           variant="secondary"
           size="sm"
@@ -152,6 +215,17 @@ const VideoItem = ({
         videoUrl={url}
         onTrimComplete={onTrimComplete}
       />
+      <Dialog open={annotateOpen} onOpenChange={(open) => { if (!open) { setAnnotateOpen(false); } }}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 overflow-hidden">
+          {annotationProject && (
+            <AnnotationEditor
+              project={annotationProject}
+              onSave={handleSaveAnnotation}
+              onBack={() => setAnnotateOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

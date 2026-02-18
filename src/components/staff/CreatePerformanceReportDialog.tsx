@@ -24,6 +24,7 @@ import { ActionVideoUpload } from "./ActionVideoUpload";
 import { ActionStatRecorder, aggregateRecordedStats, RecordedStat, STAT_TYPE_CONFIGS, StatTypeConfig } from "./ActionStatRecorder";
 import { UnifiedStatsEditor, UnifiedStat, mergeStatsForEditor, unifiedStatsToStrikerStats } from "./UnifiedStatsEditor";
 import { FixtureStatsEditor, UNIFIED_TO_FIXTURE_MAP, FIXTURE_TO_UNIFIED_MAP } from "./FixtureStatsEditor";
+import { InlineFixtureCreator } from "./InlineFixtureCreator";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -1315,11 +1316,10 @@ export const CreatePerformanceReportDialog = ({
               <SelectContent>
                 {fixtures.length === 0 ? (
                   <div className="p-2 text-sm text-muted-foreground text-center">
-                    No fixtures found. Add fixtures in the Fixtures tab first.
+                    No fixtures found. Create one below or add fixtures in the Fixtures tab.
                   </div>
                 ) : (
                   fixtures.map((fixture) => {
-                    // Determine the opponent for display (handle "For" placeholder)
                     const homeIsFor = fixture.home_team.toLowerCase() === "for" || fixture.home_team.toLowerCase().startsWith("for ");
                     const awayIsFor = fixture.away_team.toLowerCase() === "for" || fixture.away_team.toLowerCase().startsWith("for ");
                     const hasForPlaceholder = homeIsFor || awayIsFor;
@@ -1335,6 +1335,15 @@ export const CreatePerformanceReportDialog = ({
                 )}
               </SelectContent>
             </Select>
+            <div className="mt-2">
+              <InlineFixtureCreator
+                playerId={playerId}
+                onFixtureCreated={(newFixtureId) => {
+                  fetchFixtures();
+                  setSelectedFixtureId(newFixtureId);
+                }}
+              />
+            </div>
           </div>
 
           {/* Key Stats */}
