@@ -114,12 +114,16 @@ export const VideoAnalysis = () => {
   const [showAttachDialog, setShowAttachDialog] = useState(false);
   const [attachClip, setAttachClip] = useState<Clip | null>(null);
   const [linkedReportIds, setLinkedReportIds] = useState<string[]>([]);
-  const [linkedReportActions, setLinkedReportActions] = useState<{ id: string; action_number: number; action_type: string; action_description: string; report_title: string }[]>([]);
+  const [linkedReportActions, setLinkedReportActions] = useState<{ id: string; action_number: number; action_type: string; action_description: string; report_title: string; analysis_id: string }[]>([]);
   const [loadingAttachActions, setLoadingAttachActions] = useState(false);
 
   // Clip saved toast
   const [clipSavedToast, setClipSavedToast] = useState(false);
   const clipSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Playback speed
+  const SPEED_STEPS = [0.25, 0.5, 1, 2, 4, 8];
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
 
   // Inline annotation
   const [annotatingClip, setAnnotatingClip] = useState<Clip | null>(null);
@@ -699,7 +703,7 @@ export const VideoAnalysis = () => {
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [selectedVideo]);
 
-  // Hotkeys: arrow keys for seeking, Del for clip
+  // Hotkeys: arrow keys for seeking, Del for clip, +/- for speed
   useEffect(() => {
     if (!selectedVideo) return;
     const handleHotkey = (e: KeyboardEvent) => {
@@ -721,6 +725,22 @@ export const VideoAnalysis = () => {
       } else if (e.key === 'Delete') {
         e.preventDefault();
         handleInstantClip();
+      } else if (e.key === '=' || e.key === '+') {
+        e.preventDefault();
+        setPlaybackSpeed(prev => {
+          const idx = SPEED_STEPS.indexOf(prev);
+          const next = idx < SPEED_STEPS.length - 1 ? SPEED_STEPS[idx + 1] : prev;
+          if (video) video.playbackRate = next;
+          return next;
+        });
+      } else if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        setPlaybackSpeed(prev => {
+          const idx = SPEED_STEPS.indexOf(prev);
+          const next = idx > 0 ? SPEED_STEPS[idx - 1] : prev;
+          if (video) video.playbackRate = next;
+          return next;
+        });
       }
     };
     window.addEventListener('keydown', handleHotkey);
@@ -772,6 +792,7 @@ export const VideoAnalysis = () => {
           action_number: a.action_number,
           action_type: a.action_type || '',
           action_description: a.action_description || '',
+          analysis_id: a.analysis_id,
           report_title: reports.find(r => r.id === a.analysis_id)?.opponent
             ? `vs ${reports.find(r => r.id === a.analysis_id)!.opponent}`
             : `Report ${reports.find(r => r.id === a.analysis_id)?.analysis_date || ''}`,
@@ -797,6 +818,49 @@ export const VideoAnalysis = () => {
       setAttachClip(null);
     } catch (err: any) {
       toast.error(err.message || "Failed to attach clip");
+    }
+  };
+
+  const handleInsertNewActionWithClip = async (insertAfterNumber: number, reportAnalysisId: string) => {
+    if (!attachClip || !selectedVideo) return;
+    try {
+      // Shift existing actions that come after the insert position
+      const { data: actionsToShift } = await supabase
+        .from("performance_report_actions")
+        .select("id, action_number")
+        .eq("analysis_id", reportAnalysisId)
+        .gt("action_number", insertAfterNumber)
+        .order("action_number", { ascending: false });
+
+      if (actionsToShift) {
+        for (const a of actionsToShift) {
+          await supabase
+            .from("performance_report_actions")
+            .update({ action_number: a.action_number + 1 })
+            .eq("id", a.id);
+        }
+      }
+
+      const clipUrl = `${selectedVideo.video_url}#t=${attachClip.start},${attachClip.end}`;
+      const { error } = await supabase
+        .from("performance_report_actions")
+        .insert({
+          analysis_id: reportAnalysisId,
+          action_number: insertAfterNumber + 1,
+          action_type: attachClip.action_type || "other",
+          action_description: attachClip.action_description || attachClip.label || "",
+          notes: attachClip.notes || null,
+          video_url: clipUrl,
+          is_successful: true,
+          minute: getMatchMinute(attachClip.start, selectedVideo.match_minute_offset),
+        });
+
+      if (error) throw error;
+      toast.success("New action created with clip attached");
+      setShowAttachDialog(false);
+      setAttachClip(null);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create action");
     }
   };
 
@@ -926,7 +990,25 @@ export const VideoAnalysis = () => {
               );
             })()}
             {/* Clip button overlay */}
-            <div className="absolute bottom-14 left-1/2 -translate-x-1/2 opacity-0 group-hover/player:opacity-100 transition-opacity flex gap-2">
+            <div className="absolute bottom-14 left-1/2 -translate-x-1/2 opacity-0 group-hover/player:opacity-100 transition-opacity flex gap-2 items-center">
+              <div className="flex items-center gap-0.5 bg-black/70 backdrop-blur-sm rounded-lg px-1.5 py-1 shadow-lg">
+                {SPEED_STEPS.map(s => (
+                  <button
+                    key={s}
+                    onClick={() => {
+                      setPlaybackSpeed(s);
+                      if (videoRef.current) videoRef.current.playbackRate = s;
+                    }}
+                    className={`px-1.5 py-0.5 text-[10px] font-mono rounded transition-colors ${
+                      playbackSpeed === s
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-white/70 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    {s === 0.25 ? '¼' : s === 0.5 ? '½' : `${s}x`}
+                  </button>
+                ))}
+              </div>
               <Button onClick={handleInstantClip} size="sm" className="gap-1.5 shadow-lg bg-primary/90 backdrop-blur-sm">
                 <Scissors className="h-4 w-4" /> Clip (±5s)
               </Button>
@@ -1164,7 +1246,7 @@ export const VideoAnalysis = () => {
             <DialogHeader>
               <DialogTitle>Attach Clip to Action</DialogTitle>
             </DialogHeader>
-            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            <div className="max-h-[400px] overflow-y-auto">
               {loadingAttachActions ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -1176,23 +1258,41 @@ export const VideoAnalysis = () => {
                   <p className="text-xs mt-1">Add actions to the performance report first.</p>
                 </div>
               ) : (
-                linkedReportActions.map(action => (
+                <>
                   <button
-                    key={action.id}
-                    onClick={() => handleAttachClipToAction(action.id)}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/30 transition-colors text-left"
+                    onClick={() => {
+                      const first = linkedReportActions[0];
+                      handleInsertNewActionWithClip(first.action_number - 1, first.analysis_id);
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[10px] text-muted-foreground hover:text-primary transition-colors"
                   >
-                    <span className="text-xs font-mono text-muted-foreground shrink-0">#{action.action_number}</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{action.action_description || action.action_type || 'Untitled action'}</p>
-                      <p className="text-xs text-muted-foreground capitalize">
-                        {action.action_type && <span>{action.action_type}</span>}
-                        <span className="ml-2 opacity-60">{action.report_title}</span>
-                      </p>
-                    </div>
-                    <Paperclip className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <Plus className="h-3 w-3" /> Add new action here
                   </button>
-                ))
+                  {linkedReportActions.map((action) => (
+                    <div key={action.id}>
+                      <button
+                        onClick={() => handleAttachClipToAction(action.id)}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/30 transition-colors text-left"
+                      >
+                        <span className="text-xs font-mono text-muted-foreground shrink-0">#{action.action_number}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{action.action_description || action.action_type || 'Untitled action'}</p>
+                          <p className="text-xs text-muted-foreground capitalize">
+                            {action.action_type && <span>{action.action_type}</span>}
+                            <span className="ml-2 opacity-60">{action.report_title}</span>
+                          </p>
+                        </div>
+                        <Paperclip className="h-3.5 w-3.5 text-primary shrink-0" />
+                      </button>
+                      <button
+                        onClick={() => handleInsertNewActionWithClip(action.action_number, action.analysis_id)}
+                        className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <Plus className="h-3 w-3" /> Add new action here
+                      </button>
+                    </div>
+                  ))}
+                </>
               )}
             </div>
           </DialogContent>
