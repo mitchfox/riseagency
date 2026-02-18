@@ -207,7 +207,7 @@ export const PlayerDatabase = () => {
         supabase.from('club_map_positions').select('club_name, image_url'),
         supabase.from('club_map_positions').select('club_name, country'),
         supabase.from('recruitment_age_rules').select('country, country_code, min_contact_age'),
-        supabase.from('club_ratings').select('club_name, first_team_rating, academy_rating'),
+        supabase.from('club_ratings').select('club_name, first_team_rating, academy_rating, country'),
       ]);
 
       if (scoutingResult.error) throw scoutingResult.error;
@@ -220,8 +220,23 @@ export const PlayerDatabase = () => {
       });
 
       const countryMap: Record<string, string> = {};
+      // First populate from club_map_positions
       clubCountryResult.data?.forEach(c => {
         if (c.club_name && c.country) countryMap[c.club_name.toLowerCase()] = c.country;
+      });
+      // Then enrich from club_ratings (which has AI-detected countries)
+      ratingsResult.data?.forEach((r: any) => {
+        if (r.club_name && r.country && r.country !== 'Unknown') {
+          const lower = r.club_name.toLowerCase();
+          if (!countryMap[lower]) {
+            countryMap[lower] = r.country;
+          }
+          // Also add normalised version for fuzzy matching
+          const norm = normalizeClubName(r.club_name);
+          if (norm && !countryMap[norm]) {
+            countryMap[norm] = r.country;
+          }
+        }
       });
       setClubCountryMap(countryMap);
       setAgeRules(rulesResult.data || []);
