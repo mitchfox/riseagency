@@ -213,25 +213,26 @@ export const AnalysisQuickLink = ({
 
         <div>
           <Label className="text-xs">Fixture</Label>
-          <Select value={selectedFixtureId} onValueChange={setSelectedFixtureId} disabled={loadingFixtures || playerFixtures.length === 0}>
-            <SelectTrigger className="h-9">
-              <SelectValue placeholder={loadingFixtures ? "Loading..." : playerFixtures.length === 0 ? "No fixtures" : "Select a fixture"} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Select a fixture</SelectItem>
-              {playerFixtures.map((fixture) => (
-                <SelectItem key={fixture.id} value={fixture.id}>
-                  {formatFixtureLabel(fixture)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="mt-2">
+          <div className="flex gap-1.5">
+            <Select value={selectedFixtureId} onValueChange={setSelectedFixtureId} disabled={loadingFixtures || playerFixtures.length === 0}>
+              <SelectTrigger className="h-9 flex-1">
+                <SelectValue placeholder={loadingFixtures ? "Loading..." : selectedPlayerId === "none" ? "Select player first" : playerFixtures.length === 0 ? "No fixtures" : "Select a fixture"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Select a fixture</SelectItem>
+                {playerFixtures.map((fixture) => (
+                  <SelectItem key={fixture.id} value={fixture.id}>
+                    {formatFixtureLabel(fixture)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <InlineFixtureCreator
               playerId={selectedPlayerId !== "none" ? selectedPlayerId : undefined}
-              onFixtureCreated={() => {
+              onFixtureCreated={(fixtureId) => {
                 if (selectedPlayerId && selectedPlayerId !== "none") {
                   fetchPlayerFixtures(selectedPlayerId);
+                  setSelectedFixtureId(fixtureId);
                 }
               }}
             />
