@@ -17,7 +17,7 @@ import { NotificationPermission } from "@/components/NotificationPermission";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
-import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List, RefreshCw, CheckCircle2, WifiOff, Bell, BarChart3 } from "lucide-react";
+import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List, RefreshCw, CheckCircle2, WifiOff, Bell, BarChart3, ChevronLeft, LineChart, Video, Database, Users, Search, Compass, Layers, Brain, FolderOpen, Activity, Apple } from "lucide-react";
 import { ClipNameEditor } from "@/components/ClipNameEditor";
 import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { SEO } from "@/components/SEO";
@@ -155,6 +155,7 @@ const Dashboard = () => {
   const [selectedHistoryMonth, setSelectedHistoryMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
   const [savingTestResult, setSavingTestResult] = useState(false);
   const [nutritionPrograms, setNutritionPrograms] = useState<any[]>([]);
+  const [showAnalysisSub, setShowAnalysisSub] = useState(false);
 
   // Initialize form grade configs from database
   const { getGradeBoundaries: getDynamicGradeBoundaries, getGradeForScore, hasThresholds } = useFormGradeConfigs();
@@ -1656,35 +1657,87 @@ const Dashboard = () => {
                   <ChevronDown className="ml-2 h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" sideOffset={0} className="w-[100vw] max-w-[100vw] bg-card border-2 border-gold shadow-lg shadow-gold/20 z-50 p-3 sm:p-5 rounded-none">
-                {/* 3x3 Grid Navigation - square cells with icons */}
-                <div className="grid grid-cols-3 gap-2 sm:gap-3 aspect-square max-h-[70vh]">
-                  {/* Row 1: Analysis, Programming, Nutrition */}
-                  {[
-                    { tab: "analysis", label: "Analysis", icon: <BarChart3 className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                    { tab: "physical", label: "Programming", icon: <Calendar className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                    { tab: "nutrition", label: "Nutrition", icon: <Trophy className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                    { tab: "invoices", label: "Key Documents", icon: <FileText className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                    { tab: "hub", label: "Hub", icon: <TrendingUp className="h-7 w-7 sm:h-8 sm:w-8" />, isHub: true },
-                    { tab: "updates", label: "Updates", icon: <Bell className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                    { tab: "highlights", label: "Highlights", icon: <Play className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                    { tab: "transfer-hub", label: "Transfer Hub", icon: <RefreshCw className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                    { tab: "profile", label: "View Profile", icon: <Eye className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                  ].map((item) => (
-                    <DropdownMenuItem
-                      key={item.tab}
-                      onClick={() => item.tab === "profile" ? setShowProfileModal(true) : setActiveTab(item.tab)}
-                      className={`flex flex-col items-center justify-center gap-2 cursor-pointer rounded-lg transition-all aspect-square ${
-                        item.isHub 
-                          ? `font-bebas uppercase text-xl sm:text-2xl border-2 ${activeTab === "hub" ? "bg-gold/20 text-gold border-gold" : "text-gold border-gold/30 hover:bg-gold/10 hover:border-gold/60"}`
-                          : `font-bebas uppercase text-base sm:text-lg ${activeTab === item.tab ? "bg-gold/20 text-gold border border-gold" : "text-gold/80 hover:text-gold hover:bg-gold/10"}`
-                      }`}
+               <DropdownMenuContent align="center" sideOffset={0} className="w-[100vw] max-w-[100vw] bg-card border-2 border-gold shadow-lg shadow-gold/20 z-50 p-2 sm:p-3 rounded-none">
+                {showAnalysisSub ? (
+                  <div className="space-y-2">
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAnalysisSub(false); }}
+                      className="flex items-center gap-2 text-gold/70 hover:text-gold font-bebas uppercase text-sm px-2 py-1 transition-colors"
                     >
-                      {item.icon}
-                      {item.label}
-                    </DropdownMenuItem>
-                  ))}
-                </div>
+                      <ChevronLeft className="h-4 w-4" />
+                      Back
+                    </button>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 sm:gap-2">
+                      {[
+                        { value: "performance", label: "Performance", icon: <Activity className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "form", label: "Form", icon: <LineChart className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "video-reports", label: "Video Reports", icon: <Video className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "data", label: "Data", icon: <Database className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "comparisons", label: "Comparisons", icon: <Users className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "scouting", label: "Scouting", icon: <Search className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "positional-guides", label: "Positional", icon: <Compass className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "schemes", label: "Schemes", icon: <Layers className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "concepts", label: "Concepts", icon: <Brain className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "cognisance", label: "Cognisance", icon: <Eye className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "other", label: "Other", icon: <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                      ].map((tab) => (
+                        <DropdownMenuItem
+                          key={tab.value}
+                          onClick={() => {
+                            setActiveTab("analysis");
+                            setActiveAnalysisTab(tab.value);
+                            setShowAnalysisSub(false);
+                          }}
+                          className={`flex flex-col items-center justify-center gap-1.5 cursor-pointer rounded-lg transition-all aspect-square font-bebas uppercase text-xs sm:text-sm ${
+                            activeTab === "analysis" && activeAnalysisTab === tab.value
+                              ? "bg-gold/20 text-gold border border-gold"
+                              : "text-gold/80 hover:text-gold hover:bg-gold/10"
+                          }`}
+                        >
+                          {tab.icon}
+                          <span className="text-center leading-tight">{tab.label}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid gap-1.5 sm:gap-2" style={{ gridTemplateColumns: '1fr 1.4fr 1fr', gridTemplateRows: 'repeat(3, 1fr)' }}>
+                    {[
+                      { tab: "analysis", label: "Analysis", icon: <BarChart3 className="h-6 w-6 sm:h-7 sm:w-7" />, isAnalysis: true },
+                      { tab: "physical", label: "Programming", icon: <Calendar className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                      { tab: "nutrition", label: "Nutrition", icon: <Apple className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                      { tab: "invoices", label: "Key Documents", icon: <FileText className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                      { tab: "hub", label: "Hub", icon: <TrendingUp className="h-8 w-8 sm:h-9 sm:w-9" />, isHub: true },
+                      { tab: "updates", label: "Updates", icon: <Bell className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                      { tab: "highlights", label: "Highlights", icon: <Play className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                      { tab: "transfer-hub", label: "Transfer Hub", icon: <RefreshCw className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                      { tab: "profile", label: "View Profile", icon: <Eye className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                    ].map((item) => (
+                      <DropdownMenuItem
+                        key={item.tab}
+                        onClick={(e) => {
+                          if (item.isAnalysis) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowAnalysisSub(true);
+                          } else if (item.tab === "profile") {
+                            setShowProfileModal(true);
+                          } else {
+                            setActiveTab(item.tab);
+                          }
+                        }}
+                        className={`flex flex-col items-center justify-center gap-2 cursor-pointer rounded-lg transition-all aspect-square ${
+                          item.isHub
+                            ? `font-bebas uppercase text-xl sm:text-2xl border-2 ${activeTab === "hub" ? "bg-gold/20 text-gold border-gold" : "text-gold border-gold/30 hover:bg-gold/10 hover:border-gold/60"}`
+                            : `font-bebas uppercase text-sm sm:text-lg ${activeTab === item.tab || (item.isAnalysis && activeTab === "analysis") ? "bg-gold/20 text-gold border border-gold" : "text-gold/80 hover:text-gold hover:bg-gold/10"}`
+                        }`}
+                      >
+                        {item.icon}
+                        <span className="text-center leading-tight">{item.label}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
         </div>
