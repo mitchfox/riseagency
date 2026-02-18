@@ -66,9 +66,15 @@ export const InlineFixtureCreator = ({ playerId, onFixtureCreated }: InlineFixtu
 
   if (!showForm) {
     return (
-      <Button variant="outline" size="sm" onClick={() => setShowForm(true)} className="gap-1">
-        <Plus className="w-3 h-3" />
-        New Fixture
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={() => setShowForm(true)} 
+        disabled={!playerId}
+        className="h-9 w-9 p-0 shrink-0"
+        title={playerId ? "Create new fixture" : "Select a player first"}
+      >
+        <Plus className="w-4 h-4" />
       </Button>
     );
   }
