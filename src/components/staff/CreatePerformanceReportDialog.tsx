@@ -1544,6 +1544,7 @@ export const CreatePerformanceReportDialog = ({
                           onVideoUploaded={(videoUrl) => {
                             updateAction(index, 'video_url', videoUrl);
                           }}
+                          analysisId={analysisId}
                         />
                       ) : (
                         <span className="inline-flex items-center justify-center h-8 w-8 text-muted-foreground text-xs" title="Save report first to add clips">💾</span>
@@ -1759,6 +1760,7 @@ export const CreatePerformanceReportDialog = ({
                               onVideoUploaded={(videoUrl) => {
                                 updateAction(index, 'video_url', videoUrl);
                               }}
+                              analysisId={analysisId}
                             />
                           ) : (
                             <Tooltip>

@@ -2289,6 +2289,7 @@ export type Database = {
           fixture_id: string | null
           fixture_stats: Json | null
           id: string
+          linked_video_analysis_ids: string[] | null
           minutes_played: number | null
           notes: string | null
           opponent: string | null
@@ -2308,6 +2309,7 @@ export type Database = {
           fixture_id?: string | null
           fixture_stats?: Json | null
           id?: string
+          linked_video_analysis_ids?: string[] | null
           minutes_played?: number | null
           notes?: string | null
           opponent?: string | null
@@ -2327,6 +2329,7 @@ export type Database = {
           fixture_id?: string | null
           fixture_stats?: Json | null
           id?: string
+          linked_video_analysis_ids?: string[] | null
           minutes_played?: number | null
           notes?: string | null
           opponent?: string | null
