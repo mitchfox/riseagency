@@ -1667,7 +1667,7 @@ const Dashboard = () => {
                       <ChevronLeft className="h-4 w-4" />
                       Back
                     </button>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 sm:gap-2">
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 sm:gap-2">
                       {[
                         { value: "performance", label: "Performance", icon: <Activity className="h-5 w-5 sm:h-6 sm:w-6" /> },
                         { value: "form", label: "Form", icon: <LineChart className="h-5 w-5 sm:h-6 sm:w-6" /> },
@@ -1688,7 +1688,7 @@ const Dashboard = () => {
                             setActiveAnalysisTab(tab.value);
                             setShowAnalysisSub(false);
                           }}
-                          className={`flex flex-col items-center justify-center gap-1.5 cursor-pointer rounded-lg transition-all aspect-square font-bebas uppercase text-xs sm:text-sm ${
+                          className={`flex flex-col items-center justify-center gap-1.5 cursor-pointer rounded-lg transition-all py-4 font-bebas uppercase text-xs sm:text-sm ${
                             activeTab === "analysis" && activeAnalysisTab === tab.value
                               ? "bg-gold/20 text-gold border border-gold"
                               : "text-gold/80 hover:text-gold hover:bg-gold/10"
@@ -1701,7 +1701,7 @@ const Dashboard = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid gap-1.5 sm:gap-2" style={{ gridTemplateColumns: '1fr 1.4fr 1fr', gridTemplateRows: 'repeat(3, 1fr)' }}>
+                  <div className="grid gap-1.5 sm:gap-2" style={{ gridTemplateColumns: '0.8fr 1.4fr 0.8fr', gridTemplateRows: 'auto auto auto' }}>
                     {[
                       { tab: "analysis", label: "Analysis", icon: <BarChart3 className="h-6 w-6 sm:h-7 sm:w-7" />, isAnalysis: true },
                       { tab: "physical", label: "Programming", icon: <Calendar className="h-6 w-6 sm:h-7 sm:w-7" /> },
@@ -1726,9 +1726,9 @@ const Dashboard = () => {
                             setActiveTab(item.tab);
                           }
                         }}
-                        className={`flex flex-col items-center justify-center gap-2 cursor-pointer rounded-lg transition-all aspect-square ${
+                        className={`flex flex-col items-center justify-center gap-2 cursor-pointer rounded-lg transition-all py-6 sm:py-8 ${
                           item.isHub
-                            ? `font-bebas uppercase text-xl sm:text-2xl border-2 ${activeTab === "hub" ? "bg-gold/20 text-gold border-gold" : "text-gold border-gold/30 hover:bg-gold/10 hover:border-gold/60"}`
+                            ? `font-bebas uppercase text-xl sm:text-2xl border-2 py-8 sm:py-10 ${activeTab === "hub" ? "bg-gold/20 text-gold border-gold" : "text-gold border-gold/30 hover:bg-gold/10 hover:border-gold/60"}`
                             : `font-bebas uppercase text-sm sm:text-lg ${activeTab === item.tab || (item.isAnalysis && activeTab === "analysis") ? "bg-gold/20 text-gold border border-gold" : "text-gold/80 hover:text-gold hover:bg-gold/10"}`
                         }`}
                       >
