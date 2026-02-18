@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Link2, Loader2 } from "lucide-react";
+import { sortPlayersByRepresentation, getStatusLabel } from "@/lib/playerSorting";
+import { InlineFixtureCreator } from "@/components/staff/InlineFixtureCreator";
 import {
   Collapsible,
   CollapsibleContent,
@@ -197,9 +199,12 @@ export const AnalysisQuickLink = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">Select a player</SelectItem>
-              {players.map((player) => (
+              {sortPlayersByRepresentation(players).map((player: any) => (
                 <SelectItem key={player.id} value={player.id}>
                   {player.name}
+                  {player.representation_status && player.representation_status !== 'other' && (
+                    <span className="text-xs text-muted-foreground ml-1">({getStatusLabel(player.representation_status)})</span>
+                  )}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -221,6 +226,16 @@ export const AnalysisQuickLink = ({
               ))}
             </SelectContent>
           </Select>
+          <div className="mt-2">
+            <InlineFixtureCreator
+              playerId={selectedPlayerId !== "none" ? selectedPlayerId : undefined}
+              onFixtureCreated={() => {
+                if (selectedPlayerId && selectedPlayerId !== "none") {
+                  fetchPlayerFixtures(selectedPlayerId);
+                }
+              }}
+            />
+          </div>
         </div>
       </div>
 

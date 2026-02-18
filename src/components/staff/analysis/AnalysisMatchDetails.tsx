@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, X, Crop } from "lucide-react";
+import { sortPlayersByRepresentation, getStatusLabel } from "@/lib/playerSorting";
 import {
   Collapsible,
   CollapsibleContent,
@@ -188,9 +189,12 @@ export const AnalysisMatchDetails = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">No player link</SelectItem>
-                  {players.map((player) => (
+                  {sortPlayersByRepresentation(players).map((player: any) => (
                     <SelectItem key={player.id} value={player.id}>
                       {player.name}
+                      {player.representation_status && player.representation_status !== 'other' && (
+                        <span className="text-xs text-muted-foreground ml-1">({getStatusLabel(player.representation_status)})</span>
+                      )}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -234,11 +238,14 @@ export const AnalysisMatchDetails = ({
               <SelectValue placeholder="Select players to tag..." />
             </SelectTrigger>
             <SelectContent>
-              {players
-                .filter(p => !taggedPlayerIds.includes(p.id))
-                .map((player) => (
+              {sortPlayersByRepresentation(players)
+                .filter((p: any) => !taggedPlayerIds.includes(p.id))
+                .map((player: any) => (
                   <SelectItem key={player.id} value={player.id}>
                     {player.name}
+                    {player.representation_status && player.representation_status !== 'other' && (
+                      <span className="text-xs text-muted-foreground ml-1">({getStatusLabel(player.representation_status)})</span>
+                    )}
                   </SelectItem>
                 ))}
             </SelectContent>
