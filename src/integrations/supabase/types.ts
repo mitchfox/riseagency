@@ -2881,18 +2881,27 @@ export type Database = {
           id: string
           player_id: string
           show_analysis: boolean
+          show_aphorisms: boolean
           show_cognisance: boolean
           show_comparisons: boolean
           show_countdown: boolean
+          show_data_tab: boolean
           show_highlights: boolean
           show_hub: boolean
           show_injury_log: boolean
           show_key_documents: boolean
+          show_match_clipper: boolean
+          show_news_feed: boolean
           show_nutrition: boolean
+          show_performance_reports: boolean
+          show_positional_guides: boolean
           show_programming: boolean
+          show_quick_stats: boolean
+          show_r90_chart: boolean
           show_scouting: boolean
           show_transfer_hub: boolean
           show_updates: boolean
+          show_video_reports: boolean
           show_view_profile: boolean
           updated_at: string
         }
@@ -2903,18 +2912,27 @@ export type Database = {
           id?: string
           player_id: string
           show_analysis?: boolean
+          show_aphorisms?: boolean
           show_cognisance?: boolean
           show_comparisons?: boolean
           show_countdown?: boolean
+          show_data_tab?: boolean
           show_highlights?: boolean
           show_hub?: boolean
           show_injury_log?: boolean
           show_key_documents?: boolean
+          show_match_clipper?: boolean
+          show_news_feed?: boolean
           show_nutrition?: boolean
+          show_performance_reports?: boolean
+          show_positional_guides?: boolean
           show_programming?: boolean
+          show_quick_stats?: boolean
+          show_r90_chart?: boolean
           show_scouting?: boolean
           show_transfer_hub?: boolean
           show_updates?: boolean
+          show_video_reports?: boolean
           show_view_profile?: boolean
           updated_at?: string
         }
@@ -2925,18 +2943,27 @@ export type Database = {
           id?: string
           player_id?: string
           show_analysis?: boolean
+          show_aphorisms?: boolean
           show_cognisance?: boolean
           show_comparisons?: boolean
           show_countdown?: boolean
+          show_data_tab?: boolean
           show_highlights?: boolean
           show_hub?: boolean
           show_injury_log?: boolean
           show_key_documents?: boolean
+          show_match_clipper?: boolean
+          show_news_feed?: boolean
           show_nutrition?: boolean
+          show_performance_reports?: boolean
+          show_positional_guides?: boolean
           show_programming?: boolean
+          show_quick_stats?: boolean
+          show_r90_chart?: boolean
           show_scouting?: boolean
           show_transfer_hub?: boolean
           show_updates?: boolean
+          show_video_reports?: boolean
           show_view_profile?: boolean
           updated_at?: string
         }
