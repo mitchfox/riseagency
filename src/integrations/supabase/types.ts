@@ -2873,6 +2873,90 @@ export type Database = {
         }
         Relationships: []
       }
+      player_portal_settings: {
+        Row: {
+          created_at: string
+          hero_focal_points: Json | null
+          hero_images: Json | null
+          id: string
+          player_id: string
+          show_analysis: boolean
+          show_cognisance: boolean
+          show_comparisons: boolean
+          show_countdown: boolean
+          show_highlights: boolean
+          show_hub: boolean
+          show_injury_log: boolean
+          show_key_documents: boolean
+          show_nutrition: boolean
+          show_programming: boolean
+          show_scouting: boolean
+          show_transfer_hub: boolean
+          show_updates: boolean
+          show_view_profile: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hero_focal_points?: Json | null
+          hero_images?: Json | null
+          id?: string
+          player_id: string
+          show_analysis?: boolean
+          show_cognisance?: boolean
+          show_comparisons?: boolean
+          show_countdown?: boolean
+          show_highlights?: boolean
+          show_hub?: boolean
+          show_injury_log?: boolean
+          show_key_documents?: boolean
+          show_nutrition?: boolean
+          show_programming?: boolean
+          show_scouting?: boolean
+          show_transfer_hub?: boolean
+          show_updates?: boolean
+          show_view_profile?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hero_focal_points?: Json | null
+          hero_images?: Json | null
+          id?: string
+          player_id?: string
+          show_analysis?: boolean
+          show_cognisance?: boolean
+          show_comparisons?: boolean
+          show_countdown?: boolean
+          show_highlights?: boolean
+          show_hub?: boolean
+          show_injury_log?: boolean
+          show_key_documents?: boolean
+          show_nutrition?: boolean
+          show_programming?: boolean
+          show_scouting?: boolean
+          show_transfer_hub?: boolean
+          show_updates?: boolean
+          show_view_profile?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_portal_settings_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_portal_settings_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_programs: {
         Row: {
           created_at: string

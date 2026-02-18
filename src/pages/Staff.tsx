@@ -91,6 +91,7 @@ import { VideoAnalysis } from "@/components/staff/coaching/VideoAnalysis";
 import { StrengthPowerSpeedSection } from "@/components/staff/programming/StrengthPowerSpeedSection";
 import { NutritionSection } from "@/components/staff/programming/NutritionSection";
 import { MessagingCaseStudies } from "@/components/staff/MessagingCaseStudies";
+import { PortalManagement } from "@/components/staff/PortalManagement";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTheme } from "next-themes";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
@@ -136,6 +137,7 @@ import {
   Database,
   Apple,
   LayoutGrid,
+  Monitor,
 } from "lucide-react";
 
 const Staff = () => {
@@ -150,7 +152,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -861,6 +863,8 @@ const Staff = () => {
           { id: 'transferhub', title: 'Transfer Hub', icon: Building2 },
           { id: 'updates', title: 'Player Updates', icon: BellRing },
           { id: 'requests', title: 'Requests', icon: Target },
+          { id: '_group_portal', title: 'Portal', isGroupLabel: true },
+          { id: 'portalmanagement', title: 'Portal', icon: Monitor },
         ]
       },
       {
@@ -978,6 +982,7 @@ const Staff = () => {
     streams: ['stream', 'live', 'watch', 'channel', 'broadcast', 'tv'],
     scoutingcentre: ['scouting', 'reports', 'scouts', 'evaluations'],
     transferhub: ['transfers', 'outreach', 'clubs', 'deals'],
+    portalmanagement: ['portal', 'features', 'visibility', 'hero', 'toggle'],
   };
 
   const filteredCategories = categories.map(category => ({
@@ -1581,6 +1586,7 @@ const Staff = () => {
                   {expandedSection === 'clubnetwork' && <ClubNetworkManagement />}
                   {expandedSection === 'casestudies' && <MessagingCaseStudies />}
                   {expandedSection === 'transferhub' && <TransferHub isAdmin={isAdmin} />}
+                  {expandedSection === 'portalmanagement' && <PortalManagement />}
                   {expandedSection === 'athletecentre' && <AthleteCentre />}
                   {expandedSection === 'legal' && <LegalManagement isAdmin={isAdmin} />}
                   {expandedSection === 'partners' && <PartnersManagement isAdmin={isAdmin} />}

@@ -21,20 +21,43 @@ const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints
 
   React.useEffect(() => {
     const fetchNext = async () => {
+      const playerId = playerData?.id;
       const club = playerData?.current_club;
-      if (!club) return;
       const today = new Date().toISOString().split("T")[0];
-      const { data } = await supabase
-        .from("fixtures")
-        .select("match_date, home_team, away_team, venue")
-        .gte("match_date", today)
-        .or(`home_team.ilike.%${club}%,away_team.ilike.%${club}%`)
-        .order("match_date", { ascending: true })
-        .limit(1);
-      if (data && data.length > 0) setNextFixture(data[0]);
+      
+      // Try player_fixtures first (most reliable)
+      if (playerId) {
+        const { data: pfData } = await supabase
+          .from("player_fixtures")
+          .select("fixture:fixtures(match_date, home_team, away_team, venue)")
+          .eq("player_id", playerId)
+          .order("fixture(match_date)", { ascending: true });
+        
+        if (pfData && pfData.length > 0) {
+          const upcoming = pfData
+            .map((pf: any) => pf.fixture)
+            .filter((f: any) => f && f.match_date >= today);
+          if (upcoming.length > 0) {
+            setNextFixture(upcoming[0]);
+            return;
+          }
+        }
+      }
+      
+      // Fallback: match by club name
+      if (club) {
+        const { data } = await supabase
+          .from("fixtures")
+          .select("match_date, home_team, away_team, venue")
+          .gte("match_date", today)
+          .or(`home_team.ilike.%${club}%,away_team.ilike.%${club}%`)
+          .order("match_date", { ascending: true })
+          .limit(1);
+        if (data && data.length > 0) setNextFixture(data[0]);
+      }
     };
     fetchNext();
-  }, [playerData?.current_club]);
+  }, [playerData?.id, playerData?.current_club]);
 
   const imageUrls = React.useMemo(() => {
     const urls: string[] = [];
