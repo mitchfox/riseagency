@@ -1295,7 +1295,35 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint }: An
                     <div className="flex items-center gap-1 text-[10px] text-white/40">
                       <span>Size</span>
                     </div>
-                    {(selectedElement.type === 'circle' || selectedElement.type === 'spotlight' || selectedElement.type === 'player-marker' || selectedElement.type === 'semi-circle' || selectedElement.type === 'magnifier') && (
+                    {(selectedElement.type === 'circle' || selectedElement.type === 'spotlight') && (
+                      <>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-[9px] text-white/40">Width (rx)</Label>
+                            <span className="text-[9px] text-white/30">{(selectedElement.width ?? selectedElement.radius ?? 2.5).toFixed(1)}</span>
+                          </div>
+                          <Slider
+                            value={[selectedElement.width ?? selectedElement.radius ?? 2.5]}
+                            min={0.5} max={30} step={0.5}
+                            onValueChange={([v]) => updateElement(selectedElement.id, { width: v })}
+                            className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-[9px] text-white/40">Height (ry)</Label>
+                            <span className="text-[9px] text-white/30">{(selectedElement.height ?? selectedElement.radius ?? 2.5).toFixed(1)}</span>
+                          </div>
+                          <Slider
+                            value={[selectedElement.height ?? selectedElement.radius ?? 2.5]}
+                            min={0.5} max={30} step={0.5}
+                            onValueChange={([v]) => updateElement(selectedElement.id, { height: v })}
+                            className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
+                          />
+                        </div>
+                      </>
+                    )}
+                    {(selectedElement.type === 'player-marker' || selectedElement.type === 'magnifier') && (
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
                           <Label className="text-[9px] text-white/40">Radius</Label>
@@ -1354,11 +1382,11 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint }: An
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <Label className="text-[9px] text-white/40">Line Thickness</Label>
-                        <span className="text-[9px] text-white/30">{selectedElement.strokeWidth}px</span>
+                        <span className="text-[9px] text-white/30">{selectedElement.strokeWidth.toFixed(1)}px</span>
                       </div>
                       <Slider
                         value={[selectedElement.strokeWidth]}
-                        min={1} max={20} step={1}
+                        min={0.2} max={20} step={0.2}
                         onValueChange={([v]) => updateElement(selectedElement.id, { strokeWidth: v })}
                         className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
                       />
