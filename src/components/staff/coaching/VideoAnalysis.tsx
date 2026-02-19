@@ -272,7 +272,7 @@ export const VideoAnalysis = () => {
       id: crypto.randomUUID(),
       start: clipStart,
       end: clipEnd,
-      label: `Action at ${fmtMatchTime(currentTime, selectedVideo.match_minute_offset)}`,
+      label: `Clip ${fmtClipMinute(currentTime, selectedVideo.match_minute_offset)}`,
       action_type: "",
       action_description: "",
       notes: "",
@@ -661,7 +661,7 @@ export const VideoAnalysis = () => {
         action_number: nextNumber + i,
         minute: getMatchMinute(clip.start, selectedVideo.match_minute_offset),
         action_type: clip.action_type || "other",
-        action_description: clip.action_description || clip.label,
+        action_description: clip.action_description || "",
         notes: clip.notes || null,
         video_url: selectedVideo.video_url || null,
         video_analysis_id: selectedVideo.id,
@@ -919,7 +919,7 @@ export const VideoAnalysis = () => {
           analysis_id: reportAnalysisId,
           action_number: insertAfterNumber + 1,
           action_type: attachClip.action_type || "other",
-          action_description: attachClip.action_description || attachClip.label || "",
+          action_description: attachClip.action_description || "",
           notes: attachClip.notes || null,
           video_url: clipUrl,
           is_successful: true,
@@ -1011,8 +1011,8 @@ export const VideoAnalysis = () => {
               ref={videoRef}
               src={selectedVideo.video_url}
               controls
-              controlsList="nofullscreen nodownload"
-              className="w-full aspect-video object-fill [&:fullscreen]:controls-hidden [&::-webkit-media-controls-fullscreen-button]:hidden [&::-webkit-media-controls-mute-button]:hidden [&::-webkit-media-controls-overflow-button]:hidden"
+              controlsList="nodownload"
+              className="w-full aspect-video object-fill"
               onKeyDown={(e) => {
                 // Prevent native video controls from intercepting our hotkeys in fullscreen
                 const key = e.key;

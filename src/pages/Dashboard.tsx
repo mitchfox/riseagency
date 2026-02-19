@@ -17,7 +17,7 @@ import { NotificationPermission } from "@/components/NotificationPermission";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
-import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List, RefreshCw, CheckCircle2, WifiOff, Bell, BarChart3, ChevronLeft, LineChart, Video, Database, Users, Search, Compass, Layers, Brain, FolderOpen, Activity, Apple } from "lucide-react";
+import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List, RefreshCw, CheckCircle2, WifiOff, Bell, BarChart3, ChevronLeft, LineChart, Video, Database, Users, Search, Compass, Layers, Brain, FolderOpen, Activity, UtensilsCrossed } from "lucide-react";
 import { ClipNameEditor } from "@/components/ClipNameEditor";
 import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { SEO } from "@/components/SEO";
@@ -1705,7 +1705,7 @@ const Dashboard = () => {
                     {[
                       { tab: "analysis", label: "Analysis", icon: <BarChart3 className="h-6 w-6 sm:h-7 sm:w-7" />, isAnalysis: true },
                       { tab: "physical", label: "Programming", icon: <Calendar className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                      { tab: "nutrition", label: "Nutrition", icon: <Apple className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                      { tab: "nutrition", label: "Nutrition", icon: <UtensilsCrossed className="h-6 w-6 sm:h-7 sm:w-7" /> },
                       { tab: "invoices", label: "Key Documents", icon: <FileText className="h-6 w-6 sm:h-7 sm:w-7" /> },
                       { tab: "hub", label: "Hub", icon: <TrendingUp className="h-8 w-8 sm:h-9 sm:w-9" />, isHub: true },
                       { tab: "updates", label: "Updates", icon: <Bell className="h-6 w-6 sm:h-7 sm:w-7" /> },

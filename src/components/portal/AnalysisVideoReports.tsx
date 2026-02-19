@@ -71,7 +71,38 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
     fetchActions();
   }, [analyses]);
 
-  const actionTypes = useMemo(() => [...new Set(allActions.map(a => a.action_type).filter(Boolean))].sort(), [allActions]);
+  // Split comma-separated action types into individual categories
+  const actionTypes = useMemo(() => {
+    const types = new Set<string>();
+    allActions.forEach(a => {
+      if (!a.action_type) return;
+      if (a.action_type.includes(',')) {
+        a.action_type.split(',').map(t => t.trim()).filter(Boolean).forEach(t => types.add(t));
+      } else {
+        types.add(a.action_type);
+      }
+    });
+    return [...types].sort();
+  }, [allActions]);
+
+  // Categorise types
+  const categoriseType = (type: string): string => {
+    const t = type.toLowerCase();
+    if (['goal', 'assist', 'key pass', 'chance created', 'shot on target'].some(k => t.includes(k))) return 'Key Actions';
+    if (['dribble', 'carry', 'pass', 'cross', 'through ball', 'attacking', 'build-up', 'shot', 'set-piece', 'corner', 'free-kick', 'penalty', 'throw-in', 'goal-kick'].some(k => t.includes(k))) return 'Offensive';
+    if (['tackle', 'interception', 'block', 'clearance', 'defensive', 'pressing', 'recovery', 'aerial', 'header', 'regain'].some(k => t.includes(k))) return 'Defensive';
+    return 'Other';
+  };
+
+  const categoryOrder = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
+  const sortedActionTypes = useMemo(() => {
+    return [...actionTypes].sort((a, b) => {
+      const catA = categoryOrder.indexOf(categoriseType(a));
+      const catB = categoryOrder.indexOf(categoriseType(b));
+      if (catA !== catB) return catA - catB;
+      return a.localeCompare(b);
+    });
+  }, [actionTypes]);
 
   const toggleMatch = (id: string) => {
     setSelectedMatches(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -85,10 +116,19 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
     setSelectedActionTypes(prev => prev.includes(type) ? prev.filter(x => x !== type) : [...prev, type]);
   };
 
+  // Check if an action matches selected types (handles comma-separated)
+  const actionMatchesTypes = (action: ActionClip, types: string[]) => {
+    if (types.length === 0) return true;
+    const actionTypes = action.action_type.includes(',')
+      ? action.action_type.split(',').map(t => t.trim()).filter(Boolean)
+      : [action.action_type];
+    return actionTypes.some(t => types.includes(t));
+  };
+
   const generateCompilation = () => {
     const clips = allActions.filter(a =>
       selectedMatches.includes(a.analysis_id) &&
-      (selectedActionTypes.length === 0 || selectedActionTypes.includes(a.action_type))
+      actionMatchesTypes(a, selectedActionTypes)
     ).sort((a, b) => {
       const dateA = a.match_date || '';
       const dateB = b.match_date || '';
@@ -190,18 +230,30 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
             {/* Step 1: Select action types */}
             <div>
               <h3 className="text-sm font-semibold uppercase tracking-wider mb-2">Step 1: Select Action Types</h3>
-              <div className="flex flex-wrap gap-2">
-                {actionTypes.map(type => (
-                  <button
-                    key={type}
-                    onClick={() => toggleActionType(type)}
-                    className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${
-                      selectedActionTypes.includes(type) ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'
-                    }`}
-                  >
-                    {type}
-                  </button>
-                ))}
+              <div className="space-y-2">
+                {(() => {
+                  let lastCategory = '';
+                  return sortedActionTypes.map(type => {
+                    const category = categoriseType(type);
+                    const showHeader = category !== lastCategory;
+                    lastCategory = category;
+                    return (
+                      <span key={type}>
+                        {showHeader && (
+                          <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mt-2 mb-1">{category}</span>
+                        )}
+                        <button
+                          onClick={() => toggleActionType(type)}
+                          className={`px-3 py-1.5 rounded-lg border text-sm transition-colors mr-2 mb-1 ${
+                            selectedActionTypes.includes(type) ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'
+                          }`}
+                        >
+                          {type}
+                        </button>
+                      </span>
+                    );
+                  });
+                })()}
                 {selectedActionTypes.length > 0 && (
                   <Button variant="ghost" size="sm" onClick={() => setSelectedActionTypes([])}>Clear</Button>
                 )}
