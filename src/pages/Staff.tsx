@@ -235,6 +235,10 @@ const Staff = () => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
+      // Suppress staff hotkeys when video analysis or annotation editor is active
+      const section = searchParams.get('section');
+      if (section === 'videoanalysis' || section === 'annotations') return;
+
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setSidebarSearchOpen((open) => !open);

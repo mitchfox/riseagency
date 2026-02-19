@@ -21,6 +21,8 @@ interface AnnotationEditorProps {
   onBack: () => void;
   /** When set, constrains video playback to this time range (clip-only mode) */
   clipConstraint?: { start: number; end: number };
+  /** Auto-start playback once video is loaded */
+  autoPlay?: boolean;
 }
 
 export type AnnotationTool =
@@ -31,7 +33,7 @@ export type AnnotationTool =
 
 // interpolateKeyframes moved to annotationRenderUtils.ts
 
-export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint }: AnnotationEditorProps) => {
+export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, autoPlay }: AnnotationEditorProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -685,10 +687,30 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint }: An
         if (e.key === 'b') setActiveTool('image-layer');
         if (e.key === 'e') setActiveTool('eraser');
       }
+      // Stop propagation to prevent staff hotkeys from firing
+      e.stopPropagation();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    // Use capture phase so annotation shortcuts fire before staff-level handlers
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
   }, [handleDeleteElement, togglePlay, stepFrame, addKeyframe]);
+
+  // Autoplay once video is loaded
+  useEffect(() => {
+    if (!autoPlay) return;
+    const video = videoRef.current;
+    if (!video) return;
+    const onCanPlay = () => {
+      video.removeEventListener('canplay', onCanPlay);
+      video.play().then(() => setIsPlaying(true)).catch(() => {});
+    };
+    if (video.readyState >= 3) {
+      video.play().then(() => setIsPlaying(true)).catch(() => {});
+    } else {
+      video.addEventListener('canplay', onCanPlay);
+    }
+    return () => video.removeEventListener('canplay', onCanPlay);
+  }, [autoPlay]);
 
   // Scroll-wheel zoom on the video container
   useEffect(() => {
@@ -789,7 +811,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint }: An
                 ref={videoRef}
                 src={clipConstraint ? `${project.videoUrl}#t=${clipConstraint.start},${clipConstraint.end}` : project.videoUrl}
                 crossOrigin="anonymous"
-                className={`max-w-full max-h-[calc(100vh-16rem)] block ${drawingMode ? 'invisible' : ''}`}
+                className={`w-full aspect-video object-fill block ${drawingMode ? 'invisible' : ''}`}
                 muted={muted}
                 playsInline
                 preload="auto"
@@ -845,7 +867,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint }: An
               {drawingMode && freezeFrameUrl && (
                 <img
                   src={freezeFrameUrl}
-                  className="absolute inset-0 w-full h-full object-contain"
+                  className="absolute inset-0 w-full h-full object-fill"
                   alt="Freeze frame"
                   style={{ zIndex: 10 }}
                 />
@@ -854,7 +876,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint }: An
               {playbackFreezeActive && playbackFreezeUrl && (
                 <img
                   src={playbackFreezeUrl}
-                  className="absolute inset-0 w-full h-full object-contain"
+                  className="absolute inset-0 w-full h-full object-fill"
                   alt="Playback freeze frame"
                   style={{ zIndex: 10 }}
                 />

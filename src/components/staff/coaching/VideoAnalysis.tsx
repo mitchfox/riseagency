@@ -33,6 +33,7 @@ interface Clip {
   action_description: string;
   notes: string;
   created_at: string;
+  minute?: string;
 }
 
 interface VideoAnalysisEntry {
@@ -114,7 +115,8 @@ export const VideoAnalysis = () => {
   const [showAttachDialog, setShowAttachDialog] = useState(false);
   const [attachClip, setAttachClip] = useState<Clip | null>(null);
   const [linkedReportIds, setLinkedReportIds] = useState<string[]>([]);
-  const [linkedReportActions, setLinkedReportActions] = useState<{ id: string; action_number: number; action_type: string; action_description: string; report_title: string; analysis_id: string; minute?: number | null }[]>([]);
+  const [linkedReportActions, setLinkedReportActions] = useState<{ id: string; action_number: number; action_type: string; action_description: string; report_title: string; analysis_id: string; minute?: number | null; video_url?: string | null }[]>([]);
+  const [showActionsWithClips, setShowActionsWithClips] = useState(false);
   const [loadingAttachActions, setLoadingAttachActions] = useState(false);
 
   // Clip saved toast
@@ -263,6 +265,9 @@ export const VideoAnalysis = () => {
     const clipStart = Math.max(0, currentTime - 5);
     const clipEnd = Math.min(videoRef.current.duration || currentTime + 5, currentTime + 5);
 
+    // Compute formatted minute for the clip
+    const clipMinute = fmtClipMinute(currentTime, selectedVideo.match_minute_offset);
+
     const newClip: Clip = {
       id: crypto.randomUUID(),
       start: clipStart,
@@ -272,6 +277,7 @@ export const VideoAnalysis = () => {
       action_description: "",
       notes: "",
       created_at: new Date().toISOString(),
+      minute: clipMinute,
     };
 
     const updatedClips = [...selectedVideo.clips, newClip];
@@ -316,6 +322,12 @@ export const VideoAnalysis = () => {
   const handleUpdateClipNotes = async (clipId: string, notes: string) => {
     if (!selectedVideo) return;
     const updatedClips = selectedVideo.clips.map(c => c.id === clipId ? { ...c, notes } : c);
+    await saveClips(updatedClips);
+  };
+
+  const handleUpdateClipMinute = async (clipId: string, minute: string) => {
+    if (!selectedVideo) return;
+    const updatedClips = selectedVideo.clips.map(c => c.id === clipId ? { ...c, minute } : c);
     await saveClips(updatedClips);
   };
 
@@ -695,11 +707,31 @@ export const VideoAnalysis = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  /** Format minute for clip display: mm:ss with seconds rounded down to nearest 5 */
+  const fmtClipMinute = (videoSeconds: number, _offset: number) => {
+    const offset = getEffectiveOffset(videoSeconds);
+    const matchSeconds = videoSeconds + offset;
+    const mins = Math.floor(matchSeconds / 60);
+    const rawSecs = Math.floor(matchSeconds % 60);
+    const roundedSecs = Math.floor(rawSecs / 5) * 5;
+    return `${mins}:${roundedSecs.toString().padStart(2, '0')}`;
+  };
+
   const getMatchMinute = (videoSeconds: number, _offset: number) => {
     const offset = getEffectiveOffset(videoSeconds);
     const matchSeconds = videoSeconds + offset;
     const snapped = Math.floor(matchSeconds / 5) * 5;
     return Math.floor(snapped / 60);
+  };
+
+  /** Parse clip minute string "mm:ss" to a numeric minute for report insertion */
+  const parseClipMinuteToNumber = (minuteStr?: string): number | null => {
+    if (!minuteStr) return null;
+    const parts = minuteStr.split(':');
+    if (parts.length === 2) {
+      return parseInt(parts[0]) || 0;
+    }
+    return parseInt(minuteStr) || null;
   };
 
   const daysUntilExpiry = (dateStr: string | null) => {
@@ -819,7 +851,7 @@ export const VideoAnalysis = () => {
 
       const { data: actions } = await supabase
         .from("performance_report_actions")
-        .select("id, action_number, action_type, action_description, analysis_id, minute")
+        .select("id, action_number, action_type, action_description, analysis_id, minute, video_url")
         .in("analysis_id", linkedReportIds)
         .order("action_number");
 
@@ -831,6 +863,7 @@ export const VideoAnalysis = () => {
           action_description: a.action_description || '',
           analysis_id: a.analysis_id,
           minute: a.minute,
+          video_url: a.video_url,
           report_title: reports.find(r => r.id === a.analysis_id)?.opponent
             ? `vs ${reports.find(r => r.id === a.analysis_id)!.opponent}`
             : `Report ${reports.find(r => r.id === a.analysis_id)?.analysis_date || ''}`,
@@ -890,7 +923,7 @@ export const VideoAnalysis = () => {
           notes: attachClip.notes || null,
           video_url: clipUrl,
           is_successful: true,
-          minute: getMatchMinute(attachClip.start, selectedVideo.match_minute_offset),
+          minute: parseClipMinuteToNumber(attachClip.minute) ?? getMatchMinute(attachClip.start, selectedVideo.match_minute_offset),
         });
 
       if (error) throw error;
@@ -1101,9 +1134,16 @@ export const VideoAnalysis = () => {
                     } catch {}
                     return null;
                   })()}
-                  <p className="text-[10px] text-muted-foreground shrink-0">
-                    {getMatchMinute(clip.start, selectedVideo.match_minute_offset)}'
-                  </p>
+                  <Input
+                    defaultValue={clip.minute || fmtClipMinute(clip.start, selectedVideo.match_minute_offset)}
+                    onBlur={e => {
+                      if (e.target.value !== (clip.minute || '')) {
+                        handleUpdateClipMinute(clip.id, e.target.value);
+                      }
+                    }}
+                    className="h-7 text-[10px] font-mono w-[60px] shrink-0"
+                    title="Match time (editable)"
+                  />
 
                   <ActionTypeCombobox
                     value={clip.action_type}
@@ -1217,6 +1257,7 @@ export const VideoAnalysis = () => {
                <AnnotationEditor
                  project={annotationProject}
                  clipConstraint={{ start: annotatingClip.start, end: annotatingClip.end }}
+                 autoPlay
                  onSave={(proj) => {
                    // Save annotations to localStorage keyed by clip id
                    if (annotatingClip) {
@@ -1286,7 +1327,7 @@ export const VideoAnalysis = () => {
         </Dialog>
 
         {/* Attach clip to report action dialog */}
-        <Dialog open={showAttachDialog} onOpenChange={setShowAttachDialog}>
+        <Dialog open={showAttachDialog} onOpenChange={(open) => { setShowAttachDialog(open); if (!open) setShowActionsWithClips(false); }}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Attach Clip to Action</DialogTitle>
@@ -1302,46 +1343,85 @@ export const VideoAnalysis = () => {
                   <p className="text-sm">No actions found on linked reports.</p>
                   <p className="text-xs mt-1">Add actions to the performance report first.</p>
                 </div>
-              ) : (
-                <>
-                  <button
-                    onClick={() => {
-                      const first = linkedReportActions[0];
-                      handleInsertNewActionWithClip(first.action_number - 1, first.analysis_id);
-                    }}
-                    className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[10px] text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    <Plus className="h-3 w-3" /> Add new action here
-                  </button>
-                  {linkedReportActions.map((action) => (
-                    <div key={action.id}>
-                      <button
-                        onClick={() => handleAttachClipToAction(action.id)}
-                        className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/30 transition-colors text-left"
-                      >
-                        <span className="text-xs font-mono text-muted-foreground shrink-0">#{action.action_number}</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{action.action_description || action.action_type || 'Untitled action'}</p>
-                          <p className="text-xs text-muted-foreground capitalize">
-                            {action.action_type && <span>{action.action_type}</span>}
-                            {action.minute !== undefined && action.minute !== null && (
-                              <span className="ml-1.5 font-mono text-[10px] opacity-70">{action.minute}'</span>
-                            )}
-                            <span className="ml-2 opacity-60">{action.report_title}</span>
-                          </p>
-                        </div>
-                        <Paperclip className="h-3.5 w-3.5 text-primary shrink-0" />
-                      </button>
-                      <button
-                        onClick={() => handleInsertNewActionWithClip(action.action_number, action.analysis_id)}
-                        className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[10px] text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <Plus className="h-3 w-3" /> Add new action here
-                      </button>
-                    </div>
-                  ))}
-                </>
-              )}
+              ) : (() => {
+                const actionsWithoutClip = linkedReportActions.filter(a => !a.video_url);
+                const actionsWithClip = linkedReportActions.filter(a => !!a.video_url);
+                return (
+                  <>
+                    {/* Actions without clips - shown prominently */}
+                    <button
+                      onClick={() => {
+                        const first = actionsWithoutClip[0] || linkedReportActions[0];
+                        handleInsertNewActionWithClip(first.action_number - 1, first.analysis_id);
+                      }}
+                      className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <Plus className="h-3 w-3" /> Add new action here
+                    </button>
+                    {actionsWithoutClip.map((action) => (
+                      <div key={action.id}>
+                        <button
+                          onClick={() => handleAttachClipToAction(action.id)}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/30 transition-colors text-left"
+                        >
+                          <span className="text-xs font-mono text-muted-foreground shrink-0">#{action.action_number}</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{action.action_description || action.action_type || 'Untitled action'}</p>
+                            <p className="text-xs text-muted-foreground capitalize">
+                              {action.action_type && <span>{action.action_type}</span>}
+                              {action.minute !== undefined && action.minute !== null && (
+                                <span className="ml-1.5 font-mono text-[10px] opacity-70">{action.minute}'</span>
+                              )}
+                              <span className="ml-2 opacity-60">{action.report_title}</span>
+                            </p>
+                          </div>
+                          <Paperclip className="h-3.5 w-3.5 text-primary shrink-0" />
+                        </button>
+                        <button
+                          onClick={() => handleInsertNewActionWithClip(action.action_number, action.analysis_id)}
+                          className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          <Plus className="h-3 w-3" /> Add new action here
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Actions with clips - collapsed at bottom */}
+                    {actionsWithClip.length > 0 && (
+                      <div className="mt-3 border-t pt-2">
+                        <button
+                          onClick={() => setShowActionsWithClips(!showActionsWithClips)}
+                          className="w-full flex items-center justify-between px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <span>{actionsWithClip.length} action{actionsWithClip.length !== 1 ? 's' : ''} already have a clip</span>
+                          <ChevronLeft className={`h-3.5 w-3.5 transition-transform ${showActionsWithClips ? '-rotate-90' : 'rotate-0'}`} />
+                        </button>
+                        {showActionsWithClips && actionsWithClip.map((action) => (
+                          <button
+                            key={action.id}
+                            onClick={() => handleAttachClipToAction(action.id)}
+                            className="w-full flex items-center gap-3 p-3 rounded-lg border border-dashed border-muted hover:bg-muted/30 transition-colors text-left opacity-60 hover:opacity-100"
+                          >
+                            <span className="text-xs font-mono text-muted-foreground shrink-0">#{action.action_number}</span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium truncate">{action.action_description || action.action_type || 'Untitled action'}</p>
+                              <p className="text-xs text-muted-foreground capitalize">
+                                {action.action_type && <span>{action.action_type}</span>}
+                                {action.minute !== undefined && action.minute !== null && (
+                                  <span className="ml-1.5 font-mono text-[10px] opacity-70">{action.minute}'</span>
+                                )}
+                                <span className="ml-2 opacity-60">{action.report_title}</span>
+                                <span className="ml-1.5 text-amber-500/80">· has clip</span>
+                              </p>
+                            </div>
+                            <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </DialogContent>
         </Dialog>
