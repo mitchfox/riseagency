@@ -216,13 +216,16 @@ export function renderElementsToSVGString(
         );
         break;
 
-      case 'circle':
+      case 'circle': {
+        const rx = el.width ?? el.radius ?? 1;
+        const ry = el.height ?? el.radius ?? 1;
         parts.push(
           groupOpen,
-          `<circle cx="${x}%" cy="${y}%" r="${el.radius}%" stroke="${el.color}" stroke-width="${el.strokeWidth}" fill="${el.fillOpacity ? el.color : 'none'}" fill-opacity="${el.fillOpacity || 0}"/>`,
+          `<ellipse cx="${x}%" cy="${y}%" rx="${rx}%" ry="${ry}%" stroke="${el.color}" stroke-width="${el.strokeWidth}" fill="${el.fillOpacity ? el.color : 'none'}" fill-opacity="${el.fillOpacity || 0}"/>`,
           groupClose
         );
         break;
+      }
 
       case 'semi-circle': {
         const rx = el.width || el.radius || 4;
@@ -258,13 +261,14 @@ export function renderElementsToSVGString(
       }
 
       case 'spotlight': {
-        const r = el.radius || 5;
+        const rx = el.width ?? el.radius ?? 5;
+        const ry = el.height ?? el.radius ?? 5;
         const maskId = `spot-exp-${el.id}`;
         parts.push(
           groupOpen,
-          `<defs><mask id="${maskId}"><rect x="0" y="0" width="100%" height="100%" fill="white"/><circle cx="${x}%" cy="${y}%" r="${r}%" fill="black"/></mask></defs>`,
+          `<defs><mask id="${maskId}"><rect x="0" y="0" width="100%" height="100%" fill="white"/><ellipse cx="${x}%" cy="${y}%" rx="${rx}%" ry="${ry}%" fill="black"/></mask></defs>`,
           `<rect x="0" y="0" width="100%" height="100%" fill="black" fill-opacity="${el.fillOpacity || 0.3}" mask="url(#${maskId})"/>`,
-          `<circle cx="${x}%" cy="${y}%" r="${r}%" fill="none" stroke="${el.color}" stroke-width="2" stroke-opacity="0.6"/>`,
+          `<ellipse cx="${x}%" cy="${y}%" rx="${rx}%" ry="${ry}%" fill="none" stroke="${el.color}" stroke-width="2" stroke-opacity="0.6"/>`,
           groupClose
         );
         break;

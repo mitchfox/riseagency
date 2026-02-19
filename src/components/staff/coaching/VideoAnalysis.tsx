@@ -732,6 +732,7 @@ export const VideoAnalysis = () => {
     if (!selectedVideo) return;
     const handleHotkey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
+      // Allow hotkeys even from video element (for fullscreen support)
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
       const video = videoRef.current;
@@ -739,18 +740,23 @@ export const VideoAnalysis = () => {
 
       if (e.key === 'ArrowRight' && !e.shiftKey) {
         e.preventDefault();
+        e.stopPropagation();
         video.currentTime = Math.min(video.duration, video.currentTime + 10);
       } else if (e.key === 'ArrowLeft' && !e.shiftKey) {
         e.preventDefault();
+        e.stopPropagation();
         video.currentTime = Math.max(0, video.currentTime - 10);
       } else if (e.key === 'Shift') {
         e.preventDefault();
+        e.stopPropagation();
         video.currentTime = Math.min(video.duration, video.currentTime + 30);
       } else if (e.key === 'Delete') {
         e.preventDefault();
+        e.stopPropagation();
         handleInstantClip();
       } else if (e.key === '=' || e.key === '+') {
         e.preventDefault();
+        e.stopPropagation();
         setPlaybackSpeed(prev => {
           const idx = SPEED_STEPS.indexOf(prev);
           const next = idx < SPEED_STEPS.length - 1 ? SPEED_STEPS[idx + 1] : prev;
@@ -759,6 +765,7 @@ export const VideoAnalysis = () => {
         });
       } else if (e.key === '-' || e.key === '_') {
         e.preventDefault();
+        e.stopPropagation();
         setPlaybackSpeed(prev => {
           const idx = SPEED_STEPS.indexOf(prev);
           const next = idx > 0 ? SPEED_STEPS[idx - 1] : prev;
@@ -767,12 +774,14 @@ export const VideoAnalysis = () => {
         });
       } else if (e.key === '0') {
         e.preventDefault();
+        e.stopPropagation();
         setPlaybackSpeed(1);
         if (video) video.playbackRate = 1;
       }
     };
-    window.addEventListener('keydown', handleHotkey);
-    return () => window.removeEventListener('keydown', handleHotkey);
+    // Use capture phase so our handler fires before the browser's native video handlers
+    window.addEventListener('keydown', handleHotkey, true);
+    return () => window.removeEventListener('keydown', handleHotkey, true);
   }, [selectedVideo, handleInstantClip]);
 
   // Fetch linked report IDs for clip-to-report attachment
@@ -969,7 +978,14 @@ export const VideoAnalysis = () => {
               ref={videoRef}
               src={selectedVideo.video_url}
               controls
-              className="w-full aspect-video"
+              className="w-full aspect-video object-fill"
+              onKeyDown={(e) => {
+                // Prevent native video controls from intercepting our hotkeys in fullscreen
+                const key = e.key;
+                if (['-', '_', '=', '+', '0', 'Delete', 'ArrowLeft', 'ArrowRight', 'Shift'].includes(key)) {
+                  e.stopPropagation();
+                }
+              }}
               onTimeUpdate={() => {
                 if (overlayElements.length > 0) {
                   setOverlayCurrentTime(videoRef.current?.currentTime ?? 0);

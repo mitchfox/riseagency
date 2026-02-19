@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Plus, Search, Loader2, ChevronDown, ChevronUp, List, Video } from "lucide-react";
+import { Trash2, Plus, Search, Loader2, ChevronDown, ChevronUp, List, Video, ArrowUp, ArrowDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { R90RatingsViewer } from "./R90RatingsViewer";
 import { ActionStatRecorder, aggregateRecordedStats, RecordedStat } from "./ActionStatRecorder";
@@ -385,6 +385,29 @@ export const PerformanceActionsDialog = ({
     } catch (error: any) {
       console.error("Error deleting action:", error);
       toast.error("Failed to delete action");
+    }
+  };
+
+  const handleMoveAction = async (actionId: string, direction: 'up' | 'down') => {
+    const idx = actions.findIndex(a => a.id === actionId);
+    if (idx < 0) return;
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= actions.length) return;
+
+    const a = actions[idx];
+    const b = actions[swapIdx];
+    if (!a.id || !b.id) return;
+
+    try {
+      // Swap action_numbers
+      await Promise.all([
+        supabase.from("performance_report_actions").update({ action_number: b.action_number }).eq("id", a.id),
+        supabase.from("performance_report_actions").update({ action_number: a.action_number }).eq("id", b.id),
+      ]);
+      toast.success("Action reordered");
+      await fetchActions();
+    } catch {
+      toast.error("Failed to reorder");
     }
   };
 
@@ -837,6 +860,16 @@ export const PerformanceActionsDialog = ({
                         <span className="font-semibold truncate">{action.action_type}</span>
                       </div>
                       <div className="flex gap-1 flex-shrink-0 items-center">
+                        {isAdmin && (
+                          <>
+                            <Button variant="ghost" size="sm" onClick={() => action.id && handleMoveAction(action.id, 'up')} disabled={actions.indexOf(action) === 0} title="Move up">
+                              <ArrowUp className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => action.id && handleMoveAction(action.id, 'down')} disabled={actions.indexOf(action) === actions.length - 1} title="Move down">
+                              <ArrowDown className="w-3.5 h-3.5" />
+                            </Button>
+                          </>
+                        )}
                         {/* Video button - show if video exists */}
                         {action.video_url && (
                           <Button

@@ -168,8 +168,26 @@ export const AnnotationCanvas = ({
       setElements(prev => prev.map(el => {
         if (el.id !== resizing.id) return el;
 
-        // Circle/spotlight/player-marker/semi-circle: resize radius
-        if (el.radius !== undefined && (el.type === 'circle' || el.type === 'spotlight' || el.type === 'player-marker' || el.type === 'semi-circle' || el.type === 'magnifier')) {
+        // Circle/spotlight: resize width/height independently (oval support)
+        if ((el.type === 'circle' || el.type === 'spotlight') && (el.width !== undefined || el.radius !== undefined)) {
+          const sRx = s.width ?? s.radius ?? 2.5;
+          const sRy = s.height ?? s.radius ?? 2.5;
+          let newRx = sRx;
+          let newRy = sRy;
+          if (h.includes('e')) newRx = Math.max(0.5, sRx + dx);
+          if (h.includes('w')) newRx = Math.max(0.5, sRx - dx);
+          if (h.includes('s')) newRy = Math.max(0.5, sRy + dy);
+          if (h.includes('n')) newRy = Math.max(0.5, sRy - dy);
+          if (h.length === 2) {
+            // Corner: both dimensions
+            if (h.includes('e') || h.includes('w')) {} // already set
+            if (h.includes('s') || h.includes('n')) {} // already set
+          }
+          return { ...el, width: newRx, height: newRy, radius: Math.max(newRx, newRy) };
+        }
+
+        // Player-marker/semi-circle/magnifier: resize radius
+        if (el.radius !== undefined && (el.type === 'player-marker' || el.type === 'semi-circle' || el.type === 'magnifier')) {
           const delta = h.includes('e') || h.includes('s') ? Math.max(dx, dy) : Math.min(dx, dy);
           const isCorner = h.length === 2;
           const scaleFactor = isCorner ? delta : (h === 'e' || h === 'w' ? dx : dy);
@@ -461,19 +479,22 @@ export const AnnotationCanvas = ({
         );
       }
       case 'circle': {
-        const circPerim = 2 * Math.PI * (el.radius || 1);
+        const rx = el.width ?? el.radius ?? 1;
+        const ry = el.height ?? el.radius ?? 1;
+        const circPerim = 2 * Math.PI * Math.max(rx, ry);
         const circDash = `${circPerim * 0.08} ${circPerim * 0.04}`;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
-            <circle
-              cx={`${el.x}%`} cy={`${el.y}%`} r={`${el.radius}%`}
+            <ellipse
+              cx={`${el.x}%`} cy={`${el.y}%`} rx={`${rx}%`} ry={`${ry}%`}
               stroke={el.color} strokeWidth={el.strokeWidth}
               fill={el.fillOpacity ? el.color : 'none'} fillOpacity={el.fillOpacity || 0}
               strokeDasharray={circDash}
             >
-              {anim && <animate attributeName="r" from="0" to={`${el.radius}%`} dur="0.3s" fill="freeze" />}
+              {anim && <animate attributeName="rx" from="0" to={`${rx}%`} dur="0.3s" fill="freeze" />}
+              {anim && <animate attributeName="ry" from="0" to={`${ry}%`} dur="0.3s" fill="freeze" />}
               {anim && <animate attributeName="stroke-dashoffset" from={`${circPerim}`} to="0" dur="8s" repeatCount="indefinite" />}
-            </circle>
+            </ellipse>
           </g>
         );
       }
@@ -638,21 +659,22 @@ export const AnnotationCanvas = ({
         );
       }
       case 'spotlight': {
-        const r = el.radius || 5;
+        const rx = el.width ?? el.radius ?? 5;
+        const ry = el.height ?? el.radius ?? 5;
         const maskId = `spot-mask-${el.id}`;
         const spotGradId = `spot-grad-${el.id}`;
         const spotGlowId = `spot-glow-${el.id}`;
-        const spotPerim = 2 * Math.PI * r;
+        const spotPerim = 2 * Math.PI * Math.max(rx, ry);
         const spotDash = `${spotPerim * 0.08} ${spotPerim * 0.04}`;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
               <mask id={maskId}>
                 <rect x="0" y="0" width="100%" height="100%" fill="white" />
-                <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`} fill="black" />
+                <ellipse cx={`${el.x}%`} cy={`${el.y}%`} rx={`${rx}%`} ry={`${ry}%`} fill="black" />
               </mask>
               <linearGradient id={spotGradId} gradientUnits="userSpaceOnUse"
-                x1={`${el.x - r}%`} y1={`${el.y}%`} x2={`${el.x + r}%`} y2={`${el.y}%`}>
+                x1={`${el.x - rx}%`} y1={`${el.y}%`} x2={`${el.x + rx}%`} y2={`${el.y}%`}>
                 <stop offset="0%" stopColor={el.color} stopOpacity={0.5}>
                   <animate attributeName="stop-opacity" values="0.5;0.9;0.5" dur="1.8s" repeatCount="indefinite" />
                 </stop>
@@ -679,19 +701,19 @@ export const AnnotationCanvas = ({
             </defs>
             <rect x="0" y="0" width="100%" height="100%" fill="black" fillOpacity={el.fillOpacity || 0.15} mask={`url(#${maskId})`} />
             {/* Outer glow ring */}
-            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r * 1.08}%`}
+            <ellipse cx={`${el.x}%`} cy={`${el.y}%`} rx={`${rx * 1.08}%`} ry={`${ry * 1.08}%`}
               fill="none" stroke={el.color} strokeWidth={el.strokeWidth || 1} strokeOpacity={0.1}
             />
             {/* Main glossy ring with flywheel */}
-            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`}
+            <ellipse cx={`${el.x}%`} cy={`${el.y}%`} rx={`${rx}%`} ry={`${ry}%`}
               fill="none" stroke={`url(#${spotGradId})`} strokeWidth={el.strokeWidth || 1}
               filter={`url(#${spotGlowId})`}
               strokeDasharray={spotDash}
             >
               {anim && <animate attributeName="stroke-dashoffset" from={`${spotPerim}`} to="0" dur="8s" repeatCount="indefinite" />}
-            </circle>
+            </ellipse>
             {/* Inner highlight */}
-            <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r * 0.95}%`}
+            <ellipse cx={`${el.x}%`} cy={`${el.y}%`} rx={`${rx * 0.95}%`} ry={`${ry * 0.95}%`}
               fill="none" stroke="white" strokeWidth={Math.max((el.strokeWidth || 1) * 0.3, 0.3)} strokeOpacity={0.2}
             />
           </g>
@@ -1041,7 +1063,21 @@ export const AnnotationCanvas = ({
         { handle: 'e', x: el.x + rx, y: el.y, cursor: 'ew-resize' },
         { handle: 'w', x: el.x - rx, y: el.y, cursor: 'ew-resize' },
       ];
-    } else if ((el.type === 'circle' || el.type === 'spotlight' || el.type === 'player-marker' || el.type === 'semi-circle' || el.type === 'magnifier') && el.radius !== undefined) {
+    } else if ((el.type === 'circle' || el.type === 'spotlight') && (el.width !== undefined || el.radius !== undefined)) {
+      const rx = el.width ?? el.radius ?? 2.5;
+      const ry = el.height ?? el.radius ?? 2.5;
+      bbox = { x: el.x - rx, y: el.y - ry, w: rx * 2, h: ry * 2 };
+      handles = [
+        { handle: 'ne', x: el.x + rx, y: el.y - ry, cursor: 'nesw-resize' },
+        { handle: 'se', x: el.x + rx, y: el.y + ry, cursor: 'nwse-resize' },
+        { handle: 'sw', x: el.x - rx, y: el.y + ry, cursor: 'nesw-resize' },
+        { handle: 'nw', x: el.x - rx, y: el.y - ry, cursor: 'nwse-resize' },
+        { handle: 'e', x: el.x + rx, y: el.y, cursor: 'ew-resize' },
+        { handle: 'w', x: el.x - rx, y: el.y, cursor: 'ew-resize' },
+        { handle: 'n', x: el.x, y: el.y - ry, cursor: 'ns-resize' },
+        { handle: 's', x: el.x, y: el.y + ry, cursor: 'ns-resize' },
+      ];
+    } else if ((el.type === 'player-marker' || el.type === 'semi-circle' || el.type === 'magnifier') && el.radius !== undefined) {
       const r = el.radius;
       bbox = { x: el.x - r, y: el.y - r, w: r * 2, h: r * 2 };
       handles = [
