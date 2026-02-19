@@ -79,7 +79,9 @@ export function computeVisibleElements(
     const start = el.appearAt;
     const end = el.duration !== undefined ? start + el.duration : Infinity;
 
-    // Visibility check (0.25s epsilon so annotations within 0.2s of each other all show together)
+    // Visibility check — strict: element must have appeared AND not yet ended
+    // The 0.25s epsilon is only on the start side so annotations that appear within 0.2s of each other
+    // all show together; but it must NOT cause earlier annotations to persist into later groups.
     const isVisible = time >= start - 0.25 && time < end;
 
     if (!isVisible && !config?.includeHidden) continue;

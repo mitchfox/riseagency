@@ -405,8 +405,8 @@ export const AnnotationCanvas = ({
       }
       case 'arrow': {
         const mid = `arrow-${el.id}`;
-        const mw = Math.max(6, el.strokeWidth * 2.5);
-        const mh = Math.max(4, el.strokeWidth * 1.8);
+        const mw = Math.max(el.strokeWidth * 3, el.strokeWidth * 2.5);
+        const mh = Math.max(el.strokeWidth * 2, el.strokeWidth * 1.8);
         const adx = (el.x2 ?? el.x) - el.x;
         const ady = (el.y2 ?? el.y) - el.y;
         const arrowLen = Math.sqrt(adx * adx + ady * ady) || 1;
@@ -429,8 +429,8 @@ export const AnnotationCanvas = ({
       }
       case 'curved-arrow': {
         const mid = `carrow-${el.id}`;
-        const cmw = Math.max(6, el.strokeWidth * 2.5);
-        const cmh = Math.max(4, el.strokeWidth * 1.8);
+        const cmw = Math.max(el.strokeWidth * 3, el.strokeWidth * 2.5);
+        const cmh = Math.max(el.strokeWidth * 2, el.strokeWidth * 1.8);
         const offset = el.curveOffset ?? -15;
         const mx = ((el.x) + (el.x2 ?? el.x)) / 2;
         const my = ((el.y) + (el.y2 ?? el.y)) / 2;

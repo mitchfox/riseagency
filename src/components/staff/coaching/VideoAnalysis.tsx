@@ -1011,7 +1011,8 @@ export const VideoAnalysis = () => {
               ref={videoRef}
               src={selectedVideo.video_url}
               controls
-              className="w-full aspect-video object-fill"
+              controlsList="nofullscreen nodownload"
+              className="w-full aspect-video object-fill [&:fullscreen]:controls-hidden [&::-webkit-media-controls-fullscreen-button]:hidden [&::-webkit-media-controls-mute-button]:hidden [&::-webkit-media-controls-overflow-button]:hidden"
               onKeyDown={(e) => {
                 // Prevent native video controls from intercepting our hotkeys in fullscreen
                 const key = e.key;
