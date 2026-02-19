@@ -216,7 +216,7 @@ export const InjuryLog = ({ playerId, readOnly = false }: InjuryLogProps) => {
 
       {entries.length === 0 && (
         <div className="text-center py-6 text-muted-foreground text-sm">
-          No injuries logged. Stay healthy!
+          Log any tweaks or recurring injuries so we can keep them in mind when programming
         </div>
       )}
     </div>

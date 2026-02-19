@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Trash2, Edit, Apple, Loader2, Save, Database, Check } from "lucide-react";
+import { Plus, Trash2, Edit, UtensilsCrossed, Loader2, Save, Database, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SaveNutritionToCoachingDBDialog } from "./SaveNutritionToCoachingDBDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -825,7 +825,7 @@ export const NutritionProgramManagement = ({ isOpen, onClose, playerId, playerNa
           <Card>
             <CardContent className="py-8">
               <div className="text-center text-muted-foreground">
-                <Apple className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <UtensilsCrossed className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No nutrition programs yet. Click "Add Program" to create one.</p>
               </div>
             </CardContent>

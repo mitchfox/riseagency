@@ -135,7 +135,7 @@ import {
   Briefcase,
   Handshake,
   Database,
-  Apple,
+  UtensilsCrossed,
   LayoutGrid,
   Monitor,
 } from "lucide-react";
@@ -853,7 +853,7 @@ const Staff = () => {
           { id: 'tacticsboard', title: 'Tactics Board', icon: Target },
           { id: '_group_programming', title: 'Programming', isGroupLabel: true },
           { id: 'strengthpower', title: 'Strength, Power & Speed', icon: Dumbbell },
-          { id: 'nutrition', title: 'Nutrition', icon: Apple },
+          { id: 'nutrition', title: 'Nutrition', icon: UtensilsCrossed },
         ]
       },
       {

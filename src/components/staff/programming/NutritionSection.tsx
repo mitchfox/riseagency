@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Apple } from "lucide-react";
+import { UtensilsCrossed } from "lucide-react";
 import { NutritionProgramManagement } from "@/components/staff/NutritionProgramManagement";
 
 const STATUS_ORDER = ['represented', 'mandated', 'previously_mandated', 'fuel_for_football', 'other', 'scouted'];
@@ -62,7 +62,7 @@ export const NutritionSection = () => {
 
       {selectedPlayer === "all" && (
         <div className="text-center py-12 text-muted-foreground">
-          <Apple className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <UtensilsCrossed className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>Select a player to manage their nutrition programming</p>
         </div>
       )}

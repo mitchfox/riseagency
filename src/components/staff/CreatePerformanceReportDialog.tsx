@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X } from "lucide-react";
+import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -1036,6 +1036,15 @@ export const CreatePerformanceReportDialog = ({
     setActions(newActions);
   };
 
+  const moveAction = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= actions.length) return;
+    const newActions = [...actions];
+    [newActions[index], newActions[targetIndex]] = [newActions[targetIndex], newActions[index]];
+    newActions.forEach((action, i) => { action.action_number = i + 1; });
+    setActions(newActions);
+  };
+
   const updateAction = async (index: number, field: keyof PerformanceAction, value: string | RecordedStat | RecordedStat[] | null) => {
     const newActions = [...actions];
     newActions[index] = { ...newActions[index], [field]: value };
@@ -1780,6 +1789,24 @@ export const CreatePerformanceReportDialog = ({
                             disabled={actions.length === 1}
                           >
                             <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            onClick={() => moveAction(index, 'up')}
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            disabled={index === 0}
+                          >
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            onClick={() => moveAction(index, 'down')}
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            disabled={index === actions.length - 1}
+                          >
+                            <ArrowDown className="h-4 w-4" />
                           </Button>
                         </div>
                       </td>
