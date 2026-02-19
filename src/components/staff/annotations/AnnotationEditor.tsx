@@ -230,14 +230,14 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint }: An
 
     if (newVisible.length === 0) return;
 
-    // Mark these as triggered and track freeze element IDs
-    const freezeIds = new Set<string>();
+    // Mark these as triggered and track ALL visible element IDs (not just new ones)
+    // so annotations within 0.2s of each other all display simultaneously
     newVisible.forEach(el => {
       const roundedTime = Math.round(el.appearAt * 100) / 100;
       triggeredTimesRef.current.add(roundedTime);
-      freezeIds.add(el.id);
     });
-    // Only show the newly triggered elements — do NOT add all visible elements
+    // Show ALL currently visible elements, not just the newly triggered ones
+    const freezeIds = new Set<string>(visibleElements.map(el => el.id));
     freezeElementIdsRef.current = freezeIds;
 
     // Calculate the longest remaining duration among visible annotations
@@ -1079,9 +1079,34 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint }: An
                 Annotations {activeKlip ? `(${allElements.length})` : ''}
               </p>
               {selectedId && (
-                <Button variant="destructive" size="sm" className="w-full text-xs mb-2 h-7" onClick={handleDeleteElement}>
-                  Delete Selected
-                </Button>
+                <div className="flex gap-1.5 mb-2">
+                  <Button variant="destructive" size="sm" className="flex-1 text-xs h-7" onClick={handleDeleteElement}>
+                    Delete
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-xs h-7 border-white/20 text-white/70 hover:text-white hover:bg-white/10"
+                    onClick={() => {
+                      const el = allElements.find(e => e.id === selectedId);
+                      if (!el) return;
+                      const newId = crypto.randomUUID();
+                      const duplicate: AnnotationElement = {
+                        ...el,
+                        id: newId,
+                        x: el.x + 3,
+                        y: el.y + 3,
+                        ...(el.x2 !== undefined ? { x2: (el.x2 ?? 0) + 3 } : {}),
+                        ...(el.y2 !== undefined ? { y2: (el.y2 ?? 0) + 3 } : {}),
+                      };
+                      setElements(prev => [...prev, duplicate]);
+                      setSelectedId(newId);
+                      toast.success("Annotation duplicated");
+                    }}
+                  >
+                    Duplicate
+                  </Button>
+                </div>
               )}
               <div className="space-y-0.5">
                 {[...allElements].sort((a, b) => a.appearAt - b.appearAt).map((el) => {
@@ -1270,7 +1295,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint }: An
                     <div className="flex items-center gap-1 text-[10px] text-white/40">
                       <span>Size</span>
                     </div>
-                    {(selectedElement.type === 'circle' || selectedElement.type === 'spotlight' || selectedElement.type === 'player-marker' || selectedElement.type === 'semi-circle') && (
+                    {(selectedElement.type === 'circle' || selectedElement.type === 'spotlight' || selectedElement.type === 'player-marker' || selectedElement.type === 'semi-circle' || selectedElement.type === 'magnifier') && (
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
                           <Label className="text-[9px] text-white/40">Radius</Label>

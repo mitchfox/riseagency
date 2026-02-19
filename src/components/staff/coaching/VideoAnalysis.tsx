@@ -114,7 +114,7 @@ export const VideoAnalysis = () => {
   const [showAttachDialog, setShowAttachDialog] = useState(false);
   const [attachClip, setAttachClip] = useState<Clip | null>(null);
   const [linkedReportIds, setLinkedReportIds] = useState<string[]>([]);
-  const [linkedReportActions, setLinkedReportActions] = useState<{ id: string; action_number: number; action_type: string; action_description: string; report_title: string; analysis_id: string }[]>([]);
+  const [linkedReportActions, setLinkedReportActions] = useState<{ id: string; action_number: number; action_type: string; action_description: string; report_title: string; analysis_id: string; minute?: number | null }[]>([]);
   const [loadingAttachActions, setLoadingAttachActions] = useState(false);
 
   // Clip saved toast
@@ -529,6 +529,30 @@ export const VideoAnalysis = () => {
 
   const handleDeleteVideo = async (id: string) => {
     const video = videos.find(v => v.id === id);
+
+    // Before deleting, copy any clip URLs used in report actions to standalone storage
+    // so they survive the video analysis deletion
+    if (video) {
+      try {
+        // Find all report actions referencing clips from this video
+        const { data: linkedActions } = await supabase
+          .from("performance_report_actions")
+          .select("id, video_url, video_analysis_id")
+          .eq("video_analysis_id", id);
+
+        if (linkedActions && linkedActions.length > 0) {
+          // Clear the video_analysis_id link but keep the video_url (clip URL) intact
+          await supabase
+            .from("performance_report_actions")
+            .update({ video_analysis_id: null })
+            .eq("video_analysis_id", id);
+        }
+      } catch (err) {
+        console.warn("Could not unlink clip references:", err);
+      }
+    }
+
+    // Only delete the main uploaded video file, not individual clips
     if (video?.video_url?.includes('analysis-videos')) {
       const path = video.video_url.split('analysis-videos/')[1];
       if (path) await supabase.storage.from('analysis-videos').remove([path]);
@@ -537,7 +561,7 @@ export const VideoAnalysis = () => {
     if (!error) {
       setVideos(prev => prev.filter(v => v.id !== id));
       if (selectedVideo?.id === id) setSelectedVideo(null);
-      toast.success("Deleted");
+      toast.success("Deleted — clips attached to reports are preserved");
     }
   };
 
@@ -741,6 +765,10 @@ export const VideoAnalysis = () => {
           if (video) video.playbackRate = next;
           return next;
         });
+      } else if (e.key === '0') {
+        e.preventDefault();
+        setPlaybackSpeed(1);
+        if (video) video.playbackRate = 1;
       }
     };
     window.addEventListener('keydown', handleHotkey);
@@ -782,7 +810,7 @@ export const VideoAnalysis = () => {
 
       const { data: actions } = await supabase
         .from("performance_report_actions")
-        .select("id, action_number, action_type, action_description, analysis_id")
+        .select("id, action_number, action_type, action_description, analysis_id, minute")
         .in("analysis_id", linkedReportIds)
         .order("action_number");
 
@@ -793,6 +821,7 @@ export const VideoAnalysis = () => {
           action_type: a.action_type || '',
           action_description: a.action_description || '',
           analysis_id: a.analysis_id,
+          minute: a.minute,
           report_title: reports.find(r => r.id === a.analysis_id)?.opponent
             ? `vs ${reports.find(r => r.id === a.analysis_id)!.opponent}`
             : `Report ${reports.find(r => r.id === a.analysis_id)?.analysis_date || ''}`,
@@ -1279,6 +1308,9 @@ export const VideoAnalysis = () => {
                           <p className="text-sm font-medium truncate">{action.action_description || action.action_type || 'Untitled action'}</p>
                           <p className="text-xs text-muted-foreground capitalize">
                             {action.action_type && <span>{action.action_type}</span>}
+                            {action.minute !== undefined && action.minute !== null && (
+                              <span className="ml-1.5 font-mono text-[10px] opacity-70">{action.minute}'</span>
+                            )}
                             <span className="ml-2 opacity-60">{action.report_title}</span>
                           </p>
                         </div>
