@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -177,17 +177,39 @@ export const ActionsByTypeDialog = ({
     toast.success(`Applied average score: ${averageScore.toFixed(5)}`);
   };
 
-  // Group actions by type
+  // Group actions by type — comma-separated types go into each individual category
   const groupedActions = actions.reduce((acc, action) => {
-    const type = action.action_type || "Uncategorized";
-    if (!acc[type]) {
-      acc[type] = [];
+    const rawType = action.action_type || "Uncategorized";
+    // Split on commas to handle multi-type actions like "regain, pass"
+    const types = rawType.includes(',')
+      ? rawType.split(',').map(t => t.trim()).filter(Boolean)
+      : [rawType];
+    
+    for (const type of types) {
+      if (!acc[type]) {
+        acc[type] = [];
+      }
+      acc[type].push(action);
     }
-    acc[type].push(action);
     return acc;
   }, {} as Record<string, PerformanceAction[]>);
 
-  const sortedTypes = Object.keys(groupedActions).sort();
+  // Categorise types into groups
+  const categoriseType = (type: string): string => {
+    const t = type.toLowerCase();
+    if (['goal', 'assist', 'key pass', 'chance created', 'shot', 'shot on target'].some(k => t.includes(k))) return 'Key Actions';
+    if (['dribble', 'carry', 'pass', 'cross', 'through ball', 'attacking', 'build-up', 'shot', 'set-piece', 'corner', 'free-kick', 'penalty', 'throw-in', 'goal-kick'].some(k => t.includes(k))) return 'Offensive';
+    if (['tackle', 'interception', 'block', 'clearance', 'defensive', 'pressing', 'recovery', 'aerial', 'header', 'regain'].some(k => t.includes(k))) return 'Defensive';
+    return 'Other';
+  };
+
+  const categoryOrder = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
+  const sortedTypes = Object.keys(groupedActions).sort((a, b) => {
+    const catA = categoryOrder.indexOf(categoriseType(a));
+    const catB = categoryOrder.indexOf(categoriseType(b));
+    if (catA !== catB) return catA - catB;
+    return a.localeCompare(b);
+  });
 
   const getEditedAction = (action: PerformanceAction): PerformanceAction => {
     return editedActions[action.id || ""] || action;
@@ -409,305 +431,286 @@ export const ActionsByTypeDialog = ({
             <p className="text-center text-muted-foreground py-8">No actions to display</p>
           ) : (
             <Accordion type="multiple" className="space-y-2">
-              {sortedTypes.map((type) => {
+              {(() => {
+                let lastCategory = '';
+                return sortedTypes.map((type) => {
                 const typeActions = groupedActions[type];
+                const category = categoriseType(type);
+                const showCategoryHeader = category !== lastCategory;
+                lastCategory = category;
                 const totalScore = typeActions.reduce((sum, a) => sum + (a.action_score || 0), 0);
 
                 return (
-                  <AccordionItem key={type} value={type} className="border rounded-lg px-4">
-                    <AccordionTrigger className="hover:no-underline">
-                      <div className="flex items-center justify-between w-full pr-4">
-                        <div className="flex items-center gap-4">
-                          <span className="font-semibold text-lg">{type}</span>
-                          <span className="text-sm text-muted-foreground">
-                            ({typeActions.length} action{typeActions.length !== 1 ? 's' : ''})
+                  <React.Fragment key={type}>
+                    {showCategoryHeader && (
+                      <div className="pt-2 pb-1">
+                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{category}</span>
+                        <div className="h-px bg-border mt-1" />
+                      </div>
+                    )}
+                    <AccordionItem value={type} className="border rounded-lg px-4">
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex items-center justify-between w-full pr-4">
+                          <div className="flex items-center gap-4">
+                            <span className="font-semibold text-lg">{type}</span>
+                            <span className="text-sm text-muted-foreground">
+                              ({typeActions.length} action{typeActions.length !== 1 ? 's' : ''})
+                            </span>
+                          </div>
+                          <span className={`text-sm font-mono ${getActionScoreColor(totalScore)}`}>
+                            Total: {totalScore.toFixed(5)}
                           </span>
                         </div>
-                        <span className={`text-sm font-mono ${getActionScoreColor(totalScore)}`}>
-                          Total: {totalScore.toFixed(5)}
-                        </span>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-4 pt-4">
-                        {typeActions.map((action) => {
-                          const edited = getEditedAction(action);
-                          const isSaving = savingIds.has(action.id || "");
-                          const hasChanges = hasUnsavedChanges(action.id || "");
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="space-y-4 pt-4">
+                          {typeActions.map((action) => {
+                            const edited = getEditedAction(action);
+                            const isSaving = savingIds.has(action.id || "");
+                            const hasChanges = hasUnsavedChanges(action.id || "");
 
-                          return (
-                            <div
-                              key={action.id}
-                              className={`border rounded-lg p-4 space-y-3 ${
-                                hasChanges ? "border-primary bg-primary/5" : ""
-                              }`}
-                            >
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <div className="space-y-1">
-                                  <Label className="text-xs">Action #</Label>
-                                  <Input
-                                    type="number"
-                                    value={edited.action_number}
-                                    onChange={(e) =>
-                                      updateEditedAction(action.id!, {
-                                        action_number: parseInt(e.target.value) || 0,
-                                      })
-                                    }
-                                    disabled={!isAdmin}
-                                    className="h-9"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <Label className="text-xs">Minute</Label>
-                                  <Input
-                                    type="text"
-                                    value={edited.minute.toFixed(2)}
-                                    onChange={(e) => {
-                                      const val = parseFloat(e.target.value);
-                                      if (!isNaN(val)) {
+                            return (
+                              <div
+                                key={action.id}
+                                className={`border rounded-lg p-4 space-y-3 ${
+                                  hasChanges ? "border-primary bg-primary/5" : ""
+                                }`}
+                              >
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Action #</Label>
+                                    <Input
+                                      type="number"
+                                      value={edited.action_number}
+                                      onChange={(e) =>
                                         updateEditedAction(action.id!, {
-                                          minute: val,
-                                        });
+                                          action_number: parseInt(e.target.value) || 0,
+                                        })
                                       }
-                                    }}
-                                    disabled={!isAdmin}
-                                    className="h-9"
-                                    placeholder="MM.SS"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <Label className="text-xs">Score</Label>
-                                  <Input
-                                    type="number"
-                                    step="0.00001"
-                                    value={edited.action_score ?? ""}
-                                    onChange={(e) => {
-                                      const raw = e.target.value;
-                                      updateEditedAction(action.id!, {
-                                        action_score: raw === "" ? 0 : parseFloat(raw) || 0,
-                                      });
-                                    }}
-                                    disabled={!isAdmin}
-                                    className={`h-9 font-mono ${getActionScoreColor(edited.action_score)}`}
-                                  />
-                                  {edited.zone && (
-                                    <div className="text-xs text-muted-foreground mt-1">
-                                      Adjusted: {getAdjustedScore(edited)?.toFixed(5) || 'N/A'}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Zone and Success Row */}
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                  <Label className="text-xs">Zone (1-18)</Label>
-                                  <Select
-                                    value={edited.zone?.toString() || "none"}
-                                    onValueChange={(v) => updateEditedAction(action.id!, { zone: v === "none" ? null : parseInt(v) })}
-                                    disabled={!isAdmin}
-                                  >
-                                    <SelectTrigger className="h-9">
-                                      <SelectValue placeholder="Select zone" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="none">None</SelectItem>
-                                      {Array.from({ length: 18 }, (_, i) => i + 1).map(z => (
-                                        <SelectItem key={z} value={z.toString()}>Zone {z}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="space-y-1">
-                                  <Label className="text-xs flex items-center gap-2">
-                                    <span>Successful</span>
-                                    <Switch
-                                      checked={edited.is_successful ?? true}
-                                      onCheckedChange={(checked) => updateEditedAction(action.id!, { is_successful: checked })}
                                       disabled={!isAdmin}
+                                      className="h-9"
                                     />
-                                  </Label>
-                                  <div className="text-xs text-muted-foreground">
-                                    {edited.is_successful ? 'Positive' : 'Negative'}
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Minute</Label>
+                                    <Input
+                                      type="text"
+                                      value={edited.minute.toFixed(2)}
+                                      onChange={(e) => {
+                                        const val = parseFloat(e.target.value);
+                                        if (!isNaN(val)) {
+                                          updateEditedAction(action.id!, {
+                                            minute: val,
+                                          });
+                                        }
+                                      }}
+                                      disabled={!isAdmin}
+                                      className="h-9"
+                                      placeholder="MM.SS"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Score</Label>
+                                    <Input
+                                      type="number"
+                                      step="0.00001"
+                                      value={edited.action_score ?? ""}
+                                      onChange={(e) => {
+                                        const raw = e.target.value;
+                                        updateEditedAction(action.id!, {
+                                          action_score: raw === "" ? 0 : parseFloat(raw) || 0,
+                                        });
+                                      }}
+                                      disabled={!isAdmin}
+                                      className={`h-9 font-mono ${getActionScoreColor(edited.action_score)}`}
+                                    />
+                                    {edited.zone && (
+                                      <div className="text-xs text-muted-foreground mt-1">
+                                        Adjusted: {getAdjustedScore(edited)?.toFixed(5) || 'N/A'}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Zone</Label>
+                                    <Select
+                                      value={String(edited.zone ?? '')}
+                                      onValueChange={(v) => updateEditedAction(action.id!, { zone: v ? parseInt(v) : null })}
+                                      disabled={!isAdmin}
+                                    >
+                                      <SelectTrigger className="h-9">
+                                        <SelectValue placeholder="Zone" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="">None</SelectItem>
+                                        {[1,2,3,4,5,6].map(z => (
+                                          <SelectItem key={z} value={String(z)}>Zone {z}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
                                   </div>
                                 </div>
-                              </div>
 
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Type</Label>
+                                    <Input
+                                      value={edited.action_type}
+                                      onChange={(e) =>
+                                        updateEditedAction(action.id!, {
+                                          action_type: e.target.value,
+                                        })
+                                      }
+                                      disabled={!isAdmin}
+                                      className="h-9"
+                                    />
+                                  </div>
+                                  <div className="space-y-1 flex items-end gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <Label className="text-xs">Successful</Label>
+                                      <Switch
+                                        checked={edited.is_successful ?? true}
+                                        onCheckedChange={(v) => updateEditedAction(action.id!, { is_successful: v })}
+                                        disabled={!isAdmin}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
                                 <div className="space-y-1">
-                                  <Label className="text-xs">Type</Label>
-                                  <Input
-                                    value={edited.action_type}
+                                  <Label className="text-xs">Description</Label>
+                                  <Textarea
+                                    value={edited.action_description}
                                     onChange={(e) =>
                                       updateEditedAction(action.id!, {
-                                        action_type: e.target.value,
+                                        action_description: e.target.value,
                                       })
                                     }
                                     disabled={!isAdmin}
-                                    className="h-9"
+                                    rows={2}
+                                    className="resize-none"
                                   />
                                 </div>
-                              </div>
 
-                              <div className="space-y-1">
-                                <Label className="text-xs">Description</Label>
-                                <Textarea
-                                  value={edited.action_description}
-                                  onChange={(e) =>
-                                    updateEditedAction(action.id!, {
-                                      action_description: e.target.value,
-                                    })
-                                  }
-                                  disabled={!isAdmin}
-                                  rows={2}
-                                  className="resize-none"
-                                />
-                              </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs">Notes</Label>
+                                  <Textarea
+                                    value={edited.notes || ""}
+                                    onChange={(e) =>
+                                      updateEditedAction(action.id!, {
+                                        notes: e.target.value,
+                                      })
+                                    }
+                                    disabled={!isAdmin}
+                                    rows={2}
+                                    className="resize-none"
+                                  />
+                                </div>
 
-                              <div className="space-y-1">
-                                <Label className="text-xs">Notes</Label>
-                                <Textarea
-                                  value={edited.notes || ""}
-                                  onChange={(e) =>
-                                    updateEditedAction(action.id!, {
-                                      notes: e.target.value,
-                                    })
-                                  }
-                                  disabled={!isAdmin}
-                                  rows={2}
-                                  className="resize-none"
-                                />
-                              </div>
-
-                              {/* Suggested Scores from R90 */}
-                              {action.id && previousScores[action.id] && previousScores[action.id].length > 0 && (
-                                <Collapsible
-                                  open={expandedScores.has(action.id)}
-                                  onOpenChange={(isOpen) => {
+                                {/* Suggested scores */}
+                                {action.id && previousScores[action.id] && previousScores[action.id].length > 0 && (
+                                  <Collapsible open={expandedScores.has(action.id)} onOpenChange={(open) => {
                                     setExpandedScores(prev => {
                                       const next = new Set(prev);
-                                      if (isOpen) {
-                                        next.add(action.id!);
-                                      } else {
-                                        next.delete(action.id!);
-                                      }
+                                      if (open) next.add(action.id!); else next.delete(action.id!);
                                       return next;
                                     });
-                                  }}
-                                  className="border rounded-md p-3 bg-muted/30"
-                                >
-                                  <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 p-2 rounded">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm font-medium">Suggested Scores from R90</span>
-                                      {selectedScores[action.id] && selectedScores[action.id].size > 0 && (
+                                  }}>
+                                    <CollapsibleTrigger className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                                      <ChevronDown className={`w-3 h-3 transition-transform ${expandedScores.has(action.id!) ? 'rotate-180' : ''}`} />
+                                      <Sparkles className="w-3 h-3" />
+                                      {previousScores[action.id].length} suggested score{previousScores[action.id].length !== 1 ? 's' : ''}
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent className="mt-2">
+                                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                                        {previousScores[action.id].map((ps, idx) => (
+                                          <label
+                                            key={idx}
+                                            className="flex items-center gap-2 text-xs p-1.5 rounded hover:bg-muted/50 cursor-pointer"
+                                          >
+                                            <Checkbox
+                                              checked={selectedScores[action.id!]?.has(idx) || false}
+                                              onCheckedChange={(checked) => {
+                                                setSelectedScores(prev => {
+                                                  const current = new Set(prev[action.id!] || []);
+                                                  if (checked) current.add(idx); else current.delete(idx);
+                                                  return { ...prev, [action.id!]: current };
+                                                });
+                                              }}
+                                            />
+                                            <span className="font-mono text-primary">{formatScoreWithFrequency(ps.score)}</span>
+                                            <span className="text-muted-foreground truncate">{ps.title}</span>
+                                          </label>
+                                        ))}
+                                      </div>
+                                      {selectedScores[action.id!] && selectedScores[action.id!].size > 0 && (
                                         <Button
                                           size="sm"
-                                          variant="secondary"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            applySelectedScores(action.id!);
-                                          }}
-                                          className="h-6 text-xs"
+                                          variant="outline"
+                                          className="mt-2 text-xs"
+                                          onClick={() => applySelectedScores(action.id!)}
                                         >
-                                          Apply Selected ({selectedScores[action.id].size})
+                                          Apply average of {selectedScores[action.id!].size} selected
                                         </Button>
                                       )}
+                                    </CollapsibleContent>
+                                  </Collapsible>
+                                )}
+                                {action.id && loadingScores.has(action.id) && (
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                    Loading suggested scores...
+                                  </div>
+                                )}
+
+                                {isAdmin && (
+                                  <div className="flex items-center justify-between pt-2 border-t">
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => openSmartR90Viewer(action)}
+                                        className="text-xs gap-1"
+                                      >
+                                        <LineChart className="w-3 h-3" />
+                                        R90
+                                      </Button>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <span className="text-xs text-muted-foreground">
-                                        See all ({previousScores[action.id].length})
-                                      </span>
-                                      <ChevronDown className={`h-4 w-4 transition-transform ${expandedScores.has(action.id) ? 'rotate-180' : ''}`} />
-                                    </div>
-                                  </CollapsibleTrigger>
-                                  <CollapsibleContent className="space-y-2 pt-2">
-                                    {previousScores[action.id].map((score, idx) => (
-                                      <div key={idx} className="flex items-start gap-2 text-sm">
-                                        <Checkbox
-                                          checked={selectedScores[action.id]?.has(idx) || false}
-                                          onCheckedChange={(checked) => {
-                                            setSelectedScores(prev => {
-                                              const actionScores = new Set(prev[action.id!] || []);
-                                              if (checked) {
-                                                actionScores.add(idx);
-                                              } else {
-                                                actionScores.delete(idx);
-                                              }
-                                              return { ...prev, [action.id!]: actionScores };
-                                            });
-                                          }}
-                                          className="mt-1"
-                                        />
-                                        <span className="flex-1">
-                                          {score.title} - {score.description || 'No description'}{' '}
-                                          <span className="font-mono font-semibold">
-                                            {formatScoreWithFrequency(score.score)}
-                                          </span>
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </CollapsibleContent>
-                                </Collapsible>
-                              )}
-
-                              {/* Loading indicator for suggested scores */}
-                              {action.id && loadingScores.has(action.id) && (
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                  <span>Loading suggested scores...</span>
-                                </div>
-                              )}
-
-                              <div className="flex gap-2 justify-between pt-2">
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => openSmartR90Viewer(edited)}
-                                  >
-                                    <Search className="w-4 h-4 mr-2" />
-                                    R90 Search
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => openR90Viewer()}
-                                  >
-                                    <Search className="w-4 h-4 mr-2" />
-                                    R90 Ratings
-                                  </Button>
-                                </div>
-                                {isAdmin && (
-                                  <div className="flex gap-2">
-                                    {hasChanges && (
                                       <Button
+                                        variant="outline"
                                         size="sm"
                                         onClick={() => handleSaveAction(action)}
-                                        disabled={isSaving}
+                                        disabled={!hasChanges || isSaving}
+                                        className="text-xs gap-1"
                                       >
-                                        <Save className="w-4 h-4 mr-2" />
-                                        {isSaving ? "Saving..." : "Save"}
+                                        {isSaving ? (
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                          <Save className="w-3 h-3" />
+                                        )}
+                                        Save
                                       </Button>
-                                    )}
-                                    <Button
-                                      variant="destructive"
-                                      size="sm"
-                                      onClick={() => action.id && handleDeleteAction(action.id)}
-                                    >
-                                      <Trash2 className="w-4 h-4 mr-2" />
-                                      Delete
-                                    </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleDeleteAction(action.id!)}
+                                        className="text-xs text-destructive hover:text-destructive"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
                                   </div>
                                 )}
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
+                            );
+                          })}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </React.Fragment>
                 );
-              })}
+              });
+              })()}
             </Accordion>
           )}
         </div>

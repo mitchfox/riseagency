@@ -1544,6 +1544,9 @@ const Staff = () => {
               })()}
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
                 <CardContent className="pt-6">
+              {/* Use hidden class for key sections to preserve state, conditional render for others */}
+                  <div className={expandedSection === 'videoanalysis' ? '' : 'hidden'}><VideoAnalysis /></div>
+                  <div className={expandedSection === 'annotations' ? '' : 'hidden'}><AnnotationProjects /></div>
                   {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} userId={user?.id} isMarketeer={isMarketeer} />}
                   {expandedSection === 'focusedtasks' && <FocusedTasksSection />}
                   {expandedSection === 'schedule' && (
@@ -1559,7 +1562,6 @@ const Staff = () => {
                   {expandedSection === 'docs' && <DocsSection />}
                   {expandedSection === 'sheets' && <SheetsSection />}
                   {expandedSection === 'designstudio' && <DesignProjects />}
-                  {expandedSection === 'annotations' && <AnnotationProjects />}
                   {expandedSection === 'streams' && <StreamsSection />}
                   {expandedSection === 'staffschedules' && <StaffSchedulesManagement />}
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
@@ -1605,7 +1607,6 @@ const Staff = () => {
                   {expandedSection === 'pushnotifications' && <StaffPushNotifications />}
                   {expandedSection === 'notifications' && user?.email === 'jolonlevene98@gmail.com' && <NotificationSettingsManagement />}
                   {expandedSection === 'smsnotifications' && user?.email === 'jolonlevene98@gmail.com' && <StaffSMSNotifications />}
-                  {expandedSection === 'videoanalysis' && <VideoAnalysis />}
                   {expandedSection === 'strengthpower' && <StrengthPowerSpeedSection />}
                   {expandedSection === 'nutrition' && <NutritionSection />}
                   {expandedSection === 'activitylog' && isAdmin && <ActivityLog />}
