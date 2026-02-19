@@ -771,7 +771,7 @@ export const AnnotationCanvas = ({
         const magDash = `${magCircPerim * 0.12} ${magCircPerim * 0.06}`;
 
         let dataUrl = '';
-        if (video && video.readyState >= 2 && svgRef.current) {
+        if (video && video.readyState >= 2) {
           try {
             const vw = video.videoWidth || 1;
             const vh = video.videoHeight || 1;
@@ -881,7 +881,7 @@ export const AnnotationCanvas = ({
         const clipId = `img-layer-${el.id}`;
 
         let layerDataUrl = '';
-        if (video && video.readyState >= 2 && svgRef.current) {
+        if (video && video.readyState >= 2) {
           try {
             const vw = video.videoWidth || 1;
             const vh = video.videoHeight || 1;
