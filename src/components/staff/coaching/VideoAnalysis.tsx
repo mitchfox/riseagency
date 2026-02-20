@@ -641,36 +641,10 @@ export const VideoAnalysis = () => {
     setExporting(false);
   };
 
-  // Helper: extract clip as independent storage file and return its URL with #t= fragment
+  // Helper: extract clip as independent trimmed file using client-side canvas+MediaRecorder
   const extractClipFile = async (sourceUrl: string, clipId: string, start: number, end: number): Promise<string> => {
-    // Strip any existing #t= fragment from source URL
-    const cleanSourceUrl = sourceUrl.split('#')[0];
-    
-    const { data: session } = await supabase.auth.getSession();
-    const token = session.session?.access_token;
-    if (!token) throw new Error('Not authenticated');
-
-    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-    const res = await fetch(
-      `https://${projectId}.supabase.co/functions/v1/extract-clip`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ sourceUrl: cleanSourceUrl, clipId }),
-      }
-    );
-    
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Extract failed' }));
-      throw new Error(err.error || 'Failed to extract clip');
-    }
-    
-    const { clipUrl } = await res.json();
-    // Append time fragment so the browser only plays the segment
-    return `${clipUrl}#t=${start},${end}`;
+    const { trimAndUploadClip } = await import("@/lib/clientClipExtractor");
+    return trimAndUploadClip(sourceUrl, clipId, start, end);
   };
 
   // Helper: read localStorage annotations for a clip

@@ -40,6 +40,13 @@ interface Props {
   embedded?: boolean;
 }
 
+/** Parse #t=start,end fragment from a video URL for legacy boundary enforcement */
+const parseTimeFragment = (url: string | null | undefined) => {
+  if (!url) return null;
+  const match = url.match(/#t=([\d.]+),([\d.]+)/);
+  return match ? { start: parseFloat(match[1]), end: parseFloat(match[2]) } : null;
+};
+
 export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) => {
   const [allActions, setAllActions] = useState<ActionClip[]>([]);
   const [loading, setLoading] = useState(true);
@@ -343,10 +350,22 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
                       ref={videoRef}
                       src={currentClip.video_url || ''}
                       className="max-h-full max-w-full object-contain"
-                      autoPlay muted playsInline
+                      autoPlay muted playsInline loop
                       onEnded={handleVideoEnded}
                       onPlay={() => setIsPlaying(true)}
                       onPause={() => setIsPlaying(false)}
+                      onLoadedMetadata={() => {
+                        const boundaries = parseTimeFragment(currentClip.video_url);
+                        if (boundaries && videoRef.current) {
+                          videoRef.current.currentTime = boundaries.start;
+                        }
+                      }}
+                      onTimeUpdate={() => {
+                        const boundaries = parseTimeFragment(currentClip.video_url);
+                        if (boundaries && videoRef.current && videoRef.current.currentTime >= boundaries.end) {
+                          videoRef.current.currentTime = boundaries.start;
+                        }
+                      }}
                     />
                     {currentClip.clip_annotations && currentClip.clip_annotations.length > 0 && (
                       <ReadOnlyAnnotationOverlay
