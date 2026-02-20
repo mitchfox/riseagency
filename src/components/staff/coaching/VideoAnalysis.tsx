@@ -100,6 +100,7 @@ export const VideoAnalysis = () => {
 
   // Known action types from existing reports
   const [knownActionTypes, setKnownActionTypes] = useState<string[]>([]);
+  const [actionTypeFrequency, setActionTypeFrequency] = useState<Record<string, number>>({});
 
   // Export to report
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -180,15 +181,26 @@ export const VideoAnalysis = () => {
       .select("action_type")
       .not("action_type", "is", null);
     if (data) {
-      const unique = [...new Set(data.map(d => d.action_type).filter(Boolean) as string[])];
+      const allTypes = data.map(d => d.action_type).filter(Boolean) as string[];
+      const unique = [...new Set(allTypes)];
+      // Build frequency counts for sorting
+      const counts: Record<string, number> = {};
+      allTypes.forEach(t => { counts[t] = (counts[t] || 0) + 1; });
       setKnownActionTypes(unique);
+      setActionTypeFrequency(counts);
     }
   };
 
+  // Sort action types by frequency of use (most used first), then alphabetical
   const allActionTypes = useMemo(() => {
     const merged = new Set([...DEFAULT_ACTION_TYPES, ...knownActionTypes]);
-    return [...merged].sort();
-  }, [knownActionTypes]);
+    return [...merged].sort((a, b) => {
+      const freqA = actionTypeFrequency[a] || 0;
+      const freqB = actionTypeFrequency[b] || 0;
+      if (freqB !== freqA) return freqB - freqA;
+      return a.localeCompare(b);
+    });
+  }, [knownActionTypes, actionTypeFrequency]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
