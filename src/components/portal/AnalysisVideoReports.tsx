@@ -86,18 +86,20 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
     fetchActions();
   }, [analyses]);
 
-  // Split comma-separated action types into individual categories
+  // Split comma-separated action types into individual categories and sort by frequency
   const actionTypes = useMemo(() => {
-    const types = new Set<string>();
+    const typeCounts: Record<string, number> = {};
     allActions.forEach(a => {
       if (!a.action_type) return;
-      if (a.action_type.includes(',')) {
-        a.action_type.split(',').map(t => t.trim()).filter(Boolean).forEach(t => types.add(t));
-      } else {
-        types.add(a.action_type);
-      }
+      const parts = a.action_type.includes(',')
+        ? a.action_type.split(',').map(t => t.trim()).filter(Boolean)
+        : [a.action_type];
+      parts.forEach(t => { typeCounts[t] = (typeCounts[t] || 0) + 1; });
     });
-    return [...types].sort();
+    return Object.keys(typeCounts).sort((a, b) => {
+      const diff = typeCounts[b] - typeCounts[a];
+      return diff !== 0 ? diff : a.localeCompare(b);
+    });
   }, [allActions]);
 
   // Categorise types

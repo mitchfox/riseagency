@@ -10,10 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Users, BarChart3, Target, Box, Crosshair, ChevronsUpDown, X, Search } from "lucide-react";
+import { Users, BarChart3, Target, Box, Crosshair, ChevronsUpDown, X, Search, ScatterChart } from "lucide-react";
 import { METRIC_CATEGORIES, ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
 import { GoalTracking } from "@/components/portal/GoalTracking";
 import { ScoutingComparisonMatrix } from "@/components/portal/ScoutingComparisonMatrix";
+import { ScatterComparisonChart } from "@/components/portal/ScatterComparisonChart";
 import { toast } from "sonner";
 
 const RadarChart3D = lazy(() => import("@/components/portal/RadarChart3D").then(m => ({ default: m.RadarChart3D })));
@@ -52,7 +53,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
   const [comparisonPlayers, setComparisonPlayers] = useState<ComparisonPlayer[]>([]);
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [formWindow, setFormWindow] = useState<number>(5);
-  const [subTab, setSubTab] = useState<string>("percentile");
+  const [subTab, setSubTab] = useState<string>("scatter");
   const [fixtureAnalyses, setFixtureAnalyses] = useState<Analysis[]>([]);
   const [selectedMetricKey, setSelectedMetricKey] = useState<string>('goals_per90');
   const [playerSearchOpen, setPlayerSearchOpen] = useState(false);
@@ -324,12 +325,23 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
 
         <Tabs value={subTab} onValueChange={setSubTab}>
           <TabsList>
+            <TabsTrigger value="scatter"><ScatterChart className="w-4 h-4 mr-1" /> Scatter</TabsTrigger>
             <TabsTrigger value="percentile"><BarChart3 className="w-4 h-4 mr-1" /> Percentile</TabsTrigger>
             <TabsTrigger value="radar3d"><Box className="w-4 h-4 mr-1" /> 3D Radar</TabsTrigger>
             <TabsTrigger value="comparison"><Users className="w-4 h-4 mr-1" /> Player Comparison</TabsTrigger>
             <TabsTrigger value="scouting"><Crosshair className="w-4 h-4 mr-1" /> Scouting Matrix</TabsTrigger>
             <TabsTrigger value="goals"><Target className="w-4 h-4 mr-1" /> Goals</TabsTrigger>
           </TabsList>
+
+          {/* Scatter Tab */}
+          <TabsContent value="scatter" className="mt-4">
+            <ScatterComparisonChart
+              playerName={playerName}
+              portalMetrics={portalMetrics}
+              hasPortalData={hasPortalData}
+              comparisonPlayers={comparisonPlayers}
+            />
+          </TabsContent>
 
           {/* 3D Radar Tab */}
           <TabsContent value="radar3d" className="mt-4">

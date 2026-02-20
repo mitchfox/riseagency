@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award } from "lucide-react";
+import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
@@ -66,6 +66,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>("");
   const [showR90Flow, setShowR90Flow] = useState(false);
+  const [showR90Info, setShowR90Info] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showChanceCreation, setShowChanceCreation] = useState(false);
   const [showRankedPlayer, setShowRankedPlayer] = useState(false);
@@ -638,8 +639,17 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                     {actions.length > 0 ? calculateRScore().toFixed(3) : (analysis.r90_score !== null && analysis.minutes_played ? ((analysis.r90_score / 90) * analysis.minutes_played).toFixed(3) : "N/A")}
                   </p>
                 </div>
-                <div className="text-center bg-primary text-primary-foreground rounded-lg p-2 md:p-4">
-                  <p className="text-[10px] md:text-sm mb-0.5 md:mb-1 opacity-90">R90</p>
+                <div className="text-center bg-primary text-primary-foreground rounded-lg p-2 md:p-4 relative">
+                  <div className="flex items-center justify-center gap-1 mb-0.5 md:mb-1">
+                    <p className="text-[10px] md:text-sm opacity-90">R90</p>
+                    <button
+                      onClick={() => setShowR90Info(true)}
+                      className="opacity-50 hover:opacity-100 transition-opacity"
+                      title="How is R90 calculated?"
+                    >
+                      <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                    </button>
+                  </div>
                   <p className="text-lg md:text-3xl font-bold">
                     {analysis.r90_score !== null 
                       ? analysis.r90_score.toFixed(2)
@@ -876,6 +886,70 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
             minute: a.minute,
           }))}
       />
+
+      {/* R90 Info Dialog */}
+      <Dialog open={showR90Info} onOpenChange={setShowR90Info}>
+        <DialogContent className="max-w-2xl">
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">How R90 Scores Work</h2>
+            <p className="text-sm text-muted-foreground">
+              R90 is a performance rating that normalises a player's contribution to a per-90-minute basis, 
+              allowing fair comparison across different match durations.
+            </p>
+            
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm">Calculation</h3>
+              <div className="bg-accent/20 rounded-lg p-3 space-y-2 text-sm">
+                <p><strong>Raw Score</strong> = sum of all action scores in the match</p>
+                <p><strong>R90</strong> = (Raw Score / Minutes Played) × 90</p>
+              </div>
+              
+              <h3 className="font-semibold text-sm">Action Scoring</h3>
+              <p className="text-sm text-muted-foreground">
+                Every action in a match is scored using pre-configured weightings. Positive actions 
+                (goals, assists, successful passes, regains) add to the score while negative actions 
+                (turnovers, fouls committed) subtract from it. The weightings are calibrated so that an 
+                average performance sits around 1.00.
+              </p>
+              
+              <h3 className="font-semibold text-sm">Score Guide</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-green-700" />
+                  <span>1.80+ — Elite performance</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-green-500" />
+                  <span>1.40–1.79 — Very strong</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-lime-400" />
+                  <span>1.00–1.39 — Good</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-yellow-400" />
+                  <span>0.80–0.99 — Average</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-orange-500" />
+                  <span>0.40–0.79 — Below average</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-red-500" />
+                  <span>Below 0.40 — Poor</span>
+                </div>
+              </div>
+
+              <h3 className="font-semibold text-sm">Important Notes</h3>
+              <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                <li>Short appearances (under 20 minutes) can produce inflated or deflated scores</li>
+                <li>R90 works best when comparing across multiple matches rather than a single game</li>
+                <li>Different positions are scored using the same system, so context matters when comparing</li>
+              </ul>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };
