@@ -1,112 +1,93 @@
 
 
-# Clip Persistence, Annotation Delivery, and Comparison Dropdown
+# Client-Side Clip Extraction, Data Repair, and Portal Playback Fix
 
-## Overview
+## The Problem
 
-Three workstreams: (1) ensure clips are saved as independent storage files and original full videos can safely expire; (2) persist clip annotations to the database so they render on the portal; (3) replace the comparison player picker with a searchable dropdown and "request player" feature.
+1. The `extract-clip` edge function has **never worked** (auth uses non-existent `getClaims`), so clips fall back to `#t=` fragment URLs on the full source video. The portal plays the entire file, not just the clip.
+2. Even if it did work, it copies the **entire source video** (500MB+) to `clips/` -- wasteful and defeats the purpose.
+3. Existing Kristiansund, Barcelona, and Bilbao report actions all point to full source video URLs with `#t=` fragments (or no fragments at all for some Barcelona actions).
 
----
+## The Fix
 
-## 1. Clips as Independent Storage Files
+### 1. Client-side clip trimming (replace the edge function approach)
 
-### Problem
-Currently, clips are stored as media fragment URLs (`video.mp4#t=10,20`) referencing the full source video. When the source video's 7-day `auto_delete_at` expires, the cleanup function deletes it from storage, breaking all clips that reference it.
+Replace `extractClipFile` in `VideoAnalysis.tsx` with a client-side function that uses the **same canvas + MediaRecorder pattern** already working in `VideoTrimmerDialog.tsx`:
 
-### Solution
-Create a new edge function `extract-clip` that:
-- Receives `sourceVideoUrl`, `start`, `end`, and `clipId`
-- Downloads the source video bytes for the relevant range (or full file if range requests aren't viable)
-- Re-uploads just the clipped segment as a new file in the `analysis-videos` bucket under a clip-specific path (e.g. `clips/{clipId}.mp4`)
-- Returns the new public URL for the independent clip file
+- Create an offscreen `<video>` element, seek to `clip.start`
+- Use a `<canvas>` + `MediaRecorder` to capture frames from `start` to `end`
+- Capture audio via `AudioContext.createMediaElementSource`
+- Result: a small webm blob (2-5MB for a 10s clip vs 500MB+ for the full file)
+- Upload to `analysis-videos/clips/{clipId}.webm`
+- Store the clean public URL (no `#t=` fragment needed) in `performance_report_actions.video_url`
 
-When a clip is attached to a performance report (via `handleAttachClipToAction`, `handleExportToReport`, or `handleInsertNewActionWithClip`), the code will:
-1. Call the `extract-clip` function to create an independent file
-2. Store the returned URL (not a `#t=` fragment URL) in `performance_report_actions.video_url`
-3. Leave the source `video_analyses` record and its `auto_delete_at` untouched so the full video is cleaned up as normal
+This runs entirely in the browser. No edge function needed for clip extraction.
 
-**Why an edge function?** The source video may be hundreds of megabytes. Server-side extraction avoids downloading the full file to the browser. The edge function can use FFmpeg via WASM or, more practically, simply copy the full file to a new path and store the clip boundaries as metadata. Given edge function constraints, the pragmatic approach is:
-- Copy the source file to `clips/{clipId}.mp4` in storage
-- Store `#t=start,end` on the new URL so the browser only plays the segment
-- The key difference: this copied file lives in `clips/` prefix and is never subject to `auto_delete_at` cleanup
+### 2. Portal playback fix
 
-The `cleanup_expired_video_analyses` database function will be updated to skip files in the `clips/` prefix.
+In `AnalysisVideoReports.tsx`, since clips are now independent small files, the video simply plays the whole file. Add the `loop` attribute so clips repeat. For any legacy `#t=` URLs that haven't been migrated yet, parse the fragment and enforce boundaries via `onTimeUpdate` + `onLoadedMetadata` as a fallback.
 
-### Data repair
-- For the existing Kristiansund report actions (analysis_id `2b85f7ef-...`), the clip URLs already use `#t=` fragments correctly. These source videos need their clips extracted to independent files before the `auto_delete_at` (25 Feb) expires.
+### 3. Data repair for existing reports
 
----
+After deploying the code changes, run the client-side extraction on all existing report actions for:
+- **Loris Mettler vs Kristiansund** (analysis `2b85f7ef`): 20 actions across 2 source videos
+- **Cristiano Ronaldo vs FC Barcelona** (analyses `9bf728f5` and `0d632a2b`): ~30 actions from 1 source video
+- **Cristiano Ronaldo vs Athletic de Bilbao** (analysis `a0c73ad7`): actions from its source video
 
-## 2. Annotation Persistence to Database
+Since I cannot run client-side trimming from here, I will add a **one-off "Re-extract clips" button** visible to staff on the performance report editor. Clicking it will loop through all actions with non-`clips/` URLs, trim each one client-side, upload to `clips/`, and update the database. Once run on these reports, the button can be removed in a follow-up.
 
-### Problem
-Annotations on video analysis clips are stored in `localStorage` (`va_annotations_{clipId}`). This means they only exist on the staff member's browser and never reach the portal.
+### 4. Cleanup safety
 
-### Solution
+The existing `cleanup_expired_video_analyses` database function already skips files in the `clips/` prefix (updated in the previous migration). Source videos with `auto_delete_at` will still be cleaned up as normal. Clips in `clips/` prefix persist forever.
 
-**Database column**: Add a `clip_annotations` JSONB column to `performance_report_actions`. This stores the annotation elements array for each clip.
+### 5. Delete the broken edge function
 
-**Save flow**:
-- When annotations are saved in `AnnotationEditor` (the `onSave` callback at line 1262), continue saving to `localStorage` for the editing workflow
-- When a clip is attached to a report action (`handleAttachClipToAction`, `handleExportToReport`, `handleInsertNewActionWithClip`), read the `localStorage` annotations for that `clip_id` and include them in the database insert/update as `clip_annotations`
-
-**Render flow on portal**:
-- In `AnalysisVideoReports.tsx`, fetch `clip_annotations` alongside existing fields
-- When playing a clip in the compilation modal, overlay an `AnnotationCanvas` (read-only, no interaction) on top of the video, passing the stored annotation elements
-- The canvas uses `computeVisibleElements` to determine which annotations to show at the current playback time, relative to the clip start time
-- This is the same rendering pipeline used in `VideoAnalysis.tsx` playback, ensuring visual parity
-
-**Portal playback changes** (`AnalysisVideoReports.tsx`):
-- Wrap the `<video>` element in a relative container
-- Add `<AnnotationCanvas>` as an absolute overlay with `pointer-events: none`
-- Feed it the `clip_annotations` elements and current video time via a `timeupdate` listener
-
----
-
-## 3. Comparison Dropdown with Player Request
-
-### Current state
-`AnalysisComparisons.tsx` lines 158-185: pill buttons listing all comparison players for the position.
-
-### Changes
-- Replace the pill buttons with a searchable `Command`/`Popover` dropdown (already available as UI components)
-- Selected players appear as removable badges below the dropdown
-- Below the dropdown, add a "Can't find a player? Request one" link
-- Clicking it opens a small dialog with a single text input for the player name
-- On submit, insert a row into `staff_notification_events` with `event_type: 'comparison_request'`, `title: 'Player Request'`, `body: '{playerName}'`, and relevant `event_data`
-- No database migration needed; reuses existing table
+Remove `supabase/functions/extract-clip/index.ts` and its config entry. It is no longer needed.
 
 ---
 
 ## Technical Details
 
-### New edge function
-`supabase/functions/extract-clip/index.ts`
-- Accepts POST with `{ sourceUrl, clipId }`
-- Downloads the source video from the `analysis-videos` bucket
-- Re-uploads to `analysis-videos/clips/{clipId}.mp4`
-- Returns new public URL
-
-### Database migration
-```sql
-ALTER TABLE performance_report_actions
-ADD COLUMN clip_annotations jsonb DEFAULT NULL;
-```
-
-### Updated database function
-Update `cleanup_expired_video_analyses` to NOT delete storage objects whose path starts with `clips/`.
-
 ### Files to modify
 
 | File | Changes |
 |------|---------|
-| `supabase/functions/extract-clip/index.ts` | New edge function for copying source video to independent clip path |
-| `supabase/config.toml` | Add `[functions.extract-clip]` with `verify_jwt = true` |
-| `src/components/staff/coaching/VideoAnalysis.tsx` | In `handleExportToReport`, `handleAttachClipToAction`, `handleInsertNewActionWithClip`: call `extract-clip`, use returned URL, read localStorage annotations and include as `clip_annotations` |
-| `src/components/portal/AnalysisVideoReports.tsx` | Fetch `clip_annotations` column. Add `AnnotationCanvas` overlay in the compilation modal video player. Wire `timeupdate` to drive annotation rendering. |
-| `src/components/portal/AnalysisComparisons.tsx` | Replace pill buttons with searchable Command/Popover dropdown. Add "Request a player" dialog that inserts into `staff_notification_events`. |
+| `src/components/staff/coaching/VideoAnalysis.tsx` | Replace `extractClipFile` with client-side canvas+MediaRecorder trim. Upload blob to `clips/{clipId}.webm`. All three attachment functions (`handleExportToReport`, `handleAttachClipToAction`, `handleInsertNewActionWithClip`) use this new function. Add a "Re-extract clips" utility for migrating existing data. |
+| `src/components/portal/AnalysisVideoReports.tsx` | Add `loop` attribute to video player. Add fallback `#t=` boundary enforcement for legacy URLs. |
+| `supabase/functions/extract-clip/index.ts` | Delete this file |
+| `supabase/config.toml` | Remove `[functions.extract-clip]` entry |
 
-### Data fixes (via insert tool after implementation)
-1. Clear `auto_delete_at` on the video analyses linked to the Kristiansund report so existing clips survive until the extraction flow is live
-2. Once the extract-clip function is deployed, run extraction for existing report actions that still use `#t=` fragment URLs on source videos
+### Client-side trim function (core logic)
 
+```text
+async function trimAndUploadClip(sourceUrl, clipId, start, end):
+  1. Create offscreen <video> with src = sourceUrl (stripped of any #t=)
+  2. Wait for loadedmetadata
+  3. Create <canvas> matching video dimensions
+  4. Seek video to start, wait for seeked event
+  5. Set up MediaRecorder on canvas.captureStream(30)
+  6. Capture audio via AudioContext if available
+  7. Start recording, play video
+  8. On each animationFrame: draw video to canvas
+  9. When currentTime >= end: pause video, stop recorder
+  10. Collect blob chunks into final webm blob
+  11. Upload to supabase storage at clips/{clipId}.webm
+  12. Return public URL (clean, no fragment)
+```
+
+### Storage impact
+
+- 10s clip from a 500MB source: ~2-5MB (webm) instead of 500MB (full copy)
+- Source videos continue their 7-day auto-delete cycle
+- Clips in `clips/` prefix persist indefinitely
+
+### Data migration approach
+
+A temporary "Re-extract all clips" button on the performance report edit dialog will:
+1. Query all actions for that report where `video_url` does NOT contain `/clips/`
+2. For each action, parse the `#t=start,end` from the URL (or use the clip metadata)
+3. Run the client-side trim function
+4. Update the action's `video_url` to the new clean URL
+5. Show progress (e.g. "Extracting clip 3/20...")
+
+This needs to be run manually on the Kristiansund, Barcelona, and Bilbao reports.
