@@ -6,10 +6,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Users, BarChart3, Target, Box, Crosshair } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Users, BarChart3, Target, Box, Crosshair, ChevronsUpDown, X, Search } from "lucide-react";
 import { METRIC_CATEGORIES, ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
 import { GoalTracking } from "@/components/portal/GoalTracking";
 import { ScoutingComparisonMatrix } from "@/components/portal/ScoutingComparisonMatrix";
+import { toast } from "sonner";
 
 const RadarChart3D = lazy(() => import("@/components/portal/RadarChart3D").then(m => ({ default: m.RadarChart3D })));
 
@@ -50,6 +55,11 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
   const [subTab, setSubTab] = useState<string>("percentile");
   const [fixtureAnalyses, setFixtureAnalyses] = useState<Analysis[]>([]);
   const [selectedMetricKey, setSelectedMetricKey] = useState<string>('goals_per90');
+  const [playerSearchOpen, setPlayerSearchOpen] = useState(false);
+  const [playerSearchQuery, setPlayerSearchQuery] = useState("");
+  const [showRequestDialog, setShowRequestDialog] = useState(false);
+  const [requestName, setRequestName] = useState("");
+  const [requestingPlayer, setRequestingPlayer] = useState(false);
 
   const playerPosition = playerData?.position || '';
   const playerName = playerData?.name || 'You';
@@ -155,34 +165,162 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
           ))}
         </div>
 
-        {/* Player picker - shared across all sub-tabs */}
+        {/* Player picker - searchable dropdown */}
         <div className="mb-4">
           <p className="text-sm font-medium mb-2">Select comparison players ({playerPosition} only):</p>
           {comparisonPlayers.length === 0 ? (
             <p className="text-muted-foreground text-sm">No players stored for this position.</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
-              {comparisonPlayers.map(cp => (
-                <button
-                  key={cp.id}
-                  onClick={() => togglePlayer(cp.id)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition-colors ${
-                    selectedPlayerIds.includes(cp.id)
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'border-border hover:bg-muted'
-                  }`}
-                >
-                  <Avatar className="h-5 w-5">
-                    {cp.image_url ? <AvatarImage src={cp.image_url} /> : null}
-                    <AvatarFallback className="text-[10px]">{cp.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  {cp.name}
-                  <span className="text-xs opacity-70">{cp.club} · {cp.season}</span>
-                </button>
-              ))}
+            <div className="space-y-3">
+              <Popover open={playerSearchOpen} onOpenChange={setPlayerSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full sm:w-[320px] justify-between">
+                    <span className="text-muted-foreground">
+                      <Search className="w-3.5 h-3.5 inline mr-2" />
+                      Search players...
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[320px] p-0" align="start">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search players..."
+                      value={playerSearchQuery}
+                      onValueChange={setPlayerSearchQuery}
+                    />
+                    <CommandList>
+                      <CommandEmpty>
+                        <div className="py-2 text-center">
+                          <p className="text-sm text-muted-foreground mb-2">No players found</p>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="text-primary"
+                            onClick={() => {
+                              setPlayerSearchOpen(false);
+                              setRequestName(playerSearchQuery);
+                              setShowRequestDialog(true);
+                            }}
+                          >
+                            Request this player
+                          </Button>
+                        </div>
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {comparisonPlayers.map(cp => (
+                          <CommandItem
+                            key={cp.id}
+                            value={`${cp.name} ${cp.club || ''}`}
+                            onSelect={() => {
+                              togglePlayer(cp.id);
+                            }}
+                          >
+                            <div className="flex items-center gap-2 w-full">
+                              <Avatar className="h-5 w-5">
+                                {cp.image_url ? <AvatarImage src={cp.image_url} /> : null}
+                                <AvatarFallback className="text-[10px]">{cp.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <span className="flex-1">{cp.name}</span>
+                              <span className="text-xs text-muted-foreground">{cp.club} · {cp.season}</span>
+                              {selectedPlayerIds.includes(cp.id) && (
+                                <span className="text-primary text-xs font-bold">✓</span>
+                              )}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                  <div className="border-t px-3 py-2">
+                    <button
+                      className="text-xs text-primary hover:underline"
+                      onClick={() => {
+                        setPlayerSearchOpen(false);
+                        setShowRequestDialog(true);
+                      }}
+                    >
+                      Can't find a player? Request one
+                    </button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* Selected player badges */}
+              {selectedComps.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedComps.map(cp => (
+                    <span
+                      key={cp.id}
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary text-primary-foreground text-sm"
+                    >
+                      <Avatar className="h-4 w-4">
+                        {cp.image_url ? <AvatarImage src={cp.image_url} /> : null}
+                        <AvatarFallback className="text-[8px]">{cp.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      {cp.name}
+                      <button onClick={() => togglePlayer(cp.id)} className="ml-1 hover:opacity-70">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
+
+        {/* Request Player Dialog */}
+        <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Request a Comparison Player</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <p className="text-sm text-muted-foreground">
+                Enter the player name and we'll add them to the database.
+              </p>
+              <Input
+                placeholder="Player name"
+                value={requestName}
+                onChange={(e) => setRequestName(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowRequestDialog(false)}>Cancel</Button>
+              <Button
+                disabled={!requestName.trim() || requestingPlayer}
+                onClick={async () => {
+                  setRequestingPlayer(true);
+                  try {
+                    const { error } = await supabase
+                      .from('staff_notification_events')
+                      .insert({
+                        event_type: 'comparison_request',
+                        title: 'Player Request',
+                        body: requestName.trim(),
+                        event_data: {
+                          requested_by: playerName,
+                          player_id: playerData?.id,
+                          position: playerPosition,
+                          requested_name: requestName.trim(),
+                        },
+                      });
+                    if (error) throw error;
+                    toast.success('Player requested. We\'ll add them soon.');
+                    setShowRequestDialog(false);
+                    setRequestName('');
+                  } catch (err: any) {
+                    toast.error(err.message || 'Failed to submit request');
+                  }
+                  setRequestingPlayer(false);
+                }}
+              >
+                {requestingPlayer ? 'Sending...' : 'Request'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <Tabs value={subTab} onValueChange={setSubTab}>
           <TabsList>
