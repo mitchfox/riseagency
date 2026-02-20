@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Play, Pause, SkipBack, SkipForward, X, Maximize, Trash2, Download, CheckSquare, Film, ListVideo } from "lucide-react";
 import { downloadVideo } from "@/lib/videoDownload";
+import { computeVisibleElements } from "@/lib/annotationRenderUtils";
+import { ReadOnlyAnnotationOverlay } from "@/components/portal/ReadOnlyAnnotationOverlay";
 
 interface Analysis {
   id: string;
@@ -26,6 +28,7 @@ interface ActionClip {
   minute: number | null;
   video_url: string | null;
   is_successful: boolean | null;
+  clip_annotations: any[] | null;
   // Joined
   opponent?: string;
   match_date?: string;
@@ -63,7 +66,12 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
       
       const enriched = (data || []).map(a => {
         const match = analyses.find(an => an.id === a.analysis_id);
-        return { ...a, opponent: match?.opponent || 'Unknown', match_date: match?.analysis_date };
+        return {
+          ...a,
+          clip_annotations: Array.isArray(a.clip_annotations) ? a.clip_annotations : null,
+          opponent: match?.opponent || 'Unknown',
+          match_date: match?.analysis_date,
+        };
       });
       setAllActions(enriched);
       setLoading(false);
@@ -330,15 +338,23 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
                     </Button>
                   </div>
 
-                  <video
-                    ref={videoRef}
-                    src={currentClip.video_url || ''}
-                    className="max-h-full max-w-full object-contain"
-                    autoPlay muted playsInline
-                    onEnded={handleVideoEnded}
-                    onPlay={() => setIsPlaying(true)}
-                    onPause={() => setIsPlaying(false)}
-                  />
+                  <div className="relative max-h-full max-w-full">
+                    <video
+                      ref={videoRef}
+                      src={currentClip.video_url || ''}
+                      className="max-h-full max-w-full object-contain"
+                      autoPlay muted playsInline
+                      onEnded={handleVideoEnded}
+                      onPlay={() => setIsPlaying(true)}
+                      onPause={() => setIsPlaying(false)}
+                    />
+                    {currentClip.clip_annotations && currentClip.clip_annotations.length > 0 && (
+                      <ReadOnlyAnnotationOverlay
+                        elements={currentClip.clip_annotations}
+                        videoRef={videoRef}
+                      />
+                    )}
+                  </div>
                 </div>
 
                 {/* Controls */}

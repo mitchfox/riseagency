@@ -2159,6 +2159,7 @@ export type Database = {
           action_score: number | null
           action_type: string | null
           analysis_id: string
+          clip_annotations: Json | null
           clip_id: string | null
           created_at: string | null
           id: string
@@ -2177,6 +2178,7 @@ export type Database = {
           action_score?: number | null
           action_type?: string | null
           analysis_id: string
+          clip_annotations?: Json | null
           clip_id?: string | null
           created_at?: string | null
           id?: string
@@ -2195,6 +2197,7 @@ export type Database = {
           action_score?: number | null
           action_type?: string | null
           analysis_id?: string
+          clip_annotations?: Json | null
           clip_id?: string | null
           created_at?: string | null
           id?: string

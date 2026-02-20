@@ -641,6 +641,49 @@ export const VideoAnalysis = () => {
     setExporting(false);
   };
 
+  // Helper: extract clip as independent storage file and return its URL with #t= fragment
+  const extractClipFile = async (sourceUrl: string, clipId: string, start: number, end: number): Promise<string> => {
+    // Strip any existing #t= fragment from source URL
+    const cleanSourceUrl = sourceUrl.split('#')[0];
+    
+    const { data: session } = await supabase.auth.getSession();
+    const token = session.session?.access_token;
+    if (!token) throw new Error('Not authenticated');
+
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    const res = await fetch(
+      `https://${projectId}.supabase.co/functions/v1/extract-clip`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ sourceUrl: cleanSourceUrl, clipId }),
+      }
+    );
+    
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Extract failed' }));
+      throw new Error(err.error || 'Failed to extract clip');
+    }
+    
+    const { clipUrl } = await res.json();
+    // Append time fragment so the browser only plays the segment
+    return `${clipUrl}#t=${start},${end}`;
+  };
+
+  // Helper: read localStorage annotations for a clip
+  const getClipAnnotations = (clipId: string): any[] | null => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(`va_annotations_${clipId}`) || 'null');
+      if (saved?.klips?.[0]?.elements?.length > 0) {
+        return saved.klips[0].elements;
+      }
+    } catch {}
+    return null;
+  };
+
   const handleExportToReport = async () => {
     if (!selectedVideo || !selectedReportId) return;
     setExporting(true);
@@ -656,18 +699,33 @@ export const VideoAnalysis = () => {
 
       let nextNumber = (existing?.[0]?.action_number || 0) + 1;
 
-      const actionsToInsert = selectedVideo.clips.map((clip, i) => ({
-        analysis_id: selectedReportId,
-        action_number: nextNumber + i,
-        minute: getMatchMinute(clip.start, selectedVideo.match_minute_offset),
-        action_type: clip.action_type || "other",
-        action_description: clip.action_description || "",
-        notes: clip.notes || null,
-        video_url: selectedVideo.video_url || null,
-        video_analysis_id: selectedVideo.id,
-        clip_id: clip.id,
-        is_successful: true,
-      }));
+      // Extract each clip as an independent file
+      const actionsToInsert = [];
+      for (const [i, clip] of selectedVideo.clips.entries()) {
+        let clipUrl: string | null = null;
+        try {
+          clipUrl = await extractClipFile(selectedVideo.video_url, clip.id, clip.start, clip.end);
+        } catch (err) {
+          console.error('Clip extraction failed, using fragment URL:', err);
+          clipUrl = `${selectedVideo.video_url}#t=${clip.start},${clip.end}`;
+        }
+        
+        const annotations = getClipAnnotations(clip.id);
+
+        actionsToInsert.push({
+          analysis_id: selectedReportId,
+          action_number: nextNumber + i,
+          minute: getMatchMinute(clip.start, selectedVideo.match_minute_offset),
+          action_type: clip.action_type || "other",
+          action_description: clip.action_description || "",
+          notes: clip.notes || null,
+          video_url: clipUrl,
+          video_analysis_id: selectedVideo.id,
+          clip_id: clip.id,
+          is_successful: true,
+          ...(annotations ? { clip_annotations: annotations } : {}),
+        });
+      }
 
       const { error } = await supabase
         .from("performance_report_actions")
@@ -877,11 +935,22 @@ export const VideoAnalysis = () => {
 
   const handleAttachClipToAction = async (actionId: string) => {
     if (!attachClip || !selectedVideo) return;
-    const clipUrl = `${selectedVideo.video_url}#t=${attachClip.start},${attachClip.end}`;
     try {
+      let clipUrl: string;
+      try {
+        clipUrl = await extractClipFile(selectedVideo.video_url, attachClip.id, attachClip.start, attachClip.end);
+      } catch (err) {
+        console.error('Clip extraction failed, using fragment URL:', err);
+        clipUrl = `${selectedVideo.video_url}#t=${attachClip.start},${attachClip.end}`;
+      }
+      
+      const annotations = getClipAnnotations(attachClip.id);
+      const updateData: any = { video_url: clipUrl };
+      if (annotations) updateData.clip_annotations = annotations;
+
       const { error } = await supabase
         .from("performance_report_actions")
-        .update({ video_url: clipUrl })
+        .update(updateData)
         .eq("id", actionId);
       if (error) throw error;
       toast.success("Clip attached to action");
@@ -912,19 +981,30 @@ export const VideoAnalysis = () => {
         }
       }
 
-      const clipUrl = `${selectedVideo.video_url}#t=${attachClip.start},${attachClip.end}`;
+      let clipUrl: string;
+      try {
+        clipUrl = await extractClipFile(selectedVideo.video_url, attachClip.id, attachClip.start, attachClip.end);
+      } catch (err) {
+        console.error('Clip extraction failed, using fragment URL:', err);
+        clipUrl = `${selectedVideo.video_url}#t=${attachClip.start},${attachClip.end}`;
+      }
+      
+      const annotations = getClipAnnotations(attachClip.id);
+      const insertData: any = {
+        analysis_id: reportAnalysisId,
+        action_number: insertAfterNumber + 1,
+        action_type: attachClip.action_type || "other",
+        action_description: attachClip.action_description || "",
+        notes: attachClip.notes || null,
+        video_url: clipUrl,
+        is_successful: true,
+        minute: parseClipMinuteToNumber(attachClip.minute) ?? getMatchMinute(attachClip.start, selectedVideo.match_minute_offset),
+      };
+      if (annotations) insertData.clip_annotations = annotations;
+
       const { error } = await supabase
         .from("performance_report_actions")
-        .insert({
-          analysis_id: reportAnalysisId,
-          action_number: insertAfterNumber + 1,
-          action_type: attachClip.action_type || "other",
-          action_description: attachClip.action_description || "",
-          notes: attachClip.notes || null,
-          video_url: clipUrl,
-          is_successful: true,
-          minute: parseClipMinuteToNumber(attachClip.minute) ?? getMatchMinute(attachClip.start, selectedVideo.match_minute_offset),
-        });
+        .insert(insertData);
 
       if (error) throw error;
       toast.success("New action created with clip attached");
