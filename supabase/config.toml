@@ -96,5 +96,3 @@ verify_jwt = false
 [functions.detect-club-countries]
 verify_jwt = true
 
-[functions.extract-clip]
-verify_jwt = false

@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Plus, Search, Loader2, ChevronDown, ChevronUp, List, Video, ArrowUp, ArrowDown } from "lucide-react";
+import { Trash2, Plus, Search, Loader2, ChevronDown, ChevronUp, List, Video, ArrowUp, ArrowDown, RefreshCw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { R90RatingsViewer } from "./R90RatingsViewer";
 import { ActionStatRecorder, aggregateRecordedStats, RecordedStat } from "./ActionStatRecorder";
@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { ActionVideoUpload } from "./ActionVideoUpload";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
+import { ReExtractClipsButton } from "./ReExtractClipsButton";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -458,7 +459,10 @@ export const PerformanceActionsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Performance Report Actions - {playerName}</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>Performance Report Actions - {playerName}</DialogTitle>
+            <ReExtractClipsButton analysisId={analysisId} onComplete={fetchActions} />
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">
