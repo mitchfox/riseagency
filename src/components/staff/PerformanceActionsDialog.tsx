@@ -20,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { ActionVideoUpload } from "./ActionVideoUpload";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
 import { ReExtractClipsButton } from "./ReExtractClipsButton";
+import { toTitleCase } from "@/lib/titleCase";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -177,7 +178,14 @@ export const PerformanceActionsDialog = ({
       .order("action_type");
 
     if (!error && data) {
-      const uniqueTypes = Array.from(new Set(data.map(item => item.action_type)));
+      const uniqueTypes = Array.from(new Set(data.map(item => toTitleCase(item.action_type))));
+      // Sort by frequency (most used first)
+      const freqMap: Record<string, number> = {};
+      data.forEach(item => {
+        const tc = toTitleCase(item.action_type);
+        freqMap[tc] = (freqMap[tc] || 0) + 1;
+      });
+      uniqueTypes.sort((a, b) => (freqMap[b] || 0) - (freqMap[a] || 0));
       setActionTypes(uniqueTypes);
     }
   };
@@ -944,7 +952,7 @@ export const PerformanceActionsDialog = ({
           {/* Datalist for action types */}
           <datalist id="action-types-list">
             {actionTypes.map((type) => (
-              <option key={type} value={type} />
+              <option key={type} value={toTitleCase(type)} />
             ))}
           </datalist>
 

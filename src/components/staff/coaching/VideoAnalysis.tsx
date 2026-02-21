@@ -16,6 +16,7 @@ import { AnnotationCanvas } from "@/components/staff/annotations/AnnotationCanva
 import type { AnnotationProject, Klip, AnnotationElement } from "@/components/staff/annotations/AnnotationProjects";
 import { computeVisibleElements } from "@/lib/annotationRenderUtils";
 import { sortPlayersByRepresentation, getStatusLabel, groupPlayersByStatus } from "@/lib/playerSorting";
+import { toTitleCase } from "@/lib/titleCase";
 
 interface Annotation {
   id: string;
@@ -53,10 +54,10 @@ interface VideoAnalysisEntry {
 }
 
 const DEFAULT_ACTION_TYPES = [
-  "pressing", "build-up", "transition", "set-piece", "defensive", "attacking",
-  "individual", "dribble", "pass", "cross", "shot", "tackle", "interception",
-  "header", "save", "clearance", "foul", "free-kick", "corner", "throw-in",
-  "goal-kick", "penalty", "offside", "substitution", "other"
+  "Pressing", "Build-Up", "Transition", "Set-Piece", "Defensive", "Attacking",
+  "Individual", "Dribble", "Pass", "Cross", "Shot", "Tackle", "Interception",
+  "Header", "Save", "Clearance", "Foul", "Free-Kick", "Corner", "Throw-In",
+  "Goal-Kick", "Penalty", "Offside", "Substitution", "Other"
 ];
 
 const ACTION_COLOURS: Record<string, string> = {
@@ -102,10 +103,14 @@ export const VideoAnalysis = () => {
   const [knownActionTypes, setKnownActionTypes] = useState<string[]>([]);
   const [actionTypeFrequency, setActionTypeFrequency] = useState<Record<string, number>>({});
 
-  // Export to report
+  // Export to report or analysis
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportDestination, setExportDestination] = useState<"report" | "analysis">("report");
   const [availableReports, setAvailableReports] = useState<{ id: string; title: string; player_name: string }[]>([]);
+  const [availableAnalyses, setAvailableAnalyses] = useState<{ id: string; title: string; analysis_type: string; points: any[] }[]>([]);
   const [selectedReportId, setSelectedReportId] = useState("");
+  const [selectedAnalysisId, setSelectedAnalysisId] = useState("");
+  const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
   const [exportPlayerId, setExportPlayerId] = useState("");
   const [exporting, setExporting] = useState(false);
 
@@ -182,7 +187,7 @@ export const VideoAnalysis = () => {
       .not("action_type", "is", null);
     if (data) {
       const allTypes = data.map(d => d.action_type).filter(Boolean) as string[];
-      const unique = [...new Set(allTypes)];
+      const unique = [...new Set(allTypes.map(t => toTitleCase(t)))];
       // Build frequency counts for sorting
       const counts: Record<string, number> = {};
       allTypes.forEach(t => { counts[t] = (counts[t] || 0) + 1; });
@@ -600,28 +605,110 @@ export const VideoAnalysis = () => {
   const handleOpenExport = () => {
     setExportPlayerId("");
     setSelectedReportId("");
+    setSelectedAnalysisId("");
+    setSelectedPointIndex(null);
     setAvailableReports([]);
+    setAvailableAnalyses([]);
+    setExportDestination("report");
     setShowExportDialog(true);
   };
 
   const handleExportPlayerChange = async (playerId: string) => {
     setExportPlayerId(playerId);
     setSelectedReportId("");
-    // Fetch from player_analysis (performance reports)
+    setSelectedAnalysisId("");
+    setSelectedPointIndex(null);
+
+    if (exportDestination === "report") {
+      const { data } = await supabase
+        .from("player_analysis")
+        .select("id, opponent, analysis_date")
+        .eq("player_id", playerId)
+        .order("analysis_date", { ascending: false })
+        .limit(50);
+
+      if (data) {
+        setAvailableReports(data.map(d => ({
+          id: d.id,
+          title: d.opponent ? `vs ${d.opponent} (${d.analysis_date})` : `Report ${d.analysis_date}`,
+          player_name: players.find(p => p.id === playerId)?.name || "Unknown",
+        })));
+      }
+    } else {
+      await fetchAnalysesForExport();
+    }
+  };
+
+  const fetchAnalysesForExport = async () => {
     const { data } = await supabase
-      .from("player_analysis")
-      .select("id, opponent, analysis_date")
-      .eq("player_id", playerId)
-      .order("analysis_date", { ascending: false })
+      .from("analyses")
+      .select("id, title, analysis_type, points")
+      .in("analysis_type", ["pre-match", "post-match"])
+      .order("created_at", { ascending: false })
       .limit(50);
 
     if (data) {
-      setAvailableReports(data.map(d => ({
+      setAvailableAnalyses(data.map(d => ({
         id: d.id,
-        title: d.opponent ? `vs ${d.opponent} (${d.analysis_date})` : `Report ${d.analysis_date}`,
-        player_name: players.find(p => p.id === playerId)?.name || "Unknown",
+        title: d.title || `${d.analysis_type} analysis`,
+        analysis_type: d.analysis_type,
+        points: (d.points as any[]) || [],
       })));
     }
+  };
+
+  const handleExportDestinationChange = async (dest: "report" | "analysis") => {
+    setExportDestination(dest);
+    setSelectedReportId("");
+    setSelectedAnalysisId("");
+    setSelectedPointIndex(null);
+    setAvailableReports([]);
+    setAvailableAnalyses([]);
+    if (dest === "analysis") {
+      await fetchAnalysesForExport();
+    } else if (exportPlayerId) {
+      // Re-fetch reports for the selected player
+      handleExportPlayerChange(exportPlayerId);
+    }
+  };
+
+  const handleExportToAnalysisPoint = async () => {
+    if (!selectedVideo || !selectedAnalysisId || selectedPointIndex === null) return;
+    setExporting(true);
+    try {
+      const analysis = availableAnalyses.find(a => a.id === selectedAnalysisId);
+      if (!analysis) throw new Error("Analysis not found");
+
+      const points = [...analysis.points];
+      const point = { ...points[selectedPointIndex] };
+      const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
+
+      // Extract each clip and add to point
+      for (const clip of selectedVideo.clips) {
+        let clipUrl: string;
+        try {
+          clipUrl = await extractClipFile(selectedVideo.video_url, clip.id, clip.start, clip.end);
+        } catch {
+          clipUrl = `${selectedVideo.video_url}#t=${clip.start},${clip.end}`;
+        }
+        currentVideos.push(clipUrl);
+      }
+
+      point.video_urls = currentVideos;
+      points[selectedPointIndex] = point;
+
+      const { error } = await supabase
+        .from("analyses")
+        .update({ points })
+        .eq("id", selectedAnalysisId);
+
+      if (error) throw error;
+      toast.success(`${selectedVideo.clips.length} clip(s) added to point ${selectedPointIndex + 1}`);
+      setShowExportDialog(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add clips to analysis");
+    }
+    setExporting(false);
   };
 
   // Link clips to a report (makes them available for selection, doesn't add as actions)
@@ -1344,51 +1431,117 @@ export const VideoAnalysis = () => {
         <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Link or Export Clips to Report</DialogTitle>
+              <DialogTitle>Export Clips</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
-              <p className="text-sm text-muted-foreground">
-                <strong>Link:</strong> Makes {selectedVideo.clips.length} clip(s) available for selection on the report.
-                <br />
-                <strong>Export:</strong> Adds them directly as actions.
-              </p>
-              <Select value={exportPlayerId} onValueChange={handleExportPlayerChange}>
-                <SelectTrigger><SelectValue placeholder="Select player first" /></SelectTrigger>
-                <SelectContent>
-                  {groupPlayersByStatus(players).map(group => (
-                    <SelectGroup key={group.status}>
-                      <SelectLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">{group.label}</SelectLabel>
-                      {group.players.map(p => (
-                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))}
-                </SelectContent>
-              </Select>
-              {exportPlayerId && (
-                <Select value={selectedReportId} onValueChange={setSelectedReportId}>
-                  <SelectTrigger><SelectValue placeholder="Select performance report" /></SelectTrigger>
-                  <SelectContent>
-                    {availableReports.length === 0 ? (
-                      <SelectItem value="__none" disabled>No reports found for this player</SelectItem>
-                    ) : (
-                      availableReports.map(r => (
-                        <SelectItem key={r.id} value={r.id}>{r.title}</SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              )}
-              <div className="flex gap-2">
-                <Button onClick={handleLinkToReport} disabled={!selectedReportId || exporting} variant="outline" className="flex-1">
-                  {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Link2 className="h-4 w-4 mr-2" />}
-                  Link Clips
-                </Button>
-                <Button onClick={handleExportToReport} disabled={!selectedReportId || exporting} className="flex-1">
-                  {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
-                  Export as Actions
-                </Button>
+              {/* Destination toggle */}
+              <div className="flex rounded-lg border overflow-hidden">
+                <button
+                  onClick={() => handleExportDestinationChange("report")}
+                  className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${exportDestination === "report" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                >
+                  Performance Report
+                </button>
+                <button
+                  onClick={() => handleExportDestinationChange("analysis")}
+                  className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${exportDestination === "analysis" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                >
+                  Analysis
+                </button>
               </div>
+
+              {exportDestination === "report" ? (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Link:</strong> Makes {selectedVideo.clips.length} clip(s) available for selection on the report.
+                    <br />
+                    <strong>Export:</strong> Adds them directly as actions.
+                  </p>
+                  <Select value={exportPlayerId} onValueChange={handleExportPlayerChange}>
+                    <SelectTrigger><SelectValue placeholder="Select player first" /></SelectTrigger>
+                    <SelectContent>
+                      {groupPlayersByStatus(players).map(group => (
+                        <SelectGroup key={group.status}>
+                          <SelectLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">{group.label}</SelectLabel>
+                          {group.players.map(p => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {exportPlayerId && (
+                    <Select value={selectedReportId} onValueChange={setSelectedReportId}>
+                      <SelectTrigger><SelectValue placeholder="Select performance report" /></SelectTrigger>
+                      <SelectContent>
+                        {availableReports.length === 0 ? (
+                          <SelectItem value="__none" disabled>No reports found for this player</SelectItem>
+                        ) : (
+                          availableReports.map(r => (
+                            <SelectItem key={r.id} value={r.id}>{r.title}</SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <div className="flex gap-2">
+                    <Button onClick={handleLinkToReport} disabled={!selectedReportId || exporting} variant="outline" className="flex-1">
+                      {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Link2 className="h-4 w-4 mr-2" />}
+                      Link Clips
+                    </Button>
+                    <Button onClick={handleExportToReport} disabled={!selectedReportId || exporting} className="flex-1">
+                      {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                      Export as Actions
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Add {selectedVideo.clips.length} clip(s) to an analysis point's videos.
+                  </p>
+                  <Select value={selectedAnalysisId} onValueChange={(v) => { setSelectedAnalysisId(v); setSelectedPointIndex(null); }}>
+                    <SelectTrigger><SelectValue placeholder="Select analysis" /></SelectTrigger>
+                    <SelectContent>
+                      {availableAnalyses.length === 0 ? (
+                        <SelectItem value="__none" disabled>No analyses found</SelectItem>
+                      ) : (
+                        availableAnalyses.map(a => (
+                          <SelectItem key={a.id} value={a.id}>
+                            <span className="capitalize">{a.analysis_type.replace('-', ' ')}</span> — {a.title}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {selectedAnalysisId && (() => {
+                    const analysis = availableAnalyses.find(a => a.id === selectedAnalysisId);
+                    if (!analysis || analysis.points.length === 0) return (
+                      <p className="text-sm text-muted-foreground">No points on this analysis. Add points first.</p>
+                    );
+                    return (
+                      <Select value={selectedPointIndex !== null ? String(selectedPointIndex) : ""} onValueChange={(v) => setSelectedPointIndex(parseInt(v))}>
+                        <SelectTrigger><SelectValue placeholder="Select point" /></SelectTrigger>
+                        <SelectContent>
+                          {analysis.points.map((pt: any, idx: number) => (
+                            <SelectItem key={idx} value={String(idx)}>
+                              Point {idx + 1}{pt.title ? ` — ${pt.title}` : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    );
+                  })()}
+                  <Button
+                    onClick={handleExportToAnalysisPoint}
+                    disabled={!selectedAnalysisId || selectedPointIndex === null || exporting}
+                    className="w-full"
+                  >
+                    {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                    Add Clips to Point
+                  </Button>
+                </>
+              )}
             </div>
           </DialogContent>
         </Dialog>
@@ -1636,7 +1789,7 @@ function ActionTypeCombobox({
 
   const handleCustom = () => {
     if (search.trim()) {
-      onChange(search.trim().toLowerCase());
+      onChange(toTitleCase(search.trim()));
       setOpen(false);
       setSearch("");
     }
@@ -1648,9 +1801,9 @@ function ActionTypeCombobox({
         <Button
           variant="outline"
           size="sm"
-          className={`justify-between capitalize ${compact ? 'h-7 text-[10px] w-[110px]' : 'w-[130px]'}`}
+          className={`justify-between ${compact ? 'h-7 text-[10px] w-[110px]' : 'w-[130px]'}`}
         >
-          {value || "Action type"}
+          {toTitleCase(value) || "Action type"}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">
@@ -1667,7 +1820,7 @@ function ActionTypeCombobox({
                   className="w-full px-3 py-2 text-sm text-left hover:bg-accent cursor-pointer"
                   onClick={handleCustom}
                 >
-                  Use "{search.trim()}"
+                  Use "{toTitleCase(search.trim())}"
                 </button>
               ) : (
                 <span className="text-muted-foreground text-sm">No matches</span>
@@ -1675,8 +1828,8 @@ function ActionTypeCombobox({
             </CommandEmpty>
             <CommandGroup>
               {filtered.map(t => (
-                <CommandItem key={t} value={t} onSelect={() => handleSelect(t)} className="capitalize cursor-pointer">
-                  {t}
+                <CommandItem key={t} value={t} onSelect={() => handleSelect(t)} className="cursor-pointer">
+                  {toTitleCase(t)}
                 </CommandItem>
               ))}
             </CommandGroup>
