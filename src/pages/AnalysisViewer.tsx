@@ -670,10 +670,16 @@ const AnalysisViewer = () => {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [playerName, setPlayerName] = useState<string | null>(null);
   
-  // No sequential loading - all videos load immediately via LazyVideo with loadImmediately
+  const [pageLoaded, setPageLoaded] = useState(false);
 
   // Extract UUID from slug (e.g., "team-vs-team-uuid" -> "uuid")
   const analysisId = rawSlug ? extractAnalysisIdFromSlug(rawSlug) : null;
+
+  // Mark page as loaded after initial render + short delay to let framework/text/images paint first
+  useEffect(() => {
+    const timer = setTimeout(() => setPageLoaded(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (analysisId) fetchAnalysis();
@@ -1127,6 +1133,7 @@ const AnalysisViewer = () => {
                                   key={vidIndex}
                                   src={url}
                                   autoPlayOnVisible
+                                  loadImmediately={pageLoaded}
                                   loop
                                   muted
                                   playsInline
@@ -1426,6 +1433,7 @@ const AnalysisViewer = () => {
                                   key={vidIndex}
                                   src={url}
                                   autoPlayOnVisible
+                                  loadImmediately={pageLoaded}
                                   loop
                                   muted
                                   playsInline
@@ -1540,13 +1548,13 @@ const AnalysisViewer = () => {
                                 <LazyVideo
                                   key={vidIndex}
                                   src={url}
-                                  loadImmediately
-                                  autoPlay
+                                  loadImmediately={pageLoaded}
+                                  autoPlayOnVisible
                                   loop
                                   muted
                                   playsInline
-                                  className="w-full rounded-lg border-2 border-primary block"
-                                  style={{ display: 'block', maxWidth: '100%' }}
+                                  className="rounded-lg shadow-md border-2 border-primary"
+                                  style={{ display: 'block', width: '100%', height: 'auto' }}
                                 />
                               ))}
                             </div>
