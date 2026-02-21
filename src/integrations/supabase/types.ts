@@ -1277,6 +1277,7 @@ export type Database = {
           home_team: string
           id: string
           match_date: string
+          match_time: string | null
           updated_at: string
           venue: string | null
         }
@@ -1289,6 +1290,7 @@ export type Database = {
           home_team: string
           id?: string
           match_date: string
+          match_time?: string | null
           updated_at?: string
           venue?: string | null
         }
@@ -1301,6 +1303,7 @@ export type Database = {
           home_team?: string
           id?: string
           match_date?: string
+          match_time?: string | null
           updated_at?: string
           venue?: string | null
         }

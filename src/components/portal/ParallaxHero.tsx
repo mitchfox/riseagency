@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
+import { createAnalysisSlug } from "@/lib/urlHelpers";
 
 interface ParallaxHeroProps {
   imageUrl: string | null;
@@ -8,10 +12,11 @@ interface ParallaxHeroProps {
   playerName: string;
   clubName?: string;
   position?: string;
-  nextFixture?: { home_team: string; away_team: string; match_date: string; venue?: string } | null;
+  nextFixture?: { home_team: string; away_team: string; match_date: string; match_time?: string | null; venue?: string } | null;
+  preMatchAnalysis?: { id: string; home_team: string; away_team: string } | null;
 }
 
-export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName, clubName, position, nextFixture }: ParallaxHeroProps) => {
+export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName, clubName, position, nextFixture, preMatchAnalysis }: ParallaxHeroProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -59,7 +64,15 @@ export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName
 
   const countdown = useMemo(() => {
     if (!nextFixture) return null;
-    const target = new Date(nextFixture.match_date);
+    // Build target date+time
+    let target: Date;
+    if (nextFixture.match_time) {
+      const [hours, mins] = nextFixture.match_time.split(":").map(Number);
+      target = new Date(nextFixture.match_date);
+      target.setHours(hours || 0, mins || 0, 0, 0);
+    } else {
+      target = new Date(nextFixture.match_date);
+    }
     const diff = target.getTime() - now.getTime();
     if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, passed: true };
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -124,25 +137,54 @@ export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName
           <div className="mt-2">
             <p className="text-[10px] text-white/60 mb-1">
               {nextFixture.home_team} vs {nextFixture.away_team}
+              {nextFixture.match_time && <span className="ml-1">· {nextFixture.match_time}</span>}
             </p>
-            <div className="flex gap-2">
-              {units.map(unit => (
-                <div key={unit.label} className="flex flex-col items-center">
-                  <div className="bg-black/70 border border-primary/30 rounded px-2 py-1 min-w-[36px]">
-                    <span className="text-lg md:text-xl font-bold text-primary tabular-nums">
-                      {String(unit.value).padStart(2, "0")}
-                    </span>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-2">
+                {units.map(unit => (
+                  <div key={unit.label} className="flex flex-col items-center">
+                    <div className="bg-black/70 border border-primary/30 rounded px-2 py-1 min-w-[36px]">
+                      <span className="text-lg md:text-xl font-bold text-primary tabular-nums">
+                        {String(unit.value).padStart(2, "0")}
+                      </span>
+                    </div>
+                    <span className="text-[8px] text-white/50 mt-0.5 font-medium">{unit.label}</span>
                   </div>
-                  <span className="text-[8px] text-white/50 mt-0.5 font-medium">{unit.label}</span>
-                </div>
-              ))}
+                ))}
+              </div>
+              {preMatchAnalysis && (
+                <PreMatchButton analysis={preMatchAnalysis} />
+              )}
             </div>
           </div>
         )}
         {countdown?.passed && nextFixture && (
-          <p className="text-primary font-bold text-sm mt-2">Match day!</p>
+          <div className="flex items-center gap-2 mt-2">
+            <p className="text-primary font-bold text-sm">Match day!</p>
+            {preMatchAnalysis && (
+              <PreMatchButton analysis={preMatchAnalysis} />
+            )}
+          </div>
         )}
       </div>
     </div>
+  );
+};
+
+const PreMatchButton = ({ analysis }: { analysis: { id: string; home_team: string; away_team: string } }) => {
+  const navigate = useNavigate();
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-8 px-3 bg-black/70 text-white border border-primary/40 hover:bg-primary hover:text-black rounded font-bold text-[10px] flex items-center gap-1"
+      onClick={() => {
+        const slug = createAnalysisSlug(analysis.home_team, analysis.away_team, analysis.id);
+        navigate(slug);
+      }}
+    >
+      <Eye className="h-3 w-3" />
+      Pre-Match
+    </Button>
   );
 };

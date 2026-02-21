@@ -106,6 +106,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
     home_score: null as number | null,
     away_score: null as number | null,
     match_date: "",
+    match_time: "",
     competition: "",
     venue: "",
   });
@@ -333,6 +334,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
           home_score: null,
           away_score: null,
           match_date: "",
+          match_time: "",
           competition: "",
           venue: "",
         });
@@ -1017,15 +1019,28 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
                   </div>
                 </div>
 
-                <div>
-                  <Label>Match Date</Label>
-                  <Input
-                    type="date"
-                    value={manualFixture.match_date}
-                    onChange={(e) =>
-                      setManualFixture({ ...manualFixture, match_date: e.target.value })
-                    }
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Match Date</Label>
+                    <Input
+                      type="date"
+                      value={manualFixture.match_date}
+                      onChange={(e) =>
+                        setManualFixture({ ...manualFixture, match_date: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Kick-off Time</Label>
+                    <Input
+                      type="time"
+                      value={manualFixture.match_time}
+                      onChange={(e) =>
+                        setManualFixture({ ...manualFixture, match_time: e.target.value })
+                      }
+                      placeholder="HH:MM"
+                    />
+                  </div>
                 </div>
 
                 <div>

@@ -92,6 +92,7 @@ import { StrengthPowerSpeedSection } from "@/components/staff/programming/Streng
 import { NutritionSection } from "@/components/staff/programming/NutritionSection";
 import { MessagingCaseStudies } from "@/components/staff/MessagingCaseStudies";
 import { PortalManagement } from "@/components/staff/PortalManagement";
+import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTheme } from "next-themes";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
@@ -152,7 +153,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | '__grid_picker__' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -1170,10 +1171,10 @@ const Staff = () => {
                     </>
                   )}
 
-                  {/* Add tab button — navigates to overview */}
+                  {/* Add tab button — opens section grid picker */}
                   <button
                     className="flex items-center justify-center w-7 h-7 rounded-full border border-dashed border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40 shrink-0 transition-colors"
-                    onClick={() => addSectionAsTab('overview')}
+                    onClick={() => setExpandedSection('__grid_picker__' as any)}
                     title="Open new tab"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -1614,6 +1615,14 @@ const Staff = () => {
                 </CardContent>
               </Card>
             </div>
+          ) : expandedSection === '__grid_picker__' ? (
+            <SectionGridPicker
+              categories={categories}
+              onSelect={(sectionId, categoryId) => {
+                addSectionAsTab(sectionId);
+                setExpandedCategory(categoryId);
+              }}
+            />
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               <div className="text-center">
