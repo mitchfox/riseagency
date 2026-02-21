@@ -83,6 +83,18 @@ const SECTION_PREVIEWS: Record<string, string> = {
   smsnotifications: "SMS notification management",
 };
 
+// Colour palette for section preview cards - cycles through these
+const PREVIEW_GRADIENTS = [
+  "from-blue-600/30 to-blue-900/50",
+  "from-emerald-600/30 to-emerald-900/50",
+  "from-violet-600/30 to-violet-900/50",
+  "from-amber-600/30 to-amber-900/50",
+  "from-rose-600/30 to-rose-900/50",
+  "from-cyan-600/30 to-cyan-900/50",
+  "from-indigo-600/30 to-indigo-900/50",
+  "from-orange-600/30 to-orange-900/50",
+];
+
 export const SectionGridPicker = ({ categories, onSelect }: SectionGridPickerProps) => {
   const [search, setSearch] = useState("");
 
@@ -100,6 +112,8 @@ export const SectionGridPicker = ({ categories, onSelect }: SectionGridPickerPro
       }))
       .filter(cat => cat.sections.length > 0);
   }, [categories, search]);
+
+  let globalIdx = 0;
 
   return (
     <div className="h-full flex flex-col">
@@ -138,6 +152,8 @@ export const SectionGridPicker = ({ categories, onSelect }: SectionGridPickerPro
                   {realSections.map((section, idx) => {
                     const Icon = section.icon || CatIcon;
                     const preview = SECTION_PREVIEWS[section.id] || "";
+                    const gradientClass = PREVIEW_GRADIENTS[globalIdx % PREVIEW_GRADIENTS.length];
+                    globalIdx++;
                     return (
                       <motion.button
                         key={section.id}
@@ -145,18 +161,27 @@ export const SectionGridPicker = ({ categories, onSelect }: SectionGridPickerPro
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.02 }}
                         onClick={() => onSelect(section.id, cat.id)}
-                        className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border/50 bg-card hover:border-primary hover:bg-primary/5 transition-all text-center"
+                        className="group relative flex flex-col rounded-xl border border-border/50 bg-card hover:border-primary hover:shadow-lg hover:shadow-primary/10 transition-all text-center overflow-hidden"
                       >
-                        {/* Icon container with glossy effect */}
-                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center group-hover:from-primary/30 group-hover:to-primary/10 transition-all">
-                          <Icon className="w-5 h-5 text-primary" />
+                        {/* Preview area with gradient and large icon */}
+                        <div className={`relative w-full h-24 bg-gradient-to-br ${gradientClass} flex items-center justify-center`}>
+                          {/* Decorative pattern */}
+                          <div className="absolute inset-0 opacity-10">
+                            <div className="absolute top-2 right-2 w-8 h-8 border border-white/30 rounded-full" />
+                            <div className="absolute bottom-2 left-2 w-5 h-5 border border-white/20 rounded" />
+                            <div className="absolute top-4 left-4 w-12 h-[1px] bg-white/20 rotate-45" />
+                          </div>
+                          <Icon className="w-10 h-10 text-primary drop-shadow-lg group-hover:scale-110 transition-transform" />
                         </div>
-                        <span className="text-xs font-medium leading-tight">{section.title}</span>
-                        {preview && (
-                          <span className="text-[10px] text-muted-foreground leading-tight line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {preview}
-                          </span>
-                        )}
+                        {/* Label and description */}
+                        <div className="px-3 py-3 flex flex-col gap-1">
+                          <span className="text-xs font-semibold leading-tight">{section.title}</span>
+                          {preview && (
+                            <span className="text-[10px] text-muted-foreground leading-tight line-clamp-2">
+                              {preview}
+                            </span>
+                          )}
+                        </div>
                       </motion.button>
                     );
                   })}

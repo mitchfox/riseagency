@@ -1137,8 +1137,8 @@ const AnalysisViewer = () => {
                                   loop
                                   muted
                                   playsInline
-                                  className="rounded-lg shadow-md border-2 border-primary"
-                                  style={{ display: 'block', width: '100%', height: 'auto' }}
+                                  className="rounded-lg shadow-md border-2 border-primary w-full"
+                                  style={{ display: 'block', width: '100%', height: 'auto', objectFit: 'contain', aspectRatio: '16/9' }}
                                 />
                               ))}
                             </div>
@@ -1437,8 +1437,8 @@ const AnalysisViewer = () => {
                                   loop
                                   muted
                                   playsInline
-                                  className="rounded-lg shadow-md border-2 border-primary"
-                                  style={{ display: 'block', width: '100%', height: 'auto' }}
+                                  className="rounded-lg shadow-md border-2 border-primary w-full"
+                                  style={{ display: 'block', width: '100%', height: 'auto', objectFit: 'contain', aspectRatio: '16/9' }}
                                 />
                               ))}
                             </div>
@@ -1553,8 +1553,8 @@ const AnalysisViewer = () => {
                                   loop
                                   muted
                                   playsInline
-                                  className="rounded-lg shadow-md border-2 border-primary"
-                                  style={{ display: 'block', width: '100%', height: 'auto' }}
+                                  className="rounded-lg shadow-md border-2 border-primary w-full"
+                                  style={{ display: 'block', width: '100%', height: 'auto', objectFit: 'contain', aspectRatio: '16/9' }}
                                 />
                               ))}
                             </div>

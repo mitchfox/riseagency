@@ -37,7 +37,7 @@ export const SequentialLazyVideo = forwardRef<HTMLVideoElement, SequentialLazyVi
       {...props}
       onCanPlay={handleCanPlay}
     >
-      {shouldLoad && <source src={`${src}#t=0.001`} type="video/mp4" />}
+      {shouldLoad && <source src={src} type="video/mp4" />}
       {children}
     </video>
   );
