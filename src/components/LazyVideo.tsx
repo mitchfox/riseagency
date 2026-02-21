@@ -21,9 +21,16 @@ export const LazyVideo = forwardRef<HTMLVideoElement, LazyVideoProps>(({
   const internalRef = useRef<HTMLVideoElement>(null);
   const videoRef = (ref as React.RefObject<HTMLVideoElement>) || internalRef;
 
+  // React to loadImmediately changing from false to true after mount
+  useEffect(() => {
+    if (loadImmediately) {
+      setIsInView(true);
+    }
+  }, [loadImmediately]);
+
   // Lazy load observer - only load source when in view (skip if loadImmediately)
   useEffect(() => {
-    if (loadImmediately || !videoRef.current) return;
+    if (loadImmediately || isInView || !videoRef.current) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -38,8 +45,7 @@ export const LazyVideo = forwardRef<HTMLVideoElement, LazyVideoProps>(({
     observer.observe(videoRef.current);
 
     return () => observer.disconnect();
-  }, [threshold, videoRef, loadImmediately]);
-
+  }, [threshold, videoRef, loadImmediately, isInView]);
   // Autoplay/pause observer - play when visible, pause when not
   useEffect(() => {
     if (!autoPlayOnVisible || !videoRef.current) return;
@@ -73,7 +79,7 @@ export const LazyVideo = forwardRef<HTMLVideoElement, LazyVideoProps>(({
       {...props}
       onCanPlay={handleCanPlay}
     >
-      {isInView && <source src={`${src}#t=0.001`} type="video/mp4" />}
+      {isInView && <source src={src} type="video/mp4" />}
       {children}
     </video>
   );
