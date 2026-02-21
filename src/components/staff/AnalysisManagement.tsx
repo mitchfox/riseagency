@@ -402,6 +402,9 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
   const handleOpenDialog = async (type: AnalysisType, analysis?: Analysis) => {
     setAnalysisType(type);
+    // Set activeView immediately so the editor shows even if async fetches fail
+    setActiveView(type);
+    
     if (analysis) {
       setEditingAnalysis(analysis);
       // Assign stable _id to any points that don't have one
@@ -411,23 +414,28 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       }));
       setFormData({ ...analysis, points: pointsWithIds });
 
-      const { data } = await supabase
-        .from("player_analysis")
-        .select("player_id, id")
-        .eq("analysis_writer_id", analysis.id)
-        .maybeSingle();
+      try {
+        const { data } = await supabase
+          .from("player_analysis")
+          .select("player_id, id")
+          .eq("analysis_writer_id", analysis.id)
+          .maybeSingle();
 
-      if (data) {
-        setSelectedPlayerId(data.player_id);
-        setSelectedPerformanceReportId(data.id);
+        if (data) {
+          setSelectedPlayerId(data.player_id);
+          setSelectedPerformanceReportId(data.id);
+        }
+
+        // Load tagged players
+        const { data: tags } = await supabase
+          .from("analysis_player_tags")
+          .select("player_id")
+          .eq("analysis_id", analysis.id);
+        setTaggedPlayerIds((tags || []).map(t => t.player_id));
+      } catch (error) {
+        console.error("Error loading analysis details:", error);
+        toast.error("Some analysis details could not be loaded");
       }
-
-      // Load tagged players
-      const { data: tags } = await supabase
-        .from("analysis_player_tags")
-        .select("player_id")
-        .eq("analysis_id", analysis.id);
-      setTaggedPlayerIds((tags || []).map(t => t.player_id));
     } else {
       setEditingAnalysis(null);
       setFormData({ analysis_type: type, points: [], matchups: [], starting_xi: [] });
@@ -435,8 +443,6 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       setSelectedPerformanceReportId("none");
       setTaggedPlayerIds([]);
     }
-
-    setActiveView(type);
   };
 
   const handleCloseDialog = () => {

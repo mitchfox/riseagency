@@ -329,10 +329,9 @@ const Staff = () => {
   const addSectionAsTab = (section: string) => {
     try {
       const tabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
-      if (!tabs.includes(section)) {
-        const updated = [...tabs, section].slice(-12);
-        localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
-      }
+      // Allow duplicate section tabs
+      const updated = [...tabs, section].slice(-12);
+      localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
     } catch {}
     handleSectionToggle(section);
   };
@@ -1521,7 +1520,15 @@ const Staff = () => {
         <main className={`flex-1 overflow-y-auto scrollbar-thin relative z-10 transition-all duration-300 pt-20 ${
           sidebarCollapsed ? 'ml-0' : 'ml-14 md:ml-24'
         } ${isMobile ? 'pb-[60px]' : ''}`}>
-          {expandedSection ? (
+          {expandedSection === '__grid_picker__' ? (
+            <SectionGridPicker
+              categories={categories}
+              onSelect={(sectionId, categoryId) => {
+                addSectionAsTab(sectionId);
+                setExpandedCategory(categoryId);
+              }}
+            />
+          ) : expandedSection ? (
             <div className="container mx-auto px-3 md:px-6 py-4 md:py-6">
               {/* Breadcrumb */}
               {(() => {
@@ -1615,14 +1622,6 @@ const Staff = () => {
                 </CardContent>
               </Card>
             </div>
-          ) : expandedSection === '__grid_picker__' ? (
-            <SectionGridPicker
-              categories={categories}
-              onSelect={(sectionId, categoryId) => {
-                addSectionAsTab(sectionId);
-                setExpandedCategory(categoryId);
-              }}
-            />
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               <div className="text-center">
