@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors, PenLine } from "lucide-react";
+import { AudioRecorder } from "./AudioRecorder";
 import {
   Collapsible,
   CollapsibleContent,
@@ -51,6 +52,7 @@ interface Point {
   images: string[];
   video_url?: string;
   video_urls?: string[];
+  audio_url?: string;
 }
 
 interface PerformanceReportAction {
@@ -358,6 +360,19 @@ const SortablePointCard = ({
               />
             </div>
           </>
+        )}
+
+        {/* Audio Recording */}
+        {analysisType !== "concept" && (
+          <div>
+            <Label>Audio Commentary (Optional)</Label>
+            <div className="mt-1">
+              <AudioRecorder
+                audioUrl={point.audio_url}
+                onAudioChange={(url) => updatePoint(index, "audio_url" as keyof Point, url)}
+              />
+            </div>
+          </div>
         )}
 
         <div>
