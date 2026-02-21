@@ -1515,31 +1515,31 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
   const renderAnalysisList = (type: AnalysisType) => {
     return analyses.filter(a => a.analysis_type === type).map((analysis) => (
-      <Card key={analysis.id} className="p-4">
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <h3 className="font-semibold">
+      <Card key={analysis.id} className="p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm sm:text-base truncate">
               {analysis.title || `${analysis.home_team} vs ${analysis.away_team}`}
             </h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               {new Date(analysis.created_at).toLocaleDateString()}
             </p>
+            {linkedPlayers[analysis.id] && linkedPlayers[analysis.id].length > 0 && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                <Users className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">{linkedPlayers[analysis.id].map(p => p.playerName).join(', ')}</span>
+              </div>
+            )}
           </div>
-          {linkedPlayers[analysis.id] && linkedPlayers[analysis.id].length > 0 && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mr-2">
-              <Users className="w-3 h-3" />
-              {linkedPlayers[analysis.id].map(p => p.playerName).join(', ')}
-            </div>
-          )}
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => navigate(createAnalysisSlug(analysis.home_team, analysis.away_team, analysis.id))}>
+          <div className="flex gap-1 flex-shrink-0">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => navigate(createAnalysisSlug(analysis.home_team, analysis.away_team, analysis.id))}>
               <Eye className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(type, analysis)}>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleOpenDialog(type, analysis)}>
               <Pencil className="w-4 h-4" />
             </Button>
             {isAdmin && (
-              <Button variant="ghost" size="sm" onClick={() => handleDelete(analysis.id)}>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(analysis.id)}>
                 <Trash2 className="w-4 h-4" />
               </Button>
             )}
