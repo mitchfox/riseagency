@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { HoverText } from "@/components/HoverText";
 import { LazyVideo } from "@/components/LazyVideo";
+import { AudioPlaybackButton } from "@/components/AudioPlaybackButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1043,36 +1044,38 @@ const AnalysisViewer = () => {
 
                   {analysis.selected_scheme && (
                     <TextReveal delay={0.2}>
-                      <div className="relative rounded-lg min-h-[400px] md:min-h-[600px] border-4 border-primary shadow-xl overflow-hidden bg-gradient-to-b from-green-700 via-green-800 to-green-900">
-                        {/* Field markings */}
-                        <div className="absolute inset-8 border-2 border-white/30 rounded-lg"></div>
-                        <div className="absolute inset-x-8 top-1/2 h-0.5 bg-white/30"></div>
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 border-2 border-white/30 rounded-full"></div>
-                        <div className="absolute left-1/2 -translate-x-1/2 top-8 w-48 h-24 border-2 border-white/30 border-t-0"></div>
-                        <div className="absolute left-1/2 -translate-x-1/2 bottom-8 w-48 h-24 border-2 border-white/30 border-b-0"></div>
+                      <div className="relative rounded-lg min-h-[500px] md:min-h-[600px] border-4 border-primary shadow-xl overflow-hidden bg-gradient-to-b from-green-700 via-green-800 to-green-900">
+                        {/* Field markings - responsive */}
+                        <div className="absolute inset-4 md:inset-8 border-2 border-white/30 rounded-lg"></div>
+                        <div className="absolute inset-x-4 md:inset-x-8 top-1/2 h-0.5 bg-white/30"></div>
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 md:w-20 md:h-20 border-2 border-white/30 rounded-full"></div>
+                        <div className="absolute left-1/2 -translate-x-1/2 top-4 md:top-8 w-32 md:w-48 h-16 md:h-24 border-2 border-white/30 border-t-0"></div>
+                        <div className="absolute left-1/2 -translate-x-1/2 bottom-4 md:bottom-8 w-32 md:w-48 h-16 md:h-24 border-2 border-white/30 border-b-0"></div>
 
-                        <div className="text-white text-center py-4 text-2xl font-bebas tracking-wider">
+                        <div className="text-white text-center py-3 md:py-4 text-xl md:text-2xl font-bebas tracking-wider">
                           {analysis.selected_scheme}
                         </div>
 
                         {analysis.starting_xi && analysis.starting_xi.length > 0 && (
-                          <div className="absolute inset-0 p-8">
+                          <div className="absolute inset-0 p-4 md:p-8">
                             {analysis.starting_xi.map((player: any, index: number) => (
                               <div
                                 key={index}
-                                className="absolute flex flex-col items-center gap-1"
+                                className="absolute flex flex-col items-center gap-0.5 md:gap-1"
                                 style={{
                                   left: `${player.x}%`,
                                   top: `${player.y}%`,
                                   transform: 'translate(-50%, -50%)'
                                 }}
                               >
-                                <PlayerKit
-                                  primaryColor={analysis.kit_primary_color || '#FFD700'}
-                                  secondaryColor={analysis.kit_secondary_color || '#000000'}
-                                  number={player.shirt_number || player.number || ''}
-                                />
-                                <div className="bg-black/80 text-white px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap">
+                                <div className="scale-75 md:scale-100">
+                                  <PlayerKit
+                                    primaryColor={analysis.kit_primary_color || '#FFD700'}
+                                    secondaryColor={analysis.kit_secondary_color || '#000000'}
+                                    number={player.shirt_number || player.number || ''}
+                                  />
+                                </div>
+                                <div className="bg-black/80 text-white px-1.5 md:px-2 py-0.5 rounded text-[9px] md:text-xs font-bold whitespace-nowrap max-w-[60px] md:max-w-none truncate">
                                   {player.surname || player.position}
                                 </div>
                               </div>
@@ -1104,6 +1107,11 @@ const AnalysisViewer = () => {
                   return (
                     <ExpandableSection key={index} title={point.title} id={`section-point-${index}`} flipBackground={shouldFlip}>
                       <div className="space-y-4 md:space-y-6">
+                        {point.audio_url && (
+                          <div className="flex justify-center">
+                            <AudioPlaybackButton audioUrl={point.audio_url} />
+                          </div>
+                        )}
                         {point.paragraph_1 && (
                           <TextReveal>
                             <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
@@ -1113,7 +1121,7 @@ const AnalysisViewer = () => {
                         )}
                         {point.images && point.images.length > 0 && (
                           <TextReveal delay={0.15}>
-                            <div className="flex flex-col items-center gap-4">
+                            <div className="flex flex-col gap-4">
                               {point.images.map((img: string, imgIndex: number) => (
                                 <img
                                   key={imgIndex}
@@ -1127,7 +1135,7 @@ const AnalysisViewer = () => {
                         )}
                         {(point.video_urls?.length > 0 || point.video_url) && (
                           <TextReveal delay={0.2}>
-                            <div className="flex flex-col gap-4 w-full">
+                            <div className="flex flex-col gap-4 -mx-4 md:-mx-6">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
                                 <LazyVideo
                                   key={vidIndex}
@@ -1137,8 +1145,8 @@ const AnalysisViewer = () => {
                                   loop
                                   muted
                                   playsInline
-                                  className="rounded-lg shadow-md border-2 border-primary w-full"
-                                  style={{ display: 'block', width: '100%', height: 'auto', objectFit: 'contain', aspectRatio: '16/9' }}
+                                  className="w-full"
+                                  style={{ display: 'block', width: '100%', height: 'auto' }}
                                 />
                               ))}
                             </div>
@@ -1409,6 +1417,11 @@ const AnalysisViewer = () => {
                   return (
                     <ExpandableSection key={index} title={point.title} id={`section-point-${index}`} flipBackground={shouldFlip}>
                       <div className="space-y-4 md:space-y-6">
+                        {point.audio_url && (
+                          <div className="flex justify-center">
+                            <AudioPlaybackButton audioUrl={point.audio_url} />
+                          </div>
+                        )}
                         {point.paragraph_1 && (
                           <TextReveal>
                             <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
@@ -1418,7 +1431,7 @@ const AnalysisViewer = () => {
                         )}
                         {point.images && point.images.length > 0 && (
                           <TextReveal delay={0.15}>
-                            <div className="flex flex-col items-center gap-4">
+                            <div className="flex flex-col gap-4">
                               {point.images.map((img: string, imgIndex: number) => (
                                 <img key={imgIndex} src={img} alt={`${point.title} - Image ${imgIndex + 1}`} className="w-full rounded-lg shadow-md border-2 border-primary" />
                               ))}
@@ -1427,7 +1440,7 @@ const AnalysisViewer = () => {
                         )}
                         {(point.video_urls?.length > 0 || point.video_url) && (
                           <TextReveal delay={0.2}>
-                            <div className="flex flex-col gap-4 w-full">
+                            <div className="flex flex-col gap-4 -mx-4 md:-mx-6">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
                                 <LazyVideo
                                   key={vidIndex}
@@ -1437,8 +1450,8 @@ const AnalysisViewer = () => {
                                   loop
                                   muted
                                   playsInline
-                                  className="rounded-lg shadow-md border-2 border-primary w-full"
-                                  style={{ display: 'block', width: '100%', height: 'auto', objectFit: 'contain', aspectRatio: '16/9' }}
+                                  className="w-full"
+                                  style={{ display: 'block', width: '100%', height: 'auto' }}
                                 />
                               ))}
                             </div>
@@ -1543,7 +1556,7 @@ const AnalysisViewer = () => {
                         )}
                         {(point.video_urls?.length > 0 || point.video_url) && (
                           <TextReveal delay={0.2}>
-                            <div className="flex flex-col gap-4 w-full">
+                            <div className="flex flex-col gap-4 -mx-4 md:-mx-6">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
                                 <LazyVideo
                                   key={vidIndex}
@@ -1553,8 +1566,8 @@ const AnalysisViewer = () => {
                                   loop
                                   muted
                                   playsInline
-                                  className="rounded-lg shadow-md border-2 border-primary w-full"
-                                  style={{ display: 'block', width: '100%', height: 'auto', objectFit: 'contain', aspectRatio: '16/9' }}
+                                  className="w-full"
+                                  style={{ display: 'block', width: '100%', height: 'auto' }}
                                 />
                               ))}
                             </div>
