@@ -136,7 +136,7 @@ export const SectionGridPicker = ({ categories, onSelect }: SectionGridPickerPro
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {realSections.map((section, idx) => {
-                    const Icon = section.icon;
+                    const Icon = section.icon || CatIcon;
                     const preview = SECTION_PREVIEWS[section.id] || "";
                     return (
                       <motion.button

@@ -283,13 +283,24 @@ export const AnalysisMatchDetails = ({
 
         {analysisType === "pre-match" ? (
           <>
-            <div>
-              <Label>Match Date</Label>
-              <Input
-                type="date"
-                value={formData.match_date || ""}
-                onChange={(e) => setFormData({ ...formData, match_date: e.target.value })}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Match Date</Label>
+                <Input
+                  type="date"
+                  value={formData.match_date || ""}
+                  onChange={(e) => setFormData({ ...formData, match_date: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Kick-off Time</Label>
+                <Input
+                  type="time"
+                  value={formData.match_time || ""}
+                  onChange={(e) => setFormData({ ...formData, match_time: e.target.value })}
+                  placeholder="HH:MM"
+                />
+              </div>
             </div>
 
             {/* Teams on one line */}

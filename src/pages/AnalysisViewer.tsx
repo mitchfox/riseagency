@@ -989,13 +989,13 @@ const AnalysisViewer = () => {
 
             {/* Key Matchups - Section 3 (flip) */}
             {analysis.matchups && analysis.matchups.length > 0 && (
-              <ExpandableSection title="Potential Matchup(s)" id={SECTION_IDS.matchups} transparentContent flipBackground={true}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <ExpandableSection title="Potential Matchup(s)" id={SECTION_IDS.matchups} transparentContent flipBackground={true}>
+                <div className="space-y-4">
                   {analysis.matchups.map((matchup: any, index: number) => (
                     <TextReveal key={index} delay={index * 0.15}>
                       <div className="relative rounded-xl overflow-hidden bg-card border-2 border-primary shadow-lg">
                         <div className="relative flex">
-                          <div className="w-28 md:w-36 flex-shrink-0 self-stretch">
+                          <div className="w-28 md:w-40 flex-shrink-0 self-stretch">
                             {matchup.image_url ? (
                               <img src={matchup.image_url} alt={matchup.name} className="w-full h-full object-cover object-top" style={{ minHeight: '100%' }} />
                             ) : (
@@ -1011,7 +1011,7 @@ const AnalysisViewer = () => {
                             )}
                             {matchup.notes && (
                               <div className="mt-3 pt-3 border-t border-primary/40">
-                                <p className="text-sm md:text-base text-white/90 leading-relaxed break-words">{matchup.notes}</p>
+                                <p className="text-sm md:text-base text-white/90 leading-relaxed break-words whitespace-pre-wrap">{matchup.notes}</p>
                               </div>
                             )}
                           </div>
@@ -1126,13 +1126,12 @@ const AnalysisViewer = () => {
                                 <LazyVideo
                                   key={vidIndex}
                                   src={url}
-                                  loadImmediately
-                                  autoPlay
+                                  autoPlayOnVisible
                                   loop
                                   muted
                                   playsInline
-                                  className="w-full rounded-lg shadow-md border-2 border-primary block"
-                                  style={{ display: 'block', maxWidth: '100%' }}
+                                  className="rounded-lg shadow-md border-2 border-primary"
+                                  style={{ display: 'block', width: '100%', height: 'auto' }}
                                 />
                               ))}
                             </div>
@@ -1426,13 +1425,12 @@ const AnalysisViewer = () => {
                                 <LazyVideo
                                   key={vidIndex}
                                   src={url}
-                                  loadImmediately
-                                  autoPlay
+                                  autoPlayOnVisible
                                   loop
                                   muted
                                   playsInline
-                                  className="w-full rounded-lg shadow-md border-2 border-primary block"
-                                  style={{ display: 'block', maxWidth: '100%' }}
+                                  className="rounded-lg shadow-md border-2 border-primary"
+                                  style={{ display: 'block', width: '100%', height: 'auto' }}
                                 />
                               ))}
                             </div>
