@@ -1,93 +1,65 @@
 
 
-# Client-Side Clip Extraction, Data Repair, and Portal Playback Fix
+## Plan: Fix Grid Picker, Video Loading, Video Width, and Staff Navigation
 
-## The Problem
+### Issue 1: Grid Picker Shows Nothing on New Tab
 
-1. The `extract-clip` edge function has **never worked** (auth uses non-existent `getClaims`), so clips fall back to `#t=` fragment URLs on the full source video. The portal plays the entire file, not just the clip.
-2. Even if it did work, it copies the **entire source video** (500MB+) to `clips/` -- wasteful and defeats the purpose.
-3. Existing Kristiansund, Barcelona, and Bilbao report actions all point to full source video URLs with `#t=` fragments (or no fragments at all for some Barcelona actions).
+**Root cause**: The `SectionGridPicker` renders correctly at line 1523, but when `expandedSection` is `__grid_picker__`, the content renders *inside* the `<main>` wrapper which also contains the `hidden`-class sections (lines 1556-1559). These `hidden` sections (VideoAnalysis, AnnotationProjects, PlayerManagement, AnalysisManagement) are always mounted and may be interfering with layout. However, the more likely issue is that the grid picker content is rendering but the `categories` array passed to it may contain sections with no valid non-group-label entries, or the component is rendering but scrolled out of view.
 
-## The Fix
+**Actual root cause found**: Looking more carefully, the grid picker IS inside the conditional branch at line 1523. But the `hidden` divs at lines 1556-1559 are *also* rendered inside the same `expandedSection ? (...)` branch at line 1531. When `expandedSection === '__grid_picker__'`, the code takes the first branch (line 1523) and renders `SectionGridPicker` -- so those hidden divs are NOT rendered. This means the grid picker should work. The issue is likely that preview images were requested but never added. The current grid only shows icons and text descriptions.
 
-### 1. Client-side clip trimming (replace the edge function approach)
+**Fix**: Add actual preview images/screenshots to each grid item. Since we don't have real screenshots, we'll generate visual preview cards using coloured gradients and icons as placeholder previews, making the grid visually rich. Each card will show a larger, more prominent visual representation of the section.
 
-Replace `extractClipFile` in `VideoAnalysis.tsx` with a client-side function that uses the **same canvas + MediaRecorder pattern** already working in `VideoTrimmerDialog.tsx`:
+### Issue 2: Videos Not Loading (Waiting Minutes)
 
-- Create an offscreen `<video>` element, seek to `clip.start`
-- Use a `<canvas>` + `MediaRecorder` to capture frames from `start` to `end`
-- Capture audio via `AudioContext.createMediaElementSource`
-- Result: a small webm blob (2-5MB for a 10s clip vs 500MB+ for the full file)
-- Upload to `analysis-videos/clips/{clipId}.webm`
-- Store the clean public URL (no `#t=` fragment needed) in `performance_report_actions.video_url`
+**Root cause**: The `LazyVideo` component uses `loadImmediately={pageLoaded}` where `pageLoaded` becomes `true` after 1.5s. BUT the videos are inside collapsed `ExpandableSection` components. When collapsed, the content is rendered with `height: 0` and `overflow: hidden`. The `IntersectionObserver` in `LazyVideo` cannot detect these as "in view" because they have zero height. When `loadImmediately` is `true`, it sets `isInView` to `true` in the initial state -- but `useState(loadImmediately)` only runs once on mount. If the component mounts before `pageLoaded` is `true`, it will stay `false` forever because the `useState` initial value doesn't update on re-renders.
 
-This runs entirely in the browser. No edge function needed for clip extraction.
+This is the critical bug: `useState(loadImmediately)` captures the initial value only. When `pageLoaded` changes from `false` to `true` after 1.5s, already-mounted `LazyVideo` components won't update their `isInView` state.
 
-### 2. Portal playback fix
+**Fix**: Add a `useEffect` in `LazyVideo` that watches `loadImmediately` and sets `isInView(true)` when it becomes `true`. This ensures videos start loading 1.5s after page load regardless of visibility.
 
-In `AnalysisVideoReports.tsx`, since clips are now independent small files, the video simply plays the whole file. Add the `loop` attribute so clips repeat. For any legacy `#t=` URLs that haven't been migrated yet, parse the fragment and enforce boundaries via `onTimeUpdate` + `onLoadedMetadata` as a fallback.
+### Issue 3: Videos Not Filling Grey Background Width
 
-### 3. Data repair for existing reports
+**Root cause**: The video element has `style={{ width: '100%', height: 'auto' }}` but `.webm` clips extracted via `MediaRecorder` may not have proper dimension metadata. When a video element can't determine intrinsic dimensions, `height: auto` may not work correctly, causing the browser to use a default size. The video also has `display: block` which is correct.
 
-After deploying the code changes, run the client-side extraction on all existing report actions for:
-- **Loris Mettler vs Kristiansund** (analysis `2b85f7ef`): 20 actions across 2 source videos
-- **Cristiano Ronaldo vs FC Barcelona** (analyses `9bf728f5` and `0d632a2b`): ~30 actions from 1 source video
-- **Cristiano Ronaldo vs Athletic de Bilbao** (analysis `a0c73ad7`): actions from its source video
+The real issue is the `#t=0.001` fragment appended to the source URL. Some browsers treat this as a different resource and may have issues with dimension reporting. Additionally, some `.webm` files from `MediaRecorder` lack width/height metadata entirely.
 
-Since I cannot run client-side trimming from here, I will add a **one-off "Re-extract clips" button** visible to staff on the performance report editor. Clicking it will loop through all actions with non-`clips/` URLs, trim each one client-side, upload to `clips/`, and update the database. Once run on these reports, the button can be removed in a follow-up.
+**Fix**: 
+- Remove the `#t=0.001` fragment (it was for showing a thumbnail frame but causes issues)
+- Add `object-fit: contain` as fallback
+- Set `width: 100%` directly on the video via both className and style to ensure it fills the `ContentCard` container
+- Use `aspect-ratio` CSS as fallback when video dimensions aren't available
 
-### 4. Cleanup safety
+### Issue 4: Staff View/Edit Analysis Not Loading
 
-The existing `cleanup_expired_video_analyses` database function already skips files in the `clips/` prefix (updated in the previous migration). Source videos with `auto_delete_at` will still be cleaned up as normal. Clips in `clips/` prefix persist forever.
+**Root cause**: Likely a Lovable preview issue as the user suspects, but worth ensuring the navigation logic is robust. The `handleOpenDialog` in `AnalysisManagement` should use `setActiveView` immediately.
 
-### 5. Delete the broken edge function
-
-Remove `supabase/functions/extract-clip/index.ts` and its config entry. It is no longer needed.
+**Fix**: No code change needed if it's a preview issue, but we'll add a safety `setTimeout` fallback and ensure the state transitions are immediate.
 
 ---
 
-## Technical Details
+### Technical Changes
 
-### Files to modify
+**File: `src/components/LazyVideo.tsx`**
+- Add `useEffect` watching `loadImmediately` prop to reactively set `isInView = true` when it changes
+- Remove `#t=0.001` from source URL to fix dimension reporting issues
 
-| File | Changes |
-|------|---------|
-| `src/components/staff/coaching/VideoAnalysis.tsx` | Replace `extractClipFile` with client-side canvas+MediaRecorder trim. Upload blob to `clips/{clipId}.webm`. All three attachment functions (`handleExportToReport`, `handleAttachClipToAction`, `handleInsertNewActionWithClip`) use this new function. Add a "Re-extract clips" utility for migrating existing data. |
-| `src/components/portal/AnalysisVideoReports.tsx` | Add `loop` attribute to video player. Add fallback `#t=` boundary enforcement for legacy URLs. |
-| `supabase/functions/extract-clip/index.ts` | Delete this file |
-| `supabase/config.toml` | Remove `[functions.extract-clip]` entry |
+**File: `src/pages/AnalysisViewer.tsx`**
+- Ensure video containers use `w-full` class on parent divs
+- Remove `items-center` from any flex container wrapping videos (already done but verify)
+- Videos already have `width: '100%'` style -- the `LazyVideo` fix above will make them actually load and render
 
-### Client-side trim function (core logic)
+**File: `src/components/staff/SectionGridPicker.tsx`**
+- Add visual preview cards with coloured gradient backgrounds, larger icons, and descriptive text
+- Make each card more visually prominent with a preview area showing a styled representation of the section
+- Increase card size and add a visual preview zone above the label
 
-```text
-async function trimAndUploadClip(sourceUrl, clipId, start, end):
-  1. Create offscreen <video> with src = sourceUrl (stripped of any #t=)
-  2. Wait for loadedmetadata
-  3. Create <canvas> matching video dimensions
-  4. Seek video to start, wait for seeked event
-  5. Set up MediaRecorder on canvas.captureStream(30)
-  6. Capture audio via AudioContext if available
-  7. Start recording, play video
-  8. On each animationFrame: draw video to canvas
-  9. When currentTime >= end: pause video, stop recorder
-  10. Collect blob chunks into final webm blob
-  11. Upload to supabase storage at clips/{clipId}.webm
-  12. Return public URL (clean, no fragment)
-```
+**File: `src/pages/Staff.tsx`**  
+- No changes needed for the grid picker logic (it works, the issue is visual content)
 
-### Storage impact
+### Summary of Root Causes
+1. Grid picker renders but has no preview images -- only small icons and hover text
+2. `useState(loadImmediately)` only captures initial value; needs a `useEffect` to react to prop changes  
+3. Video width issue is a consequence of videos not loading (issue 2) plus the `#t=0.001` fragment
+4. Staff navigation is likely a preview environment issue
 
-- 10s clip from a 500MB source: ~2-5MB (webm) instead of 500MB (full copy)
-- Source videos continue their 7-day auto-delete cycle
-- Clips in `clips/` prefix persist indefinitely
-
-### Data migration approach
-
-A temporary "Re-extract all clips" button on the performance report edit dialog will:
-1. Query all actions for that report where `video_url` does NOT contain `/clips/`
-2. For each action, parse the `#t=start,end` from the URL (or use the clip metadata)
-3. Run the client-side trim function
-4. Update the action's `video_url` to the new clean URL
-5. Show progress (e.g. "Extracting clip 3/20...")
-
-This needs to be run manually on the Kristiansund, Barcelona, and Bilbao reports.
