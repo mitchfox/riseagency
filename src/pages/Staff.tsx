@@ -1544,9 +1544,11 @@ const Staff = () => {
               })()}
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
                 <CardContent className="pt-6">
-              {/* Use hidden class for key sections to preserve state, conditional render for others */}
+              {/* Use hidden class for key sections to preserve state (popups, playback, etc.) */}
                   <div className={expandedSection === 'videoanalysis' ? '' : 'hidden'}><VideoAnalysis /></div>
                   <div className={expandedSection === 'annotations' ? '' : 'hidden'}><AnnotationProjects /></div>
+                  <div className={expandedSection === 'players' ? '' : 'hidden'}><PlayerManagement isAdmin={isAdmin} /></div>
+                  <div className={expandedSection === 'analysis' ? '' : 'hidden'}><AnalysisManagement isAdmin={isAdmin} /></div>
                   {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} userId={user?.id} isMarketeer={isMarketeer} />}
                   {expandedSection === 'focusedtasks' && <FocusedTasksSection />}
                   {expandedSection === 'schedule' && (
@@ -1565,7 +1567,6 @@ const Staff = () => {
                   {expandedSection === 'streams' && <StreamsSection />}
                   {expandedSection === 'staffschedules' && <StaffSchedulesManagement />}
                   {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
-                  {expandedSection === 'players' && <PlayerManagement isAdmin={isAdmin} />}
                   {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={isAdmin} />}
                   {expandedSection === 'playerdatabase' && <PlayerDatabaseManagement isAdmin={isAdmin} />}
                   
@@ -1574,7 +1575,6 @@ const Staff = () => {
                   {expandedSection === 'tacticsboard' && <TacticsBoard />}
                   {expandedSection === 'meetings' && <Meetings />}
                   {expandedSection === 'coachingdata' && <CoachingDataSection />}
-                  {expandedSection === 'analysis' && <AnalysisManagement isAdmin={isAdmin} />}
                   {expandedSection === 'marketing' && <MarketingManagement isAdmin={isAdmin} isMarketeer={isMarketeer} />}
                   {expandedSection === 'contentcreator' && <ContentCreator />}
                   {expandedSection === 'salesdeck' && <SalesDeck />}

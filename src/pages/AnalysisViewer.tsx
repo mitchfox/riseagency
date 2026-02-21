@@ -995,15 +995,15 @@ const AnalysisViewer = () => {
                     <TextReveal key={index} delay={index * 0.15}>
                       <div className="relative rounded-xl overflow-hidden bg-card border-2 border-primary shadow-lg">
                         <div className="relative flex">
-                          <div className="w-28 md:w-32 flex-shrink-0 self-stretch">
+                          <div className="w-28 md:w-36 flex-shrink-0 self-stretch">
                             {matchup.image_url ? (
                               <img src={matchup.image_url} alt={matchup.name} className="w-full h-full object-cover object-top" style={{ minHeight: '100%' }} />
                             ) : (
                               <div className="w-full h-full bg-black/40 flex items-center justify-center text-white/50 text-xs min-h-[120px]">No image</div>
                             )}
                           </div>
-                          <div className="flex-1 p-4 md:p-5 flex flex-col justify-center">
-                            <h3 className="font-bebas text-lg md:text-xl uppercase tracking-wide text-white drop-shadow-lg leading-tight">
+                          <div className="flex-1 min-w-0 p-4 md:p-5 flex flex-col justify-center">
+                            <h3 className="font-bebas text-lg md:text-xl uppercase tracking-wide text-white drop-shadow-lg leading-tight break-words">
                               {matchup.name?.toUpperCase()}
                             </h3>
                             {matchup.shirt_number && (
@@ -1011,7 +1011,7 @@ const AnalysisViewer = () => {
                             )}
                             {matchup.notes && (
                               <div className="mt-3 pt-3 border-t border-primary/40">
-                                <p className="text-sm md:text-base text-white/90 leading-relaxed">{matchup.notes}</p>
+                                <p className="text-sm md:text-base text-white/90 leading-relaxed break-words">{matchup.notes}</p>
                               </div>
                             )}
                           </div>
@@ -1121,7 +1121,7 @@ const AnalysisViewer = () => {
                         )}
                         {(point.video_urls?.length > 0 || point.video_url) && (
                           <TextReveal delay={0.2}>
-                            <div className="flex flex-col items-center gap-4">
+                            <div className="flex flex-col gap-4 w-full">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
                                 <LazyVideo
                                   key={vidIndex}
@@ -1131,7 +1131,8 @@ const AnalysisViewer = () => {
                                   loop
                                   muted
                                   playsInline
-                                  className="w-full rounded-lg shadow-md border-2 border-primary"
+                                  className="w-full rounded-lg shadow-md border-2 border-primary block"
+                                  style={{ display: 'block', maxWidth: '100%' }}
                                 />
                               ))}
                             </div>
@@ -1420,7 +1421,7 @@ const AnalysisViewer = () => {
                         )}
                         {(point.video_urls?.length > 0 || point.video_url) && (
                           <TextReveal delay={0.2}>
-                            <div className="flex flex-col items-center gap-4">
+                            <div className="flex flex-col gap-4 w-full">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
                                 <LazyVideo
                                   key={vidIndex}
@@ -1430,7 +1431,8 @@ const AnalysisViewer = () => {
                                   loop
                                   muted
                                   playsInline
-                                  className="w-full rounded-lg shadow-md border-2 border-primary"
+                                  className="w-full rounded-lg shadow-md border-2 border-primary block"
+                                  style={{ display: 'block', maxWidth: '100%' }}
                                 />
                               ))}
                             </div>
@@ -1535,7 +1537,7 @@ const AnalysisViewer = () => {
                         )}
                         {(point.video_urls?.length > 0 || point.video_url) && (
                           <TextReveal delay={0.2}>
-                            <div className="flex flex-col items-center gap-4">
+                            <div className="flex flex-col gap-4 w-full">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
                                 <LazyVideo
                                   key={vidIndex}
@@ -1545,7 +1547,8 @@ const AnalysisViewer = () => {
                                   loop
                                   muted
                                   playsInline
-                                  className="w-full rounded-lg border-2 border-primary"
+                                  className="w-full rounded-lg border-2 border-primary block"
+                                  style={{ display: 'block', maxWidth: '100%' }}
                                 />
                               ))}
                             </div>

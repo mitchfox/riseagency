@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image as ImageIcon, X, Download, FileDown } from "lucide-react";
+import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image as ImageIcon, X, Download, FileDown, Pencil } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
 import { ProgrammingManagement } from "./ProgrammingManagement";
@@ -430,11 +430,19 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const fetchTacticalAnalyses = async () => {
     try {
+      // Fetch analyses linked via player_analysis.analysis_writer_id
       const { data: playerAnalysisLinks, error: linksError } = await supabase
         .from("player_analysis")
         .select("player_id, analysis_writer_id");
 
       if (linksError) throw linksError;
+
+      // Fetch analyses tagged to players via analysis_player_tags
+      const { data: playerTags, error: tagsError } = await supabase
+        .from("analysis_player_tags")
+        .select("player_id, analysis_id");
+
+      if (tagsError) throw tagsError;
 
       const { data: analyses, error: analysesError } = await supabase
         .from("analyses")
@@ -444,17 +452,30 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       if (analysesError) throw analysesError;
 
       const tacticalMap: Record<string, any[]> = {};
+      const addedIds: Record<string, Set<string>> = {};
+
+      const addAnalysis = (playerId: string, analysis: any) => {
+        if (!addedIds[playerId]) addedIds[playerId] = new Set();
+        if (addedIds[playerId].has(analysis.id)) return;
+        addedIds[playerId].add(analysis.id);
+        if (!tacticalMap[playerId]) tacticalMap[playerId] = [];
+        tacticalMap[playerId].push(analysis);
+      };
+
+      // Add from player_analysis links
       playerAnalysisLinks?.forEach(link => {
         if (link.analysis_writer_id) {
           const analysis = analyses?.find(a => a.id === link.analysis_writer_id);
-          if (analysis) {
-            if (!tacticalMap[link.player_id]) {
-              tacticalMap[link.player_id] = [];
-            }
-            tacticalMap[link.player_id].push(analysis);
-          }
+          if (analysis) addAnalysis(link.player_id, analysis);
         }
       });
+
+      // Add from analysis_player_tags
+      playerTags?.forEach(tag => {
+        const analysis = analyses?.find(a => a.id === tag.analysis_id);
+        if (analysis) addAnalysis(tag.player_id, analysis);
+      });
+
       setTacticalAnalyses(tacticalMap);
     } catch (error: any) {
       toast.error("Failed to fetch tactical analyses: " + error.message);
@@ -2155,12 +2176,23 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   <TabsContent value="tactical" className="mt-0">
                     <Card>
                       <CardHeader className="px-3 md:px-6 py-3 md:py-4">
-                        <CardTitle className="hidden md:block text-lg">Tactical Analysis</CardTitle>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="hidden md:block text-lg">Tactical Analysis</CardTitle>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              navigate('/staff?section=analysis');
+                            }}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Create Analysis
+                          </Button>
+                        </div>
                       </CardHeader>
                       <CardContent className="px-3 md:px-6 py-4">
-                        {tacticalAnalyses[selectedPlayerId]?.length > 0 ? (
+                        {tacticalAnalyses[selectedPlayerId!]?.length > 0 ? (
                           <div className="space-y-3">
-                            {tacticalAnalyses[selectedPlayerId].map((analysis) => (
+                            {tacticalAnalyses[selectedPlayerId!].map((analysis) => (
                               <div
                                 key={analysis.id}
                                 className="p-3 md:p-4 border rounded-lg hover:bg-secondary/30 transition-colors"
@@ -2168,8 +2200,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                                   <div className="flex-1 min-w-0">
                                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                                      <span className="text-[10px] md:text-xs px-2 py-1 rounded bg-primary/20 text-primary font-medium whitespace-nowrap">
-                                        {analysis.analysis_type}
+                                      <span className={`text-[10px] md:text-xs px-2 py-1 rounded font-bold uppercase tracking-wider whitespace-nowrap ${
+                                        analysis.analysis_type === 'pre-match' 
+                                          ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
+                                          : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                      }`}>
+                                        {analysis.analysis_type === 'pre-match' ? 'PRE' : 'POST'}
                                       </span>
                                       {analysis.match_date && (
                                         <span className="text-xs md:text-sm text-muted-foreground">
@@ -2189,21 +2225,38 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       </p>
                                     )}
                                   </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => navigate(`/analysis/${analysis.id}`)}
-                                    className="w-full sm:w-auto"
-                                  >
-                                    View
-                                  </Button>
+                                  <div className="flex gap-2 w-full sm:w-auto">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => navigate(`/analysis/${analysis.id}`)}
+                                      className="flex-1 sm:flex-none"
+                                    >
+                                      View
+                                    </Button>
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      onClick={() => {
+                                        navigate(`/staff?section=analysis`);
+                                        // Small delay to let section load, then trigger edit
+                                        setTimeout(() => {
+                                          window.dispatchEvent(new CustomEvent('edit-analysis', { detail: { id: analysis.id, type: analysis.analysis_type } }));
+                                        }, 300);
+                                      }}
+                                      className="flex-1 sm:flex-none"
+                                    >
+                                      <Pencil className="w-3 h-3 mr-1" />
+                                      Edit
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
                             ))}
                           </div>
                         ) : (
                           <p className="text-center text-muted-foreground py-8">
-                            No tactical analysis available yet.
+                            No tactical analysis available yet. Create a pre-match or post-match analysis to get started.
                           </p>
                         )}
                       </CardContent>
