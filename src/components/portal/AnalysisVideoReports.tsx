@@ -10,6 +10,7 @@ import { Play, Pause, SkipBack, SkipForward, X, Maximize, Trash2, Download, Chec
 import { downloadVideo } from "@/lib/videoDownload";
 import { computeVisibleElements } from "@/lib/annotationRenderUtils";
 import { ReadOnlyAnnotationOverlay } from "@/components/portal/ReadOnlyAnnotationOverlay";
+import { toTitleCase } from "@/lib/titleCase";
 
 interface Analysis {
   id: string;
@@ -265,7 +266,7 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
                             selectedActionTypes.includes(type) ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'
                           }`}
                         >
-                          {type}
+                          {toTitleCase(type)}
                         </button>
                       </span>
                     );
@@ -325,7 +326,7 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
                   <div className="absolute top-3 left-3 z-10 bg-black/70 text-white text-sm px-3 py-2 rounded">
                     <div className="flex items-center gap-2 mb-1">
                       <Badge className="bg-primary text-primary-foreground text-xs">{currentClipIndex + 1}/{compilationClips.length}</Badge>
-                      <span className="font-semibold">{currentClip.action_type}</span>
+                      <span className="font-semibold">{toTitleCase(currentClip.action_type)}</span>
                     </div>
                     <p className="text-xs text-white/70">
                       vs {currentClip.opponent} {currentClip.minute != null && `· ${currentClip.minute}'`}
@@ -430,7 +431,7 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
                         />
                         <button className="flex-1 text-left" onClick={() => setCurrentClipIndex(index)}>
                           <span className="font-mono text-xs opacity-60">#{clip.action_number}</span>{' '}
-                          {clip.action_type} · vs {clip.opponent}
+                          {toTitleCase(clip.action_type)} · vs {clip.opponent}
                           {clip.minute != null && <span className="opacity-60"> · {clip.minute}'</span>}
                         </button>
                         <Button variant="ghost" size="icon" className="h-6 w-6 text-white/50 hover:text-destructive"

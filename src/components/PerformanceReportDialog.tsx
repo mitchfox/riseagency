@@ -14,6 +14,7 @@ import { R90FlowChart } from "@/components/report/R90FlowChart";
 import { ActionHeatmap } from "@/components/report/ActionHeatmap";
 import { ChanceCreationFlow } from "@/components/report/ChanceCreationFlow";
 import { RankedActionsPlayer } from "@/components/report/RankedActionsPlayer";
+import { toTitleCase } from "@/lib/titleCase";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -774,7 +775,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                               </button>
                             )}
                           </div>
-                          <div className="font-medium text-xs mt-1 truncate">{action.action_type}</div>
+                          <div className="font-medium text-xs mt-1 truncate">{toTitleCase(action.action_type)}</div>
                           <div className="text-[10px] text-foreground/80 line-clamp-2">{action.action_description}</div>
                           {action.notes && (
                             <div className="text-[9px] text-muted-foreground italic mt-1 pt-1 border-t border-border/50 truncate">
@@ -804,7 +805,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                             <tr key={action.id} className="border-b border-border/50">
                               <td className="py-2 px-2">{action.action_number}</td>
                               <td className="py-2 px-2">{formatMinute(action.minute)}'</td>
-                              <td className="py-2 px-2">{action.action_type}</td>
+                              <td className="py-2 px-2">{toTitleCase(action.action_type)}</td>
                               <td className="py-2 px-2">{action.action_description}</td>
                               <td className="py-2 px-2 text-muted-foreground">{action.notes || "-"}</td>
                               <td className={`py-2 px-2 text-right ${getActionScoreColor(action.action_score)}`}>
