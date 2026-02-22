@@ -35,6 +35,7 @@ interface Clip {
   notes: string;
   created_at: string;
   minute?: string;
+  action_score?: number | null;
 }
 
 interface VideoAnalysisEntry {
@@ -86,6 +87,8 @@ export const VideoAnalysis = () => {
   const [newMatchDate, setNewMatchDate] = useState("");
   const [creating, setCreating] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedBytes, setUploadedBytes] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Annotation form
@@ -215,6 +218,8 @@ export const VideoAnalysis = () => {
   const handleCreate = async () => {
     if (!newTitle || !uploadFile) return;
     setCreating(true);
+    setUploadProgress(0);
+    setUploadedBytes(0);
 
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -223,22 +228,50 @@ export const VideoAnalysis = () => {
       const ext = uploadFile.name.split('.').pop();
       const filePath = `${crypto.randomUUID()}.${ext}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("analysis-videos")
-        .upload(filePath, uploadFile, { cacheControl: '3600', upsert: false });
+      // Use XMLHttpRequest for upload progress tracking
+      const fileSize = uploadFile.size;
+      const publicUrl = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        
+        // Get the Supabase URL and key
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const token = session.session?.access_token || supabaseKey;
+        
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            setUploadedBytes(e.loaded);
+            setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        });
 
-      if (uploadError) throw uploadError;
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const { data: urlData } = supabase.storage
+              .from("analysis-videos")
+              .getPublicUrl(filePath);
+            resolve(urlData.publicUrl);
+          } else {
+            reject(new Error(`Upload failed: ${xhr.statusText}`));
+          }
+        });
 
-      const { data: urlData } = supabase.storage
-        .from("analysis-videos")
-        .getPublicUrl(filePath);
+        xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+
+        xhr.open('POST', `${supabaseUrl}/storage/v1/object/analysis-videos/${filePath}`);
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.setRequestHeader('apikey', supabaseKey);
+        xhr.setRequestHeader('Content-Type', uploadFile.type || 'video/mp4');
+        xhr.setRequestHeader('x-upsert', 'false');
+        xhr.send(uploadFile);
+      });
 
       const autoDeleteAt = new Date();
       autoDeleteAt.setDate(autoDeleteAt.getDate() + 7);
 
       const insertData: any = {
         title: newTitle,
-        video_url: urlData.publicUrl,
+        video_url: publicUrl,
         opponent: newOpponent || null,
         match_date: newMatchDate || null,
         created_by: userId || null,
@@ -267,6 +300,8 @@ export const VideoAnalysis = () => {
         setNewPlayerId("");
         setNewOpponent("");
         setNewMatchDate("");
+        setUploadProgress(0);
+        setUploadedBytes(0);
         toast.success("Video uploaded successfully");
       }
     } catch (err: any) {
@@ -345,6 +380,12 @@ export const VideoAnalysis = () => {
   const handleUpdateClipMinute = async (clipId: string, minute: string) => {
     if (!selectedVideo) return;
     const updatedClips = selectedVideo.clips.map(c => c.id === clipId ? { ...c, minute } : c);
+    await saveClips(updatedClips);
+  };
+
+  const handleUpdateClipScore = async (clipId: string, action_score: number | null) => {
+    if (!selectedVideo) return;
+    const updatedClips = selectedVideo.clips.map(c => c.id === clipId ? { ...c, action_score } : c);
     await saveClips(updatedClips);
   };
 
@@ -796,6 +837,7 @@ export const VideoAnalysis = () => {
           video_analysis_id: selectedVideo.id,
           clip_id: clip.id,
           is_successful: true,
+          action_score: clip.action_score ?? 0,
           ...(annotations ? { clip_annotations: annotations } : {}),
         });
       }
@@ -1374,7 +1416,7 @@ export const VideoAnalysis = () => {
                   </Button>
                 </div>
 
-                <div className="mt-1.5 grid grid-cols-1 md:grid-cols-2 gap-1.5">
+                <div className="mt-1.5 grid grid-cols-1 md:grid-cols-3 gap-1.5">
                   <Input
                     placeholder="Action description..."
                     defaultValue={clip.action_description || ""}
@@ -1394,6 +1436,20 @@ export const VideoAnalysis = () => {
                       }
                     }}
                     className="h-7 text-xs"
+                  />
+                  <Input
+                    placeholder="R90 score (e.g. 0.05)"
+                    type="number"
+                    step="0.00001"
+                    defaultValue={clip.action_score != null ? clip.action_score : ""}
+                    onBlur={e => {
+                      const val = e.target.value === "" ? null : parseFloat(e.target.value);
+                      if (val !== (clip.action_score ?? null)) {
+                        handleUpdateClipScore(clip.id, val);
+                      }
+                    }}
+                    className="h-7 text-xs font-mono"
+                    title="R90 action score"
                   />
                 </div>
               </div>
@@ -1453,9 +1509,13 @@ export const VideoAnalysis = () => {
               {exportDestination === "report" ? (
                 <>
                   <p className="text-sm text-muted-foreground">
-                    <strong>Link:</strong> Makes {selectedVideo.clips.length} clip(s) available for selection on the report.
-                    <br />
-                    <strong>Export:</strong> Adds them directly as actions.
+                    <strong>Link:</strong> Makes this video analysis available for clip selection on the report.
+                    {selectedVideo.clips.length > 0 && (
+                      <>
+                        <br />
+                        <strong>Export:</strong> Adds {selectedVideo.clips.length} clip(s) directly as actions.
+                      </>
+                    )}
                   </p>
                   <Select value={exportPlayerId} onValueChange={handleExportPlayerChange}>
                     <SelectTrigger><SelectValue placeholder="Select player first" /></SelectTrigger>
@@ -1489,7 +1549,7 @@ export const VideoAnalysis = () => {
                       {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Link2 className="h-4 w-4 mr-2" />}
                       Link Clips
                     </Button>
-                    <Button onClick={handleExportToReport} disabled={!selectedReportId || exporting} className="flex-1">
+                    <Button onClick={handleExportToReport} disabled={!selectedReportId || exporting || selectedVideo.clips.length === 0} className="flex-1">
                       {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
                       Export as Actions
                     </Button>
@@ -1706,8 +1766,30 @@ export const VideoAnalysis = () => {
               </div>
             </div>
             <Button onClick={handleCreate} disabled={!newTitle || !uploadFile || creating} className="w-full mt-4">
-              {creating ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Uploading...</> : <><Upload className="h-4 w-4 mr-2" /> Upload Match Video</>}
+              {creating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> Uploading...
+                  {uploadFile && (
+                    <span className="ml-2 text-xs opacity-80">
+                      {(uploadedBytes / (1024 * 1024)).toFixed(1)} / {(uploadFile.size / (1024 * 1024)).toFixed(1)} MB
+                    </span>
+                  )}
+                </>
+              ) : (
+                <><Upload className="h-4 w-4 mr-2" /> Upload Match Video</>
+              )}
             </Button>
+            {creating && uploadProgress > 0 && (
+              <div className="mt-2 space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Uploading video...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                  <div className="bg-primary h-full rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
