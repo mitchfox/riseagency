@@ -26,6 +26,7 @@ interface ActionClip {
   action_number: number;
   action_type: string;
   action_description: string | null;
+  action_score: number | null;
   minute: number | null;
   video_url: string | null;
   is_successful: boolean | null;
@@ -112,7 +113,12 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
     return 'Other';
   };
 
-  const categoryOrder = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
+  // Best actions: score >= 0.05
+  const bestActions = useMemo(() => {
+    return allActions.filter(a => a.action_score != null && a.action_score >= 0.05);
+  }, [allActions]);
+
+  const categoryOrder = ['Best Actions', 'Key Actions', 'Offensive', 'Defensive', 'Other'];
   const sortedActionTypes = useMemo(() => {
     return [...actionTypes].sort((a, b) => {
       const catA = categoryOrder.indexOf(categoriseType(a));
@@ -144,10 +150,12 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
   };
 
   const generateCompilation = () => {
-    const clips = allActions.filter(a =>
-      selectedMatches.includes(a.analysis_id) &&
-      actionMatchesTypes(a, selectedActionTypes)
-    ).sort((a, b) => {
+    const isBestMode = selectedActionTypes.includes('__best__');
+    const clips = allActions.filter(a => {
+      if (!selectedMatches.includes(a.analysis_id)) return false;
+      if (isBestMode) return a.action_score != null && a.action_score >= 0.05;
+      return actionMatchesTypes(a, selectedActionTypes.filter(t => t !== '__best__'));
+    }).sort((a, b) => {
       const dateA = a.match_date || '';
       const dateB = b.match_date || '';
       if (dateA !== dateB) return dateA.localeCompare(dateB);
@@ -249,6 +257,26 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
             <div>
               <h3 className="text-sm font-semibold uppercase tracking-wider mb-2">Step 1: Select Action Types</h3>
               <div className="space-y-2">
+                {/* Best Actions button - always first */}
+                {bestActions.length > 0 && (
+                  <>
+                    <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mt-2 mb-1">Best Actions</span>
+                    <button
+                      onClick={() => {
+                        if (selectedActionTypes.includes('__best__')) {
+                          setSelectedActionTypes(prev => prev.filter(x => x !== '__best__'));
+                        } else {
+                          setSelectedActionTypes(['__best__']);
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-lg border text-sm transition-colors mr-2 mb-1 ${
+                        selectedActionTypes.includes('__best__') ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'
+                      }`}
+                    >
+                      Best Actions ({bestActions.length})
+                    </button>
+                  </>
+                )}
                 {(() => {
                   let lastCategory = '';
                   return sortedActionTypes.map(type => {
@@ -261,7 +289,13 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
                           <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mt-2 mb-1">{category}</span>
                         )}
                         <button
-                          onClick={() => toggleActionType(type)}
+                          onClick={() => {
+                            // Clear best actions filter when selecting specific types
+                            setSelectedActionTypes(prev => {
+                              const withoutBest = prev.filter(x => x !== '__best__');
+                              return withoutBest.includes(type) ? withoutBest.filter(x => x !== type) : [...withoutBest, type];
+                            });
+                          }}
                           className={`px-3 py-1.5 rounded-lg border text-sm transition-colors mr-2 mb-1 ${
                             selectedActionTypes.includes(type) ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'
                           }`}

@@ -92,6 +92,7 @@ import { StrengthPowerSpeedSection } from "@/components/staff/programming/Streng
 import { NutritionSection } from "@/components/staff/programming/NutritionSection";
 import { MessagingCaseStudies } from "@/components/staff/MessagingCaseStudies";
 import { PortalManagement } from "@/components/staff/PortalManagement";
+import { VideoCompressor } from "@/components/staff/VideoCompressor";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTheme } from "next-themes";
@@ -153,7 +154,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | '__grid_picker__' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | 'videocompressor' | '__grid_picker__' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -236,9 +237,9 @@ const Staff = () => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
-      // Suppress staff hotkeys when video analysis or annotation editor is active
+      // Suppress staff hotkeys when video analysis, annotation editor, or performance report editing is active
       const section = searchParams.get('section');
-      if (section === 'videoanalysis' || section === 'annotations') return;
+      if (section === 'videoanalysis' || section === 'annotations' || section === 'coachingdata') return;
 
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -836,6 +837,7 @@ const Staff = () => {
           { id: 'annotations', title: 'Annotations', icon: Film },
           { id: 'videoanalysis', title: 'Video Analysis', icon: Film },
           { id: 'streams', title: 'Streams', icon: Tv },
+          { id: 'videocompressor', title: 'Video Compressor', icon: Film },
         ],
       },
       {
@@ -1585,6 +1587,7 @@ const Staff = () => {
                   {expandedSection === 'coachingdata' && <CoachingDataSection />}
                   {expandedSection === 'marketing' && <MarketingManagement isAdmin={isAdmin} isMarketeer={isMarketeer} />}
                   {expandedSection === 'contentcreator' && <ContentCreator />}
+                  {expandedSection === 'videocompressor' && <VideoCompressor />}
                   {expandedSection === 'salesdeck' && <SalesDeck />}
                   
                   {expandedSection === 'publiccontent' && <PublicContentManagement isAdmin={isAdmin} />}
