@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors, PenLine } from "lucide-react";
+import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors, PenLine, Loader2 } from "lucide-react";
 import { AudioRecorder } from "./AudioRecorder";
 import {
   Collapsible,
@@ -273,14 +273,55 @@ const SortablePointCard = ({
     isDragging,
   } = useSortable({ id: pointId });
 
+  const [dragOver, setDragOver] = useState(false);
+  const [dropUploading, setDropUploading] = useState(false);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith('video/')) return;
+
+    setDropUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'mp4';
+      const fileName = `point-videos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('analysis-files')
+        .upload(fileName, file, { cacheControl: '3600', upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('analysis-files').getPublicUrl(fileName);
+      const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
+      updatePoint(index, "video_urls", [...currentVideos, publicUrl]);
+      toast.success('Video added to point');
+    } catch (err: any) {
+      toast.error('Failed to upload video: ' + err.message);
+    } finally {
+      setDropUploading(false);
+    }
+  };
+
   return (
-    <Card ref={setNodeRef} style={style} className="p-4">
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className={`p-4 transition-colors ${dragOver ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragEnter={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={handleDrop}
+    >
+      {dropUploading && (
+        <div className="flex items-center gap-2 text-xs text-primary mb-2">
+          <Loader2 className="w-3 h-3 animate-spin" /> Uploading dropped video...
+        </div>
+      )}
       <div className="space-y-4">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-2">
@@ -405,7 +446,7 @@ const SortablePointCard = ({
         </div>
 
         <div>
-          <Label>Videos (Optional - Add Multiple)</Label>
+          <Label>Videos (Optional - Add Multiple) — or drag and drop a video file here</Label>
           
           {/* Select from R90 clips if available */}
           {performanceReportClips.length > 0 && (

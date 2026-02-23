@@ -140,6 +140,8 @@ export const CreatePerformanceReportDialog = ({
   const [isByActionDialogOpen, setIsByActionDialogOpen] = useState(false);
   const [unifiedStats, setUnifiedStats] = useState<UnifiedStat[]>([]);
   const [fixtureStats, setFixtureStats] = useState<Record<string, number>>({});
+  const [dragOverAction, setDragOverAction] = useState<number | null>(null);
+  const [dropUploading, setDropUploading] = useState<number | null>(null);
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -315,6 +317,34 @@ export const CreatePerformanceReportDialog = ({
         
         return arrayMove(items, oldIndex, newIndex);
       });
+    }
+  };
+
+  // Handle video file drop onto an action row
+  const handleActionDrop = async (e: React.DragEvent, actionIndex: number) => {
+    e.preventDefault();
+    setDragOverAction(null);
+    const file = e.dataTransfer.files?.[0];
+    const action = actions[actionIndex];
+    if (!file || !file.type.startsWith('video/') || !action.id) return;
+
+    setDropUploading(actionIndex);
+    try {
+      const ext = file.name.split('.').pop() || 'mp4';
+      const fileName = `action-clips/${action.id}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('analysis-files')
+        .upload(fileName, file, { cacheControl: '3600', upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('analysis-files').getPublicUrl(fileName);
+      
+      await supabase.from('performance_report_actions').update({ video_url: publicUrl }).eq('id', action.id);
+      updateAction(actionIndex, 'video_url', publicUrl);
+      toast.success('Clip uploaded via drag and drop');
+    } catch (err: any) {
+      toast.error('Failed to upload: ' + err.message);
+    } finally {
+      setDropUploading(null);
     }
   };
 
@@ -1502,6 +1532,7 @@ export const CreatePerformanceReportDialog = ({
                     return updated;
                   });
                 }}
+                actions={actions}
               />
             </CollapsibleContent>
           </Collapsible>
@@ -1528,7 +1559,14 @@ export const CreatePerformanceReportDialog = ({
             {/* Mobile Card View */}
             <div className="space-y-4 sm:hidden">
               {actions.map((action, index) => (
-                <div key={index} className="border rounded-lg p-4 space-y-3 bg-card">
+                <div
+                  key={index}
+                  className={`border rounded-lg p-4 space-y-3 bg-card transition-colors ${dragOverAction === index ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+                  onDragOver={(e) => { e.preventDefault(); setDragOverAction(index); }}
+                  onDragEnter={(e) => { e.preventDefault(); setDragOverAction(index); }}
+                  onDragLeave={() => setDragOverAction(null)}
+                  onDrop={(e) => handleActionDrop(e, index)}
+                >
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold text-sm">Action #{action.action_number}</span>
                     <div className="flex gap-1">
@@ -1698,7 +1736,13 @@ export const CreatePerformanceReportDialog = ({
                 <tbody>
                   {actions.map((action, index) => (
                     <React.Fragment key={index}>
-                      <tr className="border-t">
+                      <tr
+                        className={`border-t transition-colors ${dragOverAction === index ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+                        onDragOver={(e) => { e.preventDefault(); setDragOverAction(index); }}
+                        onDragEnter={(e) => { e.preventDefault(); setDragOverAction(index); }}
+                        onDragLeave={() => setDragOverAction(null)}
+                        onDrop={(e) => handleActionDrop(e, index)}
+                      >
                         <td className="p-2 text-sm">{action.action_number}</td>
                       <td className="p-2">
                         <Input

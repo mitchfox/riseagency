@@ -8,6 +8,20 @@ interface LazyVideoProps extends React.VideoHTMLAttributes<HTMLVideoElement> {
   onCanPlay?: () => void;
 }
 
+const getMimeType = (url: string): string | undefined => {
+  try {
+    const pathname = new URL(url, window.location.origin).pathname.toLowerCase();
+    if (pathname.endsWith('.webm')) return 'video/webm';
+    if (pathname.endsWith('.mp4')) return 'video/mp4';
+    if (pathname.endsWith('.ogg')) return 'video/ogg';
+  } catch {
+    const lower = url.toLowerCase();
+    if (lower.includes('.webm')) return 'video/webm';
+    if (lower.includes('.mp4')) return 'video/mp4';
+  }
+  return undefined; // let browser auto-detect
+};
+
 export const LazyVideo = forwardRef<HTMLVideoElement, LazyVideoProps>(({ 
   src, 
   threshold = 0.1,
@@ -21,14 +35,12 @@ export const LazyVideo = forwardRef<HTMLVideoElement, LazyVideoProps>(({
   const internalRef = useRef<HTMLVideoElement>(null);
   const videoRef = (ref as React.RefObject<HTMLVideoElement>) || internalRef;
 
-  // React to loadImmediately changing from false to true after mount
   useEffect(() => {
     if (loadImmediately) {
       setIsInView(true);
     }
   }, [loadImmediately]);
 
-  // Lazy load observer - only load source when in view (skip if loadImmediately)
   useEffect(() => {
     if (loadImmediately || isInView || !videoRef.current) return;
 
@@ -46,16 +58,14 @@ export const LazyVideo = forwardRef<HTMLVideoElement, LazyVideoProps>(({
 
     return () => observer.disconnect();
   }, [threshold, videoRef, loadImmediately, isInView]);
-  // Autoplay/pause observer - play when visible, pause when not
+
   useEffect(() => {
     if (!autoPlayOnVisible || !videoRef.current) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && videoRef.current) {
-          videoRef.current.play().catch(() => {
-            // Autoplay failed, user interaction required
-          });
+          videoRef.current.play().catch(() => {});
         } else if (videoRef.current) {
           videoRef.current.pause();
         }
@@ -68,10 +78,11 @@ export const LazyVideo = forwardRef<HTMLVideoElement, LazyVideoProps>(({
     return () => observer.disconnect();
   }, [autoPlayOnVisible, videoRef, isInView]);
 
-  // Handle canplay event
   const handleCanPlay = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     onCanPlay?.();
   };
+
+  const mimeType = getMimeType(src);
 
   return (
     <video
@@ -79,7 +90,7 @@ export const LazyVideo = forwardRef<HTMLVideoElement, LazyVideoProps>(({
       {...props}
       onCanPlay={handleCanPlay}
     >
-      {isInView && <source src={src} type="video/mp4" />}
+      {isInView && <source src={src} {...(mimeType ? { type: mimeType } : {})} />}
       {children}
     </video>
   );
