@@ -1,65 +1,84 @@
 
+## Plan: Fix Video Loading, Add Drag-and-Drop Clips, and AI Fixture Stats Suggestions
 
-## Plan: Fix Grid Picker, Video Loading, Video Width, and Staff Navigation
+### Issue 1: Videos not loading in Analysis Viewer
 
-### Issue 1: Grid Picker Shows Nothing on New Tab
+**Root cause**: `LazyVideo.tsx` hardcodes `type="video/mp4"` on the `<source>` element (line 82). Many clips are `.webm` files (extracted via `MediaRecorder` in `clientClipExtractor.ts`). Browsers won't play a source with the wrong MIME type, so these videos silently fail to load.
 
-**Root cause**: The `SectionGridPicker` renders correctly at line 1523, but when `expandedSection` is `__grid_picker__`, the content renders *inside* the `<main>` wrapper which also contains the `hidden`-class sections (lines 1556-1559). These `hidden` sections (VideoAnalysis, AnnotationProjects, PlayerManagement, AnalysisManagement) are always mounted and may be interfering with layout. However, the more likely issue is that the grid picker content is rendering but the `categories` array passed to it may contain sections with no valid non-group-label entries, or the component is rendering but scrolled out of view.
-
-**Actual root cause found**: Looking more carefully, the grid picker IS inside the conditional branch at line 1523. But the `hidden` divs at lines 1556-1559 are *also* rendered inside the same `expandedSection ? (...)` branch at line 1531. When `expandedSection === '__grid_picker__'`, the code takes the first branch (line 1523) and renders `SectionGridPicker` -- so those hidden divs are NOT rendered. This means the grid picker should work. The issue is likely that preview images were requested but never added. The current grid only shows icons and text descriptions.
-
-**Fix**: Add actual preview images/screenshots to each grid item. Since we don't have real screenshots, we'll generate visual preview cards using coloured gradients and icons as placeholder previews, making the grid visually rich. Each card will show a larger, more prominent visual representation of the section.
-
-### Issue 2: Videos Not Loading (Waiting Minutes)
-
-**Root cause**: The `LazyVideo` component uses `loadImmediately={pageLoaded}` where `pageLoaded` becomes `true` after 1.5s. BUT the videos are inside collapsed `ExpandableSection` components. When collapsed, the content is rendered with `height: 0` and `overflow: hidden`. The `IntersectionObserver` in `LazyVideo` cannot detect these as "in view" because they have zero height. When `loadImmediately` is `true`, it sets `isInView` to `true` in the initial state -- but `useState(loadImmediately)` only runs once on mount. If the component mounts before `pageLoaded` is `true`, it will stay `false` forever because the `useState` initial value doesn't update on re-renders.
-
-This is the critical bug: `useState(loadImmediately)` captures the initial value only. When `pageLoaded` changes from `false` to `true` after 1.5s, already-mounted `LazyVideo` components won't update their `isInView` state.
-
-**Fix**: Add a `useEffect` in `LazyVideo` that watches `loadImmediately` and sets `isInView(true)` when it becomes `true`. This ensures videos start loading 1.5s after page load regardless of visibility.
-
-### Issue 3: Videos Not Filling Grey Background Width
-
-**Root cause**: The video element has `style={{ width: '100%', height: 'auto' }}` but `.webm` clips extracted via `MediaRecorder` may not have proper dimension metadata. When a video element can't determine intrinsic dimensions, `height: auto` may not work correctly, causing the browser to use a default size. The video also has `display: block` which is correct.
-
-The real issue is the `#t=0.001` fragment appended to the source URL. Some browsers treat this as a different resource and may have issues with dimension reporting. Additionally, some `.webm` files from `MediaRecorder` lack width/height metadata entirely.
-
-**Fix**: 
-- Remove the `#t=0.001` fragment (it was for showing a thumbnail frame but causes issues)
-- Add `object-fit: contain` as fallback
-- Set `width: 100%` directly on the video via both className and style to ensure it fills the `ContentCard` container
-- Use `aspect-ratio` CSS as fallback when video dimensions aren't available
-
-### Issue 4: Staff View/Edit Analysis Not Loading
-
-**Root cause**: Likely a Lovable preview issue as the user suspects, but worth ensuring the navigation logic is robust. The `handleOpenDialog` in `AnalysisManagement` should use `setActiveView` immediately.
-
-**Fix**: No code change needed if it's a preview issue, but we'll add a safety `setTimeout` fallback and ensure the state transitions are immediate.
+**Fix**: Detect the file extension from the `src` URL and set the correct MIME type (`video/webm` for `.webm`, `video/mp4` for `.mp4`, or omit `type` entirely to let the browser auto-detect).
 
 ---
 
-### Technical Changes
+### Issue 2: Drag-and-drop clip upload on Performance Report actions
+
+**What**: Allow dragging a video file onto an action row in the performance report editor to upload it as the clip for that action.
+
+**Approach**: 
+- Wrap each action row in `CreatePerformanceReportDialog.tsx` with a drop zone that listens for `onDragOver` and `onDrop` events
+- On drop, extract the video file and run the same upload logic as `ActionVideoUpload.handleFileSelect`
+- Show a visual highlight (border glow) when dragging over an action row
+- The existing Upload/Clip popover menu remains as the alternative
+
+---
+
+### Issue 3: Drag-and-drop video on Analysis point editor
+
+**What**: Allow dragging a video file onto a point card in `AnalysisPointsSection.tsx` to add it to that point's videos.
+
+**Approach**:
+- Add drop zone handling to `SortablePointCard` in `AnalysisPointsSection.tsx`
+- On drop, call the existing `handleVideoUploadForPoint` function
+- Show a visual drag-over indicator
+
+---
+
+### Issue 4: AI suggestions for Fixture Stats
+
+**What**: An AI button on the Fixture Stats editor that analyses all performance report actions for that fixture and suggests stat values. Each stat box shows a small suggested number underneath with a "+" button. Clicking "+" opens a tooltip showing which actions the AI thinks contribute to that stat. The AI should be lenient (inclusive rather than exclusive).
+
+**Approach**:
+- Add a "Suggest with AI" button to `FixtureStatsEditor.tsx`
+- The component needs access to the performance actions for the current fixture/report -- pass them as a new prop
+- Create a new edge function `suggest-fixture-stats` that:
+  - Receives the list of actions (type, description, notes, minute) and the list of stat keys with labels
+  - Uses Lovable AI (gemini-3-flash-preview) with tool calling to return structured suggestions
+  - The prompt instructs the model to be lenient and inclusive
+- Display suggestions as small numbers below each input with a "+" button
+- Clicking "+" shows a popover listing which actions the AI thinks contributed
+- Accepting a suggestion populates the input field
+
+---
+
+### Technical Details
 
 **File: `src/components/LazyVideo.tsx`**
-- Add `useEffect` watching `loadImmediately` prop to reactively set `isInView = true` when it changes
-- Remove `#t=0.001` from source URL to fix dimension reporting issues
+- Replace hardcoded `type="video/mp4"` with dynamic MIME detection based on file extension
+- Helper function: if URL contains `.webm` use `video/webm`, if `.mp4` use `video/mp4`, otherwise omit type attribute
 
-**File: `src/pages/AnalysisViewer.tsx`**
-- Ensure video containers use `w-full` class on parent divs
-- Remove `items-center` from any flex container wrapping videos (already done but verify)
-- Videos already have `width: '100%'` style -- the `LazyVideo` fix above will make them actually load and render
+**File: `src/components/staff/CreatePerformanceReportDialog.tsx`**
+- Add `onDragOver`, `onDragEnter`, `onDragLeave`, `onDrop` handlers to each action row
+- Track which action is being dragged over for visual feedback (highlight border)
+- On drop: upload the file to `analysis-files` storage, update the action's `video_url`, and call the callback
 
-**File: `src/components/staff/SectionGridPicker.tsx`**
-- Add visual preview cards with coloured gradient backgrounds, larger icons, and descriptive text
-- Make each card more visually prominent with a preview area showing a styled representation of the section
-- Increase card size and add a visual preview zone above the label
+**File: `src/components/staff/analysis/AnalysisPointsSection.tsx`**
+- Add drag-and-drop handlers to the `SortablePointCard` component
+- On drop: trigger the existing `handleVideoUploadForPoint` flow by creating a synthetic change event or extracting the file and calling the upload function directly
 
-**File: `src/pages/Staff.tsx`**  
-- No changes needed for the grid picker logic (it works, the issue is visual content)
+**File: `src/components/staff/FixtureStatsEditor.tsx`**
+- Add new props: `actions` (array of performance actions) and `fixtureId` (optional)
+- Add "Suggest with AI" button next to the header
+- State for AI suggestions: `Record<string, { value: number; reasoning: string; actions: string[] }>`
+- Display suggestion below each stat input as a small chip with the suggested value and a "+" to accept
+- Clicking the chip shows a popover with the AI's reasoning and contributing actions
 
-### Summary of Root Causes
-1. Grid picker renders but has no preview images -- only small icons and hover text
-2. `useState(loadImmediately)` only captures initial value; needs a `useEffect` to react to prop changes  
-3. Video width issue is a consequence of videos not loading (issue 2) plus the `#t=0.001` fragment
-4. Staff navigation is likely a preview environment issue
+**File: `supabase/functions/suggest-fixture-stats/index.ts`** (New)
+- Edge function that receives actions and stat definitions
+- Calls Lovable AI with tool calling to extract structured stat suggestions
+- Uses lenient prompting: "When in doubt, include the action as contributing to the stat"
+- Returns `Record<string, { value: number; reasoning: string; contributing_actions: string[] }>`
 
+**File: `supabase/config.toml`**
+- Add `[functions.suggest-fixture-stats]` with `verify_jwt = false`
+
+**File: `src/components/staff/CreatePerformanceReportDialog.tsx`** (additional)
+- Pass the current actions array to `FixtureStatsEditor` as a prop so AI can analyse them
