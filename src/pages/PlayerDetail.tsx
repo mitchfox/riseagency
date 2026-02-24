@@ -8,6 +8,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, MessageCircle, ExternalLink, Video, ChevronLeft, ChevronRight, Play, BarChart3 } from "lucide-react";
+import hudlLogo from "@/assets/hudl-logo.png";
 import { FormationDisplay } from "@/components/FormationDisplay";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -804,26 +805,28 @@ const PlayerDetail = () => {
 
             return (
               <div className="mb-6 w-full">
-                <div className="flex flex-wrap gap-2 w-full">
-                  {displayCategories.map(({ name, actions }) => (
-                    <button
-                      key={name}
-                      onClick={() => {
-                        // Open video player with all clips in this category
-                        if (actions.length > 0) {
-                          setVideoClipModalUrl(actions[0].video_url);
-                          // Store full playlist for this category
-                          setVideoClipPlaylist(actions.map((a: any) => a.video_url).filter(Boolean));
-                          setVideoClipPlaylistIndex(0);
-                        }
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-secondary/30 hover:bg-primary/10 hover:border-primary/40 transition-colors text-sm"
-                    >
-                      <Play className="h-3 w-3 text-primary" />
-                      <span className="font-medium">{name}</span>
-                      <span className="text-xs text-muted-foreground">({actions.length})</span>
-                    </button>
-                  ))}
+              <div className="flex items-center gap-3 w-full flex-wrap">
+                  <img src={hudlLogo} alt="Hudl" className="h-5 opacity-60" />
+                  {displayCategories.map(({ name, actions }) => {
+                    // Title Case all category names
+                    const displayName = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                    return (
+                      <button
+                        key={name}
+                        onClick={() => {
+                          if (actions.length > 0) {
+                            setVideoClipModalUrl(actions[0].video_url);
+                            setVideoClipPlaylist(actions.map((a: any) => a.video_url).filter(Boolean));
+                            setVideoClipPlaylistIndex(0);
+                          }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-secondary/30 hover:bg-primary/10 hover:border-primary/40 transition-colors text-sm"
+                      >
+                        <Play className="h-3 w-3 text-primary" />
+                        <span className="font-medium">{displayName}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -835,13 +838,21 @@ const PlayerDetail = () => {
               {videoClipModalUrl && (
                 <div className="relative">
                   <video 
+                    key={videoClipModalUrl}
                     src={videoClipModalUrl} 
                     className="w-full max-h-[80vh] object-contain" 
                     autoPlay 
                     controls 
                     playsInline
+                    onLoadStart={(e) => {
+                      // Force play when source changes
+                      const vid = e.currentTarget;
+                      vid.load();
+                    }}
+                    onCanPlay={(e) => {
+                      e.currentTarget.play().catch(() => {});
+                    }}
                     onEnded={() => {
-                      // Auto-play next clip in playlist
                       if (videoClipPlaylist.length > 1 && videoClipPlaylistIndex < videoClipPlaylist.length - 1) {
                         const nextIdx = videoClipPlaylistIndex + 1;
                         setVideoClipPlaylistIndex(nextIdx);

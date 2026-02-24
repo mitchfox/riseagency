@@ -942,7 +942,7 @@ const Staff = () => {
           { id: '_group_site', title: 'Site', isGroupLabel: true },
           { id: 'sitetext', title: 'Site Text', icon: FileText },
           { id: 'languages', title: 'Languages', icon: Languages },
-          ...(user?.email === 'jolonlevene98@gmail.com' ? [
+          ...(isAdmin ? [
             { id: '_group_comms', title: 'Communications', isGroupLabel: true },
             { id: 'notifications', title: 'Notifications', icon: BellRing },
             { id: 'smsnotifications', title: 'SMS Notifications', icon: MessageSquare },
@@ -1616,8 +1616,8 @@ const Staff = () => {
                   {expandedSection === 'pwainstall' && <StaffPWAInstall />}
                   {expandedSection === 'offlinemanager' && <StaffOfflineManager />}
                   {expandedSection === 'pushnotifications' && <StaffPushNotifications />}
-                  {expandedSection === 'notifications' && user?.email === 'jolonlevene98@gmail.com' && <NotificationSettingsManagement />}
-                  {expandedSection === 'smsnotifications' && user?.email === 'jolonlevene98@gmail.com' && <StaffSMSNotifications />}
+                  {expandedSection === 'notifications' && isAdmin && <NotificationSettingsManagement />}
+                  {expandedSection === 'smsnotifications' && isAdmin && <StaffSMSNotifications />}
                   {expandedSection === 'strengthpower' && <StrengthPowerSpeedSection />}
                   {expandedSection === 'nutrition' && <NutritionSection />}
                   {expandedSection === 'activitylog' && isAdmin && <ActivityLog />}

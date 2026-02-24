@@ -1171,6 +1171,9 @@ export const VideoAnalysis = () => {
                 videoUrl={selectedVideo.video_url}
                 videoRef={videoRef as React.RefObject<HTMLVideoElement>}
                 opponent={selectedVideo.opponent}
+                players={players.map(p => ({ id: p.id, name: p.name }))}
+                selectedPlayerId={selectedVideo.player_id}
+                existingClips={selectedVideo.clips.map(c => ({ start: c.start, end: c.end, label: c.label, action_type: c.action_type }))}
                 onClipsAccepted={async (newClips) => {
                   if (!selectedVideo) return;
                   const clips: Clip[] = newClips.map(c => ({
@@ -1853,9 +1856,23 @@ export const VideoAnalysis = () => {
                         )}
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0" onClick={e => { e.stopPropagation(); handleDeleteVideo(video.id); }}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1 shrink-0">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary shrink-0" title="Extend deletion by 7 days" onClick={e => { 
+                        e.stopPropagation(); 
+                        const newDate = new Date(video.auto_delete_at ? new Date(video.auto_delete_at).getTime() + 7 * 86400000 : Date.now() + 14 * 86400000);
+                        supabase.from('video_analyses').update({ auto_delete_at: newDate.toISOString() }).eq('id', video.id).then(({ error }) => {
+                          if (error) { toast.error('Failed to extend'); return; }
+                          toast.success('Deletion extended by 7 days');
+                          // Refresh video list
+                          setVideos(prev => prev.map(v => v.id === video.id ? { ...v, auto_delete_at: newDate.toISOString() } : v));
+                        });
+                      }}>
+                        <Clock className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0" onClick={e => { e.stopPropagation(); handleDeleteVideo(video.id); }}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               );

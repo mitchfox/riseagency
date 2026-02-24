@@ -1,12 +1,13 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, UserSearch, Check, X, Play, Eye, Tag } from "lucide-react";
+import { Loader2, UserSearch, Check, X, Play, Tag } from "lucide-react";
 
 interface DetectedAction {
   frameIndex: number;
@@ -22,25 +23,104 @@ interface PlayerTag {
   description: string;
 }
 
+interface PlayerOption {
+  id: string;
+  name: string;
+  position?: string;
+}
+
 interface Props {
   videoUrl: string;
   videoRef: React.RefObject<HTMLVideoElement>;
   onClipsAccepted: (clips: { start: number; end: number; label: string; actionType: string }[]) => void;
   opponent?: string | null;
+  players?: PlayerOption[];
+  selectedPlayerId?: string | null;
+  existingClips?: { start: number; end: number; label: string; action_type: string }[];
 }
 
-export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponent }: Props) => {
+// Persist player AI descriptions across videos
+const STORAGE_KEY = "ai_player_descriptions";
+
+function loadSavedDescriptions(): Record<string, { description: string; notPlayer: string; kitDescription: string }> {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
+}
+
+function saveDescription(playerName: string, data: { description: string; notPlayer: string; kitDescription: string }) {
+  const all = loadSavedDescriptions();
+  all[playerName.toLowerCase().trim()] = data;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+}
+
+export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponent, players, selectedPlayerId, existingClips }: Props) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [playerDescription, setPlayerDescription] = useState("");
   const [notPlayer, setNotPlayer] = useState("");
+  const [kitDescription, setKitDescription] = useState("");
   const [playerTags, setPlayerTags] = useState<PlayerTag[]>([]);
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [detectedActions, setDetectedActions] = useState<DetectedAction[]>([]);
   const [reviewMode, setReviewMode] = useState(false);
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
+  const [selectedPlayerForScan, setSelectedPlayerForScan] = useState<string>(selectedPlayerId || "");
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // When a player is selected from dropdown, load saved description and previous report clips
+  useEffect(() => {
+    if (!selectedPlayerForScan || !players) return;
+    const player = players.find(p => p.id === selectedPlayerForScan);
+    if (!player) return;
+    
+    setPlayerName(player.name);
+    
+    // Load saved description
+    const saved = loadSavedDescriptions()[player.name.toLowerCase().trim()];
+    if (saved) {
+      setPlayerDescription(saved.description || "");
+      setNotPlayer(saved.notPlayer || "");
+      setKitDescription(saved.kitDescription || "");
+    }
+    
+    // Load previous clips from performance reports as reference tags
+    loadPreviousClips(selectedPlayerForScan);
+  }, [selectedPlayerForScan, players]);
+
+  const loadPreviousClips = async (playerId: string) => {
+    try {
+      // Get recent performance report actions with video clips for this player
+      const { data: reports } = await supabase
+        .from('player_analysis')
+        .select('id')
+        .eq('player_id', playerId)
+        .order('analysis_date', { ascending: false })
+        .limit(5);
+      
+      if (!reports || reports.length === 0) return;
+      
+      const { data: actions } = await supabase
+        .from('performance_report_actions')
+        .select('action_type, minute, video_url')
+        .in('analysis_id', reports.map(r => r.id))
+        .not('video_url', 'is', null)
+        .limit(30);
+      
+      if (actions && actions.length > 0) {
+        const tags: PlayerTag[] = actions.map(a => ({
+          timestamp: a.minute ? a.minute * 60 : 0,
+          description: `${a.action_type} (previous report)`,
+        }));
+        setPlayerTags(prev => {
+          // Don't duplicate existing tags
+          const existing = new Set(prev.map(t => t.description));
+          return [...prev, ...tags.filter(t => !existing.has(t.description))];
+        });
+      }
+    } catch {
+      // Silently fail - reference tags are optional
+    }
+  };
 
   const tagCurrentFrame = () => {
     if (!videoRef.current) return;
@@ -52,13 +132,20 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     toast.success("Player tagged at current frame");
   };
 
+  const tagFromExistingClip = (clip: { start: number; label: string; action_type: string }) => {
+    setPlayerTags(prev => [...prev, {
+      timestamp: clip.start,
+      description: `${clip.action_type || clip.label} (existing clip)`,
+    }]);
+    toast.success("Tagged from existing clip");
+  };
+
   const extractFrame = useCallback((time: number): Promise<string> => {
     return new Promise((resolve, reject) => {
       const video = videoRef.current;
       if (!video) return reject("No video element");
 
       const canvas = canvasRef.current || document.createElement("canvas");
-      // Use small dimensions to reduce payload size
       canvas.width = 640;
       canvas.height = 360;
       const ctx = canvas.getContext("2d");
@@ -67,7 +154,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       const onSeeked = () => {
         video.removeEventListener("seeked", onSeeked);
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        // Use JPEG for smaller size
         resolve(canvas.toDataURL("image/jpeg", 0.6));
       };
 
@@ -86,27 +172,28 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       return;
     }
 
+    // Save description for future videos
+    saveDescription(playerName, { description: playerDescription, notPlayer, kitDescription });
+
     setScanning(true);
     setScanProgress(0);
     setDetectedActions([]);
 
     const video = videoRef.current;
     const duration = video.duration;
-    const sampleInterval = 3; // Every 3 seconds
+    const sampleInterval = 3;
     const totalFrames = Math.floor(duration / sampleInterval);
-    const batchSize = 15; // Send 15 frames per API call to stay under limits
+    const batchSize = 15;
 
     const allDetected: DetectedAction[] = [];
 
     try {
-      // Pause the video for frame extraction
       video.pause();
 
       for (let batchStart = 0; batchStart < totalFrames; batchStart += batchSize) {
         const batchEnd = Math.min(batchStart + batchSize, totalFrames);
         const frames: { dataUrl: string; timestamp: number; index: number }[] = [];
 
-        // Extract frames for this batch
         for (let i = batchStart; i < batchEnd; i++) {
           const time = i * sampleInterval;
           try {
@@ -120,13 +207,12 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
         if (frames.length === 0) continue;
 
-        // Call AI
         const { data, error } = await supabase.functions.invoke('detect-player-actions', {
           body: {
             frames,
             playerInfo: {
               name: playerName,
-              description: playerDescription || undefined,
+              description: [playerDescription, kitDescription].filter(Boolean).join('. ') || undefined,
               notPlayer: notPlayer || undefined,
             },
             videoContext: {
@@ -154,7 +240,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         }
       }
 
-      // Deduplicate nearby timestamps (within 3s)
       const deduped = allDetected.filter((action, idx) => {
         return !allDetected.slice(0, idx).some(prev => Math.abs(prev.timestamp - action.timestamp) < 3);
       });
@@ -177,7 +262,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
   const handleReviewAction = (index: number, status: 'accepted' | 'rejected') => {
     setDetectedActions(prev => prev.map((a, i) => i === index ? { ...a, status } : a));
-    // Auto-advance to next pending
     const nextPending = detectedActions.findIndex((a, i) => i > index && a.status === 'pending');
     if (nextPending !== -1) setCurrentReviewIndex(nextPending);
   };
@@ -237,9 +321,26 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
           {!reviewMode ? (
             <div className="space-y-4 mt-2">
-              {/* Player identity */}
+              {/* Player selection */}
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold uppercase tracking-wider">1. Identify the Player</h4>
+                
+                {players && players.length > 0 && (
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Select Player</label>
+                    <Select value={selectedPlayerForScan} onValueChange={setSelectedPlayerForScan}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a player..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {players.map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.name}{p.position ? ` (${p.position})` : ''}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Player Name *</label>
@@ -250,21 +351,31 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Description (kit, appearance)</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">Description (appearance)</label>
                     <Input
                       value={playerDescription}
                       onChange={e => setPlayerDescription(e.target.value)}
-                      placeholder="e.g. #9, red shirt, tall striker"
+                      placeholder="e.g. #9, tall striker, dark skin"
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Who they are NOT (disambiguation)</label>
-                  <Input
-                    value={notPlayer}
-                    onChange={e => setNotPlayer(e.target.value)}
-                    placeholder="e.g. The shorter player also wearing red"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Kit Description (this game)</label>
+                    <Input
+                      value={kitDescription}
+                      onChange={e => setKitDescription(e.target.value)}
+                      placeholder="e.g. red shirt, white shorts, #9"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Who they are NOT (disambiguation)</label>
+                    <Input
+                      value={notPlayer}
+                      onChange={e => setNotPlayer(e.target.value)}
+                      placeholder="e.g. The shorter player also wearing red"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -272,16 +383,33 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold uppercase tracking-wider">2. Tag the Player in Video</h4>
                 <p className="text-xs text-muted-foreground">
-                  Navigate to moments in the video where the player is clearly visible, then click "Tag Here" to help the AI identify them.
+                  Navigate to moments in the video where the player is clearly visible, then click "Tag Here". Previous report clips are auto-loaded as references.
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Button variant="outline" size="sm" onClick={tagCurrentFrame} className="gap-1">
                     <Tag className="h-3.5 w-3.5" /> Tag Here
                   </Button>
+                  {existingClips && existingClips.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => {
+                      existingClips.forEach(clip => tagFromExistingClip(clip));
+                    }} className="gap-1">
+                      <Tag className="h-3.5 w-3.5" /> Tag From All Clips ({existingClips.length})
+                    </Button>
+                  )}
                   <span className="text-xs text-muted-foreground">
                     {playerTags.length} tag{playerTags.length !== 1 ? 's' : ''} added
                   </span>
                 </div>
+                {existingClips && existingClips.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {existingClips.slice(0, 8).map((clip, i) => (
+                      <Badge key={i} variant="outline" className="text-xs cursor-pointer hover:bg-primary/10" onClick={() => tagFromExistingClip(clip)}>
+                        + {clip.action_type || clip.label}
+                      </Badge>
+                    ))}
+                    {existingClips.length > 8 && <Badge variant="outline" className="text-xs">+{existingClips.length - 8} more</Badge>}
+                  </div>
+                )}
                 {playerTags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {playerTags.map((tag, i) => (
