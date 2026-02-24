@@ -4560,6 +4560,42 @@ export type Database = {
         }
         Relationships: []
       }
+      sportscode_action_types: {
+        Row: {
+          action_name: string
+          category: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          typical_duration_seconds: number | null
+          updated_at: string
+          visual_cues: string | null
+        }
+        Insert: {
+          action_name: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          typical_duration_seconds?: number | null
+          updated_at?: string
+          visual_cues?: string | null
+        }
+        Update: {
+          action_name?: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          typical_duration_seconds?: number | null
+          updated_at?: string
+          visual_cues?: string | null
+        }
+        Relationships: []
+      }
       staff_activity_log: {
         Row: {
           action: string

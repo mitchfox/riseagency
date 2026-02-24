@@ -15,6 +15,8 @@ interface DetectedAction {
   confidence: string;
   description: string;
   status: 'pending' | 'accepted' | 'rejected';
+  clipBefore?: number;
+  clipAfter?: number;
 }
 
 interface PlayerTag {
@@ -243,6 +245,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             confidence: a.confidence,
             description: a.description,
             status: 'pending' as const,
+            clipBefore: a.clipBefore,
+            clipAfter: a.clipAfter,
           }));
           allDetected.push(...batchActions);
         }
@@ -256,14 +260,18 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         toast.info("No actions detected for this player");
       } else {
         // Send all detected actions as pending clips to the clip list
-        const clips = deduped.map(a => ({
-          start: Math.max(0, a.timestamp - 5),
-          end: a.timestamp + 5,
-          label: `${a.actionType} at ${Math.floor(a.timestamp / 60)}:${String(Math.floor(a.timestamp % 60)).padStart(2, '0')}`,
-          actionType: a.actionType,
-          description: a.description,
-          confidence: a.confidence,
-        }));
+        const clips = deduped.map(a => {
+          const before = a.clipBefore ?? 5;
+          const after = a.clipAfter ?? 5;
+          return {
+            start: Math.max(0, a.timestamp - before),
+            end: a.timestamp + after,
+            label: `${a.actionType} at ${Math.floor(a.timestamp / 60)}:${String(Math.floor(a.timestamp % 60)).padStart(2, '0')}`,
+            actionType: a.actionType,
+            description: a.description,
+            confidence: a.confidence,
+          };
+        });
         onClipsAccepted(clips);
         toast.success(`${deduped.length} potential actions added as pending clips`);
         setDialogOpen(false);
