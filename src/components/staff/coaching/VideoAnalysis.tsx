@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check } from "lucide-react";
+import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -38,6 +39,7 @@ interface Clip {
   minute?: string;
   action_score?: number | null;
   ai_status?: 'pending' | 'accepted' | 'rejected';
+  ai_reason?: string;
 }
 
 interface VideoAnalysisEntry {
@@ -1208,6 +1210,7 @@ export const VideoAnalysis = () => {
                     created_at: new Date().toISOString(),
                     minute: `${Math.floor(c.start / 60)}:${String(Math.floor(c.start % 60)).padStart(2, '0')}`,
                     ai_status: 'pending' as const,
+                    ai_reason: c.description || '',
                   }));
                   await saveClips([...selectedVideo.clips, ...clips]);
                 }}
@@ -1421,6 +1424,18 @@ export const VideoAnalysis = () => {
                   {clip.ai_status === 'pending' && (
                     <div className="flex items-center gap-1 shrink-0">
                       <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-500 bg-amber-500/10">Pending</Badge>
+                      {clip.ai_reason && (
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-3.5 w-3.5 text-amber-500/60 hover:text-amber-500 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs text-xs">
+                              {clip.ai_reason}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                       <Button variant="ghost" size="icon" className="h-6 w-6 text-green-500 hover:text-green-600 hover:bg-green-500/10" onClick={() => handleAcceptAIClip(clip.id)} title="Accept">
                         <Check className="h-3.5 w-3.5" />
                       </Button>

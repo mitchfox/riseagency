@@ -5,6 +5,57 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+interface SportscodeAction {
+  action_name: string;
+  description: string | null;
+  visual_cues: string | null;
+  typical_duration_seconds: number | null;
+  category: string | null;
+}
+
+async function fetchActionDefinitions(): Promise<SportscodeAction[]> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const sb = createClient(supabaseUrl, supabaseKey);
+  const { data } = await sb
+    .from('sportscode_action_types')
+    .select('action_name, description, visual_cues, typical_duration_seconds, category')
+    .order('display_order', { ascending: true });
+  return (data as SportscodeAction[]) || [];
+}
+
+function buildActionReference(actions: SportscodeAction[]): string {
+  if (actions.length === 0) return '';
+
+  const grouped: Record<string, SportscodeAction[]> = {};
+  for (const a of actions) {
+    const cat = a.category || 'Other';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(a);
+  }
+
+  let text = '\n\nACTION TYPE REFERENCE (from coaching database):\n';
+  for (const [cat, items] of Object.entries(grouped)) {
+    text += `\n${cat.toUpperCase()}:\n`;
+    for (const a of items) {
+      text += `- ${a.action_name}`;
+      if (a.description) text += `: ${a.description}`;
+      text += '\n';
+      if (a.visual_cues) text += `  VISUAL CUES: ${a.visual_cues}\n`;
+      if (a.typical_duration_seconds) text += `  SUGGESTED CLIP: ${a.typical_duration_seconds}s\n`;
+    }
+  }
+  return text;
+}
+
+function buildDurationMap(actions: SportscodeAction[]): Record<string, number> {
+  const map: Record<string, number> = {};
+  for (const a of actions) {
+    map[a.action_name.toLowerCase()] = a.typical_duration_seconds || 10;
+  }
+  return map;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -30,7 +81,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build the system prompt with deep football knowledge
+    // Fetch action definitions from the coaching database
+    const actionDefs = await fetchActionDefinitions();
+    const actionReference = buildActionReference(actionDefs);
+    const durationMap = buildDurationMap(actionDefs);
+
     const systemPrompt = `You are an elite professional football (soccer) match analyst with deep tactical knowledge. You are reviewing video frames sampled every 3 seconds from a competitive match recording — typically a wide-angle broadcast or touchline camera.
 
 PLAYER TO TRACK: ${playerInfo.name}
@@ -43,34 +98,12 @@ UNDERSTANDING THE FOOTAGE:
 - The camera angle is usually wide, covering most of the pitch. Players will appear relatively small.
 - Identify the player by their kit colour, shirt number, body shape, skin tone, hair, and position on the pitch as described above.
 - If you cannot confidently identify the target player in a frame, skip that frame entirely. Do not guess.
+${actionReference}
 
-WHAT COUNTS AS A MEANINGFUL ACTION:
-You are looking for moments where the player is directly involved in play. These include:
-
-ON THE BALL:
-- Receiving a pass (ball arriving at their feet or chest)
-- Making a pass (short, long, through ball, switch of play)
-- Crossing the ball
-- Shooting or striking towards goal
-- Dribbling past or taking on an opponent
-- Heading the ball
-- First touch / controlling the ball
-- Set piece delivery (corners, free kicks, throw-ins)
-- Goal kick or distribution (if goalkeeper)
-
-DEFENSIVE:
-- Tackling or attempting a tackle
-- Intercepting a pass
-- Blocking a shot or cross
-- Clearing the ball
-- Winning an aerial duel
-- Shepherding or jockeying an attacker
-
-KEY OFF-THE-BALL:
-- Making a penetrating run in behind (obvious forward sprint into space)
-- Pressing the ball carrier (closing down aggressively)
-- Dropping deep to receive / showing for the ball
-- Marking a specific opponent tightly
+CONFIDENCE GUIDE:
+- "high": Player is clearly identifiable AND clearly performing the action (ball visible at feet, obvious body shape of a tackle, etc.)
+- "medium": Player appears to be the right person and the body position suggests the action, but the frame is not perfectly clear
+- "low": You think it might be the player or the action is ambiguous from a single frame
 
 DO NOT REPORT:
 - Standing still, jogging into general position, or walking
@@ -78,20 +111,19 @@ DO NOT REPORT:
 - Moments where the player is simply in the frame but not involved
 - Celebrations, conversations, or other non-play moments
 
-CONFIDENCE GUIDE:
-- "high": Player is clearly identifiable AND clearly performing the action (ball visible at feet, obvious body shape of a tackle, etc.)
-- "medium": Player appears to be the right person and the body position suggests the action, but the frame is not perfectly clear
-- "low": You think it might be the player or the action is ambiguous from a single frame
-
 Be SELECTIVE. Quality over quantity. Only report frames where you genuinely believe the identified player is performing one of the actions listed above. A match typically has 40-80 meaningful involvements per player across 90 minutes.
+
+CLIP DURATION:
+For each action, suggest how many seconds before and after the key frame to include. Use the suggested clip durations from the action reference above. If an action is part of a longer sequence (e.g. a dribble leading to a cross), extend accordingly. If it is a quick isolated moment (e.g. a clearance), keep it short.
 
 For each detected action provide:
 - frameIndex: the 0-indexed frame number
-- actionType: a short label (e.g. "Pass", "Dribble", "Shot", "Tackle", "Run", "Press", "Header", "Cross", "Interception", "Receive", "Clearance", "Aerial Duel", "Set Piece", "Block")
+- actionType: a short label matching one of the action types above (e.g. "Pass", "Dribble", "Shot", "Tackle", "Run", "Press", "Header", "Cross", "Interception", "Receive", "Clearance", "Aerial Duel", "Set Piece", "Block")
 - confidence: "high", "medium", or "low"
-- description: one sentence describing what you see the player doing in that frame`;
+- description: one sentence describing what you see the player doing in that frame — this will be shown to the coach as the reason the AI flagged it
+- clipBefore: seconds to include before the key frame (typically 2-5)
+- clipAfter: seconds to include after the key frame (typically 2-5)`;
 
-    // Build messages with image content
     const imageContent = frames.map((frame: { dataUrl: string; timestamp: number; index: number }) => ([
       {
         type: 'text' as const,
@@ -119,7 +151,7 @@ For each detected action provide:
               ...imageContent,
               {
                 type: 'text',
-                text: `Review all ${frames.length} frames above. For each frame, determine whether ${playerInfo.name} is performing a meaningful on-ball action, defensive action, or key off-ball movement as defined in your instructions. Only report genuine involvements — do not flag general positioning or jogging.`,
+                text: `Review all ${frames.length} frames above. For each frame, determine whether ${playerInfo.name} is performing a meaningful action as defined in your instructions. Only report genuine involvements — do not flag general positioning or jogging.`,
               },
             ],
           },
@@ -141,7 +173,9 @@ For each detected action provide:
                         frameIndex: { type: 'number', description: 'The 0-indexed frame number' },
                         actionType: { type: 'string', description: 'Type of action (Pass, Dribble, Shot, etc.)' },
                         confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
-                        description: { type: 'string', description: 'Brief description of what the player is doing' },
+                        description: { type: 'string', description: 'Brief description of what the player is doing — shown to the coach as the reason for flagging' },
+                        clipBefore: { type: 'number', description: 'Seconds before the frame to include in the clip (default 5)' },
+                        clipAfter: { type: 'number', description: 'Seconds after the frame to include in the clip (default 5)' },
                       },
                       required: ['frameIndex', 'actionType', 'confidence', 'description'],
                       additionalProperties: false,
@@ -181,14 +215,14 @@ For each detected action provide:
 
     if (!toolCall?.function?.arguments) {
       return new Response(
-        JSON.stringify({ actions: [] }),
+        JSON.stringify({ actions: [], durationMap }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const parsed = JSON.parse(toolCall.function.arguments);
     return new Response(
-      JSON.stringify({ actions: parsed.actions || [] }),
+      JSON.stringify({ actions: parsed.actions || [], durationMap }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
