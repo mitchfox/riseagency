@@ -105,6 +105,18 @@ const SITE_ASSETS: SiteAsset[] = [
   { id: "depth-map", label: "Depth Map", description: "3D depth map for effects", type: "image", path: "/src/assets/depth-map.png" },
 ];
 
+// Components that can be exported as recordings/captures
+interface SiteComponent {
+  id: string;
+  label: string;
+  description: string;
+  type: 'component' | 'video';
+}
+
+const SITE_COMPONENTS: SiteComponent[] = [
+  { id: "page-transition", label: "Page Transition (Shader)", description: "The animated shader transition that plays between page navigations", type: "component" },
+];
+
 function jsonToCsv(data: any[]): string {
   if (data.length === 0) return "";
   const headers = Object.keys(data[0]);
@@ -202,6 +214,91 @@ export const DatabaseExport = () => {
       toast.error(`Failed to download ${asset.label}`);
     }
     setDownloadingAsset(null);
+  };
+
+  const handleRecordTransition = async (componentId: string) => {
+    setDownloadingAsset(componentId);
+    try {
+      toast.info("Recording transition animation...");
+      
+      const canvas = document.createElement("canvas");
+      canvas.width = 1920;
+      canvas.height = 1080;
+      
+      const THREE = await import("three");
+      const camera = new THREE.Camera();
+      camera.position.z = 1;
+      const scene = new THREE.Scene();
+      const geometry = new THREE.PlaneGeometry(2, 2);
+      const uniforms = {
+        time: { type: "f", value: 1.0 },
+        resolution: { type: "v2", value: new THREE.Vector2(canvas.width * 2, canvas.height * 2) },
+      };
+      const material = new THREE.ShaderMaterial({
+        uniforms,
+        vertexShader: `void main() { gl_Position = vec4(position, 1.0); }`,
+        fragmentShader: `
+          precision highp float;
+          uniform vec2 resolution;
+          uniform float time;
+          void main(void) {
+            vec2 uv = (gl_FragCoord.xy * 2.0 - resolution.xy) / min(resolution.x, resolution.y);
+            float t = time*0.05;
+            float lineWidth = 0.002;
+            vec3 riseGold = vec3(0.792, 0.694, 0.443);
+            vec3 white = vec3(1.0, 1.0, 1.0);
+            float intensity = 0.0;
+            for(int i=0; i < 5; i++){
+              intensity += lineWidth*float(i*i) / abs(fract(t + float(i)*0.01)*5.0 - length(uv) + mod(uv.x+uv.y, 0.2));
+            }
+            float colorMix = sin(uv.x * 3.0 + uv.y * 2.0 + t * 2.0) * 0.5 + 0.5;
+            vec3 baseColor = mix(riseGold, white, colorMix * 0.6);
+            vec3 color = baseColor * intensity;
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      scene.add(mesh);
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setSize(canvas.width, canvas.height);
+      
+      const stream = canvas.captureStream(30);
+      const recorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp9" });
+      const chunks: Blob[] = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: "video/webm" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `rise-page-transition-${new Date().toISOString().split("T")[0]}.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+        renderer.dispose();
+        geometry.dispose();
+        material.dispose();
+        toast.success("Transition video downloaded");
+        setDownloadingAsset(null);
+      };
+      
+      recorder.start();
+      let frame = 0;
+      const totalFrames = 75;
+      const animate = () => {
+        if (frame >= totalFrames) { recorder.stop(); return; }
+        uniforms.time.value += 0.05;
+        renderer.render(scene, camera);
+        frame++;
+        requestAnimationFrame(animate);
+      };
+      animate();
+    } catch (err) {
+      console.error("Error recording transition:", err);
+      toast.error("Failed to record transition");
+      setDownloadingAsset(null);
+    }
   };
 
   const handleDownloadAllAssets = async () => {
@@ -326,36 +423,70 @@ export const DatabaseExport = () => {
               </CardTitle>
               <CardDescription>Download logos, backgrounds, textures and other site assets</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Button onClick={handleDownloadAllAssets} disabled={exporting} variant="outline" className="w-full gap-2">
-                {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-                Download All Assets as ZIP
-              </Button>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {SITE_ASSETS.map(asset => (
-                  <div key={asset.id} className="p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{asset.label}</p>
-                        <p className="text-xs text-muted-foreground">{asset.description}</p>
+            <CardContent className="space-y-6">
+              {/* Page Transition / Components Section */}
+              <div>
+                <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Components & Animations</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {SITE_COMPONENTS.map(comp => (
+                    <div key={comp.id} className="p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm">{comp.label}</p>
+                          <p className="text-xs text-muted-foreground">{comp.description}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0"
+                          disabled={downloadingAsset === comp.id}
+                          onClick={() => handleRecordTransition(comp.id)}
+                        >
+                          {downloadingAsset === comp.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Download className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 shrink-0"
-                        disabled={downloadingAsset === asset.id}
-                        onClick={() => handleDownloadAsset(asset)}
-                      >
-                        {downloadingAsset === asset.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Download className="h-3.5 w-3.5" />
-                        )}
-                      </Button>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+
+              {/* Static Assets Section */}
+              <div>
+                <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Static Assets</h4>
+                <Button onClick={handleDownloadAllAssets} disabled={exporting} variant="outline" className="w-full gap-2 mb-3">
+                  {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                  Download All Assets as ZIP
+                </Button>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {SITE_ASSETS.map(asset => (
+                    <div key={asset.id} className="p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{asset.label}</p>
+                          <p className="text-xs text-muted-foreground">{asset.description}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0"
+                          disabled={downloadingAsset === asset.id}
+                          onClick={() => handleDownloadAsset(asset)}
+                        >
+                          {downloadingAsset === asset.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Download className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>

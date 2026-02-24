@@ -130,6 +130,7 @@ interface HubProps {
   analyses: PlayerAnalysis[];
   playerData: any;
   dailyAphorism?: any;
+  portalSettings?: any;
   onNavigateToAnalysis: () => void;
   onNavigateToComparisons?: () => void;
   onNavigateToForm?: () => void;
@@ -137,7 +138,7 @@ interface HubProps {
   onNavigateToSchedule?: () => void;
 }
 
-export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateToAnalysis, onNavigateToComparisons, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
+export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSettings, onNavigateToAnalysis, onNavigateToComparisons, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
   const navigate = useNavigate();
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
   const [imageFocalPoints, setImageFocalPoints] = React.useState<string[]>([]);
@@ -246,18 +247,35 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
     );
   };
   
-  // Fetch marketing gallery images for this player
+  // Fetch hero images - prefer portal settings hero_images, fallback to marketing_gallery
   React.useEffect(() => {
     const fetchMarketingImages = async () => {
+      // If portal settings have hero images, use those instead of marketing_gallery
+      if (portalSettings?.hero_images && portalSettings.hero_images.length > 0) {
+        console.log('Using portal settings hero images:', portalSettings.hero_images.length);
+        setMarketingImages(portalSettings.hero_images);
+        setImageFocalPoints(portalSettings.hero_focal_points || portalSettings.hero_images.map(() => 'center center'));
+        
+        // Preload
+        Promise.all(
+          portalSettings.hero_images.slice(0, 4).map((url: string) => {
+            return new Promise((resolve) => {
+              const img = new Image();
+              img.onload = () => resolve(url);
+              img.onerror = () => resolve(url);
+              img.src = url;
+            });
+          })
+        ).then(() => setImagesPreloaded(true));
+        return;
+      }
+
       if (!playerData?.name) {
-        console.log('No player name available');
-        setImagesPreloaded(true); // Allow carousel to check other sources
+        setImagesPreloaded(true);
         return;
       }
       
-      console.log('Fetching marketing images for player:', playerData?.id, playerData?.name);
-      
-      // Fetch images filtered by this specific player's ID - no category filter
+      // Fallback: Fetch images from marketing_gallery
       const { data: images, error } = await supabase
         .from('marketing_gallery')
         .select('file_url, focal_point')
@@ -266,17 +284,15 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
         .order('created_at', { ascending: false });
       
       if (error) {
-        console.error('Error fetching player images:', error, error.message, error.details);
+        console.error('Error fetching player images:', error);
         setImagesPreloaded(true);
         return;
       }
       
-      console.log('Player images from DB:', images?.length);
-      const imageUrls = images?.map(img => img.file_url) || [];
-      const focalPoints = images?.map(img => (img as any).focal_point || 'center') || [];
+      const imageUrls = (images || []).map(img => img.file_url).filter(Boolean);
+      const focalPoints = (images || []).map(img => img.focal_point || 'center center');
       
       if (imageUrls.length === 0) {
-        console.log('No images to preload');
         setImagesPreloaded(true);
         return;
       }
@@ -284,51 +300,28 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
       setMarketingImages(imageUrls);
       setImageFocalPoints(focalPoints);
       
-      // Priority load: Load first 4 images immediately, then show carousel
       const priorityCount = Math.min(4, imageUrls.length);
-      const priorityImages = imageUrls.slice(0, priorityCount);
-      const remainingImages = imageUrls.slice(priorityCount);
-      
-      console.log('Priority loading first', priorityCount, 'images');
-      
-      // Load priority images first
       Promise.all(
-        priorityImages.map(url => {
-          return new Promise((resolve, reject) => {
+        imageUrls.slice(0, priorityCount).map(url => {
+          return new Promise((resolve) => {
             const img = new Image();
-            img.onload = () => {
-              console.log('Priority loaded:', url);
-              resolve(url);
-            };
-            img.onerror = (err) => {
-              console.error('Failed to load priority image:', url, err);
-              resolve(url); // Resolve anyway to not block
-            };
+            img.onload = () => resolve(url);
+            img.onerror = () => resolve(url);
             img.src = url;
           });
         })
       ).then(() => {
-        console.log('Priority images loaded, showing carousel');
-        setImagesPreloaded(true); // Show carousel now
-        
-        // Load remaining images in background
-        if (remainingImages.length > 0) {
-          console.log('Background loading remaining', remainingImages.length, 'images');
-          remainingImages.forEach(url => {
-            const img = new Image();
-            img.onload = () => console.log('Background loaded:', url);
-            img.onerror = (err) => console.error('Failed to load background image:', url, err);
-            img.src = url;
-          });
-        }
-      }).catch(err => {
-        console.error('Error loading priority images:', err);
-        setImagesPreloaded(true); // Show anyway
-      });
+        setImagesPreloaded(true);
+        const remaining = imageUrls.slice(priorityCount);
+        remaining.forEach(url => {
+          const img = new Image();
+          img.src = url;
+        });
+      }).catch(() => setImagesPreloaded(true));
     };
     
     fetchMarketingImages();
-  }, [playerData?.name, playerData?.id]);
+  }, [playerData?.name, playerData?.id, portalSettings?.hero_images]);
   
   // Set hasAnimated to true after initial animation completes
   React.useEffect(() => {
@@ -929,14 +922,14 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, onNavigateT
       )}
 
       {/* Gold Separator Line */}
-      {dailyAphorism && (
+      {dailyAphorism && (portalSettings?.show_aphorisms !== false) && (
         <div className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw]">
           <div className="border-t-2 border-gold"></div>
         </div>
       )}
 
-      {/* Daily Aphorism */}
-      {dailyAphorism && (
+      {/* Daily Aphorism - respects portal settings */}
+      {dailyAphorism && (portalSettings?.show_aphorisms !== false) && (
         <div className="px-4 md:px-0 mt-[10px]">
           <Card className="relative overflow-hidden border-gold bg-gold/30">
             <CardContent className="relative py-3 px-3 text-center space-y-3">
