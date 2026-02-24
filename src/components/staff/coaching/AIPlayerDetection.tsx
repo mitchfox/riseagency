@@ -140,11 +140,23 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     toast.success("Tagged from existing clip");
   };
 
-  const extractFrame = useCallback((time: number): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const video = videoRef.current;
-      if (!video) return reject("No video element");
+  const hiddenVideoRef = useRef<HTMLVideoElement | null>(null);
 
+  const createHiddenVideo = useCallback((): Promise<HTMLVideoElement> => {
+    return new Promise((resolve, reject) => {
+      const vid = document.createElement("video");
+      vid.src = videoUrl;
+      vid.crossOrigin = "anonymous";
+      vid.preload = "auto";
+      vid.style.display = "none";
+      document.body.appendChild(vid);
+      vid.oncanplay = () => resolve(vid);
+      vid.onerror = () => reject(new Error("Failed to load video for scanning"));
+    });
+  }, [videoUrl]);
+
+  const extractFrame = useCallback((video: HTMLVideoElement, time: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
       const canvas = canvasRef.current || document.createElement("canvas");
       canvas.width = 640;
       canvas.height = 360;
@@ -160,7 +172,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       video.addEventListener("seeked", onSeeked);
       video.currentTime = time;
     });
-  }, [videoRef]);
+  }, []);
 
   const startScan = async () => {
     if (!playerName.trim()) {
@@ -179,16 +191,17 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setScanProgress(0);
     setDetectedActions([]);
 
-    const video = videoRef.current;
-    const duration = video.duration;
+    const duration = videoRef.current.duration;
     const sampleInterval = 3;
     const totalFrames = Math.floor(duration / sampleInterval);
     const batchSize = 15;
 
     const allDetected: DetectedAction[] = [];
 
+    let hiddenVideo: HTMLVideoElement | null = null;
     try {
-      video.pause();
+      hiddenVideo = await createHiddenVideo();
+      hiddenVideoRef.current = hiddenVideo;
 
       for (let batchStart = 0; batchStart < totalFrames; batchStart += batchSize) {
         const batchEnd = Math.min(batchStart + batchSize, totalFrames);
@@ -197,7 +210,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         for (let i = batchStart; i < batchEnd; i++) {
           const time = i * sampleInterval;
           try {
-            const dataUrl = await extractFrame(time);
+            const dataUrl = await extractFrame(hiddenVideo, time);
             frames.push({ dataUrl, timestamp: time, index: i });
           } catch {
             // Skip frames that fail
@@ -255,6 +268,13 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       }
     } catch (err: any) {
       toast.error(err.message || "Scan failed");
+    } finally {
+      if (hiddenVideo) {
+        hiddenVideo.pause();
+        hiddenVideo.src = "";
+        hiddenVideo.remove();
+        hiddenVideoRef.current = null;
+      }
     }
 
     setScanning(false);
