@@ -1866,8 +1866,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           localStorage.setItem("player_email", email);
                           sessionStorage.setItem("player_email", email);
                           localStorage.setItem("player_login_timestamp", Date.now().toString());
-                          // Open portal on current origin (works for both preview and published)
-                          window.open(`${window.location.origin}/portal`, '_blank');
+                          // Open portal with email param (ensures it works even if localStorage isn't shared across tabs/iframes)
+                          window.open(`${window.location.origin}/portal?staff_login=${encodeURIComponent(email)}`, '_blank');
                         }}
                         className="flex-1 h-8 md:h-9 text-xs md:text-sm"
                       >

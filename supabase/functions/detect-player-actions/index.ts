@@ -10,6 +10,8 @@ interface SportscodeAction {
   description: string | null;
   visual_cues: string | null;
   typical_duration_seconds: number | null;
+  default_before_seconds: number | null;
+  default_after_seconds: number | null;
   category: string | null;
 }
 
@@ -19,7 +21,7 @@ async function fetchActionDefinitions(): Promise<SportscodeAction[]> {
   const sb = createClient(supabaseUrl, supabaseKey);
   const { data } = await sb
     .from('sportscode_action_types')
-    .select('action_name, description, visual_cues, typical_duration_seconds, category')
+    .select('action_name, description, visual_cues, typical_duration_seconds, default_before_seconds, default_after_seconds, category')
     .order('display_order', { ascending: true });
   return (data as SportscodeAction[]) || [];
 }
@@ -42,16 +44,21 @@ function buildActionReference(actions: SportscodeAction[]): string {
       if (a.description) text += `: ${a.description}`;
       text += '\n';
       if (a.visual_cues) text += `  VISUAL CUES: ${a.visual_cues}\n`;
-      if (a.typical_duration_seconds) text += `  SUGGESTED CLIP: ${a.typical_duration_seconds}s\n`;
+      const before = a.default_before_seconds || 5;
+      const after = a.default_after_seconds || 5;
+      text += `  CLIP TIMING: ${before}s before, ${after}s after the key moment\n`;
     }
   }
   return text;
 }
 
-function buildDurationMap(actions: SportscodeAction[]): Record<string, number> {
-  const map: Record<string, number> = {};
+function buildDurationMap(actions: SportscodeAction[]): Record<string, { before: number; after: number }> {
+  const map: Record<string, { before: number; after: number }> = {};
   for (const a of actions) {
-    map[a.action_name.toLowerCase()] = a.typical_duration_seconds || 10;
+    map[a.action_name.toLowerCase()] = {
+      before: a.default_before_seconds || 5,
+      after: a.default_after_seconds || 5,
+    };
   }
   return map;
 }
@@ -114,15 +121,15 @@ DO NOT REPORT:
 Be SELECTIVE. Quality over quantity. Only report frames where you genuinely believe the identified player is performing one of the actions listed above. A match typically has 40-80 meaningful involvements per player across 90 minutes.
 
 CLIP DURATION:
-For each action, suggest how many seconds before and after the key frame to include. Use the suggested clip durations from the action reference above. If an action is part of a longer sequence (e.g. a dribble leading to a cross), extend accordingly. If it is a quick isolated moment (e.g. a clearance), keep it short.
+For each action, suggest how many seconds before (clipBefore) and after (clipAfter) the key frame to include. Use the clip timing values from the action reference above as defaults. If an action is part of a longer sequence (e.g. a dribble leading to a cross), extend accordingly. If it is a quick isolated moment (e.g. a clearance), keep it short. The default if not specified in the reference is 5s before and 5s after.
 
 For each detected action provide:
 - frameIndex: the 0-indexed frame number
-- actionType: a short label matching one of the action types above (e.g. "Pass", "Dribble", "Shot", "Tackle", "Run", "Press", "Header", "Cross", "Interception", "Receive", "Clearance", "Aerial Duel", "Set Piece", "Block")
+- actionType: a short label matching one of the action types from the reference above (e.g. "Pass", "Dribble", "Shot")
 - confidence: "high", "medium", or "low"
 - description: one sentence describing what you see the player doing in that frame — this will be shown to the coach as the reason the AI flagged it
-- clipBefore: seconds to include before the key frame (typically 2-5)
-- clipAfter: seconds to include after the key frame (typically 2-5)`;
+- clipBefore: seconds before the frame to include in the clip
+- clipAfter: seconds after the frame to include in the clip`;
 
     const imageContent = frames.map((frame: { dataUrl: string; timestamp: number; index: number }) => ([
       {

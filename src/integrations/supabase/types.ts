@@ -4565,6 +4565,8 @@ export type Database = {
           action_name: string
           category: string | null
           created_at: string
+          default_after_seconds: number | null
+          default_before_seconds: number | null
           description: string | null
           display_order: number | null
           id: string
@@ -4576,6 +4578,8 @@ export type Database = {
           action_name: string
           category?: string | null
           created_at?: string
+          default_after_seconds?: number | null
+          default_before_seconds?: number | null
           description?: string | null
           display_order?: number | null
           id?: string
@@ -4587,6 +4591,8 @@ export type Database = {
           action_name?: string
           category?: string | null
           created_at?: string
+          default_after_seconds?: number | null
+          default_before_seconds?: number | null
           description?: string | null
           display_order?: number | null
           id?: string
