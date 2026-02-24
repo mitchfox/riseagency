@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch } from "lucide-react";
+import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -37,6 +37,7 @@ interface Clip {
   created_at: string;
   minute?: string;
   action_score?: number | null;
+  ai_status?: 'pending' | 'accepted' | 'rejected';
 }
 
 interface VideoAnalysisEntry {
@@ -407,6 +408,26 @@ export const VideoAnalysis = () => {
   const handleDeleteClip = async (clipId: string) => {
     if (!selectedVideo) return;
     await saveClips(selectedVideo.clips.filter(c => c.id !== clipId));
+  };
+
+  const handleAcceptAIClip = async (clipId: string) => {
+    if (!selectedVideo) return;
+    await saveClips(selectedVideo.clips.map(c => c.id === clipId ? { ...c, ai_status: 'accepted' as const } : c));
+  };
+
+  const handleRejectAIClip = async (clipId: string) => {
+    if (!selectedVideo) return;
+    await saveClips(selectedVideo.clips.filter(c => c.id !== clipId));
+  };
+
+  const handleAcceptAllAIClips = async () => {
+    if (!selectedVideo) return;
+    await saveClips(selectedVideo.clips.map(c => c.ai_status === 'pending' ? { ...c, ai_status: 'accepted' as const } : c));
+  };
+
+  const handleRejectAllAIClips = async () => {
+    if (!selectedVideo) return;
+    await saveClips(selectedVideo.clips.filter(c => c.ai_status !== 'pending'));
   };
 
   const handleAddAnnotation = async () => {
@@ -1182,10 +1203,11 @@ export const VideoAnalysis = () => {
                     end: c.end,
                     label: c.label,
                     action_type: c.actionType,
-                    action_description: '',
+                    action_description: c.description || '',
                     notes: 'AI detected',
                     created_at: new Date().toISOString(),
                     minute: `${Math.floor(c.start / 60)}:${String(Math.floor(c.start % 60)).padStart(2, '0')}`,
+                    ai_status: 'pending' as const,
                   }));
                   await saveClips([...selectedVideo.clips, ...clips]);
                 }}
@@ -1333,10 +1355,31 @@ export const VideoAnalysis = () => {
 
         {/* Clips list: newest first */}
         <div className="pt-1">
-          <h4 className="text-sm font-medium mb-1">Clips ({selectedVideo.clips.length})</h4>
+          {(() => {
+            const pendingCount = selectedVideo.clips.filter(c => c.ai_status === 'pending').length;
+            return (
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="text-sm font-medium">Clips ({selectedVideo.clips.length}){pendingCount > 0 && <span className="text-xs text-amber-500 ml-1.5">· {pendingCount} pending review</span>}</h4>
+                {pendingCount > 0 && (
+                  <div className="flex gap-1.5">
+                    <Button variant="outline" size="sm" className="h-6 text-xs gap-1" onClick={handleAcceptAllAIClips}>
+                      <Check className="h-3 w-3" /> Accept All
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-6 text-xs gap-1 text-destructive hover:text-destructive" onClick={handleRejectAllAIClips}>
+                      <X className="h-3 w-3" /> Reject All
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
             {clipsNewestFirst.map(clip => (
-              <div key={clip.id} className="p-2.5 rounded-lg border bg-card hover:bg-muted/30 transition-colors group/clip">
+              <div key={clip.id} className={`p-2.5 rounded-lg border transition-colors group/clip ${
+                clip.ai_status === 'pending' ? 'bg-amber-500/5 border-amber-500/30' :
+                clip.ai_status === 'accepted' ? 'bg-card border-green-500/30' :
+                'bg-card hover:bg-muted/30'
+              }`}>
                 <div className="flex items-center gap-2">
                   <button onClick={() => playClip(clip)} className="flex items-center gap-1 text-primary hover:underline font-mono text-xs whitespace-nowrap shrink-0">
                     <Play className="h-3 w-3" />
@@ -1374,6 +1417,21 @@ export const VideoAnalysis = () => {
                     actionTypes={allActionTypes}
                     compact
                   />
+
+                  {clip.ai_status === 'pending' && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-500 bg-amber-500/10">Pending</Badge>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-green-500 hover:text-green-600 hover:bg-green-500/10" onClick={() => handleAcceptAIClip(clip.id)} title="Accept">
+                        <Check className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => handleRejectAIClip(clip.id)} title="Reject">
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  )}
+                  {clip.ai_status === 'accepted' && (
+                    <Badge variant="outline" className="text-[10px] border-green-500/40 text-green-500 bg-green-500/10 shrink-0">AI ✓</Badge>
+                  )}
 
                   <div className="flex-1" />
 

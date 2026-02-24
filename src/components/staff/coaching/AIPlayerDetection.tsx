@@ -1,13 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, UserSearch, Check, X, Play, Tag } from "lucide-react";
+import { Loader2, UserSearch, X, Tag } from "lucide-react";
 
 interface DetectedAction {
   frameIndex: number;
@@ -32,7 +31,7 @@ interface PlayerOption {
 interface Props {
   videoUrl: string;
   videoRef: React.RefObject<HTMLVideoElement>;
-  onClipsAccepted: (clips: { start: number; end: number; label: string; actionType: string }[]) => void;
+  onClipsAccepted: (clips: { start: number; end: number; label: string; actionType: string; description?: string; confidence?: string }[]) => void;
   opponent?: string | null;
   players?: PlayerOption[];
   selectedPlayerId?: string | null;
@@ -61,9 +60,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [playerTags, setPlayerTags] = useState<PlayerTag[]>([]);
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
-  const [detectedActions, setDetectedActions] = useState<DetectedAction[]>([]);
-  const [reviewMode, setReviewMode] = useState(false);
-  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const [selectedPlayerForScan, setSelectedPlayerForScan] = useState<string>(selectedPlayerId || "");
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -189,7 +185,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
     setScanning(true);
     setScanProgress(0);
-    setDetectedActions([]);
 
     const duration = videoRef.current.duration;
     const sampleInterval = 3;
@@ -257,14 +252,21 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         return !allDetected.slice(0, idx).some(prev => Math.abs(prev.timestamp - action.timestamp) < 3);
       });
 
-      setDetectedActions(deduped);
-      setReviewMode(true);
-      setCurrentReviewIndex(0);
-
       if (deduped.length === 0) {
         toast.info("No actions detected for this player");
       } else {
-        toast.success(`Found ${deduped.length} potential actions`);
+        // Send all detected actions as pending clips to the clip list
+        const clips = deduped.map(a => ({
+          start: Math.max(0, a.timestamp - 5),
+          end: a.timestamp + 5,
+          label: `${a.actionType} at ${Math.floor(a.timestamp / 60)}:${String(Math.floor(a.timestamp % 60)).padStart(2, '0')}`,
+          actionType: a.actionType,
+          description: a.description,
+          confidence: a.confidence,
+        }));
+        onClipsAccepted(clips);
+        toast.success(`${deduped.length} potential actions added as pending clips`);
+        setDialogOpen(false);
       }
     } catch (err: any) {
       toast.error(err.message || "Scan failed");
@@ -279,49 +281,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
     setScanning(false);
   };
-
-  const handleReviewAction = (index: number, status: 'accepted' | 'rejected') => {
-    setDetectedActions(prev => prev.map((a, i) => i === index ? { ...a, status } : a));
-    const nextPending = detectedActions.findIndex((a, i) => i > index && a.status === 'pending');
-    if (nextPending !== -1) setCurrentReviewIndex(nextPending);
-  };
-
-  const previewAction = (action: DetectedAction) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = Math.max(0, action.timestamp - 5);
-      videoRef.current.play();
-    }
-  };
-
-  const acceptAll = () => {
-    setDetectedActions(prev => prev.map(a => a.status === 'pending' ? { ...a, status: 'accepted' } : a));
-  };
-
-  const finishReview = () => {
-    const accepted = detectedActions.filter(a => a.status === 'accepted');
-    if (accepted.length === 0) {
-      toast.info("No actions accepted");
-      setDialogOpen(false);
-      return;
-    }
-
-    const clips = accepted.map(a => ({
-      start: Math.max(0, a.timestamp - 5),
-      end: a.timestamp + 5,
-      label: `${a.actionType} at ${Math.floor(a.timestamp / 60)}:${String(Math.floor(a.timestamp % 60)).padStart(2, '0')}`,
-      actionType: a.actionType,
-    }));
-
-    onClipsAccepted(clips);
-    toast.success(`${clips.length} clips created from AI detection`);
-    setDialogOpen(false);
-    setReviewMode(false);
-    setDetectedActions([]);
-  };
-
-  const pendingCount = detectedActions.filter(a => a.status === 'pending').length;
-  const acceptedCount = detectedActions.filter(a => a.status === 'accepted').length;
-  const rejectedCount = detectedActions.filter(a => a.status === 'rejected').length;
 
   return (
     <>
@@ -339,8 +298,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             </DialogTitle>
           </DialogHeader>
 
-          {!reviewMode ? (
-            <div className="space-y-4 mt-2">
+          <div className="space-y-4 mt-2">
               {/* Player selection */}
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold uppercase tracking-wider">1. Identify the Player</h4>
@@ -449,7 +407,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                 <h4 className="text-sm font-semibold uppercase tracking-wider">3. Start AI Scan</h4>
                 <p className="text-xs text-muted-foreground">
                   The AI will sample a frame every 3 seconds and analyse each one for actions by {playerName || 'the player'}.
-                  This may take a few minutes for longer videos.
+                  Detected actions will appear as pending clips below the video for you to review.
                 </p>
                 <Button onClick={startScan} disabled={scanning || !playerName.trim()} className="gap-2">
                   {scanning ? (
@@ -474,89 +432,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                 )}
               </div>
             </div>
-          ) : (
-            /* Review mode */
-            <div className="space-y-4 mt-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline">{pendingCount} pending</Badge>
-                  <Badge className="bg-green-600 text-white">{acceptedCount} accepted</Badge>
-                  <Badge variant="destructive">{rejectedCount} rejected</Badge>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={acceptAll}>Accept All Pending</Button>
-                  <Button size="sm" onClick={finishReview} disabled={acceptedCount === 0}>
-                    Create {acceptedCount} Clips
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-1.5 max-h-[60vh] overflow-y-auto">
-                {detectedActions.map((action, idx) => (
-                  <div
-                    key={idx}
-                    className={`flex items-center gap-3 p-2.5 rounded-lg border transition-colors ${
-                      action.status === 'accepted' ? 'bg-green-500/10 border-green-500/30' :
-                      action.status === 'rejected' ? 'bg-destructive/10 border-destructive/30 opacity-50' :
-                      idx === currentReviewIndex ? 'bg-primary/5 border-primary/30' :
-                      'bg-card border-border'
-                    }`}
-                  >
-                    <button
-                      onClick={() => previewAction(action)}
-                      className="shrink-0 w-8 h-8 rounded bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
-                    >
-                      <Play className="h-3.5 w-3.5 text-primary" />
-                    </button>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm">{action.actionType}</span>
-                        <Badge variant="outline" className="text-[10px]">
-                          {Math.floor(action.timestamp / 60)}:{String(Math.floor(action.timestamp % 60)).padStart(2, '0')}
-                        </Badge>
-                        <Badge variant={
-                          action.confidence === 'high' ? 'default' :
-                          action.confidence === 'medium' ? 'secondary' : 'outline'
-                        } className="text-[10px]">
-                          {action.confidence}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">{action.description}</p>
-                    </div>
-
-                    <div className="flex gap-1 shrink-0">
-                      <Button
-                        variant={action.status === 'accepted' ? 'default' : 'ghost'}
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => handleReviewAction(idx, 'accepted')}
-                      >
-                        <Check className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant={action.status === 'rejected' ? 'destructive' : 'ghost'}
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => handleReviewAction(idx, 'rejected')}
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => { setReviewMode(false); setDetectedActions([]); }}>
-                  Back to Setup
-                </Button>
-                <Button onClick={finishReview} disabled={acceptedCount === 0} className="flex-1">
-                  Create {acceptedCount} Clips
-                </Button>
-              </div>
-            </div>
-          )}
         </DialogContent>
       </Dialog>
     </>
