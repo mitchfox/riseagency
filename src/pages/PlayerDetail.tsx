@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, MessageCircle, ExternalLink, Video, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, MessageCircle, ExternalLink, Video, ChevronLeft, ChevronRight, Play, BarChart3 } from "lucide-react";
 import { FormationDisplay } from "@/components/FormationDisplay";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -45,6 +45,9 @@ const PlayerDetail = () => {
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [translatedStatDescriptions, setTranslatedStatDescriptions] = useState<Record<number, string>>({});
+  const [topVideoActions, setTopVideoActions] = useState<any[]>([]);
+  const [videoClipModalUrl, setVideoClipModalUrl] = useState<string | null>(null);
+  const [seasonReportOpen, setSeasonReportOpen] = useState(false);
   const [isTranslatingDescriptions, setIsTranslatingDescriptions] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   
@@ -288,6 +291,70 @@ const PlayerDetail = () => {
               .order('analysis_date', { ascending: false });
             
             setPerformanceReports(analysisData || []);
+            
+            // Fetch top video actions for video report buttons
+            if (analysisData && analysisData.length > 0) {
+              const analysisIds = analysisData.map((a: any) => a.id);
+              const { data: actionData } = await supabase
+                .from('performance_report_actions')
+                .select('id, action_type, action_score, video_url, minute, analysis_id')
+                .in('analysis_id', analysisIds)
+                .not('video_url', 'is', null)
+                .gt('action_score', 0)
+                .order('action_score', { ascending: false })
+                .limit(50);
+              
+              if (actionData && actionData.length > 0) {
+                // Group by action type and get average score per type
+                const typeScores: Record<string, { total: number; count: number; actions: any[] }> = {};
+                actionData.forEach((a: any) => {
+                  const types = a.action_type?.includes(',')
+                    ? a.action_type.split(',').map((t: string) => t.trim())
+                    : [a.action_type];
+                  types.forEach((type: string) => {
+                    if (!typeScores[type]) typeScores[type] = { total: 0, count: 0, actions: [] };
+                    typeScores[type].total += a.action_score || 0;
+                    typeScores[type].count++;
+                    typeScores[type].actions.push(a);
+                  });
+                });
+                
+                // Best actions (score >= 0.05) sorted by score desc
+                const bestActions = actionData.filter((a: any) => a.action_score >= 0.05);
+                
+                // Top 4 action types by average r90 score
+                const sortedTypes = Object.entries(typeScores)
+                  .map(([type, data]) => ({ type, avg: data.total / data.count, actions: data.actions }))
+                  .sort((a, b) => b.avg - a.avg)
+                  .slice(0, 4);
+                
+                // Combine: best actions first, then top type representatives
+                const topActions: any[] = [];
+                const usedIds = new Set<string>();
+                
+                // Add best actions
+                bestActions.slice(0, 10).forEach((a: any) => {
+                  if (!usedIds.has(a.id)) {
+                    topActions.push({ ...a, category: 'Best Actions' });
+                    usedIds.add(a.id);
+                  }
+                });
+                
+                // Add top type representatives
+                sortedTypes.forEach(({ type, actions: typeActions }) => {
+                  typeActions.sort((a: any, b: any) => (b.action_score || 0) - (a.action_score || 0));
+                  for (const a of typeActions) {
+                    if (!usedIds.has(a.id)) {
+                      topActions.push({ ...a, category: type });
+                      usedIds.add(a.id);
+                      break;
+                    }
+                  }
+                });
+                
+                setTopVideoActions(topActions);
+              }
+            }
             
             // Use optimized parsers
             const bioData = parsePlayerBio(data.bio);
@@ -711,6 +778,38 @@ const PlayerDetail = () => {
             </div>
           </div>
 
+          {/* Top Video Report Actions - Below highlights */}
+          {topVideoActions.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-xs font-bebas text-muted-foreground uppercase tracking-wider mb-2">Top Actions</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {topVideoActions.map((action: any, idx: number) => (
+                  <button
+                    key={action.id || idx}
+                    onClick={() => setVideoClipModalUrl(action.video_url)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-secondary/30 hover:bg-primary/10 hover:border-primary/40 transition-colors text-xs"
+                    title={`${action.action_type} · R90: ${action.action_score?.toFixed(3)}`}
+                  >
+                    <Play className="h-3 w-3 text-primary" />
+                    <span className="font-medium truncate max-w-[120px]">{action.action_type?.split(',')[0]?.trim()}</span>
+                    {action.action_score != null && (
+                      <span className="text-muted-foreground font-mono text-[10px]">{action.action_score.toFixed(2)}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Video Clip Playback Modal */}
+          <Dialog open={!!videoClipModalUrl} onOpenChange={() => setVideoClipModalUrl(null)}>
+            <DialogContent className="max-w-[90vw] w-full p-0 overflow-hidden bg-black border-none">
+              {videoClipModalUrl && (
+                <video src={videoClipModalUrl} className="w-full max-h-[80vh] object-contain" autoPlay controls playsInline />
+              )}
+            </DialogContent>
+          </Dialog>
+
           {/* Biography Section */}
           <div className="mb-12">
             <h2 className="text-3xl font-bebas text-primary uppercase tracking-widest mb-4 flex items-center gap-3">
@@ -861,6 +960,14 @@ const PlayerDetail = () => {
                   <span className="w-12 h-1 bg-primary"></span>
                   {seasonStatsLabel}
                   <span className="flex-1 h-1 bg-primary/20"></span>
+                  {performanceReports.length > 0 && (
+                    <button
+                      onClick={() => setSeasonReportOpen(true)}
+                      className="ml-2 flex items-center gap-1 px-3 py-1 rounded-md border border-primary/30 bg-primary/10 hover:bg-primary/20 transition-colors text-xs font-bebas uppercase tracking-wider text-primary"
+                    >
+                      <BarChart3 className="h-3.5 w-3.5" /> Full Report
+                    </button>
+                  )}
                 </h2>
                 <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
                   {player.seasonStats.map((stat: any, idx: number) => (
@@ -1164,6 +1271,44 @@ const PlayerDetail = () => {
             />
           )}
           
+          {/* Season Report Dialog */}
+          <Dialog open={seasonReportOpen} onOpenChange={setSeasonReportOpen}>
+            <DialogContent className="max-w-[90vw] w-full max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bebas uppercase tracking-wider text-primary">
+                  {player?.name} - Season Report
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 mt-4">
+                {performanceReports.map((report: any) => (
+                  <div
+                    key={report.id}
+                    className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => { setSelectedReportId(report.id); setReportDialogOpen(true); setSeasonReportOpen(false); }}
+                  >
+                    <div>
+                      <p className="font-medium text-sm">vs {report.opponent || 'Unknown'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {report.analysis_date ? new Date(report.analysis_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                        {report.result && ` · ${report.result}`}
+                        {report.minutes_played && ` · ${report.minutes_played}'`}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      {report.r90_score != null && (
+                        <span className="text-lg font-bebas text-primary">{report.r90_score.toFixed(2)}</span>
+                      )}
+                      <p className="text-[10px] text-muted-foreground">R90</p>
+                    </div>
+                  </div>
+                ))}
+                {performanceReports.length === 0 && (
+                  <p className="text-center text-muted-foreground py-8">No match reports available</p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
           {/* Performance Report Dialog */}
           <PerformanceReportDialog 
             open={reportDialogOpen} 

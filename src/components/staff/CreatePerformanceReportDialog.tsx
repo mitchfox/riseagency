@@ -25,6 +25,7 @@ import { ActionStatRecorder, aggregateRecordedStats, RecordedStat, STAT_TYPE_CON
 import { UnifiedStatsEditor, UnifiedStat, mergeStatsForEditor, unifiedStatsToStrikerStats } from "./UnifiedStatsEditor";
 import { FixtureStatsEditor, UNIFIED_TO_FIXTURE_MAP, FIXTURE_TO_UNIFIED_MAP } from "./FixtureStatsEditor";
 import { InlineFixtureCreator } from "./InlineFixtureCreator";
+import { logActivity } from "@/lib/activityLogger";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -1312,6 +1313,12 @@ export const CreatePerformanceReportDialog = ({
       }
 
       toast.success(`Performance report ${analysisId ? 'updated' : 'created'} successfully`);
+      logActivity({
+        action: analysisId ? 'updated' : 'created',
+        entityType: 'performance_report',
+        entityId: analysisIdToUse || null,
+        entityName: `${playerName} vs ${opponent}`,
+      });
       
       // Only close dialog and call onSuccess in create mode
       // In edit mode, keep dialog open for continued editing

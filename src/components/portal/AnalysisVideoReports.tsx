@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Play, Pause, SkipBack, SkipForward, X, Maximize, Trash2, Download, CheckSquare, Film, ListVideo } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, X, Maximize, Trash2, Download, CheckSquare, Film, ListVideo, Star, Loader2 } from "lucide-react";
 import { downloadVideo } from "@/lib/videoDownload";
 import { computeVisibleElements } from "@/lib/annotationRenderUtils";
 import { ReadOnlyAnnotationOverlay } from "@/components/portal/ReadOnlyAnnotationOverlay";
@@ -59,6 +59,7 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
   const [currentClipIndex, setCurrentClipIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [selectedClipIds, setSelectedClipIds] = useState<Set<string>>(new Set());
+  const [savingToBestClips, setSavingToBestClips] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -235,6 +236,50 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
         setTimeout(() => downloadVideo(c.video_url!, `clip-${i + 1}-${c.action_type}`), i * 500);
       });
     }
+  };
+
+  const handleSaveToBestClips = async (clip: ActionClip) => {
+    if (!clip.video_url) return;
+    setSavingToBestClips(clip.id);
+    try {
+      // Fetch current player highlights
+      const { data: playerData, error: fetchErr } = await supabase
+        .from('players')
+        .select('highlights')
+        .eq('id', playerId)
+        .single();
+      if (fetchErr) throw fetchErr;
+
+      const highlights = typeof playerData?.highlights === 'string'
+        ? JSON.parse(playerData.highlights)
+        : playerData?.highlights || {};
+
+      const bestClips = Array.isArray(highlights.bestClips) ? highlights.bestClips : [];
+
+      // Check if already saved
+      if (bestClips.some((c: any) => c.videoUrl === clip.video_url)) {
+        toast.info('This clip is already in Best Clips');
+        setSavingToBestClips(null);
+        return;
+      }
+
+      bestClips.push({
+        name: `${toTitleCase(clip.action_type)} vs ${clip.opponent}${clip.minute != null ? ` (${clip.minute}')` : ''}`,
+        videoUrl: clip.video_url,
+        addedAt: new Date().toISOString(),
+      });
+
+      const { error: updateErr } = await supabase
+        .from('players')
+        .update({ highlights: { ...highlights, bestClips } })
+        .eq('id', playerId);
+      if (updateErr) throw updateErr;
+
+      toast.success('Saved to Best Clips');
+    } catch (err: any) {
+      toast.error('Failed to save: ' + (err.message || 'Unknown error'));
+    }
+    setSavingToBestClips(null);
   };
 
   return (
@@ -468,6 +513,12 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
                           {toTitleCase(clip.action_type)} · vs {clip.opponent}
                           {clip.minute != null && <span className="opacity-60"> · {clip.minute}'</span>}
                         </button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-white/50 hover:text-yellow-400"
+                          title="Save to Best Clips"
+                          disabled={savingToBestClips === clip.id}
+                          onClick={(e) => { e.stopPropagation(); handleSaveToBestClips(clip); }}>
+                          {savingToBestClips === clip.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Star className="h-3 w-3" />}
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-6 w-6 text-white/50 hover:text-destructive"
                           onClick={(e) => { e.stopPropagation(); removeClip(index); }}>
                           <Trash2 className="h-3 w-3" />
