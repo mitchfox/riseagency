@@ -285,7 +285,7 @@ export const DatabaseExport = () => {
       
       recorder.start();
       let frame = 0;
-      const totalFrames = 75;
+      const totalFrames = 120;
       const animate = () => {
         if (frame >= totalFrames) { recorder.stop(); return; }
         uniforms.time.value += 0.05;
