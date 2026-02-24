@@ -57,9 +57,10 @@ interface FixtureStatsEditorProps {
   fixtureStats: Record<string, number>;
   onStatsChange: (stats: Record<string, number>) => void;
   actions?: PerformanceActionForAI[];
+  previousFixtureStats?: Record<string, number>;
 }
 
-export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions }: FixtureStatsEditorProps) => {
+export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previousFixtureStats }: FixtureStatsEditorProps) => {
   const [activeCategory, setActiveCategory] = useState("Shooting");
   const [aiSuggestions, setAiSuggestions] = useState<Record<string, AISuggestion>>({});
   const [aiLoading, setAiLoading] = useState(false);
@@ -108,6 +109,7 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions }: Fix
             notes: a.notes,
           })),
           statDefinitions: allMetrics,
+          previousStats: previousFixtureStats || {},
         },
       });
 

@@ -1853,6 +1853,28 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       <Edit className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
                       <span className="hidden md:inline">Edit</span>
                     </Button>
+                    {selectedPlayer?.email && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          const email = selectedPlayer!.email!;
+                          // Clear any existing portal session
+                          localStorage.removeItem("player_email");
+                          sessionStorage.removeItem("player_email");
+                          // Set this player's email as logged in
+                          localStorage.setItem("player_email", email);
+                          sessionStorage.setItem("player_email", email);
+                          localStorage.setItem("player_login_timestamp", Date.now().toString());
+                          // Open portal in new tab
+                          window.open('/portal', '_blank');
+                        }}
+                        className="flex-1 h-8 md:h-9 text-xs md:text-sm"
+                      >
+                        <Eye className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                        <span className="hidden md:inline">Portal</span>
+                      </Button>
+                    )}
                     <Button 
                       variant="outline" 
                       size="sm"
