@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { actions, statDefinitions } = await req.json();
+    const { actions, statDefinitions, previousStats } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
@@ -35,29 +35,41 @@ serve(async (req) => {
       .map((s: any) => `- ${s.key}: ${s.label}`)
       .join("\n");
 
-    const systemPrompt = `You are a football performance analyst. Given a list of match actions from a player's performance report, suggest raw match totals for each stat category.
+    const previousStatsText = previousStats && Object.keys(previousStats).length > 0
+      ? `\n\nPrevious match stats for this player (use as context for what stats are typically tracked):\n${Object.entries(previousStats).map(([k, v]) => `- ${k}: ${v}`).join("\n")}`
+      : "";
 
-IMPORTANT RULES:
+    const systemPrompt = `You are a football performance analyst. Given a list of match actions from a player's performance report, suggest raw match totals for EVERY stat category provided.
+
+CRITICAL RULES:
+- You MUST provide a suggestion for EVERY stat listed below. Do not skip any.
 - Be LENIENT and INCLUSIVE. When in doubt, include the action as contributing to a stat.
 - These are RAW MATCH TOTALS (counts), not per-90 values.
 - For goals: count actions that clearly describe a goal being scored.
 - For assists: count actions that clearly describe an assist.
-- For shots: count any action involving a shot attempt.
+- For shots: count any action involving a shot attempt. Shots on target are shots that would have gone in without a save.
 - For tackles, interceptions, clearances etc: count any action that describes these defensive actions.
 - For progressive passes/carries: count actions describing forward passing or carrying the ball.
 - For npxG/xA: estimate reasonable values based on the quality of chances described (these are decimal scores, not counts).
-- Only suggest stats where you can identify at least one contributing action.
-- For each stat, list which action numbers you think contribute to it.`;
+- For percentage stats (on_target_pct, pass_accuracy_pct, etc): estimate a percentage value.
+- For dribbles: count actions where the player takes on/beats an opponent.
+- For touches in box: count actions occurring in the opposition penalty area.
+- For fouls drawn: count actions where the player wins a foul.
+- For aerial duels/duels: count physical contest actions.
+- For key passes: count passes that create a chance.
+- For crosses and long balls: count those specific pass types.
+- If no actions seem relevant to a stat, suggest 0 with reasoning "No clear evidence in actions".
+- For each stat, list which action numbers you think contribute to it.${previousStatsText}`;
 
     const userPrompt = `Here are the performance actions from the match:
 
 ${actionsText}
 
-Here are the stat categories to analyse:
+Here are ALL the stat categories you MUST analyse and provide suggestions for:
 
 ${statsText}
 
-Analyse each action and suggest raw totals for each relevant stat. Be lenient - if an action could reasonably contribute to a stat, include it.`;
+Analyse each action and suggest raw totals for EVERY stat listed above. Be lenient - if an action could reasonably contribute to a stat, include it. You must return a suggestion for every single stat key listed.`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -79,7 +91,7 @@ Analyse each action and suggest raw totals for each relevant stat. Be lenient - 
               function: {
                 name: "suggest_stats",
                 description:
-                  "Return suggested raw match totals for each stat based on the performance actions.",
+                  "Return suggested raw match totals for EVERY stat based on the performance actions. You must include all stat keys.",
                 parameters: {
                   type: "object",
                   properties: {

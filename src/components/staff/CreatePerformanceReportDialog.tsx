@@ -141,6 +141,7 @@ export const CreatePerformanceReportDialog = ({
   const [isByActionDialogOpen, setIsByActionDialogOpen] = useState(false);
   const [unifiedStats, setUnifiedStats] = useState<UnifiedStat[]>([]);
   const [fixtureStats, setFixtureStats] = useState<Record<string, number>>({});
+  const [previousFixtureStats, setPreviousFixtureStats] = useState<Record<string, number>>({});
   const [dragOverAction, setDragOverAction] = useState<number | null>(null);
   const [dropUploading, setDropUploading] = useState<number | null>(null);
 
@@ -349,12 +350,33 @@ export const CreatePerformanceReportDialog = ({
     }
   };
 
+  // Fetch previous fixture stats from the player's most recent report
+  const fetchPreviousFixtureStats = async () => {
+    try {
+      const { data } = await supabase
+        .from("player_analysis")
+        .select("fixture_stats")
+        .eq("player_id", playerId)
+        .not("fixture_stats", "is", null)
+        .order("analysis_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (data?.fixture_stats) {
+        setPreviousFixtureStats(data.fixture_stats as Record<string, number>);
+      }
+    } catch (err) {
+      console.error("Error fetching previous fixture stats:", err);
+    }
+  };
+
   useEffect(() => {
     // In inline mode, always load; in dialog mode, only when open
     if ((inline || open) && playerId) {
       console.log('CreatePerformanceReportDialog opened for player:', playerId);
       fetchActionTypes();
       fetchAllR90Ratings(); // Fetch all R90 ratings once for local filtering
+      fetchPreviousFixtureStats();
       if (analysisId) {
         // Edit mode
         setIsEditMode(true);
@@ -1141,10 +1163,6 @@ export const CreatePerformanceReportDialog = ({
       toast.error("Please fill in Minutes Played");
       return;
     }
-    if (actions.length === 0 || !actions[0].minute) {
-      toast.error("Please add at least one performance action");
-      return;
-    }
 
     setLoading(true);
 
@@ -1275,7 +1293,7 @@ export const CreatePerformanceReportDialog = ({
       const preservedVideoUrls = (window as any).__preservedVideoUrls as Map<number, string | null> | undefined;
       
       const actionsToInsert = actions
-        .filter(a => a.action_number)
+        .filter(a => a.action_number && (a.minute || a.action_score || a.action_type || a.action_description || a.notes || a.video_url))
         .map(a => ({
           analysis_id: analysisIdToUse,
           action_number: a.action_number,
@@ -1319,6 +1337,59 @@ export const CreatePerformanceReportDialog = ({
         entityId: analysisIdToUse || null,
         entityName: `${playerName} vs ${opponent}`,
       });
+
+      // Check for performance improvements and notify staff
+      try {
+        // Fetch last 3 reports for this player to detect improvement trends
+        const { data: recentReports } = await supabase
+          .from("player_analysis")
+          .select("r90_score, fixture_stats, opponent, analysis_date")
+          .eq("player_id", playerId)
+          .order("analysis_date", { ascending: false })
+          .limit(3);
+
+        if (recentReports && recentReports.length >= 2) {
+          const current = recentReports[0];
+          const previous = recentReports[1];
+          const improvements: string[] = [];
+
+          // Check R90 improvement
+          if (current.r90_score && previous.r90_score && current.r90_score > previous.r90_score) {
+            const pctChange = ((current.r90_score - previous.r90_score) / Math.abs(previous.r90_score || 1) * 100).toFixed(0);
+            improvements.push(`R90: ${previous.r90_score.toFixed(2)} → ${current.r90_score.toFixed(2)} (+${pctChange}%)`);
+          }
+
+          // Check fixture stats improvements
+          const currentFS = (current.fixture_stats as Record<string, number>) || {};
+          const previousFS = (previous.fixture_stats as Record<string, number>) || {};
+          const keyStats = ['goals_per90', 'assists_per90', 'npxg_per90', 'xa_per90', 'successful_dribbles_per90', 'progressive_carries_per90', 'tackles_won_per90'];
+          for (const key of keyStats) {
+            if (currentFS[key] != null && previousFS[key] != null && currentFS[key] > previousFS[key]) {
+              const label = key.replace(/_per90$/, '').replace(/_/g, ' ');
+              improvements.push(`${label}: ${previousFS[key]} → ${currentFS[key]}`);
+            }
+          }
+
+          if (improvements.length > 0) {
+            await supabase.from('staff_notification_events').insert({
+              event_type: 'performance_improvement',
+              title: `📈 ${playerName} Performance Improvement`,
+              body: `${playerName} showed improvement vs ${opponent}:\n${improvements.join('\n')}`,
+              event_data: {
+                player_id: playerId,
+                player_name: playerName,
+                opponent,
+                improvements,
+                r90_score: calculatedR90,
+                analysis_id: analysisIdToUse,
+              },
+            });
+          }
+        }
+      } catch (notifErr) {
+        console.error("Error creating performance notification:", notifErr);
+        // Don't block save on notification failure
+      }
       
       // Only close dialog and call onSuccess in create mode
       // In edit mode, keep dialog open for continued editing
@@ -1540,6 +1611,7 @@ export const CreatePerformanceReportDialog = ({
                   });
                 }}
                 actions={actions}
+                previousFixtureStats={previousFixtureStats}
               />
             </CollapsibleContent>
           </Collapsible>
