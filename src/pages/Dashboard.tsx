@@ -736,6 +736,17 @@ const Dashboard = () => {
 
   const checkAuth = async () => {
     try {
+      // Check URL params first (staff portal login passes email via URL)
+      const urlParams = new URLSearchParams(window.location.search);
+      const staffLoginEmail = urlParams.get("staff_login");
+      if (staffLoginEmail) {
+        localStorage.setItem("player_email", staffLoginEmail);
+        sessionStorage.setItem("player_email", staffLoginEmail);
+        localStorage.setItem("player_login_timestamp", Date.now().toString());
+        // Clean the URL
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+
       // Check both localStorage and sessionStorage for maximum persistence
       let playerEmail = localStorage.getItem("player_email");
       

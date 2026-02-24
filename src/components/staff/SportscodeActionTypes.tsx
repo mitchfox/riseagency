@@ -18,6 +18,8 @@ interface ActionType {
   description: string | null;
   visual_cues: string | null;
   typical_duration_seconds: number | null;
+  default_before_seconds: number | null;
+  default_after_seconds: number | null;
   category: string | null;
   display_order: number | null;
   created_at: string;
@@ -38,6 +40,8 @@ export const SportscodeActionTypes = () => {
     description: "",
     visual_cues: "",
     typical_duration_seconds: 10,
+    default_before_seconds: 5,
+    default_after_seconds: 5,
     category: "On Ball",
   });
 
@@ -69,6 +73,8 @@ export const SportscodeActionTypes = () => {
           description: formData.description || null,
           visual_cues: formData.visual_cues || null,
           typical_duration_seconds: formData.typical_duration_seconds,
+          default_before_seconds: formData.default_before_seconds,
+          default_after_seconds: formData.default_after_seconds,
           category: formData.category,
         })
         .eq("id", editingAction.id);
@@ -86,6 +92,8 @@ export const SportscodeActionTypes = () => {
           description: formData.description || null,
           visual_cues: formData.visual_cues || null,
           typical_duration_seconds: formData.typical_duration_seconds,
+          default_before_seconds: formData.default_before_seconds,
+          default_after_seconds: formData.default_after_seconds,
           category: formData.category,
           display_order: maxOrder + 1,
         });
@@ -109,6 +117,8 @@ export const SportscodeActionTypes = () => {
       description: action.description || "",
       visual_cues: action.visual_cues || "",
       typical_duration_seconds: action.typical_duration_seconds || 10,
+      default_before_seconds: action.default_before_seconds || 5,
+      default_after_seconds: action.default_after_seconds || 5,
       category: action.category || "On Ball",
     });
     setDialogOpen(true);
@@ -131,6 +141,8 @@ export const SportscodeActionTypes = () => {
       description: "",
       visual_cues: "",
       typical_duration_seconds: 10,
+      default_before_seconds: 5,
+      default_after_seconds: 5,
       category: "On Ball",
     });
   };
@@ -180,7 +192,7 @@ export const SportscodeActionTypes = () => {
                       <Badge variant="outline" className="text-[10px]">{action.category}</Badge>
                       <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                         <Clock className="h-3 w-3" />
-                        {action.typical_duration_seconds}s clip
+                        {action.default_before_seconds || 5}s before / {action.default_after_seconds || 5}s after
                       </div>
                     </div>
                     {action.description && (
@@ -258,17 +270,29 @@ export const SportscodeActionTypes = () => {
               />
               <p className="text-[10px] text-muted-foreground">The more specific you are about body positions, ball movement and spatial context, the better the AI will detect it.</p>
             </div>
-            <div className="space-y-1.5">
-              <Label>Typical Clip Duration (seconds)</Label>
-              <Input
-                type="number"
-                min={3}
-                max={30}
-                value={formData.typical_duration_seconds}
-                onChange={e => setFormData(prev => ({ ...prev, typical_duration_seconds: parseInt(e.target.value) || 10 }))}
-              />
-              <p className="text-[10px] text-muted-foreground">How long the clip should be when the AI detects this action. Shorter for simple actions like clearances, longer for dribbles or runs.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Seconds Before Action</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={15}
+                  value={formData.default_before_seconds}
+                  onChange={e => setFormData(prev => ({ ...prev, default_before_seconds: parseInt(e.target.value) || 5 }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Seconds After Action</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={15}
+                  value={formData.default_after_seconds}
+                  onChange={e => setFormData(prev => ({ ...prev, default_after_seconds: parseInt(e.target.value) || 5 }))}
+                />
+              </div>
             </div>
+            <p className="text-[10px] text-muted-foreground -mt-2">How many seconds before and after the action the AI should include in the clip. Shorter for quick actions like clearances, longer for dribbles or runs.</p>
             <Button onClick={handleSave} className="w-full">
               {editingAction ? "Update" : "Add"} Action Type
             </Button>
