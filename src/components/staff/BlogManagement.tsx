@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/lib/activityLogger";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -150,9 +151,11 @@ const BlogManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     if (!confirm("Are you sure you want to delete this blog post?")) return;
 
     try {
+      const post = posts.find(p => p.id === id);
       const { error } = await supabase.from("blog_posts").delete().eq("id", id);
       if (error) throw error;
       toast.success("Blog post deleted successfully");
+      logActivity({ action: 'deleted', entityType: 'blog_post', entityId: id, entityName: post?.title });
       fetchPosts();
     } catch (error: any) {
       toast.error("Failed to delete blog post: " + error.message);

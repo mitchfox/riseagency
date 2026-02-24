@@ -837,18 +837,14 @@ const PlayerDetail = () => {
             <DialogContent className="max-w-[90vw] w-full p-0 overflow-hidden bg-black border-none">
               {videoClipModalUrl && (
                 <div className="relative">
-                  <video 
+                   <video 
                     key={videoClipModalUrl}
                     src={videoClipModalUrl} 
                     className="w-full max-h-[80vh] object-contain" 
                     autoPlay 
                     controls 
                     playsInline
-                    onLoadStart={(e) => {
-                      // Force play when source changes
-                      const vid = e.currentTarget;
-                      vid.load();
-                    }}
+                    preload="auto"
                     onCanPlay={(e) => {
                       e.currentTarget.play().catch(() => {});
                     }}

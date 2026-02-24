@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, Check, CheckCheck, ChevronDown, ChevronRight, Users, FileText, Film, ListMusic, Calendar, CheckSquare, Target, LogIn, BarChart3, Search, Send, Building2 } from "lucide-react";
+import { Bell, Check, CheckCheck, ChevronDown, ChevronRight, Users, FileText, Film, ListMusic, Calendar, CheckSquare, Target, LogIn, BarChart3, Search, Send, Building2, TrendingUp, PenLine, GitCompare, Cake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -51,6 +51,10 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType }
   portal_analysis_view: { label: "Analysis Views", icon: Search },
   portal_transfer_submission: { label: "Transfer Submissions", icon: Send },
   portal_club_submission: { label: "Club Suggestions", icon: Building2 },
+  performance_improvement: { label: "Performance Improvements", icon: TrendingUp },
+  contract_signed: { label: "Contracts Signed", icon: PenLine },
+  comparison_request: { label: "Comparison Requests", icon: GitCompare },
+  player_birthday: { label: "Player Birthdays", icon: Cake },
 };
 
 export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdownProps) => {
@@ -223,6 +227,14 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
         return "Transfer Hub Submission";
       case "portal_club_submission":
         return "Club Suggestion Submitted";
+      case "performance_improvement":
+        return "Performance Improvement";
+      case "contract_signed":
+        return "Contract Signed";
+      case "comparison_request":
+        return "Comparison Requested";
+      case "player_birthday":
+        return "Player Birthday";
       default:
         return "Notification";
     }
@@ -270,6 +282,17 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
         return data?.player_name ? `${data.player_name} made a submission` : "New transfer hub submission";
       case "portal_club_submission":
         return data?.player_name ? `${data.player_name} suggested a club` : "New club suggestion submitted";
+      case "performance_improvement": {
+        const improvements = data?.improvements || [];
+        const playerName = data?.player_name || "Player";
+        return improvements.length > 0 ? `${playerName}: ${improvements[0]}` : `${playerName} showed improvement`;
+      }
+      case "contract_signed":
+        return data?.player_name ? `${data.player_name} signed a contract` : "New contract signed";
+      case "comparison_request":
+        return data?.player_name ? `Comparison requested for ${data.player_name}` : "New comparison request";
+      case "player_birthday":
+        return data?.player_name ? `${data.player_name}'s birthday today` : "Player birthday today";
       default:
         return notification.body || "";
     }

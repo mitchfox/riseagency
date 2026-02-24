@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { logActivity } from "@/lib/activityLogger";
 import { Pencil, Trash2, Plus, X, Sparkles, Database, Copy, Settings, Eye, Users, ChevronDown } from "lucide-react";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
 import {
@@ -690,6 +691,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
       if (error) throw error;
       toast.success("Analysis deleted successfully");
+      logActivity({ action: 'deleted', entityType: 'analysis', entityId: id });
       fetchAnalyses();
     } catch (error: any) {
       toast.error("Failed to delete analysis");
