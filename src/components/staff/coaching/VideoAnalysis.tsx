@@ -1231,6 +1231,7 @@ export const VideoAnalysis = () => {
             <video
               ref={videoRef}
               src={selectedVideo.video_url}
+              crossOrigin="anonymous"
               controls
               controlsList="nodownload"
               className="w-full aspect-video object-fill"
