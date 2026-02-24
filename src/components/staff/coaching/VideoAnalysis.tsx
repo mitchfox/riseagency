@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip } from "lucide-react";
+import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -17,6 +17,7 @@ import type { AnnotationProject, Klip, AnnotationElement } from "@/components/st
 import { computeVisibleElements } from "@/lib/annotationRenderUtils";
 import { sortPlayersByRepresentation, getStatusLabel, groupPlayersByStatus } from "@/lib/playerSorting";
 import { toTitleCase } from "@/lib/titleCase";
+import { AIPlayerDetection } from "./AIPlayerDetection";
 
 interface Annotation {
   id: string;
@@ -1164,6 +1165,28 @@ export const VideoAnalysis = () => {
               <Button onClick={handleOpenExport} variant="outline" size="sm" className="gap-1">
                 <Link2 className="h-3.5 w-3.5" /> Link / Export
               </Button>
+            )}
+            {selectedVideo.video_url && (
+              <AIPlayerDetection
+                videoUrl={selectedVideo.video_url}
+                videoRef={videoRef as React.RefObject<HTMLVideoElement>}
+                opponent={selectedVideo.opponent}
+                onClipsAccepted={async (newClips) => {
+                  if (!selectedVideo) return;
+                  const clips: Clip[] = newClips.map(c => ({
+                    id: crypto.randomUUID(),
+                    start: c.start,
+                    end: c.end,
+                    label: c.label,
+                    action_type: c.actionType,
+                    action_description: '',
+                    notes: 'AI detected',
+                    created_at: new Date().toISOString(),
+                    minute: `${Math.floor(c.start / 60)}:${String(Math.floor(c.start % 60)).padStart(2, '0')}`,
+                  }));
+                  await saveClips([...selectedVideo.clips, ...clips]);
+                }}
+              />
             )}
           </div>
         </div>

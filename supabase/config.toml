@@ -99,3 +99,6 @@ verify_jwt = true
 [functions.suggest-fixture-stats]
 verify_jwt = false
 
+[functions.detect-player-actions]
+verify_jwt = true
+
