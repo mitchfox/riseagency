@@ -21,6 +21,7 @@ import { HoverText } from "@/components/HoverText";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { usePlayerTranslations, usePlayerProfileLabel, useTranslatedCountry, seasonStatTranslations, schemeHistoryLabels, inNumbersStatTranslations } from "@/hooks/usePlayerTranslations";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 
 // Language column map for translation API responses
 const languageColumnMap: Record<string, string> = {
@@ -322,34 +323,27 @@ const PlayerDetail = () => {
                 // Best actions (score >= 0.05) sorted by score desc
                 const bestActions = actionData.filter((a: any) => a.action_score >= 0.05);
                 
-                // Top 4 action types by average r90 score
+                // Top 4 action types by average r90 score per clip
                 const sortedTypes = Object.entries(typeScores)
                   .map(([type, data]) => ({ type, avg: data.total / data.count, actions: data.actions }))
                   .sort((a, b) => b.avg - a.avg)
                   .slice(0, 4);
                 
-                // Combine: best actions first, then top type representatives
+                // Build category-based structure: Best Actions category, then top type categories
                 const topActions: any[] = [];
-                const usedIds = new Set<string>();
                 
-                // Add best actions
-                bestActions.slice(0, 10).forEach((a: any) => {
-                  if (!usedIds.has(a.id)) {
-                    topActions.push({ ...a, category: 'Best Actions' });
-                    usedIds.add(a.id);
-                  }
+                // Add best actions as a category
+                bestActions.forEach((a: any) => {
+                  topActions.push({ ...a, category: 'Best Actions' });
                 });
                 
-                // Add top type representatives
+                // Add top type categories (all actions in each type)
                 sortedTypes.forEach(({ type, actions: typeActions }) => {
-                  typeActions.sort((a: any, b: any) => (b.action_score || 0) - (a.action_score || 0));
-                  for (const a of typeActions) {
-                    if (!usedIds.has(a.id)) {
+                  typeActions
+                    .sort((a: any, b: any) => (b.action_score || 0) - (a.action_score || 0))
+                    .forEach((a: any) => {
                       topActions.push({ ...a, category: type });
-                      usedIds.add(a.id);
-                      break;
-                    }
-                  }
+                    });
                 });
                 
                 setTopVideoActions(topActions);
@@ -778,28 +772,47 @@ const PlayerDetail = () => {
             </div>
           </div>
 
-          {/* Top Video Report Actions - Below highlights */}
-          {topVideoActions.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-xs font-bebas text-muted-foreground uppercase tracking-wider mb-2">Top Actions</h3>
-              <div className="flex flex-wrap gap-1.5">
-                {topVideoActions.map((action: any, idx: number) => (
-                  <button
-                    key={action.id || idx}
-                    onClick={() => setVideoClipModalUrl(action.video_url)}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-secondary/30 hover:bg-primary/10 hover:border-primary/40 transition-colors text-xs"
-                    title={`${action.action_type} · R90: ${action.action_score?.toFixed(3)}`}
-                  >
-                    <Play className="h-3 w-3 text-primary" />
-                    <span className="font-medium truncate max-w-[120px]">{action.action_type?.split(',')[0]?.trim()}</span>
-                    {action.action_score != null && (
-                      <span className="text-muted-foreground font-mono text-[10px]">{action.action_score.toFixed(2)}</span>
-                    )}
-                  </button>
-                ))}
+          {/* Video Report Action Categories - Below highlights */}
+          {topVideoActions.length > 0 && (() => {
+            // Group actions by category
+            const categories: Record<string, any[]> = {};
+            topVideoActions.forEach((a: any) => {
+              const cat = a.category || 'Other';
+              if (!categories[cat]) categories[cat] = [];
+              categories[cat].push(a);
+            });
+            const categoryEntries = Object.entries(categories);
+            // Ensure Best Actions is first
+            categoryEntries.sort((a, b) => {
+              if (a[0] === 'Best Actions') return -1;
+              if (b[0] === 'Best Actions') return 1;
+              return 0;
+            });
+            return (
+              <div className="-mt-2 mb-6">
+                <div className="flex flex-wrap gap-x-4 gap-y-2 w-full">
+                  {categoryEntries.map(([category, actions]) => (
+                    <div key={category} className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bebas text-muted-foreground uppercase tracking-wider whitespace-nowrap">{category}</span>
+                      <div className="flex flex-wrap gap-1">
+                        {actions.map((action: any, idx: number) => (
+                          <button
+                            key={action.id || idx}
+                            onClick={() => setVideoClipModalUrl(action.video_url)}
+                            className="flex items-center gap-1 px-2 py-0.5 rounded border border-border bg-secondary/30 hover:bg-primary/10 hover:border-primary/40 transition-colors text-xs"
+                            title={`${action.action_type} · R90: ${action.action_score?.toFixed(3)}`}
+                          >
+                            <Play className="h-2.5 w-2.5 text-primary" />
+                            <span className="font-medium truncate max-w-[100px]">{action.action_type?.split(',')[0]?.trim()}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Video Clip Playback Modal */}
           <Dialog open={!!videoClipModalUrl} onOpenChange={() => setVideoClipModalUrl(null)}>
@@ -961,12 +974,14 @@ const PlayerDetail = () => {
                   {seasonStatsLabel}
                   <span className="flex-1 h-1 bg-primary/20"></span>
                   {performanceReports.length > 0 && (
-                    <button
+                    <Button
                       onClick={() => setSeasonReportOpen(true)}
-                      className="ml-2 flex items-center gap-1 px-3 py-1 rounded-md border border-primary/30 bg-primary/10 hover:bg-primary/20 transition-colors text-xs font-bebas uppercase tracking-wider text-primary"
+                      variant="outline"
+                      size="sm"
+                      className="ml-2 gap-1.5 font-bebas uppercase tracking-wider border-primary/40 hover:bg-primary hover:text-primary-foreground"
                     >
-                      <BarChart3 className="h-3.5 w-3.5" /> Full Report
-                    </button>
+                      <BarChart3 className="h-3.5 w-3.5" /> View Full Season Report
+                    </Button>
                   )}
                 </h2>
                 <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
@@ -1271,38 +1286,31 @@ const PlayerDetail = () => {
             />
           )}
           
-          {/* Season Report Dialog */}
+          {/* Season Report Dialog - Shows the season data table */}
           <Dialog open={seasonReportOpen} onOpenChange={setSeasonReportOpen}>
-            <DialogContent className="max-w-[90vw] w-full max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-[95vw] w-full max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                  {player?.name} - Season Report
+                  {player?.name} - Season Performance Report
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-3 mt-4">
-                {performanceReports.map((report: any) => (
-                  <div
-                    key={report.id}
-                    className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors cursor-pointer"
-                    onClick={() => { setSelectedReportId(report.id); setReportDialogOpen(true); setSeasonReportOpen(false); }}
-                  >
-                    <div>
-                      <p className="font-medium text-sm">vs {report.opponent || 'Unknown'}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {report.analysis_date ? new Date(report.analysis_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
-                        {report.result && ` · ${report.result}`}
-                        {report.minutes_played && ` · ${report.minutes_played}'`}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      {report.r90_score != null && (
-                        <span className="text-lg font-bebas text-primary">{report.r90_score.toFixed(2)}</span>
-                      )}
-                      <p className="text-[10px] text-muted-foreground">R90</p>
-                    </div>
-                  </div>
-                ))}
-                {performanceReports.length === 0 && (
+              <div className="mt-2">
+                {performanceReports.length > 0 ? (
+                  <AnalysisDataTab
+                    analyses={performanceReports.map((r: any) => ({
+                      id: r.id,
+                      analysis_date: r.analysis_date,
+                      r90_score: r.r90_score,
+                      minutes_played: r.minutes_played,
+                      opponent: r.opponent,
+                      result: r.result,
+                      striker_stats: r.striker_stats,
+                      fixture_stats: r.fixture_stats,
+                    }))}
+                    playerData={player}
+                    embedded
+                  />
+                ) : (
                   <p className="text-center text-muted-foreground py-8">No match reports available</p>
                 )}
               </div>
