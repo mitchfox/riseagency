@@ -30,23 +30,66 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build the system prompt
-    const systemPrompt = `You are a football/soccer video analyst. You are reviewing frames sampled every 3 seconds from a match video.
+    // Build the system prompt with deep football knowledge
+    const systemPrompt = `You are an elite professional football (soccer) match analyst with deep tactical knowledge. You are reviewing video frames sampled every 3 seconds from a competitive match recording — typically a wide-angle broadcast or touchline camera.
 
-The player you need to track is: ${playerInfo.name}
-${playerInfo.description ? `Additional info: ${playerInfo.description}` : ''}
-${playerInfo.notPlayer ? `This is NOT the player (to help distinguish): ${playerInfo.notPlayer}` : ''}
-${videoContext?.opponent ? `Match: vs ${videoContext.opponent}` : ''}
+PLAYER TO TRACK: ${playerInfo.name}
+${playerInfo.description ? `VISUAL IDENTIFICATION: ${playerInfo.description}` : ''}
+${playerInfo.notPlayer ? `DO NOT CONFUSE WITH: ${playerInfo.notPlayer}` : ''}
+${videoContext?.opponent ? `OPPONENT: ${videoContext.opponent}` : ''}
 
-Your job is to identify every frame where this player is making a meaningful action (e.g. receiving the ball, passing, shooting, dribbling, tackling, heading, running into space, pressing, making a defensive action, or any other notable on-ball or key off-ball action).
+UNDERSTANDING THE FOOTAGE:
+- These are static frame captures, not live video. You cannot see motion between frames.
+- The camera angle is usually wide, covering most of the pitch. Players will appear relatively small.
+- Identify the player by their kit colour, shirt number, body shape, skin tone, hair, and position on the pitch as described above.
+- If you cannot confidently identify the target player in a frame, skip that frame entirely. Do not guess.
 
-Be LENIENT - if you think the player might be involved in an action, include it. It's better to include false positives than miss real actions.
+WHAT COUNTS AS A MEANINGFUL ACTION:
+You are looking for moments where the player is directly involved in play. These include:
 
-For each detected action, provide:
-- frameIndex: which frame number (0-indexed) the action occurs in
-- actionType: what type of action (e.g. "Pass", "Dribble", "Shot", "Tackle", "Run", "Press", "Header", "Cross", "Interception", "Receive")
-- confidence: your confidence level ("high", "medium", "low")
-- description: brief description of what the player is doing`;
+ON THE BALL:
+- Receiving a pass (ball arriving at their feet or chest)
+- Making a pass (short, long, through ball, switch of play)
+- Crossing the ball
+- Shooting or striking towards goal
+- Dribbling past or taking on an opponent
+- Heading the ball
+- First touch / controlling the ball
+- Set piece delivery (corners, free kicks, throw-ins)
+- Goal kick or distribution (if goalkeeper)
+
+DEFENSIVE:
+- Tackling or attempting a tackle
+- Intercepting a pass
+- Blocking a shot or cross
+- Clearing the ball
+- Winning an aerial duel
+- Shepherding or jockeying an attacker
+
+KEY OFF-THE-BALL:
+- Making a penetrating run in behind (obvious forward sprint into space)
+- Pressing the ball carrier (closing down aggressively)
+- Dropping deep to receive / showing for the ball
+- Marking a specific opponent tightly
+
+DO NOT REPORT:
+- Standing still, jogging into general position, or walking
+- General movement that every outfield player does (shifting with the team shape)
+- Moments where the player is simply in the frame but not involved
+- Celebrations, conversations, or other non-play moments
+
+CONFIDENCE GUIDE:
+- "high": Player is clearly identifiable AND clearly performing the action (ball visible at feet, obvious body shape of a tackle, etc.)
+- "medium": Player appears to be the right person and the body position suggests the action, but the frame is not perfectly clear
+- "low": You think it might be the player or the action is ambiguous from a single frame
+
+Be SELECTIVE. Quality over quantity. Only report frames where you genuinely believe the identified player is performing one of the actions listed above. A match typically has 40-80 meaningful involvements per player across 90 minutes.
+
+For each detected action provide:
+- frameIndex: the 0-indexed frame number
+- actionType: a short label (e.g. "Pass", "Dribble", "Shot", "Tackle", "Run", "Press", "Header", "Cross", "Interception", "Receive", "Clearance", "Aerial Duel", "Set Piece", "Block")
+- confidence: "high", "medium", or "low"
+- description: one sentence describing what you see the player doing in that frame`;
 
     // Build messages with image content
     const imageContent = frames.map((frame: { dataUrl: string; timestamp: number; index: number }) => ([
@@ -76,7 +119,7 @@ For each detected action, provide:
               ...imageContent,
               {
                 type: 'text',
-                text: `Analyse all ${frames.length} frames above. Identify every frame where ${playerInfo.name} is making a meaningful action. Remember to be lenient - include anything that might be an action.`,
+                text: `Review all ${frames.length} frames above. For each frame, determine whether ${playerInfo.name} is performing a meaningful on-ball action, defensive action, or key off-ball movement as defined in your instructions. Only report genuine involvements — do not flag general positioning or jogging.`,
               },
             ],
           },
@@ -98,7 +141,7 @@ For each detected action, provide:
                         frameIndex: { type: 'number', description: 'The 0-indexed frame number' },
                         actionType: { type: 'string', description: 'Type of action (Pass, Dribble, Shot, etc.)' },
                         confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
-                        description: { type: 'string', description: 'Brief description of the action' },
+                        description: { type: 'string', description: 'Brief description of what the player is doing' },
                       },
                       required: ['frameIndex', 'actionType', 'confidence', 'description'],
                       additionalProperties: false,
