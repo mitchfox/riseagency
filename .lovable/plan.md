@@ -1,84 +1,115 @@
 
-## Plan: Fix Video Loading, Add Drag-and-Drop Clips, and AI Fixture Stats Suggestions
 
-### Issue 1: Videos not loading in Analysis Viewer
+# Fix Notifications, Complete Unfinished Features, and Polish
 
-**Root cause**: `LazyVideo.tsx` hardcodes `type="video/mp4"` on the `<source>` element (line 82). Many clips are `.webm` files (extracted via `MediaRecorder` in `clientClipExtractor.ts`). Browsers won't play a source with the wrong MIME type, so these videos silently fail to load.
-
-**Fix**: Detect the file extension from the `src` URL and set the correct MIME type (`video/webm` for `.webm`, `video/mp4` for `.mp4`, or omit `type` entirely to let the browser auto-detect).
+This plan addresses all the outstanding issues: broken notifications, missing marketing notification category, the page transition recorder, and several other items that were previously promised but not fully delivered.
 
 ---
 
-### Issue 2: Drag-and-drop clip upload on Performance Report actions
+## 1. Fix Staff Notifications (Not Receiving Anything)
 
-**What**: Allow dragging a video file onto an action row in the performance report editor to upload it as the clip for that action.
+**Root cause**: The database has trigger functions defined (`log_form_submission_notification`, `log_playlist_change_notification`, `log_clip_upload_notification`, `log_site_visit_notification`) but **no actual triggers are attached to the tables**. Site visitor notifications work because they are inserted directly by the `track-visit` edge function, not via a trigger.
 
-**Approach**: 
-- Wrap each action row in `CreatePerformanceReportDialog.tsx` with a drop zone that listens for `onDragOver` and `onDrop` events
-- On drop, extract the video file and run the same upload logic as `ActionVideoUpload.handleFileSelect`
-- Show a visual highlight (border glow) when dragging over an action row
-- The existing Upload/Clip popover menu remains as the alternative
+**Fix**:
+- Create database triggers connecting the existing functions to their tables:
+  - `site_visits` INSERT -> `log_site_visit_notification()`
+  - `form_submissions` INSERT -> `log_form_submission_notification()`
+  - `playlists` INSERT/UPDATE/DELETE -> `log_playlist_change_notification()`
+  - `players` UPDATE (for highlights/clips) -> `log_clip_upload_notification()`
 
----
-
-### Issue 3: Drag-and-drop video on Analysis point editor
-
-**What**: Allow dragging a video file onto a point card in `AnalysisPointsSection.tsx` to add it to that point's videos.
-
-**Approach**:
-- Add drop zone handling to `SortablePointCard` in `AnalysisPointsSection.tsx`
-- On drop, call the existing `handleVideoUploadForPoint` function
-- Show a visual drag-over indicator
+- Add `performance_improvement` to the `CATEGORY_CONFIG` in `StaffNotificationsDropdown.tsx` so it appears with a proper label and icon when inserted
+- Add `contract_signed`, `comparison_request`, and `player_birthday` to `CATEGORY_CONFIG` as well - these event types exist in the database but have no display configuration
 
 ---
 
-### Issue 4: AI suggestions for Fixture Stats
+## 2. Add Marketing Performance Improvement Notification
 
-**What**: An AI button on the Fixture Stats editor that analyses all performance report actions for that fixture and suggests stat values. Each stat box shows a small suggested number underneath with a "+" button. Clicking "+" opens a tooltip showing which actions the AI thinks contribute to that stat. The AI should be lenient (inclusive rather than exclusive).
+**Current state**: The code in `CreatePerformanceReportDialog.tsx` already inserts `performance_improvement` events, but the `StaffNotificationsDropdown` doesn't recognise the event type (falls through to "Other" with a generic bell icon).
 
-**Approach**:
-- Add a "Suggest with AI" button to `FixtureStatsEditor.tsx`
-- The component needs access to the performance actions for the current fixture/report -- pass them as a new prop
-- Create a new edge function `suggest-fixture-stats` that:
-  - Receives the list of actions (type, description, notes, minute) and the list of stat keys with labels
-  - Uses Lovable AI (gemini-3-flash-preview) with tool calling to return structured suggestions
-  - The prompt instructs the model to be lenient and inclusive
-- Display suggestions as small numbers below each input with a "+" button
-- Clicking "+" shows a popover listing which actions the AI thinks contributed
-- Accepting a suggestion populates the input field
+**Fix**:
+- Add to `CATEGORY_CONFIG`:
+  - `performance_improvement` with label "Performance Improvements" and a trending-up icon
+  - `contract_signed` with label "Contracts Signed"
+  - `comparison_request` with label "Comparison Requests"
+  - `player_birthday` with label "Player Birthdays"
+- Update `getNotificationBody` to render improvement data nicely (showing the R90 change and stat improvements)
 
 ---
 
-### Technical Details
+## 3. Fix Page Transition Shader Recording
 
-**File: `src/components/LazyVideo.tsx`**
-- Replace hardcoded `type="video/mp4"` with dynamic MIME detection based on file extension
-- Helper function: if URL contains `.webm` use `video/webm`, if `.mp4` use `video/mp4`, otherwise omit type attribute
+**Current state**: The recorder in `DatabaseExport.tsx` uses the correct shader code from `ShaderAnimation`, but:
+- Only records 75 frames (~2.5s) which is too short
+- Does not include the Rise logo overlay that appears during the real transition
+- May produce low quality output
 
-**File: `src/components/staff/CreatePerformanceReportDialog.tsx`**
-- Add `onDragOver`, `onDragEnter`, `onDragLeave`, `onDrop` handlers to each action row
-- Track which action is being dragged over for visual feedback (highlight border)
-- On drop: upload the file to `analysis-files` storage, update the action's `video_url`, and call the callback
+**Fix**:
+- Extend recording to 120 frames (4 seconds) to capture the full transition cycle
+- Draw the Rise logo centred on the canvas at the appropriate timing (fade in at 0.4s, pulse at 0.8s, fade out at 1.3s) matching the real `PageTransition` component's animation timings
+- Ensure the canvas resolution and shader parameters match the live component
 
-**File: `src/components/staff/analysis/AnalysisPointsSection.tsx`**
-- Add drag-and-drop handlers to the `SortablePointCard` component
-- On drop: trigger the existing `handleVideoUploadForPoint` flow by creating a synthetic change event or extracting the file and calling the upload function directly
+---
 
-**File: `src/components/staff/FixtureStatsEditor.tsx`**
-- Add new props: `actions` (array of performance actions) and `fixtureId` (optional)
-- Add "Suggest with AI" button next to the header
-- State for AI suggestions: `Record<string, { value: number; reasoning: string; actions: string[] }>`
-- Display suggestion below each stat input as a small chip with the suggested value and a "+" to accept
-- Clicking the chip shows a popover with the AI's reasoning and contributing actions
+## 4. Best Actions Video Player on Player Profile
 
-**File: `supabase/functions/suggest-fixture-stats/index.ts`** (New)
-- Edge function that receives actions and stat definitions
-- Calls Lovable AI with tool calling to extract structured stat suggestions
-- Uses lenient prompting: "When in doubt, include the action as contributing to the stat"
-- Returns `Record<string, { value: number; reasoning: string; contributing_actions: string[] }>`
+**Current state**: Videos are `.webm` files from storage. The current implementation opens a modal with a raw video element. Videos take 30+ seconds to appear.
 
-**File: `supabase/config.toml`**
-- Add `[functions.suggest-fixture-stats]` with `verify_jwt = false`
+**Fix**:
+- Add `preload="auto"` and remove the redundant `onLoadStart` -> `load()` call which may be causing a reload loop
+- Pre-fetch the first video URL when the category button is clicked before opening the modal
+- Add a loading spinner overlay while the video is buffering
+- Keep the existing playlist navigation (Prev/Next, auto-advance on ended)
 
-**File: `src/components/staff/CreatePerformanceReportDialog.tsx`** (additional)
-- Pass the current actions array to `FixtureStatsEditor` as a prop so AI can analyse them
+---
+
+## 5. Remaining Items Previously Promised
+
+### a. Activity Logger Coverage
+Currently only logging report creation and player creation. Extend to:
+- Report deletion and editing
+- Player deletion
+- Analysis creation/deletion
+- Blog post creation/editing/deletion
+
+### b. Video Compressor Performance
+The existing video compressor likely uses a CPU-bound approach. Add a note/toast that compression can take several minutes for larger files, and consider adding a progress indicator or switching to a web worker approach.
+
+### c. Kit Description Field for AI Player Detection
+Already implemented in `AIPlayerDetection.tsx` as `kitDescription` state with localStorage persistence. No further changes needed.
+
+### d. AI Player Detection - Previous Report Clips as Tags
+Already implemented - the component fetches previous `performance_report_actions` clips for the selected player. No further changes needed.
+
+---
+
+## Technical Details
+
+### Database Migration (SQL)
+```text
+-- Create triggers for existing trigger functions
+CREATE TRIGGER trg_form_submission_notification
+  AFTER INSERT ON public.form_submissions
+  FOR EACH ROW EXECUTE FUNCTION public.log_form_submission_notification();
+
+CREATE TRIGGER trg_playlist_change_notification
+  AFTER INSERT OR UPDATE OR DELETE ON public.playlists
+  FOR EACH ROW EXECUTE FUNCTION public.log_playlist_change_notification();
+
+CREATE TRIGGER trg_clip_upload_notification
+  AFTER UPDATE ON public.players
+  FOR EACH ROW EXECUTE FUNCTION public.log_clip_upload_notification();
+```
+
+(Site visit trigger is not needed as notifications are already inserted directly by the track-visit edge function.)
+
+### Files to Modify
+- `src/components/staff/StaffNotificationsDropdown.tsx` - Add missing event type categories and body formatters
+- `src/components/staff/DatabaseExport.tsx` - Fix shader recorder (longer duration, logo overlay)
+- `src/pages/PlayerDetail.tsx` - Fix video player loading (preload, spinner, remove reload loop)
+- `src/lib/activityLogger.ts` - No changes needed (logger utility works, just needs more call sites)
+- Various staff components - Add `logActivity()` calls for delete/edit operations
+
+### Files Unchanged (Already Working)
+- `src/components/staff/coaching/AIPlayerDetection.tsx` - Kit description, persistence, and previous clip tags all present
+- `src/components/staff/CreatePerformanceReportDialog.tsx` - Performance improvement notification insert already works
+
