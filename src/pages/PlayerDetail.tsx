@@ -48,6 +48,8 @@ const PlayerDetail = () => {
   const [translatedStatDescriptions, setTranslatedStatDescriptions] = useState<Record<number, string>>({});
   const [topVideoActions, setTopVideoActions] = useState<any[]>([]);
   const [videoClipModalUrl, setVideoClipModalUrl] = useState<string | null>(null);
+  const [videoClipPlaylist, setVideoClipPlaylist] = useState<string[]>([]);
+  const [videoClipPlaylistIndex, setVideoClipPlaylistIndex] = useState(0);
   const [seasonReportOpen, setSeasonReportOpen] = useState(false);
   const [isTranslatingDescriptions, setIsTranslatingDescriptions] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -781,44 +783,106 @@ const PlayerDetail = () => {
               if (!categories[cat]) categories[cat] = [];
               categories[cat].push(a);
             });
-            const categoryEntries = Object.entries(categories);
-            // Ensure Best Actions is first
+            
+            // Sort: Best Actions first, then by category average score
+            const categoryEntries = Object.entries(categories)
+              .map(([name, actions]) => ({
+                name,
+                actions: actions.filter((a: any) => a.action_score > 0).sort((a: any, b: any) => (b.action_score || 0) - (a.action_score || 0)),
+                avgScore: actions.reduce((sum: number, a: any) => sum + (a.action_score || 0), 0) / actions.length,
+              }))
+              .filter(c => c.actions.length > 0);
+            
             categoryEntries.sort((a, b) => {
-              if (a[0] === 'Best Actions') return -1;
-              if (b[0] === 'Best Actions') return 1;
-              return 0;
+              if (a.name === 'Best Actions') return -1;
+              if (b.name === 'Best Actions') return 1;
+              return b.avgScore - a.avgScore;
             });
+
+            // Show Best Actions + top 4 others
+            const displayCategories = categoryEntries.slice(0, 5);
+
             return (
-              <div className="-mt-2 mb-6">
-                <div className="flex flex-wrap gap-x-4 gap-y-2 w-full">
-                  {categoryEntries.map(([category, actions]) => (
-                    <div key={category} className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-bebas text-muted-foreground uppercase tracking-wider whitespace-nowrap">{category}</span>
-                      <div className="flex flex-wrap gap-1">
-                        {actions.map((action: any, idx: number) => (
-                          <button
-                            key={action.id || idx}
-                            onClick={() => setVideoClipModalUrl(action.video_url)}
-                            className="flex items-center gap-1 px-2 py-0.5 rounded border border-border bg-secondary/30 hover:bg-primary/10 hover:border-primary/40 transition-colors text-xs"
-                            title={`${action.action_type} · R90: ${action.action_score?.toFixed(3)}`}
-                          >
-                            <Play className="h-2.5 w-2.5 text-primary" />
-                            <span className="font-medium truncate max-w-[100px]">{action.action_type?.split(',')[0]?.trim()}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+              <div className="mb-6 w-full">
+                <div className="flex flex-wrap gap-2 w-full">
+                  {displayCategories.map(({ name, actions }) => (
+                    <button
+                      key={name}
+                      onClick={() => {
+                        // Open video player with all clips in this category
+                        if (actions.length > 0) {
+                          setVideoClipModalUrl(actions[0].video_url);
+                          // Store full playlist for this category
+                          setVideoClipPlaylist(actions.map((a: any) => a.video_url).filter(Boolean));
+                          setVideoClipPlaylistIndex(0);
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-secondary/30 hover:bg-primary/10 hover:border-primary/40 transition-colors text-sm"
+                    >
+                      <Play className="h-3 w-3 text-primary" />
+                      <span className="font-medium">{name}</span>
+                      <span className="text-xs text-muted-foreground">({actions.length})</span>
+                    </button>
                   ))}
                 </div>
               </div>
             );
           })()}
 
-          {/* Video Clip Playback Modal */}
-          <Dialog open={!!videoClipModalUrl} onOpenChange={() => setVideoClipModalUrl(null)}>
+          {/* Video Clip Playback Modal - supports playlist navigation */}
+          <Dialog open={!!videoClipModalUrl} onOpenChange={() => { setVideoClipModalUrl(null); setVideoClipPlaylist([]); setVideoClipPlaylistIndex(0); }}>
             <DialogContent className="max-w-[90vw] w-full p-0 overflow-hidden bg-black border-none">
               {videoClipModalUrl && (
-                <video src={videoClipModalUrl} className="w-full max-h-[80vh] object-contain" autoPlay controls playsInline />
+                <div className="relative">
+                  <video 
+                    src={videoClipModalUrl} 
+                    className="w-full max-h-[80vh] object-contain" 
+                    autoPlay 
+                    controls 
+                    playsInline
+                    onEnded={() => {
+                      // Auto-play next clip in playlist
+                      if (videoClipPlaylist.length > 1 && videoClipPlaylistIndex < videoClipPlaylist.length - 1) {
+                        const nextIdx = videoClipPlaylistIndex + 1;
+                        setVideoClipPlaylistIndex(nextIdx);
+                        setVideoClipModalUrl(videoClipPlaylist[nextIdx]);
+                      }
+                    }}
+                  />
+                  {videoClipPlaylist.length > 1 && (
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-black/70 backdrop-blur-sm rounded-full px-4 py-2">
+                      <button 
+                        onClick={() => {
+                          if (videoClipPlaylistIndex > 0) {
+                            const prevIdx = videoClipPlaylistIndex - 1;
+                            setVideoClipPlaylistIndex(prevIdx);
+                            setVideoClipModalUrl(videoClipPlaylist[prevIdx]);
+                          }
+                        }}
+                        disabled={videoClipPlaylistIndex === 0}
+                        className="text-white disabled:opacity-30"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </button>
+                      <span className="text-white text-sm font-medium">
+                        {videoClipPlaylistIndex + 1} / {videoClipPlaylist.length}
+                      </span>
+                      <button 
+                        onClick={() => {
+                          if (videoClipPlaylistIndex < videoClipPlaylist.length - 1) {
+                            const nextIdx = videoClipPlaylistIndex + 1;
+                            setVideoClipPlaylistIndex(nextIdx);
+                            setVideoClipModalUrl(videoClipPlaylist[nextIdx]);
+                          }
+                        }}
+                        disabled={videoClipPlaylistIndex >= videoClipPlaylist.length - 1}
+                        className="text-white disabled:opacity-30"
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </DialogContent>
           </Dialog>

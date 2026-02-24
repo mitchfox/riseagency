@@ -1137,11 +1137,10 @@ const AnalysisViewer = () => {
                           <TextReveal delay={0.2}>
                             <div className="flex flex-col gap-4 -mx-4 md:-mx-6">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
-                                <LazyVideo
+                                <video
                                   key={vidIndex}
                                   src={url}
-                                  autoPlayOnVisible
-                                  loadImmediately={pageLoaded}
+                                  autoPlay
                                   loop
                                   muted
                                   playsInline
@@ -1442,11 +1441,10 @@ const AnalysisViewer = () => {
                           <TextReveal delay={0.2}>
                             <div className="flex flex-col gap-4 -mx-4 md:-mx-6">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
-                                <LazyVideo
+                                <video
                                   key={vidIndex}
                                   src={url}
-                                  autoPlayOnVisible
-                                  loadImmediately={pageLoaded}
+                                  autoPlay
                                   loop
                                   muted
                                   playsInline
@@ -1558,11 +1556,10 @@ const AnalysisViewer = () => {
                           <TextReveal delay={0.2}>
                             <div className="flex flex-col gap-4 -mx-4 md:-mx-6">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
-                                <LazyVideo
+                                <video
                                   key={vidIndex}
                                   src={url}
-                                  loadImmediately={pageLoaded}
-                                  autoPlayOnVisible
+                                  autoPlay
                                   loop
                                   muted
                                   playsInline

@@ -156,6 +156,7 @@ const Dashboard = () => {
   const [savingTestResult, setSavingTestResult] = useState(false);
   const [nutritionPrograms, setNutritionPrograms] = useState<any[]>([]);
   const [showAnalysisSub, setShowAnalysisSub] = useState(false);
+  const [portalSettings, setPortalSettings] = useState<any>(null);
 
   // Initialize form grade configs from database
   const { getGradeBoundaries: getDynamicGradeBoundaries, getGradeForScore, hasThresholds } = useFormGradeConfigs();
@@ -834,6 +835,7 @@ const Dashboard = () => {
       await fetchUpdates(player.id);
       await fetchTestResults(player.id);
       await fetchNutritionPrograms(player.id);
+      await fetchPortalSettings(player.id);
     } catch (error) {
       console.error("Error loading data:", error);
       
@@ -1293,6 +1295,19 @@ const Dashboard = () => {
       setDailyAphorism(data[index]);
     } catch (error) {
       console.error("Error fetching daily aphorism:", error);
+    }
+  };
+
+  const fetchPortalSettings = async (playerId: string) => {
+    try {
+      const { data } = await supabase
+        .from("player_portal_settings")
+        .select("*")
+        .eq("player_id", playerId)
+        .maybeSingle();
+      if (data) setPortalSettings(data);
+    } catch (error) {
+      console.error("Error fetching portal settings:", error);
     }
   };
 
@@ -1757,6 +1772,7 @@ const Dashboard = () => {
                 analyses={analyses} 
                 playerData={playerData}
                 dailyAphorism={dailyAphorism}
+                portalSettings={portalSettings}
                 onNavigateToAnalysis={() => {
                   setActiveTab("analysis");
                   setActiveAnalysisTab("performance");
