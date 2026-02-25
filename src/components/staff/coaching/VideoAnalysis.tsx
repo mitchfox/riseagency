@@ -171,13 +171,21 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     if (defaultPlayerId) {
       setNewPlayerId(defaultPlayerId);
     }
+    fetchVideos();
   }, [defaultPlayerId]);
 
   const fetchVideos = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from("video_analyses")
       .select("*")
       .order("created_at", { ascending: false });
+
+    // When embedded in Athlete Centre, only show videos for this player
+    if (defaultPlayerId) {
+      query = query.eq("player_id", defaultPlayerId);
+    }
+
+    const { data } = await query;
 
     if (data) {
       setVideos(data.map(v => ({
