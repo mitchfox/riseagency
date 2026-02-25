@@ -7,9 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   User, Dumbbell, LineChart, Target, Calendar,
-  Save, Loader2, ChevronRight, ClipboardList, BarChart3, Film, Database, Plus, Trash2, GripHorizontal
+  Save, Loader2, ChevronRight, ChevronDown, ClipboardList, BarChart3, Film, Database, Plus, Trash2, GripHorizontal,
+  Zap, FileText, Search, Video, Pencil, Layers
 } from "lucide-react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { toast } from "sonner";
@@ -19,6 +21,13 @@ import { AnalysisComparisons } from "@/components/portal/AnalysisComparisons";
 import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { InjuryLog } from "@/components/portal/InjuryLog";
+import { PlayerFixtures } from "@/components/staff/PlayerFixtures";
+import { ActionReportsList } from "@/components/staff/analysis/ActionReportsList";
+import { CreatePerformanceReportDialog } from "@/components/staff/CreatePerformanceReportDialog";
+import { AnalysisManagement } from "@/components/staff/AnalysisManagement";
+import { VideoAnalysis } from "@/components/staff/coaching/VideoAnalysis";
+import { AnnotationProjects } from "@/components/staff/annotations/AnnotationProjects";
+import { HighlightCompiler } from "@/components/staff/HighlightCompiler";
 
 interface Player {
   id: string;
@@ -59,10 +68,120 @@ const STATUS_LABELS: Record<string, string> = {
   scouted: 'Scouted',
 };
 
+interface InlineReportState {
+  playerId: string;
+  playerName: string;
+  analysisId?: string;
+}
+
+// ─── Match Flow Section ──────────────────────────────────────────────────────
+
+const MATCH_FLOW_SECTIONS = [
+  { id: "fixtures", label: "Fixtures", icon: Calendar, description: "Manage and create fixtures" },
+  { id: "reports", label: "Performance Reports", icon: ClipboardList, description: "Create and review performance reports" },
+  { id: "analysis", label: "Analysis", icon: Search, description: "Pre-match and post-match analysis" },
+  { id: "videoanalysis", label: "Video Analysis", icon: Video, description: "Review match footage and create clips" },
+  { id: "annotations", label: "Annotations", icon: Pencil, description: "Annotate and mark up video" },
+  { id: "highlightcompiler", label: "Highlight Compiler", icon: Film, description: "Compile highlight reels" },
+];
+
+const MatchFlowTab = ({ selectedPlayer, currentPlayer }: { selectedPlayer: string | null; currentPlayer: Player | null }) => {
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ fixtures: true });
+  const [inlineReport, setInlineReport] = useState<InlineReportState | null>(null);
+
+  const toggleSection = (id: string) => {
+    setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  if (inlineReport) {
+    return (
+      <CreatePerformanceReportDialog
+        inline
+        playerId={inlineReport.playerId}
+        playerName={inlineReport.playerName}
+        analysisId={inlineReport.analysisId}
+        onClose={() => setInlineReport(null)}
+        onSuccess={() => setInlineReport(null)}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-muted-foreground mb-4">
+        Work through each stage of match preparation and review without switching tabs.
+      </p>
+
+      {MATCH_FLOW_SECTIONS.map((section, idx) => (
+        <Collapsible
+          key={section.id}
+          open={openSections[section.id] ?? false}
+          onOpenChange={() => toggleSection(section.id)}
+        >
+          <CollapsibleTrigger asChild>
+            <button className="w-full flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors text-left group">
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full shrink-0 ${openSections[section.id] ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                <section.icon className="h-4 w-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-muted-foreground">{idx + 1}.</span>
+                  <span className="font-semibold text-sm">{section.label}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{section.description}</p>
+              </div>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${openSections[section.id] ? 'rotate-180' : ''}`} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3 pb-1 px-1">
+            <div className="border rounded-lg p-3 md:p-4 bg-background">
+              {section.id === "fixtures" && selectedPlayer && currentPlayer ? (
+                <PlayerFixtures playerId={selectedPlayer} playerName={currentPlayer.name} />
+              ) : section.id === "fixtures" ? (
+                <p className="text-sm text-muted-foreground text-center py-6">Select a player to view fixtures</p>
+              ) : null}
+
+              {section.id === "reports" && (
+                <ActionReportsList
+                  onCreateReport={(playerId, playerName) => {
+                    setInlineReport({ playerId, playerName });
+                  }}
+                  onEditReport={(playerId, playerName, analysisId) => {
+                    setInlineReport({ playerId, playerName, analysisId });
+                  }}
+                />
+              )}
+
+              {section.id === "analysis" && (
+                <AnalysisManagement isAdmin={true} />
+              )}
+
+              {section.id === "videoanalysis" && (
+                <VideoAnalysis />
+              )}
+
+              {section.id === "annotations" && (
+                <AnnotationProjects />
+              )}
+
+              {section.id === "highlightcompiler" && (
+                <HighlightCompiler />
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      ))}
+    </div>
+  );
+};
+
+// ─── Main Component ──────────────────────────────────────────────────────────
+
 export const AthleteCentre = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("longterm");
+  const [mainTab, setMainTab] = useState("matchflow");
+  const [devTab, setDevTab] = useState("longterm");
   const [loading, setLoading] = useState(true);
   
   const [programs, setPrograms] = useState<PlayerProgram[]>([]);
@@ -90,7 +209,6 @@ export const AthleteCentre = () => {
     if (!error && data) {
       setPlayers(data);
       if (data.length > 0) {
-        // Default to first represented player, or first player
         const firstRepresented = data.find(p => p.representation_status === 'represented');
         setSelectedPlayer(firstRepresented?.id || data[0].id);
       }
@@ -98,7 +216,6 @@ export const AthleteCentre = () => {
     setLoading(false);
   };
 
-  // Group players by representation_status in correct order
   const groupedPlayers = useMemo(() => {
     const groups: { status: string; label: string; players: Player[] }[] = [];
     
@@ -109,7 +226,6 @@ export const AthleteCentre = () => {
       }
     });
     
-    // Catch any players with no/unknown status
     const uncategorised = players.filter(p => !p.representation_status || !STATUS_ORDER.includes(p.representation_status));
     if (uncategorised.length > 0) {
       groups.push({ status: 'uncategorised', label: 'Uncategorised', players: uncategorised });
@@ -158,7 +274,7 @@ export const AthleteCentre = () => {
     return <LoadingSpinner size="lg" className="py-12" />;
   }
 
-  const tabItems = [
+  const devTabItems = [
     { value: "longterm", label: "Long-Term Plan", icon: Calendar },
     { value: "periodisation", label: "Periodisation", icon: GripHorizontal },
     { value: "focuses", label: "Dev Focuses", icon: Target },
@@ -235,169 +351,199 @@ export const AthleteCentre = () => {
             </div>
           </CardHeader>
           <CardContent className="p-0 overflow-hidden">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            {/* Main two tabs: Match Flow / Development */}
+            <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
               <div className="border-b p-2 md:p-3">
-                <Select value={activeTab} onValueChange={setActiveTab}>
-                  <SelectTrigger className="w-full md:hidden">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tabItems.map((tab) => (
-                      <SelectItem key={tab.value} value={tab.value}>
-                        <div className="flex items-center gap-2">
-                          <tab.icon className="h-4 w-4" />
-                          {tab.label}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                <TabsList className="hidden md:flex w-full justify-start h-auto p-0 bg-transparent rounded-none gap-1 flex-wrap">
-                  {tabItems.map((tab) => (
-                    <TabsTrigger 
-                      key={tab.value}
-                      value={tab.value} 
-                      className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-t px-3 py-2 text-sm"
-                    >
-                      <tab.icon className="h-4 w-4 mr-1.5" />
-                      {tab.label}
-                    </TabsTrigger>
-                  ))}
+                <TabsList className="w-full justify-start h-auto p-0 bg-transparent rounded-none gap-1">
+                  <TabsTrigger
+                    value="matchflow"
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded px-4 py-2 text-sm font-semibold"
+                  >
+                    <Zap className="h-4 w-4 mr-1.5" />
+                    Match Flow
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="development"
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded px-4 py-2 text-sm font-semibold"
+                  >
+                    <Layers className="h-4 w-4 mr-1.5" />
+                    Development
+                  </TabsTrigger>
                 </TabsList>
               </div>
 
               <div className="p-3 md:p-6">
-                <TabsContent value="longterm" className="mt-0 space-y-3 md:space-y-4">
-                  <div className="flex items-center justify-between mb-3 md:mb-4">
-                    <h3 className="text-base md:text-lg font-semibold">Long-Term Development Plan</h3>
-                  </div>
-                  <div className="space-y-3 md:space-y-4">
-                    <Textarea
-                      placeholder="Outline the long-term development trajectory for this player..."
-                      value={longTermPlan}
-                      onChange={(e) => setLongTermPlan(e.target.value)}
-                      className="min-h-[150px] md:min-h-[200px] resize-none text-sm md:text-base"
-                    />
-                    <div className="flex justify-end">
-                      <Button onClick={handleSaveLongTermPlan} disabled={saving} size="sm">
-                        {saving ? <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-2 animate-spin" /> : <Save className="h-3 w-3 md:h-4 md:w-4 mr-2" />}
-                        Save Plan
-                      </Button>
-                    </div>
-                  </div>
+                {/* ═══ Match Flow Tab ═══ */}
+                <TabsContent value="matchflow" className="mt-0">
+                  <MatchFlowTab selectedPlayer={selectedPlayer} currentPlayer={currentPlayer} />
                 </TabsContent>
 
-                <TabsContent value="focuses" className="mt-0 space-y-3 md:space-y-4">
-                  <div className="flex items-center justify-between mb-3 md:mb-4">
-                    <h3 className="text-base md:text-lg font-semibold">Development Focuses</h3>
-                  </div>
-                  <div className="space-y-3 md:space-y-4">
-                    <Textarea
-                      placeholder="Enter key areas of focus for this player's development..."
-                      value={focuses}
-                      onChange={(e) => setFocuses(e.target.value)}
-                      className="min-h-[150px] md:min-h-[200px] resize-none text-sm md:text-base"
-                    />
-                    <div className="flex justify-end">
-                      <Button onClick={handleSaveFocuses} disabled={saving} size="sm">
-                        {saving ? <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-2 animate-spin" /> : <Save className="h-3 w-3 md:h-4 md:w-4 mr-2" />}
-                        Save Focuses
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="periodisation" className="mt-0 space-y-4">
-                  <PeriodisationPlanner playerId={selectedPlayer} />
-                </TabsContent>
-
-                <TabsContent value="programming" className="mt-0 space-y-3 md:space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 md:mb-4">
-                    <h3 className="text-base md:text-lg font-semibold">Training Programs</h3>
-                    <Button variant="outline" size="sm" className="w-full sm:w-auto border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground">
-                      View All Programs
-                    </Button>
-                  </div>
-                  
-                  {programs.length > 0 ? (
-                    <div className="grid gap-3 md:gap-4">
-                      {programs.map((program) => (
-                        <div key={program.id} className={`p-3 md:p-4 rounded-lg border ${program.is_current ? "bg-primary/5 border-primary" : "bg-muted/30"}`}>
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h4 className="font-semibold text-sm md:text-base truncate">{program.program_name}</h4>
-                                {program.is_current && <Badge className="bg-primary text-xs">Current</Badge>}
+                {/* ═══ Development Tab ═══ */}
+                <TabsContent value="development" className="mt-0">
+                  <Tabs value={devTab} onValueChange={setDevTab} className="w-full">
+                    <div className="mb-4">
+                      <Select value={devTab} onValueChange={setDevTab}>
+                        <SelectTrigger className="w-full md:hidden">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {devTabItems.map((tab) => (
+                            <SelectItem key={tab.value} value={tab.value}>
+                              <div className="flex items-center gap-2">
+                                <tab.icon className="h-4 w-4" />
+                                {tab.label}
                               </div>
-                              {program.phase_name && (
-                                <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">Phase: {program.phase_name}</p>
-                              )}
-                            </div>
-                            <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground shrink-0" />
-                          </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      <TabsList className="hidden md:flex w-full justify-start h-auto p-0 bg-transparent rounded-none gap-1 flex-wrap">
+                        {devTabItems.map((tab) => (
+                          <TabsTrigger 
+                            key={tab.value}
+                            value={tab.value} 
+                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-t px-3 py-2 text-sm"
+                          >
+                            <tab.icon className="h-4 w-4 mr-1.5" />
+                            {tab.label}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </div>
+
+                    <TabsContent value="longterm" className="mt-0 space-y-3 md:space-y-4">
+                      <div className="flex items-center justify-between mb-3 md:mb-4">
+                        <h3 className="text-base md:text-lg font-semibold">Long-Term Development Plan</h3>
+                      </div>
+                      <div className="space-y-3 md:space-y-4">
+                        <Textarea
+                          placeholder="Outline the long-term development trajectory for this player..."
+                          value={longTermPlan}
+                          onChange={(e) => setLongTermPlan(e.target.value)}
+                          className="min-h-[150px] md:min-h-[200px] resize-none text-sm md:text-base"
+                        />
+                        <div className="flex justify-end">
+                          <Button onClick={handleSaveLongTermPlan} disabled={saving} size="sm">
+                            {saving ? <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-2 animate-spin" /> : <Save className="h-3 w-3 md:h-4 md:w-4 mr-2" />}
+                            Save Plan
+                          </Button>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 md:py-8 text-muted-foreground">
-                      <Dumbbell className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 md:mb-4 opacity-50" />
-                      <p className="text-sm md:text-base">No programs assigned yet</p>
-                    </div>
-                  )}
-                </TabsContent>
+                      </div>
+                    </TabsContent>
 
-                <TabsContent value="injuries" className="mt-0">
-                  <InjuryLog playerId={selectedPlayer} readOnly />
-                </TabsContent>
+                    <TabsContent value="focuses" className="mt-0 space-y-3 md:space-y-4">
+                      <div className="flex items-center justify-between mb-3 md:mb-4">
+                        <h3 className="text-base md:text-lg font-semibold">Development Focuses</h3>
+                      </div>
+                      <div className="space-y-3 md:space-y-4">
+                        <Textarea
+                          placeholder="Enter key areas of focus for this player's development..."
+                          value={focuses}
+                          onChange={(e) => setFocuses(e.target.value)}
+                          className="min-h-[150px] md:min-h-[200px] resize-none text-sm md:text-base"
+                        />
+                        <div className="flex justify-end">
+                          <Button onClick={handleSaveFocuses} disabled={saving} size="sm">
+                            {saving ? <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-2 animate-spin" /> : <Save className="h-3 w-3 md:h-4 md:w-4 mr-2" />}
+                            Save Focuses
+                          </Button>
+                        </div>
+                      </div>
+                    </TabsContent>
 
-                <TabsContent value="scouting" className="mt-0">
-                  <PlayerScoutingReports playerId={selectedPlayer} playerName={currentPlayer.name} embedded />
-                </TabsContent>
+                    <TabsContent value="periodisation" className="mt-0 space-y-4">
+                      <PeriodisationPlanner playerId={selectedPlayer} />
+                    </TabsContent>
 
-                <TabsContent value="data" className="mt-0">
-                  <AnalysisDataTab analyses={analyses} playerData={currentPlayer} embedded />
-                </TabsContent>
-
-                <TabsContent value="comparisons" className="mt-0">
-                  <AnalysisComparisons analyses={analyses} playerData={currentPlayer} embedded />
-                </TabsContent>
-
-                <TabsContent value="video" className="mt-0">
-                  <AnalysisVideoReports analyses={analyses} playerId={selectedPlayer} embedded />
-                </TabsContent>
-
-                <TabsContent value="analysis" className="mt-0 space-y-3 md:space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 md:mb-4">
-                    <h3 className="text-base md:text-lg font-semibold">Performance Analysis</h3>
-                  </div>
-                  {analyses.length > 0 ? (
-                    <div className="grid gap-2 md:gap-3">
-                      {analyses.map((analysis) => (
-                        <div key={analysis.id} className="p-3 md:p-4 rounded-lg bg-muted/30 border hover:border-primary/50 transition-colors cursor-pointer">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-medium text-sm md:text-base truncate">vs {analysis.opponent || "Unknown"}</span>
-                                {analysis.r90_score && (
-                                  <Badge variant="outline" className="text-xs">R90: {analysis.r90_score.toFixed(1)}</Badge>
-                                )}
+                    <TabsContent value="programming" className="mt-0 space-y-3 md:space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 md:mb-4">
+                        <h3 className="text-base md:text-lg font-semibold">Training Programs</h3>
+                        <Button variant="outline" size="sm" className="w-full sm:w-auto border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground">
+                          View All Programs
+                        </Button>
+                      </div>
+                      
+                      {programs.length > 0 ? (
+                        <div className="grid gap-3 md:gap-4">
+                          {programs.map((program) => (
+                            <div key={program.id} className={`p-3 md:p-4 rounded-lg border ${program.is_current ? "bg-primary/5 border-primary" : "bg-muted/30"}`}>
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <h4 className="font-semibold text-sm md:text-base truncate">{program.program_name}</h4>
+                                    {program.is_current && <Badge className="bg-primary text-xs">Current</Badge>}
+                                  </div>
+                                  {program.phase_name && (
+                                    <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">Phase: {program.phase_name}</p>
+                                  )}
+                                </div>
+                                <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground shrink-0" />
                               </div>
-                              <p className="text-xs md:text-sm text-muted-foreground mt-1">
-                                {format(new Date(analysis.analysis_date), "MMM dd, yyyy")}
-                              </p>
                             </div>
-                            <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground shrink-0" />
-                          </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 md:py-8 text-muted-foreground">
-                      <LineChart className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 md:mb-4 opacity-50" />
-                      <p className="text-sm md:text-base">No analysis reports yet</p>
-                    </div>
-                  )}
+                      ) : (
+                        <div className="text-center py-6 md:py-8 text-muted-foreground">
+                          <Dumbbell className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 md:mb-4 opacity-50" />
+                          <p className="text-sm md:text-base">No programs assigned yet</p>
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="injuries" className="mt-0">
+                      <InjuryLog playerId={selectedPlayer} readOnly />
+                    </TabsContent>
+
+                    <TabsContent value="scouting" className="mt-0">
+                      <PlayerScoutingReports playerId={selectedPlayer} playerName={currentPlayer.name} embedded />
+                    </TabsContent>
+
+                    <TabsContent value="data" className="mt-0">
+                      <AnalysisDataTab analyses={analyses} playerData={currentPlayer} embedded />
+                    </TabsContent>
+
+                    <TabsContent value="comparisons" className="mt-0">
+                      <AnalysisComparisons analyses={analyses} playerData={currentPlayer} embedded />
+                    </TabsContent>
+
+                    <TabsContent value="video" className="mt-0">
+                      <AnalysisVideoReports analyses={analyses} playerId={selectedPlayer} embedded />
+                    </TabsContent>
+
+                    <TabsContent value="analysis" className="mt-0 space-y-3 md:space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 md:mb-4">
+                        <h3 className="text-base md:text-lg font-semibold">Performance Analysis</h3>
+                      </div>
+                      {analyses.length > 0 ? (
+                        <div className="grid gap-2 md:gap-3">
+                          {analyses.map((analysis) => (
+                            <div key={analysis.id} className="p-3 md:p-4 rounded-lg bg-muted/30 border hover:border-primary/50 transition-colors cursor-pointer">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="font-medium text-sm md:text-base truncate">vs {analysis.opponent || "Unknown"}</span>
+                                    {analysis.r90_score && (
+                                      <Badge variant="outline" className="text-xs">R90: {analysis.r90_score.toFixed(1)}</Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-xs md:text-sm text-muted-foreground mt-1">
+                                    {format(new Date(analysis.analysis_date), "MMM dd, yyyy")}
+                                  </p>
+                                </div>
+                                <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground shrink-0" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 md:py-8 text-muted-foreground">
+                          <LineChart className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 md:mb-4 opacity-50" />
+                          <p className="text-sm md:text-base">No analysis reports yet</p>
+                        </div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
                 </TabsContent>
               </div>
             </Tabs>
@@ -522,7 +668,6 @@ const PeriodisationPlanner = ({ playerId }: { playerId: string }) => {
         </div>
       </div>
 
-      {/* Visual timeline */}
       {phases.length > 0 && (
         <div className="overflow-x-auto">
           <div className="flex gap-1 min-w-[600px]">
@@ -542,7 +687,6 @@ const PeriodisationPlanner = ({ playerId }: { playerId: string }) => {
         </div>
       )}
 
-      {/* Phase editor */}
       <div className="space-y-3">
         {phases.map((phase, idx) => (
           <div key={idx} className="flex flex-wrap items-center gap-2 p-3 rounded-lg border bg-card">
