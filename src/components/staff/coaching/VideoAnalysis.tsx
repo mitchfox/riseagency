@@ -256,11 +256,21 @@ export const VideoAnalysis = () => {
               .getPublicUrl(filePath);
             resolve(urlData.publicUrl);
           } else {
-            reject(new Error(`Upload failed: ${xhr.statusText}`));
+            let detail = xhr.statusText || 'Unknown error';
+            try {
+              const body = JSON.parse(xhr.responseText);
+              detail = body.message || body.error || body.statusCode || detail;
+            } catch { 
+              if (xhr.responseText) detail = xhr.responseText.slice(0, 200);
+            }
+            if (xhr.status === 413) {
+              detail = `File too large for upload. Try compressing the video first using Video Compressor.`;
+            }
+            reject(new Error(`Upload failed (${xhr.status}): ${detail}`));
           }
         });
 
-        xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+        xhr.addEventListener('error', () => reject(new Error('Upload failed: network error. Check your connection and try again.')));
 
         xhr.open('POST', `${supabaseUrl}/storage/v1/object/analysis-videos/${filePath}`);
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);

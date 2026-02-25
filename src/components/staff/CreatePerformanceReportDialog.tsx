@@ -1338,9 +1338,8 @@ export const CreatePerformanceReportDialog = ({
         entityName: `${playerName} vs ${opponent}`,
       });
 
-      // Check for performance improvements and notify staff
+      // Check for performance improvements and notify staff (non-blocking)
       try {
-        // Fetch last 3 reports for this player to detect improvement trends
         const { data: recentReports } = await supabase
           .from("player_analysis")
           .select("r90_score, fixture_stats, opponent, analysis_date")
@@ -1353,22 +1352,22 @@ export const CreatePerformanceReportDialog = ({
           const previous = recentReports[1];
           const improvements: string[] = [];
 
-          // Check R90 improvement
           if (current.r90_score && previous.r90_score && current.r90_score > previous.r90_score) {
             const pctChange = ((current.r90_score - previous.r90_score) / Math.abs(previous.r90_score || 1) * 100).toFixed(0);
             improvements.push(`R90: ${previous.r90_score.toFixed(2)} → ${current.r90_score.toFixed(2)} (+${pctChange}%)`);
           }
 
-          // Check fixture stats improvements
-          const currentFS = (current.fixture_stats as Record<string, number>) || {};
-          const previousFS = (previous.fixture_stats as Record<string, number>) || {};
-          const keyStats = ['goals_per90', 'assists_per90', 'npxg_per90', 'xa_per90', 'successful_dribbles_per90', 'progressive_carries_per90', 'tackles_won_per90'];
-          for (const key of keyStats) {
-            if (currentFS[key] != null && previousFS[key] != null && currentFS[key] > previousFS[key]) {
-              const label = key.replace(/_per90$/, '').replace(/_/g, ' ');
-              improvements.push(`${label}: ${previousFS[key]} → ${currentFS[key]}`);
+          try {
+            const currentFS = (current.fixture_stats as Record<string, number>) || {};
+            const previousFS = (previous.fixture_stats as Record<string, number>) || {};
+            const keyStats = ['goals_per90', 'assists_per90', 'npxg_per90', 'xa_per90', 'successful_dribbles_per90', 'progressive_carries_per90', 'tackles_won_per90'];
+            for (const key of keyStats) {
+              if (currentFS[key] != null && previousFS[key] != null && currentFS[key] > previousFS[key]) {
+                const label = key.replace(/_per90$/, '').replace(/_/g, ' ');
+                improvements.push(`${label}: ${previousFS[key]} → ${currentFS[key]}`);
+              }
             }
-          }
+          } catch { /* fixture_stats parsing issue - ignore */ }
 
           if (improvements.length > 0) {
             await supabase.from('staff_notification_events').insert({
@@ -1383,12 +1382,11 @@ export const CreatePerformanceReportDialog = ({
                 r90_score: calculatedR90,
                 analysis_id: analysisIdToUse,
               },
-            });
+            }).throwOnError();
           }
         }
       } catch (notifErr) {
-        console.error("Error creating performance notification:", notifErr);
-        // Don't block save on notification failure
+        console.warn("Non-blocking: performance notification failed:", notifErr);
       }
       
       // Only close dialog and call onSuccess in create mode
