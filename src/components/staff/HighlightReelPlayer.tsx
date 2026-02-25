@@ -5,6 +5,38 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { X, ChevronLeft, ChevronRight, Maximize, Minimize, Star } from "lucide-react";
 
+const getScoreBgColor = (score: number | null | undefined): string => {
+  if (score === null || score === undefined) return 'bg-primary/90';
+  if (score < 0) return 'bg-red-950';
+  if (score < 0.2) return 'bg-red-600';
+  if (score < 0.4) return 'bg-red-400';
+  if (score < 0.6) return 'bg-orange-700';
+  if (score < 0.8) return 'bg-orange-500';
+  if (score < 1.0) return 'bg-yellow-400';
+  if (score < 1.4) return 'bg-lime-400';
+  if (score < 1.8) return 'bg-green-500';
+  if (score < 2.5) return 'bg-green-700';
+  return 'bg-yellow-600';
+};
+
+const getActionScoreBgColor = (score: number | null | undefined): string => {
+  if (score === null || score === undefined) return 'bg-muted';
+  if (score >= 0.15) return 'bg-green-800';
+  if (score >= 0.10) return 'bg-green-600';
+  if (score >= 0.05) return 'bg-green-500';
+  if (score > 0) return 'bg-lime-500';
+  if (score === 0) return 'bg-yellow-500';
+  if (score > -0.05) return 'bg-orange-500';
+  if (score > -0.10) return 'bg-red-500';
+  return 'bg-red-700';
+};
+
+const getClipScoreColor = (clip: { r90Score?: number | null; actionScore?: number | null }): string => {
+  if (clip.actionScore != null) return getActionScoreBgColor(clip.actionScore);
+  if (clip.r90Score != null) return getScoreBgColor(clip.r90Score);
+  return 'bg-primary/90';
+};
+
 interface ReelClip {
   id: string;
   title: string;
@@ -89,7 +121,7 @@ export const HighlightReelPlayer = ({ clips, projectName, isOpen, onClose }: Hig
               <div className="flex items-center justify-center gap-2">
                 <h3 className="text-base md:text-xl font-semibold truncate">{currentClip.title}</h3>
                 {(currentClip.r90Score != null || currentClip.actionScore != null) && (
-                  <Badge variant="outline" className="text-xs flex-shrink-0">
+                  <Badge className={`text-xs flex-shrink-0 text-white ${getClipScoreColor(currentClip)}`}>
                     <Star className="h-3 w-3 mr-1" />
                     {currentClip.actionScore != null ? currentClip.actionScore.toFixed(3) : currentClip.r90Score?.toFixed(2)}
                   </Badge>

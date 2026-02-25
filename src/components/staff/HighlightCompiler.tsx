@@ -50,6 +50,40 @@ interface HighlightProject {
   updated_at: string;
 }
 
+// ─── Score colour coding (matches PlayerFixtures scale) ──────────────────────
+
+const getScoreBgColor = (score: number | null | undefined): string => {
+  if (score === null || score === undefined) return 'bg-primary/90';
+  if (score < 0) return 'bg-red-950';
+  if (score < 0.2) return 'bg-red-600';
+  if (score < 0.4) return 'bg-red-400';
+  if (score < 0.6) return 'bg-orange-700';
+  if (score < 0.8) return 'bg-orange-500';
+  if (score < 1.0) return 'bg-yellow-400';
+  if (score < 1.4) return 'bg-lime-400';
+  if (score < 1.8) return 'bg-green-500';
+  if (score < 2.5) return 'bg-green-700';
+  return 'bg-yellow-600'; // RISE gold for 2.5+
+};
+
+const getActionScoreBgColor = (score: number | null | undefined): string => {
+  if (score === null || score === undefined) return 'bg-muted';
+  if (score >= 0.15) return 'bg-green-800';
+  if (score >= 0.10) return 'bg-green-600';
+  if (score >= 0.05) return 'bg-green-500';
+  if (score > 0) return 'bg-lime-500';
+  if (score === 0) return 'bg-yellow-500';
+  if (score > -0.05) return 'bg-orange-500';
+  if (score > -0.10) return 'bg-red-500';
+  return 'bg-red-700';
+};
+
+const getClipScoreColor = (clip: { r90Score?: number | null; actionScore?: number | null }): string => {
+  if (clip.actionScore != null) return getActionScoreBgColor(clip.actionScore);
+  if (clip.r90Score != null) return getScoreBgColor(clip.r90Score);
+  return 'bg-primary/90';
+};
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export const HighlightCompiler = () => {
@@ -587,7 +621,7 @@ export const HighlightCompiler = () => {
                       {fmtDuration(clip.duration)}
                     </Badge>
                     {(clip.r90Score != null || clip.actionScore != null) && (
-                      <Badge className="absolute top-1 left-1 text-[10px] py-0 px-1 bg-primary/90">
+                      <Badge className={`absolute top-1 left-1 text-[10px] py-0 px-1 text-white ${getClipScoreColor(clip)}`}>
                         <Star className="h-2.5 w-2.5 mr-0.5" />
                         {clip.actionScore != null ? clip.actionScore.toFixed(3) : clip.r90Score?.toFixed(2)}
                       </Badge>
@@ -672,7 +706,7 @@ export const HighlightCompiler = () => {
                         <span className="text-primary font-bold text-sm">{index + 1}.</span>
                         <span className="font-medium text-sm truncate">{clip.title}</span>
                         {(clip.r90Score != null || clip.actionScore != null) && (
-                          <Badge variant="outline" className="text-[10px] ml-auto flex-shrink-0">
+                          <Badge className={`text-[10px] ml-auto flex-shrink-0 text-white ${getClipScoreColor(clip)}`}>
                             {clip.actionScore != null ? `Score: ${clip.actionScore.toFixed(3)}` : `R90: ${clip.r90Score?.toFixed(2)}`}
                           </Badge>
                         )}
