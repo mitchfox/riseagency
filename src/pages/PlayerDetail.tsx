@@ -296,9 +296,9 @@ const PlayerDetail = () => {
             
             setPerformanceReports(analysisData || []);
             
-            // Fetch top video actions for video report buttons
+            // Fetch top video actions for video report buttons (limit to recent 10 reports for speed)
             if (analysisData && analysisData.length > 0) {
-              const analysisIds = analysisData.map((a: any) => a.id);
+              const analysisIds = analysisData.slice(0, 10).map((a: any) => a.id);
               const { data: actionData } = await supabase
                 .from('performance_report_actions')
                 .select('id, action_type, action_score, video_url, minute, analysis_id')
@@ -808,8 +808,12 @@ const PlayerDetail = () => {
               <div className="flex items-center gap-3 w-full flex-wrap">
                   <img src={hudlLogo} alt="Hudl" className="h-5 opacity-60" />
                   {displayCategories.map(({ name, actions }) => {
-                    // Title Case all category names
-                    const displayName = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                    // Title Case and pluralise category names
+                    let displayName = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                    // Pluralise: add 's' if last word doesn't already end in 's'
+                    if (displayName && !displayName.endsWith('s')) {
+                      displayName = displayName + 's';
+                    }
                     return (
                       <button
                         key={name}
