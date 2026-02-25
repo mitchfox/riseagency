@@ -93,6 +93,7 @@ import { NutritionSection } from "@/components/staff/programming/NutritionSectio
 import { MessagingCaseStudies } from "@/components/staff/MessagingCaseStudies";
 import { PortalManagement } from "@/components/staff/PortalManagement";
 import { VideoCompressor } from "@/components/staff/VideoCompressor";
+import { HighlightCompiler } from "@/components/staff/HighlightCompiler";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTheme } from "next-themes";
@@ -154,7 +155,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | 'videocompressor' | '__grid_picker__' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | '__grid_picker__' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -838,6 +839,7 @@ const Staff = () => {
           { id: 'videoanalysis', title: 'Video Analysis', icon: Film },
           { id: 'streams', title: 'Streams', icon: Tv },
           { id: 'videocompressor', title: 'Video Compressor', icon: Film },
+          { id: 'highlightcompiler', title: 'Highlight Compiler', icon: Film },
         ],
       },
       {
@@ -989,6 +991,7 @@ const Staff = () => {
     scoutingcentre: ['scouting', 'reports', 'scouts', 'evaluations'],
     transferhub: ['transfers', 'outreach', 'clubs', 'deals'],
     portalmanagement: ['portal', 'features', 'visibility', 'hero', 'toggle'],
+    highlightcompiler: ['highlight', 'compiler', 'reel', 'compilation', 'export', 'clips'],
   };
 
   const filteredCategories = categories.map(category => ({
@@ -1588,6 +1591,7 @@ const Staff = () => {
                   {expandedSection === 'marketing' && <MarketingManagement isAdmin={isAdmin} isMarketeer={isMarketeer} />}
                   {expandedSection === 'contentcreator' && <ContentCreator />}
                   {expandedSection === 'videocompressor' && <VideoCompressor />}
+                  {expandedSection === 'highlightcompiler' && <HighlightCompiler />}
                   {expandedSection === 'salesdeck' && <SalesDeck />}
                   
                   {expandedSection === 'publiccontent' && <PublicContentManagement isAdmin={isAdmin} />}
