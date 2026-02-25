@@ -136,7 +136,7 @@ const MatchFlowTab = ({ selectedPlayer, currentPlayer }: { selectedPlayer: strin
           <CollapsibleContent className="pt-3 pb-1 px-1">
             <div className="border rounded-lg p-3 md:p-4 bg-background">
               {section.id === "fixtures" && selectedPlayer && currentPlayer ? (
-                <PlayerFixtures playerId={selectedPlayer} playerName={currentPlayer.name} />
+                <PlayerFixtures playerId={selectedPlayer} playerName={currentPlayer.name} isAdmin={true} />
               ) : section.id === "fixtures" ? (
                 <p className="text-sm text-muted-foreground text-center py-6">Select a player to view fixtures</p>
               ) : null}

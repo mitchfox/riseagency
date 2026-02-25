@@ -1529,7 +1529,16 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
   }
 
   const renderAnalysisList = (type: AnalysisType) => {
-    return analyses.filter(a => a.analysis_type === type).map((analysis) => (
+    const filtered = analyses.filter(a => {
+      if (a.analysis_type !== type) return false;
+      // When embedded in Athlete Centre with a default player, only show analyses linked to that player
+      if (defaultPlayerId) {
+        const linked = linkedPlayers[a.id];
+        return linked && linked.some(p => p.playerId === defaultPlayerId);
+      }
+      return true;
+    });
+    return filtered.map((analysis) => (
       <Card key={analysis.id} className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
           <div className="flex-1 min-w-0">
