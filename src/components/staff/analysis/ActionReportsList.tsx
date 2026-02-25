@@ -27,13 +27,15 @@ interface ActionReport {
 interface ActionReportsListProps {
   onCreateReport?: (playerId: string, playerName: string) => void;
   onEditReport?: (playerId: string, playerName: string, analysisId: string) => void;
+  defaultPlayerId?: string;
+  defaultPlayerName?: string;
 }
 
-export const ActionReportsList = ({ onCreateReport, onEditReport }: ActionReportsListProps = {}) => {
+export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerId, defaultPlayerName }: ActionReportsListProps = {}) => {
   const [reports, setReports] = useState<ActionReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [playerFilter, setPlayerFilter] = useState("all");
+  const [playerFilter, setPlayerFilter] = useState(defaultPlayerId || "all");
   const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
   
   // Dialog states
@@ -50,6 +52,12 @@ export const ActionReportsList = ({ onCreateReport, onEditReport }: ActionReport
     fetchReports();
     fetchPlayers();
   }, []);
+
+  useEffect(() => {
+    if (defaultPlayerId) {
+      setPlayerFilter(defaultPlayerId);
+    }
+  }, [defaultPlayerId]);
 
   const fetchPlayers = async () => {
     const { data } = await supabase
@@ -160,7 +168,20 @@ export const ActionReportsList = ({ onCreateReport, onEditReport }: ActionReport
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={() => setShowPlayerPicker(true)}>
+        <Button onClick={() => {
+          if (defaultPlayerId && defaultPlayerName) {
+            if (onCreateReport) {
+              onCreateReport(defaultPlayerId, defaultPlayerName);
+            } else {
+              setReportEditorPlayerId(defaultPlayerId);
+              setReportEditorPlayerName(defaultPlayerName);
+              setReportEditorAnalysisId(undefined);
+              setShowReportEditor(true);
+            }
+          } else {
+            setShowPlayerPicker(true);
+          }
+        }}>
           <Plus className="w-4 h-4 mr-2" />
           New Action Report
         </Button>

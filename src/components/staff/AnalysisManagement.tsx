@@ -99,9 +99,10 @@ interface AIWriterState {
 
 interface AnalysisManagementProps {
   isAdmin: boolean;
+  defaultPlayerId?: string;
 }
 
-export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
+export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagementProps) => {
   const navigate = useNavigate();
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [loading, setLoading] = useState(true);
@@ -235,7 +236,7 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
 
   const [uploadingImage, setUploadingImage] = useState(false);
   const [players, setPlayers] = useState<any[]>([]);
-  const [selectedPlayerId, setSelectedPlayerId] = useState("none");
+  const [selectedPlayerId, setSelectedPlayerId] = useState(defaultPlayerId || "none");
   const [performanceReports, setPerformanceReports] = useState<any[]>([]);
   const [selectedPerformanceReportId, setSelectedPerformanceReportId] = useState("none");
   const [performanceReportClips, setPerformanceReportClips] = useState<any[]>([]);
@@ -256,6 +257,12 @@ export const AnalysisManagement = ({ isAdmin }: AnalysisManagementProps) => {
       setPerformanceReportClips([]);
     }
   }, [selectedPlayerId]);
+
+  useEffect(() => {
+    if (defaultPlayerId) {
+      setSelectedPlayerId(defaultPlayerId);
+    }
+  }, [defaultPlayerId]);
 
   // Fetch clips when a performance report is selected
   useEffect(() => {

@@ -76,7 +76,11 @@ const ACTION_COLOURS: Record<string, string> = {
 };
 
 
-export const VideoAnalysis = () => {
+interface VideoAnalysisProps {
+  defaultPlayerId?: string;
+}
+
+export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [videos, setVideos] = useState<VideoAnalysisEntry[]>([]);
   const [players, setPlayers] = useState<{ id: string; name: string; representation_status?: string | null; image_url?: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,7 +90,7 @@ export const VideoAnalysis = () => {
 
   // Upload form
   const [newTitle, setNewTitle] = useState("");
-  const [newPlayerId, setNewPlayerId] = useState("");
+  const [newPlayerId, setNewPlayerId] = useState(defaultPlayerId || "");
   const [newOpponent, setNewOpponent] = useState("");
   const [newMatchDate, setNewMatchDate] = useState("");
   const [creating, setCreating] = useState(false);
@@ -162,6 +166,12 @@ export const VideoAnalysis = () => {
     fetchPlayers();
     fetchKnownActionTypes();
   }, []);
+
+  useEffect(() => {
+    if (defaultPlayerId) {
+      setNewPlayerId(defaultPlayerId);
+    }
+  }, [defaultPlayerId]);
 
   const fetchVideos = async () => {
     const { data } = await supabase
