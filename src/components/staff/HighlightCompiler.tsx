@@ -14,8 +14,9 @@ import { Progress } from "@/components/ui/progress";
 import {
   Film, Trash2, Play, Pause, Plus, FolderDown, ChevronUp, ChevronDown,
   Link2, Check, XCircle, Star, Clock, ArrowLeft, Pencil, FileVideo,
-  ClipboardList, Search, MoreHorizontal
+  ClipboardList, Search, MoreHorizontal, ArrowDownWideNarrow, MonitorPlay
 } from "lucide-react";
+import { HighlightReelPlayer } from "./HighlightReelPlayer";
 import JSZip from "jszip";
 import { format } from "date-fns";
 
@@ -82,6 +83,9 @@ export const HighlightCompiler = () => {
   // ── Rename ──
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+
+  // ── Reel player ──
+  const [reelPlayerOpen, setReelPlayerOpen] = useState(false);
 
   // ─── Load projects ──────────────────────────────────────────────────────────
 
@@ -312,6 +316,20 @@ export const HighlightCompiler = () => {
 
   const handleDurationLoaded = (id: string, duration: number) => {
     setClips(prev => prev.map(c => c.id === id ? { ...c, duration } : c));
+  };
+
+  const sortByR90 = () => {
+    const accepted = clips.filter(c => c.status === "accepted");
+    const pending = clips.filter(c => c.status === "pending");
+    const hasScore = accepted.filter(c => c.r90Score != null || c.actionScore != null);
+    const noScore = accepted.filter(c => c.r90Score == null && c.actionScore == null);
+    hasScore.sort((a, b) => {
+      const scoreA = a.actionScore ?? a.r90Score ?? 0;
+      const scoreB = b.actionScore ?? b.r90Score ?? 0;
+      return scoreB - scoreA;
+    });
+    updateClips([...hasScore, ...noScore, ...pending]);
+    toast.success("Sorted by score (highest first)");
   };
 
   // ─── Extend expiry ─────────────────────────────────────────────────────────
@@ -610,10 +628,22 @@ export const HighlightCompiler = () => {
       {/* ════ Accepted clips (ordered reel) ════ */}
       {acceptedClips.length > 0 && (
         <div className="space-y-2">
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <h3 className="font-semibold text-foreground">Highlight Reel</h3>
-            <span>{acceptedClips.length} clip{acceptedClips.length !== 1 ? "s" : ""}</span>
-            <span>Total: {fmtDuration(totalDuration)}</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <h3 className="font-semibold text-foreground">Highlight Reel</h3>
+              <span>{acceptedClips.length} clip{acceptedClips.length !== 1 ? "s" : ""}</span>
+              <span>Total: {fmtDuration(totalDuration)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {acceptedClips.some(c => c.r90Score != null || c.actionScore != null) && (
+                <Button variant="outline" size="sm" onClick={sortByR90} className="text-xs h-7">
+                  <ArrowDownWideNarrow className="h-3 w-3 mr-1" /> Sort by Score
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={() => setReelPlayerOpen(true)} className="text-xs h-7">
+                <MonitorPlay className="h-3 w-3 mr-1" /> Watch Reel
+              </Button>
+            </div>
           </div>
 
           {acceptedClips.map((clip, index) => {
@@ -805,6 +835,13 @@ export const HighlightCompiler = () => {
           </Tabs>
         </DialogContent>
       </Dialog>
+      {/* ═══ Highlight Reel Player ═══ */}
+      <HighlightReelPlayer
+        clips={acceptedClips}
+        projectName={activeProject.name}
+        isOpen={reelPlayerOpen}
+        onClose={() => setReelPlayerOpen(false)}
+      />
     </div>
   );
 };
