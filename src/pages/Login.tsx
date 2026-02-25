@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { insertStaffNotification } from "@/lib/staffNotifications";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -104,7 +105,7 @@ const Login = () => {
     try {
       const { data: player, error: playerError } = await supabase
         .from("players")
-        .select("id, email")
+        .select("id, email, name")
         .eq("email", email)
         .maybeSingle();
 
@@ -128,6 +129,16 @@ const Login = () => {
         }
         
         toast.success(t('login.welcome_portal', 'Welcome to your portal!'));
+        
+        // Fire-and-forget portal login notification
+        insertStaffNotification({
+          eventType: "portal_login",
+          title: "Portal Login",
+          body: `${player.name || player.email} logged in`,
+          eventData: { player_id: player.id, player_name: player.name, player_email: player.email },
+          dedupeKey: player.id,
+        });
+        
         navigate("/portal");
         return;
       }

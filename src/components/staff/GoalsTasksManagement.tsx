@@ -187,6 +187,15 @@ export const GoalsTasksManagement = () => {
 
         if (error) throw error;
         toast.success("Goal added!");
+        
+        // Fire-and-forget goal notification
+        const { insertStaffNotification } = await import("@/lib/staffNotifications");
+        insertStaffNotification({
+          eventType: "goal_added",
+          title: "New Goal Added",
+          body: goalData.title,
+          eventData: { title: goalData.title, quarter: goalData.quarter, year: goalData.year },
+        });
       }
 
       setGoalForm({
@@ -240,9 +249,22 @@ export const GoalsTasksManagement = () => {
 
       if (error) throw error;
       setNewTaskTitle("");
+      const taskTitle = newTaskTitle;
+      const assignees = [...newTaskAssignees];
       setNewTaskAssignees([]);
       toast.success("Task added!");
       fetchTasks();
+      
+      // Fire-and-forget task notification
+      const { insertStaffNotification } = await import("@/lib/staffNotifications");
+      if (assignees.length > 0) {
+        insertStaffNotification({
+          eventType: "task_assigned",
+          title: "Task Assigned",
+          body: taskTitle,
+          eventData: { title: taskTitle, assigned_to: assignees },
+        });
+      }
     } catch (error: any) {
       console.error("Error adding task:", error);
       toast.error("Failed to add task");
@@ -251,13 +273,24 @@ export const GoalsTasksManagement = () => {
 
   const handleToggleTask = async (task: Task) => {
     try {
+      const newCompleted = !task.completed;
       const { error } = await supabase
         .from("staff_tasks")
-        .update({ completed: !task.completed })
+        .update({ completed: newCompleted })
         .eq("id", task.id);
 
       if (error) throw error;
       fetchTasks();
+      
+      if (newCompleted) {
+        const { insertStaffNotification } = await import("@/lib/staffNotifications");
+        insertStaffNotification({
+          eventType: "task_completed",
+          title: "Task Completed",
+          body: task.title,
+          eventData: { title: task.title, task_id: task.id },
+        });
+      }
     } catch (error: any) {
       console.error("Error toggling task:", error);
       toast.error("Failed to update task");
