@@ -160,6 +160,7 @@ const Dashboard = () => {
   const [nutritionPrograms, setNutritionPrograms] = useState<any[]>([]);
   const [showAnalysisSub, setShowAnalysisSub] = useState(false);
   const [portalSettings, setPortalSettings] = useState<any>(null);
+  const [navDropdownOpen, setNavDropdownOpen] = useState(false);
 
   // Initialize form grade configs from database
   const { getGradeBoundaries: getDynamicGradeBoundaries, getGradeForScore, hasThresholds } = useFormGradeConfigs();
@@ -1667,7 +1668,7 @@ const Dashboard = () => {
         </div>
         {/* Navigation Menu - Full width, conditionally sticky */}
         <div className={`w-full ${!isSubheaderVisible ? 'sticky top-16 z-40' : ''}`}>
-          <DropdownMenu>
+          <DropdownMenu open={navDropdownOpen} onOpenChange={setNavDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline" 
@@ -3844,14 +3845,18 @@ const Dashboard = () => {
             <TabsContent value="invoices">
               <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-0">
                 <CardContent className="container mx-auto px-4 pt-2">
-                  <Tabs defaultValue="invoices" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-0 bg-muted h-auto p-2">
-                  <TabsTrigger value="invoices" className="font-bebas uppercase text-sm sm:text-base">
-                    Invoices
-                  </TabsTrigger>
-                  <TabsTrigger value="payment" className="font-bebas uppercase text-sm sm:text-base">
-                    Make Payment
-                  </TabsTrigger>
+                  <Tabs defaultValue={invoices.length > 0 ? "invoices" : "contracts"} className="w-full">
+                    <TabsList className={`grid w-full gap-2 mb-0 bg-muted h-auto p-2`} style={{ gridTemplateColumns: `repeat(${[invoices.length > 0, invoices.some(inv => inv.status === 'pending' || inv.status === 'overdue'), true, true].filter(Boolean).length}, 1fr)` }}>
+                  {invoices.length > 0 && (
+                    <TabsTrigger value="invoices" className="font-bebas uppercase text-sm sm:text-base">
+                      Invoices
+                    </TabsTrigger>
+                  )}
+                  {invoices.some(inv => inv.status === 'pending' || inv.status === 'overdue') && (
+                    <TabsTrigger value="payment" className="font-bebas uppercase text-sm sm:text-base">
+                      Make Payment
+                    </TabsTrigger>
+                  )}
                   <TabsTrigger value="contracts" className="font-bebas uppercase text-sm sm:text-base">
                     Contracts
                   </TabsTrigger>
@@ -4821,10 +4826,10 @@ const Dashboard = () => {
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tab) => { setActiveTab(tab); setNavDropdownOpen(false); }}
         onMoreClick={() => {
-          // Scroll to top and open the dropdown menu
           window.scrollTo({ top: 0, behavior: 'smooth' });
+          setTimeout(() => setNavDropdownOpen(true), 300);
         }}
       />
     </div>
