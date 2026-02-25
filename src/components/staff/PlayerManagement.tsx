@@ -339,41 +339,59 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         });
       }
       
-      // Parse stats from player bio field instead of player_stats table
+      // Fetch stats from player_stats table first, then overlay bio seasonStats
       const statsMap: Record<string, PlayerStats> = {};
+      
+      // 1. Fetch from player_stats table (primary source)
+      const playerIds = (playersData || []).map(p => p.id);
+      if (playerIds.length > 0) {
+        const { data: playerStatsData } = await supabase
+          .from('player_stats')
+          .select('id, player_id, goals, assists, matches, minutes, clean_sheets, saves')
+          .in('player_id', playerIds);
+        
+        playerStatsData?.forEach(ps => {
+          statsMap[ps.player_id] = {
+            id: ps.id,
+            player_id: ps.player_id,
+            goals: ps.goals || 0,
+            assists: ps.assists || 0,
+            matches: ps.matches || 0,
+            minutes: ps.minutes || 0,
+            clean_sheets: ps.clean_sheets || null,
+            saves: ps.saves || null
+          };
+        });
+      }
+      
+      // 2. Override with bio seasonStats if available (takes priority as manually entered)
       playersData?.forEach(player => {
         try {
           let bioData: any = {};
           if (player.bio) {
-            // Try to parse bio as JSON
-            if (typeof player.bio === 'string') {
-              bioData = JSON.parse(player.bio);
-            } else {
-              bioData = player.bio;
-            }
+            bioData = typeof player.bio === 'string' ? JSON.parse(player.bio) : player.bio;
           }
           
-          // Extract stats from seasonStats array in bio
           if (bioData.seasonStats && Array.isArray(bioData.seasonStats)) {
             const seasonStats = bioData.seasonStats;
-            const goals = seasonStats.find((s: any) => s.header?.toLowerCase() === 'goals')?.value || '0';
-            const assists = seasonStats.find((s: any) => s.header?.toLowerCase() === 'assists')?.value || '0';
-            const matches = seasonStats.find((s: any) => s.header?.toLowerCase() === 'matches')?.value || '0';
-            const minutes = seasonStats.find((s: any) => s.header?.toLowerCase() === 'minutes')?.value || '0';
+            const goals = seasonStats.find((s: any) => s.header?.toLowerCase() === 'goals')?.value;
+            const assists = seasonStats.find((s: any) => s.header?.toLowerCase() === 'assists')?.value;
+            const matches = seasonStats.find((s: any) => s.header?.toLowerCase() === 'matches')?.value;
+            const minutes = seasonStats.find((s: any) => s.header?.toLowerCase() === 'minutes')?.value;
             
-            statsMap[player.id] = {
-              id: player.id,
-              player_id: player.id,
-              goals: parseInt(goals) || 0,
-              assists: parseInt(assists) || 0,
-              matches: parseInt(matches) || 0,
-              minutes: parseInt(minutes) || 0,
-              clean_sheets: null,
-              saves: null
-            };
+            // Only override if bio has actual values
+            if (goals || assists || matches || minutes) {
+              const existing = statsMap[player.id] || { id: player.id, player_id: player.id, goals: 0, assists: 0, matches: 0, minutes: 0, clean_sheets: null, saves: null };
+              statsMap[player.id] = {
+                ...existing,
+                goals: goals ? (parseInt(goals) || 0) : existing.goals,
+                assists: assists ? (parseInt(assists) || 0) : existing.assists,
+                matches: matches ? (parseInt(matches) || 0) : existing.matches,
+                minutes: minutes ? (parseInt(minutes) || 0) : existing.minutes,
+              };
+            }
           }
         } catch (e) {
-          // If bio parsing fails, skip this player's stats
           console.warn(`Failed to parse stats for player ${player.name}:`, e);
         }
       });

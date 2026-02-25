@@ -8,6 +8,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Trash2, Plus, Search, Loader2, ChevronDown, ChevronUp, List, Video, ArrowUp, ArrowDown, RefreshCw } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 import { R90RatingsViewer } from "./R90RatingsViewer";
 import { ActionStatRecorder, aggregateRecordedStats, RecordedStat } from "./ActionStatRecorder";
@@ -73,6 +75,8 @@ export const PerformanceActionsDialog = ({
   
   
   const [isByActionDialogOpen, setIsByActionDialogOpen] = useState(false);
+  const [actionTypePopoverOpen, setActionTypePopoverOpen] = useState(false);
+  const [actionTypeSearch, setActionTypeSearch] = useState("");
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>("");
   const [newAction, setNewAction] = useState<PerformanceAction>({
@@ -758,13 +762,58 @@ export const PerformanceActionsDialog = ({
               </div>
               <div className="space-y-2 col-span-2 md:col-span-3">
                 <Label htmlFor="action_type">Action Type *</Label>
-                <Input
-                  id="action_type"
-                  list="action-types-list"
-                  value={newAction.action_type}
-                  onChange={(e) => handleActionTypeChange(e.target.value)}
-                  placeholder="Select or type new action type"
-                />
+                <Popover open={actionTypePopoverOpen} onOpenChange={setActionTypePopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between font-normal"
+                    >
+                      {newAction.action_type || "Select or type action type..."}
+                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput
+                        placeholder="Search action types..."
+                        value={actionTypeSearch}
+                        onValueChange={setActionTypeSearch}
+                      />
+                      <CommandList>
+                        <CommandEmpty>
+                          {actionTypeSearch && (
+                            <button
+                              className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded cursor-pointer"
+                              onClick={() => {
+                                handleActionTypeChange(toTitleCase(actionTypeSearch));
+                                setActionTypePopoverOpen(false);
+                                setActionTypeSearch("");
+                              }}
+                            >
+                              Use "{toTitleCase(actionTypeSearch)}"
+                            </button>
+                          )}
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {actionTypes.map((type) => (
+                            <CommandItem
+                              key={type}
+                              value={type}
+                              onSelect={() => {
+                                handleActionTypeChange(type);
+                                setActionTypePopoverOpen(false);
+                                setActionTypeSearch("");
+                              }}
+                            >
+                              {type}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2 col-span-2 md:col-span-3">
                 <Label htmlFor="action_description">Action Description *</Label>
@@ -949,12 +998,7 @@ export const PerformanceActionsDialog = ({
             )}
           </div>
 
-          {/* Datalist for action types */}
-          <datalist id="action-types-list">
-            {actionTypes.map((type) => (
-              <option key={type} value={toTitleCase(type)} />
-            ))}
-          </datalist>
+          {/* Action types now use Command popover instead of datalist */}
 
           {/* Footer Actions */}
           <div className="flex items-center justify-end gap-2 pt-4 border-t mt-6">
