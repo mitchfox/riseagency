@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
 import { supabase } from "@/integrations/supabase/client";
+import { insertStaffNotification } from "@/lib/staffNotifications";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -167,6 +168,25 @@ const Dashboard = () => {
 
   // Initialize push notifications with player ID
   usePushNotifications(playerData?.id);
+
+  // Track portal tab views for staff notifications
+  useEffect(() => {
+    if (!playerData?.id) return;
+    const playerName = playerData?.name || playerData?.email || "A player";
+    const playerId = playerData.id;
+
+    if (activeTab === "analysis") {
+      const subType = activeAnalysisTab === "performance" ? "portal_performance_view" : "portal_analysis_view";
+      const label = activeAnalysisTab === "performance" ? "Performance Reports" : "Analysis";
+      insertStaffNotification({
+        eventType: subType,
+        title: `Portal ${label} View`,
+        body: `${playerName} viewed ${label}`,
+        eventData: { player_name: playerName, player_id: playerId, sub_tab: activeAnalysisTab },
+        dedupeKey: playerId,
+      });
+    }
+  }, [activeTab, activeAnalysisTab, playerData?.id]);
 
   // Session color mapping with hover states
   const getSessionColor = (sessionKey: string) => {
