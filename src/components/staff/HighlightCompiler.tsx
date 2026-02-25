@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  Film, GripVertical, Trash2, Play, Pause, Download, Plus,
-  FileVideo, ClipboardList, Search, FolderDown, X, ChevronUp, ChevronDown,
-  Link2, Check, XCircle, Star
+  Film, Trash2, Play, Pause, Plus, FolderDown, ChevronUp, ChevronDown,
+  Link2, Check, XCircle, Star, Clock, ArrowLeft, Pencil, FileVideo,
+  ClipboardList, Search, MoreHorizontal
 } from "lucide-react";
 import JSZip from "jszip";
+import { format } from "date-fns";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface CompilerClip {
   id: string;
@@ -24,61 +27,159 @@ interface CompilerClip {
   description?: string;
   videoUrl: string;
   source: "video_analysis" | "performance_report";
+  sourceId: string;
   sourceLabel: string;
   duration?: number;
   r90Score?: number | null;
+  actionScore?: number | null;
   actionNumber?: number;
   status: "accepted" | "pending";
+  /** ISO date — inherited from parent video_analysis auto_delete_at */
+  expiresAt?: string | null;
 }
 
+interface HighlightProject {
+  id: string;
+  name: string;
+  player_id: string | null;
+  clips: CompilerClip[];
+  settings: Record<string, any> | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
 export const HighlightCompiler = () => {
+  // ── Project list state ──
+  const [projects, setProjects] = useState<HighlightProject[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
+  const [activeProject, setActiveProject] = useState<HighlightProject | null>(null);
+
+  // ── Active project state ──
   const [clips, setClips] = useState<CompilerClip[]>([]);
-  const [importOpen, setImportOpen] = useState(false);
-  const [linkOpen, setLinkOpen] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
-  const [projectName, setProjectName] = useState("Highlight Reel");
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Import sources
-  const [players, setPlayers] = useState<any[]>([]);
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string>("all");
-  const [videoAnalyses, setVideoAnalyses] = useState<any[]>([]);
-  const [vaSearch, setVaSearch] = useState("");
-  const [perfReports, setPerfReports] = useState<any[]>([]);
-  const [prSearch, setPrSearch] = useState("");
-
-  // Link report
+  // ── Link dialog state ──
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkTab, setLinkTab] = useState<"reports" | "analyses">("reports");
   const [linkPlayerId, setLinkPlayerId] = useState<string>("");
+  const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
   const [linkReports, setLinkReports] = useState<any[]>([]);
+  const [linkAnalyses, setLinkAnalyses] = useState<any[]>([]);
+  const [linkSearch, setLinkSearch] = useState("");
 
-  useEffect(() => { fetchPlayers(); }, []);
+  // ── New project dialog ──
+  const [newProjectOpen, setNewProjectOpen] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  // ── Rename ──
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+
+  // ─── Load projects ──────────────────────────────────────────────────────────
+
+  useEffect(() => { fetchProjects(); fetchPlayers(); }, []);
+
+  const fetchProjects = async () => {
+    setLoadingProjects(true);
+    const { data, error } = await supabase
+      .from("highlight_projects")
+      .select("*")
+      .order("updated_at", { ascending: false });
+
+    if (!error && data) {
+      setProjects(data.map(p => ({
+        ...p,
+        clips: Array.isArray(p.clips) ? (p.clips as any as CompilerClip[]) : [],
+        settings: p.settings as Record<string, any> | null,
+      })));
+    }
+    setLoadingProjects(false);
+  };
 
   const fetchPlayers = async () => {
     const { data } = await supabase.from("players").select("id, name").order("name");
     setPlayers(data || []);
   };
 
-  const fetchVideoAnalyses = async () => {
-    let query = supabase.from("video_analyses").select("id, title, clips, created_at, player_id, opponent").order("created_at", { ascending: false });
-    if (selectedPlayerId !== "all") query = query.eq("player_id", selectedPlayerId);
-    const { data } = await query;
-    setVideoAnalyses(data || []);
+  // ─── Create project ─────────────────────────────────────────────────────────
+
+  const createProject = async () => {
+    if (!newProjectName.trim()) return;
+    setCreating(true);
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session.session?.user?.id;
+
+    const { data, error } = await supabase
+      .from("highlight_projects")
+      .insert({ name: newProjectName.trim(), clips: [], created_by: userId || null })
+      .select()
+      .single();
+
+    if (error) { toast.error("Failed to create project"); setCreating(false); return; }
+    const project: HighlightProject = { ...data, clips: [], settings: data.settings as any };
+    setProjects(prev => [project, ...prev]);
+    setActiveProject(project);
+    setClips([]);
+    setNewProjectOpen(false);
+    setNewProjectName("");
+    setCreating(false);
+    toast.success("Project created");
   };
 
-  const fetchPerfReports = async () => {
-    let query = supabase.from("player_analysis").select("id, opponent, analysis_date, player_id, r90_score, players!player_analysis_player_id_fkey(name)").order("analysis_date", { ascending: false });
-    if (selectedPlayerId !== "all") query = query.eq("player_id", selectedPlayerId);
-    const { data } = await query;
-    setPerfReports(data || []);
+  const deleteProject = async (id: string) => {
+    const { error } = await supabase.from("highlight_projects").delete().eq("id", id);
+    if (error) { toast.error("Failed to delete"); return; }
+    setProjects(prev => prev.filter(p => p.id !== id));
+    if (activeProject?.id === id) { setActiveProject(null); setClips([]); }
+    toast.success("Project deleted");
   };
 
-  useEffect(() => {
-    if (importOpen) { fetchVideoAnalyses(); fetchPerfReports(); }
-  }, [importOpen, selectedPlayerId]);
+  const renameProject = async (id: string) => {
+    if (!renameValue.trim()) return;
+    const { error } = await supabase.from("highlight_projects").update({ name: renameValue.trim() }).eq("id", id);
+    if (!error) {
+      setProjects(prev => prev.map(p => p.id === id ? { ...p, name: renameValue.trim() } : p));
+      if (activeProject?.id === id) setActiveProject(prev => prev ? { ...prev, name: renameValue.trim() } : prev);
+    }
+    setRenamingId(null);
+    setRenameValue("");
+  };
 
-  // Fetch reports for linking
+  // ─── Open project ───────────────────────────────────────────────────────────
+
+  const openProject = (project: HighlightProject) => {
+    setActiveProject(project);
+    setClips(project.clips || []);
+  };
+
+  // ─── Persist clips (debounced) ──────────────────────────────────────────────
+
+  const persistClips = useCallback((newClips: CompilerClip[]) => {
+    if (!activeProject) return;
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    saveTimeout.current = setTimeout(async () => {
+      await supabase
+        .from("highlight_projects")
+        .update({ clips: newClips as any })
+        .eq("id", activeProject.id);
+    }, 800);
+  }, [activeProject]);
+
+  const updateClips = useCallback((newClips: CompilerClip[]) => {
+    setClips(newClips);
+    persistClips(newClips);
+  }, [persistClips]);
+
+  // ─── Linking ────────────────────────────────────────────────────────────────
+
   const fetchLinkReports = async (playerId: string) => {
     const { data } = await supabase
       .from("player_analysis")
@@ -88,15 +189,30 @@ export const HighlightCompiler = () => {
     setLinkReports(data || []);
   };
 
+  const fetchLinkAnalyses = async (playerId?: string) => {
+    let query = supabase
+      .from("video_analyses")
+      .select("id, title, clips, created_at, player_id, opponent, video_url, auto_delete_at")
+      .order("created_at", { ascending: false });
+    if (playerId && playerId !== "all") query = query.eq("player_id", playerId);
+    const { data } = await query;
+    setLinkAnalyses(data || []);
+  };
+
   useEffect(() => {
-    if (linkOpen && linkPlayerId) fetchLinkReports(linkPlayerId);
+    if (linkOpen && linkPlayerId) {
+      fetchLinkReports(linkPlayerId);
+      fetchLinkAnalyses(linkPlayerId);
+    } else if (linkOpen) {
+      fetchLinkAnalyses();
+    }
   }, [linkOpen, linkPlayerId]);
 
-  // Link a full report — add all clipped actions as pending
+  /** Link a performance report — all clipped actions become pending */
   const linkReport = async (reportId: string, reportLabel: string, reportR90?: number | null) => {
     const { data: actions } = await supabase
       .from("performance_report_actions")
-      .select("id, action_number, action_type, action_description, video_url, minute")
+      .select("id, action_number, action_type, action_description, video_url, minute, action_score")
       .eq("analysis_id", reportId)
       .not("video_url", "is", null)
       .order("action_number");
@@ -114,8 +230,10 @@ export const HighlightCompiler = () => {
         description: a.action_description || undefined,
         videoUrl: a.video_url!,
         source: "performance_report" as const,
+        sourceId: reportId,
         sourceLabel: reportLabel,
         r90Score: reportR90,
+        actionScore: a.action_score,
         actionNumber: a.action_number,
         status: "pending" as const,
       }));
@@ -125,38 +243,52 @@ export const HighlightCompiler = () => {
       return;
     }
 
-    setClips(prev => [...prev, ...newClips]);
+    updateClips([...clips, ...newClips]);
     setLinkOpen(false);
-    toast.success(`${newClips.length} clips added as pending — review below`);
+    toast.success(`${newClips.length} clips pending review`);
   };
 
-  // Clip management
-  const addClip = (clip: CompilerClip) => {
-    if (clips.some(c => c.videoUrl === clip.videoUrl)) {
-      toast.info("Clip already added");
+  /** Link a video analysis — all clips become pending, inherit expiry */
+  const linkAnalysis = (analysis: any) => {
+    const analysisClips = Array.isArray(analysis.clips) ? analysis.clips : [];
+    if (analysisClips.length === 0) {
+      toast.error("No clips in this analysis");
       return;
     }
-    setClips(prev => [...prev, clip]);
-    toast.success(`Added: ${clip.title}`);
+
+    const baseUrl = analysis.video_url;
+    const newClips: CompilerClip[] = analysisClips
+      .filter((c: any) => !clips.some(existing => existing.id === `va-${analysis.id}-${c.id}`))
+      .map((c: any) => ({
+        id: `va-${analysis.id}-${c.id}`,
+        title: c.label || c.action_type || `Clip`,
+        description: c.action_description || c.notes || undefined,
+        videoUrl: `${baseUrl}#t=${c.start},${c.end}`,
+        source: "video_analysis" as const,
+        sourceId: analysis.id,
+        sourceLabel: analysis.title || "Video Analysis",
+        actionScore: c.action_score ?? null,
+        status: "pending" as const,
+        expiresAt: analysis.auto_delete_at,
+      }));
+
+    if (newClips.length === 0) {
+      toast.info("All clips already added");
+      return;
+    }
+
+    updateClips([...clips, ...newClips]);
+    setLinkOpen(false);
+    toast.success(`${newClips.length} clips pending review`);
   };
 
-  const removeClip = (id: string) => setClips(prev => prev.filter(c => c.id !== id));
+  // ─── Clip actions ───────────────────────────────────────────────────────────
 
-  const acceptClip = (id: string) => {
-    setClips(prev => prev.map(c => c.id === id ? { ...c, status: "accepted" } : c));
-  };
-
-  const rejectClip = (id: string) => removeClip(id);
-
-  const acceptAll = () => {
-    setClips(prev => prev.map(c => c.status === "pending" ? { ...c, status: "accepted" } : c));
-    toast.success("All pending clips accepted");
-  };
-
-  const rejectAll = () => {
-    setClips(prev => prev.filter(c => c.status !== "pending"));
-    toast.success("All pending clips removed");
-  };
+  const acceptClip = (id: string) => updateClips(clips.map(c => c.id === id ? { ...c, status: "accepted" } : c));
+  const rejectClip = (id: string) => updateClips(clips.filter(c => c.id !== id));
+  const acceptAll = () => { updateClips(clips.map(c => c.status === "pending" ? { ...c, status: "accepted" } : c)); toast.success("All accepted"); };
+  const rejectAll = () => { updateClips(clips.filter(c => c.status !== "pending")); toast.success("All rejected"); };
+  const removeClip = (id: string) => updateClips(clips.filter(c => c.id !== id));
 
   const moveClip = (index: number, direction: "up" | "down") => {
     const accepted = clips.filter(c => c.status === "accepted");
@@ -164,16 +296,14 @@ export const HighlightCompiler = () => {
     const target = direction === "up" ? index - 1 : index + 1;
     if (target < 0 || target >= accepted.length) return;
     [accepted[index], accepted[target]] = [accepted[target], accepted[index]];
-    setClips([...accepted, ...pending]);
+    updateClips([...accepted, ...pending]);
   };
 
   const togglePlay = (id: string) => {
     const video = videoRefs.current[id];
     if (!video) return;
-    if (playingId === id) {
-      video.pause();
-      setPlayingId(null);
-    } else {
+    if (playingId === id) { video.pause(); setPlayingId(null); }
+    else {
       Object.entries(videoRefs.current).forEach(([key, v]) => { if (key !== id && v) v.pause(); });
       video.play().catch(() => {});
       setPlayingId(id);
@@ -184,22 +314,42 @@ export const HighlightCompiler = () => {
     setClips(prev => prev.map(c => c.id === id ? { ...c, duration } : c));
   };
 
-  // Export as ZIP
+  // ─── Extend expiry ─────────────────────────────────────────────────────────
+
+  const extendExpiry = async (clip: CompilerClip) => {
+    if (!clip.expiresAt || clip.source !== "video_analysis") return;
+    const newDate = new Date(new Date(clip.expiresAt).getTime() + 7 * 86400000);
+    const { error } = await supabase
+      .from("video_analyses")
+      .update({ auto_delete_at: newDate.toISOString() })
+      .eq("id", clip.sourceId);
+    if (error) { toast.error("Failed to extend"); return; }
+
+    // Update all clips from same source
+    const updated = clips.map(c =>
+      c.sourceId === clip.sourceId ? { ...c, expiresAt: newDate.toISOString() } : c
+    );
+    updateClips(updated);
+    toast.success("Deletion extended by 7 days");
+  };
+
+  // ─── Export ─────────────────────────────────────────────────────────────────
+
   const exportAsZip = async () => {
     const accepted = clips.filter(c => c.status === "accepted");
     if (accepted.length === 0) { toast.error("No accepted clips to export"); return; }
-    setExporting(true);
-    setExportProgress(0);
+    setExporting(true); setExportProgress(0);
     try {
       const zip = new JSZip();
-      const folder = zip.folder(projectName) || zip;
+      const folder = zip.folder(activeProject?.name || "Highlight Reel") || zip;
       for (let i = 0; i < accepted.length; i++) {
         const clip = accepted[i];
-        const sanitised = clip.title.replace(/[^a-zA-Z0-9 _-]/g, "").trim();
+        const sanitised = clip.title.replace(/[^a-zA-Z0-9 _-]/g, "").trim() || "Clip";
         const fileName = `${i + 1}. ${sanitised}.mp4`;
         setExportProgress(Math.round((i / accepted.length) * 80));
         try {
-          const response = await fetch(clip.videoUrl);
+          const cleanUrl = clip.videoUrl.split("#")[0];
+          const response = await fetch(cleanUrl);
           const blob = await response.blob();
           folder.file(fileName, blob);
         } catch { toast.error(`Could not download: ${clip.title}`); }
@@ -211,57 +361,157 @@ export const HighlightCompiler = () => {
       const url = URL.createObjectURL(content);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${projectName}.zip`;
+      a.download = `${activeProject?.name || "Highlight Reel"}.zip`;
       a.click();
       URL.revokeObjectURL(url);
       setExportProgress(100);
       toast.success("Highlight reel exported!");
-    } catch (err: any) {
-      console.error("Export failed:", err);
-      toast.error("Export failed");
-    } finally {
-      setTimeout(() => { setExporting(false); setExportProgress(0); }, 1500);
-    }
+    } catch { toast.error("Export failed"); }
+    finally { setTimeout(() => { setExporting(false); setExportProgress(0); }, 1500); }
   };
+
+  // ─── Helpers ────────────────────────────────────────────────────────────────
 
   const fmtDuration = (s?: number) => {
     if (!s || !isFinite(s)) return "--";
     return `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
   };
 
+  const daysUntilExpiry = (dateStr?: string | null): number | null => {
+    if (!dateStr) return null;
+    const diff = new Date(dateStr).getTime() - Date.now();
+    return Math.max(0, Math.ceil(diff / 86400000));
+  };
+
   const acceptedClips = clips.filter(c => c.status === "accepted");
   const pendingClips = clips.filter(c => c.status === "pending");
   const totalDuration = acceptedClips.reduce((sum, c) => sum + (c.duration || 0), 0);
 
-  const getVaClips = (analysis: any): CompilerClip[] => {
-    if (!analysis.clips || !Array.isArray(analysis.clips)) return [];
-    return (analysis.clips as any[])
-      .filter((c: any) => c.url || c.videoUrl)
-      .map((c: any, idx: number) => ({
-        id: `va-${analysis.id}-${idx}`,
-        title: c.label || c.name || `Clip ${idx + 1}`,
-        videoUrl: c.url || c.videoUrl,
-        source: "video_analysis" as const,
-        sourceLabel: analysis.title || "Video Analysis",
-        status: "accepted" as const,
-      }));
-  };
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER — Project list view
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  if (!activeProject) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <Film className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">Highlight Compiler</h2>
+          </div>
+          <Button onClick={() => setNewProjectOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" /> New Project
+          </Button>
+        </div>
+
+        {loadingProjects ? (
+          <p className="text-sm text-muted-foreground text-center py-12">Loading projects...</p>
+        ) : projects.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="py-16 text-center space-y-3">
+              <Film className="h-10 w-10 mx-auto text-muted-foreground/40" />
+              <p className="text-muted-foreground text-sm">No highlight projects yet</p>
+              <Button variant="outline" size="sm" onClick={() => setNewProjectOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" /> Create your first project
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {projects.map(project => {
+              const clipCount = Array.isArray(project.clips) ? project.clips.length : 0;
+              const acceptedCount = Array.isArray(project.clips) ? project.clips.filter(c => c.status === "accepted").length : 0;
+              return (
+                <Card
+                  key={project.id}
+                  className="cursor-pointer hover:border-primary/50 transition-colors group"
+                  onClick={() => openProject(project)}
+                >
+                  <CardContent className="p-4 space-y-2">
+                    {renamingId === project.id ? (
+                      <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                        <Input
+                          value={renameValue}
+                          onChange={e => setRenameValue(e.target.value)}
+                          className="h-8 text-sm"
+                          autoFocus
+                          onKeyDown={e => e.key === "Enter" && renameProject(project.id)}
+                        />
+                        <Button size="sm" variant="outline" className="h-8" onClick={() => renameProject(project.id)}>
+                          <Check className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-start justify-between">
+                        <h3 className="font-semibold text-sm truncate flex-1">{project.name}</h3>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setRenamingId(project.id); setRenameValue(project.name); }}>
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteProject(project.id)}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>{clipCount} clip{clipCount !== 1 ? "s" : ""}</span>
+                      {acceptedCount > 0 && <Badge variant="outline" className="text-[10px]">{acceptedCount} accepted</Badge>}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      Updated {format(new Date(project.updated_at || project.created_at), "dd MMM yyyy HH:mm")}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
+        {/* New Project Dialog */}
+        <Dialog open={newProjectOpen} onOpenChange={setNewProjectOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>New Highlight Project</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm">Project Name</Label>
+                <Input
+                  value={newProjectName}
+                  onChange={e => setNewProjectName(e.target.value)}
+                  placeholder="e.g. Michael Pre-Season Reel"
+                  onKeyDown={e => e.key === "Enter" && createProject()}
+                />
+              </div>
+              <Button onClick={createProject} disabled={!newProjectName.trim() || creating} className="w-full">
+                {creating ? "Creating..." : "Create Project"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER — Active project view
+  // ═══════════════════════════════════════════════════════════════════════════
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setActiveProject(null); fetchProjects(); }}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
           <Film className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold">Highlight Compiler</h2>
+          <h2 className="text-lg font-semibold truncate">{activeProject.name}</h2>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Input value={projectName} onChange={e => setProjectName(e.target.value)} className="w-48 text-sm" placeholder="Project name" />
-          <Button variant="outline" size="sm" onClick={() => setLinkOpen(true)}>
-            <Link2 className="h-4 w-4 mr-1" /> Link Report
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Import Clips
+          <Button variant="outline" size="sm" onClick={() => { setLinkOpen(true); setLinkSearch(""); }}>
+            <Link2 className="h-4 w-4 mr-1" /> Link Source
           </Button>
           <Button size="sm" onClick={exportAsZip} disabled={acceptedClips.length === 0 || exporting}>
             <FolderDown className="h-4 w-4 mr-1" />
@@ -270,6 +520,7 @@ export const HighlightCompiler = () => {
         </div>
       </div>
 
+      {/* Export progress */}
       {exporting && (
         <div className="space-y-1">
           <Progress value={exportProgress} className="h-2" />
@@ -277,7 +528,7 @@ export const HighlightCompiler = () => {
         </div>
       )}
 
-      {/* Pending clips review */}
+      {/* ════ Pending clips ════ */}
       {pendingClips.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -296,71 +547,67 @@ export const HighlightCompiler = () => {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-            {pendingClips.map(clip => (
-              <Card key={clip.id} className="overflow-hidden border-dashed border-primary/40">
-                {/* Video thumbnail */}
-                <div
-                  className="relative aspect-square bg-black cursor-pointer group"
-                  onClick={() => togglePlay(clip.id)}
-                >
-                  <video
-                    ref={el => { videoRefs.current[clip.id] = el; }}
-                    src={clip.videoUrl}
-                    className="w-full h-full object-cover"
-                    muted
-                    playsInline
-                    preload="metadata"
-                    crossOrigin="anonymous"
-                    onLoadedMetadata={e => handleDurationLoaded(clip.id, (e.target as HTMLVideoElement).duration)}
-                    onEnded={() => setPlayingId(null)}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/50 transition-colors">
-                    {playingId === clip.id
-                      ? <Pause className="h-8 w-8 text-white/90" />
-                      : <Play className="h-8 w-8 text-white/90" />}
-                  </div>
-                  <Badge variant="secondary" className="absolute bottom-1 right-1 text-[10px] py-0 px-1">
-                    {fmtDuration(clip.duration)}
-                  </Badge>
-                  {clip.r90Score != null && (
-                    <Badge className="absolute top-1 left-1 text-[10px] py-0 px-1 bg-primary/90">
-                      <Star className="h-2.5 w-2.5 mr-0.5" /> {clip.r90Score.toFixed(2)}
+            {pendingClips.map(clip => {
+              const expiry = daysUntilExpiry(clip.expiresAt);
+              return (
+                <Card key={clip.id} className="overflow-hidden border-dashed border-primary/40">
+                  <div className="relative aspect-square bg-black cursor-pointer group" onClick={() => togglePlay(clip.id)}>
+                    <video
+                      ref={el => { videoRefs.current[clip.id] = el; }}
+                      src={clip.videoUrl}
+                      className="w-full h-full object-cover"
+                      muted playsInline preload="metadata" crossOrigin="anonymous"
+                      onLoadedMetadata={e => handleDurationLoaded(clip.id, (e.target as HTMLVideoElement).duration)}
+                      onEnded={() => setPlayingId(null)}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/50 transition-colors">
+                      {playingId === clip.id
+                        ? <Pause className="h-8 w-8 text-white/90" />
+                        : <Play className="h-8 w-8 text-white/90" />}
+                    </div>
+                    <Badge variant="secondary" className="absolute bottom-1 right-1 text-[10px] py-0 px-1">
+                      {fmtDuration(clip.duration)}
                     </Badge>
-                  )}
-                </div>
+                    {(clip.r90Score != null || clip.actionScore != null) && (
+                      <Badge className="absolute top-1 left-1 text-[10px] py-0 px-1 bg-primary/90">
+                        <Star className="h-2.5 w-2.5 mr-0.5" />
+                        {clip.actionScore != null ? clip.actionScore.toFixed(3) : clip.r90Score?.toFixed(2)}
+                      </Badge>
+                    )}
+                    {expiry !== null && (
+                      <button
+                        onClick={e => { e.stopPropagation(); extendExpiry(clip); }}
+                        className={`absolute top-1 right-1 flex items-center gap-0.5 text-[9px] px-1 py-0.5 rounded ${expiry <= 2 ? 'bg-destructive/90 text-destructive-foreground' : 'bg-black/60 text-white/80'}`}
+                        title="Click to extend by 7 days"
+                      >
+                        <Clock className="h-2.5 w-2.5" /> {expiry}d
+                      </button>
+                    )}
+                  </div>
 
-                {/* Info */}
-                <div className="p-2 space-y-1">
-                  <p className="font-medium text-xs truncate">{clip.title}</p>
-                  {clip.description && (
-                    <p className="text-[10px] text-muted-foreground line-clamp-2">{clip.description}</p>
-                  )}
-                  <p className="text-[10px] text-muted-foreground truncate">{clip.sourceLabel}</p>
-                </div>
+                  <div className="p-2 space-y-1">
+                    <p className="font-medium text-xs truncate">{clip.title}</p>
+                    {clip.description && <p className="text-[10px] text-muted-foreground line-clamp-2">{clip.description}</p>}
+                    <p className="text-[10px] text-muted-foreground truncate">{clip.sourceLabel}</p>
+                  </div>
 
-                {/* Accept / Reject */}
-                <div className="flex border-t">
-                  <button
-                    onClick={() => acceptClip(clip.id)}
-                    className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium hover:bg-accent transition-colors text-primary"
-                  >
-                    <Check className="h-3.5 w-3.5" /> Accept
-                  </button>
-                  <div className="w-px bg-border" />
-                  <button
-                    onClick={() => rejectClip(clip.id)}
-                    className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium hover:bg-accent transition-colors text-destructive"
-                  >
-                    <XCircle className="h-3.5 w-3.5" /> Reject
-                  </button>
-                </div>
-              </Card>
-            ))}
+                  <div className="flex border-t">
+                    <button onClick={() => acceptClip(clip.id)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium hover:bg-accent transition-colors text-primary">
+                      <Check className="h-3.5 w-3.5" /> Accept
+                    </button>
+                    <div className="w-px bg-border" />
+                    <button onClick={() => rejectClip(clip.id)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium hover:bg-accent transition-colors text-destructive">
+                      <XCircle className="h-3.5 w-3.5" /> Reject
+                    </button>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* Accepted clips — ordered list */}
+      {/* ════ Accepted clips (ordered reel) ════ */}
       {acceptedClips.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -369,59 +616,70 @@ export const HighlightCompiler = () => {
             <span>Total: {fmtDuration(totalDuration)}</span>
           </div>
 
-          {acceptedClips.map((clip, index) => (
-            <Card key={clip.id} className="overflow-hidden">
-              <div className="flex items-stretch">
-                <div className="relative w-48 min-h-[108px] bg-black flex-shrink-0 group cursor-pointer" onClick={() => togglePlay(clip.id)}>
-                  <video
-                    ref={el => { videoRefs.current[clip.id] = el; }}
-                    src={clip.videoUrl}
-                    className="w-full h-full object-cover"
-                    muted playsInline preload="metadata" crossOrigin="anonymous"
-                    onLoadedMetadata={e => handleDurationLoaded(clip.id, (e.target as HTMLVideoElement).duration)}
-                    onEnded={() => setPlayingId(null)}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
-                    {playingId === clip.id ? <Pause className="h-8 w-8 text-white/80" /> : <Play className="h-8 w-8 text-white/80" />}
-                  </div>
-                  <Badge variant="secondary" className="absolute bottom-1 right-1 text-[10px] py-0 px-1">{fmtDuration(clip.duration)}</Badge>
-                </div>
-
-                <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-primary font-bold text-sm">{index + 1}.</span>
-                      <span className="font-medium text-sm truncate">{clip.title}</span>
-                      {clip.r90Score != null && (
-                        <Badge variant="outline" className="text-[10px] ml-auto flex-shrink-0">
-                          R90: {clip.r90Score.toFixed(2)}
-                        </Badge>
-                      )}
+          {acceptedClips.map((clip, index) => {
+            const expiry = daysUntilExpiry(clip.expiresAt);
+            return (
+              <Card key={clip.id} className="overflow-hidden">
+                <div className="flex items-stretch">
+                  <div className="relative w-48 min-h-[108px] bg-black flex-shrink-0 group cursor-pointer" onClick={() => togglePlay(clip.id)}>
+                    <video
+                      ref={el => { videoRefs.current[clip.id] = el; }}
+                      src={clip.videoUrl}
+                      className="w-full h-full object-cover"
+                      muted playsInline preload="metadata" crossOrigin="anonymous"
+                      onLoadedMetadata={e => handleDurationLoaded(clip.id, (e.target as HTMLVideoElement).duration)}
+                      onEnded={() => setPlayingId(null)}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                      {playingId === clip.id ? <Pause className="h-8 w-8 text-white/80" /> : <Play className="h-8 w-8 text-white/80" />}
                     </div>
-                    {clip.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{clip.description}</p>
-                    )}
-                    <Badge variant="outline" className="text-[10px] mt-1">
-                      {clip.source === "video_analysis" ? "Video Analysis" : "Performance Report"}
-                    </Badge>
+                    <Badge variant="secondary" className="absolute bottom-1 right-1 text-[10px] py-0 px-1">{fmtDuration(clip.duration)}</Badge>
+                  </div>
+
+                  <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-primary font-bold text-sm">{index + 1}.</span>
+                        <span className="font-medium text-sm truncate">{clip.title}</span>
+                        {(clip.r90Score != null || clip.actionScore != null) && (
+                          <Badge variant="outline" className="text-[10px] ml-auto flex-shrink-0">
+                            {clip.actionScore != null ? `Score: ${clip.actionScore.toFixed(3)}` : `R90: ${clip.r90Score?.toFixed(2)}`}
+                          </Badge>
+                        )}
+                      </div>
+                      {clip.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{clip.description}</p>}
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className="text-[10px]">
+                          {clip.source === "video_analysis" ? "Video Analysis" : "Performance Report"}
+                        </Badge>
+                        {expiry !== null && (
+                          <button
+                            onClick={() => extendExpiry(clip)}
+                            className={`flex items-center gap-0.5 text-[10px] ${expiry <= 2 ? 'text-destructive' : 'text-muted-foreground'}`}
+                            title="Click to extend by 7 days"
+                          >
+                            <Clock className="h-3 w-3" /> {expiry}d left
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center px-2 gap-1 border-l">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveClip(index, "up")} disabled={index === 0}>
+                      <ChevronUp className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveClip(index, "down")} disabled={index === acceptedClips.length - 1}>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => removeClip(clip.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-
-                <div className="flex flex-col items-center justify-center px-2 gap-1 border-l">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveClip(index, "up")} disabled={index === 0}>
-                    <ChevronUp className="h-4 w-4" />
-                  </Button>
-                  <GripVertical className="h-4 w-4 text-muted-foreground/40" />
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveClip(index, "down")} disabled={index === acceptedClips.length - 1}>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => removeClip(clip.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
 
@@ -430,87 +688,27 @@ export const HighlightCompiler = () => {
         <Card className="border-dashed">
           <CardContent className="py-16 text-center space-y-3">
             <Film className="h-10 w-10 mx-auto text-muted-foreground/40" />
-            <p className="text-muted-foreground text-sm">No clips added yet</p>
-            <div className="flex items-center justify-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setLinkOpen(true)}>
-                <Link2 className="h-4 w-4 mr-1" /> Link a Performance Report
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-                <Plus className="h-4 w-4 mr-1" /> Import Individual Clips
-              </Button>
-            </div>
+            <p className="text-muted-foreground text-sm">No clips yet. Link a performance report or video analysis to get started.</p>
+            <Button variant="outline" size="sm" onClick={() => setLinkOpen(true)}>
+              <Link2 className="h-4 w-4 mr-1" /> Link Source
+            </Button>
           </CardContent>
         </Card>
       )}
 
-      {/* ═══ Link Report Dialog ═══ */}
+      {/* ═══ Link Source Dialog ═══ */}
       <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Link Performance Report</DialogTitle>
-            <DialogDescription>Select a player then a report. All clipped actions will appear as pending for review.</DialogDescription>
+            <DialogTitle>Link Source</DialogTitle>
+            <DialogDescription>Link a performance report or video analysis. All clips will appear as pending for review.</DialogDescription>
           </DialogHeader>
 
           <div className="flex items-center gap-3 pb-2">
             <Label className="text-sm whitespace-nowrap">Player:</Label>
-            <Select value={linkPlayerId} onValueChange={(v) => { setLinkPlayerId(v); setLinkReports([]); }}>
+            <Select value={linkPlayerId} onValueChange={(v) => { setLinkPlayerId(v); setLinkReports([]); setLinkAnalyses([]); }}>
               <SelectTrigger className="w-56">
-                <SelectValue placeholder="Select player" />
-              </SelectTrigger>
-              <SelectContent>
-                {players.map(p => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <ScrollArea className="flex-1 min-h-0">
-            <div className="space-y-2 pr-3">
-              {!linkPlayerId && (
-                <p className="text-sm text-muted-foreground text-center py-8">Select a player to see their reports</p>
-              )}
-              {linkPlayerId && linkReports.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-8">No reports found for this player</p>
-              )}
-              {linkReports.map(report => (
-                <Card
-                  key={report.id}
-                  className="p-3 cursor-pointer hover:bg-accent/50 transition-colors"
-                  onClick={() => linkReport(report.id, `${(report.players as any)?.name || 'Player'} vs ${report.opponent || 'Unknown'}`, report.r90_score)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-sm">{(report.players as any)?.name || "Player"} vs {report.opponent || "Unknown"}</p>
-                      <p className="text-xs text-muted-foreground">{report.analysis_date}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {report.r90_score != null && (
-                        <Badge variant="outline" className="text-xs">R90: {report.r90_score.toFixed(2)}</Badge>
-                      )}
-                      <Link2 className="h-4 w-4 text-primary" />
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-
-      {/* ═══ Import Individual Clips Dialog ═══ */}
-      <Dialog open={importOpen} onOpenChange={setImportOpen}>
-        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Import Individual Clips</DialogTitle>
-            <DialogDescription>Add individual clips from Video Analysis sessions or Performance Report actions.</DialogDescription>
-          </DialogHeader>
-
-          <div className="flex items-center gap-3 pb-2">
-            <Label className="text-sm whitespace-nowrap">Filter by player:</Label>
-            <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="All players" />
+                <SelectValue placeholder="All / Select player" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All players</SelectItem>
@@ -521,147 +719,92 @@ export const HighlightCompiler = () => {
             </Select>
           </div>
 
-          <Tabs defaultValue="video_analysis" className="flex-1 flex flex-col min-h-0">
+          <Tabs value={linkTab} onValueChange={v => setLinkTab(v as any)} className="flex-1 flex flex-col min-h-0">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="video_analysis" className="gap-1.5"><FileVideo className="h-4 w-4" /> Video Analysis</TabsTrigger>
-              <TabsTrigger value="performance_reports" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Performance Reports</TabsTrigger>
+              <TabsTrigger value="reports" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Performance Reports</TabsTrigger>
+              <TabsTrigger value="analyses" className="gap-1.5"><FileVideo className="h-4 w-4" /> Video Analysis</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="video_analysis" className="flex-1 min-h-0 mt-3">
-              <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search video analyses..." value={vaSearch} onChange={e => setVaSearch(e.target.value)} className="pl-9" />
-              </div>
+            <div className="relative mt-3 mb-2">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search..." value={linkSearch} onChange={e => setLinkSearch(e.target.value)} className="pl-9" />
+            </div>
+
+            <TabsContent value="reports" className="flex-1 min-h-0 mt-0">
               <ScrollArea className="h-[400px]">
                 <div className="space-y-2 pr-3">
-                  {videoAnalyses
-                    .filter(va => !vaSearch || va.title?.toLowerCase().includes(vaSearch.toLowerCase()) || va.opponent?.toLowerCase().includes(vaSearch.toLowerCase()))
-                    .map(va => {
-                      const vaClips = getVaClips(va);
-                      if (vaClips.length === 0) return null;
-                      return (
-                        <Card key={va.id} className="p-3">
-                          <div className="flex items-center justify-between mb-2">
+                  {!linkPlayerId || linkPlayerId === "all" ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">Select a player to see their reports</p>
+                  ) : linkReports.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">No reports found</p>
+                  ) : (
+                    linkReports
+                      .filter(r => !linkSearch || r.opponent?.toLowerCase().includes(linkSearch.toLowerCase()))
+                      .map(report => (
+                        <Card
+                          key={report.id}
+                          className="p-3 cursor-pointer hover:bg-accent/50 transition-colors"
+                          onClick={() => linkReport(report.id, `${(report.players as any)?.name || 'Player'} vs ${report.opponent || 'Unknown'}`, report.r90_score)}
+                        >
+                          <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-medium text-sm">{va.title}</p>
-                              {va.opponent && <p className="text-xs text-muted-foreground">vs {va.opponent}</p>}
+                              <p className="font-medium text-sm">{(report.players as any)?.name || "Player"} vs {report.opponent || "Unknown"}</p>
+                              <p className="text-xs text-muted-foreground">{report.analysis_date}</p>
                             </div>
-                            <Badge variant="secondary" className="text-xs">{vaClips.length} clips</Badge>
-                          </div>
-                          <div className="space-y-1">
-                            {vaClips.map(clip => {
-                              const alreadyAdded = clips.some(c => c.videoUrl === clip.videoUrl);
-                              return (
-                                <div key={clip.id} className="flex items-center justify-between py-1 px-2 rounded bg-muted/30 text-sm">
-                                  <span className="truncate flex-1 mr-2">{clip.title}</span>
-                                  <Button variant={alreadyAdded ? "secondary" : "outline"} size="sm" className="h-7 text-xs" disabled={alreadyAdded} onClick={() => addClip(clip)}>
-                                    {alreadyAdded ? "Added" : "Add"}
-                                  </Button>
-                                </div>
-                              );
-                            })}
+                            <div className="flex items-center gap-2">
+                              {report.r90_score != null && <Badge variant="outline" className="text-xs">R90: {report.r90_score.toFixed(2)}</Badge>}
+                              <Link2 className="h-4 w-4 text-primary" />
+                            </div>
                           </div>
                         </Card>
-                      );
-                    })}
+                      ))
+                  )}
                 </div>
               </ScrollArea>
             </TabsContent>
 
-            <TabsContent value="performance_reports" className="flex-1 min-h-0 mt-3">
-              <ImportPerfReportTab
-                perfReports={perfReports}
-                prSearch={prSearch}
-                setPrSearch={setPrSearch}
-                clips={clips}
-                addClip={addClip}
-              />
+            <TabsContent value="analyses" className="flex-1 min-h-0 mt-0">
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-2 pr-3">
+                  {linkAnalyses.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">No video analyses found</p>
+                  ) : (
+                    linkAnalyses
+                      .filter(va => !linkSearch || va.title?.toLowerCase().includes(linkSearch.toLowerCase()) || va.opponent?.toLowerCase().includes(linkSearch.toLowerCase()))
+                      .map(va => {
+                        const clipCount = Array.isArray(va.clips) ? va.clips.length : 0;
+                        const expiry = daysUntilExpiry(va.auto_delete_at);
+                        return (
+                          <Card
+                            key={va.id}
+                            className={`p-3 cursor-pointer hover:bg-accent/50 transition-colors ${clipCount === 0 ? 'opacity-50' : ''}`}
+                            onClick={() => clipCount > 0 && linkAnalysis(va)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-sm">{va.title}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  {va.opponent && <span className="text-xs text-muted-foreground">vs {va.opponent}</span>}
+                                  <Badge variant="secondary" className="text-[10px]">{clipCount} clips</Badge>
+                                  {expiry !== null && (
+                                    <span className={`text-[10px] flex items-center gap-0.5 ${expiry <= 2 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                      <Clock className="h-2.5 w-2.5" /> {expiry}d left
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              {clipCount > 0 && <Link2 className="h-4 w-4 text-primary" />}
+                            </div>
+                          </Card>
+                        );
+                      })
+                  )}
+                </div>
+              </ScrollArea>
             </TabsContent>
           </Tabs>
         </DialogContent>
       </Dialog>
     </div>
-  );
-};
-
-// Sub-component for performance report individual import
-const ImportPerfReportTab = ({ perfReports, prSearch, setPrSearch, clips, addClip }: {
-  perfReports: any[];
-  prSearch: string;
-  setPrSearch: (v: string) => void;
-  clips: CompilerClip[];
-  addClip: (clip: CompilerClip) => void;
-}) => {
-  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
-  const [perfActions, setPerfActions] = useState<any[]>([]);
-
-  const fetchPerfActions = async (reportId: string) => {
-    const { data } = await supabase
-      .from("performance_report_actions")
-      .select("id, action_number, action_type, action_description, video_url, minute")
-      .eq("analysis_id", reportId)
-      .not("video_url", "is", null)
-      .order("action_number");
-    setPerfActions(data || []);
-    setSelectedReportId(reportId);
-  };
-
-  return (
-    <>
-      <div className="relative mb-3">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search reports..." value={prSearch} onChange={e => setPrSearch(e.target.value)} className="pl-9" />
-      </div>
-      <ScrollArea className="h-[400px]">
-        <div className="space-y-1 pr-3">
-          {selectedReportId ? (
-            <div className="space-y-2">
-              <Button variant="ghost" size="sm" onClick={() => { setSelectedReportId(null); setPerfActions([]); }}>← Back to reports</Button>
-              {perfActions.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No clipped actions in this report</p>
-              ) : (
-                perfActions.map(action => {
-                  const clipData: CompilerClip = {
-                    id: `pr-${action.id}`,
-                    title: `${action.action_type || "Action"} (${action.minute ? action.minute + "'" : "#" + action.action_number})`,
-                    description: action.action_description || undefined,
-                    videoUrl: action.video_url,
-                    source: "performance_report",
-                    sourceLabel: `Report action #${action.action_number}`,
-                    status: "accepted",
-                  };
-                  const alreadyAdded = clips.some(c => c.videoUrl === action.video_url);
-                  return (
-                    <div key={action.id} className="flex items-center justify-between py-2 px-3 rounded bg-muted/30">
-                      <div className="flex-1 min-w-0 mr-2">
-                        <p className="text-sm font-medium truncate">{action.action_type || "Action"}</p>
-                        <p className="text-xs text-muted-foreground truncate">{action.action_description || `#${action.action_number}`}</p>
-                      </div>
-                      <Button variant={alreadyAdded ? "secondary" : "outline"} size="sm" className="h-7 text-xs flex-shrink-0" disabled={alreadyAdded} onClick={() => addClip(clipData)}>
-                        {alreadyAdded ? "Added" : "Add"}
-                      </Button>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          ) : (
-            perfReports
-              .filter(r => !prSearch || r.opponent?.toLowerCase().includes(prSearch.toLowerCase()) || (r.players as any)?.name?.toLowerCase().includes(prSearch.toLowerCase()))
-              .map(report => (
-                <Card key={report.id} className="p-3 cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => fetchPerfActions(report.id)}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-sm">{(report.players as any)?.name || "Player"} vs {report.opponent || "Unknown"}</p>
-                      <p className="text-xs text-muted-foreground">{report.analysis_date}</p>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground rotate-[-90deg]" />
-                  </div>
-                </Card>
-              ))
-          )}
-        </div>
-      </ScrollArea>
-    </>
   );
 };
