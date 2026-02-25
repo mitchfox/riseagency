@@ -143,6 +143,8 @@ const MatchFlowTab = ({ selectedPlayer, currentPlayer }: { selectedPlayer: strin
 
               {section.id === "reports" && (
                 <ActionReportsList
+                  defaultPlayerId={selectedPlayer || undefined}
+                  defaultPlayerName={currentPlayer?.name}
                   onCreateReport={(playerId, playerName) => {
                     setInlineReport({ playerId, playerName });
                   }}
@@ -153,11 +155,11 @@ const MatchFlowTab = ({ selectedPlayer, currentPlayer }: { selectedPlayer: strin
               )}
 
               {section.id === "analysis" && (
-                <AnalysisManagement isAdmin={true} />
+                <AnalysisManagement isAdmin={true} defaultPlayerId={selectedPlayer || undefined} />
               )}
 
               {section.id === "videoanalysis" && (
-                <VideoAnalysis />
+                <VideoAnalysis defaultPlayerId={selectedPlayer || undefined} />
               )}
 
               {section.id === "annotations" && (
@@ -165,7 +167,7 @@ const MatchFlowTab = ({ selectedPlayer, currentPlayer }: { selectedPlayer: strin
               )}
 
               {section.id === "highlightcompiler" && (
-                <HighlightCompiler />
+                <HighlightCompiler defaultPlayerId={selectedPlayer || undefined} />
               )}
             </div>
           </CollapsibleContent>

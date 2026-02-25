@@ -86,7 +86,11 @@ const getClipScoreColor = (clip: { r90Score?: number | null; actionScore?: numbe
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export const HighlightCompiler = () => {
+interface HighlightCompilerProps {
+  defaultPlayerId?: string;
+}
+
+export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = {}) => {
   // ── Project list state ──
   const [projects, setProjects] = useState<HighlightProject[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
@@ -103,7 +107,7 @@ export const HighlightCompiler = () => {
   // ── Link dialog state ──
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkTab, setLinkTab] = useState<"reports" | "analyses">("reports");
-  const [linkPlayerId, setLinkPlayerId] = useState<string>("");
+  const [linkPlayerId, setLinkPlayerId] = useState<string>(defaultPlayerId || "");
   const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
   const [linkReports, setLinkReports] = useState<any[]>([]);
   const [linkAnalyses, setLinkAnalyses] = useState<any[]>([]);
@@ -124,6 +128,12 @@ export const HighlightCompiler = () => {
   // ─── Load projects ──────────────────────────────────────────────────────────
 
   useEffect(() => { fetchProjects(); fetchPlayers(); }, []);
+
+  useEffect(() => {
+    if (defaultPlayerId) {
+      setLinkPlayerId(defaultPlayerId);
+    }
+  }, [defaultPlayerId]);
 
   const fetchProjects = async () => {
     setLoadingProjects(true);
