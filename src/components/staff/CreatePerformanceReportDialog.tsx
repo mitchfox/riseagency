@@ -130,6 +130,8 @@ export const CreatePerformanceReportDialog = ({
   const [isAddStatDialogOpen, setIsAddStatDialogOpen] = useState(false);
   const [hiddenStatKeys, setHiddenStatKeys] = useState<string[]>([]);
   const [actionTypes, setActionTypes] = useState<string[]>([]);
+  const [descriptionsByType, setDescriptionsByType] = useState<Record<string, string[]>>({});
+  const [descriptionPopoverOpen, setDescriptionPopoverOpen] = useState<Record<number, boolean>>({});
   const [allR90Ratings, setAllR90Ratings] = useState<Array<{score: string | number | null, title: string, description: string}>>([]);
   const [expandedScores, setExpandedScores] = useState<Set<number>>(new Set());
   const [selectedScores, setSelectedScores] = useState<Record<number, Set<number>>>({}); // actionIndex -> Set of score indices
@@ -531,13 +533,32 @@ export const CreatePerformanceReportDialog = ({
   const fetchActionTypes = async () => {
     const { data, error } = await supabase
       .from("performance_report_actions")
-      .select("action_type")
+      .select("action_type, action_description")
       .not("action_type", "is", null)
       .order("action_type");
 
     if (!error && data) {
       const uniqueTypes = Array.from(new Set(data.map(item => item.action_type)));
       setActionTypes(uniqueTypes);
+      
+      // Build frequency-sorted descriptions grouped by action_type
+      const descMap: Record<string, Record<string, number>> = {};
+      data.forEach(item => {
+        if (item.action_description && item.action_description.trim()) {
+          const type = item.action_type || '';
+          if (!descMap[type]) descMap[type] = {};
+          const desc = item.action_description.trim();
+          descMap[type][desc] = (descMap[type][desc] || 0) + 1;
+        }
+      });
+      
+      const sortedDescs: Record<string, string[]> = {};
+      Object.entries(descMap).forEach(([type, counts]) => {
+        sortedDescs[type] = Object.entries(counts)
+          .sort((a, b) => b[1] - a[1])
+          .map(([desc]) => desc);
+      });
+      setDescriptionsByType(sortedDescs);
     }
   };
 
@@ -1608,6 +1629,29 @@ export const CreatePerformanceReportDialog = ({
                     return updated;
                   });
                 }}
+                onAddToMatchStats={(fixtureKey, label, value) => {
+                  // Check if this fixture key maps to a unified stat key
+                  const mapping = FIXTURE_TO_UNIFIED_MAP[fixtureKey];
+                  const unifiedKey = mapping?.key || fixtureKey.replace('_per90', '').replace('_pct', '_pct');
+                  
+                  // Check if already in unified stats
+                  if (unifiedStats.some(s => s.key === unifiedKey)) {
+                    toast.info(`${label} is already in Match Statistics`);
+                    return;
+                  }
+                  
+                  const isPercentage = fixtureKey.endsWith('_pct');
+                  const newStat: UnifiedStat = {
+                    key: unifiedKey,
+                    displayName: label,
+                    type: isPercentage ? 'score' : (mapping?.type === 'score' ? 'score' : 'count'),
+                    ...(isPercentage || mapping?.type === 'score' ? { score: value } : { count: value }),
+                    isFromActions: false,
+                  };
+                  
+                  setUnifiedStats(prev => [...prev, newStat]);
+                  toast.success(`${label} added to Match Statistics`);
+                }}
                 actions={actions}
                 previousFixtureStats={previousFixtureStats}
               />
@@ -1729,6 +1773,31 @@ export const CreatePerformanceReportDialog = ({
                       className="text-sm min-h-[60px]"
                       rows={2}
                     />
+                    {action.action_type && descriptionsByType[action.action_type]?.length > 0 && (
+                      <div className="mt-1">
+                        <Collapsible>
+                          <CollapsibleTrigger className="text-[9px] p-1 rounded bg-muted/50 font-medium w-full text-left flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors text-muted-foreground">
+                            <span>Previous descriptions</span>
+                            <ChevronDown className="h-3 w-3" />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-1 max-h-28 overflow-y-auto border rounded bg-background">
+                            {descriptionsByType[action.action_type]
+                              .filter(d => !action.action_description || d.toLowerCase().includes(action.action_description.toLowerCase()))
+                              .slice(0, 10)
+                              .map((desc, di) => (
+                                <button
+                                  key={di}
+                                  type="button"
+                                  className="block w-full text-left text-xs px-2 py-1.5 hover:bg-accent transition-colors truncate"
+                                  onClick={() => updateAction(index, "action_description", desc)}
+                                >
+                                  {desc}
+                                </button>
+                              ))}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      </div>
+                    )}
                   </div>
                   
                   <div>
@@ -1849,14 +1918,33 @@ export const CreatePerformanceReportDialog = ({
                           className="w-40 text-sm"
                         />
                       </td>
-                      <td className="p-2">
+                      <td className="p-2 relative">
                         <Textarea
                           value={action.action_description}
                           onChange={(e) => updateAction(index, "action_description", e.target.value)}
                           placeholder="Describe"
                           className="min-w-[180px] min-h-[40px] text-sm"
                           rows={1}
+                          onFocus={() => setDescriptionPopoverOpen(prev => ({ ...prev, [index]: true }))}
+                          onBlur={() => setTimeout(() => setDescriptionPopoverOpen(prev => ({ ...prev, [index]: false })), 200)}
                         />
+                        {descriptionPopoverOpen[index] && action.action_type && descriptionsByType[action.action_type]?.length > 0 && (
+                          <div className="absolute z-20 top-full left-2 right-2 mt-0.5 max-h-32 overflow-y-auto border rounded bg-popover shadow-md">
+                            {descriptionsByType[action.action_type]
+                              .filter(d => !action.action_description || d.toLowerCase().includes(action.action_description.toLowerCase()))
+                              .slice(0, 8)
+                              .map((desc, di) => (
+                                <button
+                                  key={di}
+                                  type="button"
+                                  className="block w-full text-left text-xs px-2 py-1.5 hover:bg-accent transition-colors truncate"
+                                  onMouseDown={(e) => { e.preventDefault(); updateAction(index, "action_description", desc); setDescriptionPopoverOpen(prev => ({ ...prev, [index]: false })); }}
+                                >
+                                  {desc}
+                                </button>
+                              ))}
+                          </div>
+                        )}
                       </td>
                       <td className="p-2">
                         <Textarea

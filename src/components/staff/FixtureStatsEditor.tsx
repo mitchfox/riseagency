@@ -4,10 +4,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { METRIC_CATEGORIES } from "./ComparisonPlayerData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Sparkles, Plus, Loader2 } from "lucide-react";
+import { Sparkles, Plus, Loader2, ArrowUpToLine } from "lucide-react";
 
 // Mapping from fixture stat keys to match statistics (unified stats) keys
 export const FIXTURE_TO_UNIFIED_MAP: Record<string, { key: string; type: 'count' | 'score' }> = {
@@ -58,9 +59,10 @@ interface FixtureStatsEditorProps {
   onStatsChange: (stats: Record<string, number>) => void;
   actions?: PerformanceActionForAI[];
   previousFixtureStats?: Record<string, number>;
+  onAddToMatchStats?: (fixtureKey: string, label: string, value: number) => void;
 }
 
-export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previousFixtureStats }: FixtureStatsEditorProps) => {
+export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previousFixtureStats, onAddToMatchStats }: FixtureStatsEditorProps) => {
   const [activeCategory, setActiveCategory] = useState("Shooting");
   const [aiSuggestions, setAiSuggestions] = useState<Record<string, AISuggestion>>({});
   const [aiLoading, setAiLoading] = useState(false);
@@ -175,7 +177,23 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
                 const suggestion = aiSuggestions[m.key];
                 return (
                   <div key={m.key}>
-                    <Label className="text-xs text-muted-foreground">{m.label}</Label>
+                    <div className="flex items-center gap-1">
+                      <Label className="text-xs text-muted-foreground">{m.label}</Label>
+                      {onAddToMatchStats && fixtureStats[m.key] != null && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={() => onAddToMatchStats(m.key, m.label, fixtureStats[m.key])}
+                              className="p-0.5 rounded hover:bg-accent transition-colors text-muted-foreground hover:text-primary"
+                            >
+                              <ArrowUpToLine className="w-3 h-3" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs">Add to Match Statistics</TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
                     <Input
                       type="number"
                       step="0.01"
