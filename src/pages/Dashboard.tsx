@@ -48,6 +48,9 @@ import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { MarkdownContent } from "@/utils/markdownRenderer";
 import { InjuryLog } from "@/components/portal/InjuryLog";
 import { PlayerMatchClipper } from "@/components/portal/PlayerMatchClipper";
+import { PortalEmptyState } from "@/components/portal/PortalEmptyState";
+import { SectionDivider } from "@/components/portal/SectionDivider";
+import { MobileBottomNav } from "@/components/portal/MobileBottomNav";
 
 interface Analysis {
   id: string;
@@ -1657,7 +1660,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      <main className="pb-0">
+      <main className="pb-16 md:pb-0">
         {/* Notification Permission - with padding */}
         <div className="container mx-auto max-w-6xl px-4 md:px-6 mb-0">
           <NotificationPermission />
@@ -1888,7 +1891,7 @@ const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="container mx-auto px-4 space-y-4">
                       {analyses.length === 0 ? (
-                        <div className="py-8"></div>
+                        <PortalEmptyState icon="performance" title="No performance reports yet" description="Your reports will appear here after each match." />
                       ) : (
                         <div className="space-y-3">
                           {analyses.map((analysis) => (
@@ -2031,9 +2034,7 @@ const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="container mx-auto px-4 space-y-6">
                       {concepts.length === 0 ? (
-                        <div className="py-8">
-                          <p className="text-center text-muted-foreground">No concepts available yet.</p>
-                        </div>
+                        <PortalEmptyState icon="concepts" title="No concepts available yet" description="Tactical concepts and principles will appear here." />
                       ) : (
                         <Accordion type="single" collapsible className="space-y-4">
                           {concepts.map((concept) => (
@@ -3890,9 +3891,7 @@ const Dashboard = () => {
                       )}
 
                       {invoices.length === 0 ? (
-                        <div className="py-8 text-center text-muted-foreground">
-                          No invoices available yet.
-                        </div>
+                        <PortalEmptyState icon="invoices" title="No invoices yet" description="Your invoices and billing documents will appear here." />
                       ) : (
                         <div className="space-y-4">
                           {/* Outstanding invoices first */}
@@ -4116,9 +4115,7 @@ const Dashboard = () => {
                         
                         <TabsContent value="match">
                           {!highlightsData.matchHighlights || highlightsData.matchHighlights.length === 0 ? (
-                            <div className="py-8 text-center text-muted-foreground">
-                              No match highlights available yet.
-                            </div>
+                            <PortalEmptyState icon="highlights" title="No match highlights yet" description="Match highlight compilations will be added here." />
                           ) : (
                             <div className="grid gap-4 md:grid-cols-2">
                               {highlightsData.matchHighlights?.map((highlight: any, index: number) => (
@@ -4192,8 +4189,7 @@ const Dashboard = () => {
 
                             <TabsContent value="clips">
                               {!highlightsData.bestClips || highlightsData.bestClips.length === 0 ? (
-                                <div className="py-8 flex flex-col items-center justify-center space-y-4">
-                                  <p className="text-muted-foreground">No best clips available yet.</p>
+                                <PortalEmptyState icon="highlights" title="No clips yet" description="Upload your best clips to build your compilation reel.">
                                   <Button
                                     onClick={() => {
                                       const input = document.createElement('input');
@@ -4213,7 +4209,7 @@ const Dashboard = () => {
                                     <Upload className="w-4 h-4 mr-2" />
                                     Upload Clip{uploadProgress !== null ? 'ping...' : 's'}
                                   </Button>
-                                </div>
+                                </PortalEmptyState>
                               ) : (
                                 <div className="space-y-4">
                                   <div className="flex justify-between items-center gap-2 container mx-auto px-4">
@@ -4424,9 +4420,7 @@ const Dashboard = () => {
 
                     <TabsContent value="general" className="space-y-6 pl-6 pr-6">
                       {updates.length === 0 ? (
-                        <div className="py-8 text-center text-muted-foreground">
-                          No updates available yet.
-                        </div>
+                        <PortalEmptyState icon="updates" title="No updates yet" description="Important updates and announcements will appear here." />
                       ) : (
                         <div className="space-y-6">
                           {updates.map((update) => (
@@ -4822,6 +4816,16 @@ const Dashboard = () => {
         open={performanceReportDialogOpen}
         onOpenChange={setPerformanceReportDialogOpen}
         analysisId={selectedReportAnalysisId}
+      />
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onMoreClick={() => {
+          // Scroll to top and open the dropdown menu
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
     </div>
   );
