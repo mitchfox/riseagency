@@ -104,12 +104,15 @@ export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName
           style={{
             backgroundImage: `url(${images[currentImageIndex]})`,
             backgroundPosition: (imageFocalPoints?.[currentImageIndex] || 'center').replace('-', ' '),
-            transform: `translateY(${offset}px) scale(1.1)`,
+            transform: `translateY(${offset}px)`,
           }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: 1, scale: 1.12 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 1.2, ease: "easeInOut" }}
+          transition={{ 
+            opacity: { duration: 1.2, ease: "easeInOut" },
+            scale: { duration: 6, ease: "linear" }
+          }}
         />
       </AnimatePresence>
 
