@@ -53,6 +53,7 @@ interface Point {
   video_url?: string;
   video_urls?: string[];
   audio_url?: string;
+  annotation_ids?: Record<string, string>; // video_url -> annotation_project_id
 }
 
 interface PerformanceReportAction {
@@ -134,6 +135,8 @@ const VideoItem = ({
   pointIndex,
   totalPoints,
   onMoveToPoint,
+  onAnnotationSaved,
+  existingAnnotationId,
 }: {
   url: string;
   onRemove: () => void;
@@ -141,13 +144,42 @@ const VideoItem = ({
   pointIndex: number;
   totalPoints: number;
   onMoveToPoint: (targetPointIndex: number) => void;
+  onAnnotationSaved?: (annotationProjectId: string) => void;
+  existingAnnotationId?: string;
 }) => {
   const [trimOpen, setTrimOpen] = useState(false);
   const [annotateOpen, setAnnotateOpen] = useState(false);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
   const [moveOpen, setMoveOpen] = useState(false);
 
+  // Load existing annotation project if one exists
+  useEffect(() => {
+    if (existingAnnotationId && !annotationProject) {
+      supabase
+        .from("annotation_projects")
+        .select("*")
+        .eq("id", existingAnnotationId)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            setAnnotationProject({
+              id: data.id,
+              name: data.name,
+              videoUrl: data.video_url,
+              videoName: data.video_name,
+              createdAt: data.created_at,
+              klips: Array.isArray(data.klips) ? (data.klips as any) : [],
+            });
+          }
+        });
+    }
+  }, [existingAnnotationId]);
+
   const handleOpenAnnotate = () => {
+    if (annotationProject) {
+      setAnnotateOpen(true);
+      return;
+    }
     const project: AnnotationProject = {
       id: crypto.randomUUID(),
       name: "Point Video Annotation",
@@ -182,6 +214,8 @@ const VideoItem = ({
       if (error) throw error;
 
       setAnnotationProject(proj);
+      // Store the annotation project ID on the point data so it persists
+      onAnnotationSaved?.(proj.id);
       toast.success("Annotations saved");
       setAnnotateOpen(false);
     } catch (err: any) {
@@ -618,7 +652,12 @@ const SortablePointCard = ({
                   url={url}
                   pointIndex={index}
                   totalPoints={totalPoints}
+                  existingAnnotationId={point.annotation_ids?.[url]}
                   onMoveToPoint={(targetIdx) => onMoveVideoToPoint(index, vidIndex, targetIdx)}
+                  onAnnotationSaved={(annotationId) => {
+                    const currentIds = point.annotation_ids || {};
+                    updatePoint(index, "annotation_ids", { ...currentIds, [url]: annotationId });
+                  }}
                   onRemove={() => {
                     const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
                     updatePoint(index, "video_urls", currentVideos.filter((_, i) => i !== vidIndex));

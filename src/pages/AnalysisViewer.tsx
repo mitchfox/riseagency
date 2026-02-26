@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
+import { ReadOnlyAnnotationOverlay } from "@/components/portal/ReadOnlyAnnotationOverlay";
 import { ArrowLeft, ChevronDown, Play, Plus, Minus, Download } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -425,7 +426,7 @@ const AnalysisHeader = ({
           }}
         >
           <span
-            className="font-bebas text-white tracking-wide uppercase text-center leading-tight ml-[18vw] mr-[10vw] max-w-[25vw] overflow-hidden"
+            className="font-bebas text-white tracking-wide uppercase text-center leading-tight overflow-hidden"
             style={{
               fontSize: 'clamp(0.7rem, 3.5vw, 1.2rem)',
               textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
@@ -434,6 +435,9 @@ const AnalysisHeader = ({
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical' as const,
               wordBreak: 'break-word' as const,
+              marginLeft: '22%',
+              marginRight: '12%',
+              maxWidth: '60%',
             }}
           >
             {homeTeam}
@@ -449,7 +453,7 @@ const AnalysisHeader = ({
           }}
         >
           <span
-            className="font-bebas text-white tracking-wide uppercase text-center leading-tight ml-[10vw] mr-[18vw] max-w-[25vw] overflow-hidden"
+            className="font-bebas text-white tracking-wide uppercase text-center leading-tight overflow-hidden"
             style={{
               fontSize: 'clamp(0.7rem, 3.5vw, 1.2rem)',
               textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
@@ -458,6 +462,9 @@ const AnalysisHeader = ({
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical' as const,
               wordBreak: 'break-word' as const,
+              marginLeft: '12%',
+              marginRight: '22%',
+              maxWidth: '60%',
             }}
           >
             {awayTeam}
@@ -660,6 +667,55 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
       </motion.div>
       </div>
       </div>
+    </div>
+  );
+};
+
+// Video with annotation overlay for analysis points
+const AnnotatedPointVideo = ({ url, annotationId }: { url: string; annotationId?: string }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [elements, setElements] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!annotationId) return;
+    supabase
+      .from("annotation_projects")
+      .select("klips")
+      .eq("id", annotationId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.klips && Array.isArray(data.klips)) {
+          // Flatten all klip elements into a single array
+          const allElements = (data.klips as any[]).flatMap((klip: any) =>
+            (klip.elements || []).map((el: any) => ({
+              ...el,
+              klipStart: klip.startTime ?? 0,
+              klipEnd: klip.endTime ?? Infinity,
+            }))
+          );
+          setElements(allElements);
+        }
+      });
+  }, [annotationId]);
+
+  return (
+    <div className="relative">
+      <video
+        ref={videoRef}
+        src={url}
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="w-full"
+        style={{ display: 'block', width: '100%', height: 'auto' }}
+      />
+      {elements.length > 0 && (
+        <ReadOnlyAnnotationOverlay
+          elements={elements}
+          videoRef={videoRef as React.RefObject<HTMLVideoElement>}
+        />
+      )}
     </div>
   );
 };
@@ -1076,7 +1132,7 @@ const AnalysisViewer = () => {
                                   />
                                 </div>
                                 <div className="bg-black/80 text-white px-1.5 md:px-2 py-0.5 rounded text-[9px] md:text-xs font-bold whitespace-nowrap max-w-[60px] md:max-w-none truncate">
-                                  {player.surname || player.position}
+                                  {player.name || player.surname || player.position}
                                 </div>
                               </div>
                             ))}
@@ -1137,15 +1193,10 @@ const AnalysisViewer = () => {
                           <TextReveal delay={0.2}>
                             <div className="flex flex-col gap-4 -mx-4 md:-mx-6">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
-                                <video
+                                <AnnotatedPointVideo
                                   key={vidIndex}
-                                  src={url}
-                                  autoPlay
-                                  loop
-                                  muted
-                                  playsInline
-                                  className="w-full"
-                                  style={{ display: 'block', width: '100%', height: 'auto' }}
+                                  url={url}
+                                  annotationId={point.annotation_ids?.[url]}
                                 />
                               ))}
                             </div>
@@ -1441,15 +1492,10 @@ const AnalysisViewer = () => {
                           <TextReveal delay={0.2}>
                             <div className="flex flex-col gap-4 -mx-4 md:-mx-6">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
-                                <video
+                                <AnnotatedPointVideo
                                   key={vidIndex}
-                                  src={url}
-                                  autoPlay
-                                  loop
-                                  muted
-                                  playsInline
-                                  className="w-full"
-                                  style={{ display: 'block', width: '100%', height: 'auto' }}
+                                  url={url}
+                                  annotationId={point.annotation_ids?.[url]}
                                 />
                               ))}
                             </div>
@@ -1556,15 +1602,10 @@ const AnalysisViewer = () => {
                           <TextReveal delay={0.2}>
                             <div className="flex flex-col gap-4 -mx-4 md:-mx-6">
                               {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url: string, vidIndex: number) => (
-                                <video
+                                <AnnotatedPointVideo
                                   key={vidIndex}
-                                  src={url}
-                                  autoPlay
-                                  loop
-                                  muted
-                                  playsInline
-                                  className="w-full"
-                                  style={{ display: 'block', width: '100%', height: 'auto' }}
+                                  url={url}
+                                  annotationId={point.annotation_ids?.[url]}
                                 />
                               ))}
                             </div>
