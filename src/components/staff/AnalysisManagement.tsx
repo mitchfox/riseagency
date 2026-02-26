@@ -1439,6 +1439,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             showPlayerLinking={isPostMatch}
             taggedPlayerIds={taggedPlayerIds}
             setTaggedPlayerIds={setTaggedPlayerIds}
+            defaultPlayerId={defaultPlayerId}
           />
         )}
 

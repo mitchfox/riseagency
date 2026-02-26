@@ -154,19 +154,25 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
               className="pl-9"
             />
           </div>
-          <Select value={playerFilter} onValueChange={setPlayerFilter}>
-            <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="All Players" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Players</SelectItem>
-              {players.map((player) => (
-                <SelectItem key={player.id} value={player.id}>
-                  {player.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {defaultPlayerId ? (
+            <div className="rounded-md border px-3 py-2 text-sm min-w-[200px]">
+              <span className="font-medium">{defaultPlayerName || players.find(p => p.id === defaultPlayerId)?.name || "Selected player"}</span>
+            </div>
+          ) : (
+            <Select value={playerFilter} onValueChange={setPlayerFilter}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="All Players" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Players</SelectItem>
+                {players.map((player) => (
+                  <SelectItem key={player.id} value={player.id}>
+                    {player.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <Button onClick={() => {
           if (defaultPlayerId && defaultPlayerName) {
