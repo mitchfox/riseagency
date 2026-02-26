@@ -226,20 +226,10 @@ const VideoItem = ({
             value=""
             onValueChange={(val) => {
               onMoveToPoint(Number(val));
-              setMoveOpen(false);
             }}
-            open={moveOpen}
-            onOpenChange={setMoveOpen}
           >
-            <SelectTrigger asChild>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="h-6 w-6 p-0"
-                title="Move to another point"
-              >
-                <ArrowRightLeft className="w-3 h-3" />
-              </Button>
+            <SelectTrigger className="h-6 w-6 p-0 border-0 bg-secondary hover:bg-secondary/80 [&>svg.lucide-chevron-down]:hidden">
+              <ArrowRightLeft className="w-3 h-3" />
             </SelectTrigger>
             <SelectContent>
               {otherPoints.map((i) => (
