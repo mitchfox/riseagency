@@ -20,11 +20,14 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { useState, useEffect } from "react";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useState, useEffect, useMemo } from "react";
 import { VideoTrimmerDialog } from "./VideoTrimmerDialog";
 import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEditor";
 import type { AnnotationProject } from "@/components/staff/annotations/AnnotationProjects";
+import { ReadOnlyAnnotationPlayback } from "@/components/portal/ReadOnlyAnnotationPlayback";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -150,6 +153,7 @@ const VideoItem = ({
   const [trimOpen, setTrimOpen] = useState(false);
   const [annotateOpen, setAnnotateOpen] = useState(false);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
+  const [annotationVersion, setAnnotationVersion] = useState(0); // bump to refresh preview
   const [moveOpen, setMoveOpen] = useState(false);
 
   // Load existing annotation project if one exists
@@ -214,6 +218,7 @@ const VideoItem = ({
       if (error) throw error;
 
       setAnnotationProject(proj);
+      setAnnotationVersion(v => v + 1); // force preview refresh
       // Store the annotation project ID on the point data so it persists
       onAnnotationSaved?.(proj.id);
       toast.success("Annotations saved — remember to save the analysis to persist the link");
@@ -225,17 +230,35 @@ const VideoItem = ({
   // Build list of other points to move to
   const otherPoints = Array.from({ length: totalPoints }, (_, i) => i).filter(i => i !== pointIndex);
 
+  // Get preloaded elements from local state for preview (avoids refetch)
+  const previewElements = useMemo(() => {
+    if (!annotationProject?.klips) return undefined;
+    return annotationProject.klips.flatMap((klip: any) => klip.elements || []);
+  }, [annotationProject, annotationVersion]);
+
+  const hasAnnotation = !!(existingAnnotationId || (previewElements && previewElements.length > 0));
+
   return (
-    <div className="relative">
-      <video
-        src={url}
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="max-w-xs rounded"
-      />
-      <div className="absolute top-1 right-1 flex gap-1">
+    <div className="relative max-w-xs">
+      {hasAnnotation ? (
+        <ReadOnlyAnnotationPlayback
+          key={`preview-${annotationVersion}`}
+          videoUrl={url}
+          annotationProjectId={!previewElements?.length ? existingAnnotationId : undefined}
+          preloadedElements={previewElements?.length ? previewElements : undefined}
+          className="rounded overflow-hidden"
+        />
+      ) : (
+        <video
+          src={url}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full rounded"
+        />
+      )}
+      <div className="absolute top-1 right-1 flex gap-1 z-10">
         <Button
           variant="secondary"
           size="sm"
@@ -290,6 +313,7 @@ const VideoItem = ({
       />
       <Dialog open={annotateOpen} onOpenChange={(open) => { if (!open) { setAnnotateOpen(false); } }}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 overflow-hidden">
+          <VisuallyHidden><DialogTitle>Annotate Video</DialogTitle></VisuallyHidden>
           {annotationProject && (
             <AnnotationEditor
               project={annotationProject}
@@ -798,6 +822,15 @@ export const AnalysisPointsSection = ({
                   const fromVideos = newPoints[fromPointIdx].video_urls || (newPoints[fromPointIdx].video_url ? [newPoints[fromPointIdx].video_url] : []);
                   const [movedUrl] = fromVideos.splice(videoIdx, 1);
                   newPoints[fromPointIdx].video_urls = fromVideos;
+                  // Migrate annotation_ids entry with the video
+                  const fromIds = newPoints[fromPointIdx].annotation_ids || {};
+                  if (fromIds[movedUrl]) {
+                    const toIds = newPoints[toPointIdx].annotation_ids || {};
+                    toIds[movedUrl] = fromIds[movedUrl];
+                    delete fromIds[movedUrl];
+                    newPoints[fromPointIdx].annotation_ids = fromIds;
+                    newPoints[toPointIdx].annotation_ids = toIds;
+                  }
                   const toVideos = newPoints[toPointIdx].video_urls || (newPoints[toPointIdx].video_url ? [newPoints[toPointIdx].video_url] : []);
                   toVideos.push(movedUrl);
                   newPoints[toPointIdx].video_urls = toVideos;

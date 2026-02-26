@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
-import { ReadOnlyAnnotationOverlay } from "@/components/portal/ReadOnlyAnnotationOverlay";
+import { ReadOnlyAnnotationPlayback } from "@/components/portal/ReadOnlyAnnotationPlayback";
 import { ArrowLeft, ChevronDown, Play, Plus, Minus, Download } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -80,11 +80,12 @@ interface KitProps {
   primaryColor: string;
   secondaryColor: string;
   numberColor?: string;
+  collarColor?: string;
   stripeStyle?: 'none' | 'thin' | 'thick' | 'halves';
   number: string;
 }
 
-const PlayerKit = ({ primaryColor, secondaryColor, numberColor = 'white', stripeStyle = 'none', number }: KitProps) => {
+const PlayerKit = ({ primaryColor, secondaryColor, numberColor = 'white', collarColor, stripeStyle = 'none', number }: KitProps) => {
   const showNumber = number && number !== '0' && number.trim() !== '';
   return (
     <svg width="50" height="60" viewBox="0 0 100 120" className="drop-shadow-lg">
@@ -121,8 +122,8 @@ const PlayerKit = ({ primaryColor, secondaryColor, numberColor = 'white', stripe
       <path d="M75 38 L82 48 L78 58 L75 52 Z" fill={stripeStyle === 'halves' ? secondaryColor : primaryColor} stroke={secondaryColor} strokeWidth="1.5"/>
 
       {/* Collar */}
-      <path d="M42 28 L50 40 L58 28" fill="none" stroke={secondaryColor} strokeWidth="3" strokeLinecap="round"/>
-      <ellipse cx="50" cy="25" rx="10" ry="3" fill={secondaryColor} />
+      <path d="M42 28 L50 40 L58 28" fill="none" stroke={collarColor || secondaryColor} strokeWidth="3" strokeLinecap="round"/>
+      <ellipse cx="50" cy="25" rx="10" ry="3" fill={collarColor || secondaryColor} />
 
       {/* Number - only show if provided */}
       {showNumber && (
@@ -672,50 +673,14 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
 };
 
 // Video with annotation overlay for analysis points
-// Uses the same element structure as the annotation editor — elements already have
-// correct appearAt/duration timing so we pass them straight to ReadOnlyAnnotationOverlay.
+// Uses the shared ReadOnlyAnnotationPlayback which mirrors the editor's freeze/pause
+// behaviour and supports all annotation types including space-oval, distance, etc.
 const AnnotatedPointVideo = ({ url, annotationId }: { url: string; annotationId?: string }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [elements, setElements] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!annotationId) return;
-    supabase
-      .from("annotation_projects")
-      .select("klips")
-      .eq("id", annotationId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.klips && Array.isArray(data.klips)) {
-          // Flatten all klip elements — they already carry their own appearAt/duration
-          // which computeVisibleElements uses directly.
-          const allElements = (data.klips as any[]).flatMap((klip: any) =>
-            (klip.elements || [])
-          );
-          setElements(allElements);
-        }
-      });
-  }, [annotationId]);
-
   return (
-    <div className="relative">
-      <video
-        ref={videoRef}
-        src={url}
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="w-full"
-        style={{ display: 'block', width: '100%', height: 'auto', objectFit: 'fill' }}
-      />
-      {elements.length > 0 && (
-        <ReadOnlyAnnotationOverlay
-          elements={elements}
-          videoRef={videoRef as React.RefObject<HTMLVideoElement>}
-        />
-      )}
-    </div>
+    <ReadOnlyAnnotationPlayback
+      videoUrl={url}
+      annotationProjectId={annotationId}
+    />
   );
 };
 
@@ -1128,6 +1093,7 @@ const AnalysisViewer = () => {
                                     primaryColor={analysis.kit_primary_color || '#FFD700'}
                                     secondaryColor={analysis.kit_secondary_color || '#000000'}
                                     numberColor={(analysis as any).kit_number_color || 'white'}
+                                    collarColor={(analysis as any).kit_collar_color}
                                     stripeStyle={(analysis as any).kit_stripe_style || 'none'}
                                     number={player.shirt_number || player.number || ''}
                                   />
