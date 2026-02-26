@@ -163,7 +163,7 @@ const MatchFlowTab = ({ selectedPlayer, currentPlayer }: { selectedPlayer: strin
               )}
 
               {section.id === "annotations" && (
-                <AnnotationProjects />
+                <AnnotationProjects defaultPlayerId={selectedPlayer || undefined} />
               )}
 
               {section.id === "highlightcompiler" && (

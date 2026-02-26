@@ -170,6 +170,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   useEffect(() => {
     if (defaultPlayerId) {
       setNewPlayerId(defaultPlayerId);
+      setExportPlayerId(defaultPlayerId);
     }
     fetchVideos();
   }, [defaultPlayerId]);
@@ -329,7 +330,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         setShowUpload(false);
         setNewTitle("");
         setUploadFile(null);
-        setNewPlayerId("");
+        setNewPlayerId(defaultPlayerId || "");
         setNewOpponent("");
         setNewMatchDate("");
         setUploadProgress(0);
@@ -695,8 +696,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   };
 
   // Export clips to a performance report
-  const handleOpenExport = () => {
-    setExportPlayerId("");
+  const handleOpenExport = async () => {
+    const contextPlayerId = defaultPlayerId || selectedVideo?.player_id || "";
+    setExportPlayerId(contextPlayerId);
     setSelectedReportId("");
     setSelectedAnalysisId("");
     setSelectedPointIndex(null);
@@ -704,15 +706,23 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     setAvailableAnalyses([]);
     setExportDestination("report");
     setShowExportDialog(true);
+
+    if (contextPlayerId) {
+      await handleExportPlayerChange(contextPlayerId, "report");
+    }
   };
 
-  const handleExportPlayerChange = async (playerId: string) => {
+  const handleExportPlayerChange = async (
+    playerId: string,
+    destinationOverride?: "report" | "analysis"
+  ) => {
+    const destination = destinationOverride || exportDestination;
     setExportPlayerId(playerId);
     setSelectedReportId("");
     setSelectedAnalysisId("");
     setSelectedPointIndex(null);
 
-    if (exportDestination === "report") {
+    if (destination === "report") {
       const { data } = await supabase
         .from("player_analysis")
         .select("id, opponent, analysis_date")
@@ -728,17 +738,53 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         })));
       }
     } else {
-      await fetchAnalysesForExport();
+      await fetchAnalysesForExport(playerId);
     }
   };
 
-  const fetchAnalysesForExport = async () => {
-    const { data } = await supabase
+  const fetchAnalysesForExport = async (playerId?: string) => {
+    let filteredAnalysisIds: string[] | null = null;
+
+    if (playerId && playerId !== "all") {
+      const [{ data: tagged }, { data: linkedReports }] = await Promise.all([
+        supabase
+          .from("analysis_player_tags")
+          .select("analysis_id")
+          .eq("player_id", playerId),
+        supabase
+          .from("player_analysis")
+          .select("analysis_writer_id")
+          .eq("player_id", playerId)
+          .not("analysis_writer_id", "is", null),
+      ]);
+
+      const idSet = new Set<string>();
+      (tagged || []).forEach((row: any) => {
+        if (row.analysis_id) idSet.add(row.analysis_id);
+      });
+      (linkedReports || []).forEach((row: any) => {
+        if (row.analysis_writer_id) idSet.add(row.analysis_writer_id);
+      });
+
+      filteredAnalysisIds = Array.from(idSet);
+      if (filteredAnalysisIds.length === 0) {
+        setAvailableAnalyses([]);
+        return;
+      }
+    }
+
+    let query = supabase
       .from("analyses")
       .select("id, title, analysis_type, points")
       .in("analysis_type", ["pre-match", "post-match"])
       .order("created_at", { ascending: false })
       .limit(50);
+
+    if (filteredAnalysisIds) {
+      query = query.in("id", filteredAnalysisIds);
+    }
+
+    const { data } = await query;
 
     if (data) {
       setAvailableAnalyses(data.map(d => ({
@@ -757,11 +803,14 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     setSelectedPointIndex(null);
     setAvailableReports([]);
     setAvailableAnalyses([]);
+
+    const contextPlayerId = defaultPlayerId || exportPlayerId || selectedVideo?.player_id || "";
+
     if (dest === "analysis") {
-      await fetchAnalysesForExport();
-    } else if (exportPlayerId) {
+      await fetchAnalysesForExport(contextPlayerId || undefined);
+    } else if (contextPlayerId) {
       // Re-fetch reports for the selected player
-      handleExportPlayerChange(exportPlayerId);
+      await handleExportPlayerChange(contextPlayerId, "report");
     }
   };
 
@@ -1645,19 +1694,26 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       </>
                     )}
                   </p>
-                  <Select value={exportPlayerId} onValueChange={handleExportPlayerChange}>
-                    <SelectTrigger><SelectValue placeholder="Select player first" /></SelectTrigger>
-                    <SelectContent>
-                      {groupPlayersByStatus(players).map(group => (
-                        <SelectGroup key={group.status}>
-                          <SelectLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">{group.label}</SelectLabel>
-                          {group.players.map(p => (
-                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                          ))}
-                        </SelectGroup>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {defaultPlayerId ? (
+                    <div className="rounded-md border px-3 py-2 text-sm">
+                      <span className="text-muted-foreground mr-1">Player:</span>
+                      <span className="font-medium">{players.find(p => p.id === defaultPlayerId)?.name || "Selected player"}</span>
+                    </div>
+                  ) : (
+                    <Select value={exportPlayerId} onValueChange={(value) => handleExportPlayerChange(value, "report")}>
+                      <SelectTrigger><SelectValue placeholder="Select player first" /></SelectTrigger>
+                      <SelectContent>
+                        {groupPlayersByStatus(players).map(group => (
+                          <SelectGroup key={group.status}>
+                            <SelectLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">{group.label}</SelectLabel>
+                            {group.players.map(p => (
+                              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                            ))}
+                          </SelectGroup>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                   {exportPlayerId && (
                     <Select value={selectedReportId} onValueChange={setSelectedReportId}>
                       <SelectTrigger><SelectValue placeholder="Select performance report" /></SelectTrigger>
@@ -1856,15 +1912,22 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
                 <Input placeholder="Match title (e.g. vs Arsenal - PL R23)" value={newTitle} onChange={e => setNewTitle(e.target.value)} />
-                <Select value={newPlayerId} onValueChange={setNewPlayerId}>
-                  <SelectTrigger><SelectValue placeholder="Link to player (optional)" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {players.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {defaultPlayerId ? (
+                  <div className="rounded-md border px-3 py-2 text-sm">
+                    <span className="text-muted-foreground mr-1">Player:</span>
+                    <span className="font-medium">{players.find(p => p.id === defaultPlayerId)?.name || "Selected player"}</span>
+                  </div>
+                ) : (
+                  <Select value={newPlayerId} onValueChange={setNewPlayerId}>
+                    <SelectTrigger><SelectValue placeholder="Link to player (optional)" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {players.map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <Input placeholder="Opponent" value={newOpponent} onChange={e => setNewOpponent(e.target.value)} />
                   <Input type="date" value={newMatchDate} onChange={e => setNewMatchDate(e.target.value)} />

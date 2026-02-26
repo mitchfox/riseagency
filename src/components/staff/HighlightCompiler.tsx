@@ -135,6 +135,12 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
     }
   }, [defaultPlayerId]);
 
+  useEffect(() => {
+    if (linkOpen && defaultPlayerId) {
+      setLinkPlayerId(defaultPlayerId);
+    }
+  }, [linkOpen, defaultPlayerId]);
+
   const fetchProjects = async () => {
     setLoadingProjects(true);
     const { data, error } = await supabase
@@ -167,7 +173,12 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
 
     const { data, error } = await supabase
       .from("highlight_projects")
-      .insert({ name: newProjectName.trim(), clips: [], created_by: userId || null })
+      .insert({
+        name: newProjectName.trim(),
+        clips: [],
+        created_by: userId || null,
+        player_id: defaultPlayerId || null,
+      })
       .select()
       .single();
 
@@ -572,7 +583,7 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
           <h2 className="text-lg font-semibold truncate">{activeProject.name}</h2>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={() => { setLinkOpen(true); setLinkSearch(""); }}>
+          <Button variant="outline" size="sm" onClick={() => { setLinkOpen(true); setLinkSearch(""); if (defaultPlayerId) setLinkPlayerId(defaultPlayerId); }}>
             <Link2 className="h-4 w-4 mr-1" /> Link Source
           </Button>
           <Button size="sm" onClick={exportAsZip} disabled={acceptedClips.length === 0 || exporting}>
@@ -763,7 +774,7 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
           <CardContent className="py-16 text-center space-y-3">
             <Film className="h-10 w-10 mx-auto text-muted-foreground/40" />
             <p className="text-muted-foreground text-sm">No clips yet. Link a performance report or video analysis to get started.</p>
-            <Button variant="outline" size="sm" onClick={() => setLinkOpen(true)}>
+            <Button variant="outline" size="sm" onClick={() => { setLinkOpen(true); if (defaultPlayerId) setLinkPlayerId(defaultPlayerId); }}>
               <Link2 className="h-4 w-4 mr-1" /> Link Source
             </Button>
           </CardContent>
@@ -780,17 +791,23 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
 
           <div className="flex items-center gap-3 pb-2">
             <Label className="text-sm whitespace-nowrap">Player:</Label>
-            <Select value={linkPlayerId} onValueChange={(v) => { setLinkPlayerId(v); setLinkReports([]); setLinkAnalyses([]); }}>
-              <SelectTrigger className="w-56">
-                <SelectValue placeholder="All / Select player" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All players</SelectItem>
-                {players.map(p => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {defaultPlayerId ? (
+              <div className="rounded-md border px-3 py-2 text-sm min-w-[220px]">
+                <span className="font-medium">{players.find(p => p.id === defaultPlayerId)?.name || "Selected player"}</span>
+              </div>
+            ) : (
+              <Select value={linkPlayerId} onValueChange={(v) => { setLinkPlayerId(v); setLinkReports([]); setLinkAnalyses([]); }}>
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder="All / Select player" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All players</SelectItem>
+                  {players.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <Tabs value={linkTab} onValueChange={v => setLinkTab(v as any)} className="flex-1 flex flex-col min-h-0">
