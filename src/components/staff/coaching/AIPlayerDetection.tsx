@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
 import { Loader2, UserSearch, X, Tag } from "lucide-react";
 
@@ -217,7 +218,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
         if (frames.length === 0) continue;
 
-        const { data, error } = await supabase.functions.invoke('detect-player-actions', {
+        const { data, error } = await invokeEdgeFunction('detect-player-actions', {
           body: {
             frames,
             playerInfo: {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -222,7 +223,7 @@ export const MessagingCaseStudies = () => {
     }
 
     try {
-      const { data: parseResult, error } = await supabase.functions.invoke("parse-case-study-images", {
+      const { data: parseResult, error } = await invokeEdgeFunction("parse-case-study-images", {
         body: { imageUrls, caseStudyId: selectedStudy.id },
       });
 

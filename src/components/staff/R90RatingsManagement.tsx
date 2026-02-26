@@ -12,6 +12,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
 import { Plus, Edit2, Save, X, ChevronDown, Trash2, Sparkles } from "lucide-react";
 
@@ -353,7 +354,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
 
     setIsSplitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('split-r90-ratings');
+      const { data, error } = await invokeEdgeFunction('split-r90-ratings');
       
       if (error) throw error;
       
@@ -548,7 +549,7 @@ export const R90RatingsManagement = ({ open, onOpenChange }: R90RatingsManagemen
 
       toast.info(`Auto-mapping ${unmappedTypes.length} action types...`);
 
-      const { data, error } = await supabase.functions.invoke('auto-map-action-categories', {
+      const { data, error } = await invokeEdgeFunction('auto-map-action-categories', {
         body: {
           action_types: unmappedTypes,
           auto_apply: true

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
 import { Plus, Trash2, Check, Edit, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Database, Sparkles, Calendar, FolderOpen, Save, Copy } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -981,7 +982,7 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('ai-write-description', {
+      const { data, error } = await invokeEdgeFunction('ai-write-description', {
         body: { 
           exerciseName,
           sampleDescriptions
@@ -1134,7 +1135,7 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
 
       const prompt = `Write a comprehensive training program overview for this athlete's strength and conditioning program.`;
 
-      const { data, error } = await supabase.functions.invoke('ai-write', {
+      const { data, error } = await invokeEdgeFunction('ai-write', {
         body: { 
           prompt,
           context,
@@ -1176,7 +1177,7 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
       const player = allPlayers.find(p => p.id === selectedFixturePlayer);
       const teamName = player?.club || player?.name;
 
-      const { data, error } = await supabase.functions.invoke('fetch-team-fixtures', {
+      const { data, error } = await invokeEdgeFunction('fetch-team-fixtures', {
         body: { teamName }
       });
 

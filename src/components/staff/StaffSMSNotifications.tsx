@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Send, Loader2, Phone, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -143,7 +144,7 @@ export const StaffSMSNotifications = () => {
 
       for (const staff of staffWithPhone) {
         try {
-          const { error } = await supabase.functions.invoke('notificationapi-rise_staff', {
+          const { error } = await invokeEdgeFunction('notificationapi-rise_staff', {
             body: {
               phone: staff.phone_number,
               message: message.trim(),

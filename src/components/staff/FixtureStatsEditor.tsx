@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { METRIC_CATEGORIES } from "./ComparisonPlayerData";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
 import { Sparkles, Plus, Loader2, ArrowUpToLine } from "lucide-react";
 
@@ -100,7 +101,7 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
         cat.metrics.map(m => ({ key: m.key, label: m.label }))
       );
 
-      const { data, error } = await supabase.functions.invoke('suggest-fixture-stats', {
+      const { data, error } = await invokeEdgeFunction('suggest-fixture-stats', {
         body: {
           actions: actions.map(a => ({
             action_number: a.action_number,

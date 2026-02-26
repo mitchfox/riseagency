@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { Send, Save, Copy } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -111,7 +112,7 @@ export const EmailResponseDialog = ({
 
     setSending(true);
     try {
-      const { error } = await supabase.functions.invoke("send-form-email", {
+      const { error } = await invokeEdgeFunction("send-form-email", {
         body: {
           to: recipientEmail,
           subject: subject,

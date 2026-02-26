@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { Plus, Edit, Trash2, Search, Languages, RefreshCw, Globe } from "lucide-react";
 
 interface Translation {
@@ -244,7 +245,7 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
     setIsGenerating(true);
     try {
-      const response = await supabase.functions.invoke("ai-translate", {
+      const response = await invokeEdgeFunction("ai-translate", {
         body: { text: formData.english },
       });
 

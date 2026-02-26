@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -164,7 +165,7 @@ export const ClubRatings = () => {
     setDetectingCountries(true);
     try {
       const clubNames = unknownClubs.map(c => c.club_name);
-      const { data, error } = await supabase.functions.invoke('detect-club-countries', {
+      const { data, error } = await invokeEdgeFunction('detect-club-countries', {
         body: { clubs: clubNames }
       });
 
