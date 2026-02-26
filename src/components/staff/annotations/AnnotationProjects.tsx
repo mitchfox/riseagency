@@ -80,7 +80,11 @@ export interface AnnotationProject {
 
 // ── Projects Dashboard ──
 
-export const AnnotationProjects = () => {
+interface AnnotationProjectsProps {
+  defaultPlayerId?: string;
+}
+
+export const AnnotationProjects = ({ defaultPlayerId }: AnnotationProjectsProps = {}) => {
   const { user } = useAuth();
   const [projects, setProjects] = useState<AnnotationProject[]>([]);
   const [activeProject, setActiveProject] = useState<AnnotationProject | null>(null);
@@ -93,17 +97,30 @@ export const AnnotationProjects = () => {
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     const load = async () => {
-      const { data, error } = await supabase
-        .from('annotation_projects')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      const [{ data, error }, { data: playerVideos }] = await Promise.all([
+        supabase
+          .from('annotation_projects')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+        defaultPlayerId
+          ? supabase
+              .from('video_analyses')
+              .select('video_url')
+              .eq('player_id', defaultPlayerId)
+          : Promise.resolve({ data: null, error: null } as any),
+      ]);
 
       if (error) {
         console.error('Failed to load annotation projects:', error);
         toast.error('Failed to load projects');
       } else if (data) {
-        setProjects(data.map(row => ({
+        const playerVideoUrlSet = new Set((playerVideos || []).map((v: any) => v.video_url));
+        const filteredRows = defaultPlayerId
+          ? data.filter((row: any) => playerVideoUrlSet.has(row.video_url))
+          : data;
+
+        setProjects(filteredRows.map(row => ({
           id: row.id,
           name: row.name,
           videoUrl: row.video_url,
@@ -115,7 +132,7 @@ export const AnnotationProjects = () => {
       setLoading(false);
     };
     load();
-  }, [user]);
+  }, [user, defaultPlayerId]);
 
   const handleNewProject = () => {
     if (!user) { toast.error('You must be logged in'); return; }

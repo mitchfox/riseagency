@@ -447,9 +447,10 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
     } else {
       setEditingAnalysis(null);
       setFormData({ analysis_type: type, points: [], matchups: [], starting_xi: [] });
-      setSelectedPlayerId("none");
+      // In Athlete Centre context, keep the currently selected player pre-linked
+      setSelectedPlayerId(defaultPlayerId || "none");
       setSelectedPerformanceReportId("none");
-      setTaggedPlayerIds([]);
+      setTaggedPlayerIds(defaultPlayerId ? [defaultPlayerId] : []);
     }
   };
 
@@ -457,9 +458,10 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
     setActiveView('list');
     setEditingAnalysis(null);
     setFormData({ points: [], matchups: [], starting_xi: [] });
-    setSelectedPlayerId("none");
+    // Preserve Athlete Centre selected player context instead of resetting to none
+    setSelectedPlayerId(defaultPlayerId || "none");
     setSelectedPerformanceReportId("none");
-    setTaggedPlayerIds([]);
+    setTaggedPlayerIds(defaultPlayerId ? [defaultPlayerId] : []);
   };
 
   const handleSchemeChange = (scheme: string) => {
@@ -1673,7 +1675,10 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         </TabsContent>
 
         <TabsContent value="action-reports" className="space-y-4">
-          <ActionReportsList />
+          <ActionReportsList
+            defaultPlayerId={defaultPlayerId}
+            defaultPlayerName={defaultPlayerId ? players.find(p => p.id === defaultPlayerId)?.name : undefined}
+          />
         </TabsContent>
       </Tabs>
 
