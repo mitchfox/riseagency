@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors, PenLine, Loader2 } from "lucide-react";
+import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors, PenLine, Loader2, ArrowUp, ArrowDown, ArrowRightLeft } from "lucide-react";
 import { AudioRecorder } from "./AudioRecorder";
 import {
   Collapsible,
@@ -131,17 +131,23 @@ const VideoItem = ({
   url,
   onRemove,
   onTrimComplete,
+  pointIndex,
+  totalPoints,
+  onMoveToPoint,
 }: {
   url: string;
   onRemove: () => void;
   onTrimComplete: (newUrl: string) => void;
+  pointIndex: number;
+  totalPoints: number;
+  onMoveToPoint: (targetPointIndex: number) => void;
 }) => {
   const [trimOpen, setTrimOpen] = useState(false);
   const [annotateOpen, setAnnotateOpen] = useState(false);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
+  const [moveOpen, setMoveOpen] = useState(false);
 
   const handleOpenAnnotate = () => {
-    // Create a temporary annotation project for this video
     const project: AnnotationProject = {
       id: crypto.randomUUID(),
       name: "Point Video Annotation",
@@ -156,7 +162,6 @@ const VideoItem = ({
 
   const handleSaveAnnotation = async (proj: AnnotationProject) => {
     try {
-      // Save annotation project to database
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Must be logged in to save annotations");
@@ -183,6 +188,9 @@ const VideoItem = ({
       toast.error("Failed to save annotations: " + err.message);
     }
   };
+
+  // Build list of other points to move to
+  const otherPoints = Array.from({ length: totalPoints }, (_, i) => i).filter(i => i !== pointIndex);
 
   return (
     <div className="relative">
@@ -213,6 +221,35 @@ const VideoItem = ({
         >
           <Scissors className="w-3 h-3" />
         </Button>
+        {otherPoints.length > 0 && (
+          <Select
+            value=""
+            onValueChange={(val) => {
+              onMoveToPoint(Number(val));
+              setMoveOpen(false);
+            }}
+            open={moveOpen}
+            onOpenChange={setMoveOpen}
+          >
+            <SelectTrigger asChild>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-6 w-6 p-0"
+                title="Move to another point"
+              >
+                <ArrowRightLeft className="w-3 h-3" />
+              </Button>
+            </SelectTrigger>
+            <SelectContent>
+              {otherPoints.map((i) => (
+                <SelectItem key={i} value={String(i)}>
+                  Move to Point {i + 1}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Button
           variant="destructive"
           size="sm"
@@ -248,9 +285,12 @@ interface SortablePointCardProps {
   point: Point;
   index: number;
   pointId: string;
+  totalPoints: number;
   analysisType: string;
   removePoint: (index: number) => void;
   updatePoint: (index: number, field: keyof Point, value: any) => void;
+  onMovePoint: (fromIndex: number, toIndex: number) => void;
+  onMoveVideoToPoint: (fromPointIndex: number, videoIndex: number, toPointIndex: number) => void;
   handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>, field: string, pointIndex?: number, isMultiple?: boolean) => Promise<void>;
   handleVideoUploadForPoint: (event: React.ChangeEvent<HTMLInputElement>, pointIndex: number) => Promise<void>;
   removeImageFromPoint: (pointIndex: number, imageIndex: number) => void;
@@ -265,9 +305,12 @@ const SortablePointCard = ({
   point,
   index,
   pointId,
+  totalPoints,
   analysisType,
   removePoint,
   updatePoint,
+  onMovePoint,
+  onMoveVideoToPoint,
   handleImageUpload,
   handleVideoUploadForPoint,
   removeImageFromPoint,
@@ -348,6 +391,28 @@ const SortablePointCard = ({
             <h4 className="font-medium">
               {analysisType === "concept" ? `Image Set ${index + 1}` : `Point ${index + 1}`}
             </h4>
+            <div className="flex items-center gap-0.5 ml-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={() => onMovePoint(index, index - 1)}
+                disabled={index === 0}
+                title="Move up"
+              >
+                <ArrowUp className="w-3 h-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={() => onMovePoint(index, index + 1)}
+                disabled={index === totalPoints - 1}
+                title="Move down"
+              >
+                <ArrowDown className="w-3 h-3" />
+              </Button>
+            </div>
           </div>
           <Button variant="ghost" size="sm" onClick={() => removePoint(index)}>
             <X className="w-4 h-4" />
@@ -561,6 +626,9 @@ const SortablePointCard = ({
                 <VideoItem
                   key={vidIndex}
                   url={url}
+                  pointIndex={index}
+                  totalPoints={totalPoints}
+                  onMoveToPoint={(targetIdx) => onMoveVideoToPoint(index, vidIndex, targetIdx)}
                   onRemove={() => {
                     const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
                     updatePoint(index, "video_urls", currentVideos.filter((_, i) => i !== vidIndex));
@@ -687,9 +755,27 @@ export const AnalysisPointsSection = ({
                 pointId={pointIds[index]}
                 point={point}
                 index={index}
+                totalPoints={(formData.points || []).length}
                 analysisType={analysisType}
                 removePoint={removePoint}
                 updatePoint={updatePoint}
+                onMovePoint={(fromIdx, toIdx) => {
+                  const newPoints = [...(formData.points || [])];
+                  const [moved] = newPoints.splice(fromIdx, 1);
+                  newPoints.splice(toIdx, 0, moved);
+                  setFormData({ ...formData, points: newPoints });
+                }}
+                onMoveVideoToPoint={(fromPointIdx, videoIdx, toPointIdx) => {
+                  const newPoints = JSON.parse(JSON.stringify(formData.points || []));
+                  const fromVideos = newPoints[fromPointIdx].video_urls || (newPoints[fromPointIdx].video_url ? [newPoints[fromPointIdx].video_url] : []);
+                  const [movedUrl] = fromVideos.splice(videoIdx, 1);
+                  newPoints[fromPointIdx].video_urls = fromVideos;
+                  const toVideos = newPoints[toPointIdx].video_urls || (newPoints[toPointIdx].video_url ? [newPoints[toPointIdx].video_url] : []);
+                  toVideos.push(movedUrl);
+                  newPoints[toPointIdx].video_urls = toVideos;
+                  setFormData({ ...formData, points: newPoints });
+                  toast.success(`Video moved to Point ${toPointIdx + 1}`);
+                }}
                 handleImageUpload={handleImageUpload}
                 handleVideoUploadForPoint={handleVideoUploadForPoint}
                 removeImageFromPoint={removeImageFromPoint}
