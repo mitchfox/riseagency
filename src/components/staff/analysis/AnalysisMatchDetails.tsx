@@ -43,6 +43,7 @@ interface MatchDetailsProps {
   showPlayerLinking?: boolean;
   taggedPlayerIds: string[];
   setTaggedPlayerIds: (ids: string[]) => void;
+  defaultPlayerId?: string;
 }
 
 export const AnalysisMatchDetails = ({
@@ -62,6 +63,7 @@ export const AnalysisMatchDetails = ({
   showPlayerLinking = false,
   taggedPlayerIds,
   setTaggedPlayerIds,
+  defaultPlayerId,
 }: MatchDetailsProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -183,22 +185,28 @@ export const AnalysisMatchDetails = ({
           <>
             <div>
               <Label>Link to Player</Label>
-              <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a player..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No player link</SelectItem>
-                  {sortPlayersByRepresentation(players).map((player: any) => (
-                    <SelectItem key={player.id} value={player.id}>
-                      {player.name}
-                      {player.representation_status && player.representation_status !== 'other' && (
-                        <span className="text-xs text-muted-foreground ml-1">({getStatusLabel(player.representation_status)})</span>
-                      )}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {defaultPlayerId ? (
+                <div className="rounded-md border px-3 py-2 text-sm">
+                  <span className="font-medium">{players.find((p: any) => p.id === defaultPlayerId)?.name || "Selected player"}</span>
+                </div>
+              ) : (
+                <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a player..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No player link</SelectItem>
+                    {sortPlayersByRepresentation(players).map((player: any) => (
+                      <SelectItem key={player.id} value={player.id}>
+                        {player.name}
+                        {player.representation_status && player.representation_status !== 'other' && (
+                          <span className="text-xs text-muted-foreground ml-1">({getStatusLabel(player.representation_status)})</span>
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {selectedPlayerId && selectedPlayerId !== "none" && performanceReports.length > 0 && (
