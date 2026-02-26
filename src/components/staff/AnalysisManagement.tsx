@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { sharedSupabase as supabase } from "@/integrations/supabase/sharedClient";
 import { supabase as localSupabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -974,9 +975,9 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         type = 'analysis-paragraph';
       }
 
-      const { data, error } = await localSupabase.functions.invoke('ai-write', {
+      const { data, error } = await invokeEdgeFunction('ai-write', {
         body: { prompt, context, type }
-      });
+      }, localSupabase);
 
       if (error) throw error;
 
@@ -1059,13 +1060,13 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         toast.warning("No overview examples found. Add examples via the settings icon for better results.");
       }
 
-      const { data, error } = await localSupabase.functions.invoke('ai-write', {
+      const { data, error } = await invokeEdgeFunction('ai-write', {
         body: {
           prompt: `SOURCE CONTENT (preserve ALL tactical observations and facts from this - do NOT add new analysis):\n${sourceContent}\n\nRewrite this as a single cohesive overview paragraph. Keep ALL the facts and observations but apply the writing style from the examples.`,
           context: `Analysis Type: ${analysisType}\n\nSTYLE EXAMPLES (copy the EXACT tone, vocabulary, phrasing patterns, and sentence structure from these):\n${styleExamplesText || 'No examples provided - write in a professional football analysis style.'}`,
           type: 'analysis-overview'
         }
-      });
+      }, localSupabase);
 
       if (error) throw error;
 
@@ -1119,13 +1120,13 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
           ).join('\n\n')}`
         : '';
 
-      const { data, error } = await localSupabase.functions.invoke('ai-write', {
+      const { data, error } = await invokeEdgeFunction('ai-write', {
         body: {
           prompt: `Write a comprehensive overview paragraph for a ${overviewWriter.category} analysis based on this information: ${overviewWriter.overviewInfo}. Match the writing style, vocabulary level, and level of detail shown in the examples. This should be one cohesive paragraph.`,
           context: `Analysis Type: ${overviewWriter.category}${exampleContext}`,
           type: 'analysis-overview'
         }
-      });
+      }, localSupabase);
 
       if (error) throw error;
 
@@ -1178,7 +1179,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
           ).join('\n\n')}`
         : '';
 
-      const { data, error } = await localSupabase.functions.invoke('ai-write', {
+      const { data, error } = await invokeEdgeFunction('ai-write', {
         body: {
           prompt: `Write two tactical scheme paragraphs based on this information: ${schemeWriter.schemeInfo}. 
 
@@ -1191,7 +1192,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
           context: `Scheme analysis for football match`,
           type: 'analysis-scheme'
         }
-      });
+      }, localSupabase);
 
       if (error) throw error;
 
@@ -1241,26 +1242,26 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
       let paragraph2 = '';
 
       if (aiWriter.paragraph1Info.trim()) {
-        const { data: data1, error: error1 } = await localSupabase.functions.invoke('ai-write', {
+        const { data: data1, error: error1 } = await invokeEdgeFunction('ai-write', {
           body: {
             prompt: `Write a professional analysis paragraph based on this information: ${aiWriter.paragraph1Info}. Match the writing style, vocabulary level, and level of detail shown in the examples.`,
             context: `Analysis Type: ${aiWriter.category}${exampleContext}`,
             type: 'analysis-paragraph'
           }
-        });
+        }, localSupabase);
 
         if (error1) throw error1;
         paragraph1 = data1.text;
       }
 
       if (aiWriter.paragraph2Info.trim()) {
-        const { data: data2, error: error2 } = await localSupabase.functions.invoke('ai-write', {
+        const { data: data2, error: error2 } = await invokeEdgeFunction('ai-write', {
           body: {
             prompt: `Write a professional analysis paragraph based on this information: ${aiWriter.paragraph2Info}. Match the writing style, vocabulary level, and level of detail shown in the examples.`,
             context: `Analysis Type: ${aiWriter.category}${exampleContext}`,
             type: 'analysis-paragraph'
           }
-        });
+        }, localSupabase);
 
         if (error2) throw error2;
         paragraph2 = data2.text;

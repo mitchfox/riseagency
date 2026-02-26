@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Bell, BellOff, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -67,7 +68,7 @@ export const StaffPushNotifications = () => {
       }
 
       // Get VAPID public key
-      const { data: vapidData, error: vapidError } = await supabase.functions.invoke('init-web-push');
+      const { data: vapidData, error: vapidError } = await invokeEdgeFunction('init-web-push');
       if (vapidError) throw vapidError;
 
       const registration = await navigator.serviceWorker.ready;
@@ -79,7 +80,7 @@ export const StaffPushNotifications = () => {
       });
 
       // Save subscription to database
-      const { error: saveError } = await supabase.functions.invoke('subscribe-staff-push', {
+      const { error: saveError } = await invokeEdgeFunction('subscribe-staff-push', {
         body: { subscription: subscription.toJSON() }
       });
 

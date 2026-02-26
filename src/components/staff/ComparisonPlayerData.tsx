@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -221,7 +222,7 @@ export const ComparisonPlayerData = () => {
         imageContents.push(`data:${mimeType};base64,${base64}`);
       }
 
-      const { data, error } = await supabase.functions.invoke('extract-player-stats', {
+      const { data, error } = await invokeEdgeFunction('extract-player-stats', {
         body: { images: imageContents }
       });
 
