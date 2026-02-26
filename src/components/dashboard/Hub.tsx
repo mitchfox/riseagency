@@ -917,6 +917,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
           playerId={playerData.id}
           playerName={playerData.name || "You"}
           playerPosition={playerData.position || "CF"}
+          analyses={analyses}
           onSeeAll={onNavigateToComparisons || onNavigateToAnalysis}
         />
       )}

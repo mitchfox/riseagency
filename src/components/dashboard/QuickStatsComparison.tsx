@@ -5,77 +5,87 @@ import { BarChart3, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { AnimatePresence, motion } from "framer-motion";
+import { ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
 
 interface QuickStatsComparisonProps {
   playerId: string;
   playerName: string;
   playerPosition: string;
+  analyses: any[];
   onSeeAll?: () => void;
 }
-
-const COMPARABLE_STATS: { label: string; playerKey: string; benchmarkKey: string }[] = [
-  { label: "xG /90", playerKey: "xG_adj_per90", benchmarkKey: "npxg_per90" },
-  { label: "xA /90", playerKey: "xA_adj_per90", benchmarkKey: "xa_per90" },
-  { label: "Prog. Passes /90", playerKey: "progressive_passes_adj_per90", benchmarkKey: "progressive_passes_per90" },
-  { label: "Prog. Carries /90", playerKey: "progressive_carries_adj_per90", benchmarkKey: "progressive_carries_per90" },
-  { label: "Duels Won %", playerKey: "duels_won_pct", benchmarkKey: "duels_won_pct" },
-  { label: "Pass Accuracy %", playerKey: "pass_accuracy_pct", benchmarkKey: "pass_accuracy_pct" },
-  { label: "Shots on Target /90", playerKey: "shots_on_target_per90", benchmarkKey: "shots_on_target_per90" },
-  { label: "Key Passes /90", playerKey: "key_passes_per90", benchmarkKey: "key_passes_per90" },
-  { label: "Tackles Won /90", playerKey: "tackles_won_per90", benchmarkKey: "tackles_won_per90" },
-  { label: "Interceptions /90", playerKey: "interceptions_per90", benchmarkKey: "interceptions_per90" },
-];
 
 const surname = (name: string) => {
   const parts = name.trim().split(" ");
   return parts.length > 1 ? parts[parts.length - 1] : parts[0];
 };
 
-export const QuickStatsComparison = ({ playerId, playerName, playerPosition, onSeeAll }: QuickStatsComparisonProps) => {
+/** Unified stat lookup — fixture_stats first, then striker_stats fallback */
+const getStatValue = (analysis: any, key: string): number | null => {
+  const fs = analysis.fixture_stats as Record<string, any> | null;
+  const ss = analysis.striker_stats as Record<string, any> | null;
+  if (fs?.[key] != null) return Number(fs[key]);
+  if (ss?.[key] != null) return Number(ss[key]);
+  return null;
+};
+
+/** Pick a random subset of metrics that have data for both player and benchmark */
+const FORM_WINDOW = 5;
+
+export const QuickStatsComparison = ({ playerId, playerName, playerPosition, analyses, onSeeAll }: QuickStatsComparisonProps) => {
   const [loading, setLoading] = React.useState(true);
   const [chartData, setChartData] = React.useState<{ name: string; value: number }[] | null>(null);
   const [statLabel, setStatLabel] = React.useState("");
   const [benchmarkName, setBenchmarkName] = React.useState("");
   const [visible, setVisible] = React.useState(true);
 
-  const playerAnalysesRef = React.useRef<any[] | null>(null);
   const benchmarksRef = React.useRef<any[] | null>(null);
   const usedStatsRef = React.useRef<Set<string>>(new Set());
-  // Refs for deduplication — avoids circular deps
   const statLabelRef = React.useRef("");
   const benchmarkNameRef = React.useRef("");
 
-  const pickComparison = React.useCallback(() => {
-    const playerAnalyses = playerAnalysesRef.current;
-    const benchmarks = benchmarksRef.current;
-    if (!playerAnalyses || playerAnalyses.length === 0 || !benchmarks || benchmarks.length === 0) return false;
+  // Recent analyses sorted newest-first, limited to form window
+  const recentAnalyses = React.useMemo(() => {
+    return [...analyses]
+      .filter(a => a.r90_score != null)
+      .sort((a, b) => new Date(b.analysis_date).getTime() - new Date(a.analysis_date).getTime())
+      .slice(0, FORM_WINDOW);
+  }, [analyses]);
 
-    if (usedStatsRef.current.size >= COMPARABLE_STATS.length) {
+  const pickComparison = React.useCallback(() => {
+    const benchmarks = benchmarksRef.current;
+    if (recentAnalyses.length === 0 || !benchmarks || benchmarks.length === 0) return false;
+
+    if (usedStatsRef.current.size >= ALL_METRICS.length) {
       usedStatsRef.current.clear();
     }
 
-    const available = COMPARABLE_STATS.filter(s => !usedStatsRef.current.has(s.label));
-    const shuffledStats = [...available].sort(() => Math.random() - 0.5);
+    const available = ALL_METRICS.filter(m => !usedStatsRef.current.has(m.key));
+    const shuffledMetrics = [...available].sort(() => Math.random() - 0.5);
     const shuffledBenchmarks = [...benchmarks].sort(() => Math.random() - 0.5);
 
-    for (const stat of shuffledStats) {
+    for (const metric of shuffledMetrics) {
+      // Calculate player average for this metric across recent analyses
+      const playerVals = recentAnalyses
+        .map(a => getStatValue(a, metric.key))
+        .filter((v): v is number => v !== null);
+
+      if (playerVals.length === 0) continue;
+
+      const playerAvg = playerVals.reduce((a, b) => a + b, 0) / playerVals.length;
+
       for (const benchmark of shuffledBenchmarks) {
         const metrics = (benchmark.metrics || {}) as Record<string, number>;
-        const benchmarkVal = metrics[stat.benchmarkKey];
-        // Deduplicate using refs (no state dependency)
-        if (stat.label === statLabelRef.current && benchmark.name === benchmarkNameRef.current) continue;
+        const benchmarkVal = metrics[metric.key];
 
-        const playerVals = playerAnalyses
-          .map((a: any) => (a.striker_stats as any)?.[stat.playerKey])
-          .filter((v: any): v is number => typeof v === "number");
+        // Deduplicate
+        if (metric.label === statLabelRef.current && benchmark.name === benchmarkNameRef.current) continue;
 
-        if (playerVals.length > 0 && typeof benchmarkVal === "number") {
-          const playerAvg = playerVals.reduce((a: number, b: number) => a + b, 0) / playerVals.length;
-
-          usedStatsRef.current.add(stat.label);
-          statLabelRef.current = stat.label;
+        if (typeof benchmarkVal === "number") {
+          usedStatsRef.current.add(metric.key);
+          statLabelRef.current = metric.label;
           benchmarkNameRef.current = benchmark.name;
-          setStatLabel(stat.label);
+          setStatLabel(metric.label);
           setBenchmarkName(benchmark.name);
           setChartData([
             { name: surname(playerName), value: Math.round(playerAvg * 100) / 100 },
@@ -86,48 +96,39 @@ export const QuickStatsComparison = ({ playerId, playerName, playerPosition, onS
       }
     }
     return false;
-  }, [playerName]); // Only depends on playerName now — no circular dep
+  }, [playerName, recentAnalyses]);
 
+  // Fetch only benchmarks (player data comes from props now)
   React.useEffect(() => {
     let cancelled = false;
-    const fetchData = async () => {
+    const fetchBenchmarks = async () => {
       setLoading(true);
       try {
-        const [{ data: playerAnalyses }, { data: benchmarks }] = await Promise.all([
-          supabase
-            .from("player_analysis")
-            .select("striker_stats")
-            .eq("player_id", playerId)
-            .not("r90_score", "is", null)
-            .order("analysis_date", { ascending: false })
-            .limit(5),
-          supabase
-            .from("comparison_players")
-            .select("name, position, metrics")
-            .eq("position", playerPosition),
-        ]);
+        const { data: benchmarks } = await supabase
+          .from("comparison_players")
+          .select("name, position, metrics")
+          .eq("position", playerPosition);
 
         if (cancelled) return;
-        playerAnalysesRef.current = playerAnalyses || [];
         benchmarksRef.current = benchmarks || [];
 
         if (!pickComparison()) {
           setChartData(null);
         }
       } catch (error) {
-        console.error("Error fetching quick stats:", error);
+        console.error("Error fetching benchmarks:", error);
         if (!cancelled) setChartData(null);
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
-    fetchData();
+    fetchBenchmarks();
     return () => { cancelled = true; };
-  }, [playerId, playerPosition, pickComparison]);
+  }, [playerPosition, pickComparison]);
 
   // Auto-rotate every 15 seconds
   React.useEffect(() => {
-    if (loading || !playerAnalysesRef.current || !benchmarksRef.current) return;
+    if (loading || !benchmarksRef.current) return;
     const interval = setInterval(() => {
       setVisible(false);
       setTimeout(() => {
@@ -181,7 +182,7 @@ export const QuickStatsComparison = ({ playerId, playerName, playerPosition, onS
                 transition={{ duration: 0.4 }}
               >
                 <p className="text-xs text-muted-foreground mb-3">
-                  <span className="font-semibold text-foreground">{statLabel}</span> — Last 5 games avg vs{" "}
+                  <span className="font-semibold text-foreground">{statLabel}</span> — Last {FORM_WINDOW} games avg vs{" "}
                   <span className="font-semibold text-primary">{benchmarkName}</span>
                 </p>
                 <div className="h-[120px]">
