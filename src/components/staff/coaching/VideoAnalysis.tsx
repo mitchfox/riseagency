@@ -814,41 +814,30 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
   };
 
-  const handleExportToAnalysisPoint = async () => {
-    if (!selectedVideo || !selectedAnalysisId || selectedPointIndex === null) return;
+  // Link video analysis to an analysis (mirrors handleLinkToReport pattern)
+  const handleLinkToAnalysis = async () => {
+    if (!selectedVideo || !selectedAnalysisId) return;
     setExporting(true);
     try {
-      const analysis = availableAnalyses.find(a => a.id === selectedAnalysisId);
-      if (!analysis) throw new Error("Analysis not found");
+      const { data: analysis } = await supabase
+        .from("analyses")
+        .select("linked_video_analysis_ids")
+        .eq("id", selectedAnalysisId)
+        .single();
 
-      const points = [...analysis.points];
-      const point = { ...points[selectedPointIndex] };
-      const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
-
-      // Extract each clip and add to point
-      for (const clip of selectedVideo.clips) {
-        let clipUrl: string;
-        try {
-          clipUrl = await extractClipFile(selectedVideo.video_url, clip.id, clip.start, clip.end);
-        } catch {
-          clipUrl = `${selectedVideo.video_url}#t=${clip.start},${clip.end}`;
-        }
-        currentVideos.push(clipUrl);
+      const existing = (analysis?.linked_video_analysis_ids || []) as string[];
+      if (!existing.includes(selectedVideo.id)) {
+        const { error } = await supabase
+          .from("analyses")
+          .update({ linked_video_analysis_ids: [...existing, selectedVideo.id] })
+          .eq("id", selectedAnalysisId);
+        if (error) throw error;
       }
 
-      point.video_urls = currentVideos;
-      points[selectedPointIndex] = point;
-
-      const { error } = await supabase
-        .from("analyses")
-        .update({ points })
-        .eq("id", selectedAnalysisId);
-
-      if (error) throw error;
-      toast.success(`${selectedVideo.clips.length} clip(s) added to point ${selectedPointIndex + 1}`);
+      toast.success(`Video analysis linked. Clips are now available for selection when editing points.`);
       setShowExportDialog(false);
     } catch (err: any) {
-      toast.error(err.message || "Failed to add clips to analysis");
+      toast.error(err.message || "Failed to link to analysis");
     }
     setExporting(false);
   };
@@ -1740,11 +1729,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   </div>
                 </>
               ) : (
-                <>
+              <>
                   <p className="text-sm text-muted-foreground">
-                    Add {selectedVideo.clips.length} clip(s) to an analysis point's videos.
+                    Link this video analysis so its clips are available for selection when editing analysis points.
                   </p>
-                  <Select value={selectedAnalysisId} onValueChange={(v) => { setSelectedAnalysisId(v); setSelectedPointIndex(null); }}>
+                  <Select value={selectedAnalysisId} onValueChange={(v) => { setSelectedAnalysisId(v); }}>
                     <SelectTrigger><SelectValue placeholder="Select analysis" /></SelectTrigger>
                     <SelectContent>
                       {availableAnalyses.length === 0 ? (
@@ -1758,31 +1747,13 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       )}
                     </SelectContent>
                   </Select>
-                  {selectedAnalysisId && (() => {
-                    const analysis = availableAnalyses.find(a => a.id === selectedAnalysisId);
-                    if (!analysis || analysis.points.length === 0) return (
-                      <p className="text-sm text-muted-foreground">No points on this analysis. Add points first.</p>
-                    );
-                    return (
-                      <Select value={selectedPointIndex !== null ? String(selectedPointIndex) : ""} onValueChange={(v) => setSelectedPointIndex(parseInt(v))}>
-                        <SelectTrigger><SelectValue placeholder="Select point" /></SelectTrigger>
-                        <SelectContent>
-                          {analysis.points.map((pt: any, idx: number) => (
-                            <SelectItem key={idx} value={String(idx)}>
-                              Point {idx + 1}{pt.title ? ` — ${pt.title}` : ''}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    );
-                  })()}
                   <Button
-                    onClick={handleExportToAnalysisPoint}
-                    disabled={!selectedAnalysisId || selectedPointIndex === null || exporting}
+                    onClick={handleLinkToAnalysis}
+                    disabled={!selectedAnalysisId || exporting}
                     className="w-full"
                   >
-                    {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
-                    Add Clips to Point
+                    {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Link2 className="h-4 w-4 mr-2" />}
+                    Link Clips
                   </Button>
                 </>
               )}

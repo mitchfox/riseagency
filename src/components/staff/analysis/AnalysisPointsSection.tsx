@@ -21,7 +21,7 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { VideoTrimmerDialog } from "./VideoTrimmerDialog";
 import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEditor";
 import type { AnnotationProject } from "@/components/staff/annotations/AnnotationProjects";
@@ -64,6 +64,16 @@ interface PerformanceReportAction {
   action_score?: number;
 }
 
+interface VideoAnalysisClip {
+  id: string;
+  label: string;
+  start: number;
+  end: number;
+  action_type: string;
+  video_url: string;
+  video_title: string;
+}
+
 interface PointsSectionProps {
   formData: any;
   setFormData: (data: any) => void;
@@ -79,6 +89,7 @@ interface PointsSectionProps {
   analysisType: "pre-match" | "post-match" | "concept";
   defaultOpen?: boolean;
   performanceReportClips?: PerformanceReportAction[];
+  analysisId?: string;
 }
 
 // Helper to get R90 action score color - matches PerformanceReportDialog exactly
@@ -247,6 +258,7 @@ interface SortablePointCardProps {
   generateWithAI: (field: string, pointIndex?: number) => Promise<void>;
   aiGenerating: boolean;
   performanceReportClips: PerformanceReportAction[];
+  videoAnalysisClips: VideoAnalysisClip[];
 }
 
 const SortablePointCard = ({
@@ -263,6 +275,7 @@ const SortablePointCard = ({
   generateWithAI,
   aiGenerating,
   performanceReportClips,
+  videoAnalysisClips,
 }: SortablePointCardProps) => {
   const {
     attributes,
@@ -485,6 +498,41 @@ const SortablePointCard = ({
             </div>
           )}
 
+          {/* Select from Video Analysis clips if available */}
+          {videoAnalysisClips.length > 0 && (
+            <div className="mb-2">
+              <Select
+                value=""
+                onValueChange={(value) => {
+                  const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
+                  updatePoint(index, "video_urls", [...currentVideos, value]);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Add from Video Analysis clips..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {videoAnalysisClips.map((clip) => (
+                    <SelectItem key={clip.id} value={`${clip.video_url}#t=${clip.start},${clip.end}`}>
+                      <div className="flex items-center gap-2">
+                        <Film className="w-3 h-3" />
+                        <span className="truncate">
+                          {clip.label}
+                          {clip.action_type && <span className="ml-1 capitalize text-muted-foreground">({clip.action_type})</span>}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground ml-1 shrink-0">
+                          {Math.floor(clip.start / 60)}:{String(Math.floor(clip.start % 60)).padStart(2, '0')}
+                          →
+                          {Math.floor(clip.end / 60)}:{String(Math.floor(clip.end % 60)).padStart(2, '0')}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <Input
             type="file"
             accept="video/*"
@@ -547,8 +595,54 @@ export const AnalysisPointsSection = ({
   analysisType,
   defaultOpen = false,
   performanceReportClips = [],
+  analysisId,
 }: PointsSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [vaClips, setVaClips] = useState<VideoAnalysisClip[]>([]);
+
+  // Fetch linked video analysis clips when analysisId is available
+  useEffect(() => {
+    if (!analysisId) { setVaClips([]); return; }
+    const fetchVAClips = async () => {
+      try {
+        const { data: analysis } = await supabase
+          .from("analyses")
+          .select("linked_video_analysis_ids")
+          .eq("id", analysisId)
+          .single();
+
+        const linkedIds = (analysis?.linked_video_analysis_ids || []) as string[];
+        if (linkedIds.length === 0) { setVaClips([]); return; }
+
+        const { data: vas } = await supabase
+          .from("video_analyses")
+          .select("id, title, video_url, clips")
+          .in("id", linkedIds);
+
+        if (vas) {
+          const allClips: VideoAnalysisClip[] = [];
+          for (const va of vas) {
+            const clips = (va.clips as any as Array<any>) || [];
+            for (const clip of clips) {
+              allClips.push({
+                id: clip.id,
+                label: clip.label || clip.action_description || 'Clip',
+                start: clip.start,
+                end: clip.end,
+                action_type: clip.action_type || '',
+                video_url: va.video_url,
+                video_title: va.title,
+              });
+            }
+          }
+          setVaClips(allClips);
+        }
+      } catch (err) {
+        console.error('Error fetching VA clips:', err);
+      }
+    };
+    fetchVAClips();
+  }, [analysisId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -603,6 +697,7 @@ export const AnalysisPointsSection = ({
                 generateWithAI={generateWithAI}
                 aiGenerating={aiGenerating}
                 performanceReportClips={performanceReportClips}
+                videoAnalysisClips={vaClips}
               />
             ))}
           </SortableContext>

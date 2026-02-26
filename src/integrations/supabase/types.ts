@@ -102,6 +102,7 @@ export type Database = {
           key_details: string | null
           kit_primary_color: string | null
           kit_secondary_color: string | null
+          linked_video_analysis_ids: string[] | null
           match_date: string | null
           match_image_url: string | null
           matchups: Json | null
@@ -139,6 +140,7 @@ export type Database = {
           key_details?: string | null
           kit_primary_color?: string | null
           kit_secondary_color?: string | null
+          linked_video_analysis_ids?: string[] | null
           match_date?: string | null
           match_image_url?: string | null
           matchups?: Json | null
@@ -176,6 +178,7 @@ export type Database = {
           key_details?: string | null
           kit_primary_color?: string | null
           kit_secondary_color?: string | null
+          linked_video_analysis_ids?: string[] | null
           match_date?: string | null
           match_image_url?: string | null
           matchups?: Json | null

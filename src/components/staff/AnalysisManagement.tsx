@@ -1496,6 +1496,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
           analysisType={activeView as AnalysisType}
           defaultOpen={false}
           performanceReportClips={performanceReportClips}
+          analysisId={editingAnalysis?.id}
         />
 
         {/* Overview Section (Pre-Match and Post-Match - shown after points) - collapsed by default */}
