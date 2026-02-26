@@ -100,8 +100,11 @@ export type Database = {
           home_team_logo: string | null
           id: string
           key_details: string | null
+          kit_collar_color: string | null
+          kit_number_color: string | null
           kit_primary_color: string | null
           kit_secondary_color: string | null
+          kit_stripe_style: string | null
           linked_video_analysis_ids: string[] | null
           match_date: string | null
           match_image_url: string | null
@@ -138,8 +141,11 @@ export type Database = {
           home_team_logo?: string | null
           id?: string
           key_details?: string | null
+          kit_collar_color?: string | null
+          kit_number_color?: string | null
           kit_primary_color?: string | null
           kit_secondary_color?: string | null
+          kit_stripe_style?: string | null
           linked_video_analysis_ids?: string[] | null
           match_date?: string | null
           match_image_url?: string | null
@@ -176,8 +182,11 @@ export type Database = {
           home_team_logo?: string | null
           id?: string
           key_details?: string | null
+          kit_collar_color?: string | null
+          kit_number_color?: string | null
           kit_primary_color?: string | null
           kit_secondary_color?: string | null
+          kit_stripe_style?: string | null
           linked_video_analysis_ids?: string[] | null
           match_date?: string | null
           match_image_url?: string | null

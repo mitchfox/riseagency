@@ -216,8 +216,7 @@ const VideoItem = ({
       setAnnotationProject(proj);
       // Store the annotation project ID on the point data so it persists
       onAnnotationSaved?.(proj.id);
-      toast.success("Annotations saved");
-      setAnnotateOpen(false);
+      toast.success("Annotations saved — remember to save the analysis to persist the link");
     } catch (err: any) {
       toast.error("Failed to save annotations: " + err.message);
     }

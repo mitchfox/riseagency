@@ -84,7 +84,7 @@ interface KitProps {
   number: string;
 }
 
-const PlayerKit = ({ primaryColor, secondaryColor, numberColor = 'white', stripeStyle = 'thick', number }: KitProps) => {
+const PlayerKit = ({ primaryColor, secondaryColor, numberColor = 'white', stripeStyle = 'none', number }: KitProps) => {
   const showNumber = number && number !== '0' && number.trim() !== '';
   return (
     <svg width="50" height="60" viewBox="0 0 100 120" className="drop-shadow-lg">
@@ -672,6 +672,8 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
 };
 
 // Video with annotation overlay for analysis points
+// Uses the same element structure as the annotation editor — elements already have
+// correct appearAt/duration timing so we pass them straight to ReadOnlyAnnotationOverlay.
 const AnnotatedPointVideo = ({ url, annotationId }: { url: string; annotationId?: string }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [elements, setElements] = useState<any[]>([]);
@@ -685,13 +687,10 @@ const AnnotatedPointVideo = ({ url, annotationId }: { url: string; annotationId?
       .maybeSingle()
       .then(({ data }) => {
         if (data?.klips && Array.isArray(data.klips)) {
-          // Flatten all klip elements into a single array
+          // Flatten all klip elements — they already carry their own appearAt/duration
+          // which computeVisibleElements uses directly.
           const allElements = (data.klips as any[]).flatMap((klip: any) =>
-            (klip.elements || []).map((el: any) => ({
-              ...el,
-              klipStart: klip.startTime ?? 0,
-              klipEnd: klip.endTime ?? Infinity,
-            }))
+            (klip.elements || [])
           );
           setElements(allElements);
         }
@@ -708,7 +707,7 @@ const AnnotatedPointVideo = ({ url, annotationId }: { url: string; annotationId?
         muted
         playsInline
         className="w-full"
-        style={{ display: 'block', width: '100%', height: 'auto' }}
+        style={{ display: 'block', width: '100%', height: 'auto', objectFit: 'fill' }}
       />
       {elements.length > 0 && (
         <ReadOnlyAnnotationOverlay
@@ -1128,6 +1127,8 @@ const AnalysisViewer = () => {
                                   <PlayerKit
                                     primaryColor={analysis.kit_primary_color || '#FFD700'}
                                     secondaryColor={analysis.kit_secondary_color || '#000000'}
+                                    numberColor={(analysis as any).kit_number_color || 'white'}
+                                    stripeStyle={(analysis as any).kit_stripe_style || 'none'}
                                     number={player.shirt_number || player.number || ''}
                                   />
                                 </div>
