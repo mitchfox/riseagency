@@ -1,69 +1,39 @@
 
-Goal: fix Performance Report action inputs so (1) action type options are ordered by most used first, and (2) action description suggestions reliably appear as dropdown options for the selected action type.
 
-What I found in the code
-1. In `src/components/staff/CreatePerformanceReportDialog.tsx`, action type still uses native `<datalist>` (`list="action-types-list"` at both mobile and desktop rows).
-2. `fetchActionTypes` currently does:
-   - `.order("action_type")` (alphabetical),
-   - no frequency sorting,
-   - no normalisation,
-   - and is affected by the default 1000-row fetch cap.
-3. Description suggestions are keyed by exact `action_type` string (`descriptionsByType[action.action_type]`), so case/spacing mismatches prevent matches.
-4. There is already a working pattern in `src/components/staff/PerformanceActionsDialog.tsx` that uses `Popover + Command` for action type selection and frequency sorting logic.
-5. Current data confirms this mismatch risk:
-   - multiple variants exist (for example `Applied pressure` and `Applied pressure  `),
-   - total actions are >1000, so incomplete sampling can distort ordering and suggestions.
+## Problem Diagnosis
 
-Implementation plan
+The "Comparisons" section at the bottom of the Hub page uses completely different data from the "Comparisons" tab on the Analysis page. This is why the numbers are wildly wrong.
 
-1) Rebuild action-type/source data loading in `CreatePerformanceReportDialog.tsx`
-- Replace current `fetchActionTypes` logic with a normalised frequency builder.
-- Load enough rows to avoid the 1000-row cap issue (paginated `.range(...)` loop until complete).
-- Build:
-  - `actionTypeFrequencyMap` keyed by canonical action type,
-  - `descriptionsByType` keyed by canonical action type, with descriptions sorted by usage frequency.
-- Canonical format:
-  - trim,
-  - collapse duplicate spaces,
-  - title-case via existing `toTitleCase`,
-  - preserve punctuation like commas.
+**Hub (QuickStatsComparison)**: Reads from `striker_stats` column (a JSONB field containing calculated/imported data), averages the last 5 matches, and compares against benchmark players.
 
-2) Replace native datalist for action type with a proper combobox dropdown
-- Remove `<datalist id="action-types-list">`.
-- For both mobile and desktop action rows, replace action type `<Input list=...>` with `Popover + Command` pattern.
-- Sort options by most-used first, then alphabetically for ties.
-- Keep “type a new action type” behaviour by allowing free text from search input when no match exists.
+**Analysis > Comparisons (AnalysisComparisons)**: Reads from `fixture_stats` column (a separate JSONB field containing manually entered match data), and compares against the same benchmark players.
 
-3) Make action description suggestions robust and always visible as a dropdown workflow
-- Use canonical key lookup so suggestions appear even if user typed case/spacing variants.
-- Replace current fragile conditional display with a consistent suggestions dropdown interaction:
-  - desktop: popover suggestions linked to the description field,
-  - mobile: same dropdown pattern (not hidden behind collapsible-only behaviour).
-- Filter suggestions live by current description text.
-- Show clear empty state when no historic descriptions exist for chosen type.
+These are two entirely different data sources stored on the same `player_analysis` rows. So when the Hub says "xG /90 = 0.36" it could be pulling from `striker_stats.xG_adj_per90`, while the Analysis tab shows a completely different number from `fixture_stats.npxg_per90`. For most recent analyses, `striker_stats` fields are mostly null, making the averages unreliable.
 
-4) Normalise values on update/save to prevent future drift
-- In action updates for `action_type`, store canonical form immediately.
-- On save (`actionsToInsert` mapping), trim `action_description` and `notes`, and persist canonical `action_type`.
-- This prevents future duplicates that break ordering and suggestion matching.
+### Plan
 
-5) Keep refresh behaviour correct
-- After successful save/update, refresh action type + description cache (`fetchActionTypes`) so newly entered types/descriptions are available without reopening the screen.
+**Unify the data source** so the Hub's QuickStatsComparison uses the same logic as the Analysis Comparisons tab:
 
-6) Regression checks in Athlete Centre flow
-- Verify in `Athlete Centre > Match Flow > Performance Reports`:
-  - Action Type dropdown starts with top-used types (for example `Pass`, `Applied pressure`, `Defensive positioning`),
-  - Description dropdown shows historic options for selected type,
-  - Selecting a suggestion populates description correctly,
-  - Existing report editing, action reordering, clip upload, and save still work.
+1. **Refactor QuickStatsComparison** to accept `analyses` as a prop (already available from Hub) instead of fetching its own data separately
+2. **Switch data source** from `striker_stats` to `fixture_stats` (matching how AnalysisComparisons works), with a fallback to `striker_stats` for fields only available there
+3. **Use the same metric keys** as `ALL_METRICS` from `ComparisonPlayerData.tsx` so the stat names and keys match perfectly between Hub and Analysis Comparisons
+4. **Remove the separate DB fetch** inside QuickStatsComparison since the data is already loaded
 
-Technical details
-- Files to change:
-  - `src/components/staff/CreatePerformanceReportDialog.tsx` (primary and likely only file needed).
-- Reused UI components:
-  - `Popover`, `PopoverTrigger`, `PopoverContent`,
-  - `Command`, `CommandInput`, `CommandList`, `CommandEmpty`, `CommandGroup`, `CommandItem`.
-- Reused util:
-  - `toTitleCase` from `src/lib/titleCase.ts`.
-- No database migration required for this fix.
-- No backend function changes required for this fix.
+### Files to change
+
+- `src/components/dashboard/QuickStatsComparison.tsx` - refactor to accept `analyses` prop, switch from `striker_stats` to `fixture_stats`/`striker_stats` unified lookup (matching `AnalysisDataTab.getStatValue` pattern), update `COMPARABLE_STATS` keys to use `ALL_METRICS`
+- `src/components/dashboard/Hub.tsx` - pass `analyses` prop through to `QuickStatsComparison`
+
+### Technical detail
+
+The fix aligns the data lookup with `AnalysisDataTab.getStatValue`:
+```typescript
+const getStatValue = (analysis, key) => {
+  if (analysis.fixture_stats?.[key] != null) return Number(analysis.fixture_stats[key]);
+  if (analysis.striker_stats?.[key] != null) return Number(analysis.striker_stats[key]);
+  return null;
+};
+```
+
+The `COMPARABLE_STATS` array will be rebuilt to reference keys from `ALL_METRICS` (the same metric definitions used by Comparisons and Data tabs). The benchmark comparison will continue using `comparison_players.metrics` (which is the only fetch still needed).
+
