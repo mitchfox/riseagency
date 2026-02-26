@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown, ChevronsUpDown, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { toTitleCase } from "@/lib/titleCase";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -130,8 +133,10 @@ export const CreatePerformanceReportDialog = ({
   const [isAddStatDialogOpen, setIsAddStatDialogOpen] = useState(false);
   const [hiddenStatKeys, setHiddenStatKeys] = useState<string[]>([]);
   const [actionTypes, setActionTypes] = useState<string[]>([]);
+  const [actionTypeFrequencyMap, setActionTypeFrequencyMap] = useState<Record<string, number>>({});
   const [descriptionsByType, setDescriptionsByType] = useState<Record<string, string[]>>({});
   const [descriptionPopoverOpen, setDescriptionPopoverOpen] = useState<Record<number, boolean>>({});
+  const [actionTypePopoverOpen, setActionTypePopoverOpen] = useState<Record<number, boolean>>({});
   const [allR90Ratings, setAllR90Ratings] = useState<Array<{score: string | number | null, title: string, description: string}>>([]);
   const [expandedScores, setExpandedScores] = useState<Set<number>>(new Set());
   const [selectedScores, setSelectedScores] = useState<Record<number, Set<number>>>({}); // actionIndex -> Set of score indices
@@ -530,36 +535,68 @@ export const CreatePerformanceReportDialog = ({
     });
   }, [actions, minutesPlayed]);
 
-  const fetchActionTypes = async () => {
-    const { data, error } = await supabase
-      .from("performance_report_actions")
-      .select("action_type, action_description")
-      .not("action_type", "is", null)
-      .order("action_type");
+  /** Canonical action type: trim, collapse spaces, title-case */
+  const canonicalActionType = (raw: string): string => {
+    if (!raw) return raw;
+    return toTitleCase(raw.trim().replace(/\s{2,}/g, ' '));
+  };
 
-    if (!error && data) {
-      const uniqueTypes = Array.from(new Set(data.map(item => item.action_type)));
-      setActionTypes(uniqueTypes);
-      
-      // Build frequency-sorted descriptions grouped by action_type
-      const descMap: Record<string, Record<string, number>> = {};
-      data.forEach(item => {
-        if (item.action_description && item.action_description.trim()) {
-          const type = item.action_type || '';
-          if (!descMap[type]) descMap[type] = {};
-          const desc = item.action_description.trim();
-          descMap[type][desc] = (descMap[type][desc] || 0) + 1;
-        }
-      });
-      
-      const sortedDescs: Record<string, string[]> = {};
-      Object.entries(descMap).forEach(([type, counts]) => {
-        sortedDescs[type] = Object.entries(counts)
-          .sort((a, b) => b[1] - a[1])
-          .map(([desc]) => desc);
-      });
-      setDescriptionsByType(sortedDescs);
+  /** Look up descriptions using canonical key so case/spacing variants still match */
+  const getDescriptionsForType = (actionType: string): string[] => {
+    const canon = canonicalActionType(actionType);
+    return descriptionsByType[canon] || [];
+  };
+
+  const fetchActionTypes = async () => {
+    // Paginated fetch to overcome 1000-row default limit
+    let allRows: { action_type: string | null; action_description: string | null }[] = [];
+    const PAGE = 1000;
+    let from = 0;
+    let keepGoing = true;
+    while (keepGoing) {
+      const { data, error } = await supabase
+        .from("performance_report_actions")
+        .select("action_type, action_description")
+        .not("action_type", "is", null)
+        .range(from, from + PAGE - 1);
+      if (error || !data) break;
+      allRows = allRows.concat(data);
+      if (data.length < PAGE) keepGoing = false;
+      from += PAGE;
     }
+
+    // Build frequency map keyed by canonical action type
+    const freqMap: Record<string, number> = {};
+    const descMap: Record<string, Record<string, number>> = {};
+
+    allRows.forEach(item => {
+      const canon = canonicalActionType(item.action_type || '');
+      if (!canon) return;
+      freqMap[canon] = (freqMap[canon] || 0) + 1;
+
+      if (item.action_description && item.action_description.trim()) {
+        if (!descMap[canon]) descMap[canon] = {};
+        const desc = item.action_description.trim();
+        descMap[canon][desc] = (descMap[canon][desc] || 0) + 1;
+      }
+    });
+
+    // Sort types by frequency desc, then alphabetically
+    const sorted = Object.keys(freqMap).sort((a, b) => {
+      const diff = freqMap[b] - freqMap[a];
+      return diff !== 0 ? diff : a.localeCompare(b);
+    });
+    setActionTypes(sorted);
+    setActionTypeFrequencyMap(freqMap);
+
+    // Sort descriptions by frequency within each type
+    const sortedDescs: Record<string, string[]> = {};
+    Object.entries(descMap).forEach(([type, counts]) => {
+      sortedDescs[type] = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([desc]) => desc);
+    });
+    setDescriptionsByType(sortedDescs);
   };
 
   const fetchPlayerClub = async () => {
@@ -1121,10 +1158,13 @@ export const CreatePerformanceReportDialog = ({
 
   const updateAction = async (index: number, field: keyof PerformanceAction, value: string | RecordedStat | RecordedStat[] | null) => {
     const newActions = [...actions];
-    newActions[index] = { ...newActions[index], [field]: value };
+    // Normalise action_type to canonical form on every change
+    if (field === 'action_type' && typeof value === 'string') {
+      newActions[index] = { ...newActions[index], [field]: canonicalActionType(value) };
+    } else {
+      newActions[index] = { ...newActions[index], [field]: value };
+    }
     setActions(newActions);
-
-    // No longer auto-fetch category scores on action type change - user searches manually
   };
 
   // Extract keywords from description for better matching
@@ -1320,9 +1360,9 @@ export const CreatePerformanceReportDialog = ({
           action_number: a.action_number,
           minute: a.minute ? parseFloat(a.minute) : null,
           action_score: a.action_score ? parseFloat(a.action_score) : null,
-          action_type: a.action_type || null,
-          action_description: a.action_description || null,
-          notes: a.notes || null,
+          action_type: a.action_type ? canonicalActionType(a.action_type) : null,
+          action_description: a.action_description?.trim() || null,
+          notes: a.notes?.trim() || null,
           // Preserve video_url: use the one from the action state, or fall back to preserved from DB
           video_url: a.video_url || preservedVideoUrls?.get(a.action_number) || null,
           recorded_stat: (a.recorded_stat || null) as any,
@@ -1352,6 +1392,8 @@ export const CreatePerformanceReportDialog = ({
       }
 
       toast.success(`Performance report ${analysisId ? 'updated' : 'created'} successfully`);
+      // Refresh action type + description cache so newly entered types/descriptions are available
+      fetchActionTypes();
       logActivity({
         action: analysisId ? 'updated' : 'created',
         entityType: 'performance_report',
@@ -1755,13 +1797,53 @@ export const CreatePerformanceReportDialog = ({
                   
                   <div>
                     <Label className="text-xs">Action Type *</Label>
-                    <Input
-                      list="action-types-list"
-                      value={action.action_type}
-                      onChange={(e) => updateAction(index, "action_type", e.target.value)}
-                      placeholder="Select or type new"
-                      className="text-sm"
-                    />
+                    <Popover open={actionTypePopoverOpen[index] || false} onOpenChange={(open) => setActionTypePopoverOpen(prev => ({ ...prev, [index]: open }))}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" role="combobox" className="w-full justify-between text-sm font-normal h-9">
+                          {action.action_type || "Select or type new"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search action types..." />
+                          <CommandList>
+                            <CommandEmpty>
+                              <button
+                                type="button"
+                                className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent"
+                                onClick={() => {
+                                  // Use typed value from command input - get it from the DOM
+                                  const input = document.querySelector('[cmdk-input]') as HTMLInputElement;
+                                  if (input?.value) {
+                                    updateAction(index, "action_type", input.value);
+                                  }
+                                  setActionTypePopoverOpen(prev => ({ ...prev, [index]: false }));
+                                }}
+                              >
+                                Use typed value as new action type
+                              </button>
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {actionTypes.map((type) => (
+                                <CommandItem
+                                  key={type}
+                                  value={type}
+                                  onSelect={() => {
+                                    updateAction(index, "action_type", type);
+                                    setActionTypePopoverOpen(prev => ({ ...prev, [index]: false }));
+                                  }}
+                                >
+                                  <Check className={`mr-2 h-4 w-4 ${action.action_type === type ? 'opacity-100' : 'opacity-0'}`} />
+                                  {type}
+                                  <span className="ml-auto text-xs text-muted-foreground">{actionTypeFrequencyMap[type] || 0}</span>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   
                   <div>
@@ -1773,30 +1855,38 @@ export const CreatePerformanceReportDialog = ({
                       className="text-sm min-h-[60px]"
                       rows={2}
                     />
-                    {action.action_type && descriptionsByType[action.action_type]?.length > 0 && (
-                      <div className="mt-1">
-                        <Collapsible>
-                          <CollapsibleTrigger className="text-[9px] p-1 rounded bg-muted/50 font-medium w-full text-left flex items-center justify-between cursor-pointer hover:bg-muted/70 transition-colors text-muted-foreground">
+                    {action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
+                      <Popover open={descriptionPopoverOpen[index] || false} onOpenChange={(open) => setDescriptionPopoverOpen(prev => ({ ...prev, [index]: open }))}>
+                        <PopoverTrigger asChild>
+                          <Button variant="ghost" size="sm" className="mt-1 h-6 text-[10px] text-muted-foreground w-full justify-between">
                             <span>Previous descriptions</span>
                             <ChevronDown className="h-3 w-3" />
-                          </CollapsibleTrigger>
-                          <CollapsibleContent className="mt-1 max-h-28 overflow-y-auto border rounded bg-background">
-                            {descriptionsByType[action.action_type]
-                              .filter(d => !action.action_description || d.toLowerCase().includes(action.action_description.toLowerCase()))
-                              .slice(0, 10)
-                              .map((desc, di) => (
-                                <button
-                                  key={di}
-                                  type="button"
-                                  className="block w-full text-left text-xs px-2 py-1.5 hover:bg-accent transition-colors truncate"
-                                  onClick={() => updateAction(index, "action_description", desc)}
-                                >
-                                  {desc}
-                                </button>
-                              ))}
-                          </CollapsibleContent>
-                        </Collapsible>
-                      </div>
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Filter descriptions..." />
+                            <CommandList>
+                              <CommandEmpty>No matching descriptions</CommandEmpty>
+                              <CommandGroup>
+                                {getDescriptionsForType(action.action_type).map((desc, di) => (
+                                  <CommandItem
+                                    key={di}
+                                    value={desc}
+                                    onSelect={() => {
+                                      updateAction(index, "action_description", desc);
+                                      setDescriptionPopoverOpen(prev => ({ ...prev, [index]: false }));
+                                    }}
+                                    className="text-xs"
+                                  >
+                                    {desc}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     )}
                   </div>
                   
@@ -1910,13 +2000,52 @@ export const CreatePerformanceReportDialog = ({
                         />
                       </td>
                       <td className="p-2">
-                        <Input
-                          list="action-types-list"
-                          value={action.action_type}
-                          onChange={(e) => updateAction(index, "action_type", e.target.value)}
-                          placeholder="Select or type"
-                          className="w-40 text-sm"
-                        />
+                        <Popover open={actionTypePopoverOpen[1000 + index] || false} onOpenChange={(open) => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: open }))}>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" role="combobox" className="w-40 justify-between text-sm font-normal h-9">
+                              <span className="truncate">{action.action_type || "Select or type"}</span>
+                              <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64 p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Search action types..." />
+                              <CommandList>
+                                <CommandEmpty>
+                                  <button
+                                    type="button"
+                                    className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent"
+                                    onClick={() => {
+                                      const input = document.querySelector('[cmdk-input]') as HTMLInputElement;
+                                      if (input?.value) {
+                                        updateAction(index, "action_type", input.value);
+                                      }
+                                      setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
+                                    }}
+                                  >
+                                    Use typed value as new action type
+                                  </button>
+                                </CommandEmpty>
+                                <CommandGroup>
+                                  {actionTypes.map((type) => (
+                                    <CommandItem
+                                      key={type}
+                                      value={type}
+                                      onSelect={() => {
+                                        updateAction(index, "action_type", type);
+                                        setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
+                                      }}
+                                    >
+                                      <Check className={`mr-2 h-4 w-4 ${action.action_type === type ? 'opacity-100' : 'opacity-0'}`} />
+                                      {type}
+                                      <span className="ml-auto text-xs text-muted-foreground">{actionTypeFrequencyMap[type] || 0}</span>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                       </td>
                       <td className="p-2 relative">
                         <Textarea
@@ -1925,25 +2054,39 @@ export const CreatePerformanceReportDialog = ({
                           placeholder="Describe"
                           className="min-w-[180px] min-h-[40px] text-sm"
                           rows={1}
-                          onFocus={() => setDescriptionPopoverOpen(prev => ({ ...prev, [index]: true }))}
-                          onBlur={() => setTimeout(() => setDescriptionPopoverOpen(prev => ({ ...prev, [index]: false })), 200)}
                         />
-                        {descriptionPopoverOpen[index] && action.action_type && descriptionsByType[action.action_type]?.length > 0 && (
-                          <div className="absolute z-20 top-full left-2 right-2 mt-0.5 max-h-32 overflow-y-auto border rounded bg-popover shadow-md">
-                            {descriptionsByType[action.action_type]
-                              .filter(d => !action.action_description || d.toLowerCase().includes(action.action_description.toLowerCase()))
-                              .slice(0, 8)
-                              .map((desc, di) => (
-                                <button
-                                  key={di}
-                                  type="button"
-                                  className="block w-full text-left text-xs px-2 py-1.5 hover:bg-accent transition-colors truncate"
-                                  onMouseDown={(e) => { e.preventDefault(); updateAction(index, "action_description", desc); setDescriptionPopoverOpen(prev => ({ ...prev, [index]: false })); }}
-                                >
-                                  {desc}
-                                </button>
-                              ))}
-                          </div>
+                        {action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
+                          <Popover open={descriptionPopoverOpen[1000 + index] || false} onOpenChange={(open) => setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: open }))}>
+                            <PopoverTrigger asChild>
+                              <Button variant="ghost" size="sm" className="mt-0.5 h-5 text-[9px] text-muted-foreground w-full justify-between px-1">
+                                <span>Suggestions</span>
+                                <ChevronDown className="h-3 w-3" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-72 p-0" align="start">
+                              <Command>
+                                <CommandInput placeholder="Filter descriptions..." />
+                                <CommandList>
+                                  <CommandEmpty>No matching descriptions</CommandEmpty>
+                                  <CommandGroup>
+                                    {getDescriptionsForType(action.action_type).map((desc, di) => (
+                                      <CommandItem
+                                        key={di}
+                                        value={desc}
+                                        onSelect={() => {
+                                          updateAction(index, "action_description", desc);
+                                          setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
+                                        }}
+                                        className="text-xs"
+                                      >
+                                        {desc}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                         )}
                       </td>
                       <td className="p-2">
@@ -2115,12 +2258,7 @@ export const CreatePerformanceReportDialog = ({
             
           </div>
 
-          {/* Datalist for action types */}
-          <datalist id="action-types-list">
-            {actionTypes.map((type) => (
-              <option key={type} value={type} />
-            ))}
-          </datalist>
+          {/* Datalist removed - replaced with Popover+Command combobox */}
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-3">
