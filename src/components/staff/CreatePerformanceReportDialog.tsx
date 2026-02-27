@@ -1797,53 +1797,53 @@ export const CreatePerformanceReportDialog = ({
                   
                   <div>
                     <Label className="text-xs">Action Type *</Label>
-                    <Popover open={actionTypePopoverOpen[index] || false} onOpenChange={(open) => setActionTypePopoverOpen(prev => ({ ...prev, [index]: open }))}>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" role="combobox" className="w-full justify-between text-sm font-normal h-9">
-                          {action.action_type || "Select or type new"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder="Search action types..." />
-                          <CommandList>
-                            <CommandEmpty>
-                              <button
-                                type="button"
-                                className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent"
-                                onClick={() => {
-                                  // Use typed value from command input - get it from the DOM
-                                  const input = document.querySelector('[cmdk-input]') as HTMLInputElement;
-                                  if (input?.value) {
-                                    updateAction(index, "action_type", input.value);
-                                  }
-                                  setActionTypePopoverOpen(prev => ({ ...prev, [index]: false }));
-                                }}
-                              >
-                                Use typed value as new action type
-                              </button>
-                            </CommandEmpty>
-                            <CommandGroup>
-                              {actionTypes.map((type) => (
-                                <CommandItem
-                                  key={type}
-                                  value={type}
-                                  onSelect={() => {
-                                    updateAction(index, "action_type", type);
-                                    setActionTypePopoverOpen(prev => ({ ...prev, [index]: false }));
-                                  }}
-                                >
-                                  <Check className={`mr-2 h-4 w-4 ${action.action_type === type ? 'opacity-100' : 'opacity-0'}`} />
-                                  {type}
-                                  <span className="ml-auto text-xs text-muted-foreground">{actionTypeFrequencyMap[type] || 0}</span>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                    <div className="relative">
+                      <Input
+                        value={action.action_type}
+                        onChange={(e) => {
+                          updateAction(index, "action_type", e.target.value);
+                          setActionTypePopoverOpen(prev => ({ ...prev, [index]: true }));
+                        }}
+                        onFocus={() => setActionTypePopoverOpen(prev => ({ ...prev, [index]: true }))}
+                        onBlur={() => setTimeout(() => setActionTypePopoverOpen(prev => ({ ...prev, [index]: false })), 200)}
+                        placeholder="Type or select action type"
+                        className="text-sm h-9 pr-8"
+                      />
+                      {action.action_type && (
+                        <button
+                          type="button"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            updateAction(index, "action_type", "");
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    {actionTypePopoverOpen[index] && (
+                      <div className="absolute z-50 mt-1 w-[calc(100%-2rem)] max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                        {actionTypes
+                          .filter(type => !action.action_type || type.toLowerCase().includes(action.action_type.toLowerCase()))
+                          .slice(0, 15)
+                          .map((type) => (
+                            <button
+                              key={type}
+                              type="button"
+                              className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-accent flex justify-between items-center"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                updateAction(index, "action_type", type);
+                                setActionTypePopoverOpen(prev => ({ ...prev, [index]: false }));
+                              }}
+                            >
+                              <span>{type}</span>
+                              <span className="text-xs text-muted-foreground">{actionTypeFrequencyMap[type] || 0}</span>
+                            </button>
+                          ))}
+                      </div>
+                    )}
                   </div>
                   
                   <div>
@@ -1951,6 +1951,27 @@ export const CreatePerformanceReportDialog = ({
                       </CollapsibleContent>
                     </Collapsible>
                   </div>
+                  {/* Mobile save/insert between actions */}
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      onClick={() => insertActionAt(index + 1)}
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs flex-1"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Insert Action
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs flex-1"
+                      disabled={loading || deleting}
+                    >
+                      {loading ? "Saving..." : (analysisId ? "Update" : "Save")}
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -2000,52 +2021,53 @@ export const CreatePerformanceReportDialog = ({
                         />
                       </td>
                       <td className="p-2">
-                        <Popover open={actionTypePopoverOpen[1000 + index] || false} onOpenChange={(open) => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: open }))}>
-                          <PopoverTrigger asChild>
-                            <Button variant="outline" role="combobox" className="w-40 justify-between text-sm font-normal h-9">
-                              <span className="truncate">{action.action_type || "Select or type"}</span>
-                              <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-64 p-0" align="start">
-                            <Command>
-                              <CommandInput placeholder="Search action types..." />
-                              <CommandList>
-                                <CommandEmpty>
+                        <div className="relative">
+                          <Input
+                            value={action.action_type}
+                            onChange={(e) => {
+                              updateAction(index, "action_type", e.target.value);
+                              setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
+                            }}
+                            onFocus={() => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: true }))}
+                            onBlur={() => setTimeout(() => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200)}
+                            placeholder="Type or select"
+                            className="w-40 text-sm h-9 pr-7"
+                          />
+                          {action.action_type && (
+                            <button
+                              type="button"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                updateAction(index, "action_type", "");
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
+                          {actionTypePopoverOpen[1000 + index] && (
+                            <div className="absolute z-50 mt-1 w-64 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                              {actionTypes
+                                .filter(type => !action.action_type || type.toLowerCase().includes(action.action_type.toLowerCase()))
+                                .slice(0, 15)
+                                .map((type) => (
                                   <button
+                                    key={type}
                                     type="button"
-                                    className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent"
-                                    onClick={() => {
-                                      const input = document.querySelector('[cmdk-input]') as HTMLInputElement;
-                                      if (input?.value) {
-                                        updateAction(index, "action_type", input.value);
-                                      }
+                                    className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-accent flex justify-between items-center"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      updateAction(index, "action_type", type);
                                       setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
                                     }}
                                   >
-                                    Use typed value as new action type
+                                    <span>{type}</span>
+                                    <span className="text-xs text-muted-foreground">{actionTypeFrequencyMap[type] || 0}</span>
                                   </button>
-                                </CommandEmpty>
-                                <CommandGroup>
-                                  {actionTypes.map((type) => (
-                                    <CommandItem
-                                      key={type}
-                                      value={type}
-                                      onSelect={() => {
-                                        updateAction(index, "action_type", type);
-                                        setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
-                                      }}
-                                    >
-                                      <Check className={`mr-2 h-4 w-4 ${action.action_type === type ? 'opacity-100' : 'opacity-0'}`} />
-                                      {type}
-                                      <span className="ml-auto text-xs text-muted-foreground">{actionTypeFrequencyMap[type] || 0}</span>
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                                ))}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="p-2 relative">
                         <Textarea

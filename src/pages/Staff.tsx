@@ -78,6 +78,7 @@ import { StaffSMSNotifications } from "@/components/staff/StaffSMSNotifications"
 import { VisionBoardSection } from "@/components/staff/VisionBoardSection";
 import { DocsSection } from "@/components/staff/DocsSection";
 import { SheetsSection } from "@/components/staff/SheetsSection";
+import { MobileScrollButtons } from "@/components/staff/MobileScrollButtons";
 import { DesignProjects } from "@/components/staff/design/DesignProjects";
 import { AnnotationProjects } from "@/components/staff/annotations/AnnotationProjects";
 import { StreamsSection } from "@/components/staff/StreamsSection";
@@ -1714,6 +1715,7 @@ const Staff = () => {
 
       {/* Keyboard Shortcuts Dialog */}
       <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <MobileScrollButtons />
     </div>
   );
 };
