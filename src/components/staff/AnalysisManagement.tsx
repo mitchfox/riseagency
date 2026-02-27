@@ -632,7 +632,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
       } else {
         const { data, error } = await supabase
           .from("analyses")
-          .insert([dataToSave])
+          .insert([dataToSave as any])
           .select()
           .single();
 
