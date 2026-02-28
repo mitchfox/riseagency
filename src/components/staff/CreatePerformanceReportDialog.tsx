@@ -1158,12 +1158,7 @@ export const CreatePerformanceReportDialog = ({
 
   const updateAction = async (index: number, field: keyof PerformanceAction, value: string | RecordedStat | RecordedStat[] | null) => {
     const newActions = [...actions];
-    // Normalise action_type to canonical form on every change
-    if (field === 'action_type' && typeof value === 'string') {
-      newActions[index] = { ...newActions[index], [field]: canonicalActionType(value) };
-    } else {
-      newActions[index] = { ...newActions[index], [field]: value };
-    }
+    newActions[index] = { ...newActions[index], [field]: value };
     setActions(newActions);
   };
 
@@ -1805,7 +1800,10 @@ export const CreatePerformanceReportDialog = ({
                           setActionTypePopoverOpen(prev => ({ ...prev, [index]: true }));
                         }}
                         onFocus={() => setActionTypePopoverOpen(prev => ({ ...prev, [index]: true }))}
-                        onBlur={() => setTimeout(() => setActionTypePopoverOpen(prev => ({ ...prev, [index]: false })), 200)}
+                        onBlur={() => {
+                          setTimeout(() => setActionTypePopoverOpen(prev => ({ ...prev, [index]: false })), 200);
+                          if (action.action_type) updateAction(index, "action_type", canonicalActionType(action.action_type));
+                        }}
                         placeholder="Type or select action type"
                         className="text-sm h-9 pr-8"
                       />
@@ -2029,7 +2027,10 @@ export const CreatePerformanceReportDialog = ({
                               setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
                             }}
                             onFocus={() => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: true }))}
-                            onBlur={() => setTimeout(() => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200)}
+                            onBlur={() => {
+                              setTimeout(() => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200);
+                              if (action.action_type) updateAction(index, "action_type", canonicalActionType(action.action_type));
+                            }}
                             placeholder="Type or select"
                             className="w-40 text-sm h-9 pr-7"
                           />
