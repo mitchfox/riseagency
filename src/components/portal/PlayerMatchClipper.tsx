@@ -125,14 +125,14 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
             authorization: `Bearer ${ANON_KEY}`,
             'x-upsert': 'false',
           },
-          uploadDataDuringCreation: true,
+          uploadDataDuringCreation: false,
           removeFingerprintOnSuccess: true,
           metadata: {
             bucketName: 'analysis-videos',
             objectName: filePath,
             contentType: uploadFile.type || 'video/mp4',
           },
-          chunkSize: 6 * 1024 * 1024,
+          chunkSize: 5 * 1024 * 1024,
           onError: (error) => reject(new Error(error.message)),
           onSuccess: () => resolve(),
         });

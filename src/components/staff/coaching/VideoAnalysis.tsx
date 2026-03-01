@@ -266,14 +266,14 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
             authorization: `Bearer ${token}`,
             'x-upsert': 'false',
           },
-          uploadDataDuringCreation: true,
+          uploadDataDuringCreation: false,
           removeFingerprintOnSuccess: true,
           metadata: {
             bucketName: 'analysis-videos',
             objectName: filePath,
             contentType: uploadFile.type || 'video/mp4',
           },
-          chunkSize: 6 * 1024 * 1024, // 6MB chunks
+          chunkSize: 5 * 1024 * 1024, // 5MB chunks
           onError: (error) => {
             reject(new Error(`Upload failed: ${error.message || 'network error. Check your connection and try again.'}`));
           },
