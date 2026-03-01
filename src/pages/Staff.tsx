@@ -319,10 +319,12 @@ const Staff = () => {
         if (activeIdx !== -1 && !tabs.includes(section)) {
           tabs[activeIdx] = section;
           localStorage.setItem('staff_open_tabs', JSON.stringify(tabs));
+          setTabsVersion(v => v + 1);
         } else if (!tabs.includes(section)) {
           // If current section isn't in tabs, add this one
           tabs.push(section);
           localStorage.setItem('staff_open_tabs', JSON.stringify(tabs.slice(-12)));
+          setTabsVersion(v => v + 1);
         }
       }
     } catch {}
