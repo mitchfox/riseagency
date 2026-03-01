@@ -81,15 +81,15 @@ export const ClippedActionsPlayer = ({
         <DialogTitle className="sr-only">Full Match Video</DialogTitle>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2 bg-black/80 border-b border-border/30 shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 bg-black/80 border-b border-border/30 shrink-0">
           <div className="flex items-center gap-3">
             <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold">
               {currentIndex + 1}/{clips.length}
             </span>
             <span className="text-white text-sm font-semibold">{currentClip.action_type}</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-white/60 hover:text-white">
-            <X className="h-4 w-4" />
+          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:text-white hover:bg-white/20 h-10 w-10 min-w-[40px]">
+            <X className="h-5 w-5" />
           </Button>
         </div>
 
