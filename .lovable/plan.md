@@ -1,48 +1,35 @@
 
 
-# Improving clip extraction: server-side FFmpeg trimming
+# Purge source video, keep clips
 
-## The problem
+## What changes
 
-The current approach plays the video in real-time inside a hidden browser canvas and re-encodes it frame by frame. A 30-second clip takes 30+ seconds to extract, and longer clips scale linearly. The canvas re-encoding also degrades quality regardless of bitrate settings because it's decoding then re-encoding every frame.
+A single "Purge Source" button on the video analysis detail view (when a video is selected). Clicking it:
 
-## The solution
+1. **Deletes the source video file** from `analysis-videos` storage (the large 4GB file)
+2. **Clears `video_url`** on the record and sets `auto_delete_at = NULL` (no timer needed when there's nothing to expire)
+3. **Preserves everything else** — the video analysis record, all clip metadata, all extracted clip files in `analysis-videos/clips/`, all annotations, all report links
 
-Move clip trimming to a backend function using FFmpeg's **stream copy** mode (`-c copy`). This copies the original video data without re-encoding, meaning:
+The video player area then shows a "Source video purged — clips still available" message instead of a broken player. Clips remain fully playable since they're separate files.
 
-- **Near-instant** — a 30-second clip from a 90-minute file takes 1-2 seconds, not 30+
-- **Zero quality loss** — original codec bitstream is preserved byte-for-byte
-- **Works for any clip length** — no real-time playback bottleneck
+## UI placement
 
-## How it works
+- Inside the selected video detail view, near the top toolbar alongside the existing Sync/Export buttons
+- Icon: `HardDriveDownload` or `Trash2` with label "Purge Source"
+- Confirmation dialog before purging (destructive action, can't undo)
+- On the video card grid, videos with purged sources show a visual indicator (e.g. strikethrough on the expiry timer or a "Source removed" badge)
 
-1. **New backend function `trim-video-clip`**
-   - Receives: `sourceUrl`, `start`, `end`, `clipId`
-   - Downloads the source video byte-range (only the segment needed + a small buffer for keyframes) using HTTP Range headers
-   - Runs FFmpeg with `-ss start -to end -c copy` for lossless stream copy
-   - Uploads the trimmed file to `analysis-videos/clips/{clipId}.mp4`
-   - Returns the public URL
-   - FFmpeg binary: uses a static Deno-compatible FFmpeg WASM build (`ffmpeg-wasm`) that runs inside the edge function without native dependencies
+## Implementation
 
-2. **Update `clientClipExtractor.ts`**
-   - Primary path: call the backend function via `supabase.functions.invoke('trim-video-clip', ...)`
-   - Fallback: if the backend call fails, fall back to the existing canvas approach (keeps things resilient)
-   - Progress callback still works — "Trimming on server..." then "Done"
+### `VideoAnalysis.tsx`
+- Add a `handlePurgeSource` function that:
+  - Extracts the storage path from `video_url` (skipping anything in `clips/`)
+  - Calls `supabase.storage.from('analysis-videos').remove([path])`
+  - Updates the DB record: `video_url = '', auto_delete_at = null`
+  - Updates local state
+- Add an `AlertDialog` for confirmation
+- Conditionally render the video player vs a "Source purged" message based on whether `video_url` is empty
+- Add "Source removed" badge on cards where `video_url` is empty but clips exist
 
-3. **Update callers** (no API change needed)
-   - `VideoAnalysis.tsx` `extractClipFile` — no change, it already calls `trimAndUploadClip`
-   - `ReExtractClipsButton.tsx` — no change, same function signature
-
-## Edge function considerations
-
-- **FFmpeg in Deno**: Use `ffmpeg-wasm` or shell out to a statically linked binary. The WASM approach is the most portable for edge functions. For very large files, byte-range downloads keep memory usage manageable.
-- **Timeout**: Edge functions have a 150-second limit. Stream copy is fast enough that even hour-long source videos produce clips in seconds, well within limits.
-- **Output format**: `.mp4` (H.264 passthrough) instead of `.webm` — better compatibility across devices and no re-encode.
-
-## Technical details
-
-- The function authenticates with the service role key to access storage
-- Source URL is validated to ensure it points to the project's own storage bucket
-- `verify_jwt = true` so only authenticated staff can trigger extractions
-- Existing canvas fallback means zero downtime if the function has issues
+No database migration needed — `video_url` and `auto_delete_at` already support empty/null values. No new edge functions needed.
 
