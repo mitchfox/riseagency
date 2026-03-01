@@ -1,81 +1,48 @@
 
-Implementation plan
 
-1) Replace the viewer overlay path with the same playback logic used in the annotation editor
-- Create a shared read-only playback component that uses:
-  - `computeVisibleElements(...)`
-  - freeze/pause timing logic (triggered timestamps + max visible duration)
-  - `AnnotationCanvas` for rendering, not the limited SVG switch renderer
-- Use this component in:
-  - `src/pages/AnalysisViewer.tsx` (`AnnotatedPointVideo`)
-  - `src/components/staff/analysis/AnalysisPointsSection.tsx` (point video preview card)
+# Improving clip extraction: server-side FFmpeg trimming
 
-2) Make clip time handling deterministic for all point videos
-- Parse `#t=start,end` fragments for point videos.
-- On metadata load:
-  - seek to `start`
-  - store a normalised clip start marker on the video element
-- On `timeupdate`:
-  - loop back to `start` at `end`
-- Feed relative clip time into annotation visibility calculations so timing matches the editor exactly.
+## The problem
 
-3) Fix render parity by removing unsupported-shape gaps
-- Stop relying on `ReadOnlyAnnotationOverlay` for point video playback because it does not support all annotation types (eg `space-oval`, `distance`, `linked-line`, `magnifier`, `image-layer`).
-- Use `AnnotationCanvas` read-only rendering so all tools drawn in editor are rendered in viewer and preview.
+The current approach plays the video in real-time inside a hidden browser canvas and re-encodes it frame by frame. A 30-second clip takes 30+ seconds to extract, and longer clips scale linearly. The canvas re-encoding also degrades quality regardless of bitrate settings because it's decoding then re-encoding every frame.
 
-4) Fix in-editor preview staleness after saving annotation
-- In `VideoItem`, render annotation overlay on the point video preview (currently raw video only).
-- After annotation save:
-  - keep local `annotationProject` state updated
-  - trigger a reload key/refetch for that video preview even when annotation id stays the same
-- Keep the annotation dialog open state controlled, but prevent stale cached render after save.
+## The solution
 
-5) Persist annotation mapping immediately and robustly
-- Add an immediate point persistence callback from `AnalysisPointsSection` to `AnalysisManagement` for annotation mapping updates, so annotation link persistence does not depend on clicking “Save Analysis”.
-- When saving annotation, persist updated `points` JSON to backend for edited analyses.
-- Keep current full save button flow as a fallback.
+Move clip trimming to a backend function using FFmpeg's **stream copy** mode (`-c copy`). This copies the original video data without re-encoding, meaning:
 
-6) Preserve annotation links when videos are moved, trimmed, or removed
-- Update point mutation handlers in `AnalysisPointsSection`:
-  - Trim: move mapping key from old URL to new URL.
-  - Move to point: move annotation id mapping along with video URL.
-  - Remove: remove orphaned mapping entry for removed URL.
+- **Near-instant** — a 30-second clip from a 90-minute file takes 1-2 seconds, not 30+
+- **Zero quality loss** — original codec bitstream is preserved byte-for-byte
+- **Works for any clip length** — no real-time playback bottleneck
 
-7) Final kit parity correction in viewer
-- Update `AnalysisViewer` kit rendering to include collar colour parity with editor:
-  - include `kit_collar_color` in viewer analysis typing/usage
-  - pass collar colour into `PlayerKit`
-  - use collar colour in collar SVG instead of hard-coding secondary colour
+## How it works
 
-8) Accessibility warning cleanup (same touch area)
-- Add `DialogTitle` and optional description to annotation dialog content in point editor to resolve Radix warning spam while touching the same component.
+1. **New backend function `trim-video-clip`**
+   - Receives: `sourceUrl`, `start`, `end`, `clipId`
+   - Downloads the source video byte-range (only the segment needed + a small buffer for keyframes) using HTTP Range headers
+   - Runs FFmpeg with `-ss start -to end -c copy` for lossless stream copy
+   - Uploads the trimmed file to `analysis-videos/clips/{clipId}.mp4`
+   - Returns the public URL
+   - FFmpeg binary: uses a static Deno-compatible FFmpeg WASM build (`ffmpeg-wasm`) that runs inside the edge function without native dependencies
 
-Technical details to implement
-- Files to update:
-  - `src/components/staff/analysis/AnalysisPointsSection.tsx`
-  - `src/pages/AnalysisViewer.tsx`
-  - `src/components/portal/ReadOnlyAnnotationOverlay.tsx` (either retire for this flow or keep only for legacy usages)
-  - `src/components/staff/AnalysisManagement.tsx`
-- Shared utility/component target:
-  - new reusable read-only annotation playback component under `src/components/portal/` or `src/components/shared/` that encapsulates:
-    - clip fragment parsing
-    - relative time normalisation
-    - freeze/pause sequencing
-    - read-only `AnnotationCanvas` rendering
-- Data safety:
-  - preserve existing `points[].annotation_ids` schema, no migration required.
-  - update in-memory and persisted `points` atomically when mutating `video_urls`.
+2. **Update `clientClipExtractor.ts`**
+   - Primary path: call the backend function via `supabase.functions.invoke('trim-video-clip', ...)`
+   - Fallback: if the backend call fails, fall back to the existing canvas approach (keeps things resilient)
+   - Progress callback still works — "Trimming on server..." then "Done"
 
-Verification steps
-1. In analysis editor, annotate a point clip using `space-oval` and one line/arrow.
-2. Save annotation and close dialog:
-- preview thumbnail in the same point must show overlays immediately.
-3. Open the player analysis viewer:
-- overlays must appear with correct timing and position.
-- video must pause/freeze when annotations appear, then resume.
-4. Test a `#t=` clip and a trimmed clip:
-- both must show identical timing behaviour.
-5. Move and trim annotated clips between points:
-- annotation must stay attached after each action.
-6. Confirm kit parity:
-- collar, stripes, and number colour match editor exactly.
+3. **Update callers** (no API change needed)
+   - `VideoAnalysis.tsx` `extractClipFile` — no change, it already calls `trimAndUploadClip`
+   - `ReExtractClipsButton.tsx` — no change, same function signature
+
+## Edge function considerations
+
+- **FFmpeg in Deno**: Use `ffmpeg-wasm` or shell out to a statically linked binary. The WASM approach is the most portable for edge functions. For very large files, byte-range downloads keep memory usage manageable.
+- **Timeout**: Edge functions have a 150-second limit. Stream copy is fast enough that even hour-long source videos produce clips in seconds, well within limits.
+- **Output format**: `.mp4` (H.264 passthrough) instead of `.webm` — better compatibility across devices and no re-encode.
+
+## Technical details
+
+- The function authenticates with the service role key to access storage
+- Source URL is validated to ensure it points to the project's own storage bucket
+- `verify_jwt = true` so only authenticated staff can trigger extractions
+- Existing canvas fallback means zero downtime if the function has issues
+
