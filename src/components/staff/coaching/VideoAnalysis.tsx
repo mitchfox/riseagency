@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import * as tus from 'tus-js-client';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -253,52 +254,41 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       const ext = uploadFile.name.split('.').pop();
       const filePath = `${crypto.randomUUID()}.${ext}`;
 
-      // Use XMLHttpRequest for upload progress tracking
-      const fileSize = uploadFile.size;
-      const publicUrl = await new Promise<string>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        
-        // Get the Supabase URL and key
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-        const token = session.session?.access_token || supabaseKey;
-        
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
-            setUploadedBytes(e.loaded);
-            setUploadProgress(Math.round((e.loaded / e.total) * 100));
-          }
-        });
+      // Use TUS resumable upload for large file support (up to 50GB)
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const token = session.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
+      const publicUrl = await new Promise<string>((resolve, reject) => {
+        const upload = new tus.Upload(uploadFile, {
+          endpoint: `https://${projectId}.supabase.co/storage/v1/upload/resumable`,
+          retryDelays: [0, 3000, 5000, 10000, 20000],
+          headers: {
+            authorization: `Bearer ${token}`,
+            'x-upsert': 'false',
+          },
+          uploadDataDuringCreation: true,
+          removeFingerprintOnSuccess: true,
+          metadata: {
+            bucketName: 'analysis-videos',
+            objectName: filePath,
+            contentType: uploadFile.type || 'video/mp4',
+          },
+          chunkSize: 6 * 1024 * 1024, // 6MB chunks
+          onError: (error) => {
+            reject(new Error(`Upload failed: ${error.message || 'network error. Check your connection and try again.'}`));
+          },
+          onProgress: (bytesUploaded, bytesTotal) => {
+            setUploadedBytes(bytesUploaded);
+            setUploadProgress(Math.round((bytesUploaded / bytesTotal) * 100));
+          },
+          onSuccess: () => {
             const { data: urlData } = supabase.storage
-              .from("analysis-videos")
+              .from('analysis-videos')
               .getPublicUrl(filePath);
             resolve(urlData.publicUrl);
-          } else {
-            let detail = xhr.statusText || 'Unknown error';
-            try {
-              const body = JSON.parse(xhr.responseText);
-              detail = body.message || body.error || body.statusCode || detail;
-            } catch { 
-              if (xhr.responseText) detail = xhr.responseText.slice(0, 200);
-            }
-            if (xhr.status === 413) {
-              detail = `File too large for upload. Try compressing the video first using Video Compressor.`;
-            }
-            reject(new Error(`Upload failed (${xhr.status}): ${detail}`));
-          }
+          },
         });
-
-        xhr.addEventListener('error', () => reject(new Error('Upload failed: network error. Check your connection and try again.')));
-
-        xhr.open('POST', `${supabaseUrl}/storage/v1/object/analysis-videos/${filePath}`);
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        xhr.setRequestHeader('apikey', supabaseKey);
-        xhr.setRequestHeader('Content-Type', uploadFile.type || 'video/mp4');
-        xhr.setRequestHeader('x-upsert', 'false');
-        xhr.send(uploadFile);
+        upload.start();
       });
 
       const autoDeleteAt = new Date();

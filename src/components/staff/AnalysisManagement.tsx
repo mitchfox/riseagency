@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import * as tus from 'tus-js-client';
 import { useNavigate } from "react-router-dom";
 import { sharedSupabase as supabase } from "@/integrations/supabase/sharedClient";
 import { supabase as localSupabase } from "@/integrations/supabase/client";
@@ -541,16 +542,26 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("analysis-videos")
-        .upload(filePath, file);
+      const { data: session } = await supabase.auth.getSession();
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const token = session.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-      if (uploadError) throw uploadError;
+      await new Promise<void>((resolve, reject) => {
+        const upload = new tus.Upload(file, {
+          endpoint: `https://${projectId}.supabase.co/storage/v1/upload/resumable`,
+          retryDelays: [0, 3000, 5000, 10000, 20000],
+          headers: { authorization: `Bearer ${token}`, 'x-upsert': 'false' },
+          uploadDataDuringCreation: true,
+          removeFingerprintOnSuccess: true,
+          metadata: { bucketName: 'analysis-videos', objectName: filePath, contentType: file.type || 'video/mp4' },
+          chunkSize: 6 * 1024 * 1024,
+          onError: (error) => reject(new Error(error.message)),
+          onSuccess: () => resolve(),
+        });
+        upload.start();
+      });
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("analysis-videos").getPublicUrl(filePath);
-
+      const { data: { publicUrl } } = supabase.storage.from("analysis-videos").getPublicUrl(filePath);
       setFormData({ ...formData, video_url: publicUrl });
       toast.success("Video uploaded successfully");
     } catch (error: any) {
@@ -571,16 +582,26 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("analysis-videos")
-        .upload(filePath, file);
+      const { data: session } = await supabase.auth.getSession();
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const token = session.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-      if (uploadError) throw uploadError;
+      await new Promise<void>((resolve, reject) => {
+        const upload = new tus.Upload(file, {
+          endpoint: `https://${projectId}.supabase.co/storage/v1/upload/resumable`,
+          retryDelays: [0, 3000, 5000, 10000, 20000],
+          headers: { authorization: `Bearer ${token}`, 'x-upsert': 'false' },
+          uploadDataDuringCreation: true,
+          removeFingerprintOnSuccess: true,
+          metadata: { bucketName: 'analysis-videos', objectName: filePath, contentType: file.type || 'video/mp4' },
+          chunkSize: 6 * 1024 * 1024,
+          onError: (error) => reject(new Error(error.message)),
+          onSuccess: () => resolve(),
+        });
+        upload.start();
+      });
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("analysis-videos").getPublicUrl(filePath);
-
+      const { data: { publicUrl } } = supabase.storage.from("analysis-videos").getPublicUrl(filePath);
       const updatedPoints = [...(formData.points || [])];
       const currentVideos = updatedPoints[pointIndex].video_urls || (updatedPoints[pointIndex].video_url ? [updatedPoints[pointIndex].video_url] : []);
       updatedPoints[pointIndex] = { ...updatedPoints[pointIndex], video_urls: [...currentVideos, publicUrl], video_url: undefined };
