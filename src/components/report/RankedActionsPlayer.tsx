@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X, SkipForward, SkipBack } from "lucide-react";
@@ -24,6 +24,10 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedA
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [swipeY, setSwipeY] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+  const touchStartY = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const sortedClips = mode === "ranked"
     ? [...clips].sort((a, b) => b.action_score - a.action_score)
@@ -59,6 +63,23 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedA
 
   if (!current) return null;
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    setSwiping(true);
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!swiping) return;
+    const delta = e.touches[0].clientY - touchStartY.current;
+    setSwipeY(Math.max(0, delta));
+  };
+  const handleTouchEnd = () => {
+    if (swipeY > 120) {
+      onOpenChange(false);
+    }
+    setSwipeY(0);
+    setSwiping(false);
+  };
+
   const getScoreColor = (score: number) => {
     if (score >= 0.1) return "text-green-500";
     if (score >= 0.05) return "text-green-400";
@@ -69,7 +90,13 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedA
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-black border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none data-[state=open]:!slide-in-from-left-0 data-[state=open]:!slide-in-from-top-0">
+      <DialogContent
+        ref={containerRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ transform: swipeY > 0 ? `translateY(${swipeY}px)` : undefined, opacity: swipeY > 0 ? Math.max(0.3, 1 - swipeY / 300) : 1, transition: swiping ? 'none' : 'transform 0.3s ease, opacity 0.3s ease' }}
+        className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-black border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none data-[state=open]:!slide-in-from-left-0 data-[state=open]:!slide-in-from-top-0">
         <DialogTitle className="sr-only">
           {mode === "ranked" ? "Ranked" : "Full Match"} Video Report
         </DialogTitle>
