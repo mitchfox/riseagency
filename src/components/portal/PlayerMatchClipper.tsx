@@ -119,7 +119,7 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
 
       await new Promise<void>((resolve, reject) => {
         const upload = new tus.Upload(uploadFile, {
-          endpoint: `https://${projectId}.supabase.co/storage/v1/upload/resumable`,
+          endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
           retryDelays: [0, 3000, 5000, 10000, 20000],
           headers: {
             authorization: `Bearer ${ANON_KEY}`,
@@ -132,7 +132,7 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
             objectName: filePath,
             contentType: uploadFile.type || 'video/mp4',
           },
-          chunkSize: 5 * 1024 * 1024,
+          chunkSize: 6 * 1024 * 1024,
           onError: (error) => reject(new Error(error.message)),
           onSuccess: () => resolve(),
         });

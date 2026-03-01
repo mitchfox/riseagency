@@ -260,7 +260,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
       const publicUrl = await new Promise<string>((resolve, reject) => {
         const upload = new tus.Upload(uploadFile, {
-          endpoint: `https://${projectId}.supabase.co/storage/v1/upload/resumable`,
+          endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
           retryDelays: [0, 3000, 5000, 10000, 20000],
           headers: {
             authorization: `Bearer ${token}`,
@@ -273,7 +273,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
             objectName: filePath,
             contentType: uploadFile.type || 'video/mp4',
           },
-          chunkSize: 5 * 1024 * 1024, // 5MB chunks
+          chunkSize: 6 * 1024 * 1024, // 6MB chunks (Supabase recommended)
           onError: (error) => {
             reject(new Error(`Upload failed: ${error.message || 'network error. Check your connection and try again.'}`));
           },
