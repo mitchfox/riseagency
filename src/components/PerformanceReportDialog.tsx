@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle } from "lucide-react";
+import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
@@ -479,6 +479,25 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
             <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="px-2 md:px-3" disabled={savingImage || loading}>
               <ImageIcon className="h-4 w-4 md:mr-2" />
               <span className="hidden md:inline">{savingImage ? 'Saving...' : 'Save'}</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="px-2 md:px-3"
+              onClick={() => {
+                if (analysis) {
+                  const playerName = analysis.player_name || 'player';
+                  const opponent = analysis.opponent || 'opponent';
+                  const slug = `${playerName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-vs-${opponent.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${analysisId}`;
+                  const url = `${window.location.origin}/performance-report/${slug}`;
+                  navigator.clipboard.writeText(url);
+                  toast.success("Report link copied to clipboard");
+                }
+              }}
+              disabled={!analysis}
+            >
+              <Link2 className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Share</span>
             </Button>
             <Button onClick={() => onOpenChange(false)} variant="outline" size="sm" className="px-2 md:px-3">
               <X className="h-4 w-4 md:mr-2" />
