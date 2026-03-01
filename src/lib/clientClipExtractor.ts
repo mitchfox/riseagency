@@ -1,11 +1,47 @@
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 
 /**
- * Client-side clip extraction using canvas + MediaRecorder.
- * Produces a small webm file containing only the specified segment.
- * Uploads to analysis-videos/clips/{clipId}.webm and returns the public URL.
+ * Trim a clip from a source video and upload it.
+ *
+ * Strategy:
+ *  1. Try server-side FFmpeg stream-copy (instant, lossless).
+ *  2. Fall back to client-side canvas capture if the server call fails.
  */
 export async function trimAndUploadClip(
+  sourceUrl: string,
+  clipId: string,
+  start: number,
+  end: number,
+  onProgress?: (msg: string) => void
+): Promise<string> {
+  // ── 1. Server-side trim (preferred) ──
+  try {
+    onProgress?.("Trimming on server...");
+    const { data, error } = await invokeEdgeFunction<{ url: string }>(
+      "trim-video-clip",
+      { body: { sourceUrl, start, end, clipId } }
+    );
+
+    if (!error && data?.url) {
+      onProgress?.("Done");
+      return data.url;
+    }
+
+    console.warn("Server-side trim failed, falling back to client:", error?.message);
+  } catch (err) {
+    console.warn("Server-side trim unavailable, falling back to client:", err);
+  }
+
+  // ── 2. Client-side canvas fallback ──
+  return clientSideTrim(sourceUrl, clipId, start, end, onProgress);
+}
+
+/**
+ * Original canvas + MediaRecorder approach.
+ * Plays the segment in real-time and re-encodes it as WebM.
+ */
+async function clientSideTrim(
   sourceUrl: string,
   clipId: string,
   start: number,
@@ -26,7 +62,6 @@ export async function trimAndUploadClip(
   await new Promise<void>((resolve, reject) => {
     video.onloadedmetadata = () => resolve();
     video.onerror = () => reject(new Error("Failed to load source video"));
-    // Timeout after 30s
     setTimeout(() => reject(new Error("Video load timeout")), 30000);
   });
 

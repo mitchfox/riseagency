@@ -102,3 +102,6 @@ verify_jwt = false
 [functions.detect-player-actions]
 verify_jwt = true
 
+[functions.trim-video-clip]
+verify_jwt = false
+
