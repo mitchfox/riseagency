@@ -82,6 +82,8 @@ interface VideoAnalysisProps {
   defaultPlayerId?: string;
 }
 
+const MAX_VIDEO_UPLOAD_BYTES = 50 * 1024 * 1024 * 1024;
+
 export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [videos, setVideos] = useState<VideoAnalysisEntry[]>([]);
   const [players, setPlayers] = useState<{ id: string; name: string; representation_status?: string | null; image_url?: string | null }[]>([]);
@@ -243,6 +245,12 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
   const handleCreate = async () => {
     if (!newTitle || !uploadFile) return;
+
+    if (uploadFile.size > MAX_VIDEO_UPLOAD_BYTES) {
+      toast.error("This file exceeds the 50GB upload limit");
+      return;
+    }
+
     setCreating(true);
     setUploadProgress(0);
     setUploadedBytes(0);
@@ -256,13 +264,18 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
       // Use TUS resumable upload for large file support (up to 50GB)
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const token = session.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const token = session.session?.access_token;
+
+      if (!token) {
+        throw new Error("Please sign in again before uploading");
+      }
 
       const publicUrl = await new Promise<string>((resolve, reject) => {
         const upload = new tus.Upload(uploadFile, {
           endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
           retryDelays: [0, 3000, 5000, 10000, 20000],
           headers: {
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
             authorization: `Bearer ${token}`,
             'x-upsert': 'false',
           },

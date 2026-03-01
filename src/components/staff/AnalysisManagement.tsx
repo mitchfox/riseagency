@@ -104,6 +104,8 @@ interface AnalysisManagementProps {
   defaultPlayerId?: string;
 }
 
+const MAX_VIDEO_UPLOAD_BYTES = 50 * 1024 * 1024 * 1024;
+
 export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagementProps) => {
   const navigate = useNavigate();
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
@@ -536,6 +538,11 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (file.size > MAX_VIDEO_UPLOAD_BYTES) {
+      toast.error("This file exceeds the 50GB upload limit");
+      return;
+    }
+
     setUploadingImage(true);
     try {
       const fileExt = file.name.split(".").pop();
@@ -544,13 +551,21 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
 
       const { data: session } = await supabase.auth.getSession();
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const token = session.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const token = session.session?.access_token;
+
+      if (!token) {
+        throw new Error("Please sign in again before uploading");
+      }
 
       await new Promise<void>((resolve, reject) => {
         const upload = new tus.Upload(file, {
           endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
           retryDelays: [0, 3000, 5000, 10000, 20000],
-          headers: { authorization: `Bearer ${token}`, 'x-upsert': 'false' },
+          headers: {
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            authorization: `Bearer ${token}`,
+            'x-upsert': 'false'
+          },
           uploadDataDuringCreation: false,
           removeFingerprintOnSuccess: true,
           metadata: { bucketName: 'analysis-videos', objectName: filePath, contentType: file.type || 'video/mp4' },
@@ -576,6 +591,11 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (file.size > MAX_VIDEO_UPLOAD_BYTES) {
+      toast.error("This file exceeds the 50GB upload limit");
+      return;
+    }
+
     setUploadingImage(true);
     try {
       const fileExt = file.name.split(".").pop();
@@ -584,13 +604,21 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
 
       const { data: session } = await supabase.auth.getSession();
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const token = session.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const token = session.session?.access_token;
+
+      if (!token) {
+        throw new Error("Please sign in again before uploading");
+      }
 
       await new Promise<void>((resolve, reject) => {
         const upload = new tus.Upload(file, {
           endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
           retryDelays: [0, 3000, 5000, 10000, 20000],
-          headers: { authorization: `Bearer ${token}`, 'x-upsert': 'false' },
+          headers: {
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            authorization: `Bearer ${token}`,
+            'x-upsert': 'false'
+          },
           uploadDataDuringCreation: false,
           removeFingerprintOnSuccess: true,
           metadata: { bucketName: 'analysis-videos', objectName: filePath, contentType: file.type || 'video/mp4' },

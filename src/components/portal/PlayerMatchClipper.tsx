@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import * as tus from 'tus-js-client';
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Film, Plus, Play, Trash2, Loader2, Upload, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Save, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-
 interface Clip {
   id: string;
   start: number;
@@ -37,14 +37,18 @@ interface PlayerMatchClipperProps {
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/player-match-clipper`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const MAX_VIDEO_UPLOAD_BYTES = 50 * 1024 * 1024 * 1024;
 
 const callFunction = async (body: any) => {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token || ANON_KEY;
+
   const res = await fetch(FUNCTION_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'apikey': ANON_KEY,
-      'Authorization': `Bearer ${ANON_KEY}`,
+      'Authorization': `Bearer ${accessToken}`,
     },
     body: JSON.stringify(body),
   });
@@ -109,6 +113,12 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
 
   const handleCreate = async () => {
     if (!newTitle || !uploadFile) return;
+
+    if (uploadFile.size > MAX_VIDEO_UPLOAD_BYTES) {
+      toast.error("This file exceeds the 50GB upload limit");
+      return;
+    }
+
     setCreating(true);
 
     try {
@@ -116,13 +126,20 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
       const ext = uploadFile.name.split('.').pop();
       const filePath = `${crypto.randomUUID()}.${ext}`;
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error("Please sign in again before uploading");
+      }
 
       await new Promise<void>((resolve, reject) => {
         const upload = new tus.Upload(uploadFile, {
           endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
           retryDelays: [0, 3000, 5000, 10000, 20000],
           headers: {
-            authorization: `Bearer ${ANON_KEY}`,
+            apikey: ANON_KEY,
+            authorization: `Bearer ${accessToken}`,
             'x-upsert': 'false',
           },
           uploadDataDuringCreation: false,
