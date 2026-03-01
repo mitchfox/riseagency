@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import * as tus from 'tus-js-client';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -111,28 +112,43 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
     setCreating(true);
 
     try {
-      const formData = new FormData();
-      formData.append('file', uploadFile);
-      formData.append('playerEmail', playerEmail);
-      formData.append('title', newTitle);
-      if (newOpponent) formData.append('opponent', newOpponent);
-      if (newMatchDate) formData.append('matchDate', newMatchDate);
+      // Upload file to storage first using TUS resumable protocol
+      const ext = uploadFile.name.split('.').pop();
+      const filePath = `${crypto.randomUUID()}.${ext}`;
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 
-      const res = await fetch(FUNCTION_URL, {
-        method: 'POST',
-        headers: {
-          'apikey': ANON_KEY,
-          'Authorization': `Bearer ${ANON_KEY}`,
-        },
-        body: formData,
+      await new Promise<void>((resolve, reject) => {
+        const upload = new tus.Upload(uploadFile, {
+          endpoint: `https://${projectId}.supabase.co/storage/v1/upload/resumable`,
+          retryDelays: [0, 3000, 5000, 10000, 20000],
+          headers: {
+            authorization: `Bearer ${ANON_KEY}`,
+            'x-upsert': 'false',
+          },
+          uploadDataDuringCreation: true,
+          removeFingerprintOnSuccess: true,
+          metadata: {
+            bucketName: 'analysis-videos',
+            objectName: filePath,
+            contentType: uploadFile.type || 'video/mp4',
+          },
+          chunkSize: 6 * 1024 * 1024,
+          onError: (error) => reject(new Error(error.message)),
+          onSuccess: () => resolve(),
+        });
+        upload.start();
       });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Upload failed' }));
-        throw new Error(err.error || 'Upload failed');
-      }
+      // Then tell the edge function about the uploaded file
+      const result = await callFunction({
+        action: 'createFromStorage',
+        playerEmail,
+        storagePath: filePath,
+        title: newTitle,
+        opponent: newOpponent || null,
+        matchDate: newMatchDate || null,
+      });
 
-      const result = await res.json();
       if (result.data) {
         const entry: VideoEntry = {
           ...result.data,

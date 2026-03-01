@@ -15,80 +15,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const contentType = req.headers.get('content-type') || '';
-
-    // Handle file upload (multipart form data)
-    if (contentType.includes('multipart/form-data')) {
-      const formData = await req.formData();
-      const file = formData.get('file') as File;
-      const playerEmail = formData.get('playerEmail') as string;
-      const title = formData.get('title') as string;
-      const opponent = formData.get('opponent') as string | null;
-      const matchDate = formData.get('matchDate') as string | null;
-
-      if (!file || !playerEmail || !title) {
-        return new Response(
-          JSON.stringify({ error: 'Missing required fields' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Verify player
-      const { data: player, error: playerError } = await supabase
-        .from('players')
-        .select('id')
-        .eq('email', playerEmail)
-        .maybeSingle();
-
-      if (playerError || !player) {
-        return new Response(
-          JSON.stringify({ error: 'Player not found' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Upload video
-      const ext = file.name.split('.').pop();
-      const filePath = `${crypto.randomUUID()}.${ext}`;
-      const fileBuffer = await file.arrayBuffer();
-
-      const { error: uploadError } = await supabase.storage
-        .from('analysis-videos')
-        .upload(filePath, fileBuffer, { contentType: file.type, upsert: false });
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('analysis-videos')
-        .getPublicUrl(filePath);
-
-      const autoDeleteAt = new Date();
-      autoDeleteAt.setDate(autoDeleteAt.getDate() + 7);
-
-      const { data, error } = await supabase
-        .from('video_analyses')
-        .insert({
-          title,
-          video_url: urlData.publicUrl,
-          opponent: opponent || null,
-          match_date: matchDate || null,
-          player_id: player.id,
-          annotations: [],
-          clips: [],
-          auto_delete_at: autoDeleteAt.toISOString(),
-          match_minute_offset: 0,
-          source: 'player',
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      return new Response(
-        JSON.stringify({ success: true, data }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Removed multipart form data handling — clients now upload to storage directly via TUS
 
     // Handle JSON operations
     const body = await req.json();
@@ -127,6 +54,48 @@ Deno.serve(async (req) => {
         if (error) throw error;
         return new Response(
           JSON.stringify({ data }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'createFromStorage': {
+        const { storagePath, title, opponent, matchDate } = body;
+
+        if (!storagePath || !title) {
+          return new Response(
+            JSON.stringify({ error: 'Missing required fields' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('analysis-videos')
+          .getPublicUrl(storagePath);
+
+        const autoDeleteAt = new Date();
+        autoDeleteAt.setDate(autoDeleteAt.getDate() + 7);
+
+        const { data, error } = await supabase
+          .from('video_analyses')
+          .insert({
+            title,
+            video_url: urlData.publicUrl,
+            opponent: opponent || null,
+            match_date: matchDate || null,
+            player_id: player.id,
+            annotations: [],
+            clips: [],
+            auto_delete_at: autoDeleteAt.toISOString(),
+            match_minute_offset: 0,
+            source: 'player',
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        return new Response(
+          JSON.stringify({ success: true, data }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
