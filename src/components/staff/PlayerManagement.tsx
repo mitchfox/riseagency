@@ -1302,6 +1302,18 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 ))}
               </>
             )}
+            {fuelForFootballPlayers.length > 0 && (
+              <>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  Fuel for Football
+                </div>
+                {fuelForFootballPlayers.map((player) => (
+                  <SelectItem key={player.id} value={player.id}>
+                    {player.name}
+                  </SelectItem>
+                ))}
+              </>
+            )}
             {mandatedPlayers.length > 0 && (
               <>
                 <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
@@ -1353,12 +1365,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         ))}
         
         {/* Gold border separator */}
-        {representedPlayers.length > 0 && mandatedPlayers.length > 0 && (
+        {representedPlayers.length > 0 && fuelForFootballPlayers.length > 0 && (
           <div className="h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent my-2" />
         )}
-        
-        {/* Mandated Players */}
-        {mandatedPlayers.map((player) => (
+
+        {/* Fuel for Football Players */}
+        {fuelForFootballPlayers.map((player) => (
           <button
             key={player.id}
             ref={(el) => (playerRefs.current[player.id] = el)}
@@ -1376,9 +1388,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </Avatar>
           </button>
         ))}
-        
+
         {/* Gold border separator */}
-        {mandatedPlayers.length > 0 && otherPlayers.length > 0 && (
+        {(representedPlayers.length > 0 || fuelForFootballPlayers.length > 0) && mandatedPlayers.length > 0 && (
           <div className="h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent my-2" />
         )}
         
@@ -3570,9 +3582,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="represented">Represented</SelectItem>
+                        <SelectItem value="fuel_for_football">Fuel For Football</SelectItem>
                         <SelectItem value="mandated">Mandated</SelectItem>
                         <SelectItem value="previously_mandated">Previously Mandated</SelectItem>
-                        <SelectItem value="fuel_for_football">Fuel For Football</SelectItem>
                         <SelectItem value="scouted">Scouted</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>

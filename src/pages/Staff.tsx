@@ -335,6 +335,7 @@ const Staff = () => {
       // Allow duplicate section tabs
       const updated = [...tabs, section].slice(-12);
       localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
+      setTabsVersion(v => v + 1);
     } catch {}
     handleSectionToggle(section);
   };
@@ -351,13 +352,14 @@ const Staff = () => {
           handleSectionToggle('overview');
         }
       }
-      setExpandedSection(prev => prev); // force re-render
+      setTabsVersion(v => v + 1);
     } catch {}
   };
 
   const [tabOverflowOpen, setTabOverflowOpen] = useState(false);
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
   const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
+  const [tabsVersion, setTabsVersion] = useState(0);
   const dragStartXRef = useRef<number>(0);
   const isDragConfirmedRef = useRef(false);
 
@@ -1064,7 +1066,7 @@ const Staff = () => {
 
               return (
                 <>
-                  {visibleTabs.map((tabId) => {
+                  {visibleTabs.map((tabId, tabIndex) => {
                     const sec = allSections.find(s => s.id === tabId);
                     if (!sec) return null;
                     const TabIcon = sec.icon;
@@ -1073,7 +1075,7 @@ const Staff = () => {
 
                     return (
                       <motion.div
-                        key={tabId}
+                        key={`${tabId}-${tabIndex}-${tabsVersion}`}
                         layout
                         transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                         className="shrink-0"
@@ -1112,7 +1114,7 @@ const Staff = () => {
                                 setDraggingTabId(null);
                                 setDragOverTabId(null);
                                 isDragConfirmedRef.current = false;
-                                setExpandedSection(prev => prev);
+                                setTabsVersion(v => v + 1);
                               }}
                               onClick={() => handleSectionToggle(tabId as any)}
                               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-full border-2 cursor-grab active:cursor-grabbing ${
@@ -1154,13 +1156,13 @@ const Staff = () => {
                           <div className="space-y-3">
                             <p className="text-sm font-semibold">Open Tabs</p>
                             <div className="space-y-1 max-h-80 overflow-y-auto">
-                              {openTabs.map(tId => {
+                              {openTabs.map((tId, idx) => {
                                 const s = allSections.find(x => x.id === tId);
                                 if (!s) return null;
                                 const TIcon = s.icon;
                                 const active = expandedSection === tId;
                                 return (
-                                  <div key={tId} className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer ${active ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50'}`}>
+                                  <div key={`${tId}-${idx}-${tabsVersion}`} className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer ${active ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50'}`}>
                                     <TIcon className="w-4 h-4 shrink-0" />
                                     <span className="text-sm flex-1 truncate" onClick={() => { handleSectionToggle(tId as any); setTabOverflowOpen(false); }}>{s.title}</span>
                                     <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0" onClick={() => removeTab(tId)}>

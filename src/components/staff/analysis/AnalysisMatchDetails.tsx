@@ -172,6 +172,23 @@ export const AnalysisMatchDetails = ({
     }
   };
 
+  useEffect(() => {
+    if (defaultPlayerId) {
+      if (selectedPlayerId !== defaultPlayerId) {
+        setSelectedPlayerId(defaultPlayerId);
+      }
+      return;
+    }
+
+    const primaryTaggedPlayerId = taggedPlayerIds[0] || "none";
+    if (selectedPlayerId !== primaryTaggedPlayerId) {
+      setSelectedPlayerId(primaryTaggedPlayerId);
+      if (!primaryTaggedPlayerId || primaryTaggedPlayerId === "none") {
+        setSelectedPerformanceReportId("none");
+      }
+    }
+  }, [defaultPlayerId, taggedPlayerIds, selectedPlayerId, setSelectedPlayerId, setSelectedPerformanceReportId]);
+
   return (
     <>
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -180,55 +197,25 @@ export const AnalysisMatchDetails = ({
         <ChevronDown className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-4 space-y-4">
-        {/* Link to Player/Performance Report - for post-match only */}
-        {showPlayerLinking && analysisType === "post-match" && (
-          <>
-            <div>
-              <Label>Link to Player</Label>
-              {defaultPlayerId ? (
-                <div className="rounded-md border px-3 py-2 text-sm">
-                  <span className="font-medium">{players.find((p: any) => p.id === defaultPlayerId)?.name || "Selected player"}</span>
-                </div>
-              ) : (
-                <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a player..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No player link</SelectItem>
-                    {sortPlayersByRepresentation(players).map((player: any) => (
-                      <SelectItem key={player.id} value={player.id}>
-                        {player.name}
-                        {player.representation_status && player.representation_status !== 'other' && (
-                          <span className="text-xs text-muted-foreground ml-1">({getStatusLabel(player.representation_status)})</span>
-                        )}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            {selectedPlayerId && selectedPlayerId !== "none" && performanceReports.length > 0 && (
-              <div>
-                <Label>Link to Performance Report (R90)</Label>
-                <Select value={selectedPerformanceReportId} onValueChange={setSelectedPerformanceReportId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a performance report..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No report link</SelectItem>
-                    {performanceReports.map((report) => (
-                      <SelectItem key={report.id} value={report.id}>
-                        {report.opponent} - {new Date(report.analysis_date).toLocaleDateString()}
-                        {report.r90_score ? ` (R90: ${report.r90_score})` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </>
+        {/* Performance report linking (uses first tagged player) - for post-match only */}
+        {showPlayerLinking && analysisType === "post-match" && selectedPlayerId && selectedPlayerId !== "none" && performanceReports.length > 0 && (
+          <div>
+            <Label>Link to Performance Report (R90)</Label>
+            <Select value={selectedPerformanceReportId} onValueChange={setSelectedPerformanceReportId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a performance report..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No report link</SelectItem>
+                {performanceReports.map((report) => (
+                  <SelectItem key={report.id} value={report.id}>
+                    {report.opponent} - {new Date(report.analysis_date).toLocaleDateString()}
+                    {report.r90_score ? ` (R90: ${report.r90_score})` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
 
         {/* Tag Players */}
