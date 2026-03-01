@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check, HelpCircle, HardDriveDownload } from "lucide-react";
+import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check, HelpCircle, HardDriveDownload, RefreshCw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -240,6 +240,13 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
   };
 
+  const handleRefreshData = async () => {
+    setLoading(true);
+    await Promise.all([fetchVideos(), fetchPlayers(), fetchKnownActionTypes()]);
+    setLoading(false);
+    toast.success("Video analysis refreshed");
+  };
+
   // Sort action types by frequency of use (most used first), then alphabetical
   const allActionTypes = useMemo(() => {
     const merged = new Set([...DEFAULT_ACTION_TYPES, ...knownActionTypes]);
@@ -275,63 +282,67 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         const { data: session } = await supabase.auth.getSession();
         const userId = session.session?.user?.id;
 
-        const result = await splitAndUpload(uploadFile, {
-          onProgress: setHybridProgress,
-          abortSignal: abortController.signal,
-        });
-
         const autoDeleteAt = new Date();
         autoDeleteAt.setDate(autoDeleteAt.getDate() + 7);
 
-        const totalParts = result.parts.length;
-        const insertRows = result.parts.map(part => {
-          const row: any = {
-            title: newTitle,
-            video_url: part.publicUrl,
-            opponent: newOpponent || null,
-            match_date: newMatchDate || null,
-            created_by: userId || null,
-            annotations: [],
-            clips: [],
-            auto_delete_at: autoDeleteAt.toISOString(),
-            match_minute_offset: 0,
-            group_id: totalParts > 1 ? result.groupId : null,
-            part_number: totalParts > 1 ? part.partNumber : null,
-            total_parts: totalParts > 1 ? totalParts : null,
-          };
-          if (newPlayerId && newPlayerId !== "none") row.player_id = newPlayerId;
-          return row;
+        let firstInserted: VideoAnalysisEntry | null = null;
+
+        const result = await splitAndUpload(uploadFile, {
+          onProgress: setHybridProgress,
+          abortSignal: abortController.signal,
+          onPartUploaded: async (part, totalParts, groupId) => {
+            const row: any = {
+              title: newTitle,
+              video_url: part.publicUrl,
+              opponent: newOpponent || null,
+              match_date: newMatchDate || null,
+              created_by: userId || null,
+              annotations: [],
+              clips: [],
+              auto_delete_at: autoDeleteAt.toISOString(),
+              match_minute_offset: 0,
+              group_id: totalParts > 1 ? groupId : null,
+              part_number: totalParts > 1 ? part.partNumber : null,
+              total_parts: totalParts > 1 ? totalParts : null,
+            };
+            if (newPlayerId && newPlayerId !== "none") row.player_id = newPlayerId;
+
+            const { data: inserted, error: insertError } = await supabase
+              .from("video_analyses")
+              .insert(row)
+              .select()
+              .single();
+
+            if (insertError) throw insertError;
+
+            if (inserted) {
+              const entry: VideoAnalysisEntry = {
+                ...inserted,
+                annotations: [] as Annotation[],
+                clips: [] as Clip[],
+                match_minute_offset: 0,
+                second_half_offset: null,
+                second_half_video_time: null,
+                part_number: (inserted as any).part_number ?? null,
+                group_id: (inserted as any).group_id ?? null,
+                total_parts: (inserted as any).total_parts ?? null,
+              };
+              setVideos(prev => [entry, ...prev]);
+              if (!firstInserted) {
+                firstInserted = entry;
+                setSelectedVideo(entry);
+              }
+            }
+          },
         });
 
-        const { data, error } = await supabase
-          .from("video_analyses")
-          .insert(insertRows)
-          .select();
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          const entries: VideoAnalysisEntry[] = data.map(d => ({
-            ...d,
-            annotations: [] as Annotation[],
-            clips: [] as Clip[],
-            match_minute_offset: 0,
-            second_half_offset: null,
-            second_half_video_time: null,
-            part_number: (d as any).part_number ?? null,
-            group_id: (d as any).group_id ?? null,
-            total_parts: (d as any).total_parts ?? null,
-          }));
-          setVideos(prev => [...entries, ...prev]);
-          setSelectedVideo(entries[0]);
-          setShowUpload(false);
-          setNewTitle("");
-          setUploadFile(null);
-          setNewPlayerId(defaultPlayerId || "");
-          setNewOpponent("");
-          setNewMatchDate("");
-          toast.success(totalParts > 1 ? `Video uploaded as ${totalParts} parts` : "Video uploaded successfully");
-        }
+        setShowUpload(false);
+        setNewTitle("");
+        setUploadFile(null);
+        setNewPlayerId(defaultPlayerId || "");
+        setNewOpponent("");
+        setNewMatchDate("");
+        toast.success(result.parts.length > 1 ? `Video uploaded as ${result.parts.length} parts` : "Video uploaded successfully");
       } catch (err: any) {
         if (err.message !== 'Cancelled') {
           toast.error(err.message || "Failed to process large video");
@@ -2056,9 +2067,15 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
           <h2 className="text-3xl font-bebas mb-2">VIDEO ANALYSIS</h2>
           <p className="text-muted-foreground">Upload full match footage, annotate and clip key actions</p>
         </div>
-        <Button onClick={() => setShowUpload(!showUpload)} variant={showUpload ? "secondary" : "default"}>
-          {showUpload ? <><X className="h-4 w-4 mr-2" /> Cancel</> : <><Plus className="h-4 w-4 mr-2" /> Upload Match</>}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={handleRefreshData} variant="outline" size="sm" className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+          <Button onClick={() => setShowUpload(!showUpload)} variant={showUpload ? "secondary" : "default"}>
+            {showUpload ? <><X className="h-4 w-4 mr-2" /> Cancel</> : <><Plus className="h-4 w-4 mr-2" /> Upload Match</>}
+          </Button>
+        </div>
       </div>
 
       {showUpload && (

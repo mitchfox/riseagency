@@ -243,6 +243,7 @@ export const AddPlayerDialog = ({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="represented">Represented</SelectItem>
+                        <SelectItem value="fuel_for_football">Fuel for Football</SelectItem>
                         <SelectItem value="mandated">Mandated</SelectItem>
                         <SelectItem value="previously_mandated">Previously Mandated</SelectItem>
                         <SelectItem value="scouted">Scouted</SelectItem>

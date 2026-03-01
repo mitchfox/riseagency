@@ -18,6 +18,7 @@ export interface SplitUploadResult {
 
 interface SplitUploadOptions {
   onProgress?: (p: SplitUploadProgress) => void;
+  onPartUploaded?: (part: { partNumber: number; storagePath: string; publicUrl: string }, totalParts: number, groupId: string) => Promise<void> | void;
   abortSignal?: AbortSignal;
 }
 
@@ -29,11 +30,11 @@ export function needsHybridUpload(file: File): boolean {
 }
 
 /**
- * Split a file into binary chunks of ~1.5GB each.
+ * Split a file into binary chunks of ~1GB each.
  * This is instant — no re-encoding, no canvas, no MediaRecorder.
  */
 function splitFileIntoChunks(file: File): Blob[] {
-  const CHUNK_SIZE = 1.5 * 1024 * 1024 * 1024; // 1.5GB per part
+  const CHUNK_SIZE = 1 * 1024 * 1024 * 1024; // 1GB per part
   const parts: Blob[] = [];
   let offset = 0;
   while (offset < file.size) {
@@ -107,7 +108,7 @@ export async function splitAndUpload(
   file: File,
   options: SplitUploadOptions = {}
 ): Promise<SplitUploadResult> {
-  const { onProgress, abortSignal } = options;
+  const { onProgress, onPartUploaded, abortSignal } = options;
   const groupId = crypto.randomUUID();
 
   // Instant binary split
@@ -147,7 +148,9 @@ export async function splitAndUpload(
       abortSignal
     );
 
-    results.push({ partNumber: partNum, storagePath: filePath, publicUrl });
+    const uploadedPart = { partNumber: partNum, storagePath: filePath, publicUrl };
+    results.push(uploadedPart);
+    await onPartUploaded?.(uploadedPart, parts.length, groupId);
   }
 
   onProgress?.({ stage: 'done', message: 'All parts uploaded', progress: 100 });

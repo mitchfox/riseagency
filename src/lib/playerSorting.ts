@@ -1,9 +1,9 @@
 // Sort players so represented/mandated appear first, grouped by status
 const STATUS_PRIORITY: Record<string, number> = {
   represented: 0,
-  mandated: 1,
-  previously_mandated: 2,
-  fuel_for_football: 3,
+  fuel_for_football: 1,
+  mandated: 2,
+  previously_mandated: 3,
   other: 4,
   scouted: 5,
 };
@@ -36,7 +36,7 @@ export const groupPlayersByStatus = <T extends { representation_status?: string 
   players: T[]
 ): { status: string; label: string; players: T[] }[] => {
   const groups: { status: string; label: string; players: T[] }[] = [];
-  const statusOrder = ['represented', 'mandated', 'previously_mandated', 'fuel_for_football', 'other', 'scouted'];
+  const statusOrder = ['represented', 'fuel_for_football', 'mandated', 'previously_mandated', 'other', 'scouted'];
   
   statusOrder.forEach(status => {
     const matching = players.filter(p => p.representation_status === status);
