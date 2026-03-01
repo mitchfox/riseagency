@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { ActionReportsList } from "@/components/staff/analysis/ActionReportsList";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { AnalysisComparisons } from "@/components/portal/AnalysisComparisons";
 import { CreatePerformanceReportDialog } from "@/components/staff/CreatePerformanceReportDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { ClipboardList, BarChart3, Database, User } from "lucide-react";
+import { ClipboardList, BarChart3, Database, User, RefreshCw } from "lucide-react";
 import { sortPlayersByRepresentation, getStatusLabel } from "@/lib/playerSorting";
+import { toast } from "sonner";
 
 interface PlayerAnalysis {
   id: string;
@@ -32,6 +34,7 @@ export const CoachingDataSection = () => {
   const [players, setPlayers] = useState<{ id: string; name: string; position: string; image_url: string | null; representation_status?: string | null }[]>([]);
   const [analyses, setAnalyses] = useState<PlayerAnalysis[]>([]);
   const [inlineReport, setInlineReport] = useState<InlineReportState | null>(null);
+  const [reportsKey, setReportsKey] = useState(0);
 
   useEffect(() => {
     fetchPlayers();
@@ -59,6 +62,15 @@ export const CoachingDataSection = () => {
       .order("analysis_date", { ascending: false });
     setAnalyses(data || []);
   };
+
+  const handleRefresh = useCallback(async () => {
+    await fetchPlayers();
+    if (selectedPlayer && selectedPlayer !== "all") {
+      await fetchPlayerAnalyses(selectedPlayer);
+    }
+    setReportsKey(k => k + 1);
+    toast.success("Data refreshed");
+  }, [selectedPlayer]);
 
   const currentPlayer = players.find(p => p.id === selectedPlayer);
 
@@ -105,21 +117,36 @@ export const CoachingDataSection = () => {
         </div>
 
         {/* Desktop tabs */}
-        <TabsList className="hidden md:flex w-full justify-start h-auto p-0 bg-transparent rounded-none gap-1 mb-4">
-          {tabItems.map((tab) => (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded px-3 py-2 text-sm"
-            >
-              <tab.icon className="h-4 w-4 mr-1.5" />
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="hidden md:flex w-full justify-between items-center mb-4">
+          <TabsList className="flex justify-start h-auto p-0 bg-transparent rounded-none gap-1">
+            {tabItems.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded px-3 py-2 text-sm"
+              >
+                <tab.icon className="h-4 w-4 mr-1.5" />
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <Button onClick={handleRefresh} variant="outline" size="sm" className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
+
+        {/* Mobile refresh button */}
+        <div className="md:hidden flex justify-end mb-2">
+          <Button onClick={handleRefresh} variant="outline" size="sm" className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
 
         <TabsContent value="reports" className="mt-0">
           <ActionReportsList
+            key={reportsKey}
             onCreateReport={(playerId, playerName) => {
               setInlineReport({ playerId, playerName });
             }}
