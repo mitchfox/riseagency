@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import * as tus from 'tus-js-client';
+import { needsHybridUpload, splitAndUpload, type SplitUploadProgress } from "@/lib/videoSplitUpload";
+import { LargeVideoProcessingModal } from "./LargeVideoProcessingModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,6 +60,9 @@ interface VideoAnalysisEntry {
   second_half_offset: number | null;
   second_half_video_time: number | null;
   created_at: string;
+  part_number: number | null;
+  group_id: string | null;
+  total_parts: number | null;
 }
 
 const DEFAULT_ACTION_TYPES = [
@@ -102,6 +107,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedBytes, setUploadedBytes] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Hybrid upload (large files)
+  const [hybridProgress, setHybridProgress] = useState<SplitUploadProgress | null>(null);
+  const [showHybridModal, setShowHybridModal] = useState(false);
+  const hybridAbortRef = useRef<AbortController | null>(null);
 
   // Annotation form
   const [annotationText, setAnnotationText] = useState("");
@@ -201,6 +211,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         match_minute_offset: Number(v.match_minute_offset) || 0,
         second_half_offset: null,
         second_half_video_time: null,
+        part_number: (v as any).part_number ?? null,
+        group_id: (v as any).group_id ?? null,
+        total_parts: (v as any).total_parts ?? null,
       })));
     }
     setLoading(false);
@@ -248,6 +261,86 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
     if (uploadFile.size > MAX_VIDEO_UPLOAD_BYTES) {
       toast.error("This file exceeds the 50GB upload limit");
+      return;
+    }
+
+    // Route large files through hybrid compress + split flow
+    if (needsHybridUpload(uploadFile)) {
+      setCreating(true);
+      setShowHybridModal(true);
+      const abortController = new AbortController();
+      hybridAbortRef.current = abortController;
+
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        const userId = session.session?.user?.id;
+
+        const result = await splitAndUpload(uploadFile, {
+          onProgress: setHybridProgress,
+          abortSignal: abortController.signal,
+        });
+
+        const autoDeleteAt = new Date();
+        autoDeleteAt.setDate(autoDeleteAt.getDate() + 7);
+
+        const totalParts = result.parts.length;
+        const insertRows = result.parts.map(part => {
+          const row: any = {
+            title: newTitle,
+            video_url: part.publicUrl,
+            opponent: newOpponent || null,
+            match_date: newMatchDate || null,
+            created_by: userId || null,
+            annotations: [],
+            clips: [],
+            auto_delete_at: autoDeleteAt.toISOString(),
+            match_minute_offset: 0,
+            group_id: totalParts > 1 ? result.groupId : null,
+            part_number: totalParts > 1 ? part.partNumber : null,
+            total_parts: totalParts > 1 ? totalParts : null,
+          };
+          if (newPlayerId && newPlayerId !== "none") row.player_id = newPlayerId;
+          return row;
+        });
+
+        const { data, error } = await supabase
+          .from("video_analyses")
+          .insert(insertRows)
+          .select();
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const entries: VideoAnalysisEntry[] = data.map(d => ({
+            ...d,
+            annotations: [] as Annotation[],
+            clips: [] as Clip[],
+            match_minute_offset: 0,
+            second_half_offset: null,
+            second_half_video_time: null,
+            part_number: (d as any).part_number ?? null,
+            group_id: (d as any).group_id ?? null,
+            total_parts: (d as any).total_parts ?? null,
+          }));
+          setVideos(prev => [...entries, ...prev]);
+          setSelectedVideo(entries[0]);
+          setShowUpload(false);
+          setNewTitle("");
+          setUploadFile(null);
+          setNewPlayerId(defaultPlayerId || "");
+          setNewOpponent("");
+          setNewMatchDate("");
+          toast.success(totalParts > 1 ? `Video uploaded as ${totalParts} parts` : "Video uploaded successfully");
+        }
+      } catch (err: any) {
+        if (err.message !== 'Cancelled') {
+          toast.error(err.message || "Failed to process large video");
+        }
+      }
+      setShowHybridModal(false);
+      setHybridProgress(null);
+      hybridAbortRef.current = null;
+      setCreating(false);
       return;
     }
 
@@ -329,7 +422,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       if (error) throw error;
 
       if (data) {
-        const entry: VideoAnalysisEntry = { ...data, annotations: [] as Annotation[], clips: [] as Clip[], match_minute_offset: 0, second_half_offset: null, second_half_video_time: null };
+        const entry: VideoAnalysisEntry = { ...data, annotations: [] as Annotation[], clips: [] as Clip[], match_minute_offset: 0, second_half_offset: null, second_half_video_time: null, part_number: null, group_id: null, total_parts: null };
         setVideos(prev => [entry, ...prev]);
         setSelectedVideo(entry);
         setShowUpload(false);
@@ -1277,6 +1370,36 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               {selectedVideo.match_date && ` · ${format(new Date(selectedVideo.match_date), "dd MMM yyyy")}`}
               {selectedVideo.clips.length > 0 && ` · ${selectedVideo.clips.length} clips`}
             </p>
+            {/* Multi-part navigation */}
+            {selectedVideo.group_id && selectedVideo.total_parts && selectedVideo.total_parts > 1 && (
+              <div className="flex items-center gap-2 mt-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-1.5 text-xs"
+                  disabled={selectedVideo.part_number === 1}
+                  onClick={() => {
+                    const prevPart = videos.find(v => v.group_id === selectedVideo.group_id && v.part_number === (selectedVideo.part_number || 1) - 1);
+                    if (prevPart) setSelectedVideo(prevPart);
+                  }}
+                >
+                  <ChevronLeft className="h-3 w-3" />
+                </Button>
+                <span className="text-xs font-medium">Part {selectedVideo.part_number} of {selectedVideo.total_parts}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-1.5 text-xs"
+                  disabled={selectedVideo.part_number === selectedVideo.total_parts}
+                  onClick={() => {
+                    const nextPart = videos.find(v => v.group_id === selectedVideo.group_id && v.part_number === (selectedVideo.part_number || 1) + 1);
+                    if (nextPart) setSelectedVideo(nextPart);
+                  }}
+                >
+                  <ChevronsRight className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Button
@@ -2028,59 +2151,87 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {videos.map(video => {
-              const expiry = daysUntilExpiry(video.auto_delete_at);
-              return (
-                <div
-                  key={video.id}
-                  onClick={() => setSelectedVideo(video)}
-                  className="p-4 rounded-lg border cursor-pointer hover:bg-muted/30 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm truncate">{video.title}</p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        {video.opponent && <span className="text-xs text-muted-foreground">vs {video.opponent}</span>}
-                        {video.annotations.length > 0 && <Badge variant="secondary" className="text-xs">{video.annotations.length} notes</Badge>}
-                        {video.clips.length > 0 && <Badge variant="outline" className="text-xs">{video.clips.length} clips</Badge>}
+            {(() => {
+              // Group multi-part videos: show only part 1 as the entry point, hide other parts
+              const seenGroups = new Set<string>();
+              return videos.filter(video => {
+                if (video.group_id && video.part_number && video.part_number > 1) {
+                  return false; // hide non-first parts
+                }
+                if (video.group_id) {
+                  if (seenGroups.has(video.group_id)) return false;
+                  seenGroups.add(video.group_id);
+                }
+                return true;
+              }).map(video => {
+                const expiry = daysUntilExpiry(video.auto_delete_at);
+                return (
+                  <div
+                    key={video.id}
+                    onClick={() => setSelectedVideo(video)}
+                    className="p-4 rounded-lg border cursor-pointer hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm truncate">{video.title}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {video.opponent && <span className="text-xs text-muted-foreground">vs {video.opponent}</span>}
+                          {video.annotations.length > 0 && <Badge variant="secondary" className="text-xs">{video.annotations.length} notes</Badge>}
+                          {video.clips.length > 0 && <Badge variant="outline" className="text-xs">{video.clips.length} clips</Badge>}
+                          {video.total_parts && video.total_parts > 1 && (
+                            <Badge variant="secondary" className="text-xs">{video.total_parts} parts</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          {video.match_date && <p className="text-xs text-muted-foreground">{format(new Date(video.match_date), "dd MMM yyyy")}</p>}
+                          {!video.video_url && video.clips.length > 0 && (
+                            <Badge variant="outline" className="text-[10px]">Source removed</Badge>
+                          )}
+                          {expiry !== null && (
+                            <span className={`text-xs ${expiry <= 2 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                              <Clock className="h-3 w-3 inline mr-0.5" />{expiry}d left
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        {video.match_date && <p className="text-xs text-muted-foreground">{format(new Date(video.match_date), "dd MMM yyyy")}</p>}
-                        {!video.video_url && video.clips.length > 0 && (
-                          <Badge variant="outline" className="text-[10px]">Source removed</Badge>
+                      <div className="flex gap-1 shrink-0">
+                        {video.video_url && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary shrink-0" title="Extend deletion by 7 days" onClick={e => { 
+                            e.stopPropagation(); 
+                            const newDate = new Date(video.auto_delete_at ? new Date(video.auto_delete_at).getTime() + 7 * 86400000 : Date.now() + 14 * 86400000);
+                            supabase.from('video_analyses').update({ auto_delete_at: newDate.toISOString() }).eq('id', video.id).then(({ error }) => {
+                              if (error) { toast.error('Failed to extend'); return; }
+                              toast.success('Deletion extended by 7 days');
+                              setVideos(prev => prev.map(v => v.id === video.id ? { ...v, auto_delete_at: newDate.toISOString() } : v));
+                            });
+                          }}>
+                            <Clock className="h-4 w-4" />
+                          </Button>
                         )}
-                        {expiry !== null && (
-                          <span className={`text-xs ${expiry <= 2 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                            <Clock className="h-3 w-3 inline mr-0.5" />{expiry}d left
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                      {video.video_url && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary shrink-0" title="Extend deletion by 7 days" onClick={e => { 
-                          e.stopPropagation(); 
-                          const newDate = new Date(video.auto_delete_at ? new Date(video.auto_delete_at).getTime() + 7 * 86400000 : Date.now() + 14 * 86400000);
-                          supabase.from('video_analyses').update({ auto_delete_at: newDate.toISOString() }).eq('id', video.id).then(({ error }) => {
-                            if (error) { toast.error('Failed to extend'); return; }
-                            toast.success('Deletion extended by 7 days');
-                            setVideos(prev => prev.map(v => v.id === video.id ? { ...v, auto_delete_at: newDate.toISOString() } : v));
-                          });
-                        }}>
-                          <Clock className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0" onClick={e => { e.stopPropagation(); handleDeleteVideo(video.id); }}>
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                      )}
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0" onClick={e => { e.stopPropagation(); handleDeleteVideo(video.id); }}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         )}
       </div>
+
+      {/* Large video processing modal */}
+      <LargeVideoProcessingModal
+        open={showHybridModal}
+        progress={hybridProgress}
+        onCancel={() => {
+          hybridAbortRef.current?.abort();
+          setShowHybridModal(false);
+          setHybridProgress(null);
+          setCreating(false);
+        }}
+      />
     </div>
   );
 };
