@@ -24,27 +24,44 @@ export const R90FlowChart = ({ actions, minutesPlayed }: R90FlowChartProps) => {
     const lastActionMinute = Math.max(...sorted.map(a => Math.floor(a.minute)));
     const startMinute = Math.max(0, lastActionMinute - minutesPlayed);
 
-    // Build cumulative score at each action minute
-    const points: { minute: number; r90: number; rawScore: number; label: string }[] = [];
+    // Build cumulative score, then interpolate minute-by-minute
+    const actionPoints: { minute: number; score: number; label: string }[] = [];
     let cumulativeScore = 0;
-
-    // Starting point
-    points.push({ minute: startMinute, r90: 0, rawScore: 0, label: "Start" });
 
     sorted.forEach(action => {
       cumulativeScore += action.action_score;
-      const elapsedMinutes = Math.floor(action.minute) - startMinute;
-      const r90AtPoint = elapsedMinutes > 0
-        ? (cumulativeScore / elapsedMinutes) * 90
-        : 0;
-
-      points.push({
+      actionPoints.push({
         minute: Math.floor(action.minute),
-        r90: Math.round(r90AtPoint * 100) / 100,
-        rawScore: Math.round(cumulativeScore * 1000) / 1000,
+        score: cumulativeScore,
         label: `#${action.action_number} ${action.action_type}`,
       });
     });
+
+    // Generate a point for every minute from start to end
+    const endMinute = Math.max(...actionPoints.map(a => a.minute));
+    const points: { minute: number; r90: number; rawScore: number; label: string }[] = [];
+
+    // Build a map of cumulative score at each action minute
+    const scoreAtMinute = new Map<number, { score: number; label: string }>();
+    actionPoints.forEach(ap => {
+      scoreAtMinute.set(ap.minute, { score: ap.score, label: ap.label });
+    });
+
+    let runningScore = 0;
+    for (let m = startMinute; m <= endMinute; m++) {
+      const entry = scoreAtMinute.get(m);
+      if (entry) runningScore = entry.score;
+
+      const elapsed = m - startMinute;
+      const r90 = elapsed > 0 ? (runningScore / elapsed) * 90 : 0;
+
+      points.push({
+        minute: m,
+        r90: Math.round(r90 * 100) / 100,
+        rawScore: Math.round(runningScore * 1000) / 1000,
+        label: entry?.label || "",
+      });
+    }
 
     return points;
   }, [actions, minutesPlayed]);
@@ -75,6 +92,10 @@ export const R90FlowChart = ({ actions, minutesPlayed }: R90FlowChartProps) => {
               dataKey="minute"
               stroke="hsl(var(--muted-foreground))"
               fontSize={11}
+              type="number"
+              domain={['dataMin', 'dataMax']}
+              tickFormatter={(value: number) => `${value}'`}
+              ticks={chartData.filter(d => d.minute % 5 === 0).map(d => d.minute)}
               label={{ value: "Minute", position: "insideBottom", offset: -5, style: { fill: "hsl(var(--muted-foreground))", fontSize: 10 } }}
             />
             <YAxis
