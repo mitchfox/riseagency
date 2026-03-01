@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check, HelpCircle } from "lucide-react";
+import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check, HelpCircle, HardDriveDownload } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEditor";
 import { AnnotationCanvas } from "@/components/staff/annotations/AnnotationCanvas";
 import type { AnnotationProject, Klip, AnnotationElement } from "@/components/staff/annotations/AnnotationProjects";
@@ -139,6 +140,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   // Clip saved toast
   const [clipSavedToast, setClipSavedToast] = useState(false);
   const clipSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [purging, setPurging] = useState(false);
 
   // Playback speed
   const SPEED_STEPS = [0.25, 0.5, 1, 2, 4, 8];
@@ -686,6 +688,38 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       if (selectedVideo?.id === id) setSelectedVideo(null);
       toast.success("Deleted — clips attached to reports are preserved");
     }
+  };
+
+  const handlePurgeSource = async () => {
+    if (!selectedVideo || !selectedVideo.video_url) return;
+    setPurging(true);
+    try {
+      // Extract storage path from the video URL
+      const urlParts = selectedVideo.video_url.split('analysis-videos/');
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1];
+        // Only delete the source file, not clips
+        if (!filePath.startsWith('clips/')) {
+          await supabase.storage.from('analysis-videos').remove([filePath]);
+        }
+      }
+
+      // Clear video_url and auto_delete_at on the record
+      const { error } = await supabase
+        .from('video_analyses')
+        .update({ video_url: '', auto_delete_at: null })
+        .eq('id', selectedVideo.id);
+
+      if (error) throw error;
+
+      const updated = { ...selectedVideo, video_url: '', auto_delete_at: null };
+      setSelectedVideo(updated);
+      setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
+      toast.success('Source video purged. Clips and annotations preserved.');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to purge source video');
+    }
+    setPurging(false);
   };
 
   const jumpToTimestamp = (ts: number) => {
@@ -1256,6 +1290,29 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               </Button>
             )}
             {selectedVideo.video_url && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1 text-destructive hover:text-destructive">
+                    <HardDriveDownload className="h-3.5 w-3.5" /> Purge Source
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="max-w-lg">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Purge source video?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This permanently deletes the full match video file from storage. All clips, annotations and report links will be preserved. This cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handlePurgeSource} disabled={purging} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      {purging ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Purging...</> : 'Purge Source Video'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            {selectedVideo.video_url && (
               <AIPlayerDetection
                 videoUrl={selectedVideo.video_url}
                 videoRef={videoRef as React.RefObject<HTMLVideoElement>}
@@ -1416,8 +1473,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         ) : (
           <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
-              <Film className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>Video file expired. Clips and annotations preserved below.</p>
+              <HardDriveDownload className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p className="font-medium">Source video purged</p>
+              <p className="text-sm mt-1">Clips and annotations are still available below.</p>
             </CardContent>
           </Card>
         )}
@@ -1985,6 +2043,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         {video.match_date && <p className="text-xs text-muted-foreground">{format(new Date(video.match_date), "dd MMM yyyy")}</p>}
+                        {!video.video_url && video.clips.length > 0 && (
+                          <Badge variant="outline" className="text-[10px]">Source removed</Badge>
+                        )}
                         {expiry !== null && (
                           <span className={`text-xs ${expiry <= 2 ? 'text-destructive' : 'text-muted-foreground'}`}>
                             <Clock className="h-3 w-3 inline mr-0.5" />{expiry}d left
@@ -1993,18 +2054,19 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       </div>
                     </div>
                     <div className="flex gap-1 shrink-0">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary shrink-0" title="Extend deletion by 7 days" onClick={e => { 
-                        e.stopPropagation(); 
-                        const newDate = new Date(video.auto_delete_at ? new Date(video.auto_delete_at).getTime() + 7 * 86400000 : Date.now() + 14 * 86400000);
-                        supabase.from('video_analyses').update({ auto_delete_at: newDate.toISOString() }).eq('id', video.id).then(({ error }) => {
-                          if (error) { toast.error('Failed to extend'); return; }
-                          toast.success('Deletion extended by 7 days');
-                          // Refresh video list
-                          setVideos(prev => prev.map(v => v.id === video.id ? { ...v, auto_delete_at: newDate.toISOString() } : v));
-                        });
-                      }}>
-                        <Clock className="h-4 w-4" />
-                      </Button>
+                      {video.video_url && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary shrink-0" title="Extend deletion by 7 days" onClick={e => { 
+                          e.stopPropagation(); 
+                          const newDate = new Date(video.auto_delete_at ? new Date(video.auto_delete_at).getTime() + 7 * 86400000 : Date.now() + 14 * 86400000);
+                          supabase.from('video_analyses').update({ auto_delete_at: newDate.toISOString() }).eq('id', video.id).then(({ error }) => {
+                            if (error) { toast.error('Failed to extend'); return; }
+                            toast.success('Deletion extended by 7 days');
+                            setVideos(prev => prev.map(v => v.id === video.id ? { ...v, auto_delete_at: newDate.toISOString() } : v));
+                          });
+                        }}>
+                          <Clock className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0" onClick={e => { e.stopPropagation(); handleDeleteVideo(video.id); }}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
