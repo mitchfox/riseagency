@@ -5154,13 +5154,16 @@ export type Database = {
           clips: Json
           created_at: string
           created_by: string | null
+          group_id: string | null
           id: string
           match_date: string | null
           match_minute_offset: number | null
           opponent: string | null
+          part_number: number | null
           player_id: string | null
           source: string
           title: string
+          total_parts: number | null
           updated_at: string
           video_url: string
         }
@@ -5170,13 +5173,16 @@ export type Database = {
           clips?: Json
           created_at?: string
           created_by?: string | null
+          group_id?: string | null
           id?: string
           match_date?: string | null
           match_minute_offset?: number | null
           opponent?: string | null
+          part_number?: number | null
           player_id?: string | null
           source?: string
           title: string
+          total_parts?: number | null
           updated_at?: string
           video_url: string
         }
@@ -5186,13 +5192,16 @@ export type Database = {
           clips?: Json
           created_at?: string
           created_by?: string | null
+          group_id?: string | null
           id?: string
           match_date?: string | null
           match_minute_offset?: number | null
           opponent?: string | null
+          part_number?: number | null
           player_id?: string | null
           source?: string
           title?: string
+          total_parts?: number | null
           updated_at?: string
           video_url?: string
         }
