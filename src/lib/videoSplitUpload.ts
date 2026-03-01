@@ -2,11 +2,9 @@ import * as tus from 'tus-js-client';
 import { supabase } from '@/integrations/supabase/client';
 
 const SIZE_CAP = 1.8 * 1024 * 1024 * 1024; // 1.8GB
-const PART_TARGET = 1.5 * 1024 * 1024 * 1024; // 1.5GB target per part
-const PART_DURATION_TARGET = 45 * 60; // 45 minutes max per part
 
 export interface SplitUploadProgress {
-  stage: 'compressing' | 'splitting' | 'uploading' | 'done' | 'error';
+  stage: 'splitting' | 'uploading' | 'done' | 'error';
   message: string;
   progress: number; // 0-100
   currentPart?: number;
@@ -31,170 +29,18 @@ export function needsHybridUpload(file: File): boolean {
 }
 
 /**
- * Compress a video using canvas + MediaRecorder (Balanced preset: 2.5Mbps)
+ * Split a file into binary chunks of ~1.5GB each.
+ * This is instant — no re-encoding, no canvas, no MediaRecorder.
  */
-async function compressVideo(
-  file: File,
-  onProgress?: (pct: number) => void,
-  abortSignal?: AbortSignal
-): Promise<Blob> {
-  const video = document.createElement('video');
-  video.muted = true;
-  video.playsInline = true;
-  video.preload = 'auto';
-
-  await new Promise<void>((resolve, reject) => {
-    video.onloadeddata = () => resolve();
-    video.onerror = () => reject(new Error('Failed to load video for compression'));
-    video.src = URL.createObjectURL(file);
-    video.load();
-  });
-
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth || 1280;
-  canvas.height = video.videoHeight || 720;
-  const ctx = canvas.getContext('2d')!;
-
-  const stream = canvas.captureStream(30);
-  const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-    ? 'video/webm;codecs=vp9'
-    : 'video/webm';
-
-  const recorder = new MediaRecorder(stream, {
-    mimeType,
-    videoBitsPerSecond: 2500000, // Balanced preset
-  });
-
-  const chunks: Blob[] = [];
-  recorder.ondataavailable = (e) => {
-    if (e.data.size > 0) chunks.push(e.data);
-  };
-
-  recorder.start(100);
-  video.currentTime = 0;
-  await video.play();
-
-  const duration = video.duration;
-
-  await new Promise<void>((resolve) => {
-    const drawFrame = () => {
-      if (abortSignal?.aborted) {
-        video.pause();
-        recorder.stop();
-        resolve();
-        return;
-      }
-      if (video.ended || video.paused) {
-        recorder.stop();
-        resolve();
-        return;
-      }
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      onProgress?.(Math.min(95, Math.round((video.currentTime / duration) * 100)));
-      setTimeout(() => requestAnimationFrame(drawFrame), 16);
-    };
-    recorder.onstop = () => resolve();
-    requestAnimationFrame(drawFrame);
-  });
-
-  // Wait for recorder to fully stop
-  await new Promise<void>((resolve) => {
-    if (recorder.state === 'inactive') resolve();
-    else recorder.onstop = () => resolve();
-  });
-
-  URL.revokeObjectURL(video.src);
-  return new Blob(chunks, { type: mimeType });
-}
-
-/**
- * Split a video blob into sequential parts using timed MediaRecorder segments.
- * Each part targets ~PART_DURATION_TARGET seconds.
- */
-async function splitVideo(
-  blob: Blob,
-  onProgress?: (pct: number, partNum: number, totalParts: number) => void,
-  abortSignal?: AbortSignal
-): Promise<Blob[]> {
-  const video = document.createElement('video');
-  video.muted = true;
-  video.playsInline = true;
-  video.preload = 'auto';
-
-  await new Promise<void>((resolve, reject) => {
-    video.onloadeddata = () => resolve();
-    video.onerror = () => reject(new Error('Failed to load compressed video for splitting'));
-    video.src = URL.createObjectURL(blob);
-    video.load();
-  });
-
-  const duration = video.duration;
-  // Estimate parts by both size and duration
-  const partsBySize = Math.ceil(blob.size / PART_TARGET);
-  const partsByDuration = Math.ceil(duration / PART_DURATION_TARGET);
-  const totalParts = Math.max(partsBySize, partsByDuration);
-  const partDuration = duration / totalParts;
-
+function splitFileIntoChunks(file: File): Blob[] {
+  const CHUNK_SIZE = 1.5 * 1024 * 1024 * 1024; // 1.5GB per part
   const parts: Blob[] = [];
-
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth || 1280;
-  canvas.height = video.videoHeight || 720;
-  const ctx = canvas.getContext('2d')!;
-
-  const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-    ? 'video/webm;codecs=vp9'
-    : 'video/webm';
-
-  for (let i = 0; i < totalParts; i++) {
-    if (abortSignal?.aborted) break;
-
-    const startTime = i * partDuration;
-    const endTime = Math.min((i + 1) * partDuration, duration);
-
-    const stream = canvas.captureStream(30);
-    const recorder = new MediaRecorder(stream, {
-      mimeType,
-      videoBitsPerSecond: 2500000,
-    });
-
-    const chunks: Blob[] = [];
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunks.push(e.data);
-    };
-
-    video.currentTime = startTime;
-    await new Promise<void>(r => { video.onseeked = () => r(); });
-    
-    recorder.start(100);
-    await video.play();
-
-    await new Promise<void>((resolve) => {
-      const checkFrame = () => {
-        if (abortSignal?.aborted || video.currentTime >= endTime || video.ended) {
-          video.pause();
-          recorder.stop();
-          resolve();
-          return;
-        }
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const partProgress = ((video.currentTime - startTime) / (endTime - startTime)) * 100;
-        onProgress?.(Math.round(partProgress), i + 1, totalParts);
-        setTimeout(() => requestAnimationFrame(checkFrame), 16);
-      };
-      recorder.onstop = () => resolve();
-      requestAnimationFrame(checkFrame);
-    });
-
-    await new Promise<void>((resolve) => {
-      if (recorder.state === 'inactive') resolve();
-      else recorder.onstop = () => resolve();
-    });
-
-    parts.push(new Blob(chunks, { type: mimeType }));
+  let offset = 0;
+  while (offset < file.size) {
+    const end = Math.min(offset + CHUNK_SIZE, file.size);
+    parts.push(file.slice(offset, end, file.type));
+    offset = end;
   }
-
-  URL.revokeObjectURL(video.src);
   return parts;
 }
 
@@ -227,7 +73,7 @@ async function uploadViaTUS(
       metadata: {
         bucketName: 'analysis-videos',
         objectName: filePath,
-        contentType: blob.type || 'video/webm',
+        contentType: blob.type || 'video/mp4',
       },
       chunkSize: 6 * 1024 * 1024,
       onError: (error) => reject(new Error(`Upload failed: ${error.message}`)),
@@ -254,8 +100,8 @@ async function uploadViaTUS(
 }
 
 /**
- * Main hybrid flow: compress → check size → split if needed → upload via TUS.
- * Returns either a single-part or multi-part result.
+ * Main flow: instantly split the file into chunks, then upload each via TUS.
+ * No compression, no re-encoding — just binary slicing.
  */
 export async function splitAndUpload(
   file: File,
@@ -264,78 +110,39 @@ export async function splitAndUpload(
   const { onProgress, abortSignal } = options;
   const groupId = crypto.randomUUID();
 
-  // Stage 1: Compress
-  onProgress?.({ stage: 'compressing', message: 'Compressing video...', progress: 0 });
-
-  const compressed = await compressVideo(
-    file,
-    (pct) => onProgress?.({ stage: 'compressing', message: 'Compressing video...', progress: pct }),
-    abortSignal
-  );
+  // Instant binary split
+  onProgress?.({ stage: 'splitting', message: 'Splitting file...', progress: 0 });
+  const parts = splitFileIntoChunks(file);
+  onProgress?.({ stage: 'splitting', message: `Split into ${parts.length} parts`, progress: 100, totalParts: parts.length });
 
   if (abortSignal?.aborted) throw new Error('Cancelled');
 
-  // If compressed is under cap, single-part upload
-  if (compressed.size <= SIZE_CAP) {
-    onProgress?.({ stage: 'uploading', message: 'Uploading...', progress: 0, currentPart: 1, totalParts: 1 });
-
-    const filePath = `${crypto.randomUUID()}.webm`;
-    const publicUrl = await uploadViaTUS(
-      compressed,
-      filePath,
-      (pct) => onProgress?.({ stage: 'uploading', message: 'Uploading...', progress: pct, currentPart: 1, totalParts: 1 }),
-      abortSignal
-    );
-
-    onProgress?.({ stage: 'done', message: 'Complete', progress: 100 });
-    return {
-      groupId,
-      parts: [{ partNumber: 1, storagePath: filePath, publicUrl }],
-    };
-  }
-
-  // Stage 2: Split
-  onProgress?.({ stage: 'splitting', message: 'Splitting into parts...', progress: 0 });
-
-  const splitParts = await splitVideo(
-    compressed,
-    (pct, part, total) => onProgress?.({
-      stage: 'splitting',
-      message: `Splitting part ${part} of ${total}...`,
-      progress: pct,
-      currentPart: part,
-      totalParts: total,
-    }),
-    abortSignal
-  );
-
-  if (abortSignal?.aborted) throw new Error('Cancelled');
-
-  // Stage 3: Upload each part
+  // Upload each part
   const results: SplitUploadResult['parts'] = [];
+  const ext = file.name.split('.').pop() || 'mp4';
 
-  for (let i = 0; i < splitParts.length; i++) {
+  for (let i = 0; i < parts.length; i++) {
     if (abortSignal?.aborted) throw new Error('Cancelled');
 
     const partNum = i + 1;
     onProgress?.({
       stage: 'uploading',
-      message: `Uploading part ${partNum} of ${splitParts.length}...`,
+      message: `Uploading part ${partNum} of ${parts.length}...`,
       progress: 0,
       currentPart: partNum,
-      totalParts: splitParts.length,
+      totalParts: parts.length,
     });
 
-    const filePath = `${crypto.randomUUID()}.webm`;
+    const filePath = `${crypto.randomUUID()}.${ext}`;
     const publicUrl = await uploadViaTUS(
-      splitParts[i],
+      parts[i],
       filePath,
       (pct) => onProgress?.({
         stage: 'uploading',
-        message: `Uploading part ${partNum} of ${splitParts.length}...`,
+        message: `Uploading part ${partNum} of ${parts.length}...`,
         progress: pct,
         currentPart: partNum,
-        totalParts: splitParts.length,
+        totalParts: parts.length,
       }),
       abortSignal
     );

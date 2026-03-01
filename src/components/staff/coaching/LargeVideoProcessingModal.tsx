@@ -11,7 +11,6 @@ interface LargeVideoProcessingModalProps {
 }
 
 const stageLabels: Record<string, string> = {
-  compressing: 'Compressing',
   splitting: 'Splitting',
   uploading: 'Uploading',
   done: 'Complete',
@@ -19,7 +18,7 @@ const stageLabels: Record<string, string> = {
 };
 
 export const LargeVideoProcessingModal = ({ open, progress, onCancel }: LargeVideoProcessingModalProps) => {
-  const stage = progress?.stage || 'compressing';
+  const stage = progress?.stage || 'splitting';
   const isDone = stage === 'done';
   const isError = stage === 'error';
 
@@ -41,21 +40,21 @@ export const LargeVideoProcessingModal = ({ open, progress, onCancel }: LargeVid
 
         <div className="space-y-4 py-2">
           <p className="text-sm text-muted-foreground">
-            This file is too large for a single upload. It's being compressed and split into smaller parts automatically.
+            This file is too large for a single upload. It's being split into smaller parts and uploaded automatically.
           </p>
 
           {/* Stage indicator */}
           <div className="flex items-center gap-3">
-            {['compressing', 'splitting', 'uploading'].map((s, i) => {
+            {['splitting', 'uploading'].map((s, i) => {
               const isActive = s === stage;
-              const isPast = ['compressing', 'splitting', 'uploading'].indexOf(stage) > i || isDone;
+              const isPast = ['splitting', 'uploading'].indexOf(stage) > i || isDone;
               return (
                 <div key={s} className="flex items-center gap-1.5">
                   <div className={`h-2 w-2 rounded-full ${isPast ? 'bg-green-500' : isActive ? 'bg-primary animate-pulse' : 'bg-muted-foreground/30'}`} />
                   <span className={`text-xs ${isActive ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
                     {stageLabels[s]}
                   </span>
-                  {i < 2 && <span className="text-muted-foreground/30 mx-1">→</span>}
+                  {i < 1 && <span className="text-muted-foreground/30 mx-1">→</span>}
                 </div>
               );
             })}

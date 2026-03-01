@@ -3404,11 +3404,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     
                     <div className="space-y-1.5 sm:space-y-2">
                       <Label htmlFor="email" className="text-sm">Email</Label>
-                      <Input
+                       <Input
                         id="email"
-                        type="email"
+                        type="text"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="Email or username"
                         className="h-10 sm:h-11"
                       />
                     </div>
