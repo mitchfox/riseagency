@@ -204,8 +204,8 @@ const Login = () => {
               <Input
                 id="email"
                 name="email"
-                type="email"
-                placeholder={t('login.email_placeholder', 'Enter your email')}
+                type="text"
+                placeholder={t('login.email_placeholder', 'Enter your login')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
