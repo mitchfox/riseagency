@@ -1,35 +1,68 @@
 
 
-# Purge source video, keep clips
+# Fix large file uploads using resumable (TUS) uploads
 
-## What changes
+## The problem
 
-A single "Purge Source" button on the video analysis detail view (when a video is selected). Clicking it:
+The current upload uses a single XHR POST request to send the entire file in one go. For large files (4GB), this hits server-side payload limits or connection timeouts — the progress bar reaches 100% (all bytes sent) but the server rejects or times out on the response, causing a failure.
 
-1. **Deletes the source video file** from `analysis-videos` storage (the large 4GB file)
-2. **Clears `video_url`** on the record and sets `auto_delete_at = NULL` (no timer needed when there's nothing to expire)
-3. **Preserves everything else** — the video analysis record, all clip metadata, all extracted clip files in `analysis-videos/clips/`, all annotations, all report links
+## The solution
 
-The video player area then shows a "Source video purged — clips still available" message instead of a broken player. Clips remain fully playable since they're separate files.
+Replace the XHR upload with **Supabase's TUS resumable upload protocol**. This splits the file into 6MB chunks, uploads each individually, and can resume from where it left off if interrupted. Supabase Storage supports files up to 50GB this way.
 
-## UI placement
+### What changes
 
-- Inside the selected video detail view, near the top toolbar alongside the existing Sync/Export buttons
-- Icon: `HardDriveDownload` or `Trash2` with label "Purge Source"
-- Confirmation dialog before purging (destructive action, can't undo)
-- On the video card grid, videos with purged sources show a visual indicator (e.g. strikethrough on the expiry timer or a "Source removed" badge)
+**1. Install `tus-js-client`** — the official TUS protocol client library.
 
-## Implementation
+**2. Update `VideoAnalysis.tsx` upload logic** (lines ~256-301)
 
-### `VideoAnalysis.tsx`
-- Add a `handlePurgeSource` function that:
-  - Extracts the storage path from `video_url` (skipping anything in `clips/`)
-  - Calls `supabase.storage.from('analysis-videos').remove([path])`
-  - Updates the DB record: `video_url = '', auto_delete_at = null`
-  - Updates local state
-- Add an `AlertDialog` for confirmation
-- Conditionally render the video player vs a "Source purged" message based on whether `video_url` is empty
-- Add "Source removed" badge on cards where `video_url` is empty but clips exist
+Replace the current XHR-based `new Promise` block with a TUS upload:
 
-No database migration needed — `video_url` and `auto_delete_at` already support empty/null values. No new edge functions needed.
+```typescript
+import * as tus from 'tus-js-client';
+
+const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+const upload = new tus.Upload(uploadFile, {
+  endpoint: `https://${projectId}.supabase.co/storage/v1/upload/resumable`,
+  retryDelays: [0, 3000, 5000, 10000, 20000],
+  headers: {
+    authorization: `Bearer ${token}`,
+    'x-upsert': 'false',
+  },
+  uploadDataDuringCreation: true,
+  removeFingerprintOnSuccess: true,
+  metadata: {
+    bucketName: 'analysis-videos',
+    objectName: filePath,
+    contentType: uploadFile.type || 'video/mp4',
+  },
+  chunkSize: 6 * 1024 * 1024, // 6MB chunks
+  onError: (error) => reject(error),
+  onProgress: (bytesUploaded, bytesTotal) => {
+    setUploadedBytes(bytesUploaded);
+    setUploadProgress(Math.round((bytesUploaded / bytesTotal) * 100));
+  },
+  onSuccess: () => {
+    const { data } = supabase.storage
+      .from('analysis-videos')
+      .getPublicUrl(filePath);
+    resolve(data.publicUrl);
+  },
+});
+upload.start();
+```
+
+- Progress tracking works the same way (bytes uploaded / total)
+- Automatic retry on chunk failure with exponential backoff
+- The rest of the function (DB insert, state management) stays identical
+
+**3. Update `AnalysisManagement.tsx`** — apply the same TUS pattern to the two `supabase.storage.upload()` calls there (lines ~544 and ~574) so those uploads also handle large files. These can use the simpler Supabase JS client approach since they don't need granular progress.
+
+**4. Update `player-match-clipper` edge function** — the player-side upload goes through the edge function as multipart form data, which has a ~50MB limit. Change it to: client uploads to storage first, then sends the storage path to the edge function. This mirrors the pattern already used for staff uploads.
+
+### Files to modify
+- `src/components/staff/coaching/VideoAnalysis.tsx` — replace XHR with TUS
+- `src/components/staff/AnalysisManagement.tsx` — replace direct storage uploads with TUS
+- `supabase/functions/player-match-clipper/index.ts` — remove multipart handling, accept storage path instead
+- `package.json` — add `tus-js-client` dependency
 
