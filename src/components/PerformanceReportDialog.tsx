@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, Link2 } from "lucide-react";
+import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, Link2, MessageSquareText, Filter } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
@@ -71,8 +71,12 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showChanceCreation, setShowChanceCreation] = useState(false);
   const [showRankedPlayer, setShowRankedPlayer] = useState(false);
-  const [rankedMode, setRankedMode] = useState<"chronological" | "ranked">("chronological");
+  const [rankedMode, setRankedMode] = useState<"chronological" | "ranked" | "noted">("chronological");
   const [showClippedActions, setShowClippedActions] = useState(false);
+  const [showActionFilters, setShowActionFilters] = useState(false);
+  const [filterTypes, setFilterTypes] = useState<string[]>([]);
+  const [filterRating, setFilterRating] = useState<string | null>(null);
+  const [filterHasNotes, setFilterHasNotes] = useState(false);
 
   // Pre-fetch data when analysisId changes (even before dialog opens)
   useEffect(() => {
@@ -470,6 +474,47 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
   const advancedStats = getAdvancedStats();
   const calculatedStats = getCalculatedStats();
 
+  // Get unique action types (split by comma)
+  const allActionTypes = Array.from(new Set(
+    actions.flatMap(a => a.action_type.split(',').map(t => t.trim().toLowerCase()).filter(Boolean))
+  )).sort();
+
+  // Rating colour buckets
+  const getRatingBucket = (score: number): string => {
+    if (score >= 0.15) return "dark-green";
+    if (score >= 0.05) return "green";
+    if (score > 0) return "lime";
+    if (score === 0) return "neutral";
+    if (score > -0.04) return "orange";
+    return "red";
+  };
+
+  const ratingBuckets = [
+    { key: "dark-green", label: "Strong positive (≥0.15)", className: "bg-green-700 text-white" },
+    { key: "green", label: "Positive (0.05–0.15)", className: "bg-green-500 text-white" },
+    { key: "lime", label: "Slight positive (0–0.05)", className: "bg-lime-400 text-black" },
+    { key: "neutral", label: "Neutral (0)", className: "bg-muted text-muted-foreground" },
+    { key: "orange", label: "Slight negative", className: "bg-orange-500 text-white" },
+    { key: "red", label: "Negative (< -0.04)", className: "bg-red-600 text-white" },
+  ];
+
+  // Filtered actions
+  const filteredActions = actions.filter(a => {
+    if (filterTypes.length > 0) {
+      const actionTypes = a.action_type.split(',').map(t => t.trim().toLowerCase());
+      if (!filterTypes.some(ft => actionTypes.includes(ft))) return false;
+    }
+    if (filterRating) {
+      if (getRatingBucket(a.action_score) !== filterRating) return false;
+    }
+    if (filterHasNotes) {
+      if (!a.notes) return false;
+    }
+    return true;
+  });
+
+  const hasActiveFilters = filterTypes.length > 0 || filterRating !== null || filterHasNotes;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[98vw] md:max-w-[95vw] w-full max-h-[95vh] overflow-y-auto overflow-x-hidden p-0">
@@ -619,6 +664,17 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                         <Award className="h-3.5 w-3.5 mr-1.5" />
                         Ranked Actions
                       </Button>
+                      {actions.some(a => a.video_url && a.notes) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { setRankedMode("noted"); setShowRankedPlayer(true); }}
+                          className="text-xs"
+                        >
+                          <MessageSquareText className="h-3.5 w-3.5 mr-1.5" />
+                          Noted Actions
+                        </Button>
+                      )}
                     </>
                   )}
                 </div>
@@ -767,12 +823,87 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
               {actions.length > 0 && (
                 <Card className="overflow-hidden">
                   <CardHeader className="py-2 md:py-4">
-                    <CardTitle className="text-sm md:text-lg">Actions ({actions.length})</CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm md:text-lg">
+                        Actions ({hasActiveFilters ? `${filteredActions.length}/${actions.length}` : actions.length})
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        {hasActiveFilters && (
+                          <button
+                            onClick={() => { setFilterTypes([]); setFilterRating(null); setFilterHasNotes(false); }}
+                            className="text-[10px] text-muted-foreground hover:text-foreground underline"
+                          >
+                            Clear filters
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setShowActionFilters(!showActionFilters)}
+                          className={`p-1.5 rounded transition-colors ${hasActiveFilters ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                          <Filter className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    {showActionFilters && (
+                      <div className="mt-3 space-y-3 border-t pt-3">
+                        {/* Filter by action type */}
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Action Type</p>
+                          <div className="flex flex-wrap gap-1">
+                            {allActionTypes.map(type => (
+                              <button
+                                key={type}
+                                onClick={() => setFilterTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type])}
+                                className={`px-2 py-0.5 rounded text-[10px] transition-colors border ${
+                                  filterTypes.includes(type)
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'bg-muted/30 text-foreground/70 border-border hover:bg-muted/50'
+                                }`}
+                              >
+                                {type}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {/* Filter by rating */}
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Rating</p>
+                          <div className="flex flex-wrap gap-1">
+                            {ratingBuckets.map(bucket => (
+                              <button
+                                key={bucket.key}
+                                onClick={() => setFilterRating(prev => prev === bucket.key ? null : bucket.key)}
+                                className={`px-2 py-0.5 rounded text-[10px] transition-colors border ${
+                                  filterRating === bucket.key
+                                    ? `${bucket.className} border-transparent`
+                                    : 'bg-muted/30 text-foreground/70 border-border hover:bg-muted/50'
+                                }`}
+                              >
+                                {bucket.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {/* Filter by notes */}
+                        <div>
+                          <button
+                            onClick={() => setFilterHasNotes(!filterHasNotes)}
+                            className={`px-2 py-0.5 rounded text-[10px] transition-colors border ${
+                              filterHasNotes
+                                ? 'bg-primary text-primary-foreground border-primary'
+                                : 'bg-muted/30 text-foreground/70 border-border hover:bg-muted/50'
+                            }`}
+                          >
+                            📝 Has notes only
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </CardHeader>
                   <CardContent className="p-2 md:p-6">
                     {/* Mobile: Compact card layout */}
                     <div className="block md:hidden space-y-2">
-                      {actions.map((action) => (
+                      {filteredActions.map((action) => (
                         <div key={action.id} className="p-2 bg-muted/30 rounded">
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-1.5 min-w-0">
@@ -820,7 +951,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                           </tr>
                         </thead>
                         <tbody>
-                          {actions.map((action) => (
+                          {filteredActions.map((action) => (
                             <tr key={action.id} className="border-b border-border/50">
                               <td className="py-2 px-2">{action.action_number}</td>
                               <td className="py-2 px-2">{formatMinute(action.minute)}'</td>
@@ -886,6 +1017,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
             action_description: a.action_description,
             video_url: a.video_url!,
             minute: a.minute,
+            notes: a.notes,
           }))}
       />
 
@@ -904,6 +1036,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
             action_score: a.action_score,
             video_url: a.video_url!,
             minute: a.minute,
+            notes: a.notes,
           }))}
       />
 
