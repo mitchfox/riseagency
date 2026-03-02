@@ -44,6 +44,7 @@ interface Clip {
   action_score?: number | null;
   ai_status?: 'pending' | 'accepted' | 'rejected';
   ai_reason?: string;
+  ai_suggested_action?: string;
 }
 
 interface VideoAnalysisEntry {
@@ -1478,6 +1479,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                     minute: `${Math.floor(c.start / 60)}:${String(Math.floor(c.start % 60)).padStart(2, '0')}`,
                     ai_status: 'pending' as const,
                     ai_reason: c.description || '',
+                    ai_suggested_action: c.actionType || '',
                   }));
                   await saveClips([...selectedVideo.clips, ...clips]);
                 }}
@@ -1688,6 +1690,43 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                     actionTypes={allActionTypes}
                     compact
                   />
+
+                  {/* AI suggested action type */}
+                  {clip.ai_suggested_action && !clip.action_type && (
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <Badge variant="outline" className="text-[10px] border-primary/30 text-primary bg-primary/5 font-normal">
+                        {clip.ai_suggested_action}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 text-green-600 hover:text-green-700 hover:bg-green-500/10"
+                        onClick={async () => {
+                          await handleUpdateClipAction(clip.id, clip.ai_suggested_action!);
+                          // Clear suggestion after accepting
+                          if (!selectedVideo) return;
+                          const updated = selectedVideo.clips.map(c => c.id === clip.id ? { ...c, ai_suggested_action: '' } : c);
+                          await saveClips(updated);
+                        }}
+                        title="Accept suggestion"
+                      >
+                        <Check className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 text-destructive hover:bg-destructive/10"
+                        onClick={async () => {
+                          if (!selectedVideo) return;
+                          const updated = selectedVideo.clips.map(c => c.id === clip.id ? { ...c, ai_suggested_action: '' } : c);
+                          await saveClips(updated);
+                        }}
+                        title="Dismiss suggestion"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
 
                   {clip.ai_status === 'pending' && (
                     <div className="flex items-center gap-1 shrink-0">
