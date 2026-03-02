@@ -128,6 +128,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   // Known action types from existing reports
   const [knownActionTypes, setKnownActionTypes] = useState<string[]>([]);
   const [actionTypeFrequency, setActionTypeFrequency] = useState<Record<string, number>>({});
+  const [historicalLearningExamples, setHistoricalLearningExamples] = useState<{ timestamp: number; actionType: string; description?: string }[]>([]);
 
   // Export to report or analysis
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -190,6 +191,46 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
     fetchVideos();
   }, [defaultPlayerId]);
+
+  useEffect(() => {
+    const loadHistoricalLearningExamples = async () => {
+      const playerId = selectedVideo?.player_id;
+      if (!playerId) {
+        setHistoricalLearningExamples([]);
+        return;
+      }
+
+      const { data: reports } = await supabase
+        .from("player_analysis")
+        .select("id")
+        .eq("player_id", playerId)
+        .order("analysis_date", { ascending: false });
+
+      if (!reports || reports.length === 0) {
+        setHistoricalLearningExamples([]);
+        return;
+      }
+
+      const { data: actions } = await supabase
+        .from("performance_report_actions")
+        .select("action_type, action_description, minute")
+        .in("analysis_id", reports.map((r) => r.id))
+        .not("action_type", "is", null);
+
+      if (!actions || actions.length === 0) {
+        setHistoricalLearningExamples([]);
+        return;
+      }
+
+      setHistoricalLearningExamples(actions.map((a) => ({
+        timestamp: Number.isFinite(a.minute) ? Number(a.minute) * 60 : 0,
+        actionType: String(a.action_type),
+        description: a.action_description || undefined,
+      })));
+    };
+
+    void loadHistoricalLearningExamples();
+  }, [selectedVideo?.player_id]);
 
   const fetchVideos = async () => {
     let query = supabase
@@ -1122,10 +1163,15 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     setExporting(false);
   };
 
+  const toDotTime = (seconds: number) => {
+    const safe = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+    const mins = Math.floor(safe / 60);
+    const secs = Math.floor(safe % 60);
+    return `${mins}.${secs.toString().padStart(2, '0')}`;
+  };
+
   const fmtTime = (s: number) => {
-    const mins = Math.floor(s / 60);
-    const secs = Math.floor(s % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return toDotTime(s);
   };
 
   // Get the effective offset for a given video time, accounting for half-time
@@ -1139,20 +1185,17 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
   const fmtMatchTime = (videoSeconds: number, _offset: number) => {
     const offset = getEffectiveOffset(videoSeconds);
-    const matchSeconds = Math.max(0, videoSeconds + offset);
-    const mins = Math.floor(matchSeconds / 60);
-    const secs = Math.floor(matchSeconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return toDotTime(videoSeconds + offset);
   };
 
-  /** Format minute for clip display: mm:ss with seconds rounded down to nearest 5 */
+  /** Format minute for clip display with seconds rounded down to nearest 5 */
   const fmtClipMinute = (videoSeconds: number, _offset: number) => {
     const offset = getEffectiveOffset(videoSeconds);
-    const matchSeconds = Math.max(0, videoSeconds + offset);
+    const matchSeconds = Math.max(0, (Number.isFinite(videoSeconds) ? videoSeconds : 0) + offset);
     const mins = Math.floor(matchSeconds / 60);
     const rawSecs = Math.floor(matchSeconds % 60);
     const roundedSecs = Math.floor(rawSecs / 5) * 5;
-    return `${mins}:${roundedSecs.toString().padStart(2, '0')}`;
+    return `${mins}.${roundedSecs.toString().padStart(2, '0')}`;
   };
 
   const getMatchMinute = (videoSeconds: number, _offset: number) => {
@@ -1502,7 +1545,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                     action_description: '',
                     notes: '',
                     created_at: new Date().toISOString(),
-                    minute: `${Math.floor(c.start / 60)}:${String(Math.floor(c.start % 60)).padStart(2, '0')}`,
+                    minute: toDotTime(c.start),
                     ai_status: 'pending' as const,
                     ai_reason: c.description || '',
                     ai_suggested_action: c.actionType || '',
@@ -1514,14 +1557,16 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                     return JSON.parse(localStorage.getItem('ai_scan_rejections') || '[]');
                   } catch { return []; }
                 })()}
-                confirmedExamples={selectedVideo.clips
-                  .filter(c => (c.ai_status === 'accepted' || !c.ai_status) && c.action_type)
-                  .map(c => ({
-                    timestamp: c.start,
-                    actionType: c.action_type,
-                    description: c.action_description || c.label || undefined,
-                  }))
-                }
+                confirmedExamples={[
+                  ...historicalLearningExamples,
+                  ...selectedVideo.clips
+                    .filter(c => c.action_type)
+                    .map(c => ({
+                      timestamp: c.start,
+                      actionType: c.action_type,
+                      description: c.action_description || c.label || undefined,
+                    })),
+                ]}
               />
             )}
           </div>
@@ -2163,7 +2208,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   <div className="text-xs text-muted-foreground space-y-1">
                     <p><span className="font-medium text-foreground">Suggested:</span> {clip.ai_suggested_action || 'N/A'}</p>
                     <p><span className="font-medium text-foreground">AI reason:</span> {clip.ai_reason || 'N/A'}</p>
-                    <p><span className="font-medium text-foreground">Time:</span> {clip.minute || `${Math.floor(clip.start / 60)}:${String(Math.floor(clip.start % 60)).padStart(2, '0')}`}</p>
+                    <p><span className="font-medium text-foreground">Time:</span> {clip.minute || toDotTime(clip.start)}</p>
                   </div>
                 ) : null;
               })()}

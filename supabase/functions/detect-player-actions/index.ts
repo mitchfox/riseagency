@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
     if (Array.isArray(confirmedExamples) && confirmedExamples.length > 0) {
       confirmedReference = `\n\nCONFIRMED EXAMPLES FROM THIS VIDEO (coach-verified correct detections):
 The coach has already manually identified and confirmed the following actions for this player in this match. Use these as calibration for what correct detections look like:
-${confirmedExamples.slice(-30).map((ex: any) => `- ${ex.actionType} at ${Math.floor(ex.timestamp / 60)}:${String(Math.floor(ex.timestamp % 60)).padStart(2, '0')}${ex.description ? `: ${ex.description}` : ''}`).join('\n')}
+${confirmedExamples.map((ex: any) => `- ${ex.actionType} at ${Math.floor(ex.timestamp / 60)}.${String(Math.floor(ex.timestamp % 60)).padStart(2, '0')}${ex.description ? `: ${ex.description}` : ''}`).join('\n')}
 
 These examples show the coach's standard for what counts as a valid detection. Match this level of involvement when deciding whether to flag new actions.`;
     }
@@ -167,7 +167,7 @@ DETECTION RULES:
 
 4. FOULS & CARDS: Only report these if contact is CLEARLY visible in the frame. If uncertain, skip.
 
-5. BE REALISTIC BUT NOT PARANOID: A typical outfield player has 40-80 meaningful involvements per 90 minutes. You should detect actions at roughly this rate. Do not be so strict that you return nothing — if the player is clearly on the ball or making a tackle, that IS an action.
+
 
 CONFIDENCE:
 - "high": Player clearly identifiable AND clearly performing the action
@@ -217,7 +217,7 @@ For each detected action provide:
               ...imageContent,
               {
                 type: 'text',
-                text: `Review all ${frames.length} frames above. For each frame, determine whether ${playerInfo.name} is the PRIMARY ACTOR performing a meaningful on-ball or direct defensive action. Be extremely strict — a typical player has only 40-80 involvements per 90 minutes. Do NOT report frames where the player is merely visible, jogging, or in the general area of play. Only report "high" and "medium" confidence detections.`,
+                text: `Review all ${frames.length} frames above. For each frame, determine whether ${playerInfo.name} is the PRIMARY ACTOR performing a meaningful on-ball or direct defensive action. Do NOT report frames where the player is merely visible, jogging, or in the general area of play. Only report "high" and "medium" confidence detections.`,
               },
             ],
           },
