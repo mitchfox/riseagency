@@ -107,18 +107,37 @@ UNDERSTANDING THE FOOTAGE:
 - If you cannot confidently identify the target player in a frame, skip that frame entirely. Do not guess.
 ${actionReference}
 
+CRITICAL FILTERING RULES — READ CAREFULLY:
+The most common mistake is flagging frames where the player is simply VISIBLE on screen but NOT ACTIVELY INVOLVED in play. You MUST apply these filters strictly:
+
+1. BALL PROXIMITY TEST: The player must be DIRECTLY interacting with the ball OR about to receive/contest it within the next 1-2 seconds. Simply being near the ball or in the same area of the pitch is NOT enough.
+
+2. ACTIVE vs PASSIVE: Only flag moments where the player is the PRIMARY ACTOR — they are the one passing, shooting, tackling, heading, crossing, dribbling, etc. Do NOT flag:
+   - Standing in position while play happens nearby
+   - Jogging or running into space (unless it is a decisive run that creates/exploits space)
+   - Being in shot but watching play develop elsewhere
+   - Walking back after a phase of play
+   - General defensive shape-holding without directly pressing or engaging an opponent
+   - Being in frame during a set piece they are not taking or directly contesting
+
+3. DUPLICATE SUPPRESSION: A single passage of play (e.g. receiving and passing) is ONE action, not multiple. If you see the player on the ball across 2-3 consecutive frames, report ONLY the key moment (the pass, the shot, the tackle) — not every frame they appear in.
+
+4. EXPECTED OUTPUT: A typical outfield player has 40-80 meaningful involvements across a full 90-minute match. That means roughly one action every 60-135 seconds. If you are detecting significantly more than this rate, you are being too liberal. Be ruthless in filtering.
+
 CONFIDENCE GUIDE:
 - "high": Player is clearly identifiable AND clearly performing the action (ball visible at feet, obvious body shape of a tackle, etc.)
 - "medium": Player appears to be the right person and the body position suggests the action, but the frame is not perfectly clear
-- "low": You think it might be the player or the action is ambiguous from a single frame
+- "low": You think it might be the player or the action is ambiguous from a single frame — SKIP THESE ENTIRELY, do not report low confidence detections
 
 DO NOT REPORT:
 - Standing still, jogging into general position, or walking
 - General movement that every outfield player does (shifting with the team shape)
 - Moments where the player is simply in the frame but not involved
 - Celebrations, conversations, or other non-play moments
+- Frames where the player is visible but the ball is clearly with someone else and no pressing/closing down is happening
+- Any frame where you are not at least "medium" confident
 
-Be SELECTIVE. Quality over quantity. Only report frames where you genuinely believe the identified player is performing one of the actions listed above. A match typically has 40-80 meaningful involvements per player across 90 minutes.
+Be EXTREMELY SELECTIVE. Quality over quantity. Only report frames where you are confident the identified player is the primary actor in a meaningful on-ball or direct defensive action.
 
 CLIP DURATION:
 For each action, suggest how many seconds before (clipBefore) and after (clipAfter) the key frame to include. Use the clip timing values from the action reference above as defaults. If an action is part of a longer sequence (e.g. a dribble leading to a cross), extend accordingly. If it is a quick isolated moment (e.g. a clearance), keep it short. The default if not specified in the reference is 5s before and 5s after.
@@ -126,7 +145,7 @@ For each action, suggest how many seconds before (clipBefore) and after (clipAft
 For each detected action provide:
 - frameIndex: the 0-indexed frame number
 - actionType: a short label matching one of the action types from the reference above (e.g. "Pass", "Dribble", "Shot")
-- confidence: "high", "medium", or "low"
+- confidence: "high" or "medium" ONLY (do not report "low")
 - description: one sentence describing what you see the player doing in that frame — this will be shown to the coach as the reason the AI flagged it
 - clipBefore: seconds before the frame to include in the clip
 - clipAfter: seconds after the frame to include in the clip`;
@@ -158,7 +177,7 @@ For each detected action provide:
               ...imageContent,
               {
                 type: 'text',
-                text: `Review all ${frames.length} frames above. For each frame, determine whether ${playerInfo.name} is performing a meaningful action as defined in your instructions. Only report genuine involvements — do not flag general positioning or jogging.`,
+                text: `Review all ${frames.length} frames above. For each frame, determine whether ${playerInfo.name} is the PRIMARY ACTOR performing a meaningful on-ball or direct defensive action. Be extremely strict — a typical player has only 40-80 involvements per 90 minutes. Do NOT report frames where the player is merely visible, jogging, or in the general area of play. Only report "high" and "medium" confidence detections.`,
               },
             ],
           },

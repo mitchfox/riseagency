@@ -570,6 +570,13 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     await saveClips(selectedVideo.clips.filter(c => c.ai_status !== 'pending'));
   };
 
+  const handleDeleteAllClips = async () => {
+    if (!selectedVideo) return;
+    if (!confirm(`Delete all ${selectedVideo.clips.length} clips? This cannot be undone.`)) return;
+    await saveClips([]);
+    toast.success("All clips deleted");
+  };
+
   const handleAddAnnotation = async () => {
     if (!selectedVideo || !videoRef.current || !annotationText) return;
     const timestamp = videoRef.current.currentTime;
@@ -1819,6 +1826,13 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               <p className="text-center text-sm text-muted-foreground py-4">No clips yet. Hover over the video and press "Clip (±5s)" during playback.</p>
             )}
           </div>
+          {selectedVideo.clips.length > 0 && (
+            <div className="flex justify-end pt-2">
+              <Button variant="destructive" size="sm" className="h-7 text-xs gap-1" onClick={handleDeleteAllClips}>
+                <Trash2 className="h-3 w-3" /> Delete All Clips ({selectedVideo.clips.length})
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Inline annotation dialog */}
