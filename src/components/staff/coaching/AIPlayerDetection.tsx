@@ -31,11 +31,6 @@ interface PlayerOption {
   position?: string;
 }
 
-interface SportscodeActionType {
-  id: string;
-  action_name: string;
-  category: string | null;
-}
 
 interface RejectionFeedback {
   actionType: string;
@@ -87,8 +82,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [scanStartTime, setScanStartTime] = useState("");
   const [scanEndTime, setScanEndTime] = useState("");
   const [sampleInterval, setSampleInterval] = useState<string>("5");
-  const [availableActionTypes, setAvailableActionTypes] = useState<SportscodeActionType[]>([]);
-  const [selectedActionTypes, setSelectedActionTypes] = useState<string[]>([]);
+  const [historicalConfirmedExamples, setHistoricalConfirmedExamples] = useState<ConfirmedExample[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // When a player is selected from dropdown, load saved description and previous report clips
@@ -111,79 +105,51 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     loadPreviousClips(selectedPlayerForScan);
   }, [selectedPlayerForScan, players]);
 
-  const [actionTypeFrequency, setActionTypeFrequency] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    const fetchActionTypes = async () => {
-      const { data, error } = await supabase
-        .from("sportscode_action_types")
-        .select("id, action_name, category")
-        .order("display_order", { ascending: true });
-
-      if (error) return;
-      const rows = (data || []) as SportscodeActionType[];
-
-      // Fetch frequency counts from performance report actions
-      const { data: freqData } = await supabase
-        .from("performance_report_actions")
-        .select("action_type");
-
-      const freqMap: Record<string, number> = {};
-      if (freqData) {
-        freqData.forEach((item: any) => {
-          const t = (item.action_type || '').trim();
-          if (t) freqMap[t] = (freqMap[t] || 0) + 1;
-        });
-      }
-      setActionTypeFrequency(freqMap);
-
-      // Sort by frequency desc, then alphabetical
-      const sorted = [...rows].sort((a, b) => {
-        const fa = freqMap[a.action_name] || 0;
-        const fb = freqMap[b.action_name] || 0;
-        if (fb !== fa) return fb - fa;
-        return a.action_name.localeCompare(b.action_name);
-      });
-
-      setAvailableActionTypes(sorted);
-      setSelectedActionTypes(sorted.map((r) => r.action_name));
-    };
-
-    fetchActionTypes();
-  }, []);
 
   const loadPreviousClips = async (playerId: string) => {
     try {
-      // Get recent performance report actions with video clips for this player
       const { data: reports } = await supabase
         .from('player_analysis')
         .select('id')
         .eq('player_id', playerId)
-        .order('analysis_date', { ascending: false })
-        .limit(5);
-      
-      if (!reports || reports.length === 0) return;
-      
+        .order('analysis_date', { ascending: false });
+
+      if (!reports || reports.length === 0) {
+        setHistoricalConfirmedExamples([]);
+        return;
+      }
+
       const { data: actions } = await supabase
         .from('performance_report_actions')
-        .select('action_type, minute, video_url')
+        .select('action_type, action_description, minute, video_url')
         .in('analysis_id', reports.map(r => r.id))
-        .not('video_url', 'is', null)
-        .limit(30);
-      
-      if (actions && actions.length > 0) {
-        const tags: PlayerTag[] = actions.map(a => ({
-          timestamp: a.minute ? a.minute * 60 : 0,
-          description: `${a.action_type} (previous report)`,
-        }));
-        setPlayerTags(prev => {
-          // Don't duplicate existing tags
-          const existing = new Set(prev.map(t => t.description));
-          return [...prev, ...tags.filter(t => !existing.has(t.description))];
-        });
+        .not('video_url', 'is', null);
+
+      if (!actions || actions.length === 0) {
+        setHistoricalConfirmedExamples([]);
+        return;
       }
+
+      const tags: PlayerTag[] = actions.map((a) => ({
+        timestamp: a.minute ? a.minute * 60 : 0,
+        description: `${a.action_type}${a.action_description ? `: ${a.action_description}` : ''} (report example)`,
+      }));
+
+      setPlayerTags(prev => {
+        const existing = new Set(prev.map(t => t.description));
+        return [...prev, ...tags.filter(t => !existing.has(t.description))];
+      });
+
+      setHistoricalConfirmedExamples(actions
+        .filter((a) => !!a.action_type)
+        .map((a) => ({
+          timestamp: a.minute ? a.minute * 60 : 0,
+          actionType: String(a.action_type),
+          description: a.action_description || undefined,
+        }))
+      );
     } catch {
-      // Silently fail - reference tags are optional
+      setHistoricalConfirmedExamples([]);
     }
   };
 
@@ -192,7 +158,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     const ts = videoRef.current.currentTime;
     setPlayerTags(prev => [...prev, {
       timestamp: ts,
-      description: `Tagged at ${Math.floor(ts / 60)}:${String(Math.floor(ts % 60)).padStart(2, '0')}`,
+      description: `Tagged at ${Math.floor(ts / 60)}.${String(Math.floor(ts % 60)).padStart(2, '0')}`,
     }]);
     toast.success("Player tagged at current frame");
   };
@@ -239,30 +205,29 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     });
   }, []);
 
-  /** Parse "mm:ss" or raw seconds string to a number of seconds */
+  /** Parse "mm.ss" (preferred), "mm:ss" or raw seconds string to seconds */
   const parseTimeToSeconds = (val: string): number | null => {
-    if (!val.trim()) return null;
-    if (val.includes(':')) {
-      const [m, s] = val.split(':').map(Number);
-      if (isNaN(m) || isNaN(s)) return null;
-      return m * 60 + s;
+    const input = val.trim();
+    if (!input) return null;
+
+    if (input.includes('.') || input.includes(':')) {
+      const parts = input.split(/[.:]/);
+      if (parts.length !== 2) return null;
+      const mins = Number(parts[0]);
+      const secs = Number(parts[1]);
+      if (!Number.isFinite(mins) || !Number.isFinite(secs) || secs < 0) return null;
+      return (mins * 60) + secs;
     }
-    const n = parseFloat(val);
-    return isNaN(n) ? null : n;
+
+    const seconds = Number(input);
+    return Number.isFinite(seconds) ? seconds : null;
   };
 
   const numericSampleInterval = useMemo(() => {
     const parsed = parseInt(sampleInterval, 10);
     if (!Number.isFinite(parsed)) return 5;
-    return Math.max(2, Math.min(15, parsed));
+    return Math.max(1, Math.min(15, parsed));
   }, [sampleInterval]);
-
-  const toggleActionType = (actionName: string) => {
-    setSelectedActionTypes((prev) => {
-      if (prev.includes(actionName)) return prev.filter((v) => v !== actionName);
-      return [...prev, actionName];
-    });
-  };
 
   const startScan = async () => {
     if (!playerName.trim()) {
@@ -288,14 +253,13 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
     const sampleEvery = numericSampleInterval;
     const segmentDuration = Math.max(0, clampedEnd - clampedStart);
-    const totalFrames = Math.floor(segmentDuration / sampleEvery);
+    const totalFrames = Math.max(1, Math.floor(segmentDuration / sampleEvery) + 1);
     const batchSize = 15;
 
-    if (totalFrames <= 0) {
-      toast.error("Selected segment is too short for scanning");
-      setScanning(false);
-      return;
-    }
+    const mergedConfirmedExamples = [
+      ...(confirmedExamples || []),
+      ...historicalConfirmedExamples,
+    ];
 
     const allDetected: DetectedAction[] = [];
 
@@ -309,7 +273,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         const frames: { dataUrl: string; timestamp: number; index: number }[] = [];
 
         for (let i = batchStart; i < batchEnd; i++) {
-          const time = clampedStart + (i * sampleEvery);
+          const time = Math.min(clampedEnd, clampedStart + (i * sampleEvery));
           try {
             const dataUrl = await extractFrame(hiddenVideo, time);
             frames.push({ dataUrl, timestamp: time, index: i });
@@ -332,9 +296,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             videoContext: {
               opponent: opponent || undefined,
             },
-            allowedActionTypes: selectedActionTypes,
             rejectionHistory: rejectionHistory && rejectionHistory.length > 0 ? rejectionHistory : undefined,
-            confirmedExamples: confirmedExamples && confirmedExamples.length > 0 ? confirmedExamples : undefined,
+            confirmedExamples: mergedConfirmedExamples.length > 0 ? mergedConfirmedExamples : undefined,
           },
         });
 
@@ -345,16 +308,28 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         }
 
         if (data?.actions) {
-          const batchActions: DetectedAction[] = data.actions.map((a: any) => ({
-            frameIndex: a.frameIndex,
-            timestamp: frames.find(f => f.index === a.frameIndex)?.timestamp || (clampedStart + a.frameIndex * sampleEvery),
-            actionType: a.actionType,
-            confidence: a.confidence,
-            description: a.description,
-            status: 'pending' as const,
-            clipBefore: a.clipBefore,
-            clipAfter: a.clipAfter,
-          }));
+          const batchActions: DetectedAction[] = data.actions
+            .map((a: any) => {
+              const matchedTimestamp = frames.find(f => f.index === a.frameIndex)?.timestamp;
+              const fallbackTimestamp = clampedStart + (a.frameIndex * sampleEvery);
+              const timestamp = Number.isFinite(matchedTimestamp) ? matchedTimestamp : fallbackTimestamp;
+
+              if (!Number.isFinite(timestamp)) return null;
+              if (timestamp < clampedStart || timestamp > clampedEnd) return null;
+
+              return {
+                frameIndex: a.frameIndex,
+                timestamp,
+                actionType: a.actionType,
+                confidence: a.confidence,
+                description: a.description,
+                status: 'pending' as const,
+                clipBefore: a.clipBefore,
+                clipAfter: a.clipAfter,
+              };
+            })
+            .filter((a: DetectedAction | null): a is DetectedAction => a !== null);
+
           allDetected.push(...batchActions);
         }
       }
@@ -383,38 +358,27 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         if (isBetter) dedupedByWindow[dedupedByWindow.length - 1] = action;
       }
 
-      const maxActionsForSegment = Math.max(8, Math.floor(segmentDuration / 54));
-      const capped = dedupedByWindow
-        .sort((a, b) => {
-          const scoreDiff = (confidenceRank[b.confidence.toLowerCase()] || 0) - (confidenceRank[a.confidence.toLowerCase()] || 0);
-          if (scoreDiff !== 0) return scoreDiff;
-          return a.timestamp - b.timestamp;
-        })
-        .slice(0, maxActionsForSegment)
-        .sort((a, b) => a.timestamp - b.timestamp);
-
-      if (capped.length === 0) {
+      if (dedupedByWindow.length === 0) {
         toast.info("No actions detected for this player");
       } else {
-        // Round timestamps down to nearest 5 seconds for sync consistency
         const roundDown5 = (t: number) => Math.floor(t / 5) * 5;
 
-        const clips = capped.map(a => {
+        const clips = dedupedByWindow.map(a => {
           const roundedTs = roundDown5(a.timestamp);
           const before = a.clipBefore ?? 5;
           const after = a.clipAfter ?? 5;
           return {
-            start: Math.max(0, roundedTs - before),
-            end: roundedTs + after,
-            label: `${a.actionType} at ${Math.floor(roundedTs / 60)}:${String(Math.floor(roundedTs % 60)).padStart(2, '0')}`,
+            start: Math.max(clampedStart, roundedTs - before),
+            end: Math.min(clampedEnd, roundedTs + after),
+            label: `${a.actionType} at ${Math.floor(roundedTs / 60)}.${String(Math.floor(roundedTs % 60)).padStart(2, '0')}`,
             actionType: a.actionType,
             description: a.description,
             confidence: a.confidence,
           };
-        });
+        }).filter((c) => c.end > c.start);
+
         onClipsAccepted(clips);
-        const reducedBy = Math.max(0, dedupedByWindow.length - capped.length);
-        toast.success(`${capped.length} potential actions added${reducedBy > 0 ? ` (filtered ${reducedBy} low-quality/duplicate detections)` : ''}`);
+        toast.success(`${clips.length} potential actions added`);
         setDialogOpen(false);
       }
     } catch (err: any) {
@@ -556,7 +520,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                 <h4 className="text-sm font-semibold uppercase tracking-wider">3. Set Scan Segment</h4>
                 <p className="text-xs text-muted-foreground">
                   Optionally limit which portion of the video to scan. Leave blank to scan the entire video.
-                  Use mm:ss format (e.g. 5:30) or raw seconds (e.g. 330).
+                  Use mm.ss format (e.g. 5.30) or raw seconds (e.g. 330).
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -564,7 +528,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                     <Input
                       value={scanStartTime}
                       onChange={e => setScanStartTime(e.target.value)}
-                      placeholder="0:00 (start)"
+                      placeholder="0.00 (start)"
                     />
                   </div>
                   <div>
@@ -585,7 +549,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                       onClick={() => {
                         if (!videoRef.current) return;
                         const t = videoRef.current.currentTime;
-                        setScanStartTime(`${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`);
+                        setScanStartTime(`${Math.floor(t / 60)}.${String(Math.floor(t % 60)).padStart(2, '0')}`);
                       }}
                     >
                       Set start to current position
@@ -597,7 +561,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                       onClick={() => {
                         if (!videoRef.current) return;
                         const t = videoRef.current.currentTime;
-                        setScanEndTime(`${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`);
+                        setScanEndTime(`${Math.floor(t / 60)}.${String(Math.floor(t % 60)).padStart(2, '0')}`);
                       }}
                     >
                       Set end to current position
@@ -606,41 +570,10 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                 )}
               </div>
 
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold uppercase tracking-wider">4. Choose Action Types (from Coaching Database)</h4>
-                <p className="text-xs text-muted-foreground">
-                  Only selected action types will be returned by AI, using your Sportscode visual cue definitions.
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => setSelectedActionTypes(availableActionTypes.map((a) => a.action_name))}>
-                    Select all
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => setSelectedActionTypes([])}>
-                    Clear
-                  </Button>
-                  <span className="text-xs text-muted-foreground">{selectedActionTypes.length} selected</span>
-                </div>
-                <div className="max-h-32 overflow-y-auto rounded-md border p-2 flex flex-wrap gap-1.5">
-                  {availableActionTypes.map((action) => {
-                    const selected = selectedActionTypes.includes(action.action_name);
-                    return (
-                      <button
-                        key={action.id}
-                        type="button"
-                        onClick={() => toggleActionType(action.action_name)}
-                        className={`text-xs px-2 py-1 rounded-md border transition-colors ${selected ? "bg-primary text-primary-foreground border-primary" : "bg-background text-foreground border-border hover:bg-muted"}`}
-                      >
-                        {action.action_name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold uppercase tracking-wider">5. Start AI Scan</h4>
+                <h4 className="text-sm font-semibold uppercase tracking-wider">4. Start AI Scan</h4>
                 <p className="text-xs text-muted-foreground">
-                  Sampling every {numericSampleInterval}s with strict filtering and realistic action volume capping.
+                  Sampling every {numericSampleInterval}s with duplicate suppression.
                 </p>
                 <div className="flex items-center gap-2">
                   <label className="text-xs text-muted-foreground">Sample every</label>
@@ -652,7 +585,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                   />
                   <span className="text-xs text-muted-foreground">seconds</span>
                 </div>
-                <Button onClick={startScan} disabled={scanning || !playerName.trim() || selectedActionTypes.length === 0} className="gap-2">
+                <Button onClick={startScan} disabled={scanning || !playerName.trim()} className="gap-2">
                   {scanning ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
