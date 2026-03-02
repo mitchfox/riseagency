@@ -576,7 +576,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
           ) : !analysis ? (
             <div className="text-center py-8 text-muted-foreground">Performance report not found</div>
           ) : (
-            <div ref={contentRef} className="space-y-4 md:space-y-6 bg-background p-2 md:p-4 rounded-lg overflow-x-hidden">
+            <div ref={contentRef} className="space-y-2 md:space-y-3 bg-background p-2 md:p-4 rounded-lg overflow-x-hidden">
               {/* Player Info with Clipped Actions Button */}
               <div className="flex flex-col gap-3">
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
@@ -749,13 +749,17 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
               {/* Advanced Stats */}
               {advancedStats.length > 0 && (
                 <Card className="overflow-hidden">
-                  <CardHeader className="py-2 md:py-4">
+                  <CardHeader className="py-1.5 md:py-2">
                     <CardTitle className="text-sm md:text-lg">Match Statistics</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-2 md:p-6">
+                  <CardContent className="p-2 md:p-4">
                     <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
-                      {advancedStats.map((stat) => (
-                        <div key={stat.key} className="text-center p-1.5 md:p-3 bg-accent/10 rounded">
+                      {advancedStats.map((stat) => {
+                        const isGoals = stat.key === 'goals';
+                        const goalsValue = isGoals ? (stat.isPaired ? stat.successful : stat.value) : 0;
+                        const hasGoalBorder = isGoals && typeof goalsValue === 'number' && goalsValue >= 1;
+                        return (
+                        <div key={stat.key} className={`text-center p-1.5 md:p-3 bg-accent/10 rounded ${hasGoalBorder ? 'ring-2 ring-risegold' : ''}`}>
                           <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 capitalize truncate">{formatStatLabel(stat.key)}</p>
                           {stat.isPaired ? (
                             <>
@@ -771,7 +775,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                             </p>
                           )}
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>
@@ -780,13 +785,13 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
               {/* Auto-Calculated Ratios */}
               {calculatedStats.length > 0 && (
                 <Card className="overflow-hidden border-primary/20">
-                  <CardHeader className="py-2 md:py-4 bg-primary/5">
+                  <CardHeader className="py-1.5 md:py-2 bg-primary/5">
                     <CardTitle className="text-sm md:text-lg flex items-center gap-2">
                       <Calculator className="h-4 w-4 text-primary" />
                       <span className="text-primary">Calculated Ratios</span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-2 md:p-6">
+                  <CardContent className="p-2 md:p-4">
                     <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
                       {calculatedStats.map((stat) => (
                         <div key={stat.key} className="text-center p-1.5 md:p-3 bg-primary/5 rounded border border-primary/10">
@@ -811,10 +816,10 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
               {/* Performance Overview */}
               {analysis.performance_overview && (
                 <Card className="overflow-hidden">
-                  <CardHeader className="py-2 md:py-4">
+                  <CardHeader className="py-1.5 md:py-2">
                     <CardTitle className="text-sm md:text-lg">Overview</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-2 md:p-6">
+                  <CardContent className="p-2 md:p-4">
                     <p className="text-muted-foreground whitespace-pre-wrap text-center text-xs md:text-sm">{analysis.performance_overview}</p>
                   </CardContent>
                 </Card>
@@ -823,7 +828,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
               {/* Performance Actions */}
               {actions.length > 0 && (
                 <Card className="overflow-hidden">
-                  <CardHeader className="py-2 md:py-4">
+                  <CardHeader className="py-1.5 md:py-2">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-sm md:text-lg">
                         Actions ({hasActiveFilters ? `${filteredActions.length}/${actions.length}` : actions.length})
@@ -898,24 +903,24 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                             With Notes
                           </button>
                         </div>
-                        {/* Watch filtered selection */}
-                        {hasActiveFilters && filteredActions.some(a => a.video_url) && (
-                          <div className="pt-2 border-t border-border/30">
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="bg-risegold hover:bg-risegold/90 text-black font-semibold text-xs"
-                              onClick={() => setShowFilteredPlayer(true)}
-                            >
-                              <Play className="h-3.5 w-3.5 mr-1.5" />
-                              Watch Selected ({filteredActions.filter(a => a.video_url).length})
-                            </Button>
-                          </div>
-                        )}
                       </div>
                     )}
                   </CardHeader>
-                  <CardContent className="p-2 md:p-6">
+                  {/* Watch filtered selection - always visible when filters active */}
+                  {hasActiveFilters && filteredActions.some(a => a.video_url) && (
+                    <div className="px-2 md:px-6 pb-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="bg-risegold hover:bg-risegold/90 text-black font-semibold text-xs w-full"
+                        onClick={() => setShowFilteredPlayer(true)}
+                      >
+                        <Play className="h-3.5 w-3.5 mr-1.5" />
+                        Watch Selected ({filteredActions.filter(a => a.video_url).length})
+                      </Button>
+                    </div>
+                  )}
+                  <CardContent className="p-2 md:p-4">
                     {/* Mobile: Compact card layout */}
                     <div className="block md:hidden space-y-2">
                       {filteredActions.map((action) => (
@@ -1079,8 +1084,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
           <div className="space-y-4">
             <h2 className="text-xl font-bold">How R90 Scores Work</h2>
             <p className="text-sm text-muted-foreground">
-              R90 is a performance rating that normalises a player's contribution to a per-90-minute basis, 
-              allowing fair comparison across different match durations.
+              R90 is a performance rating that allows us to rate actual impact on the game result, positively or negatively, by every contributable action made on and off the ball. Scores are normalised to a per-90-minute basis for fair comparison across different match durations.
             </p>
             
             <div className="space-y-3">
@@ -1092,45 +1096,65 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
               
               <h3 className="font-semibold text-sm">Action Scoring</h3>
               <p className="text-sm text-muted-foreground">
-                Every action in a match is scored using pre-configured weightings. Positive actions 
-                (goals, assists, successful passes, regains) add to the score while negative actions 
-                (turnovers, fouls committed) subtract from it. The weightings are calibrated so that an 
-                average performance sits around 1.00.
+                The action scoring model was built from over 1,000 matches input between 2017 and 2026, analysing how actions affected scoring or conceding across 18 pitch zones with further breakdowns by action type. Positive actions add to the score while negative actions subtract from it.
               </p>
               
               <h3 className="font-semibold text-sm">Score Guide</h3>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-green-700" />
-                  <span>1.80+ — Elite performance</span>
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(43, 96%, 56%)' }} />
+                  <span>A* (2.00+)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-green-500" />
-                  <span>1.40–1.79 — Very strong</span>
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(142, 76%, 55%)' }} />
+                  <span>A+ (1.80–1.99)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-lime-400" />
-                  <span>1.00–1.39 — Good</span>
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(142, 70%, 50%)' }} />
+                  <span>A (1.60–1.79)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-yellow-400" />
-                  <span>0.80–0.99 — Average</span>
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(142, 65%, 45%)' }} />
+                  <span>A- (1.40–1.59)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-orange-500" />
-                  <span>0.40–0.79 — Below average</span>
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(142, 70%, 40%)' }} />
+                  <span>B+ (1.20–1.39)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-red-500" />
-                  <span>Below 0.40 — Poor</span>
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(142, 76%, 36%)' }} />
+                  <span>B (1.00–1.19)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(60, 70%, 50%)' }} />
+                  <span>B- (0.80–0.99)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(40, 85%, 50%)' }} />
+                  <span>C+ (0.60–0.79)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(25, 75%, 45%)' }} />
+                  <span>C (0.40–0.59)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(0, 84%, 60%)' }} />
+                  <span>C- (0.20–0.39)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(0, 84%, 45%)' }} />
+                  <span>D (0.00–0.19)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(0, 84%, 30%)' }} />
+                  <span>U (below 0)</span>
                 </div>
               </div>
 
               <h3 className="font-semibold text-sm">Important Notes</h3>
               <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
                 <li>Short appearances (under 20 minutes) can produce inflated or deflated scores</li>
-                <li>R90 works best when comparing across multiple matches rather than a single game</li>
-                <li>Different positions are scored using the same system, so context matters when comparing</li>
+                <li>Goals win games. Always remember that while R90 is heavily influenced by chance-related actions, so is the real game. A bad performance is equalised by a goal scored and a good performance is generally not complete without creating a goal or stopping one at the other end.</li>
               </ul>
             </div>
           </div>
