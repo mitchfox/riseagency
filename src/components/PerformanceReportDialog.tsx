@@ -73,6 +73,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
   const [showRankedPlayer, setShowRankedPlayer] = useState(false);
   const [rankedMode, setRankedMode] = useState<"chronological" | "ranked" | "noted">("chronological");
   const [showClippedActions, setShowClippedActions] = useState(false);
+  const [showFilteredPlayer, setShowFilteredPlayer] = useState(false);
   const [showActionFilters, setShowActionFilters] = useState(false);
   const [filterTypes, setFilterTypes] = useState<string[]>([]);
   const [filterRating, setFilterRating] = useState<string | null>(null);
@@ -490,12 +491,12 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
   };
 
   const ratingBuckets = [
-    { key: "dark-green", label: "Strong positive (≥0.15)", className: "bg-green-700 text-white" },
-    { key: "green", label: "Positive (0.05–0.15)", className: "bg-green-500 text-white" },
-    { key: "lime", label: "Slight positive (0–0.05)", className: "bg-lime-400 text-black" },
-    { key: "neutral", label: "Neutral (0)", className: "bg-muted text-muted-foreground" },
-    { key: "orange", label: "Slight negative", className: "bg-orange-500 text-white" },
-    { key: "red", label: "Negative (< -0.04)", className: "bg-red-600 text-white" },
+    { key: "dark-green", className: "bg-green-700" },
+    { key: "green", className: "bg-green-500" },
+    { key: "lime", className: "bg-lime-400" },
+    { key: "neutral", className: "bg-muted" },
+    { key: "orange", className: "bg-orange-500" },
+    { key: "red", className: "bg-red-600" },
   ];
 
   // Filtered actions
@@ -860,7 +861,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                                     : 'bg-muted/30 text-foreground/70 border-border hover:bg-muted/50'
                                 }`}
                               >
-                                {type}
+                                {toTitleCase(type)}
                               </button>
                             ))}
                           </div>
@@ -873,19 +874,19 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                               <button
                                 key={bucket.key}
                                 onClick={() => setFilterRating(prev => prev === bucket.key ? null : bucket.key)}
-                                className={`px-2 py-0.5 rounded text-[10px] transition-colors border ${
+                                className={`w-6 h-6 rounded-full transition-all border-2 ${bucket.className} ${
                                   filterRating === bucket.key
-                                    ? `${bucket.className} border-transparent`
-                                    : 'bg-muted/30 text-foreground/70 border-border hover:bg-muted/50'
+                                    ? 'border-foreground scale-110 ring-2 ring-foreground/20'
+                                    : 'border-transparent hover:scale-110'
                                 }`}
-                              >
-                                {bucket.label}
-                              </button>
+                                title={bucket.key}
+                              />
                             ))}
                           </div>
                         </div>
                         {/* Filter by notes */}
                         <div>
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Notes</p>
                           <button
                             onClick={() => setFilterHasNotes(!filterHasNotes)}
                             className={`px-2 py-0.5 rounded text-[10px] transition-colors border ${
@@ -894,9 +895,23 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                                 : 'bg-muted/30 text-foreground/70 border-border hover:bg-muted/50'
                             }`}
                           >
-                            📝 Has notes only
+                            With Notes
                           </button>
                         </div>
+                        {/* Watch filtered selection */}
+                        {hasActiveFilters && filteredActions.some(a => a.video_url) && (
+                          <div className="pt-2 border-t border-border/30">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="bg-risegold hover:bg-risegold/90 text-black font-semibold text-xs"
+                              onClick={() => setShowFilteredPlayer(true)}
+                            >
+                              <Play className="h-3.5 w-3.5 mr-1.5" />
+                              Watch Selected ({filteredActions.filter(a => a.video_url).length})
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardHeader>
@@ -1040,7 +1055,25 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
           }))}
       />
 
-      {/* R90 Info Dialog */}
+      {/* Filtered Video Player */}
+      <RankedActionsPlayer
+        open={showFilteredPlayer}
+        onOpenChange={setShowFilteredPlayer}
+        mode="chronological"
+        clips={filteredActions
+          .filter(a => a.video_url)
+          .map(a => ({
+            id: a.id,
+            action_number: a.action_number,
+            action_type: a.action_type,
+            action_description: a.action_description,
+            action_score: a.action_score,
+            video_url: a.video_url!,
+            minute: a.minute,
+            notes: a.notes,
+          }))}
+      />
+
       <Dialog open={showR90Info} onOpenChange={setShowR90Info}>
         <DialogContent className="max-w-2xl">
           <div className="space-y-4">

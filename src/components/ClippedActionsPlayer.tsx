@@ -136,7 +136,7 @@ export const ClippedActionsPlayer = ({
           <div className="absolute bottom-4 left-4 right-4 bg-black/70 text-white text-xs px-3 py-2 rounded max-w-[80%]">
             <p className="line-clamp-2">{currentClip.action_description}</p>
             {currentClip.notes && (
-              <p className="text-[10px] text-yellow-300 italic mt-1 line-clamp-2">📝 {currentClip.notes}</p>
+              <p className="text-[10px] text-risegold italic mt-1 line-clamp-2">📝 {currentClip.notes}</p>
             )}
           </div>
         </div>

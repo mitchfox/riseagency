@@ -148,7 +148,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedA
               </div>
               <p className="text-white/60 text-xs truncate mt-0.5">{current.action_type}: {current.action_description}</p>
               {current.notes && (
-                <p className="text-yellow-300/90 text-[10px] italic mt-1 line-clamp-2">📝 {current.notes}</p>
+                <p className="text-risegold text-[10px] italic mt-1 line-clamp-2">📝 {current.notes}</p>
               )}
             </div>
             <div className="flex gap-1">
