@@ -40,6 +40,7 @@ interface Fixture {
   home_score: number | null;
   away_score: number | null;
   match_date: string;
+  match_time: string | null;
   competition: string | null;
   venue: string | null;
 }
@@ -87,6 +88,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
     opponent: "",
     result: "",
     match_date: "",
+    match_time: "",
     minutes_played: "",
     notes: "",
     r90_score: "",
@@ -295,6 +297,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
           opponent: analysisData?.opponent || opponentName,
           result: analysisData?.result || "",
           match_date: playerFixture.fixtures.match_date,
+          match_time: playerFixture.fixtures.match_time || "",
           minutes_played: playerFixture.minutes_played?.toString() || "",
           notes: analysisData?.notes || "",
           r90_score: analysisData?.r90_score?.toString() || "",
@@ -316,6 +319,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
           opponent: "",
           result: "",
           match_date: "",
+          match_time: "",
           minutes_played: "",
           notes: "",
           r90_score: "",
@@ -534,6 +538,7 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
         .from("fixtures")
         .update({
           match_date: editGameData.match_date,
+          match_time: editGameData.match_time || null,
         })
         .eq("id", editingPlayerFixture.fixture_id);
 
@@ -804,15 +809,27 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="edit_date">Date *</Label>
-                <Input
-                  id="edit_date"
-                  type="date"
-                  value={editGameData.match_date}
-                  onChange={(e) => setEditGameData({ ...editGameData, match_date: e.target.value })}
-                  required
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="edit_date">Date *</Label>
+                  <Input
+                    id="edit_date"
+                    type="date"
+                    value={editGameData.match_date}
+                    onChange={(e) => setEditGameData({ ...editGameData, match_date: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit_time">Kick-off Time</Label>
+                  <Input
+                    id="edit_time"
+                    type="time"
+                    value={editGameData.match_time}
+                    onChange={(e) => setEditGameData({ ...editGameData, match_time: e.target.value })}
+                    placeholder="HH:MM"
+                  />
+                </div>
               </div>
 
               <div>

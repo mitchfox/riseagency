@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,23 @@ export const InlineFixtureCreator = ({ playerId, onFixtureCreated }: InlineFixtu
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [opponent, setOpponent] = useState("");
+  const [playerClub, setPlayerClub] = useState<string | null>(null);
+
+  // Fetch the player's club name to use as home_team
+  useEffect(() => {
+    if (!playerId) return;
+    const fetchClub = async () => {
+      const { data } = await supabase
+        .from("players")
+        .select("club")
+        .eq("id", playerId)
+        .single();
+      if (data?.club) {
+        setPlayerClub(data.club);
+      }
+    };
+    fetchClub();
+  }, [playerId]);
 
   const handleCreate = async () => {
     if (!opponent.trim()) {
@@ -27,11 +44,10 @@ export const InlineFixtureCreator = ({ playerId, onFixtureCreated }: InlineFixtu
     }
     setSaving(true);
     try {
-      // Create fixture with opponent as away team, player's club context will be inferred
       const { data, error } = await supabase
         .from("fixtures")
         .insert({
-          home_team: "TBC",
+          home_team: playerClub || "TBC",
           away_team: opponent.trim(),
           match_date: new Date().toISOString().split("T")[0],
         })
