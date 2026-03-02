@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
-    const { frames, playerInfo, videoContext, allowedActionTypes } = await req.json();
+    const { frames, playerInfo, videoContext, allowedActionTypes, rejectionHistory } = await req.json();
 
     if (!frames || !Array.isArray(frames) || frames.length === 0) {
       return new Response(
@@ -132,6 +132,12 @@ UNDERSTANDING THE FOOTAGE:
 - Identify the player by their kit colour, shirt number, body shape, skin tone, hair, and position on the pitch as described above.
 - If you cannot confidently identify the target player in a frame, skip that frame entirely. Do not guess.
 ${actionReference}
+${Array.isArray(rejectionHistory) && rejectionHistory.length > 0 ? `
+PREVIOUS REJECTION FEEDBACK FROM COACH:
+The coach has previously rejected AI detections for the following reasons. Learn from this feedback and avoid making the same mistakes:
+${rejectionHistory.slice(-20).map((r: any) => `- Action "${r.actionType}" rejected: "${r.reason}"`).join('\n')}
+
+Use this feedback to calibrate your detection threshold. If the coach says "player not involved" or "wrong player", be more conservative.` : ''}
 ${allowedNames.length > 0 ? `
 ALLOWED ACTION TYPES (STRICT):
 - You may ONLY output actionType values from this list:
