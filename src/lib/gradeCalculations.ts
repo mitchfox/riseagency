@@ -23,9 +23,8 @@ export function getR90Grade(score: number | null | undefined): GradeInfo {
   if (score < 1.4) return { grade: 'B+', color: 'hsl(142, 70%, 40%)' }; // Green 450
   if (score < 1.6) return { grade: 'A-', color: 'hsl(142, 65%, 45%)' }; // Green 530
   if (score < 1.8) return { grade: 'A', color: 'hsl(142, 70%, 50%)' }; // Green 625
-  if (score < 2.0) return { grade: 'A+', color: 'hsl(142, 76%, 55%)' }; // Green 750
-  if (score < 2.5) return { grade: 'A*', color: 'hsl(43, 96%, 56%)' }; // Rise Gold
-  return { grade: 'A*', color: 'hsl(43, 96%, 56%)' }; // Rise Gold for 2.5+
+  if (score < 2.2) return { grade: 'A+', color: 'hsl(142, 76%, 55%)' }; // Green 750
+  return { grade: 'A*', color: 'hsl(43, 96%, 56%)' }; // Rise Gold for 2.2+
 }
 
 /**
