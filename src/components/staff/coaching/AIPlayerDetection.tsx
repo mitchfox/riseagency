@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,12 @@ interface PlayerOption {
   id: string;
   name: string;
   position?: string;
+}
+
+interface SportscodeActionType {
+  id: string;
+  action_name: string;
+  category: string | null;
 }
 
 interface Props {
@@ -66,6 +72,9 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [selectedPlayerForScan, setSelectedPlayerForScan] = useState<string>(selectedPlayerId || "");
   const [scanStartTime, setScanStartTime] = useState("");
   const [scanEndTime, setScanEndTime] = useState("");
+  const [sampleInterval, setSampleInterval] = useState<string>("5");
+  const [availableActionTypes, setAvailableActionTypes] = useState<SportscodeActionType[]>([]);
+  const [selectedActionTypes, setSelectedActionTypes] = useState<string[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // When a player is selected from dropdown, load saved description and previous report clips
@@ -87,6 +96,22 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     // Load previous clips from performance reports as reference tags
     loadPreviousClips(selectedPlayerForScan);
   }, [selectedPlayerForScan, players]);
+
+  useEffect(() => {
+    const fetchActionTypes = async () => {
+      const { data, error } = await supabase
+        .from("sportscode_action_types")
+        .select("id, action_name, category")
+        .order("display_order", { ascending: true });
+
+      if (error) return;
+      const rows = (data || []) as SportscodeActionType[];
+      setAvailableActionTypes(rows);
+      setSelectedActionTypes(rows.map((r) => r.action_name));
+    };
+
+    fetchActionTypes();
+  }, []);
 
   const loadPreviousClips = async (playerId: string) => {
     try {
@@ -187,6 +212,19 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     return isNaN(n) ? null : n;
   };
 
+  const numericSampleInterval = useMemo(() => {
+    const parsed = parseInt(sampleInterval, 10);
+    if (!Number.isFinite(parsed)) return 5;
+    return Math.max(2, Math.min(15, parsed));
+  }, [sampleInterval]);
+
+  const toggleActionType = (actionName: string) => {
+    setSelectedActionTypes((prev) => {
+      if (prev.includes(actionName)) return prev.filter((v) => v !== actionName);
+      return [...prev, actionName];
+    });
+  };
+
   const startScan = async () => {
     if (!playerName.trim()) {
       toast.error("Enter the player's name first");
@@ -209,9 +247,16 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     const clampedStart = Math.max(0, Math.min(segStart, fullDuration));
     const clampedEnd = Math.max(clampedStart, Math.min(segEnd, fullDuration));
 
-    const sampleInterval = 3;
-    const totalFrames = Math.floor((clampedEnd - clampedStart) / sampleInterval);
+    const sampleEvery = numericSampleInterval;
+    const segmentDuration = Math.max(0, clampedEnd - clampedStart);
+    const totalFrames = Math.floor(segmentDuration / sampleEvery);
     const batchSize = 15;
+
+    if (totalFrames <= 0) {
+      toast.error("Selected segment is too short for scanning");
+      setScanning(false);
+      return;
+    }
 
     const allDetected: DetectedAction[] = [];
 
@@ -225,7 +270,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         const frames: { dataUrl: string; timestamp: number; index: number }[] = [];
 
         for (let i = batchStart; i < batchEnd; i++) {
-          const time = clampedStart + (i * sampleInterval);
+          const time = clampedStart + (i * sampleEvery);
           try {
             const dataUrl = await extractFrame(hiddenVideo, time);
             frames.push({ dataUrl, timestamp: time, index: i });
@@ -248,6 +293,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             videoContext: {
               opponent: opponent || undefined,
             },
+            allowedActionTypes: selectedActionTypes,
           },
         });
 
@@ -260,7 +306,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         if (data?.actions) {
           const batchActions: DetectedAction[] = data.actions.map((a: any) => ({
             frameIndex: a.frameIndex,
-            timestamp: frames.find(f => f.index === a.frameIndex)?.timestamp || (a.frameIndex * sampleInterval),
+            timestamp: frames.find(f => f.index === a.frameIndex)?.timestamp || (a.frameIndex * sampleEvery),
             actionType: a.actionType,
             confidence: a.confidence,
             description: a.description,
@@ -272,17 +318,47 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         }
       }
 
-      const deduped = allDetected.filter((action, idx) => {
-        return !allDetected.slice(0, idx).some(prev => Math.abs(prev.timestamp - action.timestamp) < 3);
+      const confidenceRank: Record<string, number> = { high: 2, medium: 1 };
+      const contactSensitive = /(foul|fouled|penalty|red card|yellow card)/i;
+
+      const qualityFiltered = allDetected.filter((action) => {
+        const conf = action.confidence.toLowerCase();
+        if (conf !== 'high' && conf !== 'medium') return false;
+        if (contactSensitive.test(action.actionType) && conf !== 'high') return false;
+        return true;
       });
 
-      if (deduped.length === 0) {
+      const sortedByTime = [...qualityFiltered].sort((a, b) => a.timestamp - b.timestamp);
+      const dedupedByWindow: DetectedAction[] = [];
+
+      for (const action of sortedByTime) {
+        const last = dedupedByWindow[dedupedByWindow.length - 1];
+        if (!last || Math.abs(last.timestamp - action.timestamp) >= 6) {
+          dedupedByWindow.push(action);
+          continue;
+        }
+
+        const isBetter = (confidenceRank[action.confidence.toLowerCase()] || 0) > (confidenceRank[last.confidence.toLowerCase()] || 0);
+        if (isBetter) dedupedByWindow[dedupedByWindow.length - 1] = action;
+      }
+
+      const maxActionsForSegment = Math.max(8, Math.floor(segmentDuration / 54));
+      const capped = dedupedByWindow
+        .sort((a, b) => {
+          const scoreDiff = (confidenceRank[b.confidence.toLowerCase()] || 0) - (confidenceRank[a.confidence.toLowerCase()] || 0);
+          if (scoreDiff !== 0) return scoreDiff;
+          return a.timestamp - b.timestamp;
+        })
+        .slice(0, maxActionsForSegment)
+        .sort((a, b) => a.timestamp - b.timestamp);
+
+      if (capped.length === 0) {
         toast.info("No actions detected for this player");
       } else {
         // Round timestamps down to nearest 5 seconds for sync consistency
         const roundDown5 = (t: number) => Math.floor(t / 5) * 5;
 
-        const clips = deduped.map(a => {
+        const clips = capped.map(a => {
           const roundedTs = roundDown5(a.timestamp);
           const before = a.clipBefore ?? 5;
           const after = a.clipAfter ?? 5;
@@ -296,7 +372,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           };
         });
         onClipsAccepted(clips);
-        toast.success(`${deduped.length} potential actions added as pending clips`);
+        const reducedBy = Math.max(0, dedupedByWindow.length - capped.length);
+        toast.success(`${capped.length} potential actions added${reducedBy > 0 ? ` (filtered ${reducedBy} low-quality/duplicate detections)` : ''}`);
         setDialogOpen(false);
       }
     } catch (err: any) {
@@ -488,13 +565,53 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                 )}
               </div>
 
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold uppercase tracking-wider">4. Start AI Scan</h4>
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold uppercase tracking-wider">4. Choose Action Types (from Coaching Database)</h4>
                 <p className="text-xs text-muted-foreground">
-                  The AI will sample a frame every 3 seconds and analyse each one for actions by {playerName || 'the player'}.
-                  Detected actions will appear as pending clips below the video for you to review.
+                  Only selected action types will be returned by AI, using your Sportscode visual cue definitions.
                 </p>
-                <Button onClick={startScan} disabled={scanning || !playerName.trim()} className="gap-2">
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => setSelectedActionTypes(availableActionTypes.map((a) => a.action_name))}>
+                    Select all
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => setSelectedActionTypes([])}>
+                    Clear
+                  </Button>
+                  <span className="text-xs text-muted-foreground">{selectedActionTypes.length} selected</span>
+                </div>
+                <div className="max-h-32 overflow-y-auto rounded-md border p-2 flex flex-wrap gap-1.5">
+                  {availableActionTypes.map((action) => {
+                    const selected = selectedActionTypes.includes(action.action_name);
+                    return (
+                      <button
+                        key={action.id}
+                        type="button"
+                        onClick={() => toggleActionType(action.action_name)}
+                        className={`text-xs px-2 py-1 rounded-md border transition-colors ${selected ? "bg-primary text-primary-foreground border-primary" : "bg-background text-foreground border-border hover:bg-muted"}`}
+                      >
+                        {action.action_name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold uppercase tracking-wider">5. Start AI Scan</h4>
+                <p className="text-xs text-muted-foreground">
+                  Sampling every {numericSampleInterval}s with strict filtering and realistic action volume capping.
+                </p>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted-foreground">Sample every</label>
+                  <Input
+                    value={sampleInterval}
+                    onChange={(e) => setSampleInterval(e.target.value)}
+                    className="w-16 h-7 text-xs"
+                    inputMode="numeric"
+                  />
+                  <span className="text-xs text-muted-foreground">seconds</span>
+                </div>
+                <Button onClick={startScan} disabled={scanning || !playerName.trim() || selectedActionTypes.length === 0} className="gap-2">
                   {scanning ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
