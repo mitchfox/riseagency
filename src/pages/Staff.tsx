@@ -162,6 +162,7 @@ const Staff = () => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
   });
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [showGridPickerDialog, setShowGridPickerDialog] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   
   // Role permissions from database
@@ -1183,7 +1184,7 @@ const Staff = () => {
                   {/* Add tab button — opens section grid picker */}
                   <button
                     className="flex items-center justify-center w-7 h-7 rounded-full border border-dashed border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40 shrink-0 transition-colors"
-                    onClick={() => setExpandedSection('__grid_picker__' as any)}
+                    onClick={() => setShowGridPickerDialog(true)}
                     title="Open new tab"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -1530,15 +1531,7 @@ const Staff = () => {
         <main className={`flex-1 overflow-y-auto scrollbar-thin relative z-10 transition-all duration-300 pt-20 ${
           sidebarCollapsed ? 'ml-0' : 'ml-14 md:ml-24'
         } ${isMobile ? 'pb-[60px]' : ''}`}>
-          {expandedSection === '__grid_picker__' ? (
-            <SectionGridPicker
-              categories={categories}
-              onSelect={(sectionId, categoryId) => {
-                addSectionAsTab(sectionId);
-                setExpandedCategory(categoryId);
-              }}
-            />
-          ) : expandedSection ? (
+          {expandedSection ? (
             <div className="container mx-auto px-3 md:px-6 py-4 md:py-6">
               {/* Breadcrumb */}
               {(() => {
@@ -1719,6 +1712,23 @@ const Staff = () => {
 
       {/* Keyboard Shortcuts Dialog */}
       <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      
+      {/* Grid Picker Dialog for new tabs */}
+      <Dialog open={showGridPickerDialog} onOpenChange={setShowGridPickerDialog}>
+        <DialogContent className="max-w-[98vw] md:max-w-[90vw] w-full max-h-[90vh] overflow-y-auto p-0">
+          <div className="p-4 md:p-6">
+            <SectionGridPicker
+              categories={categories}
+              onSelect={(sectionId, categoryId) => {
+                addSectionAsTab(sectionId);
+                setExpandedCategory(categoryId);
+                setShowGridPickerDialog(false);
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <MobileScrollButtons />
     </div>
   );

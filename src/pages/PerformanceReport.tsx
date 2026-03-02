@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useParams } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -7,12 +7,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download } from "lucide-react";
+import { Download, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, MessageSquareText, Filter, X, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { SEO } from "@/components/SEO";
+import { ActionVideoPopup } from "@/components/ActionVideoPopup";
+import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
+import { STAT_TYPE_CONFIGS, StatTypeConfig } from "@/components/staff/ActionStatRecorder";
+import { R90FlowChart } from "@/components/report/R90FlowChart";
+import { ActionHeatmap } from "@/components/report/ActionHeatmap";
+import { ChanceCreationFlow } from "@/components/report/ChanceCreationFlow";
+import { RankedActionsPlayer } from "@/components/report/RankedActionsPlayer";
+import { toTitleCase } from "@/lib/titleCase";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
-// Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
   if (minute === null || minute === undefined) return "-";
   const minPart = Math.floor(minute);
@@ -28,6 +36,7 @@ interface PerformanceAction {
   action_type: string;
   action_description: string;
   notes: string | null;
+  video_url?: string | null;
 }
 
 interface StrikerStats {
@@ -52,11 +61,28 @@ const PerformanceReport = () => {
   const [analysis, setAnalysis] = useState<AnalysisDetails | null>(null);
   const [actions, setActions] = useState<PerformanceAction[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [savingImage, setSavingImage] = useState(false);
+
+  // Video/player states
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
+  const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>("");
+  const [showR90Flow, setShowR90Flow] = useState(false);
+  const [showR90Info, setShowR90Info] = useState(false);
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showChanceCreation, setShowChanceCreation] = useState(false);
+  const [showRankedPlayer, setShowRankedPlayer] = useState(false);
+  const [rankedMode, setRankedMode] = useState<"chronological" | "ranked" | "noted">("chronological");
+  const [showClippedActions, setShowClippedActions] = useState(false);
+  const [showFilteredPlayer, setShowFilteredPlayer] = useState(false);
+  const [showActionFilters, setShowActionFilters] = useState(false);
+  const [filterTypes, setFilterTypes] = useState<string[]>([]);
+  const [filterRating, setFilterRating] = useState<string | null>(null);
+  const [filterHasNotes, setFilterHasNotes] = useState(false);
 
   const analysisId = slug ? extractAnalysisIdFromSlug(slug) : null;
 
   useEffect(() => {
-    // Check authentication status
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setIsAuthenticated(!!session);
@@ -65,144 +91,283 @@ const PerformanceReport = () => {
   }, []);
 
   useEffect(() => {
-    console.log('PerformanceReport - analysisId:', analysisId);
-    console.log('PerformanceReport - slug:', slug);
     if (analysisId) {
       fetchPerformanceData();
     } else {
-      console.log('PerformanceReport - No analysisId found, setting loading to false');
       setLoading(false);
     }
   }, [analysisId]);
 
   const fetchPerformanceData = async () => {
-    console.log('PerformanceReport - Starting fetchPerformanceData');
     try {
-      // Fetch analysis details with player name
-      const { data: analysisData, error: analysisError } = await supabase
-        .from("player_analysis")
-        .select(`
-          *,
-          players!inner (name)
-        `)
-        .eq("id", analysisId)
-        .single();
+      const [analysisResult, actionsResult] = await Promise.all([
+        supabase
+          .from("player_analysis")
+          .select(`*, players!inner (name)`)
+          .eq("id", analysisId)
+          .single(),
+        supabase
+          .from("performance_report_actions")
+          .select("*")
+          .eq("analysis_id", analysisId)
+          .order("action_number", { ascending: true })
+      ]);
 
-      console.log('PerformanceReport - Analysis data:', analysisData);
-      console.log('PerformanceReport - Analysis error:', analysisError);
-
-      if (analysisError) throw analysisError;
+      if (analysisResult.error) throw analysisResult.error;
 
       setAnalysis({
-        id: analysisData.id,
-        analysis_date: analysisData.analysis_date,
-        opponent: analysisData.opponent || "",
-        result: analysisData.result || "",
-        r90_score: analysisData.r90_score,
-        minutes_played: analysisData.minutes_played,
-        player_name: analysisData.players?.name || "Unknown Player",
-        striker_stats: analysisData.striker_stats as StrikerStats | null,
-        performance_overview: analysisData.performance_overview,
+        id: analysisResult.data.id,
+        analysis_date: analysisResult.data.analysis_date,
+        opponent: analysisResult.data.opponent || "",
+        result: analysisResult.data.result || "",
+        r90_score: analysisResult.data.r90_score,
+        minutes_played: analysisResult.data.minutes_played,
+        player_name: analysisResult.data.players?.name || "Unknown Player",
+        striker_stats: analysisResult.data.striker_stats as StrikerStats | null,
+        performance_overview: analysisResult.data.performance_overview,
       });
 
-      // Fetch performance actions
-      const { data: actionsData, error: actionsError } = await supabase
-        .from("performance_report_actions")
-        .select("*")
-        .eq("analysis_id", analysisId)
-        .order("action_number", { ascending: true });
-
-      console.log('PerformanceReport - Actions data length:', actionsData?.length);
-      console.log('PerformanceReport - Actions error:', actionsError);
-
-      if (actionsError) throw actionsError;
-
-      setActions(actionsData || []);
-      console.log('PerformanceReport - Data fetch complete');
+      if (actionsResult.error) throw actionsResult.error;
+      setActions(actionsResult.data || []);
     } catch (error: any) {
       console.error("Error fetching performance data:", error);
       toast.error("Failed to load performance report");
     } finally {
-      console.log('PerformanceReport - Setting loading to false');
       setLoading(false);
     }
   };
 
   const getActionScoreColor = (score: number) => {
-    // Positive scores - greens
-    if (score >= 0.15) return "text-green-800 font-bold"; // Dark green for excellent actions
-    if (score >= 0.1) return "text-green-600 font-bold";  // Strong green for very good actions
-    if (score >= 0.05) return "text-green-500 font-semibold"; // Medium green for good actions
-    if (score >= 0.02) return "text-green-400"; // Light green for positive actions
-    if (score > 0.005) return "text-lime-500"; // Very light green for small positive
-    if (score > 0) return "text-lime-400"; // Minimal green for tiny positive
-    
-    // Zero
+    if (score >= 0.15) return "text-green-800 font-bold";
+    if (score >= 0.1) return "text-green-600 font-bold";
+    if (score >= 0.05) return "text-green-500 font-semibold";
+    if (score >= 0.02) return "text-green-400";
+    if (score > 0.005) return "text-lime-500";
+    if (score > 0) return "text-lime-400";
     if (score === 0) return "text-muted-foreground";
-    
-    // Negative scores - reds/oranges
-    if (score > -0.005) return "text-orange-400"; // Minimal negative
-    if (score > -0.02) return "text-orange-500"; // Small negative
-    if (score > -0.04) return "text-red-400"; // Medium negative
-    if (score > -0.06) return "text-red-500 font-semibold"; // Significant negative
-    return "text-red-700 font-bold"; // Dark red for major errors
+    if (score > -0.005) return "text-orange-400";
+    if (score > -0.02) return "text-orange-500";
+    if (score > -0.04) return "text-red-400";
+    if (score > -0.06) return "text-red-500 font-semibold";
+    return "text-red-700 font-bold";
   };
 
   const calculateRScore = (): number => {
-    const totalScore = actions.reduce((sum, action) => sum + (action.action_score ?? 0), 0);
-    return totalScore;
+    return actions.reduce((sum, action) => sum + (action.action_score ?? 0), 0);
   };
 
   const calculateXGChain = (): number => {
-    // Sum only positive action scores, ignore negative ones
-    const xgChain = actions.reduce((sum, action) => {
+    return actions.reduce((sum, action) => {
       const score = action.action_score ?? 0;
       return score > 0 ? sum + score : sum;
     }, 0);
-    return xgChain;
   };
 
   const handleSaveAsWebp = async () => {
+    if (!contentRef.current || !analysis) return;
+    setSavingImage(true);
     try {
       const { default: html2canvas } = await import('html2canvas');
-      const element = document.querySelector('main');
-      if (!element) {
-        toast.error("Could not find content to save");
-        return;
+      const originalBg = contentRef.current.style.backgroundColor;
+      contentRef.current.style.backgroundColor = '#000000';
+      const canvas = await html2canvas(contentRef.current, {
+        backgroundColor: '#000000',
+        useCORS: true,
+        logging: false,
+        scale: 2,
+      } as any);
+      contentRef.current.style.backgroundColor = originalBg;
+      const fileName = `${analysis.player_name}-vs-${analysis.opponent}-performance-report`;
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+      if (isMobile) {
+        const dataUrl = canvas.toDataURL('image/png', 0.95);
+        const newTab = window.open();
+        if (newTab) {
+          newTab.document.write(`<html><head><title>${fileName}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#000;}</style></head><body><img src="${dataUrl}" style="max-width:100%;height:auto;" /></body></html>`);
+          newTab.document.close();
+          toast.success('Image opened - long-press to save');
+        } else {
+          const link = document.createElement('a');
+          link.href = dataUrl;
+          link.download = `${fileName}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast.success('Image saved');
+        }
+      } else {
+        const dataUrl = canvas.toDataURL('image/webp', 0.9);
+        const link = document.createElement('a');
+        link.download = `${fileName}.webp`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Image saved successfully');
       }
-      
-      toast.info("Generating image...");
-      
-      const canvas = await html2canvas(element as HTMLElement);
-      
-      // Convert to webp
-      const dataUrl = canvas.toDataURL('image/webp', 0.9);
-      
-      // Create download link
-      const link = document.createElement('a');
-      link.download = `${analysis?.player_name || 'performance'}-report-${analysis?.opponent || 'match'}.webp`;
-      link.href = dataUrl;
-      link.click();
-      
-      toast.success("Image saved successfully");
     } catch (error) {
-      console.error("Error saving as webp:", error);
-      toast.error("Failed to save image");
+      console.error('Error saving image:', error);
+      toast.error('Failed to save image');
+    } finally {
+      setSavingImage(false);
     }
   };
 
+  // Format stat key to readable label using config lookup
+  const formatStatLabel = (key: string): string => {
+    let config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) => c.key === key);
+    if (config) return config.name;
+    const keyLower = key.toLowerCase();
+    config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) => c.key.toLowerCase() === keyLower);
+    if (config) return config.name;
+    return key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim();
+  };
 
-  console.log('PerformanceReport - Render - loading:', loading);
-  console.log('PerformanceReport - Render - analysis:', analysis);
-  console.log('PerformanceReport - Render - actions length:', actions.length);
+  // Get advanced stats from striker_stats, excluding internal fields
+  const getAdvancedStats = () => {
+    if (!analysis?.striker_stats) return [];
+    const excludeKeys = ['selected_stats', 'stats_order'];
+    const stats: { key: string; value: number | string; per90Value?: number | string; isPaired?: boolean; successful?: number; attempted?: number; percentage?: string; }[] = [];
+    const processedKeys = new Set<string>();
+    const statsOrder = analysis.striker_stats.stats_order as string[] | undefined;
+    const selectedStats = analysis.striker_stats.selected_stats as string[] | undefined;
+    const rawKeysToShow = statsOrder || selectedStats || Object.keys(analysis.striker_stats);
+    const keysToShow = rawKeysToShow.filter(key => !excludeKeys.includes(key));
+    
+    for (const key of keysToShow) {
+      if (key.includes('_per90')) continue;
+      if (processedKeys.has(key)) continue;
+      const value = analysis.striker_stats[key];
+      if (value === null || value === undefined) continue;
+      if (typeof value === 'string' && value.trim() === '') continue;
+      if (typeof value === 'number' && isNaN(value)) continue;
+
+      let attemptedKey = `${key}_attempted`;
+      let baseKey = key;
+      if (key.endsWith('_won')) { baseKey = key.replace('_won', ''); attemptedKey = `${baseKey}_attempted`; }
+      else if (key.endsWith('_completed')) { baseKey = key.replace('_completed', ''); attemptedKey = `${baseKey}_attempted`; }
+
+      if (analysis.striker_stats[attemptedKey] != null && !key.endsWith('_attempted')) {
+        const attempted = Number(analysis.striker_stats[attemptedKey]);
+        const successful = Number(value);
+        if (!isNaN(attempted) && !isNaN(successful)) {
+          processedKeys.add(attemptedKey);
+          const per90Key = `${key}_per90`;
+          const per90Value = analysis.striker_stats[per90Key];
+          stats.push({
+            key: baseKey !== key ? baseKey : key,
+            value: successful,
+            per90Value: per90Value !== null && per90Value !== undefined ? per90Value as number | string : undefined,
+            isPaired: true, successful, attempted,
+            percentage: attempted > 0 ? ((successful / attempted) * 100).toFixed(1) : '0'
+          });
+          continue;
+        }
+      }
+      if (key.endsWith('_attempted') || key.endsWith('_successful')) { processedKeys.add(key); continue; }
+      if (typeof value !== 'number' && typeof value !== 'string') continue;
+
+      const keyLower = key.toLowerCase();
+      const rateBasedPrefixes = ['xg', 'xa', 'xc', 'xgchain'];
+      const isRateBased = rateBasedPrefixes.some(prefix => keyLower.includes(prefix));
+      const per90Key = `${key}_per90`;
+      const per90Value = isRateBased ? analysis.striker_stats[per90Key] : undefined;
+      stats.push({ key, value, per90Value: per90Value !== null && per90Value !== undefined ? per90Value as number | string : undefined });
+    }
+    return stats;
+  };
+
+  // Calculate derived stats from the base stats
+  const getCalculatedStats = () => {
+    if (!analysis?.striker_stats) return [];
+    const strikerStats = analysis.striker_stats;
+    const calculated: { key: string; displayName: string; value: number; description: string }[] = [];
+    const getVal = (key: string): number | null => { const val = strikerStats[key]; if (val === null || val === undefined) return null; return typeof val === 'number' ? val : null; };
+    const getSuccessVal = (baseKey: string): number | null => getVal(`${baseKey}_successful`) ?? getVal(baseKey);
+    const getTotalVal = (baseKey: string): number | null => getVal(`${baseKey}_total`) ?? getVal(`${baseKey}_attempted`);
+
+    const recoveries = getVal('recoveries');
+    const turnovers = getVal('turnovers');
+    if (recoveries !== null && turnovers !== null) {
+      const ratio = turnovers === 0 ? (recoveries > 0 ? recoveries : 0) : recoveries / turnovers;
+      calculated.push({ key: 'recovery_turnover_ratio', displayName: 'Recovery/Turnover', value: ratio, description: 'Recoveries ÷ Turnovers' });
+    }
+    const ppSuccess = getSuccessVal('progressive_passes');
+    if (ppSuccess !== null && turnovers !== null) {
+      const ratio = turnovers === 0 ? (ppSuccess > 0 ? ppSuccess : 0) : ppSuccess / turnovers;
+      calculated.push({ key: 'pp_turnovers_ratio', displayName: 'PP/Turnovers', value: ratio, description: 'Progressive Passes ÷ Turnovers' });
+    }
+    const aerialSuccess = getSuccessVal('aerial_duels');
+    const aerialTotal = getTotalVal('aerial_duels');
+    if (aerialSuccess !== null && aerialTotal !== null && aerialTotal > 0) {
+      calculated.push({ key: 'aerial_duel_win_pct', displayName: 'Aerial Duel Win %', value: (aerialSuccess / aerialTotal) * 100, description: 'Aerial Duels Won ÷ Total' });
+    }
+    const passSuccess = getSuccessVal('passes');
+    const passTotal = getTotalVal('passes');
+    if (passSuccess !== null && passTotal !== null && passTotal > 0) {
+      calculated.push({ key: 'pass_completion', displayName: 'Pass Completion %', value: (passSuccess / passTotal) * 100, description: 'Passes Completed ÷ Total' });
+    }
+    const dribbleSuccess = getSuccessVal('dribbles');
+    const dribbleTotal = getTotalVal('dribbles');
+    if (dribbleSuccess !== null && dribbleTotal !== null && dribbleTotal > 0) {
+      calculated.push({ key: 'dribble_success_pct', displayName: 'Dribble Success %', value: (dribbleSuccess / dribbleTotal) * 100, description: 'Dribbles Completed ÷ Total' });
+    }
+    const tackleSuccess = getSuccessVal('tackles');
+    const tackleTotal = getTotalVal('tackles');
+    if (tackleSuccess !== null && tackleTotal !== null && tackleTotal > 0) {
+      calculated.push({ key: 'tackle_success_pct', displayName: 'Tackle Success %', value: (tackleSuccess / tackleTotal) * 100, description: 'Tackles Won ÷ Total' });
+    }
+    const xg = getVal('xg');
+    const shotsTotal = getTotalVal('shots') ?? getVal('shots');
+    if (xg !== null && shotsTotal !== null && shotsTotal > 0) {
+      calculated.push({ key: 'xg_per_shot', displayName: 'xG per Shot', value: xg / shotsTotal, description: 'xG ÷ Total Shots' });
+    }
+    return calculated;
+  };
+
+  const advancedStats = getAdvancedStats();
+  const calculatedStats = getCalculatedStats();
+
+  // Get unique action types (split by comma)
+  const allActionTypes = Array.from(new Set(
+    actions.flatMap(a => a.action_type.split(',').map(t => t.trim().toLowerCase()).filter(Boolean))
+  )).sort();
+
+  const getRatingBucket = (score: number): string => {
+    if (score >= 0.15) return "dark-green";
+    if (score >= 0.05) return "green";
+    if (score > 0) return "lime";
+    if (score === 0) return "neutral";
+    if (score > -0.04) return "orange";
+    return "red";
+  };
+
+  const ratingBuckets = [
+    { key: "dark-green", className: "bg-green-700" },
+    { key: "green", className: "bg-green-500" },
+    { key: "lime", className: "bg-lime-400" },
+    { key: "neutral", className: "bg-muted" },
+    { key: "orange", className: "bg-orange-500" },
+    { key: "red", className: "bg-red-600" },
+  ];
+
+  const filteredActions = actions.filter(a => {
+    if (filterTypes.length > 0) {
+      const actionTypes = a.action_type.split(',').map(t => t.trim().toLowerCase());
+      if (!filterTypes.some(ft => actionTypes.includes(ft))) return false;
+    }
+    if (filterRating) { if (getRatingBucket(a.action_score) !== filterRating) return false; }
+    if (filterHasNotes) { if (!a.notes) return false; }
+    return true;
+  });
+
+  const hasActiveFilters = filterTypes.length > 0 || filterRating !== null || filterHasNotes;
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
         {!isAuthenticated && <Header />}
-        <main className="container mx-auto px-4 py-8">
-          <LoadingSpinner size="md" />
-        </main>
+        <main className="container mx-auto px-4 py-8"><LoadingSpinner size="md" /></main>
         {!isAuthenticated && <Footer />}
       </div>
     );
@@ -213,11 +378,7 @@ const PerformanceReport = () => {
       <div className="min-h-screen bg-background">
         {!isAuthenticated && <Header />}
         <main className="container mx-auto px-4 py-8">
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground">Performance report not found</p>
-            </CardContent>
-          </Card>
+          <Card><CardContent className="pt-6"><p className="text-center text-muted-foreground">Performance report not found</p></CardContent></Card>
         </main>
         {!isAuthenticated && <Footer />}
       </div>
@@ -226,339 +387,409 @@ const PerformanceReport = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEO 
+      <SEO
         title={`${analysis.player_name} vs ${analysis.opponent} - Performance Report | RISE Football`}
-        description={`Detailed performance analysis for ${analysis.player_name} in the match against ${analysis.opponent} on ${new Date(analysis.analysis_date).toLocaleDateString('en-GB')}. R90 Score: ${analysis.minutes_played ? ((calculateRScore() / analysis.minutes_played) * 90).toFixed(2) : 'N/A'}.`}
+        description={`Detailed performance analysis for ${analysis.player_name} against ${analysis.opponent}. R90 Score: ${analysis.r90_score?.toFixed(2) || 'N/A'}.`}
       />
-      {!isAuthenticated && (
-        <div className="print:hidden">
-          <Header />
+      {!isAuthenticated && <div className="print:hidden"><Header /></div>}
+
+      <main className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+        {/* Sticky header bar */}
+        <div className="sticky top-0 z-10 bg-background border-b mb-4 py-2 flex items-center justify-between gap-2 print:hidden">
+          <h2 className="text-base md:text-xl font-bebas uppercase tracking-wider truncate">Performance Report</h2>
+          <div className="flex gap-1 md:gap-2 flex-shrink-0">
+            <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="px-2 md:px-3" disabled={savingImage || loading}>
+              <ImageIcon className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">{savingImage ? 'Saving...' : 'Save'}</span>
+            </Button>
+          </div>
         </div>
-      )}
-      <main className="container mx-auto px-4 py-8">
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <CardTitle className="text-2xl md:text-3xl">Performance Report</CardTitle>
-              <div className="flex gap-2 print:hidden flex-wrap">
-                <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="flex-1 md:flex-none">
-                  <Download className="mr-2 h-4 w-4" />
-                  Save as .webp
+
+        <div ref={contentRef} className="space-y-2 md:space-y-3 bg-background p-2 md:p-4 rounded-lg overflow-x-hidden">
+          {/* Player Info */}
+          <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
+              <div>
+                <p className="text-xs md:text-sm text-muted-foreground">Player</p>
+                <p className="font-bold text-sm md:text-base truncate">{analysis.player_name}</p>
+              </div>
+              <div>
+                <p className="text-xs md:text-sm text-muted-foreground">Date</p>
+                <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</p>
+              </div>
+              <div>
+                <p className="text-xs md:text-sm text-muted-foreground">Opponent</p>
+                <p className="font-bold text-sm md:text-base truncate">{analysis.opponent || "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-xs md:text-sm text-muted-foreground">Result</p>
+                <p className="font-bold text-sm md:text-base">{analysis.result || "N/A"}</p>
+              </div>
+            </div>
+
+            {/* Clipped Actions Button */}
+            {actions.filter(a => a.video_url).length > 0 && (
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-risegold hover:bg-risegold/90 text-black font-semibold flex items-center gap-2 w-fit"
+                onClick={() => setShowClippedActions(true)}
+              >
+                <Play className="h-4 w-4" />
+                {actions.filter(a => a.video_url).length} Clips
+              </Button>
+            )}
+          </div>
+
+          {/* Graphics Buttons Row */}
+          {actions.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <Button variant={showR90Flow ? "default" : "outline"} size="sm" onClick={() => { setShowR90Flow(!showR90Flow); setShowHeatmap(false); }} className="text-xs">
+                <TrendingUp className="h-3.5 w-3.5 mr-1.5" />R90 Flow
+              </Button>
+              <Button variant={showHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); setShowChanceCreation(false); }} className="text-xs">
+                <BarChart3 className="h-3.5 w-3.5 mr-1.5" />Period Grade Map
+              </Button>
+              {analysis.striker_stats && ['crossing_movement_xC', 'movement_in_behind_xC', 'movement_down_side_xC', 'triple_threat_xC', 'movement_to_feet_xC'].some(k => (analysis.striker_stats as any)?.[k] > 0) && (
+                <Button variant="outline" size="sm" onClick={() => { setShowChanceCreation(!showChanceCreation); setShowR90Flow(false); setShowHeatmap(false); }} className="text-xs">
+                  <TrendingUp className="h-3.5 w-3.5 mr-1.5" />Chance Creation Flow
                 </Button>
-              </div>
+              )}
+              {actions.filter(a => a.video_url).length > 0 && (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => { setRankedMode("chronological"); setShowRankedPlayer(true); }} className="text-xs">
+                    <Film className="h-3.5 w-3.5 mr-1.5" />Full Match Video
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => { setRankedMode("ranked"); setShowRankedPlayer(true); }} className="text-xs">
+                    <Award className="h-3.5 w-3.5 mr-1.5" />Ranked Actions
+                  </Button>
+                  {actions.some(a => a.video_url && a.notes) && (
+                    <Button variant="outline" size="sm" onClick={() => { setRankedMode("noted"); setShowRankedPlayer(true); }} className="text-xs">
+                      <MessageSquareText className="h-3.5 w-3.5 mr-1.5" />Noted Actions
+                    </Button>
+                  )}
+                </>
+              )}
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div>
-                <p className="text-sm text-muted-foreground">Player</p>
-                <p className="font-bold">{analysis.player_name}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Date</p>
-                <p className="font-bold">{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Opponent</p>
-                <p className="font-bold">{analysis.opponent || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Result</p>
-                <p className="font-bold">{analysis.result || "N/A"}</p>
-              </div>
-            </div>
+          )}
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-accent/20 rounded-lg">
-              <div className="text-center">
-                <p className="text-xs md:text-sm text-muted-foreground mb-1">Raw Score</p>
-                <p className="text-xl md:text-2xl font-bold">
-                  {actions.length > 0 ? calculateRScore().toFixed(5) : (analysis.r90_score !== null && analysis.minutes_played ? ((analysis.r90_score / 90) * analysis.minutes_played).toFixed(5) : "N/A")}
-                </p>
-              </div>
-              <div className="text-center bg-primary text-primary-foreground rounded-lg p-4">
-                <p className="text-xs md:text-sm mb-1 opacity-90">R90 Score</p>
-                <p className="text-2xl md:text-3xl font-bold">
-                  {analysis.r90_score !== null 
-                    ? analysis.r90_score.toFixed(2)
-                    : analysis.minutes_played && actions.length > 0
-                      ? ((calculateRScore() / analysis.minutes_played) * 90).toFixed(2)
-                      : "N/A"
-                  }
-                </p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs md:text-sm text-muted-foreground mb-1">xG Chain</p>
-                <p className="text-xl md:text-2xl font-bold">{actions.length > 0 ? calculateXGChain().toFixed(3) : "N/A"}</p>
-                {analysis.minutes_played && actions.length > 0 && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    per 90: {((calculateXGChain() / analysis.minutes_played) * 90).toFixed(3)}
-                  </p>
-                )}
-              </div>
-              <div className="text-center">
-                <p className="text-xs md:text-sm text-muted-foreground mb-1">Minutes Played</p>
-                <p className="text-xl md:text-2xl font-bold">{analysis.minutes_played ?? "N/A"}</p>
-              </div>
-            </div>
+          {/* R90 Flow Chart */}
+          {showR90Flow && analysis.minutes_played && (
+            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><R90FlowChart actions={actions} minutesPlayed={analysis.minutes_played} /></CardContent></Card>
+          )}
 
-            {analysis.striker_stats && Object.keys(analysis.striker_stats).filter(key => !key.includes('_per90')).some(key => analysis.striker_stats![key] !== null && analysis.striker_stats![key] !== undefined && analysis.striker_stats![key] !== '') && (
-              <div className="mt-6 p-4 bg-accent/10 rounded-lg border-2 border-primary/20">
-                <h3 className="font-bold text-lg mb-4 text-primary">Additional Statistics</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {/* xG Chain - always derived from actions */}
-                  {actions.length > 0 && (
-                    <div className="text-center p-3 bg-background rounded-md">
-                      <p className="text-xs text-muted-foreground mb-1">xG Chain</p>
-                      <p className="font-bold text-lg">
-                        {calculateXGChain().toFixed(3)}
+          {/* Action Heatmap */}
+          {showHeatmap && analysis.minutes_played && (
+            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ActionHeatmap actions={actions} minutesPlayed={analysis.minutes_played} /></CardContent></Card>
+          )}
+
+          {/* Chance Creation Flow */}
+          {showChanceCreation && analysis.striker_stats && (
+            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ChanceCreationFlow strikerStats={analysis.striker_stats as Record<string, any>} /></CardContent></Card>
+          )}
+
+          {/* Key Stats */}
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4 p-2 md:p-4 bg-accent/20 rounded-lg">
+            <div className="text-center p-2">
+              <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Raw Score</p>
+              <p className="text-base md:text-2xl font-bold">
+                {actions.length > 0 ? calculateRScore().toFixed(3) : (analysis.r90_score !== null && analysis.minutes_played ? ((analysis.r90_score / 90) * analysis.minutes_played).toFixed(3) : "N/A")}
+              </p>
+            </div>
+            <div className="text-center bg-primary text-primary-foreground rounded-lg p-2 md:p-4 relative">
+              <div className="flex items-center justify-center gap-1 mb-0.5 md:mb-1">
+                <p className="text-[10px] md:text-sm opacity-90">R90</p>
+                <button onClick={() => setShowR90Info(true)} className="opacity-50 hover:opacity-100 transition-opacity" title="How is R90 calculated?">
+                  <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                </button>
+              </div>
+              <p className="text-lg md:text-3xl font-bold">
+                {analysis.r90_score !== null
+                  ? analysis.r90_score.toFixed(2)
+                  : analysis.minutes_played && actions.length > 0
+                    ? ((calculateRScore() / analysis.minutes_played) * 90).toFixed(2)
+                    : "N/A"
+                }
+              </p>
+            </div>
+            <div className="text-center p-2">
+              <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">xG Chain</p>
+              <p className="text-base md:text-2xl font-bold">{actions.length > 0 ? calculateXGChain().toFixed(2) : "N/A"}</p>
+            </div>
+            <div className="text-center p-2">
+              <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Mins</p>
+              <p className="text-base md:text-2xl font-bold">{analysis.minutes_played ?? "N/A"}</p>
+            </div>
+          </div>
+
+          {/* Advanced Stats */}
+          {advancedStats.length > 0 && (
+            <Card className="overflow-hidden">
+              <CardHeader className="py-1.5 md:py-2">
+                <CardTitle className="text-sm md:text-lg">Match Statistics</CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 md:p-4">
+                <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
+                  {advancedStats.map((stat) => {
+                    const isGoals = stat.key === 'goals';
+                    const goalsValue = isGoals ? (stat.isPaired ? stat.successful : stat.value) : 0;
+                    const hasGoalBorder = isGoals && typeof goalsValue === 'number' && goalsValue >= 1;
+                    return (
+                      <div key={stat.key} className={`text-center p-1.5 md:p-3 bg-accent/10 rounded ${hasGoalBorder ? 'ring-2 ring-gold' : ''}`}>
+                        <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 capitalize truncate">{formatStatLabel(stat.key)}</p>
+                        {stat.isPaired ? (
+                          <>
+                            <p className="text-sm md:text-lg font-bold">{stat.percentage}%</p>
+                            <p className="text-[9px] md:text-xs text-muted-foreground">{stat.successful}/{stat.attempted}</p>
+                          </>
+                        ) : (
+                          <p className="text-sm md:text-lg font-bold">{stat.value}</p>
+                        )}
+                        {stat.per90Value !== undefined && (
+                          <p className="text-[8px] md:text-xs text-muted-foreground mt-0.5">p90: {stat.per90Value}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Auto-Calculated Ratios */}
+          {calculatedStats.length > 0 && (
+            <Card className="overflow-hidden border-primary/20">
+              <CardHeader className="py-1.5 md:py-2 bg-primary/5">
+                <CardTitle className="text-sm md:text-lg flex items-center gap-2">
+                  <Calculator className="h-4 w-4 text-primary" />
+                  <span className="text-primary">Calculated Ratios</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 md:p-4">
+                <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
+                  {calculatedStats.map((stat) => (
+                    <div key={stat.key} className="text-center p-1.5 md:p-3 bg-primary/5 rounded border border-primary/10">
+                      <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 truncate" title={stat.description}>{stat.displayName}</p>
+                      <p className="text-sm md:text-lg font-bold text-primary">
+                        {stat.key.includes('pct') || stat.key.includes('completion') || stat.key.includes('success')
+                          ? `${stat.value.toFixed(1)}%`
+                          : stat.value.toFixed(2)}
                       </p>
-                      {analysis.minutes_played && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          per 90: {((calculateXGChain() / analysis.minutes_played) * 90).toFixed(3)}
-                        </p>
+                      <p className="text-[8px] md:text-[10px] text-muted-foreground mt-0.5">{stat.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Performance Overview */}
+          {analysis.performance_overview && (
+            <Card className="overflow-hidden">
+              <CardHeader className="py-1.5 md:py-2">
+                <CardTitle className="text-sm md:text-lg">Overview</CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 md:p-4">
+                <p className="text-muted-foreground whitespace-pre-wrap text-center text-xs md:text-sm">{analysis.performance_overview}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Performance Actions */}
+          {actions.length > 0 && (
+            <Card className="overflow-hidden">
+              <CardHeader className="py-1.5 md:py-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm md:text-lg">
+                    Actions ({hasActiveFilters ? `${filteredActions.length}/${actions.length}` : actions.length})
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    {hasActiveFilters && (
+                      <button onClick={() => { setFilterTypes([]); setFilterRating(null); setFilterHasNotes(false); }} className="text-[10px] text-muted-foreground hover:text-foreground underline">Clear filters</button>
+                    )}
+                    <button onClick={() => setShowActionFilters(!showActionFilters)} className={`p-1.5 rounded transition-colors ${hasActiveFilters ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'}`}>
+                      <Filter className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                {showActionFilters && (
+                  <div className="mt-3 space-y-3 border-t pt-3">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Action Type</p>
+                      <div className="flex flex-wrap gap-1">
+                        {allActionTypes.map(type => (
+                          <button key={type} onClick={() => setFilterTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type])}
+                            className={`px-2 py-0.5 rounded text-[10px] transition-colors border ${filterTypes.includes(type) ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/30 text-foreground/70 border-border hover:bg-muted/50'}`}>
+                            {toTitleCase(type)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Rating</p>
+                      <div className="flex flex-wrap gap-1">
+                        {ratingBuckets.map(bucket => (
+                          <button key={bucket.key} onClick={() => setFilterRating(prev => prev === bucket.key ? null : bucket.key)}
+                            className={`w-6 h-6 rounded-full transition-all border-2 ${bucket.className} ${filterRating === bucket.key ? 'border-foreground scale-110 ring-2 ring-foreground/20' : 'border-transparent hover:scale-110'}`}
+                            title={bucket.key} />
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Notes</p>
+                      <button onClick={() => setFilterHasNotes(!filterHasNotes)}
+                        className={`px-2 py-0.5 rounded text-[10px] transition-colors border ${filterHasNotes ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/30 text-foreground/70 border-border hover:bg-muted/50'}`}>
+                        With Notes
+                      </button>
+                    </div>
+                    {hasActiveFilters && filteredActions.some(a => a.video_url) && (
+                      <div className="pt-2 border-t border-border/30">
+                        <Button variant="default" size="sm" className="bg-gold hover:bg-gold/90 text-black font-semibold text-xs w-full" onClick={() => setShowFilteredPlayer(true)}>
+                          <Play className="h-3.5 w-3.5 mr-1.5" />Watch Selected ({filteredActions.filter(a => a.video_url).length})
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent className="p-2 md:p-4">
+                {/* Mobile: Compact card layout */}
+                <div className="block md:hidden space-y-2">
+                  {filteredActions.map((action) => (
+                    <div key={action.id} className="p-2 bg-muted/30 rounded">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-semibold text-xs">#{action.action_number}</span>
+                          <span className="text-[10px] text-muted-foreground">{formatMinute(action.minute)}'</span>
+                          <span className={`text-xs font-bold ${getActionScoreColor(action.action_score)}`}>{action.action_score?.toFixed(3)}</span>
+                        </div>
+                        {action.video_url && (
+                          <button onClick={() => { setSelectedVideoUrl(action.video_url!); setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`); }} className="text-risegold hover:text-risegold/80 p-0.5 flex-shrink-0">
+                            <Video className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="font-medium text-xs mt-1 truncate">{toTitleCase(action.action_type)}</div>
+                      <div className="text-[10px] text-foreground/80 line-clamp-2">{action.action_description}</div>
+                      {action.notes && (
+                        <div className="text-[9px] text-muted-foreground italic mt-1 pt-1 border-t border-border/50 truncate">{action.notes}</div>
                       )}
                     </div>
-                  )}
-
-                  {(() => {
-                    // Helper to check if a stat should be an integer
-                    const isIntegerStat = (key: string) => {
-                      const integerStats = [
-                        'dribbles', 'passes', 'shots', 'touches', 'duels', 'aerials',
-                        'tackles', 'interceptions', 'clearances', 'blocks', 'fouls',
-                        'crosses', 'corners', 'offsides', 'saves', 'goals', 'assists',
-                        'turnovers', 'progressive_passes', 'regains', 'key_passes'
-                      ];
-                      return integerStats.some(stat => key.toLowerCase().includes(stat));
-                    };
-
-                    // Helper to detect paired success/attempt stats
-                    const getPairedStat = (key: string, stats: StrikerStats) => {
-                      // Skip if this is already an _attempted key
-                      if (key.endsWith('_attempted')) return null;
-                      
-                      // Check for pattern: key + key_attempted (e.g., dribbles + dribbles_attempted)
-                      const attemptedKey = `${key}_attempted`;
-                      if (stats[attemptedKey] != null && stats[key] != null) {
-                        const attempted = Number(stats[attemptedKey]);
-                        const successful = Number(stats[key]);
-                        // Show paired stats even if attempted is 0 (display as 0/0)
-                        if (!isNaN(attempted) && !isNaN(successful)) {
-                          return {
-                            percentage: attempted > 0 ? ((successful / attempted) * 100).toFixed(1) : '0',
-                            successful,
-                            attempted
-                          };
-                        }
-                      }
-                      
-                      // Also check for pattern: key_successful + key_attempted
-                      const successfulKey = `${key}_successful`;
-                      if (stats[attemptedKey] != null && stats[successfulKey] != null) {
-                        const attempted = Number(stats[attemptedKey]);
-                        const successful = Number(stats[successfulKey]);
-                        // Show paired stats even if attempted is 0 (display as 0/0)
-                        if (!isNaN(attempted) && !isNaN(successful)) {
-                          return {
-                            percentage: attempted > 0 ? ((successful / attempted) * 100).toFixed(1) : '0',
-                            successful,
-                            attempted,
-                            useSuccessfulKey: true
-                          };
-                        }
-                      }
-                      
-                      return null;
-                    };
-
-                    const processedKeys = new Set<string>();
-
-                    return Object.entries(analysis.striker_stats)
-                      .filter(([key, value]) => 
-                        value !== null && 
-                        value !== undefined && 
-                        !key.includes('_per90') &&
-                        !key.toLowerCase().includes('xgchain') &&
-                        !key.toLowerCase().includes('xg_chain') &&
-                        key !== 'stats_order' &&
-                        key !== 'selected_stats' &&
-                        !processedKeys.has(key)
-                      )
-                      .map(([key, value]) => {
-                        // Check if this key has a paired success/attempt relationship
-                        const paired = getPairedStat(key, analysis.striker_stats!);
-                        
-                        if (paired) {
-                          // Mark the attempted and successful keys as processed
-                          processedKeys.add(`${key}_attempted`);
-                          processedKeys.add(`${key}_successful`);
-                          
-                          const per90Key = `${key}_per90`;
-                          const per90Value = analysis.striker_stats![per90Key];
-                          const displayName = key
-                            .replace(/_/g, ' ')
-                            .replace(/\b\w/g, l => l.toUpperCase())
-                            .replace(/Xg/g, 'xG')
-                            .replace(/Xa/g, 'xA');
-                          
-                          return (
-                            <div key={key} className="text-center p-3 bg-background rounded-md">
-                              <p className="text-xs text-muted-foreground mb-1">{displayName}</p>
-                              <p className="font-bold text-lg">{paired.percentage}%</p>
-                              <p className="text-xs text-muted-foreground">{paired.successful} / {paired.attempted}</p>
-                              {per90Value !== undefined && per90Value !== null && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  per 90: {per90Value}
-                                </p>
-                              )}
-                            </div>
-                          );
-                        }
-
-                        // Skip if this is an _attempted or _successful key (will be shown with its pair)
-                        if (key.endsWith('_attempted') || key.endsWith('_successful')) {
-                          processedKeys.add(key);
-                          return null;
-                        }
-
-                        // Only show per90 for rate-based stats (xG, xA, xC, xGChain types), not count-based stats
-                        const keyLower = key.toLowerCase();
-                        const rateBasedPrefixes = ['xg', 'xa', 'xc', 'xgchain'];
-                        const isRateBased = rateBasedPrefixes.some(prefix => keyLower.includes(prefix));
-                        
-                        const per90Key = `${key}_per90`;
-                        const per90Value = isRateBased ? analysis.striker_stats![per90Key] : undefined;
-                        
-                        const displayName = key
-                          .replace(/_/g, ' ')
-                          .replace(/\b\w/g, l => l.toUpperCase())
-                          .replace(/Xg/g, 'xG')
-                          .replace(/Xa/g, 'xA')
-                          .replace(/Xc/g, 'xC')
-                          .replace(/Adj/g, '(adj.)');
-                        
-                        const displayPer90 = isRateBased ? per90Value : undefined;
-                        
-                        return (
-                          <div key={key} className="text-center p-3 bg-background rounded-md">
-                            <p className="text-xs text-muted-foreground mb-1">{displayName}</p>
-                            <p className="font-bold text-lg">{value}</p>
-                            {displayPer90 !== undefined && displayPer90 !== null && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                per 90: {displayPer90}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })
-                      .filter(Boolean);
-                  })()}
-                  
-                  
-                  {/* Progressive Passes to Turnovers Ratio - displayed last */}
-                  {(() => {
-                    const ppField = analysis.striker_stats.progressive_passes_adj || analysis.striker_stats.progressive_passes;
-                    const toField = analysis.striker_stats.turnovers_adj || analysis.striker_stats.turnovers;
-                    
-                    if (ppField != null && toField != null && Number(toField) !== 0) {
-                      const ratio = Number(ppField) / Number(toField);
-                      
-                      return (
-                        <div className="text-center p-3 bg-background rounded-md">
-                          <p className="text-xs text-muted-foreground mb-1">Progressive Passes/Turnovers Ratio</p>
-                          <p className="font-bold text-lg">
-                            {ratio.toFixed(2)}
-                          </p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-                </div>
-              </div>
-            )}
-
-            {analysis.performance_overview && (
-              <div className="mt-6 p-4 bg-accent/10 rounded-lg border border-border">
-                <h3 className="font-bold text-lg mb-3">Performance Overview</h3>
-                <p className="text-sm whitespace-pre-wrap">{analysis.performance_overview}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Performance Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {actions.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No performance actions recorded yet</p>
-            ) : (
-              <>
-                {/* Mobile: Card layout */}
-                <div className="block md:hidden space-y-4">
-                  {actions.map((action) => (
-                    <Card key={action.id} className="p-4 bg-muted/30">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex gap-3">
-                          <span className="font-semibold text-lg">#{action.action_number}</span>
-                          <span className="text-sm text-muted-foreground">{formatMinute(action.minute)}'</span>
-                        </div>
-                        <span className={`text-sm font-bold ${getActionScoreColor(action.action_score ?? 0)}`}>
-                          {(action.action_score ?? 0).toFixed(5)}
-                        </span>
-                      </div>
-                      <div className="font-medium text-sm mb-2 text-foreground">{action.action_type}</div>
-                      <div className="text-sm text-foreground/80 mb-2">{action.action_description}</div>
-                      {action.notes && (
-                        <div className="text-xs text-muted-foreground italic mt-2 pt-2 border-t border-border/50">
-                          {action.notes}
-                        </div>
-                      )}
-                    </Card>
                   ))}
                 </div>
 
                 {/* Desktop: Table layout */}
                 <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left p-2 font-semibold text-sm whitespace-nowrap">#</th>
-                        <th className="text-left p-2 font-semibold text-sm whitespace-nowrap">Minute</th>
-                        <th className="text-left p-2 font-semibold text-sm whitespace-nowrap">Score</th>
-                        <th className="text-left p-2 font-semibold text-sm whitespace-nowrap">Action</th>
-                        <th className="text-left p-2 font-semibold text-sm">Description</th>
-                        <th className="text-left p-2 font-semibold text-sm">Notes</th>
+                        <th className="text-left py-2 px-2">#</th>
+                        <th className="text-left py-2 px-2">Min</th>
+                        <th className="text-left py-2 px-2">Type</th>
+                        <th className="text-left py-2 px-2">Description</th>
+                        <th className="text-left py-2 px-2">Notes</th>
+                        <th className="text-right py-2 px-2">Score</th>
+                        <th className="text-center py-2 px-2">Clip</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {actions.map((action) => (
-                        <tr key={action.id} className="border-b hover:bg-accent/50">
-                          <td className="p-2 text-sm whitespace-nowrap">{action.action_number}</td>
-                          <td className="p-2 text-sm whitespace-nowrap">{formatMinute(action.minute)}</td>
-                          <td className={`p-2 text-sm whitespace-nowrap ${getActionScoreColor(action.action_score ?? 0)}`}>
-                            {(action.action_score ?? 0).toFixed(5)}
+                      {filteredActions.map((action) => (
+                        <tr key={action.id} className="border-b border-border/50">
+                          <td className="py-2 px-2">{action.action_number}</td>
+                          <td className="py-2 px-2">{formatMinute(action.minute)}'</td>
+                          <td className="py-2 px-2">{toTitleCase(action.action_type)}</td>
+                          <td className="py-2 px-2">{action.action_description}</td>
+                          <td className="py-2 px-2 text-muted-foreground">{action.notes || "-"}</td>
+                          <td className={`py-2 px-2 text-right ${getActionScoreColor(action.action_score)}`}>{action.action_score?.toFixed(5)}</td>
+                          <td className="py-2 px-2 text-center">
+                            {action.video_url ? (
+                              <button onClick={() => { setSelectedVideoUrl(action.video_url!); setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`); }} className="text-risegold hover:text-risegold/80 p-1">
+                                <Video className="h-4 w-4" />
+                              </button>
+                            ) : <span className="text-muted-foreground">-</span>}
                           </td>
-                          <td className="p-2 font-medium text-sm whitespace-nowrap">{action.action_type}</td>
-                          <td className="p-2 text-sm">{action.action_description}</td>
-                          <td className="p-2 text-sm text-muted-foreground">{action.notes || "-"}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </main>
-      {!isAuthenticated && (
-        <div className="print:hidden">
-          <Footer />
+              </CardContent>
+            </Card>
+          )}
         </div>
+      </main>
+
+      {!isAuthenticated && <div className="print:hidden"><Footer /></div>}
+
+      {/* Video Popup for single action */}
+      {selectedVideoUrl && (
+        <ActionVideoPopup
+          open={!!selectedVideoUrl}
+          onOpenChange={(open) => { if (!open) { setSelectedVideoUrl(null); setSelectedVideoTitle(""); } }}
+          videoUrl={selectedVideoUrl}
+          actionTitle={selectedVideoTitle}
+        />
       )}
+
+      {/* Clipped Actions Player */}
+      <ClippedActionsPlayer
+        open={showClippedActions}
+        onOpenChange={setShowClippedActions}
+        clips={actions.filter(a => a.video_url).map(a => ({ id: a.id, action_number: a.action_number, action_type: a.action_type, action_description: a.action_description, video_url: a.video_url!, minute: a.minute, notes: a.notes }))}
+      />
+
+      {/* Ranked/Full Match Video Player */}
+      <RankedActionsPlayer
+        open={showRankedPlayer}
+        onOpenChange={setShowRankedPlayer}
+        mode={rankedMode}
+        clips={actions.filter(a => a.video_url).map(a => ({ id: a.id, action_number: a.action_number, action_type: a.action_type, action_description: a.action_description, action_score: a.action_score, video_url: a.video_url!, minute: a.minute, notes: a.notes }))}
+      />
+
+      {/* Filtered Video Player */}
+      <RankedActionsPlayer
+        open={showFilteredPlayer}
+        onOpenChange={setShowFilteredPlayer}
+        mode="chronological"
+        clips={filteredActions.filter(a => a.video_url).map(a => ({ id: a.id, action_number: a.action_number, action_type: a.action_type, action_description: a.action_description, action_score: a.action_score, video_url: a.video_url!, minute: a.minute, notes: a.notes }))}
+      />
+
+      {/* R90 Info Dialog */}
+      <Dialog open={showR90Info} onOpenChange={setShowR90Info}>
+        <DialogContent className="w-[95vw] max-w-[95vw] md:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <button onClick={() => setShowR90Info(false)} className="absolute right-3 top-3 z-10 rounded-full bg-muted p-1.5 hover:bg-muted/80 transition-colors">
+            <X className="h-4 w-4" />
+          </button>
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">How R90 Scores Work</h2>
+            <p className="text-sm text-muted-foreground">
+              R90 is a performance rating that allows us to rate actual impact on the game result, positively or negatively, by every contributable action made on and off the ball. Scores are normalised to a per-90-minute basis for fair comparison across different match durations.
+            </p>
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm">Calculation</h3>
+              <div className="bg-accent/20 rounded-lg p-3 space-y-2 text-sm">
+                <p><strong>Raw Score</strong> = sum of all action scores in the match</p>
+                <p><strong>R90</strong> = (Raw Score / Minutes Played) x 90</p>
+              </div>
+              <h3 className="font-semibold text-sm">Score Guide</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(43, 96%, 56%)' }} /><span>A* (2.20+)</span></div>
+                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(142, 76%, 55%)' }} /><span>A+ (1.80-2.19)</span></div>
+                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(142, 70%, 50%)' }} /><span>A (1.60-1.79)</span></div>
+                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(142, 65%, 45%)' }} /><span>A- (1.40-1.59)</span></div>
+                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(142, 70%, 40%)' }} /><span>B+ (1.20-1.39)</span></div>
+                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(142, 76%, 36%)' }} /><span>B (1.00-1.19)</span></div>
+                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(60, 70%, 50%)' }} /><span>B- (0.80-0.99)</span></div>
+                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(40, 85%, 50%)' }} /><span>C+ (0.60-0.79)</span></div>
+                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(25, 75%, 45%)' }} /><span>C (0.40-0.59)</span></div>
+                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(0, 84%, 60%)' }} /><span>C- (0.20-0.39)</span></div>
+                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(0, 84%, 45%)' }} /><span>D (0.00-0.19)</span></div>
+                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(0, 84%, 30%)' }} /><span>U (below 0)</span></div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
