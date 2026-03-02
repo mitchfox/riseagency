@@ -759,7 +759,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                         const goalsValue = isGoals ? (stat.isPaired ? stat.successful : stat.value) : 0;
                         const hasGoalBorder = isGoals && typeof goalsValue === 'number' && goalsValue >= 1;
                         return (
-                        <div key={stat.key} className={`text-center p-1.5 md:p-3 bg-accent/10 rounded ${hasGoalBorder ? 'ring-2 ring-risegold' : ''}`}>
+                        <div key={stat.key} className={`text-center p-1.5 md:p-3 bg-accent/10 rounded ${hasGoalBorder ? 'ring-2 ring-gold' : ''}`}>
                           <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 capitalize truncate">{formatStatLabel(stat.key)}</p>
                           {stat.isPaired ? (
                             <>
@@ -903,23 +903,23 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
                             With Notes
                           </button>
                         </div>
+                        {/* Watch filtered selection */}
+                        {hasActiveFilters && filteredActions.some(a => a.video_url) && (
+                          <div className="pt-2 border-t border-border/30">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="bg-gold hover:bg-gold/90 text-black font-semibold text-xs w-full"
+                              onClick={() => setShowFilteredPlayer(true)}
+                            >
+                              <Play className="h-3.5 w-3.5 mr-1.5" />
+                              Watch Selected ({filteredActions.filter(a => a.video_url).length})
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardHeader>
-                  {/* Watch filtered selection - always visible when filters active */}
-                  {hasActiveFilters && filteredActions.some(a => a.video_url) && (
-                    <div className="px-2 md:px-6 pb-2">
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="bg-risegold hover:bg-risegold/90 text-black font-semibold text-xs w-full"
-                        onClick={() => setShowFilteredPlayer(true)}
-                      >
-                        <Play className="h-3.5 w-3.5 mr-1.5" />
-                        Watch Selected ({filteredActions.filter(a => a.video_url).length})
-                      </Button>
-                    </div>
-                  )}
                   <CardContent className="p-2 md:p-4">
                     {/* Mobile: Compact card layout */}
                     <div className="block md:hidden space-y-2">
@@ -1080,7 +1080,13 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
       />
 
       <Dialog open={showR90Info} onOpenChange={setShowR90Info}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[95vw] max-w-[95vw] md:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <button
+            onClick={() => setShowR90Info(false)}
+            className="absolute right-3 top-3 z-10 rounded-full bg-muted p-1.5 hover:bg-muted/80 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
           <div className="space-y-4">
             <h2 className="text-xl font-bold">How R90 Scores Work</h2>
             <p className="text-sm text-muted-foreground">
@@ -1103,11 +1109,11 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId }: Perf
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(43, 96%, 56%)' }} />
-                  <span>A* (2.00+)</span>
+                  <span>A* (2.20+)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(142, 76%, 55%)' }} />
-                  <span>A+ (1.80–1.99)</span>
+                  <span>A+ (1.80–2.19)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(142, 70%, 50%)' }} />
