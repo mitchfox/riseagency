@@ -1502,6 +1502,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             applyFormation={handleSchemeChange}
             updatePlayer={updateStartingXIPlayer}
             handleImageUpload={handleImageUpload}
+            handleVideoUpload={handleVideoUpload}
             uploadingImage={uploadingImage}
             generateWithAI={generateWithAI}
             aiGenerating={aiGenerating}
