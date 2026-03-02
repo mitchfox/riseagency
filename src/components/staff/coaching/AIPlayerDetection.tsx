@@ -37,6 +37,12 @@ interface SportscodeActionType {
   category: string | null;
 }
 
+interface RejectionFeedback {
+  actionType: string;
+  reason: string;
+  date: string;
+}
+
 interface Props {
   videoUrl: string;
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -45,6 +51,7 @@ interface Props {
   players?: PlayerOption[];
   selectedPlayerId?: string | null;
   existingClips?: { start: number; end: number; label: string; action_type: string }[];
+  rejectionHistory?: RejectionFeedback[];
 }
 
 // Persist player AI descriptions across videos
@@ -60,7 +67,7 @@ function saveDescription(playerName: string, data: { description: string; notPla
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 }
 
-export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponent, players, selectedPlayerId, existingClips }: Props) => {
+export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponent, players, selectedPlayerId, existingClips, rejectionHistory }: Props) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [playerDescription, setPlayerDescription] = useState("");
@@ -294,6 +301,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
               opponent: opponent || undefined,
             },
             allowedActionTypes: selectedActionTypes,
+            rejectionHistory: rejectionHistory && rejectionHistory.length > 0 ? rejectionHistory : undefined,
           },
         });
 
@@ -306,7 +314,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         if (data?.actions) {
           const batchActions: DetectedAction[] = data.actions.map((a: any) => ({
             frameIndex: a.frameIndex,
-            timestamp: frames.find(f => f.index === a.frameIndex)?.timestamp || (a.frameIndex * sampleEvery),
+            timestamp: frames.find(f => f.index === a.frameIndex)?.timestamp || (clampedStart + a.frameIndex * sampleEvery),
             actionType: a.actionType,
             confidence: a.confidence,
             description: a.description,

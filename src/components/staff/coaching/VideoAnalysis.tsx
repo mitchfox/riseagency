@@ -556,9 +556,35 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     await saveClips(selectedVideo.clips.map(c => c.id === clipId ? { ...c, ai_status: 'accepted' as const } : c));
   };
 
+  const [rejectingClipId, setRejectingClipId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+
+  const REJECTION_STORAGE_KEY = "ai_scan_rejections";
+
+  const saveRejection = (actionType: string, reason: string) => {
+    try {
+      const existing = JSON.parse(localStorage.getItem(REJECTION_STORAGE_KEY) || '[]') as { actionType: string; reason: string; date: string }[];
+      existing.push({ actionType, reason, date: new Date().toISOString() });
+      // Keep last 50 rejections
+      const trimmed = existing.slice(-50);
+      localStorage.setItem(REJECTION_STORAGE_KEY, JSON.stringify(trimmed));
+    } catch { /* ignore */ }
+  };
+
   const handleRejectAIClip = async (clipId: string) => {
-    if (!selectedVideo) return;
-    await saveClips(selectedVideo.clips.filter(c => c.id !== clipId));
+    setRejectingClipId(clipId);
+    setRejectionReason("");
+  };
+
+  const confirmRejectAIClip = async () => {
+    if (!selectedVideo || !rejectingClipId) return;
+    const clip = selectedVideo.clips.find(c => c.id === rejectingClipId);
+    if (clip && rejectionReason.trim()) {
+      saveRejection(clip.ai_suggested_action || clip.action_type || 'Unknown', rejectionReason.trim());
+    }
+    await saveClips(selectedVideo.clips.filter(c => c.id !== rejectingClipId));
+    setRejectingClipId(null);
+    setRejectionReason("");
   };
 
   const handleAcceptAllAIClips = async () => {
@@ -1483,6 +1509,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   }));
                   await saveClips([...selectedVideo.clips, ...clips]);
                 }}
+                rejectionHistory={(() => {
+                  try {
+                    return JSON.parse(localStorage.getItem('ai_scan_rejections') || '[]');
+                  } catch { return []; }
+                })()}
               />
             )}
           </div>
@@ -2105,6 +2136,50 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   </>
                 );
               })()}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Rejection reason dialog */}
+        <Dialog open={!!rejectingClipId} onOpenChange={(open) => { if (!open) { setRejectingClipId(null); setRejectionReason(""); } }}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bebas uppercase tracking-wider text-primary">
+                Why are you rejecting this clip?
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 mt-2">
+              {(() => {
+                const clip = selectedVideo?.clips.find(c => c.id === rejectingClipId);
+                return clip ? (
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p><span className="font-medium text-foreground">Suggested:</span> {clip.ai_suggested_action || 'N/A'}</p>
+                    <p><span className="font-medium text-foreground">AI reason:</span> {clip.ai_reason || 'N/A'}</p>
+                    <p><span className="font-medium text-foreground">Time:</span> {clip.minute || `${Math.floor(clip.start / 60)}:${String(Math.floor(clip.start % 60)).padStart(2, '0')}`}</p>
+                  </div>
+                ) : null;
+              })()}
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Rejection reason (helps AI learn)</label>
+                <Input
+                  value={rejectionReason}
+                  onChange={e => setRejectionReason(e.target.value)}
+                  placeholder="e.g. Player not involved, wrong player identified, ball is elsewhere"
+                  onKeyDown={e => { if (e.key === 'Enter') confirmRejectAIClip(); }}
+                  autoFocus
+                />
+              </div>
+              <div className="flex items-center gap-2 justify-end">
+                <Button variant="outline" size="sm" onClick={() => { setRejectingClipId(null); setRejectionReason(""); }}>
+                  Cancel
+                </Button>
+                <Button variant="outline" size="sm" onClick={confirmRejectAIClip} className="text-muted-foreground">
+                  Skip reason & reject
+                </Button>
+                <Button size="sm" onClick={confirmRejectAIClip} disabled={!rejectionReason.trim()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Reject with reason
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
