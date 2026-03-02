@@ -260,14 +260,17 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       if (deduped.length === 0) {
         toast.info("No actions detected for this player");
       } else {
-        // Send all detected actions as pending clips to the clip list
+        // Round timestamps down to nearest 5 seconds for sync consistency
+        const roundDown5 = (t: number) => Math.floor(t / 5) * 5;
+
         const clips = deduped.map(a => {
+          const roundedTs = roundDown5(a.timestamp);
           const before = a.clipBefore ?? 5;
           const after = a.clipAfter ?? 5;
           return {
-            start: Math.max(0, a.timestamp - before),
-            end: a.timestamp + after,
-            label: `${a.actionType} at ${Math.floor(a.timestamp / 60)}:${String(Math.floor(a.timestamp % 60)).padStart(2, '0')}`,
+            start: Math.max(0, roundedTs - before),
+            end: roundedTs + after,
+            label: `${a.actionType} at ${Math.floor(roundedTs / 60)}:${String(Math.floor(roundedTs % 60)).padStart(2, '0')}`,
             actionType: a.actionType,
             description: a.description,
             confidence: a.confidence,
