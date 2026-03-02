@@ -1514,6 +1514,14 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                     return JSON.parse(localStorage.getItem('ai_scan_rejections') || '[]');
                   } catch { return []; }
                 })()}
+                confirmedExamples={selectedVideo.clips
+                  .filter(c => (c.ai_status === 'accepted' || !c.ai_status) && c.action_type)
+                  .map(c => ({
+                    timestamp: c.start,
+                    actionType: c.action_type,
+                    description: c.action_description || c.label || undefined,
+                  }))
+                }
               />
             )}
           </div>
