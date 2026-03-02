@@ -1095,8 +1095,9 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                   <DialogHeader>
                     <DialogTitle>{editingItem ? 'Edit' : 'Add'} {config.singular}</DialogTitle>
                   </DialogHeader>
+                  <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
                   <ScrollArea className="flex-1 -mx-6 px-6">
-                    <form onSubmit={handleSubmit} className="space-y-6 py-4">
+                    <div className="space-y-6 py-4">
                       {activeTab === 'coaching_aphorisms' ? (
                         <>
                           <div className="space-y-2">
@@ -1337,16 +1338,17 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
                           Form fields for other types not shown in this view
                         </p>
                       )}
-                      <div className="flex justify-end gap-2 pt-4">
-                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button type="submit" disabled={loading}>
-                          {loading ? 'Saving...' : editingItem ? 'Update' : 'Create'}
-                        </Button>
-                      </div>
-                    </form>
+                    </div>
                   </ScrollArea>
+                  <div className="flex justify-end gap-2 pt-4 border-t mt-2">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={loading}>
+                      {loading ? 'Saving...' : editingItem ? 'Update' : 'Create'}
+                    </Button>
+                  </div>
+                  </form>
                 </DialogContent>
               </Dialog>
                 </>
