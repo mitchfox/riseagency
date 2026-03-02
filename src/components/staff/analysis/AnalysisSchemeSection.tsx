@@ -29,6 +29,7 @@ interface SchemeSectionProps {
   formData: any;
   setFormData: (data: any) => void;
   handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>, field: string) => Promise<void>;
+  handleVideoUpload: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   uploadingImage: boolean;
   generateWithAI: (field: string, pointIndex?: number) => Promise<void>;
   aiGenerating: boolean;
@@ -43,6 +44,7 @@ export const AnalysisSchemeSection = ({
   formData,
   setFormData,
   handleImageUpload,
+  handleVideoUpload,
   uploadingImage,
   generateWithAI,
   aiGenerating,
@@ -344,6 +346,29 @@ export const AnalysisSchemeSection = ({
             onChange={(e) => setFormData({ ...formData, scheme_paragraph_1: e.target.value })}
             placeholder="Describe the tactical approach..."
           />
+        </div>
+
+        {/* Video between paragraphs */}
+        <div className="space-y-2">
+          <Label>Video (Optional)</Label>
+          <Input
+            value={formData.video_url || ""}
+            onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+            placeholder="Video URL or upload below..."
+          />
+          <Input
+            type="file"
+            accept="video/*"
+            onChange={handleVideoUpload}
+            disabled={uploadingImage}
+          />
+          {formData.video_url && (
+            <video
+              src={formData.video_url}
+              controls
+              className="w-full max-w-sm rounded mt-1"
+            />
+          )}
         </div>
 
         <div>

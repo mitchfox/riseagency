@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { ReadOnlyAnnotationPlayback } from "@/components/portal/ReadOnlyAnnotationPlayback";
-import { ArrowLeft, ChevronDown, Play, Plus, Minus, Download } from "lucide-react";
+import { ArrowLeft, ChevronDown, Play, Plus, Minus, Download, BookOpen } from "lucide-react";
+import { ConceptTagsDisplay } from "@/components/portal/ConceptTagsDisplay";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScrollReveal } from "@/components/ScrollReveal";
@@ -1176,6 +1177,9 @@ const AnalysisViewer = () => {
                             </p>
                           </TextReveal>
                         )}
+                        {point.concept_tags?.length > 0 && (
+                          <ConceptTagsDisplay conceptTagIds={point.concept_tags} />
+                        )}
                       </div>
                     </ExpandableSection>
                   );
@@ -1474,6 +1478,9 @@ const AnalysisViewer = () => {
                               {point.paragraph_2}
                             </p>
                           </TextReveal>
+                        )}
+                        {point.concept_tags?.length > 0 && (
+                          <ConceptTagsDisplay conceptTagIds={point.concept_tags} />
                         )}
                       </div>
                     </ExpandableSection>

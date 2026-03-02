@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors, PenLine, Loader2, ArrowUp, ArrowDown, ArrowRightLeft } from "lucide-react";
+import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors, PenLine, Loader2, ArrowUp, ArrowDown, ArrowRightLeft, BookOpen } from "lucide-react";
 import { AudioRecorder } from "./AudioRecorder";
 import {
   Collapsible,
@@ -24,6 +24,9 @@ import {
 } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useState, useEffect, useMemo } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { VideoTrimmerDialog } from "./VideoTrimmerDialog";
 import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEditor";
 import type { AnnotationProject } from "@/components/staff/annotations/AnnotationProjects";
@@ -57,6 +60,7 @@ interface Point {
   video_urls?: string[];
   audio_url?: string;
   annotation_ids?: Record<string, string>; // video_url -> annotation_project_id
+  concept_tags?: string[]; // concept IDs from coaching_analysis
 }
 
 interface PerformanceReportAction {
@@ -128,6 +132,70 @@ const getActionScoreBgColor = (score: number | undefined | null): string => {
   if (score > -0.04) return "bg-red-400";
   if (score > -0.06) return "bg-red-500";
   return "bg-red-700";
+};
+
+// Concept types
+interface CoachingConcept {
+  id: string;
+  title: string;
+  content: string | null;
+  description: string | null;
+  category: string | null;
+  attachments?: any;
+}
+
+// Concept detail dialog - widescreen popup
+const ConceptDetailDialog = ({
+  concept,
+  open,
+  onOpenChange,
+}: {
+  concept: CoachingConcept | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) => {
+  if (!concept) return null;
+
+  // Parse attachments for images/videos
+  const attachments = concept.attachments ? (Array.isArray(concept.attachments) ? concept.attachments : []) : [];
+  const imageAttachments = attachments.filter((a: any) => a.type === 'image' || a.url?.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i));
+  const videoAttachments = attachments.filter((a: any) => a.type === 'video' || a.url?.match(/\.(mp4|webm|mov)$/i));
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[90vw] w-full max-h-[85vh] overflow-y-auto">
+        <DialogTitle className="text-xl font-bold flex items-center gap-2">
+          <BookOpen className="w-5 h-5 text-gold" />
+          {concept.title}
+        </DialogTitle>
+        {concept.category && (
+          <Badge variant="secondary" className="w-fit">{concept.category}</Badge>
+        )}
+        {concept.description && (
+          <p className="text-sm text-muted-foreground">{concept.description}</p>
+        )}
+        {concept.content && (
+          <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed">
+            {concept.content}
+          </div>
+        )}
+        {imageAttachments.length > 0 && (
+          <div className="flex flex-wrap gap-3 mt-2">
+            {imageAttachments.map((att: any, i: number) => (
+              <img key={i} src={att.url} alt={att.name || ''} className="max-w-xs rounded shadow" />
+            ))}
+          </div>
+        )}
+        {videoAttachments.length > 0 && (
+          <div className="space-y-2 mt-2">
+            {videoAttachments.map((att: any, i: number) => (
+              <video key={i} src={att.url} controls className="w-full max-w-md rounded" />
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
 };
 
 // Individual video item with trim support
@@ -346,6 +414,7 @@ interface SortablePointCardProps {
   aiGenerating: boolean;
   performanceReportClips: PerformanceReportAction[];
   videoAnalysisClips: VideoAnalysisClip[];
+  concepts: CoachingConcept[];
 }
 
 const SortablePointCard = ({
@@ -366,7 +435,10 @@ const SortablePointCard = ({
   aiGenerating,
   performanceReportClips,
   videoAnalysisClips,
+  concepts,
 }: SortablePointCardProps) => {
+  const [viewingConcept, setViewingConcept] = useState<CoachingConcept | null>(null);
+  const [conceptPickerOpen, setConceptPickerOpen] = useState(false);
   const {
     attributes,
     listeners,
@@ -528,7 +600,87 @@ const SortablePointCard = ({
           </>
         )}
 
-        {/* Audio Recording */}
+        {/* Concept Tags */}
+        {analysisType !== "concept" && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5" />
+                Linked Concepts
+              </Label>
+              <Popover open={conceptPickerOpen} onOpenChange={setConceptPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 text-xs">
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add Concept
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-2" align="end">
+                  <ScrollArea className="max-h-60">
+                    <div className="space-y-0.5">
+                      {concepts
+                        .filter(c => !(point.concept_tags || []).includes(c.id))
+                        .map(c => (
+                          <button
+                            key={c.id}
+                            className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted transition-colors"
+                            onClick={() => {
+                              const current = point.concept_tags || [];
+                              updatePoint(index, "concept_tags" as keyof Point, [...current, c.id]);
+                              setConceptPickerOpen(false);
+                            }}
+                          >
+                            <span className="font-medium">{c.title}</span>
+                            {c.category && (
+                              <span className="ml-1.5 text-xs text-muted-foreground">({c.category})</span>
+                            )}
+                          </button>
+                        ))}
+                      {concepts.filter(c => !(point.concept_tags || []).includes(c.id)).length === 0 && (
+                        <p className="text-xs text-muted-foreground px-2 py-1">No more concepts available</p>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </PopoverContent>
+              </Popover>
+            </div>
+            {(point.concept_tags || []).length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {(point.concept_tags || []).map(tagId => {
+                  const concept = concepts.find(c => c.id === tagId);
+                  if (!concept) return null;
+                  return (
+                    <div key={tagId} className="flex items-center gap-0.5">
+                      <button
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-gold/15 text-gold border border-gold/30 hover:bg-gold/25 transition-colors"
+                        onClick={() => setViewingConcept(concept)}
+                      >
+                        <BookOpen className="w-3 h-3" />
+                        {concept.title}
+                      </button>
+                      <button
+                        className="text-muted-foreground hover:text-destructive transition-colors"
+                        onClick={() => {
+                          const current = point.concept_tags || [];
+                          updatePoint(index, "concept_tags" as keyof Point, current.filter(id => id !== tagId));
+                        }}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        <ConceptDetailDialog
+          concept={viewingConcept}
+          open={!!viewingConcept}
+          onOpenChange={(open) => { if (!open) setViewingConcept(null); }}
+        />
+
         {analysisType !== "concept" && (
           <div>
             <Label>Audio Commentary (Optional)</Label>
@@ -719,6 +871,20 @@ export const AnalysisPointsSection = ({
 }: PointsSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [vaClips, setVaClips] = useState<VideoAnalysisClip[]>([]);
+  const [concepts, setConcepts] = useState<CoachingConcept[]>([]);
+
+  // Fetch coaching concepts
+  useEffect(() => {
+    const fetchConcepts = async () => {
+      const { data } = await supabase
+        .from("coaching_analysis")
+        .select("id, title, content, description, category, attachments")
+        .eq("analysis_type", "concept")
+        .order("title");
+      if (data) setConcepts(data as CoachingConcept[]);
+    };
+    fetchConcepts();
+  }, []);
 
   // Fetch linked video analysis clips when analysisId is available
   useEffect(() => {
@@ -845,6 +1011,7 @@ export const AnalysisPointsSection = ({
                 aiGenerating={aiGenerating}
                 performanceReportClips={performanceReportClips}
                 videoAnalysisClips={vaClips}
+                concepts={concepts}
               />
             ))}
           </SortableContext>
