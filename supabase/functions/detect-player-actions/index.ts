@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
-    const { frames, playerInfo, videoContext, allowedActionTypes, rejectionHistory } = await req.json();
+    const { frames, playerInfo, videoContext, allowedActionTypes, rejectionHistory, confirmedExamples } = await req.json();
 
     if (!frames || !Array.isArray(frames) || frames.length === 0) {
       return new Response(
@@ -119,6 +119,16 @@ Deno.serve(async (req) => {
     const canonicalNameMap = buildCanonicalNameMap(scopedActionDefs);
     const allowedNames = Object.values(canonicalNameMap);
 
+    // Build confirmed examples reference
+    let confirmedReference = '';
+    if (Array.isArray(confirmedExamples) && confirmedExamples.length > 0) {
+      confirmedReference = `\n\nCONFIRMED EXAMPLES FROM THIS VIDEO (coach-verified correct detections):
+The coach has already manually identified and confirmed the following actions for this player in this match. Use these as calibration for what correct detections look like:
+${confirmedExamples.slice(-30).map((ex: any) => `- ${ex.actionType} at ${Math.floor(ex.timestamp / 60)}:${String(Math.floor(ex.timestamp % 60)).padStart(2, '0')}${ex.description ? `: ${ex.description}` : ''}`).join('\n')}
+
+These examples show the coach's standard for what counts as a valid detection. Match this level of involvement when deciding whether to flag new actions.`;
+    }
+
     const systemPrompt = `You are an elite professional football (soccer) match analyst with deep tactical knowledge. You are reviewing video frames sampled every 3 seconds from a competitive match recording — typically a wide-angle broadcast or touchline camera.
 
 PLAYER TO TRACK: ${playerInfo.name}
@@ -131,53 +141,46 @@ UNDERSTANDING THE FOOTAGE:
 - The camera angle is usually wide, covering most of the pitch. Players will appear relatively small.
 - Identify the player by their kit colour, shirt number, body shape, skin tone, hair, and position on the pitch as described above.
 - If you cannot confidently identify the target player in a frame, skip that frame entirely. Do not guess.
-${actionReference}
+${actionReference}${confirmedReference}
 ${Array.isArray(rejectionHistory) && rejectionHistory.length > 0 ? `
 PREVIOUS REJECTION FEEDBACK FROM COACH:
 The coach has previously rejected AI detections for the following reasons. Learn from this feedback and avoid making the same mistakes:
 ${rejectionHistory.slice(-20).map((r: any) => `- Action "${r.actionType}" rejected: "${r.reason}"`).join('\n')}
 
-Use this feedback to calibrate your detection threshold. If the coach says "player not involved" or "wrong player", be more conservative.` : ''}
+Use this feedback to calibrate your detection threshold. If the coach says "player not involved" or "wrong player", be more conservative about those specific scenarios.` : ''}
 ${allowedNames.length > 0 ? `
 ALLOWED ACTION TYPES (STRICT):
 - You may ONLY output actionType values from this list:
 ${allowedNames.map((n) => `  • ${n}`).join('\n')}
 - If none of these clearly applies, skip the frame.` : ''}
 
-CRITICAL FILTERING RULES — READ CAREFULLY:
-The most common mistake is flagging frames where the player is simply VISIBLE on screen but NOT ACTIVELY INVOLVED in play. You MUST apply these filters strictly:
+DETECTION RULES:
+1. BALL PROXIMITY: The player must be DIRECTLY interacting with the ball OR clearly about to receive/contest it. Simply being near the ball is not enough.
 
-1. BALL PROXIMITY TEST: The player must be DIRECTLY interacting with the ball OR about to receive/contest it within the next 1-2 seconds. Simply being near the ball or in the same area of the pitch is NOT enough.
-
-2. ACTIVE vs PASSIVE: Only flag moments where the player is the PRIMARY ACTOR — they are the one passing, shooting, tackling, heading, crossing, dribbling, etc. Do NOT flag:
+2. ACTIVE vs PASSIVE: Only flag moments where the player is the PRIMARY ACTOR. Do NOT flag:
    - Standing in position while play happens nearby
-   - Jogging or running into space (unless it is a decisive run that creates/exploits space)
+   - Jogging or running without purpose (unless a decisive run creating/exploiting space)
    - Being in shot but watching play develop elsewhere
-   - Walking back after a phase of play
-   - General defensive shape-holding without directly pressing or engaging an opponent
-   - Being in frame during a set piece they are not taking or directly contesting
+   - General defensive shape-holding without directly pressing
 
-3. DUPLICATE SUPPRESSION: A single passage of play (e.g. receiving and passing) is ONE action, not multiple. If you see the player on the ball across 2-3 consecutive frames, report ONLY the key moment (the pass, the shot, the tackle) — not every frame they appear in.
+3. DUPLICATE SUPPRESSION: A single passage of play is ONE action. If you see the player across consecutive frames, report ONLY the key moment.
 
-4. EXPECTED OUTPUT: A typical outfield player has 40-80 meaningful involvements across a full 90-minute match. That means roughly one action every 60-135 seconds. If you are detecting significantly more than this rate, you are being too liberal. Be ruthless in filtering.
+4. FOULS & CARDS: Only report these if contact is CLEARLY visible in the frame. If uncertain, skip.
 
-CONFIDENCE GUIDE:
-- "high": Player is clearly identifiable AND clearly performing the action (ball visible at feet, obvious body shape of a tackle, etc.)
-- "medium": Player appears to be the right person and the body position suggests the action, but the frame is not perfectly clear
+5. BE REALISTIC BUT NOT PARANOID: A typical outfield player has 40-80 meaningful involvements per 90 minutes. You should detect actions at roughly this rate. Do not be so strict that you return nothing — if the player is clearly on the ball or making a tackle, that IS an action.
+
+CONFIDENCE:
+- "high": Player clearly identifiable AND clearly performing the action
+- "medium": Player appears to be the right person and body position suggests the action
 
 DO NOT REPORT:
-- Standing still, jogging into general position, or walking
-- General movement that every outfield player does (shifting with the team shape)
-- Moments where the player is simply in the frame but not involved
-- Celebrations, conversations, or other non-play moments
-- Frames where the player is visible but the ball is clearly with someone else and no pressing/closing down is happening
-- Fouls/cards/penalties unless contact is clearly visible in-frame (if uncertain, skip)
-- Any frame where you are not at least "medium" confident
-
-Be EXTREMELY SELECTIVE. Quality over quantity. Only report frames where you are confident the identified player is the primary actor in a meaningful on-ball or direct defensive action.
+- Standing still, walking, or general repositioning
+- Being visible in frame but not involved in play
+- Celebrations or non-play moments
+- Anything below "medium" confidence
 
 CLIP DURATION:
-For each action, suggest how many seconds before (clipBefore) and after (clipAfter) the key frame to include. Use the clip timing values from the action reference above as defaults. If an action is part of a longer sequence (e.g. a dribble leading to a cross), extend accordingly. If it is a quick isolated moment (e.g. a clearance), keep it short. The default if not specified in the reference is 5s before and 5s after.
+For each action, suggest clipBefore and clipAfter seconds using the action reference defaults. Extend for longer sequences, shorten for quick isolated moments. Default is 5s before and 5s after.
 
 For each detected action provide:
 - frameIndex: the 0-indexed frame number

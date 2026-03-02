@@ -43,6 +43,12 @@ interface RejectionFeedback {
   date: string;
 }
 
+interface ConfirmedExample {
+  timestamp: number;
+  actionType: string;
+  description?: string;
+}
+
 interface Props {
   videoUrl: string;
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -52,6 +58,7 @@ interface Props {
   selectedPlayerId?: string | null;
   existingClips?: { start: number; end: number; label: string; action_type: string }[];
   rejectionHistory?: RejectionFeedback[];
+  confirmedExamples?: ConfirmedExample[];
 }
 
 // Persist player AI descriptions across videos
@@ -67,7 +74,7 @@ function saveDescription(playerName: string, data: { description: string; notPla
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 }
 
-export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponent, players, selectedPlayerId, existingClips, rejectionHistory }: Props) => {
+export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponent, players, selectedPlayerId, existingClips, rejectionHistory, confirmedExamples }: Props) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [playerDescription, setPlayerDescription] = useState("");
@@ -104,6 +111,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     loadPreviousClips(selectedPlayerForScan);
   }, [selectedPlayerForScan, players]);
 
+  const [actionTypeFrequency, setActionTypeFrequency] = useState<Record<string, number>>({});
+
   useEffect(() => {
     const fetchActionTypes = async () => {
       const { data, error } = await supabase
@@ -113,8 +122,31 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
       if (error) return;
       const rows = (data || []) as SportscodeActionType[];
-      setAvailableActionTypes(rows);
-      setSelectedActionTypes(rows.map((r) => r.action_name));
+
+      // Fetch frequency counts from performance report actions
+      const { data: freqData } = await supabase
+        .from("performance_report_actions")
+        .select("action_type");
+
+      const freqMap: Record<string, number> = {};
+      if (freqData) {
+        freqData.forEach((item: any) => {
+          const t = (item.action_type || '').trim();
+          if (t) freqMap[t] = (freqMap[t] || 0) + 1;
+        });
+      }
+      setActionTypeFrequency(freqMap);
+
+      // Sort by frequency desc, then alphabetical
+      const sorted = [...rows].sort((a, b) => {
+        const fa = freqMap[a.action_name] || 0;
+        const fb = freqMap[b.action_name] || 0;
+        if (fb !== fa) return fb - fa;
+        return a.action_name.localeCompare(b.action_name);
+      });
+
+      setAvailableActionTypes(sorted);
+      setSelectedActionTypes(sorted.map((r) => r.action_name));
     };
 
     fetchActionTypes();
@@ -302,6 +334,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             },
             allowedActionTypes: selectedActionTypes,
             rejectionHistory: rejectionHistory && rejectionHistory.length > 0 ? rejectionHistory : undefined,
+            confirmedExamples: confirmedExamples && confirmedExamples.length > 0 ? confirmedExamples : undefined,
           },
         });
 
