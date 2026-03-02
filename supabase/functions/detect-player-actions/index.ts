@@ -26,6 +26,16 @@ async function fetchActionDefinitions(): Promise<SportscodeAction[]> {
   return (data as SportscodeAction[]) || [];
 }
 
+function normaliseName(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function filterActionDefinitions(actions: SportscodeAction[], allowedActionTypes?: string[]): SportscodeAction[] {
+  if (!allowedActionTypes || allowedActionTypes.length === 0) return actions;
+  const allow = new Set(allowedActionTypes.map(normaliseName));
+  return actions.filter((a) => allow.has(normaliseName(a.action_name)));
+}
+
 function buildActionReference(actions: SportscodeAction[]): string {
   if (actions.length === 0) return '';
 
@@ -55,10 +65,18 @@ function buildActionReference(actions: SportscodeAction[]): string {
 function buildDurationMap(actions: SportscodeAction[]): Record<string, { before: number; after: number }> {
   const map: Record<string, { before: number; after: number }> = {};
   for (const a of actions) {
-    map[a.action_name.toLowerCase()] = {
+    map[normaliseName(a.action_name)] = {
       before: a.default_before_seconds || 5,
       after: a.default_after_seconds || 5,
     };
+  }
+  return map;
+}
+
+function buildCanonicalNameMap(actions: SportscodeAction[]): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const a of actions) {
+    map[normaliseName(a.action_name)] = a.action_name;
   }
   return map;
 }
@@ -72,7 +90,7 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
-    const { frames, playerInfo, videoContext } = await req.json();
+    const { frames, playerInfo, videoContext, allowedActionTypes } = await req.json();
 
     if (!frames || !Array.isArray(frames) || frames.length === 0) {
       return new Response(
@@ -88,10 +106,18 @@ Deno.serve(async (req) => {
       );
     }
 
+    const requestedTypes = Array.isArray(allowedActionTypes)
+      ? allowedActionTypes.filter((v: unknown): v is string => typeof v === 'string' && v.trim().length > 0)
+      : undefined;
+
     // Fetch action definitions from the coaching database
     const actionDefs = await fetchActionDefinitions();
-    const actionReference = buildActionReference(actionDefs);
-    const durationMap = buildDurationMap(actionDefs);
+    const filteredDefs = filterActionDefinitions(actionDefs, requestedTypes);
+    const scopedActionDefs = filteredDefs.length > 0 ? filteredDefs : actionDefs;
+    const actionReference = buildActionReference(scopedActionDefs);
+    const durationMap = buildDurationMap(scopedActionDefs);
+    const canonicalNameMap = buildCanonicalNameMap(scopedActionDefs);
+    const allowedNames = Object.values(canonicalNameMap);
 
     const systemPrompt = `You are an elite professional football (soccer) match analyst with deep tactical knowledge. You are reviewing video frames sampled every 3 seconds from a competitive match recording — typically a wide-angle broadcast or touchline camera.
 
@@ -106,6 +132,11 @@ UNDERSTANDING THE FOOTAGE:
 - Identify the player by their kit colour, shirt number, body shape, skin tone, hair, and position on the pitch as described above.
 - If you cannot confidently identify the target player in a frame, skip that frame entirely. Do not guess.
 ${actionReference}
+${allowedNames.length > 0 ? `
+ALLOWED ACTION TYPES (STRICT):
+- You may ONLY output actionType values from this list:
+${allowedNames.map((n) => `  • ${n}`).join('\n')}
+- If none of these clearly applies, skip the frame.` : ''}
 
 CRITICAL FILTERING RULES — READ CAREFULLY:
 The most common mistake is flagging frames where the player is simply VISIBLE on screen but NOT ACTIVELY INVOLVED in play. You MUST apply these filters strictly:
@@ -127,7 +158,6 @@ The most common mistake is flagging frames where the player is simply VISIBLE on
 CONFIDENCE GUIDE:
 - "high": Player is clearly identifiable AND clearly performing the action (ball visible at feet, obvious body shape of a tackle, etc.)
 - "medium": Player appears to be the right person and the body position suggests the action, but the frame is not perfectly clear
-- "low": You think it might be the player or the action is ambiguous from a single frame — SKIP THESE ENTIRELY, do not report low confidence detections
 
 DO NOT REPORT:
 - Standing still, jogging into general position, or walking
@@ -135,6 +165,7 @@ DO NOT REPORT:
 - Moments where the player is simply in the frame but not involved
 - Celebrations, conversations, or other non-play moments
 - Frames where the player is visible but the ball is clearly with someone else and no pressing/closing down is happening
+- Fouls/cards/penalties unless contact is clearly visible in-frame (if uncertain, skip)
 - Any frame where you are not at least "medium" confident
 
 Be EXTREMELY SELECTIVE. Quality over quantity. Only report frames where you are confident the identified player is the primary actor in a meaningful on-ball or direct defensive action.
@@ -197,8 +228,12 @@ For each detected action provide:
                       type: 'object',
                       properties: {
                         frameIndex: { type: 'number', description: 'The 0-indexed frame number' },
-                        actionType: { type: 'string', description: 'Type of action (Pass, Dribble, Shot, etc.)' },
-                        confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+                        actionType: {
+                          type: 'string',
+                          description: 'Type of action from the allowed action list',
+                          enum: allowedNames,
+                        },
+                        confidence: { type: 'string', enum: ['high', 'medium'] },
                         description: { type: 'string', description: 'Brief description of what the player is doing — shown to the coach as the reason for flagging' },
                         clipBefore: { type: 'number', description: 'Seconds before the frame to include in the clip (default 5)' },
                         clipAfter: { type: 'number', description: 'Seconds after the frame to include in the clip (default 5)' },
@@ -247,8 +282,34 @@ For each detected action provide:
     }
 
     const parsed = JSON.parse(toolCall.function.arguments);
+    const rawActions = Array.isArray(parsed?.actions) ? parsed.actions : [];
+    const highOnlyKeywords = /(foul|fouled|penalty|red card|yellow card)/i;
+
+    const sanitisedActions = rawActions
+      .filter((a: any) => Number.isInteger(a?.frameIndex) && a.frameIndex >= 0 && a.frameIndex < frames.length)
+      .map((a: any) => {
+        const canonical = canonicalNameMap[normaliseName(String(a.actionType || ''))];
+        if (!canonical) return null;
+
+        const confidence = String(a.confidence || '').toLowerCase();
+        if (confidence !== 'high' && confidence !== 'medium') return null;
+        if (highOnlyKeywords.test(canonical) && confidence !== 'high') return null;
+
+        const timing = durationMap[normaliseName(canonical)] || { before: 5, after: 5 };
+
+        return {
+          frameIndex: a.frameIndex,
+          actionType: canonical,
+          confidence,
+          description: String(a.description || '').trim() || `${canonical} detected`,
+          clipBefore: Number.isFinite(a.clipBefore) ? a.clipBefore : timing.before,
+          clipAfter: Number.isFinite(a.clipAfter) ? a.clipAfter : timing.after,
+        };
+      })
+      .filter((a: any) => a !== null);
+
     return new Response(
-      JSON.stringify({ actions: parsed.actions || [], durationMap }),
+      JSON.stringify({ actions: sanitisedActions, durationMap }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
