@@ -1113,7 +1113,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
   const fmtMatchTime = (videoSeconds: number, _offset: number) => {
     const offset = getEffectiveOffset(videoSeconds);
-    const matchSeconds = videoSeconds + offset;
+    const matchSeconds = Math.max(0, videoSeconds + offset);
     const mins = Math.floor(matchSeconds / 60);
     const secs = Math.floor(matchSeconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -1122,7 +1122,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   /** Format minute for clip display: mm:ss with seconds rounded down to nearest 5 */
   const fmtClipMinute = (videoSeconds: number, _offset: number) => {
     const offset = getEffectiveOffset(videoSeconds);
-    const matchSeconds = videoSeconds + offset;
+    const matchSeconds = Math.max(0, videoSeconds + offset);
     const mins = Math.floor(matchSeconds / 60);
     const rawSecs = Math.floor(matchSeconds % 60);
     const roundedSecs = Math.floor(rawSecs / 5) * 5;
@@ -1131,7 +1131,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
   const getMatchMinute = (videoSeconds: number, _offset: number) => {
     const offset = getEffectiveOffset(videoSeconds);
-    const matchSeconds = videoSeconds + offset;
+    const matchSeconds = Math.max(0, videoSeconds + offset);
     const snapped = Math.floor(matchSeconds / 5) * 5;
     return Math.floor(snapped / 60);
   };

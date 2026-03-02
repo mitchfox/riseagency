@@ -64,6 +64,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [selectedPlayerForScan, setSelectedPlayerForScan] = useState<string>(selectedPlayerId || "");
+  const [scanStartTime, setScanStartTime] = useState("");
+  const [scanEndTime, setScanEndTime] = useState("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // When a player is selected from dropdown, load saved description and previous report clips
@@ -173,6 +175,18 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     });
   }, []);
 
+  /** Parse "mm:ss" or raw seconds string to a number of seconds */
+  const parseTimeToSeconds = (val: string): number | null => {
+    if (!val.trim()) return null;
+    if (val.includes(':')) {
+      const [m, s] = val.split(':').map(Number);
+      if (isNaN(m) || isNaN(s)) return null;
+      return m * 60 + s;
+    }
+    const n = parseFloat(val);
+    return isNaN(n) ? null : n;
+  };
+
   const startScan = async () => {
     if (!playerName.trim()) {
       toast.error("Enter the player's name first");
@@ -189,9 +203,14 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setScanning(true);
     setScanProgress(0);
 
-    const duration = videoRef.current.duration;
+    const fullDuration = videoRef.current.duration;
+    const segStart = parseTimeToSeconds(scanStartTime) ?? 0;
+    const segEnd = parseTimeToSeconds(scanEndTime) ?? fullDuration;
+    const clampedStart = Math.max(0, Math.min(segStart, fullDuration));
+    const clampedEnd = Math.max(clampedStart, Math.min(segEnd, fullDuration));
+
     const sampleInterval = 3;
-    const totalFrames = Math.floor(duration / sampleInterval);
+    const totalFrames = Math.floor((clampedEnd - clampedStart) / sampleInterval);
     const batchSize = 15;
 
     const allDetected: DetectedAction[] = [];
@@ -206,7 +225,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         const frames: { dataUrl: string; timestamp: number; index: number }[] = [];
 
         for (let i = batchStart; i < batchEnd; i++) {
-          const time = i * sampleInterval;
+          const time = clampedStart + (i * sampleInterval);
           try {
             const dataUrl = await extractFrame(hiddenVideo, time);
             frames.push({ dataUrl, timestamp: time, index: i });
@@ -416,7 +435,61 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
               {/* Start scan */}
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold uppercase tracking-wider">3. Start AI Scan</h4>
+                <h4 className="text-sm font-semibold uppercase tracking-wider">3. Set Scan Segment</h4>
+                <p className="text-xs text-muted-foreground">
+                  Optionally limit which portion of the video to scan. Leave blank to scan the entire video.
+                  Use mm:ss format (e.g. 5:30) or raw seconds (e.g. 330).
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Start time</label>
+                    <Input
+                      value={scanStartTime}
+                      onChange={e => setScanStartTime(e.target.value)}
+                      placeholder="0:00 (start)"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">End time</label>
+                    <Input
+                      value={scanEndTime}
+                      onChange={e => setScanEndTime(e.target.value)}
+                      placeholder="End of video"
+                    />
+                  </div>
+                </div>
+                {videoRef.current?.duration && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-[10px]"
+                      onClick={() => {
+                        if (!videoRef.current) return;
+                        const t = videoRef.current.currentTime;
+                        setScanStartTime(`${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`);
+                      }}
+                    >
+                      Set start to current position
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-[10px]"
+                      onClick={() => {
+                        if (!videoRef.current) return;
+                        const t = videoRef.current.currentTime;
+                        setScanEndTime(`${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`);
+                      }}
+                    >
+                      Set end to current position
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold uppercase tracking-wider">4. Start AI Scan</h4>
                 <p className="text-xs text-muted-foreground">
                   The AI will sample a frame every 3 seconds and analyse each one for actions by {playerName || 'the player'}.
                   Detected actions will appear as pending clips below the video for you to review.
