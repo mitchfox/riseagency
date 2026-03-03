@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import * as tus from 'tus-js-client';
 import { useNavigate } from "react-router-dom";
 import { sharedSupabase as supabase } from "@/integrations/supabase/sharedClient";
@@ -32,6 +32,7 @@ import { AnalysisPointsSection } from "./analysis/AnalysisPointsSection";
 import { AnalysisOverviewSection } from "./analysis/AnalysisOverviewSection";
 import { AnalysisQuickLink } from "./analysis/AnalysisQuickLink";
 import { ActionReportsList } from "./analysis/ActionReportsList";
+import { ReportLanguageSelector } from "./ReportLanguageSelector";
 
 type AnalysisType = "pre-match" | "post-match" | "concept";
 
@@ -161,6 +162,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
   const [linkedPlayers, setLinkedPlayers] = useState<Record<string, { playerId: string; playerName: string }[]>>({});
   const [concepts, setConcepts] = useState<any[]>([]);
   const [taggedPlayerIds, setTaggedPlayerIds] = useState<string[]>([]);
+  const [analysisLanguage, setAnalysisLanguage] = useState("en");
 
   // Form states
   const [formData, setFormData] = useState<Record<string, any>>({
@@ -1449,16 +1451,74 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
     const isPostMatch = activeView === 'post-match';
     const isConcept = activeView === 'concept';
 
+    const getAnalysisTranslatableFields = () => {
+      const fields: Record<string, string> = {};
+      if (formData.title) fields.title = formData.title;
+      if (formData.key_details) fields.key_details = formData.key_details;
+      if (formData.opposition_strengths) fields.opposition_strengths = formData.opposition_strengths;
+      if (formData.opposition_weaknesses) fields.opposition_weaknesses = formData.opposition_weaknesses;
+      if (formData.strengths_improvements) fields.strengths_improvements = formData.strengths_improvements;
+      if (formData.concept) fields.concept = formData.concept;
+      if (formData.explanation) fields.explanation = formData.explanation;
+      if (formData.scheme_title) fields.scheme_title = formData.scheme_title;
+      if (formData.scheme_paragraph_1) fields.scheme_paragraph_1 = formData.scheme_paragraph_1;
+      if (formData.scheme_paragraph_2) fields.scheme_paragraph_2 = formData.scheme_paragraph_2;
+      (formData.points || []).forEach((point: any, i: number) => {
+        if (point.title) fields[`point_${i}_title`] = point.title;
+        if (point.paragraph_1) fields[`point_${i}_paragraph_1`] = point.paragraph_1;
+        if (point.paragraph_2) fields[`point_${i}_paragraph_2`] = point.paragraph_2;
+      });
+      (formData.matchups || []).forEach((matchup: any, i: number) => {
+        if (matchup.notes) fields[`matchup_${i}_notes`] = matchup.notes;
+      });
+      return fields;
+    };
+
+    const handleAnalysisTranslated = (translations: Record<string, string>) => {
+      const updated = { ...formData };
+      if (translations.title) updated.title = translations.title;
+      if (translations.key_details) updated.key_details = translations.key_details;
+      if (translations.opposition_strengths) updated.opposition_strengths = translations.opposition_strengths;
+      if (translations.opposition_weaknesses) updated.opposition_weaknesses = translations.opposition_weaknesses;
+      if (translations.strengths_improvements) updated.strengths_improvements = translations.strengths_improvements;
+      if (translations.concept) updated.concept = translations.concept;
+      if (translations.explanation) updated.explanation = translations.explanation;
+      if (translations.scheme_title) updated.scheme_title = translations.scheme_title;
+      if (translations.scheme_paragraph_1) updated.scheme_paragraph_1 = translations.scheme_paragraph_1;
+      if (translations.scheme_paragraph_2) updated.scheme_paragraph_2 = translations.scheme_paragraph_2;
+      const updatedPoints = [...(updated.points || [])];
+      (formData.points || []).forEach((_: any, i: number) => {
+        if (translations[`point_${i}_title`]) updatedPoints[i] = { ...updatedPoints[i], title: translations[`point_${i}_title`] };
+        if (translations[`point_${i}_paragraph_1`]) updatedPoints[i] = { ...updatedPoints[i], paragraph_1: translations[`point_${i}_paragraph_1`] };
+        if (translations[`point_${i}_paragraph_2`]) updatedPoints[i] = { ...updatedPoints[i], paragraph_2: translations[`point_${i}_paragraph_2`] };
+      });
+      updated.points = updatedPoints;
+      const updatedMatchups = [...(updated.matchups || [])];
+      (formData.matchups || []).forEach((_: any, i: number) => {
+        if (translations[`matchup_${i}_notes`]) updatedMatchups[i] = { ...updatedMatchups[i], notes: translations[`matchup_${i}_notes`] };
+      });
+      updated.matchups = updatedMatchups;
+      setFormData(updated);
+    };
+
     return (
       <div className="space-y-6">
         {/* Header with back button */}
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={handleCloseDialog}>
-            ← Back
-          </Button>
-          <h2 className="text-2xl font-bold">
-            {editingAnalysis ? "Edit" : "New"} {isPreMatch ? "Pre-Match Analysis" : isPostMatch ? "Post-Match Analysis" : "Concept"}
-          </h2>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" onClick={handleCloseDialog}>
+              ← Back
+            </Button>
+            <h2 className="text-2xl font-bold">
+              {editingAnalysis ? "Edit" : "New"} {isPreMatch ? "Pre-Match Analysis" : isPostMatch ? "Post-Match Analysis" : "Concept"}
+            </h2>
+          </div>
+          <ReportLanguageSelector
+            selectedLanguage={analysisLanguage}
+            onLanguageChange={setAnalysisLanguage}
+            getTranslatableFields={getAnalysisTranslatableFields}
+            onTranslated={handleAnalysisTranslated}
+          />
         </div>
 
         {/* Quick Link - only show when creating new analysis (not for concepts) - stays open */}
