@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import { UnifiedStatsEditor, UnifiedStat, mergeStatsForEditor, unifiedStatsToStr
 import { FixtureStatsEditor, UNIFIED_TO_FIXTURE_MAP, FIXTURE_TO_UNIFIED_MAP } from "./FixtureStatsEditor";
 import { InlineFixtureCreator } from "./InlineFixtureCreator";
 import { logActivity } from "@/lib/activityLogger";
+import { ReportLanguageSelector } from "./ReportLanguageSelector";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -151,6 +152,7 @@ export const CreatePerformanceReportDialog = ({
   const [previousFixtureStats, setPreviousFixtureStats] = useState<Record<string, number>>({});
   const [dragOverAction, setDragOverAction] = useState<number | null>(null);
   const [dropUploading, setDropUploading] = useState<number | null>(null);
+  const [reportLanguage, setReportLanguage] = useState("en");
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -1470,6 +1472,39 @@ export const CreatePerformanceReportDialog = ({
     }
   };
 
+  const getTranslatableFields = useCallback(() => {
+    const fields: Record<string, string> = {};
+    if (opponent) fields.opponent = opponent;
+    if (performanceOverview) fields.performanceOverview = performanceOverview;
+    actions.forEach((action, i) => {
+      if (action.action_type) fields[`action_${i}_type`] = action.action_type;
+      if (action.action_description) fields[`action_${i}_description`] = action.action_description;
+      if (action.notes) fields[`action_${i}_notes`] = action.notes;
+    });
+    return fields;
+  }, [opponent, performanceOverview, actions]);
+
+  const handleTranslated = useCallback((translations: Record<string, string>) => {
+    if (translations.opponent) setOpponent(translations.opponent);
+    if (translations.performanceOverview) setPerformanceOverview(translations.performanceOverview);
+    const updatedActions = [...actions];
+    actions.forEach((_, i) => {
+      if (translations[`action_${i}_type`]) updatedActions[i] = { ...updatedActions[i], action_type: translations[`action_${i}_type`] };
+      if (translations[`action_${i}_description`]) updatedActions[i] = { ...updatedActions[i], action_description: translations[`action_${i}_description`] };
+      if (translations[`action_${i}_notes`]) updatedActions[i] = { ...updatedActions[i], notes: translations[`action_${i}_notes`] };
+    });
+    setActions(updatedActions);
+  }, [actions]);
+
+  const languageSelector = (
+    <ReportLanguageSelector
+      selectedLanguage={reportLanguage}
+      onLanguageChange={setReportLanguage}
+      getTranslatableFields={getTranslatableFields}
+      onTranslated={handleTranslated}
+    />
+  );
+
   // The main content (used in both inline and dialog modes)
   const mainContent = (
     <>
@@ -2645,6 +2680,7 @@ export const CreatePerformanceReportDialog = ({
               <ArrowLeft className="w-4 h-4" /> Back to Player
             </Button>
             <div className="flex gap-2 items-center">
+              {languageSelector}
               {analysisId && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -2687,7 +2723,10 @@ export const CreatePerformanceReportDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl lg:max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</DialogTitle>
+          <div className="flex items-center justify-between gap-4">
+            <DialogTitle className="text-lg sm:text-xl">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</DialogTitle>
+            {languageSelector}
+          </div>
         </DialogHeader>
 
         {mainContent}

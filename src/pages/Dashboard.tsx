@@ -28,6 +28,7 @@ import { CoachAvailability } from "@/components/CoachAvailability";
 import { PlayerScoutingReports } from "@/components/PlayerScoutingReports";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineContentManager } from "@/components/OfflineContentManager";
+import { PortalWelcomeModal } from "@/components/portal/PortalWelcomeModal";
 import { CacheManager } from "@/lib/cacheManager";
 import { VersionManager } from "@/lib/versionManager";
 import { Hub } from "@/components/dashboard/Hub";
@@ -1506,6 +1507,19 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Welcome Modal for new users */}
+      {playerData && (
+        <PortalWelcomeModal
+          playerName={playerData.name || ""}
+          playerId={playerData.id}
+          hasAnalyses={analyses.length > 0}
+          hasPerformanceReports={analyses.some((a: any) => a.r90_score != null)}
+          onNavigate={(tab, subTab) => {
+            setActiveTab(tab);
+            if (subTab) setActiveAnalysisTab(subTab);
+          }}
+        />
+      )}
       {/* Header with Logo */}
       <header className="sticky top-0 bg-background/80 backdrop-blur-md border-b border-border z-50">
         <div className="container mx-auto px-4">
