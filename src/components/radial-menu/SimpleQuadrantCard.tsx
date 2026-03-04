@@ -1,4 +1,4 @@
-import { TrendingUp, BookOpen, MessageCircle, Route, Search } from "lucide-react";
+import { TrendingUp, BookOpen, MessageCircle, Route, Search, HelpCircle } from "lucide-react";
 import { ReactNode } from "react";
 
 interface SimpleQuadrantCardProps {
@@ -145,6 +145,16 @@ export const WhatWeLookForQuadrantCard = (props: QuadrantCardProps) => (
     title="What We Look For"
     description="Key traits and behaviours we value when evaluating players for RISE."
     position="top-left"
+    {...props}
+  />
+);
+
+export const FAQQuadrantCard = (props: QuadrantCardProps) => (
+  <SimpleQuadrantCard
+    icon={<HelpCircle className="w-4 h-4" />}
+    title="FAQ"
+    description="Answers to common questions about representation, services, and how we work."
+    position="bottom-right"
     {...props}
   />
 );

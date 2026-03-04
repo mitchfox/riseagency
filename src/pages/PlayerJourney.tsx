@@ -26,63 +26,63 @@ const PlayerJourney = () => {
     {
       step: 1,
       icon: Search,
-      title: "Discovery",
-      subtitle: "How we connect",
-      description: "The journey begins when we find you, through our extensive European scouting network, or when you reach out to us. Either way, it starts with recognition of talent worth investing in.",
+      title: t("journey.step1_title", "Discovery"),
+      subtitle: t("journey.step1_subtitle", "How we connect"),
+      description: t("journey.step1_desc", "The journey begins when we find you, through our extensive European scouting network, or when you reach out to us. Either way, it starts with recognition of talent worth investing in."),
       details: [
-        "We scout across all of Europe's professional leagues",
-        "Players can also request representation directly",
-        "Initial assessment of potential and fit"
+        t("journey.step1_detail1", "We scout across all of Europe's professional leagues"),
+        t("journey.step1_detail2", "Players can also request representation directly"),
+        t("journey.step1_detail3", "Initial assessment of potential and fit")
       ]
     },
     {
       step: 2,
       icon: UserCheck,
-      title: "Assessment",
-      subtitle: "Evaluating the fit",
-      description: "Not every talented player is right for us, and we might not be right for every player. We take time to assess whether there's genuine potential for a successful partnership.",
+      title: t("journey.step2_title", "Assessment"),
+      subtitle: t("journey.step2_subtitle", "Evaluating the fit"),
+      description: t("journey.step2_desc", "Not every talented player is right for us, and we might not be right for every player. We take time to assess whether there's genuine potential for a successful partnership."),
       details: [
-        "Review of playing style, mentality, and ambition",
-        "Understanding your goals and timeline",
-        "Honest assessment of where you are and where you could be"
+        t("journey.step2_detail1", "Review of playing style, mentality, and ambition"),
+        t("journey.step2_detail2", "Understanding your goals and timeline"),
+        t("journey.step2_detail3", "Honest assessment of where you are and where you could be")
       ]
     },
     {
       step: 3,
       icon: MessageCircle,
-      title: "Discussion",
-      subtitle: "Full transparency",
-      description: "We have detailed conversations about what we offer, what we expect, and what the journey looks like. For under-18s, parents are fully involved in every discussion.",
+      title: t("journey.step3_title", "Discussion"),
+      subtitle: t("journey.step3_subtitle", "Full transparency"),
+      description: t("journey.step3_desc", "We have detailed conversations about what we offer, what we expect, and what the journey looks like. For under-18s, parents are fully involved in every discussion."),
       details: [
-        "Clear explanation of our services and approach",
-        "Discussion of development pathway",
-        "Parent/guardian involvement for youth players",
-        "No pressure. Take the time you need"
+        t("journey.step3_detail1", "Clear explanation of our services and approach"),
+        t("journey.step3_detail2", "Discussion of development pathway"),
+        t("journey.step3_detail3", "Parent/guardian involvement for youth players"),
+        t("journey.step3_detail4", "No pressure. Take the time you need")
       ]
     },
     {
       step: 4,
       icon: Handshake,
-      title: "Agreement",
-      subtitle: "Formalizing the partnership",
-      description: "Once we're aligned on goals and approach, we formalize the partnership. Everything is clear, documented, and agreed upon by all parties.",
+      title: t("journey.step4_title", "Agreement"),
+      subtitle: t("journey.step4_subtitle", "Formalising the partnership"),
+      description: t("journey.step4_desc", "Once we're aligned on goals and approach, we formalise the partnership. Everything is clear, documented, and agreed upon by all parties."),
       details: [
-        "Transparent fee structure explained",
-        "Clear terms and expectations",
-        "Family involvement and approval where relevant"
+        t("journey.step4_detail1", "Transparent fee structure explained"),
+        t("journey.step4_detail2", "Clear terms and expectations"),
+        t("journey.step4_detail3", "Family involvement and approval where relevant")
       ]
     },
     {
       step: 5,
       icon: Rocket,
-      title: "Development",
-      subtitle: "The work begins",
-      description: "This is where the real journey starts. You get access to our performance teams, match analysis, development programmes, and the full weight of our network and expertise.",
+      title: t("journey.step5_title", "Development"),
+      subtitle: t("journey.step5_subtitle", "The work begins"),
+      description: t("journey.step5_desc", "This is where the real journey starts. You get access to our performance teams, match analysis, development programmes, and the full weight of our network and expertise."),
       details: [
-        "Dedicated performance support",
-        "Regular match analysis and feedback",
-        "Career guidance and opportunity creation",
-        "Ongoing development programmes"
+        t("journey.step5_detail1", "Dedicated performance support"),
+        t("journey.step5_detail2", "Regular match analysis and feedback"),
+        t("journey.step5_detail3", "Career guidance and opportunity creation"),
+        t("journey.step5_detail4", "Ongoing development programmes")
       ]
     }
   ];
@@ -90,8 +90,8 @@ const PlayerJourney = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
-        title="How We Work With Players - RISE Football Agency"
-        description="A step-by-step look at how RISE develops talent. From discovery to development, see the journey we take with every player we represent."
+        title={t("journey.seo_title", "How We Work With Players - RISE Football Agency")}
+        description={t("journey.seo_desc", "A step-by-step look at how RISE develops talent. From discovery to development, see the journey we take with every player we represent.")}
         image="/og-preview-journey.png"
         url="/player-journey"
       />
@@ -109,15 +109,15 @@ const PlayerJourney = () => {
           
           <div className="relative container mx-auto px-4 text-center z-10">
             <div className="inline-block mb-6">
-              <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                The Process
+             <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                {t("journey.badge", "The Process")}
               </span>
             </div>
             <h1 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-white mb-6">
-              HOW WE WORK <span className="text-primary">WITH PLAYERS</span>
+              {t("journey.hero_title_1", "HOW WE WORK")} <span className="text-primary">{t("journey.hero_title_2", "WITH PLAYERS")}</span>
             </h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-              From discovery to development: a transparent look at the journey
+              {t("journey.hero_subtitle", "From discovery to development: a transparent look at the journey")}
             </p>
           </div>
         </section>
@@ -145,7 +145,7 @@ const PlayerJourney = () => {
                     <div className="flex-1 pb-8">
                       <div className="flex items-center gap-3 mb-2">
                         <span className="text-sm font-bebas text-primary/60 uppercase tracking-widest">
-                          Step {step.step}
+                          {t("journey.step", "Step")} {step.step}
                         </span>
                         <ChevronRight className="w-4 h-4 text-primary/40" />
                         <span className="text-sm text-muted-foreground">
@@ -182,26 +182,26 @@ const PlayerJourney = () => {
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider">
-                THE <span className="text-primary">RESULTS</span>
+                {t("journey.results_title_1", "THE")} <span className="text-primary">{t("journey.results_title_2", "RESULTS")}</span>
               </h2>
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
               <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg">
                 <div className="text-5xl md:text-6xl font-bebas text-primary mb-2">74</div>
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Professionals</p>
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("journey.stat_professionals", "Professionals")}</p>
               </div>
               <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg">
                 <div className="text-5xl md:text-6xl font-bebas text-primary mb-2">18</div>
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Big 5 League Players</p>
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("journey.stat_big5", "Big 5 League Players")}</p>
               </div>
               <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg">
                 <div className="text-5xl md:text-6xl font-bebas text-primary mb-2">10</div>
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">National Team Players</p>
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("journey.stat_national", "National Team Players")}</p>
               </div>
               <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg">
                 <div className="text-5xl md:text-6xl font-bebas text-primary mb-2">£100M+</div>
-                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">Transfer Fees Developed</p>
+                <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("journey.stat_transfers", "Transfer Fees Developed")}</p>
               </div>
             </div>
           </div>
@@ -211,10 +211,10 @@ const PlayerJourney = () => {
         <section className="py-16 md:py-24 bg-background">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-6">
-              START YOUR <span className="text-primary">JOURNEY</span>
+              {t("journey.cta_title_1", "START YOUR")} <span className="text-primary">{t("journey.cta_title_2", "JOURNEY")}</span>
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Ready to take the first step? Get in touch and let's see if there's a fit.
+              {t("journey.cta_desc", "Ready to take the first step? Get in touch and let's see if there's a fit.")}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
@@ -222,7 +222,7 @@ const PlayerJourney = () => {
                 size="lg" 
                 className="btn-shine font-bebas uppercase tracking-wider"
               >
-                Request Representation
+                {t("journey.request_representation", "Request Representation")}
               </Button>
               <Button 
                 asChild 
@@ -230,7 +230,7 @@ const PlayerJourney = () => {
                 size="lg" 
                 className="font-bebas uppercase tracking-wider"
               >
-                <Link to="/youth-players">For Youth Players & Parents</Link>
+                <Link to="/youth-players">{t("journey.for_youth", "For Youth Players & Parents")}</Link>
               </Button>
             </div>
           </div>
