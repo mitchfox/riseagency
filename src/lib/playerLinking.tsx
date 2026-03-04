@@ -102,7 +102,6 @@ export const usePlayerNames = () => {
     const fetchPlayers = async () => {
       try {
         const { data } = await supabase
-        const { data } = await supabase
           .from('players')
           .select('name')
           .eq('visible_on_stars_page', true)
