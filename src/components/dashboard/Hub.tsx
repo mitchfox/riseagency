@@ -123,6 +123,9 @@ interface PlayerAnalysis {
   analysis_writer_id?: string | null;
   analysis_writer_data?: any;
   tagged_analyses?: any[];
+  visibility_status?: string;
+  placeholder_raw_score?: number | null;
+  placeholder_minutes?: number | null;
 }
 
 interface HubProps {
@@ -140,6 +143,14 @@ interface HubProps {
 
 export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSettings, onNavigateToAnalysis, onNavigateToComparisons, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
   const navigate = useNavigate();
+
+  const getEffectiveR90 = (a: PlayerAnalysis): number | null => {
+    if (a.visibility_status === "hidden" && a.placeholder_raw_score != null && a.placeholder_minutes) {
+      return (a.placeholder_raw_score / a.placeholder_minutes) * 90;
+    }
+    return a.r90_score;
+  };
+
   const [marketingImages, setMarketingImages] = React.useState<string[]>([]);
   const [imageFocalPoints, setImageFocalPoints] = React.useState<string[]>([]);
   const [imagesPreloaded, setImagesPreloaded] = React.useState(false);
@@ -156,8 +167,9 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
     if (confettiFired.current || analyses.length < 2) return;
     const sorted = [...analyses].sort((a, b) => new Date(b.analysis_date).getTime() - new Date(a.analysis_date).getTime());
     const latest = sorted[0];
-    const previousBest = Math.max(...sorted.slice(1).map(a => a.r90_score ?? 0));
-    if (latest?.r90_score != null && checkAndFireConfetti(latest.r90_score, previousBest)) {
+    const latestR90 = getEffectiveR90(latest);
+    const previousBest = Math.max(...sorted.slice(1).map(a => getEffectiveR90(a) ?? 0));
+    if (latestR90 != null && checkAndFireConfetti(latestR90, previousBest)) {
       confettiFired.current = true;
     }
   }, [analyses]);
@@ -417,12 +429,12 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
 
   // Prepare R90 chart data - showing opponent and result
   const chartData = analyses
-    .filter(a => a.r90_score != null)
+    .filter(a => getEffectiveR90(a) != null)
     .sort((a, b) => new Date(a.analysis_date).getTime() - new Date(b.analysis_date).getTime())
     .slice(-5)
     .map(a => ({
       opponent: a.opponent || "Unknown",
-      score: a.r90_score,
+      score: getEffectiveR90(a)!,
       result: a.result || "",
       displayLabel: `${a.opponent || "Unknown"}${a.result ? ` (${a.result})` : ""}`,
       analysisId: a.id,
@@ -884,14 +896,17 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                             </Button>
                           );
                         })()}
-                        {analysis.r90_score != null && (
-                          <div 
-                            className="px-3 py-1 rounded text-white text-sm font-bold border-2 border-transparent hover:border-[hsl(var(--gold))] transition-colors duration-200"
-                            style={{ backgroundColor: getR90Color(analysis.r90_score) }}
-                          >
-                            R90: {analysis.r90_score}
-                          </div>
-                        )}
+                        {(() => {
+                          const effectiveR90 = getEffectiveR90(analysis);
+                          return effectiveR90 != null ? (
+                            <div 
+                              className="px-3 py-1 rounded text-white text-sm font-bold border-2 border-transparent hover:border-[hsl(var(--gold))] transition-colors duration-200"
+                              style={{ backgroundColor: getR90Color(effectiveR90) }}
+                            >
+                              R90: {effectiveR90.toFixed(2)}
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
                   </button>
