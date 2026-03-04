@@ -53,6 +53,7 @@ interface PerformanceActionForAI {
   action_type: string;
   action_description: string;
   notes: string;
+  zone?: number | null;
 }
 
 interface FixtureStatsEditorProps {
@@ -110,6 +111,7 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
             action_type: a.action_type,
             action_description: a.action_description,
             notes: a.notes,
+            zone: a.zone || null,
           })),
           statDefinitions: allMetrics,
           previousStats: previousFixtureStats || {},

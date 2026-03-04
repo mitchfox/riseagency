@@ -32,6 +32,7 @@ import { InlineFixtureCreator } from "./InlineFixtureCreator";
 import { logActivity } from "@/lib/activityLogger";
 import { ReportLanguageSelector } from "./ReportLanguageSelector";
 import { parseMinuteToSeconds } from "@/lib/actionSorting";
+import { ZonePitchSelector } from "@/components/report/ZonePitchSelector";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -112,6 +113,7 @@ interface PerformanceAction {
   notes: string;
   video_url?: string | null;
   recorded_stat?: RecordedStat | RecordedStat[] | null;
+  zone?: number | null;
 }
 
 interface SortableStatItemProps {
@@ -1062,6 +1064,7 @@ export const CreatePerformanceReportDialog = ({
             notes: action.notes || "",
             video_url: action.video_url || null,
             recorded_stat: action.recorded_stat as unknown as RecordedStat | null,
+            zone: action.zone || null,
           }));
         setActions(sortActionsChronologically(mappedActions));
         
@@ -1139,6 +1142,7 @@ export const CreatePerformanceReportDialog = ({
             action_type: action.action_type || "",
             action_description: action.action_description || "",
             notes: action.notes || "",
+            zone: action.zone || null,
           }));
         setActions(sortActionsChronologically(mappedActions));
       }
@@ -1204,7 +1208,7 @@ export const CreatePerformanceReportDialog = ({
     setActions(newActions);
   };
 
-  const updateAction = async (index: number, field: keyof PerformanceAction, value: string | RecordedStat | RecordedStat[] | null) => {
+  const updateAction = async (index: number, field: keyof PerformanceAction, value: string | number | null | RecordedStat | RecordedStat[]) => {
     const newActions = [...actions];
     newActions[index] = { ...newActions[index], [field]: value };
     
@@ -1421,6 +1425,7 @@ export const CreatePerformanceReportDialog = ({
           // Preserve video_url: use the one from the action state, or fall back to preserved from DB
           video_url: a.video_url || preservedVideoUrls?.get(a.action_number) || null,
           recorded_stat: (a.recorded_stat || null) as any,
+          zone: a.zone || null,
         }));
       
       // Clean up the temporary storage
@@ -1831,6 +1836,12 @@ export const CreatePerformanceReportDialog = ({
                         <Search className="h-4 w-4 text-primary hover:text-black" />
                       </Button>
                       {/* Record Stat button - mobile */}
+                      {/* Zone selector - mobile */}
+                      <ZonePitchSelector
+                        value={action.zone || null}
+                        onChange={(zone) => updateAction(index, 'zone', zone as any)}
+                        compact
+                      />
                       <ActionStatRecorder
                         currentStat={action.recorded_stat || null}
                         onStatRecorded={(stat) => updateAction(index, 'recorded_stat', stat)}
@@ -2225,6 +2236,11 @@ export const CreatePerformanceReportDialog = ({
                           >
                             <Search className="h-4 w-4 text-primary hover:text-black" />
                           </Button>
+                          {/* Zone selector - desktop */}
+                          <ZonePitchSelector
+                            value={action.zone || null}
+                            onChange={(zone) => updateAction(index, 'zone', zone as any)}
+                          />
                           {/* Record Stat button */}
                           <ActionStatRecorder
                             currentStat={action.recorded_stat || null}
