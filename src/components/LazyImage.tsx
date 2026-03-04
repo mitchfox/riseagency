@@ -6,7 +6,19 @@ interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   threshold?: number;
   disableLoadingTransition?: boolean;
   priority?: boolean;
+  responsiveSizes?: string;
 }
+
+// Generate srcSet for Supabase storage images
+const generateSrcSet = (src: string): string | undefined => {
+  // Only generate srcSet for Supabase storage URLs
+  if (!src || !src.includes('supabase') || !src.includes('/storage/')) return undefined;
+  
+  const widths = [320, 640, 960, 1280];
+  return widths
+    .map(w => `${src}?width=${w}&resize=contain ${w}w`)
+    .join(', ');
+};
 
 export const LazyImage = memo(({ 
   src, 
@@ -14,6 +26,7 @@ export const LazyImage = memo(({
   threshold = 0.1, 
   disableLoadingTransition = false,
   priority = false,
+  responsiveSizes,
   className,
   ...props 
 }: LazyImageProps) => {
@@ -43,6 +56,8 @@ export const LazyImage = memo(({
     <img
       ref={imgRef}
       src={isInView ? src : undefined}
+      srcSet={isInView ? generateSrcSet(src) : undefined}
+      sizes={responsiveSizes || "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"}
       alt={alt}
       className={className}
       loading={priority ? "eager" : "lazy"}

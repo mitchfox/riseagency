@@ -14,6 +14,8 @@ import { ContactDialog } from "@/components/ContactDialog";
 import { PortfolioRequestDialog } from "@/components/PortfolioRequestDialog";
 import { useNavigate } from "react-router-dom";
 import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
+import { PlayersFAQ } from "@/components/PlayersFAQ";
+import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 
 const PLAYERS_PER_PAGE = 12;
 
@@ -382,9 +384,14 @@ const Stars = () => {
             )}
           </div>
         </section>
+        {/* FAQ Section */}
+        <PlayersFAQ />
       </main>
 
       <Footer />
+      
+      {/* WhatsApp Floating Widget */}
+      <WhatsAppWidget />
       
       {/* Dialogs */}
       <DeclareInterestDialog open={declareInterestOpen} onOpenChange={setDeclareInterestOpen} />
