@@ -1,18 +1,21 @@
-import { useMemo } from 'react';
-import Landing from './Landing';
-import Clubs from './Clubs';
-import Scouts from './Scouts';
-import Agents from './Agents';
-import Coaches from './Coaches';
-import Media from './Media';
-import Business from './Business';
-import Dashboard from './Dashboard';
-import Potential from './Potential';
-import PlayersPage from './PlayersPage';
+import { useMemo, lazy, Suspense } from 'react';
 import { getSubdomainInfo } from '@/lib/subdomainUtils';
+import { PageLoading } from '@/components/LoadingSpinner';
 
-// Map subdomains to their page components
-const subdomainComponents: Record<string, React.ComponentType> = {
+// Lazy import all subdomain pages to avoid static/dynamic import conflicts with App.tsx
+const Landing = lazy(() => import('./Landing'));
+const Clubs = lazy(() => import('./Clubs'));
+const Scouts = lazy(() => import('./Scouts'));
+const Agents = lazy(() => import('./Agents'));
+const Coaches = lazy(() => import('./Coaches'));
+const Media = lazy(() => import('./Media'));
+const Business = lazy(() => import('./Business'));
+const Dashboard = lazy(() => import('./Dashboard'));
+const Potential = lazy(() => import('./Potential'));
+const PlayersPage = lazy(() => import('./PlayersPage'));
+
+// Map subdomains to their lazy page components
+const subdomainComponents: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
   'portal': Dashboard,
   'scouts': Scouts,
   'potential': Potential,
@@ -30,11 +33,11 @@ const Home = () => {
   // If we have a role subdomain with a matching component, render it
   if (subdomainInfo.type === 'role' && subdomainInfo.subdomain && subdomainComponents[subdomainInfo.subdomain]) {
     const PageComponent = subdomainComponents[subdomainInfo.subdomain];
-    return <PageComponent />;
+    return <Suspense fallback={<PageLoading />}><PageComponent /></Suspense>;
   }
   
   // Default to Landing page
-  return <Landing />;
+  return <Suspense fallback={<PageLoading />}><Landing /></Suspense>;
 };
 
 export default Home;
