@@ -412,9 +412,9 @@ const PerformanceReport = () => {
         </div>
 
         {/* Visibility: Hidden - show placeholder stats */}
-        {analysis.visibility_status === "hidden" ? (
+        {(analysis.visibility_status || "").toLowerCase() === "hidden" ? (
           <div className="text-center py-16 space-y-6">
-            {analysis.placeholder_raw_score != null && analysis.placeholder_minutes ? (
+            {analysis.placeholder_raw_score != null && (analysis.placeholder_minutes ?? 0) > 0 ? (
               <div className="grid grid-cols-3 gap-4 max-w-md mx-auto p-4 bg-accent/20 rounded-lg">
                 <div className="text-center p-2">
                   <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Raw Score</p>
@@ -422,19 +422,16 @@ const PerformanceReport = () => {
                 </div>
                 <div className="text-center bg-primary text-primary-foreground rounded-lg p-2 md:p-4">
                   <p className="text-[10px] md:text-sm opacity-90 mb-0.5 md:mb-1">R90</p>
-                  <p className="text-lg md:text-3xl font-bold">{((analysis.placeholder_raw_score / analysis.placeholder_minutes) * 90).toFixed(2)}</p>
+                  <p className="text-lg md:text-3xl font-bold">{((analysis.placeholder_raw_score / analysis.placeholder_minutes!) * 90).toFixed(2)}</p>
                 </div>
                 <div className="text-center p-2">
                   <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Mins</p>
                   <p className="text-base md:text-2xl font-bold">{analysis.placeholder_minutes}</p>
                 </div>
               </div>
-            ) : analysis.r90_score != null ? (
-              <div className="space-y-2">
-                <p className="text-4xl font-bold">{analysis.r90_score.toFixed(2)}</p>
-                <p className="text-sm text-muted-foreground">R90 Score</p>
-              </div>
-            ) : null}
+            ) : (
+              <p className="text-sm text-muted-foreground">Placeholder stats are not set yet.</p>
+            )}
             <div className="bg-muted/50 rounded-lg p-6 max-w-sm mx-auto">
               <p className="text-sm font-medium">This report is locked</p>
               <p className="text-xs text-muted-foreground mt-1">Contact us to unlock the full performance breakdown.</p>

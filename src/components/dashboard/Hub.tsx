@@ -21,13 +21,21 @@ const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints
   const [preMatchAnalysis, setPreMatchAnalysis] = React.useState<{ id: string; home_team: string; away_team: string } | null>(null);
 
   React.useEffect(() => {
+    const getFixtureKickoff = (fixture: { match_date: string; match_time?: string | null }) => {
+      const [year, month, day] = fixture.match_date.split("-").map(Number);
+      const timeValue = fixture.match_time && fixture.match_time.trim() ? fixture.match_time : "23:59";
+      const [kickoffHours, kickoffMins] = timeValue.split(":").map(Number);
+      return new Date(year, (month || 1) - 1, day || 1, kickoffHours || 0, kickoffMins || 0, 0, 0);
+    };
+
     const fetchNext = async () => {
       const playerId = playerData?.id;
       const club = playerData?.current_club;
-      const today = new Date().toISOString().split("T")[0];
-      
+      const nowDate = new Date();
+      const today = nowDate.toISOString().split("T")[0];
+
       let fixtureData: any = null;
-      
+
       // Try player_fixtures first (most reliable)
       if (playerId) {
         const { data: pfData } = await supabase
@@ -35,17 +43,19 @@ const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints
           .select("fixture:fixtures(id, match_date, match_time, home_team, away_team, venue)")
           .eq("player_id", playerId)
           .order("fixture(match_date)", { ascending: true });
-        
+
         if (pfData && pfData.length > 0) {
           const upcoming = pfData
             .map((pf: any) => pf.fixture)
-            .filter((f: any) => f && f.match_date >= today);
+            .filter((f: any) => f && getFixtureKickoff(f) > nowDate)
+            .sort((a: any, b: any) => getFixtureKickoff(a).getTime() - getFixtureKickoff(b).getTime());
+
           if (upcoming.length > 0) {
             fixtureData = upcoming[0];
           }
         }
       }
-      
+
       // Fallback: match by club name
       if (!fixtureData && club) {
         const { data } = await supabase
@@ -54,31 +64,42 @@ const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints
           .gte("match_date", today)
           .or(`home_team.ilike.%${club}%,away_team.ilike.%${club}%`)
           .order("match_date", { ascending: true })
-          .limit(1);
-        if (data && data.length > 0) fixtureData = data[0];
+          .order("match_time", { ascending: true })
+          .limit(30);
+
+        fixtureData = (data || []).find((fixture: any) => getFixtureKickoff(fixture) > nowDate) || null;
       }
-      
-      if (fixtureData) {
-        setNextFixture(fixtureData);
-        
-        // Fetch pre-match analysis linked to this fixture
-        const { data: preMatch } = await supabase
-          .from("analyses")
-          .select("id, home_team, away_team")
-          .eq("analysis_type", "pre-match")
-          .eq("fixture_id", fixtureData.id)
-          .limit(1);
-        
-        if (preMatch && preMatch.length > 0) {
-          setPreMatchAnalysis({
-            id: preMatch[0].id,
-            home_team: preMatch[0].home_team || "",
-            away_team: preMatch[0].away_team || "",
-          });
-        }
+
+      if (!fixtureData) {
+        setNextFixture(null);
+        setPreMatchAnalysis(null);
+        return;
+      }
+
+      setNextFixture(fixtureData);
+
+      // Fetch pre-match analysis linked to this fixture
+      const { data: preMatch } = await supabase
+        .from("analyses")
+        .select("id, home_team, away_team")
+        .eq("analysis_type", "pre-match")
+        .eq("fixture_id", fixtureData.id)
+        .limit(1);
+
+      if (preMatch && preMatch.length > 0) {
+        setPreMatchAnalysis({
+          id: preMatch[0].id,
+          home_team: preMatch[0].home_team || "",
+          away_team: preMatch[0].away_team || "",
+        });
+      } else {
+        setPreMatchAnalysis(null);
       }
     };
+
     fetchNext();
+    const refreshTimer = setInterval(fetchNext, 30000);
+    return () => clearInterval(refreshTimer);
   }, [playerData?.id, playerData?.current_club]);
 
   const imageUrls = React.useMemo(() => {
@@ -145,8 +166,9 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
   const navigate = useNavigate();
 
   const getEffectiveR90 = (a: PlayerAnalysis): number | null => {
-    if (a.visibility_status === "hidden" && a.placeholder_raw_score != null && a.placeholder_minutes) {
-      return (a.placeholder_raw_score / a.placeholder_minutes) * 90;
+    const isHidden = String(a.visibility_status || "").toLowerCase() === "hidden";
+    if (isHidden && a.placeholder_raw_score != null && (a.placeholder_minutes ?? 0) > 0) {
+      return (a.placeholder_raw_score / a.placeholder_minutes!) * 90;
     }
     return a.r90_score;
   };
@@ -227,9 +249,6 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
               )}
               {stats.xA_adj_per90 !== undefined && (
                 <div className="text-xs text-white/70">xA (adj): {stats.xA_adj_per90.toFixed(2)}</div>
-              )}
-              {stats.xGChain_per90 !== undefined && (
-                <div className="text-xs text-white/70">xGChain: {stats.xGChain_per90.toFixed(2)}</div>
               )}
               {stats.regains_adj_per90 !== undefined && (
                 <div className="text-xs text-white/70">Regains (adj): {stats.regains_adj_per90.toFixed(2)}</div>

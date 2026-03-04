@@ -67,6 +67,9 @@ interface Analysis {
   analysis_writer_id?: string | null;
   analysis_writer_data?: any;
   striker_stats?: any;
+  visibility_status?: string;
+  placeholder_raw_score?: number | null;
+  placeholder_minutes?: number | null;
   tagged_analyses?: any[];
 }
 
@@ -1003,42 +1006,7 @@ const Dashboard = () => {
 
       if (analysisError) throw analysisError;
       
-      // Calculate xGChain for analyses based on actions (always derived from actions)
-      const analysesWithXGChain = await Promise.all(
-        (analysisData || []).map(async (analysis) => {
-          const strikerStats = (analysis.striker_stats || {}) as any;
-
-          // Fetch performance actions and calculate xGChain
-          const { data: actions } = await supabase
-            .from('performance_report_actions')
-            .select('action_score')
-            .eq('analysis_id', analysis.id);
-          
-          if (actions && actions.length > 0 && analysis.minutes_played) {
-            // Sum only positive action scores
-            const xgChain = actions.reduce((sum, action) => {
-              const score = action.action_score ?? 0;
-              return score > 0 ? sum + score : sum;
-            }, 0);
-            
-            const xgChainPer90 = (xgChain / analysis.minutes_played) * 90;
-            
-            // Add calculated xGChain to striker_stats (override any stored values)
-            return {
-              ...analysis,
-              striker_stats: {
-                ...strikerStats,
-                xGChain: xgChain,
-                xGChain_per90: xgChainPer90,
-              },
-            };
-          }
-          
-          return analysis;
-        })
-      );
-
-      setAnalyses(analysesWithXGChain);
+      setAnalyses(analysisData || []);
 
       // Fetch all concepts from coaching_analysis (available to all players)
       const { data: conceptsData, error: conceptsError } = await supabase
@@ -1066,7 +1034,7 @@ const Dashboard = () => {
       }
 
       // Fetch all analyses (pre-match, post-match) linked to this player
-      let latestAnalyses = [...(analysesWithXGChain || analysisData || [])] as Analysis[];
+      let latestAnalyses = [...(analysisData || [])] as Analysis[];
       const linkedAnalysisIds = (analysisData || [])
         .filter(a => a.analysis_writer_id)
         .map(a => a.analysis_writer_id);
@@ -1948,28 +1916,42 @@ const Dashboard = () => {
                                       )}
                                     </>
                                   )}
-                                  {analysis.minutes_played !== null && (
-                                    <span className="text-xs text-muted-foreground">
-                                      • {analysis.minutes_played}'
-                                    </span>
-                                  )}
+                                  {(() => {
+                                    const isHidden = String(analysis.visibility_status || "").toLowerCase() === "hidden";
+                                    const effectiveMinutes = isHidden && (analysis.placeholder_minutes ?? 0) > 0
+                                      ? analysis.placeholder_minutes
+                                      : analysis.minutes_played;
+
+                                    return effectiveMinutes !== null && effectiveMinutes !== undefined ? (
+                                      <span className="text-xs text-muted-foreground">• {effectiveMinutes}'</span>
+                                    ) : null;
+                                  })()}
                                 </div>
                               </div>
 
                               {/* Line 2: Buttons - Order: R90, PRE, POST */}
                               <div className="flex items-center gap-2 flex-wrap">
-                                {analysis.r90_score !== null && analysis.r90_score !== undefined && (
-                                  <button
-                                    onClick={() => {
-                                      setSelectedReportAnalysisId(analysis.id);
-                                      setPerformanceReportDialogOpen(true);
-                                    }}
-                                    className={`${getR90Color(analysis.r90_score)} text-white px-3 py-1.5 rounded text-sm font-bold hover:opacity-80 transition-opacity cursor-pointer`}
-                                  >
-                                    R90: {analysis.r90_score.toFixed(2)}
-                                  </button>
-                                )}
-                                
+                                {(() => {
+                                  const isHidden = String(analysis.visibility_status || "").toLowerCase() === "hidden";
+                                  const effectiveR90 = isHidden && analysis.placeholder_raw_score != null && (analysis.placeholder_minutes ?? 0) > 0
+                                    ? (analysis.placeholder_raw_score / analysis.placeholder_minutes) * 90
+                                    : analysis.r90_score;
+
+                                  if (effectiveR90 === null || effectiveR90 === undefined) return null;
+
+                                  return (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedReportAnalysisId(analysis.id);
+                                        setPerformanceReportDialogOpen(true);
+                                      }}
+                                      className={`${getR90Color(effectiveR90)} text-white px-3 py-1.5 rounded text-sm font-bold hover:opacity-80 transition-opacity cursor-pointer`}
+                                    >
+                                      R90: {effectiveR90.toFixed(2)}
+                                    </button>
+                                  );
+                                })()}
+
                                 {/* Pre-match buttons first */}
                                 {analysis.analysis_writer_data?.analysis_type === "pre-match" && (
                                   <Button 

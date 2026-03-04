@@ -16,37 +16,57 @@ export const NextFixtureCountdown = ({ playerName }: NextFixtureCountdownProps) 
   const [preMatchAnalysis, setPreMatchAnalysis] = useState<{ id: string; home_team: string; away_team: string } | null>(null);
   const [now, setNow] = useState(new Date());
 
+  const getFixtureKickoff = (fixture: { match_date: string; match_time?: string | null }) => {
+    const [year, month, day] = fixture.match_date.split("-").map(Number);
+    const timeValue = fixture.match_time && fixture.match_time.trim() ? fixture.match_time : "23:59";
+    const [hours, mins] = timeValue.split(":").map(Number);
+    return new Date(year, (month || 1) - 1, day || 1, hours || 0, mins || 0, 0, 0);
+  };
+
   useEffect(() => {
     const fetchNext = async () => {
-      const today = new Date().toISOString().split("T")[0];
+      const nowDate = new Date();
+      const today = nowDate.toISOString().split("T")[0];
+
       const { data } = await supabase
         .from("fixtures")
         .select("id, match_date, match_time, home_team, away_team, venue")
         .gte("match_date", today)
         .order("match_date", { ascending: true })
+        .order("match_time", { ascending: true })
+        .limit(30);
+
+      const upcomingFixture = (data || []).find((fixture) => getFixtureKickoff(fixture) > nowDate) || null;
+
+      if (!upcomingFixture) {
+        setNextFixture(null);
+        setPreMatchAnalysis(null);
+        return;
+      }
+
+      setNextFixture(upcomingFixture);
+
+      const { data: preMatch } = await supabase
+        .from("analyses")
+        .select("id, home_team, away_team")
+        .eq("analysis_type", "pre-match")
+        .eq("fixture_id", upcomingFixture.id)
         .limit(1);
 
-      if (data && data.length > 0) {
-        setNextFixture(data[0]);
-        
-        // Fetch pre-match analysis linked to this fixture
-        const { data: preMatch } = await supabase
-          .from("analyses")
-          .select("id, home_team, away_team")
-          .eq("analysis_type", "pre-match")
-          .eq("fixture_id", data[0].id)
-          .limit(1);
-        
-        if (preMatch && preMatch.length > 0) {
-          setPreMatchAnalysis({
-            id: preMatch[0].id,
-            home_team: preMatch[0].home_team || "",
-            away_team: preMatch[0].away_team || "",
-          });
-        }
+      if (preMatch && preMatch.length > 0) {
+        setPreMatchAnalysis({
+          id: preMatch[0].id,
+          home_team: preMatch[0].home_team || "",
+          away_team: preMatch[0].away_team || "",
+        });
+      } else {
+        setPreMatchAnalysis(null);
       }
     };
+
     fetchNext();
+    const refreshTimer = setInterval(fetchNext, 30000);
+    return () => clearInterval(refreshTimer);
   }, []);
 
   // Tick every second
@@ -57,14 +77,11 @@ export const NextFixtureCountdown = ({ playerName }: NextFixtureCountdownProps) 
 
   const countdown = useMemo(() => {
     if (!nextFixture) return null;
-    let target: Date;
-    if (nextFixture.match_time) {
-      const [hours, mins] = nextFixture.match_time.split(":").map(Number);
-      target = new Date(nextFixture.match_date);
-      target.setHours(hours || 0, mins || 0, 0, 0);
-    } else {
-      target = new Date(nextFixture.match_date);
-    }
+    const [year, month, day] = nextFixture.match_date.split("-").map(Number);
+    const timeValue = nextFixture.match_time && nextFixture.match_time.trim() ? nextFixture.match_time : "23:59";
+    const [kickoffHours, kickoffMins] = timeValue.split(":").map(Number);
+    const target = new Date(year, (month || 1) - 1, day || 1, kickoffHours || 0, kickoffMins || 0, 0, 0);
+
     const diff = target.getTime() - now.getTime();
     if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, passed: true };
 

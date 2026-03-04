@@ -35,7 +35,6 @@ const STAT_DEFS = [
   { key: 'xA_adj_per90', label: 'xA (p90)' },
   { key: 'regains_adj_per90', label: 'Regains (p90)' },
   { key: 'interceptions_per90', label: 'Interceptions (p90)' },
-  { key: 'xGChain_per90', label: 'xG Chain (p90)' },
   { key: 'progressive_passes_adj_per90', label: 'Prog. Passes (p90)' },
   { key: 'dribbles_per90', label: 'Dribbles (p90)' },
   { key: 'turnovers_adj_per90', label: 'Turnovers (p90)' },
