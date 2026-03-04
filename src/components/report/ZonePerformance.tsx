@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Grid3X3 } from "lucide-react";
+import { Grid3X3, LayoutGrid } from "lucide-react";
 
 interface ZoneAction {
   action_score: number;
@@ -46,7 +45,6 @@ const getScoreBgColor = (avg: number): string => {
 export const ZonePerformance = ({ actions }: ZonePerformanceProps) => {
   const [showSubZones, setShowSubZones] = useState(false);
 
-  // Calculate average score per zone and per sub-zone
   const { zoneAvg, subZoneAvg, zoneCount } = useMemo(() => {
     const zoneTotals: Record<number, { sum: number; count: number }> = {};
     const subTotals: Record<string, { sum: number; count: number }> = {};
@@ -55,11 +53,9 @@ export const ZonePerformance = ({ actions }: ZonePerformanceProps) => {
       if (a.zone_details && Array.isArray(a.zone_details) && a.zone_details.length > 0) {
         for (const zp of a.zone_details) {
           if (zp.zone < 1 || zp.zone > 18) continue;
-          // Zone level
           if (!zoneTotals[zp.zone]) zoneTotals[zp.zone] = { sum: 0, count: 0 };
           zoneTotals[zp.zone].sum += a.action_score;
           zoneTotals[zp.zone].count++;
-          // Sub-zone level
           if (zp.sub && zp.sub >= 1 && zp.sub <= 9) {
             const key = `${zp.zone}.${zp.sub}`;
             if (!subTotals[key]) subTotals[key] = { sum: 0, count: 0 };
@@ -103,15 +99,26 @@ export const ZonePerformance = ({ actions }: ZonePerformanceProps) => {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold">Zone Performance</h4>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-xs gap-1"
+        {/* Slider toggle between 18 and 162 */}
+        <div
+          className="relative flex items-center bg-muted rounded-full p-0.5 cursor-pointer w-[72px] h-7"
           onClick={() => setShowSubZones(!showSubZones)}
+          title={showSubZones ? "Switch to at-a-glance (18 zones)" : "Switch to in-depth (162 zones)"}
         >
-          <Grid3X3 className="h-3 w-3" />
-          {showSubZones ? "18 Zones" : "162 Zones"}
-        </Button>
+          <div
+            className={`absolute top-0.5 h-6 w-[34px] rounded-full bg-primary transition-all duration-200 ${
+              showSubZones ? "left-[36px]" : "left-0.5"
+            }`}
+          />
+          <div className="relative z-10 flex w-full">
+            <div className={`flex-1 flex items-center justify-center ${!showSubZones ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
+              <LayoutGrid className="h-3.5 w-3.5" />
+            </div>
+            <div className={`flex-1 flex items-center justify-center ${showSubZones ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
+              <Grid3X3 className="h-3.5 w-3.5" />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="relative border border-border/50 rounded-md overflow-hidden bg-green-900/20">
@@ -120,70 +127,84 @@ export const ZonePerformance = ({ actions }: ZonePerformanceProps) => {
         </div>
 
         {showSubZones ? (
-          /* 162-zone view: each major zone contains a 3x3 sub-grid, colour-coded only */
-          <div className="grid grid-rows-6 gap-px p-1">
-            {ZONE_GRID.map((row, ri) => (
-              <div key={ri} className="grid grid-cols-3 gap-px">
-                {row.map(zone => (
-                  <div key={zone} className="border border-border/20 rounded-sm overflow-hidden">
-                    <div className="grid grid-rows-3 gap-0">
-                      {SUB_GRID.map((subRow, sri) => (
-                        <div key={sri} className="grid grid-cols-3 gap-0">
-                          {subRow.map(sub => {
-                            const key = `${zone}.${sub}`;
-                            const avg = subZoneAvg[key];
-                            const hasValue = avg !== undefined;
-                            return (
-                              <div
-                                key={sub}
-                                className={`aspect-square flex items-center justify-center ${
-                                  hasValue ? getScoreBgColor(avg) : 'bg-green-900/30'
-                                }`}
-                                title={hasValue ? `Zone ${zone}.${sub}: avg ${avg.toFixed(3)}` : `Zone ${zone}.${sub}`}
-                              >
-                                {/* No text on sub-zone view, just colours */}
-                              </div>
-                            );
-                          })}
+          /* 162-zone view with pitch markings */
+          <div className="relative">
+            {/* Halfway line between row 3 and 4 (zones 7-9 and 10-12) */}
+            <div className="grid grid-rows-6 gap-px p-1 relative">
+              {ZONE_GRID.map((row, ri) => (
+                <div key={ri} className="relative">
+                  {/* Halfway line after row index 2 (between zones 10-12 and 7-9) */}
+                  {ri === 3 && (
+                    <div className="absolute -top-[1px] left-0 right-0 h-[2px] bg-white/30 z-10" />
+                  )}
+                  <div className="grid grid-cols-3 gap-px">
+                    {row.map(zone => (
+                      <div key={zone} className="border border-white/10 rounded-sm overflow-hidden">
+                        <div className="grid grid-rows-3 gap-0">
+                          {SUB_GRID.map((subRow, sri) => (
+                            <div key={sri} className="grid grid-cols-3 gap-0">
+                              {subRow.map(sub => {
+                                const key = `${zone}.${sub}`;
+                                const avg = subZoneAvg[key];
+                                const hasValue = avg !== undefined;
+                                return (
+                                  <div
+                                    key={sub}
+                                    className={`aspect-square flex items-center justify-center ${
+                                      hasValue ? getScoreBgColor(avg) : 'bg-green-900/30'
+                                    }`}
+                                    title={hasValue ? `Zone ${zone}.${sub}: avg ${avg.toFixed(3)}` : `Zone ${zone}.${sub}`}
+                                  />
+                                );
+                              })}
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            ))}
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           /* 18-zone view with R90 scores */
-          <div className="grid grid-rows-6 gap-1 p-1.5">
-            {ZONE_GRID.map((row, ri) => (
-              <div key={ri} className="grid grid-cols-3 gap-1">
-                {row.map(zone => {
-                  const avg = zoneAvg[zone];
-                  const count = zoneCount[zone] || 0;
-                  const hasValue = avg !== undefined;
-                  return (
-                    <div
-                      key={zone}
-                      className={`flex flex-col items-center justify-center py-3 rounded-sm transition-all ${
-                        hasValue ? getScoreBgColor(avg) : 'bg-green-900/30 text-muted-foreground'
-                      }`}
-                      title={hasValue ? `Zone ${zone}: avg ${avg.toFixed(3)} (${count} actions)` : `Zone ${zone}`}
-                    >
-                      <span className="text-[10px] opacity-70">{zone}</span>
-                      {hasValue ? (
-                        <>
-                          <span className="text-sm font-bold">{avg.toFixed(3)}</span>
-                          <span className="text-[8px] opacity-70">{count} action{count !== 1 ? 's' : ''}</span>
-                        </>
-                      ) : (
-                        <span className="text-[9px]">-</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+          <div className="relative">
+            {/* Halfway line */}
+            <div className="grid grid-rows-6 gap-1 p-1.5">
+              {ZONE_GRID.map((row, ri) => (
+                <div key={ri} className="relative">
+                  {ri === 3 && (
+                    <div className="absolute -top-[3px] left-0 right-0 h-[2px] bg-white/30 z-10" />
+                  )}
+                  <div className="grid grid-cols-3 gap-1">
+                    {row.map(zone => {
+                      const avg = zoneAvg[zone];
+                      const count = zoneCount[zone] || 0;
+                      const hasValue = avg !== undefined;
+                      return (
+                        <div
+                          key={zone}
+                          className={`flex flex-col items-center justify-center py-3 rounded-sm transition-all ${
+                            hasValue ? getScoreBgColor(avg) : 'bg-green-900/30 text-muted-foreground'
+                          }`}
+                          title={hasValue ? `Zone ${zone}: avg ${avg.toFixed(3)} (${count} actions)` : `Zone ${zone}`}
+                        >
+                          {hasValue ? (
+                            <>
+                              <span className="text-sm font-bold">{avg.toFixed(3)}</span>
+                              <span className="text-[8px] opacity-70">{count} action{count !== 1 ? 's' : ''}</span>
+                            </>
+                          ) : (
+                            <span className="text-[9px]">-</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
