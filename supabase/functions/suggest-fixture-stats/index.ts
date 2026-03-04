@@ -27,7 +27,7 @@ serve(async (req) => {
     const actionsText = actions
       .map(
         (a: any, i: number) =>
-          `Action #${a.action_number || i + 1} (min ${a.minute || "?"}, score ${a.action_score || "?"}): [${a.action_type || "unknown"}] ${a.action_description || ""} ${a.notes ? "— " + a.notes : ""}`
+          `Action #${a.action_number || i + 1} (min ${a.minute || "?"}, score ${a.action_score || "?"}, zone ${a.zone || "?"}): [${a.action_type || "unknown"}] ${a.action_description || ""} ${a.notes ? "— " + a.notes : ""}`
       )
       .join("\n");
 
@@ -41,6 +41,22 @@ serve(async (req) => {
 
     const systemPrompt = `You are a football performance analyst. Given a list of match actions from a player's performance report, suggest raw match totals for EVERY stat category provided.
 
+PITCH ZONE SYSTEM:
+Each action may have a zone (1-18) indicating where on the pitch it occurred:
+- Zones 1-3: Defensive box area (own penalty area)
+- Zones 4-6: Deep defensive (own half, behind halfway)
+- Zones 7-9: Own half (approaching halfway line)
+- Zones 10-12: Opposition half (just past halfway)
+- Zones 13-15: Final third (approaching opposition box)
+- Zones 16-18: Opposition box area (opposition penalty area)
+- Columns: Left (1,4,7,10,13,16), Centre (2,5,8,11,14,17), Right (3,6,9,12,15,18)
+
+Use zone data to inform your analysis. For example:
+- "touches_in_box" should count actions in zones 16-18
+- Defensive actions (tackles, interceptions, clearances) are more likely in zones 1-9
+- Progressive carries/passes move the ball from lower zones to higher zones
+- Shots typically occur in zones 13-18
+
 CRITICAL RULES:
 - You MUST provide a suggestion for EVERY stat listed below. Do not skip any.
 - Be LENIENT and INCLUSIVE. When in doubt, include the action as contributing to a stat.
@@ -53,7 +69,7 @@ CRITICAL RULES:
 - For npxG/xA: estimate reasonable values based on the quality of chances described (these are decimal scores, not counts).
 - For percentage stats (on_target_pct, pass_accuracy_pct, etc): estimate a percentage value.
 - For dribbles: count actions where the player takes on/beats an opponent.
-- For touches in box: count actions occurring in the opposition penalty area.
+- For touches in box: count actions occurring in zones 16-18 (opposition penalty area).
 - For fouls drawn: count actions where the player wins a foul.
 - For aerial duels/duels: count physical contest actions.
 - For key passes: count passes that create a chance.
