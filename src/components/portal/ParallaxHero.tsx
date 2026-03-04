@@ -64,15 +64,12 @@ export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName
 
   const countdown = useMemo(() => {
     if (!nextFixture) return null;
-    // Build target date+time
-    let target: Date;
-    if (nextFixture.match_time) {
-      const [hours, mins] = nextFixture.match_time.split(":").map(Number);
-      target = new Date(nextFixture.match_date);
-      target.setHours(hours || 0, mins || 0, 0, 0);
-    } else {
-      target = new Date(nextFixture.match_date);
-    }
+
+    const [year, month, day] = nextFixture.match_date.split("-").map(Number);
+    const timeValue = nextFixture.match_time && nextFixture.match_time.trim() ? nextFixture.match_time : "23:59";
+    const [kickoffHours, kickoffMins] = timeValue.split(":").map(Number);
+    const target = new Date(year, (month || 1) - 1, day || 1, kickoffHours || 0, kickoffMins || 0, 0, 0);
+
     const diff = target.getTime() - now.getTime();
     if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, passed: true };
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
