@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PlayerLink {
   name: string;
@@ -100,7 +101,6 @@ export const usePlayerNames = () => {
   React.useEffect(() => {
     const fetchPlayers = async () => {
       try {
-        const { supabase } = await import('@/integrations/supabase/client');
         const { data } = await supabase
           .from('players')
           .select('name')
