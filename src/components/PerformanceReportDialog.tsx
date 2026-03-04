@@ -582,7 +582,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
             </div>
           ) : !analysis ? (
             <div className="text-center py-8 text-muted-foreground">Performance report not found</div>
-          ) : isPortalView && analysis.visibility_status === "hidden" ? (
+          ) : analysis.visibility_status === "hidden" ? (
             <div className="text-center py-12 space-y-6">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-2">
                 <Lock className="w-8 h-8 text-muted-foreground" />

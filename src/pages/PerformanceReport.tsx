@@ -412,7 +412,7 @@ const PerformanceReport = () => {
         </div>
 
         {/* Visibility: Hidden - show placeholder stats */}
-        {!isAuthenticated && analysis.visibility_status === "hidden" ? (
+        {analysis.visibility_status === "hidden" ? (
           <div className="text-center py-16 space-y-6">
             {analysis.placeholder_raw_score != null && analysis.placeholder_minutes ? (
               <div className="grid grid-cols-3 gap-4 max-w-md mx-auto p-4 bg-accent/20 rounded-lg">
