@@ -20,6 +20,7 @@ import { ChanceCreationFlow } from "@/components/report/ChanceCreationFlow";
 import { RankedActionsPlayer } from "@/components/report/RankedActionsPlayer";
 import { toTitleCase } from "@/lib/titleCase";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { sortActionsByMinute } from "@/lib/actionSorting";
 
 const formatMinute = (minute: number | null | undefined): string => {
   if (minute === null || minute === undefined) return "-";
@@ -134,7 +135,7 @@ const PerformanceReport = () => {
       });
 
       if (actionsResult.error) throw actionsResult.error;
-      setActions(actionsResult.data || []);
+      setActions(sortActionsByMinute(actionsResult.data || []));
     } catch (error: any) {
       console.error("Error fetching performance data:", error);
       toast.error("Failed to load performance report");

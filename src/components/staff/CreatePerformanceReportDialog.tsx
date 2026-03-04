@@ -31,6 +31,7 @@ import { FixtureStatsEditor, UNIFIED_TO_FIXTURE_MAP, FIXTURE_TO_UNIFIED_MAP } fr
 import { InlineFixtureCreator } from "./InlineFixtureCreator";
 import { logActivity } from "@/lib/activityLogger";
 import { ReportLanguageSelector } from "./ReportLanguageSelector";
+import { parseMinuteToSeconds } from "@/lib/actionSorting";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -38,6 +39,14 @@ const formatMinuteForInput = (minute: number | null): string => {
   const minPart = Math.floor(minute);
   const secPart = Math.round((minute - minPart) * 100);
   return `${minPart}.${secPart.toString().padStart(2, '0')}`;
+};
+
+// Sort actions chronologically by game time, keeping empty-minute actions at end
+const sortActionsChronologically = (actions: PerformanceAction[]): PerformanceAction[] => {
+  const sorted = [...actions].sort((a, b) => parseMinuteToSeconds(a.minute) - parseMinuteToSeconds(b.minute));
+  // Renumber after sort
+  sorted.forEach((action, i) => { action.action_number = i + 1; });
+  return sorted;
 };
 
 interface CreatePerformanceReportDialogProps {
@@ -1011,8 +1020,7 @@ export const CreatePerformanceReportDialog = ({
       if (actionsError) throw actionsError;
 
       if (actionsData && actionsData.length > 0) {
-        setActions(
-          actionsData.map((action) => ({
+        const mappedActions = actionsData.map((action) => ({
             id: action.id,
             action_number: action.action_number,
             minute: formatMinuteForInput(action.minute),
@@ -1022,8 +1030,8 @@ export const CreatePerformanceReportDialog = ({
             notes: action.notes || "",
             video_url: action.video_url || null,
             recorded_stat: action.recorded_stat as unknown as RecordedStat | null,
-          }))
-        );
+          }));
+        setActions(sortActionsChronologically(mappedActions));
         
         // R90 scores are now fetched once and filtered locally - no per-action fetching needed
       }
@@ -1091,8 +1099,7 @@ export const CreatePerformanceReportDialog = ({
       if (error) throw error;
 
       if (actionsData && actionsData.length > 0) {
-        setActions(
-          actionsData.map((action) => ({
+        const mappedActions = actionsData.map((action) => ({
             id: action.id,
             action_number: action.action_number,
             minute: formatMinuteForInput(action.minute),
@@ -1100,8 +1107,8 @@ export const CreatePerformanceReportDialog = ({
             action_type: action.action_type || "",
             action_description: action.action_description || "",
             notes: action.notes || "",
-          }))
-        );
+          }));
+        setActions(sortActionsChronologically(mappedActions));
       }
     } catch (error: any) {
       console.error("Error refreshing actions:", error);
@@ -1168,7 +1175,13 @@ export const CreatePerformanceReportDialog = ({
   const updateAction = async (index: number, field: keyof PerformanceAction, value: string | RecordedStat | RecordedStat[] | null) => {
     const newActions = [...actions];
     newActions[index] = { ...newActions[index], [field]: value };
-    setActions(newActions);
+    
+    // When minute is set/changed, re-sort all actions chronologically
+    if (field === 'minute' && typeof value === 'string' && value.trim() !== '') {
+      setActions(sortActionsChronologically(newActions));
+    } else {
+      setActions(newActions);
+    }
   };
 
   // Extract keywords from description for better matching

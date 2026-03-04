@@ -15,6 +15,7 @@ import { ActionHeatmap } from "@/components/report/ActionHeatmap";
 import { ChanceCreationFlow } from "@/components/report/ChanceCreationFlow";
 import { RankedActionsPlayer } from "@/components/report/RankedActionsPlayer";
 import { toTitleCase } from "@/lib/titleCase";
+import { sortActionsByMinute } from "@/lib/actionSorting";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -137,7 +138,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
       });
 
       if (actionsResult.error) throw actionsResult.error;
-      setActions(actionsResult.data || []);
+      setActions(sortActionsByMinute(actionsResult.data || []));
       
       // Mark this ID as prefetched
       setPrefetchedId(id);
