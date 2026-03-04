@@ -15,37 +15,58 @@ const WIDTH = 300;
 const HEIGHT = 450;
 
 // Major zone grid: 3 cols x 6 rows
-// Each major zone is 100w x 75h (approx)
-const ZONE_W = (WIDTH - 20) / 3;   // ~93
-const ZONE_H = (HEIGHT - 20) / 6;  // ~72
+const ZONE_W = (WIDTH - 20) / 3;
+const ZONE_H = (HEIGHT - 20) / 6;
 
 // Get pixel position for a zone + optional sub-zone
 const getPosition = (zone: number, sub?: number): { x: number; y: number } => {
-  // Zone 1 = bottom-left, zone 18 = top-right
-  const col = (zone - 1) % 3;        // 0, 1, 2
-  const row = Math.floor((zone - 1) / 3); // 0-5 (0=bottom)
+  const col = (zone - 1) % 3;
+  const row = Math.floor((zone - 1) / 3);
 
   const majorX = 10 + col * ZONE_W + ZONE_W / 2;
   const majorY = HEIGHT - 10 - row * ZONE_H - ZONE_H / 2;
 
   if (!sub || sub < 1 || sub > 9) return { x: majorX, y: majorY };
 
-  // Sub-zone offsets within the major zone
-  const subCol = (sub - 1) % 3;        // 0, 1, 2
-  const subRow = Math.floor((sub - 1) / 3); // 0-2 (0=bottom)
+  const subCol = (sub - 1) % 3;
+  const subRow = Math.floor((sub - 1) / 3);
   const subOffsetX = (subCol - 1) * (ZONE_W / 3.5);
   const subOffsetY = -(subRow - 1) * (ZONE_H / 3.5);
 
   return { x: majorX + subOffsetX, y: majorY + subOffsetY };
 };
 
+// Interpolate colour from yellow -> orange -> red based on intensity 0-1
+const getHeatColor = (intensity: number): string => {
+  if (intensity <= 0.33) {
+    // yellow to orange
+    const t = intensity / 0.33;
+    const r = 255;
+    const g = Math.round(220 - t * 50);
+    const b = 0;
+    return `${r}, ${g}, ${b}`;
+  } else if (intensity <= 0.66) {
+    // orange to red-orange
+    const t = (intensity - 0.33) / 0.33;
+    const r = 255;
+    const g = Math.round(170 - t * 120);
+    const b = 0;
+    return `${r}, ${g}, ${b}`;
+  } else {
+    // red-orange to deep red
+    const t = (intensity - 0.66) / 0.34;
+    const r = Math.round(255 - t * 55);
+    const g = Math.round(50 - t * 50);
+    const b = 0;
+    return `${r}, ${g}, ${b}`;
+  }
+};
+
 export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
   const heatmapData = useMemo(() => {
-    // Collect all zone points from all actions
     const points: { x: number; y: number }[] = [];
 
     for (const a of actions) {
-      // Prefer zone_details if available
       if (a.zone_details && Array.isArray(a.zone_details) && a.zone_details.length > 0) {
         for (const zp of a.zone_details) {
           if (zp.zone >= 1 && zp.zone <= 18) {
@@ -59,16 +80,16 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
 
     if (points.length === 0) return null;
 
-    // Cluster nearby points into heat blobs using a simple grid binning
-    const GRID_SIZE = 25;
-    const bins: Record<string, { x: number; y: number; count: number; totalX: number; totalY: number }> = {};
+    // Grid-bin points for density
+    const GRID_SIZE = 22;
+    const bins: Record<string, { count: number; totalX: number; totalY: number }> = {};
 
     for (const p of points) {
       const bx = Math.floor(p.x / GRID_SIZE);
       const by = Math.floor(p.y / GRID_SIZE);
       const key = `${bx},${by}`;
       if (!bins[key]) {
-        bins[key] = { x: 0, y: 0, count: 0, totalX: 0, totalY: 0 };
+        bins[key] = { count: 0, totalX: 0, totalY: 0 };
       }
       bins[key].count++;
       bins[key].totalX += p.x;
@@ -110,12 +131,13 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
           <defs>
             {heatmapData.blobs.map((blob, i) => {
               const intensity = blob.count / heatmapData.maxCount;
+              const rgb = getHeatColor(intensity);
               return (
                 <radialGradient key={`grad-${i}`} id={`heat-${i}`} cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor={`rgba(255, 50, 0, ${0.3 + intensity * 0.55})`} />
-                  <stop offset="40%" stopColor={`rgba(255, 120, 0, ${0.15 + intensity * 0.35})`} />
-                  <stop offset="70%" stopColor={`rgba(255, 200, 0, ${0.05 + intensity * 0.15})`} />
-                  <stop offset="100%" stopColor="rgba(255, 200, 0, 0)" />
+                  <stop offset="0%" stopColor={`rgba(${rgb}, ${0.4 + intensity * 0.5})`} />
+                  <stop offset="35%" stopColor={`rgba(${rgb}, ${0.25 + intensity * 0.35})`} />
+                  <stop offset="65%" stopColor={`rgba(${rgb}, ${0.08 + intensity * 0.15})`} />
+                  <stop offset="100%" stopColor={`rgba(${rgb}, 0)`} />
                 </radialGradient>
               );
             })}
@@ -138,10 +160,10 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
           <rect x="60" y={HEIGHT - 65} width="180" height="55" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
           <rect x="100" y={HEIGHT - 35} width="100" height="25" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="0.5" />
           
-          {/* Heatmap blobs */}
+          {/* Heatmap blobs - larger radii for better connectivity */}
           {heatmapData.blobs.map((blob, i) => {
             const intensity = blob.count / heatmapData.maxCount;
-            const radius = 35 + intensity * 40;
+            const radius = 45 + intensity * 50;
             return (
               <ellipse
                 key={`blob-${i}`}
@@ -154,22 +176,6 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
               />
             );
           })}
-          
-          {/* Count labels */}
-          {heatmapData.blobs.map((blob, i) => (
-            <text
-              key={`label-${i}`}
-              x={blob.x}
-              y={blob.y + 4}
-              textAnchor="middle"
-              fill="white"
-              fontSize="11"
-              fontWeight="bold"
-              style={{ textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}
-            >
-              {blob.count}
-            </text>
-          ))}
           
           {/* Direction labels */}
           <text x={WIDTH / 2} y={HEIGHT - 2} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="7">
