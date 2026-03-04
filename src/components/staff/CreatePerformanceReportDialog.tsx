@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown, ChevronsUpDown, Check } from "lucide-react";
+import { VisibilityStatusButton, VisibilityStatus } from "./VisibilityStatusButton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { toTitleCase } from "@/lib/titleCase";
@@ -153,6 +154,9 @@ export const CreatePerformanceReportDialog = ({
   const [dragOverAction, setDragOverAction] = useState<number | null>(null);
   const [dropUploading, setDropUploading] = useState<number | null>(null);
   const [reportLanguage, setReportLanguage] = useState("en");
+  const [visibilityStatus, setVisibilityStatus] = useState<VisibilityStatus>("draft");
+  const [placeholderRawScore, setPlaceholderRawScore] = useState("");
+  const [placeholderMinutes, setPlaceholderMinutes] = useState("");
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -754,6 +758,9 @@ export const CreatePerformanceReportDialog = ({
       setMinutesPlayed(analysisData.minutes_played?.toString() || "");
       setSelectedFixtureId(analysisData.fixture_id || "");
       setPerformanceOverview(analysisData.performance_overview || "");
+      setVisibilityStatus((analysisData as any).visibility_status || "draft");
+      setPlaceholderRawScore((analysisData as any).placeholder_raw_score?.toString() || "");
+      setPlaceholderMinutes((analysisData as any).placeholder_minutes?.toString() || "");
       setFixtureStats((analysisData.fixture_stats as Record<string, number>) || {});
       
       // Re-derive opponent from fixture data to reflect any changes to fixture
@@ -1277,7 +1284,10 @@ export const CreatePerformanceReportDialog = ({
             striker_stats: strikerStatsJson,
             fixture_stats: Object.keys(fixtureStats).length > 0 ? fixtureStats : null,
             performance_overview: performanceOverview || null,
-          })
+            visibility_status: visibilityStatus,
+            placeholder_raw_score: visibilityStatus === "hidden" && placeholderRawScore ? parseFloat(placeholderRawScore) : null,
+            placeholder_minutes: visibilityStatus === "hidden" && placeholderMinutes ? parseInt(placeholderMinutes) : null,
+          } as any)
           .eq("id", analysisId);
 
         if (analysisError) throw analysisError;
@@ -1338,7 +1348,10 @@ export const CreatePerformanceReportDialog = ({
             striker_stats: strikerStatsJson,
             fixture_stats: Object.keys(fixtureStats).length > 0 ? fixtureStats : null,
             performance_overview: performanceOverview || null,
-          })
+            visibility_status: visibilityStatus,
+            placeholder_raw_score: visibilityStatus === "hidden" && placeholderRawScore ? parseFloat(placeholderRawScore) : null,
+            placeholder_minutes: visibilityStatus === "hidden" && placeholderMinutes ? parseInt(placeholderMinutes) : null,
+          } as any)
           .select()
           .single();
 
@@ -2326,6 +2339,14 @@ export const CreatePerformanceReportDialog = ({
                 <Plus className="h-4 w-4 mr-2" />
                 Add Action
               </Button>
+              <VisibilityStatusButton
+                value={visibilityStatus}
+                onChange={setVisibilityStatus}
+                placeholderRawScore={placeholderRawScore}
+                placeholderMinutes={placeholderMinutes}
+                onPlaceholderRawScoreChange={setPlaceholderRawScore}
+                onPlaceholderMinutesChange={setPlaceholderMinutes}
+              />
               <Button onClick={handleSave} disabled={loading || deleting} className="w-full sm:w-auto">
                 {loading ? (analysisId ? "Updating..." : "Creating...") : (analysisId ? "Update Report" : "Create Report")}
               </Button>
@@ -2702,6 +2723,14 @@ export const CreatePerformanceReportDialog = ({
                   </AlertDialogContent>
                 </AlertDialog>
               )}
+              <VisibilityStatusButton
+                value={visibilityStatus}
+                onChange={setVisibilityStatus}
+                placeholderRawScore={placeholderRawScore}
+                placeholderMinutes={placeholderMinutes}
+                onPlaceholderRawScoreChange={setPlaceholderRawScore}
+                onPlaceholderMinutesChange={setPlaceholderMinutes}
+              />
               <Button onClick={handleSave} disabled={loading} size="sm">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                 {analysisId ? 'Update' : 'Create'} Report

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, TrendingUp, Edit, Eye, User } from "lucide-react";
+import { Plus, Search, TrendingUp, Edit, Eye, User, FileEdit, EyeOff, Radio } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { CreatePerformanceReportDialog } from "@/components/staff/CreatePerformanceReportDialog";
@@ -22,6 +22,7 @@ interface ActionReport {
   player_id: string;
   player_name?: string;
   player_image_url?: string;
+  visibility_status?: string;
 }
 
 interface ActionReportsListProps {
@@ -81,6 +82,7 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           minutes_played,
           result,
           player_id,
+          visibility_status,
           players!player_analysis_player_id_fkey (
             name,
             image_url
@@ -100,6 +102,7 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
         player_id: report.player_id,
         player_name: report.players?.name || "Unknown Player",
         player_image_url: report.players?.image_url || null,
+        visibility_status: report.visibility_status || "draft",
       }));
 
       setReports(formattedReports);
@@ -247,6 +250,16 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
                         )}
                       </div>
                       <span className="text-sm font-medium text-primary">{report.player_name}</span>
+                      {report.visibility_status && report.visibility_status !== "live" && (
+                        <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                          report.visibility_status === "draft" 
+                            ? "bg-yellow-500/20 text-yellow-400" 
+                            : "bg-red-500/20 text-red-400"
+                        }`}>
+                          {report.visibility_status === "draft" ? <FileEdit className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
+                          {report.visibility_status === "draft" ? "Draft" : "Hidden"}
+                        </span>
+                      )}
                     </div>
                     <h4 className="text-base md:text-lg font-semibold truncate">vs {report.opponent || "Unknown"}</h4>
                     <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm opacity-90 mt-1">

@@ -53,6 +53,9 @@ interface AnalysisDetails {
   player_name: string;
   striker_stats?: StrikerStats | null;
   performance_overview?: string | null;
+  visibility_status?: string;
+  placeholder_raw_score?: number | null;
+  placeholder_minutes?: number | null;
 }
 
 const PerformanceReport = () => {
@@ -125,6 +128,9 @@ const PerformanceReport = () => {
         player_name: analysisResult.data.players?.name || "Unknown Player",
         striker_stats: analysisResult.data.striker_stats as StrikerStats | null,
         performance_overview: analysisResult.data.performance_overview,
+        visibility_status: (analysisResult.data as any).visibility_status || "live",
+        placeholder_raw_score: (analysisResult.data as any).placeholder_raw_score,
+        placeholder_minutes: (analysisResult.data as any).placeholder_minutes,
       });
 
       if (actionsResult.error) throw actionsResult.error;
@@ -405,6 +411,36 @@ const PerformanceReport = () => {
           </div>
         </div>
 
+        {/* Visibility: Hidden - show only R90 score */}
+        {!isAuthenticated && analysis.visibility_status === "hidden" ? (
+          <div className="text-center py-16 space-y-4">
+            {analysis.placeholder_raw_score != null && analysis.placeholder_minutes ? (
+              <div className="space-y-2">
+                <p className="text-4xl font-bold">{((analysis.placeholder_raw_score / analysis.placeholder_minutes) * 90).toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">R90 Score</p>
+                <p className="text-xs text-muted-foreground">{analysis.placeholder_minutes} minutes played</p>
+              </div>
+            ) : analysis.r90_score != null ? (
+              <div className="space-y-2">
+                <p className="text-4xl font-bold">{analysis.r90_score.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">R90 Score</p>
+              </div>
+            ) : null}
+            <div className="bg-muted/50 rounded-lg p-6 max-w-sm mx-auto">
+              <p className="text-sm font-medium">This report is locked</p>
+              <p className="text-xs text-muted-foreground mt-1">Contact us to unlock the full performance breakdown.</p>
+            </div>
+          </div>
+        ) : (
+        <div className="relative">
+        {!isAuthenticated && analysis.visibility_status === "draft" && (
+          <div className="absolute inset-0 z-20 backdrop-blur-md bg-white/40 dark:bg-black/40 rounded-lg flex items-center justify-center">
+            <div className="text-center p-6 bg-background/90 rounded-xl border shadow-lg max-w-xs">
+              <p className="font-semibold text-sm">Report In Progress</p>
+              <p className="text-xs text-muted-foreground mt-1">This report is still being prepared. Check back soon.</p>
+            </div>
+          </div>
+        )}
         <div ref={contentRef} className="space-y-2 md:space-y-3 bg-background p-2 md:p-4 rounded-lg overflow-x-hidden">
           {/* Player Info */}
           <div className="flex flex-col gap-3">
@@ -717,6 +753,8 @@ const PerformanceReport = () => {
             </Card>
           )}
         </div>
+        </div>
+        )}
       </main>
 
       {!isAuthenticated && <div className="print:hidden"><Footer /></div>}

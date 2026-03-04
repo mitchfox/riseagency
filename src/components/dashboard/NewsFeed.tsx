@@ -97,9 +97,11 @@ export const NewsFeed = ({ playerId, playerName, onNavigateToAnalysis, onNavigat
           .eq("player_id", playerId)
           .not("r90_score", "is", null)
           .order("analysis_date", { ascending: false })
-          .limit(5);
+          .limit(5) as any;
+        
+        const liveReports = (reports || []).filter((r: any) => !r.visibility_status || r.visibility_status === "live");
 
-        reports?.forEach(r => {
+        liveReports?.forEach((r: any) => {
           feed.push({
             id: `report-${r.id}`,
             type: "report",
