@@ -14,11 +14,9 @@ interface PitchHeatmapProps {
 const WIDTH = 300;
 const HEIGHT = 450;
 
-// Major zone grid: 3 cols x 6 rows
 const ZONE_W = (WIDTH - 20) / 3;
 const ZONE_H = (HEIGHT - 20) / 6;
 
-// Get pixel position for a zone + optional sub-zone
 const getPosition = (zone: number, sub?: number): { x: number; y: number } => {
   const col = (zone - 1) % 3;
   const row = Math.floor((zone - 1) / 3);
@@ -36,29 +34,16 @@ const getPosition = (zone: number, sub?: number): { x: number; y: number } => {
   return { x: majorX + subOffsetX, y: majorY + subOffsetY };
 };
 
-// Interpolate colour from yellow -> orange -> red based on intensity 0-1
 const getHeatColor = (intensity: number): string => {
   if (intensity <= 0.33) {
-    // yellow to orange
     const t = intensity / 0.33;
-    const r = 255;
-    const g = Math.round(220 - t * 50);
-    const b = 0;
-    return `${r}, ${g}, ${b}`;
+    return `${255}, ${Math.round(220 - t * 50)}, 0`;
   } else if (intensity <= 0.66) {
-    // orange to red-orange
     const t = (intensity - 0.33) / 0.33;
-    const r = 255;
-    const g = Math.round(170 - t * 120);
-    const b = 0;
-    return `${r}, ${g}, ${b}`;
+    return `${255}, ${Math.round(170 - t * 120)}, 0`;
   } else {
-    // red-orange to deep red
     const t = (intensity - 0.66) / 0.34;
-    const r = Math.round(255 - t * 55);
-    const g = Math.round(50 - t * 50);
-    const b = 0;
-    return `${r}, ${g}, ${b}`;
+    return `${Math.round(255 - t * 55)}, ${Math.round(50 - t * 50)}, 0`;
   }
 };
 
@@ -80,7 +65,6 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
 
     if (points.length === 0) return null;
 
-    // Grid-bin points for density
     const GRID_SIZE = 22;
     const bins: Record<string, { count: number; totalX: number; totalY: number }> = {};
 
@@ -88,9 +72,7 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
       const bx = Math.floor(p.x / GRID_SIZE);
       const by = Math.floor(p.y / GRID_SIZE);
       const key = `${bx},${by}`;
-      if (!bins[key]) {
-        bins[key] = { count: 0, totalX: 0, totalY: 0 };
-      }
+      if (!bins[key]) bins[key] = { count: 0, totalX: 0, totalY: 0 };
       bins[key].count++;
       bins[key].totalX += p.x;
       bins[key].totalY += p.y;
@@ -103,8 +85,7 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
     }));
 
     const maxCount = Math.max(...blobs.map(b => b.count), 1);
-
-    return { blobs, maxCount, totalPoints: points.length };
+    return { blobs, maxCount };
   }, [actions]);
 
   if (!heatmapData || heatmapData.blobs.length === 0) {
@@ -117,10 +98,7 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold">Pitch Heatmap</h4>
-        <span className="text-xs text-muted-foreground">{heatmapData.totalPoints} zone points</span>
-      </div>
+      <h4 className="text-sm font-semibold">Pitch Heatmap</h4>
       
       <div className="flex justify-center">
         <svg
@@ -160,7 +138,7 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
           <rect x="60" y={HEIGHT - 65} width="180" height="55" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
           <rect x="100" y={HEIGHT - 35} width="100" height="25" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="0.5" />
           
-          {/* Heatmap blobs - larger radii for better connectivity */}
+          {/* Heatmap blobs */}
           {heatmapData.blobs.map((blob, i) => {
             const intensity = blob.count / heatmapData.maxCount;
             const radius = 45 + intensity * 50;

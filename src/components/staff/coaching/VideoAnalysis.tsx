@@ -140,6 +140,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
   const [exportPlayerId, setExportPlayerId] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [exportClipProgress, setExportClipProgress] = useState<{ current: number; total: number; statuses: Record<string, "pending" | "done" | "skipped" | "error"> }>({ current: 0, total: 0, statuses: {} });
 
   // Half-time sync
   const [syncHalf, setSyncHalf] = useState<"1st" | "2nd">("1st");
@@ -1108,59 +1109,86 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     if (!selectedVideo || !selectedReportId) return;
     setExporting(true);
 
+    const clips = selectedVideo.clips || [];
+    const statuses: Record<string, "pending" | "done" | "skipped" | "error"> = {};
+    clips.forEach(c => { statuses[c.id] = "pending"; });
+    setExportClipProgress({ current: 0, total: clips.length, statuses: { ...statuses } });
+
     try {
-      // Get existing max action_number
-      const { data: existing } = await supabase
+      // Fetch existing actions for this report to detect already-added clips
+      const { data: existingActions } = await supabase
         .from("performance_report_actions")
-        .select("action_number")
-        .eq("analysis_id", selectedReportId)
-        .order("action_number", { ascending: false })
-        .limit(1);
+        .select("clip_id, action_number")
+        .eq("analysis_id", selectedReportId);
 
-      let nextNumber = (existing?.[0]?.action_number || 0) + 1;
+      const existingClipIds = new Set((existingActions || []).map(a => a.clip_id).filter(Boolean));
+      let nextNumber = Math.max(...(existingActions || []).map(a => a.action_number || 0), 0) + 1;
 
-      // Extract each clip as an independent file
-      const actionsToInsert = [];
-      for (const [i, clip] of selectedVideo.clips.entries()) {
-        let clipUrl: string | null = null;
-        try {
-          clipUrl = await extractClipFile(selectedVideo.video_url, clip.id, clip.start, clip.end);
-        } catch (err) {
-          console.error('Clip extraction failed, using fragment URL:', err);
-          clipUrl = `${selectedVideo.video_url}#t=${clip.start},${clip.end}`;
+      let success = 0;
+      let skipped = 0;
+
+      for (let i = 0; i < clips.length; i++) {
+        const clip = clips[i];
+        setExportClipProgress(prev => ({ ...prev, current: i + 1 }));
+
+        // Skip already-added clips
+        if (existingClipIds.has(clip.id)) {
+          statuses[clip.id] = "skipped";
+          setExportClipProgress(prev => ({ ...prev, statuses: { ...statuses } }));
+          skipped++;
+          continue;
         }
-        
-        const annotations = getClipAnnotations(clip.id);
 
-        actionsToInsert.push({
-          analysis_id: selectedReportId,
-          action_number: nextNumber + i,
-          minute: getMatchMinute(clip.start, selectedVideo.match_minute_offset),
-          action_type: clip.action_type || "other",
-          action_description: clip.action_description || "",
-          notes: clip.notes || null,
-          video_url: clipUrl,
-          video_analysis_id: selectedVideo.id,
-          clip_id: clip.id,
-          is_successful: true,
-          action_score: clip.action_score ?? 0,
-          ...(annotations ? { clip_annotations: annotations } : {}),
-        });
+        try {
+          let clipUrl: string | null = null;
+          try {
+            clipUrl = await extractClipFile(selectedVideo.video_url, clip.id, clip.start, clip.end);
+          } catch (err) {
+            console.error('Clip extraction failed, using fragment URL:', err);
+            clipUrl = `${selectedVideo.video_url}#t=${clip.start},${clip.end}`;
+          }
+
+          const annotations = getClipAnnotations(clip.id);
+
+          const { error } = await supabase
+            .from("performance_report_actions")
+            .insert({
+              analysis_id: selectedReportId,
+              action_number: nextNumber,
+              minute: getMatchMinute(clip.start, selectedVideo.match_minute_offset),
+              action_type: clip.action_type || "other",
+              action_description: clip.action_description || "",
+              notes: clip.notes || null,
+              video_url: clipUrl,
+              video_analysis_id: selectedVideo.id,
+              clip_id: clip.id,
+              is_successful: true,
+              action_score: clip.action_score ?? 0,
+              ...(annotations ? { clip_annotations: annotations } : {}),
+            });
+
+          if (error) throw error;
+
+          nextNumber++;
+          success++;
+          statuses[clip.id] = "done";
+        } catch (err) {
+          console.error(`Failed to export clip ${clip.id}:`, err);
+          statuses[clip.id] = "error";
+        }
+        setExportClipProgress(prev => ({ ...prev, statuses: { ...statuses } }));
       }
 
-      const { error } = await supabase
-        .from("performance_report_actions")
-        .insert(actionsToInsert);
-
-      if (error) throw error;
-
-      toast.success(`${actionsToInsert.length} actions exported to report`);
+      const parts = [`${success} exported`];
+      if (skipped > 0) parts.push(`${skipped} already existed`);
+      toast.success(parts.join(', '));
       setShowExportDialog(false);
       setSelectedReportId("");
     } catch (err: any) {
       toast.error(err.message || "Export failed");
     }
     setExporting(false);
+    setExportClipProgress({ current: 0, total: 0, statuses: {} });
   };
 
   const toDotTime = (seconds: number) => {
@@ -2059,6 +2087,36 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       Export as Actions
                     </Button>
                   </div>
+                  {/* Per-clip export progress */}
+                  {exporting && exportClipProgress.total > 0 && (
+                    <div className="space-y-1.5 max-h-[200px] overflow-y-auto border rounded-md p-2 bg-muted/20">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Exporting clip {exportClipProgress.current}/{exportClipProgress.total}...
+                      </p>
+                      {selectedVideo.clips.map((clip: any) => {
+                        const status = exportClipProgress.statuses[clip.id] || "pending";
+                        return (
+                          <div key={clip.id} className="flex items-center gap-2 text-xs">
+                            <span className={`h-2 w-2 rounded-full shrink-0 ${
+                              status === "done" ? "bg-green-500" :
+                              status === "skipped" ? "bg-yellow-500" :
+                              status === "error" ? "bg-red-500" :
+                              "bg-muted-foreground/30"
+                            }`} />
+                            <span className="truncate flex-1">{clip.action_description || clip.action_type || clip.label || "Clip"}</span>
+                            <span className={`text-[10px] shrink-0 ${
+                              status === "done" ? "text-green-600" :
+                              status === "skipped" ? "text-yellow-600" :
+                              status === "error" ? "text-red-600" :
+                              "text-muted-foreground"
+                            }`}>
+                              {status === "done" ? "Done" : status === "skipped" ? "Already added" : status === "error" ? "Failed" : "Pending"}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </>
               ) : (
               <>
