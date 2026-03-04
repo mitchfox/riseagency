@@ -19,7 +19,7 @@ import { SCOUTING_POSITIONS, POSITION_SKILLS, ScoutingPosition } from "@/data/sc
 import { Marquee } from "@/components/Marquee";
 import { MarketingGallery } from "@/components/MarketingGallery";
 import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from "@/components/ScrollReveal";
-
+import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 // Tyrese Omotoye half-season highlights video URL
 const HERO_VIDEO_URL = "https://qwethimbtaamlhbajmal.supabase.co/storage/v1/object/public/analysis-files/highlights/b94fd8f6-ad14-4ad0-ba0b-6cace592ee8e_1764829376950_Tyrese_Omotoye_-_2025_Half_Season_Highlights.mov";
 
@@ -708,6 +708,7 @@ const Index = () => {
         </section>
       </div>
       <Footer />
+      <WhatsAppWidget />
     </>
   );
 };

@@ -7,17 +7,15 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 // Known routes for smart matching
 const KNOWN_ROUTES = [
-  { path: "/stars", label: "Our Stars", aliases: ["players", "player", "roster", "squad", "team"] },
   { path: "/about", label: "About Us", aliases: ["about-us", "who", "company", "agency"] },
   { path: "/news", label: "News", aliases: ["blog", "articles", "press", "media", "updates"] },
   { path: "/contact", label: "Contact", aliases: ["contact-us", "get-in-touch", "enquiry", "enquiries"] },
-  { path: "/portal", label: "Portal", aliases: ["login", "dashboard", "signin", "sign-in"] },
-  { path: "/staff", label: "Staff", aliases: ["admin", "management", "backend"] },
-  { path: "/about/players", label: "For Players", aliases: ["footballer", "footballers", "representation"] },
   { path: "/about/clubs", label: "For Clubs", aliases: ["club", "clubs", "scouts", "scouting"] },
   { path: "/about/coaches", label: "For Coaches", aliases: ["coach", "coaching", "training"] },
   { path: "/between-the-lines", label: "Between The Lines", aliases: ["btl", "insights", "analysis"] },
   { path: "/careers", label: "Careers", aliases: ["jobs", "hiring", "vacancies", "work"] },
+  { path: "/how-we-rise", label: "How We Rise", aliases: ["players", "player", "representation", "footballer"] },
+  { path: "/performance", label: "Performance", aliases: ["stats", "r90", "analytics", "data"] },
 ];
 
 const getSuggestions = (pathname: string) => {

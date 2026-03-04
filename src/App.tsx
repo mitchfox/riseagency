@@ -60,6 +60,7 @@ const Potential = lazy(() => import("./pages/Potential"));
 const RealisePotential = lazy(() => import("./pages/RealisePotential"));
 const YouthPlayers = lazy(() => import("./pages/YouthPlayers"));
 const PlayerJourney = lazy(() => import("./pages/PlayerJourney"));
+const PlayersFAQPage = lazy(() => import("./pages/PlayersFAQPage"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
 const SignContract = lazy(() => import("./pages/SignContract"));
@@ -161,6 +162,7 @@ const App = () => {
                       <Route path="/realise-potential" element={<RealisePotential />} />
                       {createLocalizedRoutes('/youth-players', <YouthPlayers />)}
                       {createLocalizedRoutes('/player-journey', <PlayerJourney />)}
+                      {createLocalizedRoutes('/faq', <PlayersFAQPage />)}
                       {createLocalizedRoutes('/jobs', <Jobs />)}
                       {createLocalizedRoutes('/agent-requests', <AgentRequests />)}
                       {createLocalizedRoutes('/club-direction', <ClubDirection />)}

@@ -10,11 +10,11 @@ import riseLogoBlack from "@/assets/RISEBlack.png";
 import whiteMarbleBg from "@/assets/white-marble.png";
 import smudgedMarbleBg from "@/assets/black-marble-smudged.png";
 import europeMap from "@/assets/europe-outline.gif";
-import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Trophy, Users, Handshake, Briefcase, Search, Calendar, Heart, Package, X, ChevronDown, Sparkles, Route } from "lucide-react";
+import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Trophy, Users, Handshake, Briefcase, Search, Calendar, Heart, Package, X, ChevronDown, Sparkles, Route, HelpCircle } from "lucide-react";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { StarsQuadrantCard } from "@/components/radial-menu/StarsQuadrantCard";
 import { NewsQuadrantCard } from "@/components/radial-menu/NewsQuadrantCard";
-import { PerformanceQuadrantCard, InsightsQuadrantCard, ContactQuadrantCard, YouthQuadrantCard, JourneyQuadrantCard, WhatWeLookForQuadrantCard, HowWeRiseQuadrantCard } from "@/components/radial-menu/SimpleQuadrantCard";
+import { PerformanceQuadrantCard, InsightsQuadrantCard, ContactQuadrantCard, YouthQuadrantCard, JourneyQuadrantCard, WhatWeLookForQuadrantCard, HowWeRiseQuadrantCard, FAQQuadrantCard } from "@/components/radial-menu/SimpleQuadrantCard";
 import { calculateContentPlacement } from "@/lib/wedgeGeometry";
 
 export type QuadrantPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
@@ -142,73 +142,37 @@ export const RadialMenu = () => {
   // Role-specific menu configurations
   const roleMenus: Record<string, MenuItem[]> = {
     players: [
-      // Content-rich items on SIDES (more horizontal space)
       { 
         to: "/stars", 
         labelKey: "header.stars", 
         fallback: "STARS", 
         Icon: Star, 
-        angle: 0, // Right side
+        angle: 0,
         quadrantCard: {
           position: getQuadrantPositionForAngle(0),
           component: StarsQuadrantCard,
         },
       },
       { 
-        to: "/between-the-lines", 
-        labelKey: "header.between_the_lines", 
-        fallback: "INSIGHTS", 
-        Icon: BookOpen, 
-        angle: 180, // Left side
-        quadrantCard: {
-          position: getQuadrantPositionForAngle(180),
-          component: InsightsQuadrantCard,
-        },
-      },
-      // Secondary content items on diagonal sides
-      { 
         to: "/performance", 
         labelKey: "header.performance", 
         fallback: "PERFORMANCE", 
         Icon: TrendingUp, 
-        angle: 51, // Upper right
+        angle: 45,
         quadrantCard: {
-          position: getQuadrantPositionForAngle(51),
+          position: getQuadrantPositionForAngle(45),
           component: PerformanceQuadrantCard,
         },
       },
-      { 
-        to: "/how-we-rise", 
-        labelKey: "header.how_we_rise", 
-        fallback: "HOW WE RISE", 
-        Icon: TrendingUp, 
-        angle: 309, // Lower right
-        quadrantCard: {
-          position: getQuadrantPositionForAngle(309),
-          component: HowWeRiseQuadrantCard,
-        },
-      },
-      // Simpler items on TOP and BOTTOM (less vertical space)
       { 
         to: "/youth-players", 
         labelKey: "header.youth_players", 
         fallback: "YOUTH PLAYERS", 
         Icon: Sparkles, 
-        angle: 103, // Bottom
+        angle: 90,
         quadrantCard: {
-          position: getQuadrantPositionForAngle(103),
+          position: getQuadrantPositionForAngle(90),
           component: YouthQuadrantCard,
-        },
-      },
-      { 
-        to: "/player-journey", 
-        labelKey: "header.player_journey", 
-        fallback: "THE JOURNEY", 
-        Icon: Route, 
-        angle: 257, // Top
-        quadrantCard: {
-          position: getQuadrantPositionForAngle(257),
-          component: JourneyQuadrantCard,
         },
       },
       { 
@@ -216,10 +180,54 @@ export const RadialMenu = () => {
         labelKey: "header.what_we_look_for", 
         fallback: "WHAT WE SEEK", 
         Icon: Search, 
-        angle: 154, // Lower left
+        angle: 135,
         quadrantCard: {
-          position: getQuadrantPositionForAngle(154),
+          position: getQuadrantPositionForAngle(135),
           component: WhatWeLookForQuadrantCard,
+        },
+      },
+      { 
+        to: "/between-the-lines", 
+        labelKey: "header.between_the_lines", 
+        fallback: "INSIGHTS", 
+        Icon: BookOpen, 
+        angle: 180,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(180),
+          component: InsightsQuadrantCard,
+        },
+      },
+      { 
+        to: "/faq", 
+        labelKey: "header.faq", 
+        fallback: "FAQ", 
+        Icon: HelpCircle, 
+        angle: 225,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(225),
+          component: FAQQuadrantCard,
+        },
+      },
+      { 
+        to: "/player-journey", 
+        labelKey: "header.player_journey", 
+        fallback: "THE JOURNEY", 
+        Icon: Route, 
+        angle: 270,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(270),
+          component: JourneyQuadrantCard,
+        },
+      },
+      { 
+        to: "/how-we-rise", 
+        labelKey: "header.how_we_rise", 
+        fallback: "HOW WE RISE", 
+        Icon: TrendingUp, 
+        angle: 315,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(315),
+          component: HowWeRiseQuadrantCard,
         },
       },
     ],
