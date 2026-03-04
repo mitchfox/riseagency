@@ -4,70 +4,89 @@ interface PitchHeatmapAction {
   action_number: number;
   action_score: number;
   zone?: number | null;
+  zone_details?: { zone: number; sub?: number }[] | null;
 }
 
 interface PitchHeatmapProps {
   actions: PitchHeatmapAction[];
 }
 
-// Zone centres on a 300x450 pitch (3 cols x 6 rows)
-// Bottom-left = zone 1, top-right = zone 18
-const ZONE_CENTRES: Record<number, { x: number; y: number }> = {
-  1:  { x: 50,  y: 400 },
-  2:  { x: 150, y: 400 },
-  3:  { x: 250, y: 400 },
-  4:  { x: 50,  y: 325 },
-  5:  { x: 150, y: 325 },
-  6:  { x: 250, y: 325 },
-  7:  { x: 50,  y: 250 },
-  8:  { x: 150, y: 250 },
-  9:  { x: 250, y: 250 },
-  10: { x: 50,  y: 175 },
-  11: { x: 150, y: 175 },
-  12: { x: 250, y: 175 },
-  13: { x: 50,  y: 100 },
-  14: { x: 150, y: 100 },
-  15: { x: 250, y: 100 },
-  16: { x: 50,  y: 35 },
-  17: { x: 150, y: 35 },
-  18: { x: 250, y: 35 },
-};
-
 const WIDTH = 300;
 const HEIGHT = 450;
 
+// Major zone grid: 3 cols x 6 rows
+// Each major zone is 100w x 75h (approx)
+const ZONE_W = (WIDTH - 20) / 3;   // ~93
+const ZONE_H = (HEIGHT - 20) / 6;  // ~72
+
+// Get pixel position for a zone + optional sub-zone
+const getPosition = (zone: number, sub?: number): { x: number; y: number } => {
+  // Zone 1 = bottom-left, zone 18 = top-right
+  const col = (zone - 1) % 3;        // 0, 1, 2
+  const row = Math.floor((zone - 1) / 3); // 0-5 (0=bottom)
+
+  const majorX = 10 + col * ZONE_W + ZONE_W / 2;
+  const majorY = HEIGHT - 10 - row * ZONE_H - ZONE_H / 2;
+
+  if (!sub || sub < 1 || sub > 9) return { x: majorX, y: majorY };
+
+  // Sub-zone offsets within the major zone
+  const subCol = (sub - 1) % 3;        // 0, 1, 2
+  const subRow = Math.floor((sub - 1) / 3); // 0-2 (0=bottom)
+  const subOffsetX = (subCol - 1) * (ZONE_W / 3.5);
+  const subOffsetY = -(subRow - 1) * (ZONE_H / 3.5);
+
+  return { x: majorX + subOffsetX, y: majorY + subOffsetY };
+};
+
 export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
-  const zonedActions = actions.filter(a => a.zone != null && a.zone >= 1 && a.zone <= 18);
-
   const heatmapData = useMemo(() => {
-    if (zonedActions.length === 0) return null;
+    // Collect all zone points from all actions
+    const points: { x: number; y: number }[] = [];
 
-    // Count actions per zone and total score
-    const zoneCounts: Record<number, number> = {};
-    for (const a of zonedActions) {
-      zoneCounts[a.zone!] = (zoneCounts[a.zone!] || 0) + 1;
+    for (const a of actions) {
+      // Prefer zone_details if available
+      if (a.zone_details && Array.isArray(a.zone_details) && a.zone_details.length > 0) {
+        for (const zp of a.zone_details) {
+          if (zp.zone >= 1 && zp.zone <= 18) {
+            points.push(getPosition(zp.zone, zp.sub));
+          }
+        }
+      } else if (a.zone != null && a.zone >= 1 && a.zone <= 18) {
+        points.push(getPosition(a.zone));
+      }
     }
 
-    const maxCount = Math.max(...Object.values(zoneCounts), 1);
+    if (points.length === 0) return null;
 
-    // Generate heat points with intensity based on action count
-    const points: { x: number; y: number; intensity: number; count: number }[] = [];
-    for (const [zoneStr, count] of Object.entries(zoneCounts)) {
-      const zone = parseInt(zoneStr);
-      const centre = ZONE_CENTRES[zone];
-      if (!centre) continue;
-      points.push({
-        x: centre.x,
-        y: centre.y,
-        intensity: count / maxCount,
-        count,
-      });
+    // Cluster nearby points into heat blobs using a simple grid binning
+    const GRID_SIZE = 25;
+    const bins: Record<string, { x: number; y: number; count: number; totalX: number; totalY: number }> = {};
+
+    for (const p of points) {
+      const bx = Math.floor(p.x / GRID_SIZE);
+      const by = Math.floor(p.y / GRID_SIZE);
+      const key = `${bx},${by}`;
+      if (!bins[key]) {
+        bins[key] = { x: 0, y: 0, count: 0, totalX: 0, totalY: 0 };
+      }
+      bins[key].count++;
+      bins[key].totalX += p.x;
+      bins[key].totalY += p.y;
     }
 
-    return { points, maxCount, zoneCounts };
-  }, [zonedActions]);
+    const blobs = Object.values(bins).map(b => ({
+      x: b.totalX / b.count,
+      y: b.totalY / b.count,
+      count: b.count,
+    }));
 
-  if (!heatmapData || heatmapData.points.length === 0) {
+    const maxCount = Math.max(...blobs.map(b => b.count), 1);
+
+    return { blobs, maxCount, totalPoints: points.length };
+  }, [actions]);
+
+  if (!heatmapData || heatmapData.blobs.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground text-sm">
         No zone data available for heatmap
@@ -79,7 +98,7 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold">Pitch Heatmap</h4>
-        <span className="text-xs text-muted-foreground">{zonedActions.length} zoned actions</span>
+        <span className="text-xs text-muted-foreground">{heatmapData.totalPoints} zone points</span>
       </div>
       
       <div className="flex justify-center">
@@ -89,28 +108,25 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
           style={{ aspectRatio: `${WIDTH}/${HEIGHT}` }}
         >
           <defs>
-            {/* Radial gradient for each heat point */}
-            {heatmapData.points.map((point, i) => (
-              <radialGradient key={`grad-${i}`} id={`heat-${i}`} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={`rgba(255, 50, 0, ${0.3 + point.intensity * 0.55})`} />
-                <stop offset="40%" stopColor={`rgba(255, 120, 0, ${0.15 + point.intensity * 0.35})`} />
-                <stop offset="70%" stopColor={`rgba(255, 200, 0, ${0.05 + point.intensity * 0.15})`} />
-                <stop offset="100%" stopColor="rgba(255, 200, 0, 0)" />
-              </radialGradient>
-            ))}
+            {heatmapData.blobs.map((blob, i) => {
+              const intensity = blob.count / heatmapData.maxCount;
+              return (
+                <radialGradient key={`grad-${i}`} id={`heat-${i}`} cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor={`rgba(255, 50, 0, ${0.3 + intensity * 0.55})`} />
+                  <stop offset="40%" stopColor={`rgba(255, 120, 0, ${0.15 + intensity * 0.35})`} />
+                  <stop offset="70%" stopColor={`rgba(255, 200, 0, ${0.05 + intensity * 0.15})`} />
+                  <stop offset="100%" stopColor="rgba(255, 200, 0, 0)" />
+                </radialGradient>
+              );
+            })}
           </defs>
 
           {/* Pitch background */}
           <rect x="0" y="0" width={WIDTH} height={HEIGHT} rx="6" fill="#1a472a" />
           
           {/* Pitch markings */}
-          {/* Outer border */}
           <rect x="10" y="10" width={WIDTH - 20} height={HEIGHT - 20} rx="2" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
-          
-          {/* Centre line */}
           <line x1="10" y1={HEIGHT / 2} x2={WIDTH - 10} y2={HEIGHT / 2} stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
-          
-          {/* Centre circle */}
           <circle cx={WIDTH / 2} cy={HEIGHT / 2} r="35" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
           <circle cx={WIDTH / 2} cy={HEIGHT / 2} r="2" fill="rgba(255,255,255,0.25)" />
           
@@ -123,13 +139,14 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
           <rect x="100" y={HEIGHT - 35} width="100" height="25" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="0.5" />
           
           {/* Heatmap blobs */}
-          {heatmapData.points.map((point, i) => {
-            const radius = 40 + point.intensity * 35;
+          {heatmapData.blobs.map((blob, i) => {
+            const intensity = blob.count / heatmapData.maxCount;
+            const radius = 35 + intensity * 40;
             return (
               <ellipse
                 key={`blob-${i}`}
-                cx={point.x}
-                cy={point.y}
+                cx={blob.x}
+                cy={blob.y}
                 rx={radius}
                 ry={radius * 0.85}
                 fill={`url(#heat-${i})`}
@@ -138,23 +155,23 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
             );
           })}
           
-          {/* Zone count labels */}
-          {heatmapData.points.map((point, i) => (
+          {/* Count labels */}
+          {heatmapData.blobs.map((blob, i) => (
             <text
               key={`label-${i}`}
-              x={point.x}
-              y={point.y + 4}
+              x={blob.x}
+              y={blob.y + 4}
               textAnchor="middle"
               fill="white"
-              fontSize="12"
+              fontSize="11"
               fontWeight="bold"
               style={{ textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}
             >
-              {point.count}
+              {blob.count}
             </text>
           ))}
           
-          {/* Direction arrow */}
+          {/* Direction labels */}
           <text x={WIDTH / 2} y={HEIGHT - 2} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="7">
             Own Goal
           </text>

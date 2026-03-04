@@ -40,6 +40,7 @@ interface PerformanceAction {
   notes: string | null;
   video_url?: string | null;
   zone?: number | null;
+  zone_details?: any[] | null;
 }
 
 interface StrikerStats {
@@ -138,7 +139,7 @@ const PerformanceReport = () => {
       });
 
       if (actionsResult.error) throw actionsResult.error;
-      setActions(sortActionsByMinute(actionsResult.data || []));
+      setActions(sortActionsByMinute((actionsResult.data || []) as any));
     } catch (error: any) {
       console.error("Error fetching performance data:", error);
       toast.error("Failed to load performance report");
@@ -496,7 +497,7 @@ const PerformanceReport = () => {
               <Button variant={showHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); setShowChanceCreation(false); setShowPitchHeatmap(false); }} className="text-xs">
                 <BarChart3 className="h-3.5 w-3.5 mr-1.5" />Period Grade Map
               </Button>
-              {actions.some(a => a.zone) && (
+              {actions.some(a => a.zone || (a.zone_details && a.zone_details.length > 0)) && (
                 <Button variant={showPitchHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowPitchHeatmap(!showPitchHeatmap); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }} className="text-xs">
                   <MapPin className="h-3.5 w-3.5 mr-1.5" />Pitch Heatmap
                 </Button>

@@ -2186,6 +2186,7 @@ export type Database = {
           video_analysis_id: string | null
           video_url: string | null
           zone: number | null
+          zone_details: Json | null
         }
         Insert: {
           action_description?: string | null
@@ -2205,6 +2206,7 @@ export type Database = {
           video_analysis_id?: string | null
           video_url?: string | null
           zone?: number | null
+          zone_details?: Json | null
         }
         Update: {
           action_description?: string | null
@@ -2224,6 +2226,7 @@ export type Database = {
           video_analysis_id?: string | null
           video_url?: string | null
           zone?: number | null
+          zone_details?: Json | null
         }
         Relationships: [
           {
