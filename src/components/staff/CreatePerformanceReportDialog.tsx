@@ -1211,16 +1211,22 @@ export const CreatePerformanceReportDialog = ({
     setActions(newActions);
   };
 
-  const updateAction = async (index: number, field: keyof PerformanceAction, value: string | number | null | RecordedStat | RecordedStat[]) => {
-    const newActions = [...actions];
-    newActions[index] = { ...newActions[index], [field]: value };
-    
-    // When minute is set/changed, re-sort all actions chronologically
-    if (field === 'minute' && typeof value === 'string' && value.trim() !== '') {
-      setActions(sortActionsChronologically(newActions));
-    } else {
-      setActions(newActions);
-    }
+  const updateAction = (
+    index: number,
+    field: keyof PerformanceAction,
+    value: string | number | null | RecordedStat | RecordedStat[] | ZonePoint[]
+  ) => {
+    setActions((prevActions) => {
+      const newActions = [...prevActions];
+      newActions[index] = { ...newActions[index], [field]: value } as PerformanceAction;
+
+      // When minute is set/changed, re-sort all actions chronologically
+      if (field === 'minute' && typeof value === 'string' && value.trim() !== '') {
+        return sortActionsChronologically(newActions);
+      }
+
+      return newActions;
+    });
   };
 
   // Extract keywords from description for better matching
