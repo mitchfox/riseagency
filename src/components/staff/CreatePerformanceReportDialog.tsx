@@ -41,12 +41,44 @@ const formatMinuteForInput = (minute: number | null): string => {
   return `${minPart}.${secPart.toString().padStart(2, '0')}`;
 };
 
-// Sort actions chronologically by game time, keeping empty-minute actions at end
+// Sort actions chronologically by game time; actions without a minute keep their current position
 const sortActionsChronologically = (actions: PerformanceAction[]): PerformanceAction[] => {
-  const sorted = [...actions].sort((a, b) => parseMinuteToSeconds(a.minute) - parseMinuteToSeconds(b.minute));
-  // Renumber after sort
-  sorted.forEach((action, i) => { action.action_number = i + 1; });
-  return sorted;
+  // Separate actions with and without minutes
+  const withMinute: { action: PerformanceAction; originalIndex: number; seconds: number }[] = [];
+  const withoutMinute: { action: PerformanceAction; originalIndex: number }[] = [];
+  
+  actions.forEach((action, i) => {
+    const secs = parseMinuteToSeconds(action.minute);
+    if (secs === Infinity) {
+      withoutMinute.push({ action, originalIndex: i });
+    } else {
+      withMinute.push({ action, originalIndex: i, seconds: secs });
+    }
+  });
+  
+  // Sort only the actions that have minutes
+  withMinute.sort((a, b) => a.seconds - b.seconds);
+  
+  // Rebuild: place sorted actions with minutes in their slots, keep empty-minute actions in place
+  const result: PerformanceAction[] = new Array(actions.length);
+  
+  // First, place actions without minutes in their original positions
+  withoutMinute.forEach(({ action, originalIndex }) => {
+    result[originalIndex] = action;
+  });
+  
+  // Then fill remaining slots with sorted actions that have minutes
+  let sortedIdx = 0;
+  for (let i = 0; i < result.length; i++) {
+    if (!result[i] && sortedIdx < withMinute.length) {
+      result[i] = withMinute[sortedIdx].action;
+      sortedIdx++;
+    }
+  }
+  
+  // Renumber
+  result.forEach((action, i) => { action.action_number = i + 1; });
+  return result;
 };
 
 interface CreatePerformanceReportDialogProps {
