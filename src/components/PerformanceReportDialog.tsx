@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, Link2, MessageSquareText, Filter, Lock } from "lucide-react";
+import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, Link2, MessageSquareText, Filter, Lock, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
@@ -14,6 +14,7 @@ import { R90FlowChart } from "@/components/report/R90FlowChart";
 import { ActionHeatmap } from "@/components/report/ActionHeatmap";
 import { ChanceCreationFlow } from "@/components/report/ChanceCreationFlow";
 import { RankedActionsPlayer } from "@/components/report/RankedActionsPlayer";
+import { PitchHeatmap } from "@/components/report/PitchHeatmap";
 import { toTitleCase } from "@/lib/titleCase";
 import { sortActionsByMinute } from "@/lib/actionSorting";
 
@@ -34,6 +35,8 @@ interface PerformanceAction {
   action_description: string;
   notes: string | null;
   video_url?: string | null;
+  zone?: number | null;
+  zone_details?: any | null;
 }
 
 interface StrikerStats {
@@ -74,6 +77,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [showR90Flow, setShowR90Flow] = useState(false);
   const [showR90Info, setShowR90Info] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showPitchHeatmap, setShowPitchHeatmap] = useState(false);
   const [showChanceCreation, setShowChanceCreation] = useState(false);
   const [showRankedPlayer, setShowRankedPlayer] = useState(false);
   const [rankedMode, setRankedMode] = useState<"chronological" | "ranked" | "noted">("chronological");
@@ -138,7 +142,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
       });
 
       if (actionsResult.error) throw actionsResult.error;
-      setActions(sortActionsByMinute(actionsResult.data || []));
+      setActions(sortActionsByMinute((actionsResult.data || []) as any));
       
       // Mark this ID as prefetched
       setPrefetchedId(id);
@@ -663,7 +667,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                   <Button
                     variant={showR90Flow ? "default" : "outline"}
                     size="sm"
-                    onClick={() => { setShowR90Flow(!showR90Flow); setShowHeatmap(false); }}
+                    onClick={() => { setShowR90Flow(!showR90Flow); setShowHeatmap(false); setShowPitchHeatmap(false); setShowChanceCreation(false); }}
                     className="text-xs"
                   >
                     <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
@@ -672,18 +676,29 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                   <Button
                     variant={showHeatmap ? "default" : "outline"}
                     size="sm"
-                    onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); setShowChanceCreation(false); }}
+                    onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); setShowPitchHeatmap(false); setShowChanceCreation(false); }}
                     className="text-xs"
                   >
                     <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
                     Period Grade Map
                   </Button>
+                  {actions.some(a => a.zone || (a.zone_details && a.zone_details.length > 0)) && (
+                    <Button
+                      variant={showPitchHeatmap ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => { setShowPitchHeatmap(!showPitchHeatmap); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }}
+                      className="text-xs"
+                    >
+                      <MapPin className="h-3.5 w-3.5 mr-1.5" />
+                      Pitch Heatmap
+                    </Button>
+                  )}
                   {/* Chance Creation Flow - only show if xC data exists */}
                   {analysis.striker_stats && ['crossing_movement_xC', 'movement_in_behind_xC', 'movement_down_side_xC', 'triple_threat_xC', 'movement_to_feet_xC'].some(k => (analysis.striker_stats as any)?.[k] > 0) && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => { setShowChanceCreation(!showChanceCreation); setShowR90Flow(false); setShowHeatmap(false); }}
+                      onClick={() => { setShowChanceCreation(!showChanceCreation); setShowR90Flow(false); setShowHeatmap(false); setShowPitchHeatmap(false); }}
                       className="text-xs"
                     >
                       <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
@@ -742,6 +757,15 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     <ActionHeatmap actions={actions} minutesPlayed={analysis.minutes_played} />
                   </CardContent>
               </Card>
+              )}
+
+              {/* Pitch Heatmap */}
+              {showPitchHeatmap && (
+                <Card className="overflow-hidden">
+                  <CardContent className="p-3 md:p-6">
+                    <PitchHeatmap actions={actions} />
+                  </CardContent>
+                </Card>
               )}
 
               {/* Chance Creation Flow */}
