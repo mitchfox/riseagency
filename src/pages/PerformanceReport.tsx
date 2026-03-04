@@ -411,14 +411,23 @@ const PerformanceReport = () => {
           </div>
         </div>
 
-        {/* Visibility: Hidden - show only R90 score */}
+        {/* Visibility: Hidden - show placeholder stats */}
         {!isAuthenticated && analysis.visibility_status === "hidden" ? (
-          <div className="text-center py-16 space-y-4">
+          <div className="text-center py-16 space-y-6">
             {analysis.placeholder_raw_score != null && analysis.placeholder_minutes ? (
-              <div className="space-y-2">
-                <p className="text-4xl font-bold">{((analysis.placeholder_raw_score / analysis.placeholder_minutes) * 90).toFixed(2)}</p>
-                <p className="text-sm text-muted-foreground">R90 Score</p>
-                <p className="text-xs text-muted-foreground">{analysis.placeholder_minutes} minutes played</p>
+              <div className="grid grid-cols-3 gap-4 max-w-md mx-auto p-4 bg-accent/20 rounded-lg">
+                <div className="text-center p-2">
+                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Raw Score</p>
+                  <p className="text-base md:text-2xl font-bold">{analysis.placeholder_raw_score.toFixed(3)}</p>
+                </div>
+                <div className="text-center bg-primary text-primary-foreground rounded-lg p-2 md:p-4">
+                  <p className="text-[10px] md:text-sm opacity-90 mb-0.5 md:mb-1">R90</p>
+                  <p className="text-lg md:text-3xl font-bold">{((analysis.placeholder_raw_score / analysis.placeholder_minutes) * 90).toFixed(2)}</p>
+                </div>
+                <div className="text-center p-2">
+                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Mins</p>
+                  <p className="text-base md:text-2xl font-bold">{analysis.placeholder_minutes}</p>
+                </div>
               </div>
             ) : analysis.r90_score != null ? (
               <div className="space-y-2">
@@ -525,7 +534,7 @@ const PerformanceReport = () => {
           )}
 
           {/* Key Stats */}
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4 p-2 md:p-4 bg-accent/20 rounded-lg">
+          <div className="grid grid-cols-3 gap-2 md:gap-4 p-2 md:p-4 bg-accent/20 rounded-lg">
             <div className="text-center p-2">
               <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Raw Score</p>
               <p className="text-base md:text-2xl font-bold">
@@ -547,10 +556,6 @@ const PerformanceReport = () => {
                     : "N/A"
                 }
               </p>
-            </div>
-            <div className="text-center p-2">
-              <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">xG Chain</p>
-              <p className="text-base md:text-2xl font-bold">{actions.length > 0 ? calculateXGChain().toFixed(2) : "N/A"}</p>
             </div>
             <div className="text-center p-2">
               <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Mins</p>
