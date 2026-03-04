@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade } from "@/lib/gradeCalculations";
 import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
 import { calculateAdjustedScore, isDefensiveR90Category } from "@/lib/zoneMultipliers";
+import { sortActionsByMinute } from "@/lib/actionSorting";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ActionVideoUpload } from "./ActionVideoUpload";
@@ -220,10 +221,10 @@ export const PerformanceActionsDialog = ({
 
       if (error) throw error;
       // Map data to ensure recorded_stat is properly typed (supports single or array)
-      const mappedActions = (data || []).map(action => ({
+      const mappedActions = sortActionsByMinute((data || []).map(action => ({
         ...action,
         recorded_stat: action.recorded_stat as unknown as RecordedStat | RecordedStat[] | null,
-      }));
+      })));
       setActions(mappedActions);
       
       // Set next action number
