@@ -23,6 +23,8 @@ interface ActionReport {
   player_name?: string;
   player_image_url?: string;
   visibility_status?: string;
+  placeholder_raw_score?: number | null;
+  placeholder_minutes?: number | null;
 }
 
 interface ActionReportsListProps {
@@ -83,6 +85,8 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           result,
           player_id,
           visibility_status,
+          placeholder_raw_score,
+          placeholder_minutes,
           players!player_analysis_player_id_fkey (
             name,
             image_url
@@ -103,6 +107,8 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
         player_name: report.players?.name || "Unknown Player",
         player_image_url: report.players?.image_url || null,
         visibility_status: report.visibility_status || "draft",
+        placeholder_raw_score: report.placeholder_raw_score,
+        placeholder_minutes: report.placeholder_minutes,
       }));
 
       setReports(formattedReports);
@@ -125,6 +131,13 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
     if (score >= 1.4 && score < 1.8) return "bg-green-500";
     if (score >= 1.8 && score < 2.5) return "bg-green-700";
     return "bg-gold";
+  };
+
+  const getEffectiveR90 = (report: ActionReport): number | null => {
+    if (report.visibility_status === "hidden" && report.placeholder_raw_score != null && report.placeholder_minutes) {
+      return (report.placeholder_raw_score / report.placeholder_minutes) * 90;
+    }
+    return report.r90_score;
   };
 
   const filteredReports = reports.filter((report) => {
@@ -211,31 +224,35 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
               className="rounded-lg overflow-hidden text-white flex flex-col md:flex-row md:items-stretch"
             >
               {/* R90 Score */}
-              {report.r90_score !== null && report.r90_score !== undefined && (
-                <>
-                  {/* Mobile: Horizontal R90 */}
-                  <div className={`md:hidden ${getR90ColorClass(report.r90_score)} p-3`}>
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <div className="text-3xl font-bold">
-                        {report.r90_score.toFixed(2)}
+              {(() => {
+                const effectiveR90 = getEffectiveR90(report);
+                if (effectiveR90 === null || effectiveR90 === undefined) return null;
+                return (
+                  <>
+                    {/* Mobile: Horizontal R90 */}
+                    <div className={`md:hidden ${getR90ColorClass(effectiveR90)} p-3`}>
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <div className="text-3xl font-bold">
+                          {effectiveR90.toFixed(2)}
+                        </div>
+                        <TrendingUp className="w-8 h-8 text-white" strokeWidth={2.5} />
                       </div>
-                      <TrendingUp className="w-8 h-8 text-white" strokeWidth={2.5} />
+                      <div className="text-xs opacity-90 font-medium text-center">R90 SCORE</div>
                     </div>
-                    <div className="text-xs opacity-90 font-medium text-center">R90 SCORE</div>
-                  </div>
-                  
-                  {/* Desktop: Vertical R90 */}
-                  <div className={`hidden md:flex ${getR90ColorClass(report.r90_score)} items-center justify-center p-4 flex-shrink-0`}>
-                    <div className="text-center">
-                      <TrendingUp className="w-8 h-8 text-white mx-auto mb-2" strokeWidth={2.5} />
-                      <div className="text-4xl font-bold">
-                        {report.r90_score.toFixed(2)}
+                    
+                    {/* Desktop: Vertical R90 */}
+                    <div className={`hidden md:flex ${getR90ColorClass(effectiveR90)} items-center justify-center p-4 flex-shrink-0`}>
+                      <div className="text-center">
+                        <TrendingUp className="w-8 h-8 text-white mx-auto mb-2" strokeWidth={2.5} />
+                        <div className="text-4xl font-bold">
+                          {effectiveR90.toFixed(2)}
+                        </div>
+                        <div className="text-xs opacity-80">R90</div>
                       </div>
-                      <div className="text-xs opacity-80">R90</div>
                     </div>
-                  </div>
-                </>
-              )}
+                  </>
+                );
+              })()}
               
               {/* Match info with black background */}
               <div className="bg-black flex-1 p-3 md:p-4">
