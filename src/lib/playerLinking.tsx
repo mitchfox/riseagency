@@ -101,7 +101,7 @@ export const usePlayerNames = () => {
   React.useEffect(() => {
     const fetchPlayers = async () => {
       try {
-        const { supabase } = await import('@/integrations/supabase/client');
+        const { data } = await supabase
         const { data } = await supabase
           .from('players')
           .select('name')
