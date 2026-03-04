@@ -37,7 +37,8 @@ const SUB_GRID = [
 const isPassAction = (actionType?: string): boolean => {
   if (!actionType) return false;
   const lower = actionType.toLowerCase();
-  return lower.includes("pass") || lower.includes("cross") || lower.includes("through ball") || lower.includes("switch");
+  const passKeywords = ["pass", "cross", "through ball", "switch", "delivery", "set piece", "corner", "free kick", "long ball", "play"];
+  return passKeywords.some(kw => lower.includes(kw));
 };
 
 const getMultiplierColor = (zone: number): string => {
