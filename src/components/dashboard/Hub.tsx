@@ -907,6 +907,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
         open={reportDialogOpen} 
         onOpenChange={setReportDialogOpen}
         analysisId={selectedReportId}
+        isPortalView={true}
       />
 
       {/* News Feed moved to below schedule */}

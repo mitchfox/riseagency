@@ -2313,12 +2313,15 @@ export type Database = {
           opponent: string | null
           pdf_url: string | null
           performance_overview: string | null
+          placeholder_minutes: number | null
+          placeholder_raw_score: number | null
           player_id: string
           r90_score: number | null
           result: string | null
           striker_stats: Json | null
           updated_at: string
           video_url: string | null
+          visibility_status: string
         }
         Insert: {
           analysis_date: string
@@ -2333,12 +2336,15 @@ export type Database = {
           opponent?: string | null
           pdf_url?: string | null
           performance_overview?: string | null
+          placeholder_minutes?: number | null
+          placeholder_raw_score?: number | null
           player_id: string
           r90_score?: number | null
           result?: string | null
           striker_stats?: Json | null
           updated_at?: string
           video_url?: string | null
+          visibility_status?: string
         }
         Update: {
           analysis_date?: string
@@ -2353,12 +2359,15 @@ export type Database = {
           opponent?: string | null
           pdf_url?: string | null
           performance_overview?: string | null
+          placeholder_minutes?: number | null
+          placeholder_raw_score?: number | null
           player_id?: string
           r90_score?: number | null
           result?: string | null
           striker_stats?: Json | null
           updated_at?: string
           video_url?: string | null
+          visibility_status?: string
         }
         Relationships: [
           {
