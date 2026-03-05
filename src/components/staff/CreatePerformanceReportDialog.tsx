@@ -1945,46 +1945,47 @@ export const CreatePerformanceReportDialog = ({
                   
                   <div>
                     <Label className="text-xs">Description *</Label>
-                    <Textarea
-                      value={action.action_description}
-                      onChange={(e) => updateAction(index, "action_description", e.target.value)}
-                      placeholder="Describe the action"
-                      className="text-sm min-h-[60px]"
-                      rows={2}
-                    />
-                    {action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
-                      <Popover open={descriptionPopoverOpen[index] || false} onOpenChange={(open) => setDescriptionPopoverOpen(prev => ({ ...prev, [index]: open }))}>
-                        <PopoverTrigger asChild>
-                          <Button variant="ghost" size="sm" className="mt-1 h-6 text-[10px] text-muted-foreground w-full justify-between">
-                            <span>Previous descriptions</span>
-                            <ChevronDown className="h-3 w-3" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                          <Command>
-                            <CommandInput placeholder="Filter descriptions..." />
-                            <CommandList>
-                              <CommandEmpty>No matching descriptions</CommandEmpty>
-                              <CommandGroup>
-                                {getDescriptionsForType(action.action_type).map((desc, di) => (
-                                  <CommandItem
-                                    key={di}
-                                    value={desc}
-                                    onSelect={() => {
-                                      updateAction(index, "action_description", desc);
-                                      setDescriptionPopoverOpen(prev => ({ ...prev, [index]: false }));
-                                    }}
-                                    className="text-xs"
-                                  >
-                                    {desc}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    )}
+                    <div className="relative">
+                      <Textarea
+                        value={action.action_description}
+                        onChange={(e) => {
+                          updateAction(index, "action_description", e.target.value);
+                          setDescriptionPopoverOpen(prev => ({ ...prev, [index]: true }));
+                        }}
+                        onFocus={() => {
+                          if (action.action_type && getDescriptionsForType(action.action_type).length > 0) {
+                            setDescriptionPopoverOpen(prev => ({ ...prev, [index]: true }));
+                          }
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => setDescriptionPopoverOpen(prev => ({ ...prev, [index]: false })), 200);
+                        }}
+                        placeholder="Describe the action"
+                        className="text-sm min-h-[60px]"
+                        rows={2}
+                      />
+                      {descriptionPopoverOpen[index] && action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
+                        <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                          {getDescriptionsForType(action.action_type)
+                            .filter(desc => !action.action_description || desc.toLowerCase().includes(action.action_description.toLowerCase()))
+                            .slice(0, 12)
+                            .map((desc, di) => (
+                              <button
+                                key={di}
+                                type="button"
+                                className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  updateAction(index, "action_description", desc);
+                                  setDescriptionPopoverOpen(prev => ({ ...prev, [index]: false }));
+                                }}
+                              >
+                                {desc}
+                              </button>
+                            ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div>
@@ -2108,14 +2109,31 @@ export const CreatePerformanceReportDialog = ({
                         />
                       </td>
                       <td className="p-2">
-                        <Input
-                          type="number"
-                          step="0.00001"
-                          value={action.action_score}
-                          onChange={(e) => updateAction(index, "action_score", e.target.value)}
-                          placeholder="0.15"
-                          className="w-24 text-sm"
-                        />
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="number"
+                            step="0.00001"
+                            value={action.action_score}
+                            onChange={(e) => updateAction(index, "action_score", e.target.value)}
+                            placeholder="0.15"
+                            className="w-20 text-sm"
+                          />
+                          <Button
+                            onClick={() => openR90Viewer(index)}
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 shrink-0 [&>svg]:hover:text-black"
+                            title="R90 Ratings Reference"
+                          >
+                            <Search className="h-4 w-4 text-primary hover:text-black" />
+                          </Button>
+                          <Input
+                            value={actionSearchFilters[index] || ''}
+                            onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
+                            placeholder="Search R90..."
+                            className="h-8 text-[10px] w-28 px-2"
+                          />
+                        </div>
                       </td>
                       <td className="p-2">
                         <div className="relative">
@@ -2170,46 +2188,47 @@ export const CreatePerformanceReportDialog = ({
                         </div>
                       </td>
                       <td className="p-2 relative">
-                        <Textarea
-                          value={action.action_description}
-                          onChange={(e) => updateAction(index, "action_description", e.target.value)}
-                          placeholder="Describe"
-                          className="min-w-[180px] min-h-[40px] text-sm"
-                          rows={1}
-                        />
-                        {action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
-                          <Popover open={descriptionPopoverOpen[1000 + index] || false} onOpenChange={(open) => setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: open }))}>
-                            <PopoverTrigger asChild>
-                              <Button variant="ghost" size="sm" className="mt-0.5 h-5 text-[9px] text-muted-foreground w-full justify-between px-1">
-                                <span>Suggestions</span>
-                                <ChevronDown className="h-3 w-3" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-72 p-0" align="start">
-                              <Command>
-                                <CommandInput placeholder="Filter descriptions..." />
-                                <CommandList>
-                                  <CommandEmpty>No matching descriptions</CommandEmpty>
-                                  <CommandGroup>
-                                    {getDescriptionsForType(action.action_type).map((desc, di) => (
-                                      <CommandItem
-                                        key={di}
-                                        value={desc}
-                                        onSelect={() => {
-                                          updateAction(index, "action_description", desc);
-                                          setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
-                                        }}
-                                        className="text-xs"
-                                      >
-                                        {desc}
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </CommandList>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
-                        )}
+                        <div className="relative">
+                          <Textarea
+                            value={action.action_description}
+                            onChange={(e) => {
+                              updateAction(index, "action_description", e.target.value);
+                              setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
+                            }}
+                            onFocus={() => {
+                              if (action.action_type && getDescriptionsForType(action.action_type).length > 0) {
+                                setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
+                              }
+                            }}
+                            onBlur={() => {
+                              setTimeout(() => setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200);
+                            }}
+                            placeholder="Describe"
+                            className="min-w-[180px] min-h-[40px] text-sm"
+                            rows={1}
+                          />
+                          {descriptionPopoverOpen[1000 + index] && action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
+                            <div className="absolute z-50 mt-1 w-72 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                              {getDescriptionsForType(action.action_type)
+                                .filter(desc => !action.action_description || desc.toLowerCase().includes(action.action_description.toLowerCase()))
+                                .slice(0, 12)
+                                .map((desc, di) => (
+                                  <button
+                                    key={di}
+                                    type="button"
+                                    className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      updateAction(index, "action_description", desc);
+                                      setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
+                                    }}
+                                  >
+                                    {desc}
+                                  </button>
+                                ))}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="p-2">
                         <Textarea
@@ -2222,15 +2241,6 @@ export const CreatePerformanceReportDialog = ({
                       </td>
                       <td className="p-2">
                         <div className="flex gap-1">
-                          <Button
-                            onClick={() => openR90Viewer(index)}
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 [&>svg]:hover:text-black"
-                            title="R90 Ratings Reference"
-                          >
-                            <Search className="h-4 w-4 text-primary hover:text-black" />
-                          </Button>
                           {/* Zone selector - desktop */}
                           <ZonePitchSelector
                             value={action.zone_details || (action.zone ? [{ zone: action.zone }] : [])}
@@ -2291,19 +2301,10 @@ export const CreatePerformanceReportDialog = ({
                         </div>
                       </td>
                     </tr>
-                    {/* Suggested R90 Scores - inline search next to label */}
-                    <tr>
-                      <td colSpan={7} className="p-0">
-                        <div className="px-2 py-1.5 bg-muted/30 flex items-center gap-2">
-                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">Suggested R90 Scores</span>
-                          <Input
-                            value={actionSearchFilters[index] || ''}
-                            onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
-                            placeholder="Search action..."
-                            className="h-6 text-[10px] flex-1 max-w-[200px] px-2"
-                          />
-                        </div>
-                        {actionSearchFilters[index]?.trim() && (
+                    {/* Suggested R90 Scores - shown when search has text */}
+                    {actionSearchFilters[index]?.trim() && (
+                      <tr>
+                        <td colSpan={7} className="p-0">
                           <div className="p-2 bg-muted/20 space-y-1 max-h-40 overflow-y-auto">
                             {getFilteredScores(index).map((item, scoreIdx) => {
                               const isSelected = selectedScores[index]?.has(scoreIdx) ?? false;
@@ -2324,7 +2325,6 @@ export const CreatePerformanceReportDialog = ({
                                       }
                                       setSelectedScores(newSelected);
                                       
-                                      // Calculate sum of selected scores and update action
                                       const selectedIndices = checked 
                                         ? [...Array.from(newSelected[index] || []), scoreIdx]
                                         : Array.from(newSelected[index] || []).filter(i => i !== scoreIdx);
@@ -2349,9 +2349,9 @@ export const CreatePerformanceReportDialog = ({
                               <p className="text-muted-foreground text-center py-1 text-xs">No matching scores</p>
                             )}
                           </div>
-                        )}
-                      </td>
-                    </tr>
+                        </td>
+                      </tr>
+                    )}
                     
                     {/* Insert Action & Update Row (Desktop) */}
                     <tr className="border-t border-dashed hover:bg-accent/50 transition-colors">

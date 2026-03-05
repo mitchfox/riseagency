@@ -1169,10 +1169,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       getClipAnnotations,
     });
 
-    // Close the dialog — export continues in background
+    // Close the dialog
     setShowExportDialog(false);
     setSelectedReportId("");
-    toast.info("Export started — it will continue in the background");
   };
 
   // Subscribe to background export progress
@@ -1454,13 +1453,14 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       const insertData: any = {
         analysis_id: reportAnalysisId,
         action_number: insertAfterNumber + 1,
-        action_type: toTitleCase(attachClip.action_type || "other"),
+        action_type: attachClip.action_type ? toTitleCase(attachClip.action_type) : "",
         action_description: attachClip.action_description || "",
         notes: attachClip.notes || null,
         video_url: clipUrl,
         is_successful: true,
         minute: parseClipMinuteToNumber(attachClip.minute) ?? getMatchMinute(attachClip.start, selectedVideo.match_minute_offset),
       };
+      if (attachClip.action_score != null) insertData.action_score = attachClip.action_score;
       if (annotations) insertData.clip_annotations = annotations;
       if (attachClip.zone_details?.length) {
         insertData.zone_details = attachClip.zone_details;

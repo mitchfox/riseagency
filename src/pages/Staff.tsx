@@ -96,6 +96,7 @@ import { PortalManagement } from "@/components/staff/PortalManagement";
 import { VideoCompressor } from "@/components/staff/VideoCompressor";
 import { HighlightCompiler } from "@/components/staff/HighlightCompiler";
 import { DatasetBuilder } from "@/components/staff/DatasetBuilder";
+import { ExportProgressFloat } from "@/components/staff/ExportProgressFloat";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTheme } from "next-themes";
@@ -1017,6 +1018,7 @@ const Staff = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+      <ExportProgressFloat />
       {/* Marble background with more visible overlay */}
       <div 
         className="fixed inset-0 pointer-events-none z-0"
