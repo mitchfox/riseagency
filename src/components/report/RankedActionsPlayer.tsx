@@ -128,11 +128,23 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedA
             ref={videoRef}
             key={current.video_url}
             src={current.video_url}
-            autoPlay={isPlaying}
+            preload="auto"
+            crossOrigin="anonymous"
             controls
             className="w-full h-full object-contain"
+            onCanPlay={(e) => { if (isPlaying) e.currentTarget.play().catch(() => {}); }}
             onEnded={handleVideoEnd}
           />
+          {sortedClips[currentIndex + 1] && (
+            <video
+              key={`prefetch-${sortedClips[currentIndex + 1].video_url}`}
+              src={sortedClips[currentIndex + 1].video_url}
+              preload="auto"
+              crossOrigin="anonymous"
+              muted
+              style={{ display: 'none' }}
+            />
+          )}
         </div>
 
         {/* Info bar */}

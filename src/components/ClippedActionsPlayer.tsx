@@ -42,11 +42,7 @@ export const ClippedActionsPlayer = ({
 
   const handleVideoEnded = () => {
     if (currentIndex < clips.length - 1) {
-      const next = currentIndex + 1;
-      setCurrentIndex(next);
-      setTimeout(() => {
-        videoRef.current?.play().catch(() => {});
-      }, 100);
+      setCurrentIndex(prev => prev + 1);
     } else {
       setIsPlaying(false);
     }
@@ -71,11 +67,7 @@ export const ClippedActionsPlayer = ({
     }
   };
 
-  useEffect(() => {
-    if (videoRef.current && isPlaying) {
-      videoRef.current.play().catch(() => setIsPlaying(false));
-    }
-  }, [currentIndex]);
+  const nextClip = clips[currentIndex + 1] ?? null;
 
   if (!currentClip) return null;
 
@@ -123,15 +115,28 @@ export const ClippedActionsPlayer = ({
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
             ref={videoRef}
+            key={currentClip.video_url}
             src={currentClip.video_url}
             className="w-full h-full object-contain"
-            autoPlay
+            preload="auto"
+            crossOrigin="anonymous"
             muted
             playsInline
+            onCanPlay={(e) => { if (isPlaying) e.currentTarget.play().catch(() => {}); }}
             onEnded={handleVideoEnded}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
           />
+          {nextClip && (
+            <video
+              key={`prefetch-${nextClip.video_url}`}
+              src={nextClip.video_url}
+              preload="auto"
+              crossOrigin="anonymous"
+              muted
+              style={{ display: 'none' }}
+            />
+          )}
           {/* Description overlay */}
           <div className="absolute bottom-4 left-4 right-4 bg-black/70 text-white text-xs px-3 py-2 rounded max-w-[80%]">
             <p>{currentClip.action_description}</p>

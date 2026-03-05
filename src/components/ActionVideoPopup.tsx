@@ -75,12 +75,15 @@ export const ActionVideoPopup = ({
           )}
           <video
             ref={videoRef}
+            key={videoUrl}
             src={videoUrl}
             className="w-full max-h-[80vh] object-contain"
-            autoPlay
+            preload="auto"
+            crossOrigin="anonymous"
             muted
             loop
             playsInline
+            onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
           />
         </div>
       </DialogContent>
