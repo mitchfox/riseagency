@@ -339,6 +339,8 @@ const Staff = () => {
     // Always navigate to the section - never toggle off by clicking the same one
     setExpandedSection(section as any);
     setSearchParams({ section });
+    // Persist active tab for session restoration
+    localStorage.setItem('staff_active_tab', section);
     // Update the active tab to reflect the new section
     try {
       const tabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
