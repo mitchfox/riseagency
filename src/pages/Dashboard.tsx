@@ -132,6 +132,7 @@ const Dashboard = () => {
   const [updates, setUpdates] = useState<Update[]>([]);
   const [activeTab, setActiveTab] = useState("hub");
   const [activeAnalysisTab, setActiveAnalysisTab] = useState("performance");
+  const [portalLanguageHint, setPortalLanguageHint] = useState<string>(() => localStorage.getItem("portal_language_hint") || "en");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [visibleClipsCount, setVisibleClipsCount] = useState(10); // Show 10 clips initially
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -858,7 +859,7 @@ const Dashboard = () => {
       // Online - verify with Supabase
       const { data: player, error: playerError } = await supabase
         .from("players")
-        .select("id")
+        .select("id, portal_language")
         .eq("email", playerEmail)
         .maybeSingle();
 
@@ -867,6 +868,11 @@ const Dashboard = () => {
         localStorage.removeItem("player_email");
         navigate("/login");
         return;
+      }
+
+      if (player?.portal_language) {
+        setPortalLanguageHint(player.portal_language);
+        localStorage.setItem("portal_language_hint", player.portal_language);
       }
 
       await fetchAnalyses(playerEmail);
@@ -959,6 +965,10 @@ const Dashboard = () => {
       }
 
       setPlayerData(parsedPlayerData);
+      if (parsedPlayerData?.portal_language) {
+        setPortalLanguageHint(parsedPlayerData.portal_language);
+        localStorage.setItem("portal_language_hint", parsedPlayerData.portal_language);
+      }
 
       // Set initial scheme position to player's position
       if (parsedPlayerData.position) {
@@ -1477,7 +1487,7 @@ const Dashboard = () => {
   };
 
   if (loading) {
-    return <PageLoading />;
+    return <PageLoading text={t(portalLanguageHint, "loading")} />;
   }
 
   return (
@@ -1487,6 +1497,7 @@ const Dashboard = () => {
         <PortalWelcomeModal
           playerName={playerData.name || ""}
           playerId={playerData.id}
+          portalLanguage={playerData.portal_language}
           hasAnalyses={analyses.length > 0}
           hasPerformanceReports={analyses.some((a: any) => a.r90_score != null)}
           onNavigate={(tab, subTab) => {
