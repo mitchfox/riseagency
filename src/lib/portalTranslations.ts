@@ -27,6 +27,8 @@ const extendedKeys: Record<string, string> = {
   aphorism_of_the_day: "Thought of the Day",
   select_opposition_scheme: "Select opposition scheme",
 };
+
+const translations: Record<string, Record<string, string>> = {
   en: {
     hub: "Hub",
     analysis: "Analysis",
