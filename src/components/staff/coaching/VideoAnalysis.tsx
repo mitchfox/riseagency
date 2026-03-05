@@ -1453,14 +1453,14 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       const insertData: any = {
         analysis_id: reportAnalysisId,
         action_number: insertAfterNumber + 1,
-        action_type: toTitleCase(attachClip.action_type || "other"),
+        action_type: attachClip.action_type ? toTitleCase(attachClip.action_type) : "",
         action_description: attachClip.action_description || "",
         notes: attachClip.notes || null,
         video_url: clipUrl,
         is_successful: true,
         minute: parseClipMinuteToNumber(attachClip.minute) ?? getMatchMinute(attachClip.start, selectedVideo.match_minute_offset),
       };
-      if (annotations) insertData.clip_annotations = annotations;
+      if (attachClip.action_score != null) insertData.action_score = attachClip.action_score;
       if (attachClip.zone_details?.length) {
         insertData.zone_details = attachClip.zone_details;
         insertData.zone = attachClip.zone_details[0].zone;
