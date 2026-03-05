@@ -17,7 +17,7 @@ import { ParallaxHero } from "@/components/portal/ParallaxHero";
 import { checkAndFireConfetti } from "@/lib/confetti";
 
 // Helper: fetches next fixture for player's club and renders ParallaxHero with countdown
-const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints }: { playerData: any; marketingImages: string[]; imageFocalPoints: string[] }) => {
+const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints, portalLanguage }: { playerData: any; marketingImages: string[]; imageFocalPoints: string[]; portalLanguage?: string | null }) => {
   const [nextFixture, setNextFixture] = React.useState<{ home_team: string; away_team: string; match_date: string; match_time?: string | null; venue?: string } | null>(null);
   const [preMatchAnalysis, setPreMatchAnalysis] = React.useState<{ id: string; home_team: string; away_team: string } | null>(null);
 
@@ -118,6 +118,7 @@ const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints
       playerName={playerData?.name || "Player"}
       clubName={playerData?.current_club}
       position={playerData?.position}
+      portalLanguage={portalLanguage}
       nextFixture={nextFixture}
       preMatchAnalysis={preMatchAnalysis}
     />
@@ -500,6 +501,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
           playerData={playerData}
           marketingImages={marketingImages}
           imageFocalPoints={imageFocalPoints}
+          portalLanguage={portalLanguage}
         />
       )}
 
@@ -614,6 +616,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
           <NewsFeed
             playerId={playerData.id}
             playerName={playerData.name || "Player"}
+            portalLanguage={portalLanguage}
             onNavigateToAnalysis={onNavigateToAnalysis}
             onOpenReport={(id) => {
               setSelectedReportId(id);
