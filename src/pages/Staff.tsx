@@ -1017,6 +1017,7 @@ const Staff = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+      <ExportProgressFloat />
       {/* Marble background with more visible overlay */}
       <div 
         className="fixed inset-0 pointer-events-none z-0"
