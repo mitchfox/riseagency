@@ -4848,6 +4848,7 @@ const Dashboard = () => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
           setTimeout(() => setNavDropdownOpen(true), 300);
         }}
+        lang={playerData?.portal_language}
       />
     </div>
   );
