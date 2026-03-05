@@ -320,7 +320,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       if (freqB !== freqA) return freqB - freqA;
       return a.localeCompare(b);
     });
-    });
   }, [knownActionTypes, actionTypeFrequency]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
