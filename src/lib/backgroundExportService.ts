@@ -125,9 +125,7 @@ export async function startExportJob(job: ExportJob): Promise<void> {
 
         const annotations = job.getClipAnnotations?.(clip.id);
 
-        const { error } = await supabase
-          .from("performance_report_actions")
-          .insert({
+        const insertRow: any = {
             analysis_id: job.reportId,
             action_number: nextNumber,
             minute: getMatchMinute(clip.start, job.matchMinuteOffset),
@@ -140,7 +138,11 @@ export async function startExportJob(job: ExportJob): Promise<void> {
             is_successful: true,
             action_score: clip.action_score ?? 0,
             ...(annotations ? { clip_annotations: annotations } : {}),
-          });
+          };
+
+        const { error } = await supabase
+          .from("performance_report_actions")
+          .insert(insertRow);
 
         if (error) throw error;
 

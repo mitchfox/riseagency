@@ -41,6 +41,7 @@ export const DatasetBuilder = () => {
   const [loading, setLoading] = useState(true);
   const [actionFilter, setActionFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   const [selectedClip, setSelectedClip] = useState<ClipRow | null>(null);
   const [capturedImageUrl, setCapturedImageUrl] = useState<string | null>(null);
   const [capturedBlob, setCapturedBlob] = useState<Blob | null>(null);
@@ -62,7 +63,7 @@ export const DatasetBuilder = () => {
     if (error) {
       toast.error("Failed to load clips");
     } else {
-      setClips(data || []);
+      setClips((data || []).map((d: any) => ({ ...d, minute: d.minute != null ? String(d.minute) : null })));
     }
     setLoading(false);
   }, []);
@@ -72,7 +73,7 @@ export const DatasetBuilder = () => {
       .from("dataset_frames")
       .select("*")
       .order("created_at", { ascending: false });
-    setFrames((data as DatasetFrame[]) || []);
+    setFrames(((data || []) as unknown as DatasetFrame[]));
   }, []);
 
   useEffect(() => {
