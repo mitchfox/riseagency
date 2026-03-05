@@ -108,3 +108,6 @@ verify_jwt = false
 [functions.translate-report-content]
 verify_jwt = true
 
+[functions.generate-shell-suggestions]
+verify_jwt = true
+
