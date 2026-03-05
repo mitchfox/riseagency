@@ -24,7 +24,7 @@ export const getStatusLabel = (status: string): string => {
     represented: 'Represented',
     mandated: 'Mandated',
     previously_mandated: 'Previously Mandated',
-    fuel_for_football: 'Fuel for Football',
+    fuel_for_football: 'Fuel For Football',
     other: 'Other',
     scouted: 'Scouted',
   };
