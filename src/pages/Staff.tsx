@@ -963,7 +963,7 @@ const Staff = () => {
             { id: '_group_data', title: 'Data', isGroupLabel: true },
             { id: 'activitylog', title: 'Activity Log', icon: ClipboardList },
             { id: 'dataexport', title: 'Data Export', icon: Download },
-            { id: 'datasetbuilder', title: 'Dataset Builder', icon: Camera },
+            { id: 'datasetbuilder', title: 'Dataset Builder', icon: Film },
           ] : []),
           { id: '_group_system', title: 'System', isGroupLabel: true },
           { id: 'pwainstall', title: 'PWA Install', icon: Download },
