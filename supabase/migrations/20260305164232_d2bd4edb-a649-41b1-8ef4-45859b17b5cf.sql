@@ -1,0 +1,2 @@
+ALTER TABLE public.video_analyses ADD COLUMN IF NOT EXISTS second_half_offset double precision DEFAULT NULL;
+ALTER TABLE public.video_analyses ADD COLUMN IF NOT EXISTS second_half_video_time double precision DEFAULT NULL;
