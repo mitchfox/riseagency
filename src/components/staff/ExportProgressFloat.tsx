@@ -1,18 +1,43 @@
-import { useState, useEffect } from "react";
-import { subscribeToExportProgress, type ExportProgress } from "@/lib/backgroundExportService";
-import { Download, Check, X, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { subscribeToExportProgress, isExportRunning, type ExportProgress } from "@/lib/backgroundExportService";
+import { Check, X, Loader2, Pause, Play, RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const ExportProgressFloat = () => {
   const [progress, setProgress] = useState<ExportProgress | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  const [stalled, setStalled] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const lastProgressRef = useRef<number>(0);
+  const stallTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const unsub = subscribeToExportProgress((p) => {
       setProgress(p);
       setDismissed(false);
+      if (p.current !== lastProgressRef.current) {
+        lastProgressRef.current = p.current;
+        setStalled(false);
+      }
     });
     return unsub;
   }, []);
+
+  // Detect stalls: if progress hasn't changed in 15s while running
+  useEffect(() => {
+    if (stallTimerRef.current) clearInterval(stallTimerRef.current);
+    if (!progress || progress.finished || paused) return;
+
+    stallTimerRef.current = setInterval(() => {
+      if (progress && !progress.finished && progress.current === lastProgressRef.current) {
+        setStalled(true);
+      }
+    }, 15000);
+
+    return () => {
+      if (stallTimerRef.current) clearInterval(stallTimerRef.current);
+    };
+  }, [progress?.current, progress?.finished, paused]);
 
   if (!progress || dismissed) return null;
 
@@ -27,22 +52,56 @@ export const ExportProgressFloat = () => {
         <div className="flex items-center gap-2 text-sm font-medium">
           {progress.finished ? (
             <Check className="h-4 w-4 text-green-600" />
+          ) : stalled ? (
+            <RotateCcw className="h-4 w-4 text-yellow-600" />
           ) : (
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
           )}
-          <span>{progress.finished ? "Export complete" : "Exporting clips..."}</span>
+          <span>
+            {progress.finished
+              ? "Export complete"
+              : stalled
+              ? "Export may be stuck"
+              : "Exporting clips..."}
+          </span>
         </div>
-        {progress.finished && (
-          <button onClick={() => setDismissed(true)} className="text-muted-foreground hover:text-foreground">
-            <X className="h-3.5 w-3.5" />
-          </button>
-        )}
+        <div className="flex items-center gap-1">
+          {!progress.finished && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              title={stalled ? "Restart export" : paused ? "Resume" : "Pause"}
+              onClick={() => {
+                if (stalled) {
+                  // Force reload page to restart
+                  window.location.reload();
+                } else {
+                  setPaused(!paused);
+                }
+              }}
+            >
+              {stalled ? (
+                <RotateCcw className="h-3.5 w-3.5 text-yellow-600" />
+              ) : paused ? (
+                <Play className="h-3.5 w-3.5 text-green-600" />
+              ) : (
+                <Pause className="h-3.5 w-3.5 text-muted-foreground" />
+              )}
+            </Button>
+          )}
+          {progress.finished && (
+            <button onClick={() => setDismissed(true)} className="text-muted-foreground hover:text-foreground">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Progress bar */}
       <div className="h-1.5 bg-muted rounded-full overflow-hidden">
         <div
-          className="h-full bg-primary rounded-full transition-all duration-300"
+          className={`h-full rounded-full transition-all duration-300 ${stalled ? 'bg-yellow-500' : 'bg-primary'}`}
           style={{ width: `${pct}%` }}
         />
       </div>

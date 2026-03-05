@@ -1531,7 +1531,7 @@ const Dashboard = () => {
                   className="flex items-center gap-2 relative"
                 >
                   <Bell className="h-4 w-4" />
-                  <span className="hidden sm:inline">Notifications</span>
+                  <span className="hidden sm:inline">{t(playerData?.portal_language, "notifications")}</span>
                   {/* Notification Badge */}
                   {(() => {
                     const recentCount = [
@@ -1664,8 +1664,8 @@ const Dashboard = () => {
               className="flex items-center gap-2"
             >
               <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Coach Availability</span>
-              <span className="sm:hidden">Availability</span>
+              <span className="hidden sm:inline">{t(playerData?.portal_language, "coach_availability")}</span>
+              <span className="sm:hidden">{t(playerData?.portal_language, "availability")}</span>
             </Button>
           </div>
         </div>
@@ -1808,6 +1808,7 @@ const Dashboard = () => {
                 playerData={playerData}
                 dailyAphorism={dailyAphorism}
                 portalSettings={portalSettings}
+                portalLanguage={playerData?.portal_language}
                 onNavigateToAnalysis={() => {
                   setActiveTab("analysis");
                   setActiveAnalysisTab("performance");
@@ -3144,7 +3145,7 @@ const Dashboard = () => {
                                 {((program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0) || program.schedule_notes) && (
                                   <AccordionItem value="schedule">
                                     <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
-                                      Schedule
+                                      {t(playerData?.portal_language, "schedule")}
                                     </AccordionTrigger>
                                     <AccordionContent className="pl-6 pr-6">
                                       <div className="space-y-6">
@@ -3161,12 +3162,15 @@ const Dashboard = () => {
                                                     color: 'hsl(0, 0%, 0%)'
                                                   }}
                                                 >
-                                                  <span className="hidden md:inline text-center w-full">Week Start Date</span>
-                                                  <span className="md:hidden text-center w-full">Week Start</span>
+                                                   <span className="hidden md:inline text-center w-full">{t(playerData?.portal_language, "week_start_date")}</span>
+                                                   <span className="md:hidden text-center w-full">{t(playerData?.portal_language, "week_start")}</span>
                                                 </div>
-                                              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => (
+                                              {(() => {
+                                                const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+                                                const shortDayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+                                                return dayKeys.map((dayKey, idx) => (
                                                  <div 
-                                                  key={day}
+                                                  key={dayKey}
                                                   className="p-1 md:p-4 font-bebas uppercase text-xs md:text-lg flex items-center justify-center rounded-lg"
                                                      style={{ 
                                                        backgroundColor: 'hsl(43, 49%, 61%)',
@@ -3174,11 +3178,12 @@ const Dashboard = () => {
                                                      }}
                                                    >
                                                      <span className="hidden md:inline">
-                                                       {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][idx]}
+                                                       {t(playerData?.portal_language, dayKey)}
                                                      </span>
-                                                     <span className="md:hidden">{day}</span>
+                                                     <span className="md:hidden">{t(playerData?.portal_language, shortDayKeys[idx])}</span>
                                                    </div>
-                                                 ))}
+                                                ));
+                                              })()}
                                                </div>
                                                
                                                {/* Table Rows */}
@@ -4645,6 +4650,7 @@ const Dashboard = () => {
       <CoachAvailability
         open={coachAvailabilityOpen}
         onOpenChange={setCoachAvailabilityOpen}
+        portalLanguage={playerData?.portal_language}
       />
 
       {/* Test Input Dialog */}
@@ -4818,7 +4824,7 @@ const Dashboard = () => {
             onClick={handleLogout}
             className="font-bebas uppercase tracking-wider"
           >
-            Log Out
+            {t(playerData?.portal_language, "log_out")}
           </Button>
           <Button 
             type="button"

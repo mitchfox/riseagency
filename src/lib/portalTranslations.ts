@@ -3,21 +3,32 @@
  * Keys are English defaults; values are translations per language code.
  */
 
-type TranslationKey =
-  | "hub" | "analysis" | "programming" | "key_documents" | "updates"
-  | "highlights" | "transfer_hub" | "nutrition" | "view_profile" | "more"
-  | "back" | "performance" | "form" | "video_reports" | "data"
-  | "comparisons" | "scouting" | "positional" | "schemes" | "concepts"
-  | "cognisance" | "other" | "performance_analysis" | "uploading_clip"
-  | "no_performance_reports" | "reports_will_appear"
-  | "next_match" | "overview" | "current_programme" | "schedule"
-  | "sessions" | "exercises" | "download" | "view" | "delete"
-  | "upload_clip" | "your_clips" | "no_clips_yet" | "clips_appear_here"
-  | "match_highlights" | "best_clips" | "no_highlights"
-  | "loading" | "log_out" | "settings" | "notifications"
-  | "injury_log" | "match_clipper" | "quick_stats" | "r90_chart";
+type TranslationKey = string;
 
-const translations: Record<string, Record<TranslationKey, string>> = {
+// New keys that all languages need - English defaults
+const extendedKeys: Record<string, string> = {
+  coach_availability: "Coach Availability",
+  availability: "Availability",
+  monday: "Monday", tuesday: "Tuesday", wednesday: "Wednesday",
+  thursday: "Thursday", friday: "Friday", saturday: "Saturday", sunday: "Sunday",
+  mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun",
+  week_start_date: "Week Start Date", week_start: "Week Start",
+  select_position: "Select Position", no_schemes_for_position: "No tactical schemes available for this position yet.",
+  select_position_prompt: "Select a position to view tactical schemes.",
+  team_scheme: "Team Scheme", opposition_scheme: "Opposition Scheme", select_scheme: "Select scheme",
+  goalkeeper: "Goalkeeper", centre_back: "Centre Back", full_back: "Full Back",
+  midfielder: "Midfielder", winger: "Winger", striker: "Striker",
+  days: "days", hours: "hours", mins: "mins", secs: "secs",
+  no_upcoming_fixtures: "No upcoming fixtures", match_day: "Match Day",
+  r90_score: "R90 Score", minutes_played: "Minutes Played", result: "Result", opponent: "Opponent",
+  no_data_available: "No data available", no_comparisons: "No comparisons available",
+  score_history: "Score History", latest_reports: "Latest Reports", view_all: "View All",
+  refresh: "Refresh", close: "Close",
+  aphorism_of_the_day: "Thought of the Day",
+  select_opposition_scheme: "Select opposition scheme",
+};
+
+const translations: Record<string, Record<string, string>> = {
   en: {
     hub: "Hub",
     analysis: "Analysis",
@@ -570,9 +581,106 @@ function normalizePortalLanguage(lang: string | null | undefined): string {
   return aliases[raw] ?? raw;
 }
 
-export function t(lang: string | null | undefined, key: TranslationKey): string {
+export function t(lang: string | null | undefined, key: string): string {
   const code = normalizePortalLanguage(lang);
-  return translations[code]?.[key] ?? translations.en[key] ?? key;
+  return translations[code]?.[key] ?? extendedKeys[key] ?? translations.en?.[key] ?? key;
 }
+
+// French extended translations
+const frExtended: Record<string, string> = {
+  coach_availability: "Disponibilité du Coach",
+  availability: "Disponibilité",
+  monday: "Lundi", tuesday: "Mardi", wednesday: "Mercredi",
+  thursday: "Jeudi", friday: "Vendredi", saturday: "Samedi", sunday: "Dimanche",
+  mon: "Lun", tue: "Mar", wed: "Mer", thu: "Jeu", fri: "Ven", sat: "Sam", sun: "Dim",
+  week_start_date: "Date de Début", week_start: "Début",
+  select_position: "Choisir une Position",
+  no_schemes_for_position: "Pas encore de schémas tactiques pour cette position.",
+  select_position_prompt: "Choisissez une position pour voir les schémas tactiques.",
+  team_scheme: "Schéma d'Équipe", opposition_scheme: "Schéma Adverse",
+  select_scheme: "Choisir un schéma", select_opposition_scheme: "Choisir un schéma adverse",
+  goalkeeper: "Gardien", centre_back: "Défenseur Central", full_back: "Latéral",
+  midfielder: "Milieu de Terrain", winger: "Ailier", striker: "Attaquant",
+  days: "jours", hours: "heures", mins: "min", secs: "sec",
+  no_upcoming_fixtures: "Pas de matchs à venir", match_day: "Jour de Match",
+  r90_score: "Score R90", minutes_played: "Minutes Jouées", result: "Résultat", opponent: "Adversaire",
+  no_data_available: "Aucune donnée disponible", no_comparisons: "Aucune comparaison disponible",
+  score_history: "Historique des Scores", latest_reports: "Derniers Rapports", view_all: "Voir Tout",
+  refresh: "Actualiser", close: "Fermer",
+  aphorism_of_the_day: "Pensée du Jour",
+};
+
+// Merge extended translations into all languages
+Object.entries(frExtended).forEach(([key, val]) => {
+  if (translations.fr) translations.fr[key] = val;
+});
+
+// Spanish extended
+const esExtended: Record<string, string> = {
+  coach_availability: "Disponibilidad del Entrenador", availability: "Disponibilidad",
+  monday: "Lunes", tuesday: "Martes", wednesday: "Miércoles",
+  thursday: "Jueves", friday: "Viernes", saturday: "Sábado", sunday: "Domingo",
+  mon: "Lun", tue: "Mar", wed: "Mié", thu: "Jue", fri: "Vie", sat: "Sáb", sun: "Dom",
+  days: "días", hours: "horas", mins: "min", secs: "seg",
+  goalkeeper: "Portero", centre_back: "Central", full_back: "Lateral",
+  midfielder: "Centrocampista", winger: "Extremo", striker: "Delantero",
+  aphorism_of_the_day: "Pensamiento del Día",
+  refresh: "Actualizar", close: "Cerrar",
+  week_start_date: "Fecha de Inicio", week_start: "Inicio",
+};
+Object.entries(esExtended).forEach(([key, val]) => {
+  if (translations.es) translations.es[key] = val;
+});
+
+// Portuguese extended
+const ptExtended: Record<string, string> = {
+  coach_availability: "Disponibilidade do Treinador", availability: "Disponibilidade",
+  monday: "Segunda", tuesday: "Terça", wednesday: "Quarta",
+  thursday: "Quinta", friday: "Sexta", saturday: "Sábado", sunday: "Domingo",
+  mon: "Seg", tue: "Ter", wed: "Qua", thu: "Qui", fri: "Sex", sat: "Sáb", sun: "Dom",
+  days: "dias", hours: "horas", mins: "min", secs: "seg",
+  goalkeeper: "Guarda-Redes", centre_back: "Defesa Central", full_back: "Lateral",
+  midfielder: "Médio", winger: "Extremo", striker: "Avançado",
+  aphorism_of_the_day: "Pensamento do Dia",
+  refresh: "Atualizar", close: "Fechar",
+  week_start_date: "Data de Início", week_start: "Início",
+};
+Object.entries(ptExtended).forEach(([key, val]) => {
+  if (translations.pt) translations.pt[key] = val;
+});
+
+// German extended
+const deExtended: Record<string, string> = {
+  coach_availability: "Trainer-Verfügbarkeit", availability: "Verfügbarkeit",
+  monday: "Montag", tuesday: "Dienstag", wednesday: "Mittwoch",
+  thursday: "Donnerstag", friday: "Freitag", saturday: "Samstag", sunday: "Sonntag",
+  mon: "Mo", tue: "Di", wed: "Mi", thu: "Do", fri: "Fr", sat: "Sa", sun: "So",
+  days: "Tage", hours: "Stunden", mins: "Min", secs: "Sek",
+  goalkeeper: "Torwart", centre_back: "Innenverteidiger", full_back: "Außenverteidiger",
+  midfielder: "Mittelfeldspieler", winger: "Flügelspieler", striker: "Stürmer",
+  aphorism_of_the_day: "Gedanke des Tages",
+  refresh: "Aktualisieren", close: "Schließen",
+  week_start_date: "Wochenbeginn", week_start: "Wochenbeginn",
+};
+Object.entries(deExtended).forEach(([key, val]) => {
+  if (translations.de) translations.de[key] = val;
+});
+
+// Italian extended
+const itExtended: Record<string, string> = {
+  coach_availability: "Disponibilità Allenatore", availability: "Disponibilità",
+  monday: "Lunedì", tuesday: "Martedì", wednesday: "Mercoledì",
+  thursday: "Giovedì", friday: "Venerdì", saturday: "Sabato", sunday: "Domenica",
+  mon: "Lun", tue: "Mar", wed: "Mer", thu: "Gio", fri: "Ven", sat: "Sab", sun: "Dom",
+  days: "giorni", hours: "ore", mins: "min", secs: "sec",
+  goalkeeper: "Portiere", centre_back: "Difensore Centrale", full_back: "Terzino",
+  midfielder: "Centrocampista", winger: "Ala", striker: "Attaccante",
+  aphorism_of_the_day: "Pensiero del Giorno",
+  refresh: "Aggiorna", close: "Chiudi",
+  week_start_date: "Data Inizio", week_start: "Inizio",
+};
+Object.entries(itExtended).forEach(([key, val]) => {
+  if (translations.it) translations.it[key] = val;
+});
 
 export type { TranslationKey };

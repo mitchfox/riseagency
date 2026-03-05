@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { t } from "@/lib/portalTranslations";
 
 interface AvailabilitySlot {
   id: string;
@@ -17,9 +18,10 @@ interface AvailabilitySlot {
 interface CoachAvailabilityProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  portalLanguage?: string | null;
 }
 
-export const CoachAvailability = ({ open, onOpenChange }: CoachAvailabilityProps) => {
+export const CoachAvailability = ({ open, onOpenChange, portalLanguage }: CoachAvailabilityProps) => {
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,35 +34,22 @@ export const CoachAvailability = ({ open, onOpenChange }: CoachAvailabilityProps
   const fetchAvailability = async () => {
     try {
       setLoading(true);
-      
-      // Get today's date in YYYY-MM-DD format for comparison
       const today = new Date().toISOString().split('T')[0];
-      
-      // Fetch only current and future staff availability
       const { data: availabilityData, error: availabilityError } = await supabase
         .from("staff_availability")
-        .select(`
-          id,
-          availability_date,
-          start_time,
-          end_time,
-          notes,
-          staff_id
-        `)
+        .select(`id, availability_date, start_time, end_time, notes, staff_id`)
         .gte("availability_date", today)
         .order("availability_date")
         .order("start_time");
 
       if (availabilityError) throw availabilityError;
 
-      // Get staff names
       const staffIds = [...new Set(availabilityData?.map(a => a.staff_id) || [])];
       const { data: profilesData } = await supabase
         .from("profiles")
         .select("id, full_name")
         .in("id", staffIds);
 
-      // Combine data
       const combinedData = availabilityData?.map(slot => ({
         ...slot,
         staff_name: profilesData?.find(p => p.id === slot.staff_id)?.full_name || "Jolon"
@@ -74,7 +63,6 @@ export const CoachAvailability = ({ open, onOpenChange }: CoachAvailabilityProps
     }
   };
 
-  // Format time to 12-hour format (e.g., "6pm")
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
     const hour = parseInt(hours);
@@ -89,15 +77,15 @@ export const CoachAvailability = ({ open, onOpenChange }: CoachAvailabilityProps
         <DialogHeader className="mb-4">
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <Calendar className="h-6 w-6" />
-            Coach Availability
+            {t(portalLanguage, "coach_availability")}
           </DialogTitle>
         </DialogHeader>
 
         {loading ? (
-          <div className="text-center py-4">Loading availability...</div>
+          <div className="text-center py-4">{t(portalLanguage, "loading")}</div>
         ) : availability.length === 0 ? (
           <div className="text-center py-4 text-muted-foreground">
-            No coach availability set yet.
+            {t(portalLanguage, "no_upcoming_fixtures")}
           </div>
         ) : (
           <div className="space-y-2 flex-1 overflow-y-auto">
@@ -134,7 +122,7 @@ export const CoachAvailability = ({ open, onOpenChange }: CoachAvailabilityProps
 
         <div className="flex justify-end mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+            {t(portalLanguage, "close")}
           </Button>
         </div>
       </DialogContent>

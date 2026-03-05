@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb, Star, HelpCircle, Plus } from "lucide-react";
+import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb, Star, HelpCircle, Plus, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
 import { KeyboardShortcutsDialog } from "@/components/staff/KeyboardShortcutsDialog";
@@ -1165,6 +1165,23 @@ const Staff = () => {
                           </PopoverTrigger>
                           <PopoverContent side="bottom" align="start" className="w-auto p-2 flex items-center gap-2">
                             <span className="text-xs font-medium">{sec.title}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                              onClick={() => {
+                                // Refresh the current tab by toggling away and back
+                                if (expandedSection === tabId) {
+                                  handleSectionToggle('overview');
+                                  setTimeout(() => handleSectionToggle(tabId as any), 50);
+                                } else {
+                                  handleSectionToggle(tabId as any);
+                                }
+                              }}
+                              title="Refresh"
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"

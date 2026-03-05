@@ -1,4 +1,5 @@
 import * as React from "react";
+import { t } from "@/lib/portalTranslations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
@@ -155,6 +156,7 @@ interface HubProps {
   playerData: any;
   dailyAphorism?: any;
   portalSettings?: any;
+  portalLanguage?: string | null;
   onNavigateToAnalysis: () => void;
   onNavigateToComparisons?: () => void;
   onNavigateToForm?: () => void;
@@ -162,7 +164,7 @@ interface HubProps {
   onNavigateToSchedule?: () => void;
 }
 
-export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSettings, onNavigateToAnalysis, onNavigateToComparisons, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
+export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSettings, portalLanguage, onNavigateToAnalysis, onNavigateToComparisons, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
   const navigate = useNavigate();
 
   const getEffectiveR90 = (a: PlayerAnalysis): number | null => {
@@ -513,7 +515,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
             <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">Schedule</CardTitle>
+                <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">{t(portalLanguage, "schedule")}</CardTitle>
               </div>
               <Button 
                 variant="ghost" 
@@ -521,7 +523,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                 onClick={onNavigateToSchedule}
                 className="flex items-center justify-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
               >
-                See All
+                {t(portalLanguage, "view_all")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
@@ -634,7 +636,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                 onClick={onNavigateToForm || onNavigateToAnalysis}
                 className="flex items-center justify-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
               >
-                See All
+                {t(portalLanguage, "view_all")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
@@ -824,7 +826,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                   onClick={onNavigateToAnalysis}
                   className="flex items-center justify-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
                 >
-                  See All
+                  {t(portalLanguage, "view_all")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
