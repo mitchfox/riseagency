@@ -176,9 +176,9 @@ export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName
                   </div>
                 ))}
               </div>
-              {preMatchAnalysis && (
-                <PreMatchButton analysis={preMatchAnalysis} />
-              )}
+                {preMatchAnalysis && (
+                  <PreMatchButton analysis={preMatchAnalysis} portalLanguage={portalLanguage} />
+                )}
             </div>
           </div>
         )}
