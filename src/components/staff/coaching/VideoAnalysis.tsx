@@ -1461,6 +1461,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         minute: parseClipMinuteToNumber(attachClip.minute) ?? getMatchMinute(attachClip.start, selectedVideo.match_minute_offset),
       };
       if (attachClip.action_score != null) insertData.action_score = attachClip.action_score;
+      if (annotations) insertData.clip_annotations = annotations;
       if (attachClip.zone_details?.length) {
         insertData.zone_details = attachClip.zone_details;
         insertData.zone = attachClip.zone_details[0].zone;
