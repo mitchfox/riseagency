@@ -7,7 +7,7 @@ import { OFFENSIVE_ZONE_MULTIPLIERS } from "@/lib/zoneMultipliers";
 export interface ZonePoint {
   zone: number;       // 1-18 major zone
   sub?: number;       // 1-9 sub-zone within major zone
-  direction?: "forward" | "backward"; // pass direction on first clicked zone
+  direction?: "forward" | "backward"; // pass direction (only on first point)
 }
 
 interface ZonePitchSelectorProps {
@@ -69,12 +69,11 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
   const [expandedZone, setExpandedZone] = useState<number | null>(null);
   const showPass = isPassAction(actionType);
 
+  // Direction is stored on the first point only
+  const currentDirection = value.length > 0 ? value[0].direction : undefined;
+
   const hasZone = (zone: number, sub?: number): boolean => {
     return value.some(p => p.zone === zone && (sub === undefined || p.sub === sub));
-  };
-
-  const getPoint = (zone: number, sub?: number): ZonePoint | undefined => {
-    return value.find(p => p.zone === zone && (sub === undefined || p.sub === sub));
   };
 
   const toggleSubZone = useCallback((zone: number, sub: number) => {
@@ -83,32 +82,31 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
       onChange(value.filter(p => !(p.zone === zone && p.sub === sub)));
     } else {
       const newPoint: ZonePoint = { zone, sub };
-      // First point on a pass action always gets a direction arrow
-      if (showPass && value.length === 0) {
-        newPoint.direction = "forward";
-      }
       onChange([...value, newPoint]);
     }
-  }, [value, onChange, showPass]);
-
-  const toggleDirection = useCallback((zone: number, sub: number) => {
-    onChange(value.map(p => {
-      if (p.zone === zone && p.sub === sub && p.direction) {
-        return { ...p, direction: p.direction === "forward" ? "backward" : "forward" };
-      }
-      return p;
-    }));
   }, [value, onChange]);
 
-  // Allow adding direction to any point on a pass action
-  const addDirection = useCallback((zone: number, sub: number) => {
-    onChange(value.map(p => {
-      if (p.zone === zone && p.sub === sub && !p.direction) {
-        return { ...p, direction: "forward" as const };
+  const toggleDirection = useCallback(() => {
+    if (value.length === 0) return;
+    const newDir: "forward" | "backward" | undefined = 
+      currentDirection === "forward" ? "backward" : 
+      currentDirection === "backward" ? undefined : 
+      "forward";
+    onChange(value.map((p, i) => {
+      if (i === 0) {
+        const updated = { ...p };
+        if (newDir) {
+          updated.direction = newDir;
+        } else {
+          delete updated.direction;
+        }
+        return updated;
       }
-      return p;
+      // Remove direction from all other points
+      const { direction, ...rest } = p;
+      return rest;
     }));
-  }, [value, onChange]);
+  }, [value, onChange, currentDirection]);
 
   const zoneCount = (zone: number): number => {
     return value.filter(p => p.zone === zone).length;
@@ -139,7 +137,27 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
               {expandedZone ? `Zone ${expandedZone} — Sub-zones` : "Pitch Zone"}
               {summary && <span className="ml-1.5 text-muted-foreground font-normal">({summary})</span>}
             </p>
-            <div className="flex gap-1">
+            <div className="flex gap-1.5 items-center">
+              {/* Single direction toggle for pass actions */}
+              {showPass && value.length > 0 && (
+                <button
+                  onClick={toggleDirection}
+                  className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] transition-colors ${
+                    currentDirection 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted text-muted-foreground hover:bg-accent'
+                  }`}
+                  title={currentDirection === "forward" ? "Direction: Forward (click to change)" : currentDirection === "backward" ? "Direction: Backward (click to change)" : "Add direction"}
+                >
+                  {currentDirection === "forward" ? (
+                    <><ArrowUp className="h-3 w-3" /> Fwd</>
+                  ) : currentDirection === "backward" ? (
+                    <><ArrowDown className="h-3 w-3" /> Back</>
+                  ) : (
+                    <><ArrowUp className="h-3 w-3 opacity-50" /> Dir</>
+                  )}
+                </button>
+              )}
               {expandedZone && (
                 <button
                   onClick={() => setExpandedZone(null)}
@@ -175,7 +193,6 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
                     <div key={ri} className="grid grid-cols-3 gap-1">
                       {row.map(sub => {
                         const isSelected = hasZone(expandedZone, sub);
-                        const point = getPoint(expandedZone, sub);
                         return (
                           <button
                             key={sub}
@@ -191,30 +208,6 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
                             <span className={`text-xs font-bold ${isSelected ? '' : 'text-black'}`}>
                               {expandedZone}.{sub}
                             </span>
-                            {/* Direction arrow for pass actions - show on any selected point */}
-                            {showPass && isSelected && point?.direction && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); toggleDirection(expandedZone, sub); }}
-                                className="absolute top-0.5 right-0.5 p-0.5 rounded bg-black/30 hover:bg-black/50"
-                                title="Click to flip direction"
-                              >
-                                {point.direction === "forward" ? (
-                                  <ArrowUp className="h-3 w-3 text-white" />
-                                ) : (
-                                  <ArrowDown className="h-3 w-3 text-white" />
-                                )}
-                              </button>
-                            )}
-                            {/* For pass actions: show "add direction" tap target on selected points without direction */}
-                            {showPass && isSelected && !point?.direction && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); addDirection(expandedZone, sub); }}
-                                className="absolute top-0.5 right-0.5 p-0.5 rounded bg-black/20 hover:bg-black/40"
-                                title="Add direction arrow"
-                              >
-                                <ArrowUp className="h-3 w-3 text-white/50" />
-                              </button>
-                            )}
                           </button>
                         );
                       })}
@@ -268,7 +261,7 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
 
           <div className="text-[9px] text-muted-foreground">
             <p>Click a zone to place sub-zone points. Multiple points per action supported.</p>
-            {showPass && <p className="text-primary">Pass action — selected points show a direction arrow (click to flip).</p>}
+            {showPass && <p className="text-primary">Pass action — use the direction toggle above to set forward/backward.</p>}
           </div>
         </div>
       </PopoverContent>
