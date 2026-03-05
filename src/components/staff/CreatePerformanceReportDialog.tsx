@@ -2086,7 +2086,7 @@ export const CreatePerformanceReportDialog = ({
                     onDrop={(e) => handleActionDrop(e, index)}
                   >
                     {/* Line 1: #, Minute, Type, Description, Notes */}
-                    <div className="flex items-start gap-2">
+                    <div className="flex items-start gap-2 rounded-md border bg-card/50 p-2">
                       <span className="text-sm font-medium text-muted-foreground pt-2 shrink-0 w-6 text-center">{action.action_number}</span>
 
                       <Input
@@ -2194,69 +2194,73 @@ export const CreatePerformanceReportDialog = ({
                         value={action.notes}
                         onChange={(e) => updateAction(index, "notes", e.target.value)}
                         placeholder="Notes"
-                        className="min-w-[120px] max-w-[180px] min-h-[36px] text-sm shrink-0"
+                        className="min-w-[120px] max-w-[200px] min-h-[36px] text-sm shrink-0"
                         rows={1}
                       />
                     </div>
 
-                    {/* Line 2: Zone, Search R90, R90 Reference, Score, Clip | Delete, Reorder */}
-                    <div className="flex items-center gap-2 pl-0">
-                      <div className="w-6 shrink-0 flex justify-center">
-                        <ZonePitchSelector
-                          value={action.zone_details || (action.zone ? [{ zone: action.zone }] : [])}
-                          onChange={(zd) => { updateAction(index, 'zone_details', zd as any); updateAction(index, 'zone', (zd.length ? zd[0].zone : null) as any); }}
-                          actionType={action.action_type}
+                    {/* Line 2: Zone, Search R90, R90 Reference, Score | Clip | Delete, Reorder */}
+                    <div className="flex items-center gap-2 rounded-md border bg-card/50 p-2">
+                      <div className="flex items-center gap-2 rounded-md border bg-background px-2 py-1">
+                        <div className="w-6 shrink-0 flex justify-center">
+                          <ZonePitchSelector
+                            value={action.zone_details || (action.zone ? [{ zone: action.zone }] : [])}
+                            onChange={(zd) => { updateAction(index, 'zone_details', zd as any); updateAction(index, 'zone', (zd.length ? zd[0].zone : null) as any); }}
+                            actionType={action.action_type}
+                          />
+                        </div>
+
+                        <Input
+                          value={actionSearchFilters[index] || ''}
+                          onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
+                          placeholder="Search R90..."
+                          className="h-7 text-xs w-32 px-2"
+                        />
+                        <Button
+                          onClick={() => openR90Viewer(index)}
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs shrink-0 [&>svg]:hover:text-black"
+                          title="R90 Ratings Reference"
+                        >
+                          <Search className="h-3.5 w-3.5 text-primary mr-1" />
+                          R90
+                        </Button>
+                        <Input
+                          type="number"
+                          step="0.00001"
+                          value={action.action_score}
+                          onChange={(e) => updateAction(index, "action_score", e.target.value)}
+                          placeholder="Score"
+                          className="w-24 h-7 text-sm"
                         />
                       </div>
 
-                      <Input
-                        value={actionSearchFilters[index] || ''}
-                        onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
-                        placeholder="Search R90..."
-                        className="h-7 text-xs w-32 px-2"
-                      />
-                      <Button
-                        onClick={() => openR90Viewer(index)}
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 text-xs shrink-0 [&>svg]:hover:text-black"
-                        title="R90 Ratings Reference"
-                      >
-                        <Search className="h-3.5 w-3.5 text-primary mr-1" />
-                        R90
-                      </Button>
-                      <Input
-                        type="number"
-                        step="0.00001"
-                        value={action.action_score}
-                        onChange={(e) => updateAction(index, "action_score", e.target.value)}
-                        placeholder="Score"
-                        className="w-24 h-7 text-sm"
-                      />
-
-                      {action.id ? (
-                        <ActionVideoUpload
-                          actionId={action.id}
-                          currentVideoUrl={action.video_url || null}
-                          onVideoUploaded={(videoUrl) => {
-                            updateAction(index, 'video_url', videoUrl);
-                          }}
-                          analysisId={analysisId}
-                        />
-                      ) : (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex items-center justify-center h-8 w-8 text-muted-foreground shrink-0">
-                              <span className="text-xs">💾</span>
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>Save report first to add video clips</TooltipContent>
-                        </Tooltip>
-                      )}
+                      <div className="mx-4 shrink-0 rounded-md border bg-background px-3 py-1">
+                        {action.id ? (
+                          <ActionVideoUpload
+                            actionId={action.id}
+                            currentVideoUrl={action.video_url || null}
+                            onVideoUploaded={(videoUrl) => {
+                              updateAction(index, 'video_url', videoUrl);
+                            }}
+                            analysisId={analysisId}
+                          />
+                        ) : (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center justify-center h-8 w-8 text-muted-foreground shrink-0">
+                                <span className="text-xs">💾</span>
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>Save report first to add video clips</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
 
                       <div className="flex-1" />
 
-                      <div className="flex items-center gap-0.5 shrink-0">
+                      <div className="flex items-center gap-0.5 shrink-0 rounded-md border bg-background px-1 py-1">
                         <Button
                           onClick={() => removeAction(index)}
                           size="icon"

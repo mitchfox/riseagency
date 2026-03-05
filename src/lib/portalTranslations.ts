@@ -544,8 +544,34 @@ const translations: Record<string, Record<TranslationKey, string>> = {
  * Get a translated label for the portal.
  * Falls back to English if the language or key is missing.
  */
+function normalizePortalLanguage(lang: string | null | undefined): string {
+  const raw = (lang || "en").trim().toLowerCase();
+
+  const aliases: Record<string, string> = {
+    "français": "fr",
+    "francais": "fr",
+    "french": "fr",
+    "english": "en",
+    "español": "es",
+    "spanish": "es",
+    "português": "pt",
+    "portugues": "pt",
+    "german": "de",
+    "deutsch": "de",
+    "italiano": "it",
+    "polski": "pl",
+    "čeština": "cs",
+    "cestina": "cs",
+    "русский": "ru",
+    "türkçe": "tr",
+    "turkce": "tr",
+  };
+
+  return aliases[raw] ?? raw;
+}
+
 export function t(lang: string | null | undefined, key: TranslationKey): string {
-  const code = lang || "en";
+  const code = normalizePortalLanguage(lang);
   return translations[code]?.[key] ?? translations.en[key] ?? key;
 }
 

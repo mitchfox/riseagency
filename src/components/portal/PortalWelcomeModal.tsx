@@ -2,54 +2,113 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Video, Dumbbell, ClipboardList, TrendingUp, ArrowRight } from "lucide-react";
+import { t } from "@/lib/portalTranslations";
 
 interface PortalWelcomeModalProps {
   playerName: string;
   playerId: string;
+  portalLanguage?: string | null;
   hasAnalyses: boolean;
   hasPerformanceReports: boolean;
   onNavigate: (tab: string, subTab?: string) => void;
 }
 
-const FEATURES = [
-  {
-    icon: ClipboardList,
-    title: "Performance Reports",
-    description: "Match-by-match breakdown of your actions, R90 scores, and coaching feedback. Each report highlights what you did well and where to improve.",
-    tab: "analysis",
-    subTab: "performance",
-  },
-  {
-    icon: BarChart3,
-    title: "Analysis",
-    description: "Pre-match and post-match tactical analysis prepared by your coaching team. Review team shape, key matchups, and tactical points.",
-    tab: "analysis",
-    subTab: "analysis",
-  },
-  {
-    icon: TrendingUp,
-    title: "Form & Comparisons",
-    description: "Track your form over time with R90 trend graphs. See how your metrics compare across different matches and periods.",
-    tab: "analysis",
-    subTab: "performance",
-  },
-  {
-    icon: Video,
-    title: "Clips & Highlights",
-    description: "Watch your match clips and highlight reels. Upload your own clips or view ones selected by the coaching team.",
-    tab: "clips",
-  },
-  {
-    icon: Dumbbell,
-    title: "Programmes",
-    description: "Access your training programmes, gym sessions, nutrition plans, and weekly schedules all in one place.",
-    tab: "programmes",
-  },
-];
+const getWelcomeCopy = (lang?: string | null) => {
+  const isFrench = (lang || "").toLowerCase().trim().startsWith("fr");
+
+  if (isFrench) {
+    return {
+      intro: "Ceci est votre espace personnel pour suivre votre progression. Voici un aperçu rapide de ce que vous pouvez consulter :",
+      waiting: "Du contenu vous attend déjà !",
+      viewPerformance: "Voir les rapports de performance",
+      viewAnalysis: "Voir l'analyse",
+      cta: "Parfait, c'est parti",
+      features: [
+        {
+          icon: ClipboardList,
+          title: "Rapports de performance",
+          description: "Analyse match par match de vos actions, de vos scores R90 et des retours du staff.",
+          tab: "analysis",
+          subTab: "performance",
+        },
+        {
+          icon: BarChart3,
+          title: "Analyse",
+          description: "Analyses tactiques d'avant et d'après match préparées par votre staff.",
+          tab: "analysis",
+          subTab: "analysis",
+        },
+        {
+          icon: TrendingUp,
+          title: "Forme et comparaisons",
+          description: "Suivez l'évolution de votre forme avec les tendances R90 et les comparaisons de performances.",
+          tab: "analysis",
+          subTab: "performance",
+        },
+        {
+          icon: Video,
+          title: "Clips et highlights",
+          description: "Regardez vos clips de match et vos meilleures séquences.",
+          tab: "clips",
+        },
+        {
+          icon: Dumbbell,
+          title: "Programmes",
+          description: "Accédez à vos programmes d'entraînement, séances gym, nutrition et planning.",
+          tab: "programmes",
+        },
+      ],
+    };
+  }
+
+  return {
+    intro: "This is your personal hub for everything related to your development. Here's a quick overview of what you can access:",
+    waiting: "You already have content waiting for you!",
+    viewPerformance: "View Performance Reports",
+    viewAnalysis: "View Analysis",
+    cta: "Got it, let's go",
+    features: [
+      {
+        icon: ClipboardList,
+        title: "Performance Reports",
+        description: "Match-by-match breakdown of your actions, R90 scores, and coaching feedback. Each report highlights what you did well and where to improve.",
+        tab: "analysis",
+        subTab: "performance",
+      },
+      {
+        icon: BarChart3,
+        title: "Analysis",
+        description: "Pre-match and post-match tactical analysis prepared by your coaching team. Review team shape, key matchups, and tactical points.",
+        tab: "analysis",
+        subTab: "analysis",
+      },
+      {
+        icon: TrendingUp,
+        title: "Form & Comparisons",
+        description: "Track your form over time with R90 trend graphs. See how your metrics compare across different matches and periods.",
+        tab: "analysis",
+        subTab: "performance",
+      },
+      {
+        icon: Video,
+        title: "Clips & Highlights",
+        description: "Watch your match clips and highlight reels. Upload your own clips or view ones selected by the coaching team.",
+        tab: "clips",
+      },
+      {
+        icon: Dumbbell,
+        title: "Programmes",
+        description: "Access your training programmes, gym sessions, nutrition plans, and weekly schedules all in one place.",
+        tab: "programmes",
+      },
+    ],
+  };
+};
 
 export const PortalWelcomeModal = ({
   playerName,
   playerId,
+  portalLanguage,
   hasAnalyses,
   hasPerformanceReports,
   onNavigate,
@@ -60,7 +119,6 @@ export const PortalWelcomeModal = ({
     const key = `portal_welcome_seen_${playerId}`;
     const seen = localStorage.getItem(key);
     if (!seen) {
-      // Small delay so the portal has time to render first
       const timer = setTimeout(() => setOpen(true), 800);
       return () => clearTimeout(timer);
     }
@@ -77,20 +135,21 @@ export const PortalWelcomeModal = ({
   };
 
   const firstName = playerName?.split(" ")[0] || "there";
+  const copy = getWelcomeCopy(portalLanguage);
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleDismiss(); }}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Welcome to your portal, {firstName} 👋</DialogTitle>
+          <DialogTitle className="text-2xl">{t(portalLanguage, "view_profile")}, {firstName} 👋</DialogTitle>
         </DialogHeader>
 
         <p className="text-muted-foreground">
-          This is your personal hub for everything related to your development. Here's a quick overview of what you can access:
+          {copy.intro}
         </p>
 
         <div className="grid gap-3 mt-4">
-          {FEATURES.map((feature) => (
+          {copy.features.map((feature) => (
             <button
               key={feature.title}
               onClick={() => handleNavigate(feature.tab, feature.subTab)}
@@ -110,16 +169,16 @@ export const PortalWelcomeModal = ({
 
         {(hasPerformanceReports || hasAnalyses) && (
           <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
-            <p className="text-sm font-medium">You already have content waiting for you!</p>
+            <p className="text-sm font-medium">{copy.waiting}</p>
             <div className="flex gap-2 mt-2 flex-wrap">
               {hasPerformanceReports && (
                 <Button size="sm" onClick={() => handleNavigate("analysis", "performance")}>
-                  View Performance Reports
+                  {copy.viewPerformance}
                 </Button>
               )}
               {hasAnalyses && (
                 <Button size="sm" variant="outline" onClick={() => handleNavigate("analysis", "analysis")}>
-                  View Analysis
+                  {copy.viewAnalysis}
                 </Button>
               )}
             </div>
@@ -128,7 +187,7 @@ export const PortalWelcomeModal = ({
 
         <div className="flex justify-end mt-4">
           <Button variant="outline" onClick={handleDismiss}>
-            Got it, let's go
+            {copy.cta}
           </Button>
         </div>
       </DialogContent>
