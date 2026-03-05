@@ -296,13 +296,30 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   };
 
   // Sort action types by frequency of use (most used first), then alphabetical
+  // Normalise to Title Case to prevent duplicates like "1v1 defending" vs "1v1 Defending"
   const allActionTypes = useMemo(() => {
-    const merged = new Set([...DEFAULT_ACTION_TYPES, ...knownActionTypes]);
-    return [...merged].sort((a, b) => {
-      const freqA = actionTypeFrequency[a] || 0;
-      const freqB = actionTypeFrequency[b] || 0;
+    const normalised = new Map<string, string>();
+    [...DEFAULT_ACTION_TYPES, ...knownActionTypes].forEach(t => {
+      const tc = toTitleCase(t);
+      if (!normalised.has(tc.toLowerCase())) {
+        normalised.set(tc.toLowerCase(), tc);
+      }
+    });
+    const unique = [...normalised.values()];
+    // Merge frequency counts for case variants
+    const mergedFreq: Record<string, number> = {};
+    unique.forEach(t => {
+      const key = t.toLowerCase();
+      mergedFreq[t] = Object.entries(actionTypeFrequency)
+        .filter(([k]) => k.toLowerCase() === key)
+        .reduce((sum, [, v]) => sum + v, 0);
+    });
+    return unique.sort((a, b) => {
+      const freqA = mergedFreq[a] || 0;
+      const freqB = mergedFreq[b] || 0;
       if (freqB !== freqA) return freqB - freqA;
       return a.localeCompare(b);
+    });
     });
   }, [knownActionTypes, actionTypeFrequency]);
 
