@@ -1862,17 +1862,17 @@ const Dashboard = () => {
                   <Tabs value={activeAnalysisTab} onValueChange={setActiveAnalysisTab} className="w-full">
                     <TabsList className="grid grid-cols-3 sm:grid-cols-4 w-full h-auto bg-transparent p-0 gap-0 mb-0 rounded-none">
                       {[
-                        { value: "performance", label: "Performance" },
-                        { value: "form", label: "Form" },
-                        { value: "video-reports", label: "Video Reports" },
-                        { value: "data", label: "Data" },
-                        { value: "comparisons", label: "Comparisons" },
-                        { value: "scouting", label: "Scouting" },
-                        { value: "positional-guides", label: "Positional" },
-                        { value: "schemes", label: "Schemes" },
-                        { value: "concepts", label: "Concepts" },
-                        { value: "cognisance", label: "Cognisance" },
-                        { value: "other", label: "Other" },
+                        { value: "performance", label: t(playerData?.portal_language, "performance") },
+                        { value: "form", label: t(playerData?.portal_language, "form") },
+                        { value: "video-reports", label: t(playerData?.portal_language, "video_reports") },
+                        { value: "data", label: t(playerData?.portal_language, "data") },
+                        { value: "comparisons", label: t(playerData?.portal_language, "comparisons") },
+                        { value: "scouting", label: t(playerData?.portal_language, "scouting") },
+                        { value: "positional-guides", label: t(playerData?.portal_language, "positional") },
+                        { value: "schemes", label: t(playerData?.portal_language, "schemes") },
+                        { value: "concepts", label: t(playerData?.portal_language, "concepts") },
+                        { value: "cognisance", label: t(playerData?.portal_language, "cognisance") },
+                        { value: "other", label: t(playerData?.portal_language, "other") },
                       ].map((tab) => (
                         <TabsTrigger
                           key={tab.value}
