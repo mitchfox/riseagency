@@ -538,7 +538,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                   className="p-2 md:p-4 flex flex-col items-center justify-center rounded-lg bg-[hsl(43,49%,61%)] text-black"
                 >
                   <div className="text-center">
-                    <div className="text-sm md:text-2xl font-bold mb-1">{format(new Date(), 'd')}<sup className="text-[8px] md:text-sm">th</sup></div>
+                    <div className="text-sm md:text-2xl font-bold mb-1">{format(new Date(), 'd')}</div>
                     <div className="text-[8px] md:text-sm font-medium italic">
                       <span className="md:hidden">{t(portalLanguage, "today")}</span>
                       <span className="hidden md:inline">{t(portalLanguage, "today")}</span>
