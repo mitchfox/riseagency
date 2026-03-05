@@ -1000,6 +1000,7 @@ const Staff = () => {
     transferhub: ['transfers', 'outreach', 'clubs', 'deals'],
     portalmanagement: ['portal', 'features', 'visibility', 'hero', 'toggle'],
     highlightcompiler: ['highlight', 'compiler', 'reel', 'compilation', 'export', 'clips'],
+    datasetbuilder: ['dataset', 'training', 'roboflow', 'annotation', 'labelling', 'frames'],
   };
 
   const filteredCategories = categories.map(category => ({
