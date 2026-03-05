@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
+import { t } from "@/lib/portalTranslations";
 
 interface ParallaxHeroProps {
   imageUrl: string | null;
@@ -12,11 +13,12 @@ interface ParallaxHeroProps {
   playerName: string;
   clubName?: string;
   position?: string;
+  portalLanguage?: string | null;
   nextFixture?: { home_team: string; away_team: string; match_date: string; match_time?: string | null; venue?: string } | null;
   preMatchAnalysis?: { id: string; home_team: string; away_team: string } | null;
 }
 
-export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName, clubName, position, nextFixture, preMatchAnalysis }: ParallaxHeroProps) => {
+export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName, clubName, position, portalLanguage, nextFixture, preMatchAnalysis }: ParallaxHeroProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
