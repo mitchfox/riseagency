@@ -5,6 +5,7 @@ import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
 import { supabase } from "@/integrations/supabase/client";
 import { insertStaffNotification } from "@/lib/staffNotifications";
+import { t } from "@/lib/portalTranslations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
