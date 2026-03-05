@@ -2109,14 +2109,31 @@ export const CreatePerformanceReportDialog = ({
                         />
                       </td>
                       <td className="p-2">
-                        <Input
-                          type="number"
-                          step="0.00001"
-                          value={action.action_score}
-                          onChange={(e) => updateAction(index, "action_score", e.target.value)}
-                          placeholder="0.15"
-                          className="w-24 text-sm"
-                        />
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="number"
+                            step="0.00001"
+                            value={action.action_score}
+                            onChange={(e) => updateAction(index, "action_score", e.target.value)}
+                            placeholder="0.15"
+                            className="w-20 text-sm"
+                          />
+                          <Button
+                            onClick={() => openR90Viewer(index)}
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 shrink-0 [&>svg]:hover:text-black"
+                            title="R90 Ratings Reference"
+                          >
+                            <Search className="h-4 w-4 text-primary hover:text-black" />
+                          </Button>
+                          <Input
+                            value={actionSearchFilters[index] || ''}
+                            onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
+                            placeholder="Search R90..."
+                            className="h-8 text-[10px] w-28 px-2"
+                          />
+                        </div>
                       </td>
                       <td className="p-2">
                         <div className="relative">
