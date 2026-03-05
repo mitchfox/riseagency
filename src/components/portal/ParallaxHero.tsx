@@ -83,29 +83,27 @@ export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName
 
   if (images.length === 0) return null;
 
-  const translatedPosition = useMemo(() => {
-    if (!position) return null;
-    const mappedKey = ({
-      GK: "goalkeeper",
-      Goalkeeper: "goalkeeper",
-      FB: "full_back",
-      "Full-Back": "full_back",
-      CB: "centre_back",
-      "Centre-Back": "centre_back",
-      CM: "midfielder",
-      CDM: "midfielder",
-      AM: "midfielder",
-      CAM: "midfielder",
-      W: "winger",
-      LW: "winger",
-      RW: "winger",
-      ST: "striker",
-      CF: "striker",
-      Striker: "striker",
-    } as Record<string, string>)[position] ?? null;
+  const positionKeyMap: Record<string, string> = {
+    GK: "goalkeeper",
+    Goalkeeper: "goalkeeper",
+    FB: "full_back",
+    "Full-Back": "full_back",
+    CB: "centre_back",
+    "Centre-Back": "centre_back",
+    CM: "midfielder",
+    CDM: "midfielder",
+    AM: "midfielder",
+    CAM: "midfielder",
+    W: "winger",
+    LW: "winger",
+    RW: "winger",
+    ST: "striker",
+    CF: "striker",
+    Striker: "striker",
+  };
 
-    return mappedKey ? t(portalLanguage, mappedKey) : position;
-  }, [position, portalLanguage]);
+  const mappedPositionKey = position ? positionKeyMap[position] : null;
+  const translatedPosition = mappedPositionKey ? t(portalLanguage, mappedPositionKey) : position;
 
   const units = countdown ? [
     { label: t(portalLanguage, "days").toUpperCase(), value: countdown.days },
