@@ -444,6 +444,7 @@ export const DatasetBuilder = () => {
                 imageUrl={capturedImageUrl}
                 annotations={annotations}
                 onChange={setAnnotations}
+                actionTypes={actionTypes}
               />
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
