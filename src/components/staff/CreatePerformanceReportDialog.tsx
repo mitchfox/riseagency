@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { playSuccess } from "@/lib/soundEffects";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
@@ -202,6 +203,7 @@ export const CreatePerformanceReportDialog = ({
   const [visibilityStatus, setVisibilityStatus] = useState<VisibilityStatus>("draft");
   const [placeholderRawScore, setPlaceholderRawScore] = useState("");
   const [placeholderMinutes, setPlaceholderMinutes] = useState("");
+  const initialVisibilityRef = useRef<VisibilityStatus | null>(null);
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -761,6 +763,7 @@ export const CreatePerformanceReportDialog = ({
       setSelectedFixtureId(analysisData.fixture_id || "");
       setPerformanceOverview(analysisData.performance_overview || "");
       setVisibilityStatus((analysisData as any).visibility_status || "draft");
+      initialVisibilityRef.current = (analysisData as any).visibility_status || "draft";
       setPlaceholderRawScore((analysisData as any).placeholder_raw_score?.toString() || "");
       setPlaceholderMinutes((analysisData as any).placeholder_minutes?.toString() || "");
       setFixtureStats((analysisData.fixture_stats as Record<string, number>) || {});
@@ -1422,6 +1425,27 @@ export const CreatePerformanceReportDialog = ({
       }
 
       toast.success(`Performance report ${analysisId ? 'updated' : 'created'} successfully`);
+
+      // Prompt highlight compilation when report transitions to Live
+      const wentLive = visibilityStatus === "live" && initialVisibilityRef.current !== "live";
+      if (wentLive && analysisId) {
+        playSuccess();
+        setTimeout(() => {
+          toast("Report is now live! Consider compiling highlights for this player.", {
+            duration: 8000,
+            action: {
+              label: "Open Highlights",
+              onClick: () => {
+                // Navigate to highlight compiler section
+                const event = new CustomEvent("navigate-highlight-compiler", { detail: { playerId } });
+                window.dispatchEvent(event);
+              },
+            },
+          });
+        }, 600);
+        initialVisibilityRef.current = "live";
+      }
+
       // Refresh action type + description cache so newly entered types/descriptions are available
       fetchActionTypes();
       logActivity({
