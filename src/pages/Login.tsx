@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { insertStaffNotification } from "@/lib/staffNotifications";
+import { playWelcome } from "@/lib/soundEffects";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -129,6 +130,7 @@ const Login = () => {
         }
         
         toast.success(t('login.welcome_portal', 'Welcome to your portal!'));
+        playWelcome();
         
         // Fire-and-forget portal login notification
         insertStaffNotification({

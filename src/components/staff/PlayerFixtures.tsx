@@ -463,6 +463,28 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
       }
 
       toast.success("Fixture created and added successfully");
+      
+      // Auto-create draft performance report for this fixture
+      try {
+        const opponent = manualFixture.home_team && manualFixture.away_team
+          ? `${manualFixture.home_team} vs ${manualFixture.away_team}`
+          : manualFixture.away_team || manualFixture.home_team || "Unknown";
+        const { error: reportErr } = await supabase
+          .from("player_analysis")
+          .insert({
+            player_id: playerId,
+            fixture_id: newFixture.id,
+            opponent,
+            analysis_date: manualFixture.match_date,
+            minutes_played: minutesPlayed || null,
+            result: null,
+            r90_score: null,
+          });
+        if (!reportErr) {
+          toast.info("Draft performance report created automatically");
+        }
+      } catch { /* non-blocking */ }
+
       handleCloseDialog();
       fetchPlayerFixtures();
       fetchAllFixtures();
