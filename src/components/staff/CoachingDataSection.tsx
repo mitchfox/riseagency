@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ClipboardList, BarChart3, Database, User, RefreshCw } from "lucide-react";
 import { sortPlayersByRepresentation, getStatusLabel } from "@/lib/playerSorting";
 import { toast } from "sonner";
+import { AiShellSuggestions } from "@/components/staff/AiShellSuggestions";
 
 interface PlayerAnalysis {
   id: string;
@@ -96,6 +97,13 @@ export const CoachingDataSection = () => {
 
   return (
     <div className="space-y-4">
+      {selectedPlayer && selectedPlayer !== "all" && (
+        <AiShellSuggestions
+          section="data"
+          playerId={selectedPlayer}
+          playerName={currentPlayer?.name}
+        />
+      )}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Mobile dropdown */}
         <div className="md:hidden mb-4">

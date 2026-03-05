@@ -28,6 +28,7 @@ import { AnalysisManagement } from "@/components/staff/AnalysisManagement";
 import { VideoAnalysis } from "@/components/staff/coaching/VideoAnalysis";
 import { AnnotationProjects } from "@/components/staff/annotations/AnnotationProjects";
 import { HighlightCompiler } from "@/components/staff/HighlightCompiler";
+import { AiShellSuggestions } from "@/components/staff/AiShellSuggestions";
 
 interface Player {
   id: string;
@@ -111,6 +112,16 @@ const MatchFlowTab = ({ selectedPlayer, currentPlayer }: { selectedPlayer: strin
       <p className="text-sm text-muted-foreground mb-4">
         Work through each stage of match preparation and review without switching tabs.
       </p>
+
+      <AiShellSuggestions
+        section="athlete_centre"
+        playerId={selectedPlayer}
+        playerName={currentPlayer?.name}
+        onAccept={(shell) => {
+          // Open the reports section with the shell content available
+          setOpenSections(prev => ({ ...prev, reports: true }));
+        }}
+      />
 
       {MATCH_FLOW_SECTIONS.map((section, idx) => (
         <Collapsible

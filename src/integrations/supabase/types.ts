@@ -83,6 +83,100 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_shell_decisions: {
+        Row: {
+          created_at: string
+          decision: string
+          id: string
+          player_id: string
+          staff_user_id: string
+          suggestion_id: string
+        }
+        Insert: {
+          created_at?: string
+          decision: string
+          id?: string
+          player_id: string
+          staff_user_id: string
+          suggestion_id: string
+        }
+        Update: {
+          created_at?: string
+          decision?: string
+          id?: string
+          player_id?: string
+          staff_user_id?: string
+          suggestion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_shell_decisions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_shell_decisions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_shell_decisions_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "ai_shell_suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_shell_suggestions: {
+        Row: {
+          created_at: string
+          id: string
+          player_id: string
+          preview_text: string
+          section: string
+          shell_content: Json
+          shell_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          player_id: string
+          preview_text: string
+          section: string
+          shell_content?: Json
+          shell_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          player_id?: string
+          preview_text?: string
+          section?: string
+          shell_content?: Json
+          shell_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_shell_suggestions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_shell_suggestions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analyses: {
         Row: {
           analysis_type: string

@@ -491,7 +491,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
 
   // Get unique action types (split by comma)
   const allActionTypes = Array.from(new Set(
-    actions.flatMap(a => a.action_type.split(',').map(t => t.trim().toLowerCase()).filter(Boolean))
+    actions.flatMap(a => (a.action_type || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean))
   )).sort();
 
   // Rating colour buckets
@@ -516,7 +516,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   // Filtered actions
   const filteredActions = actions.filter(a => {
     if (filterTypes.length > 0) {
-      const actionTypes = a.action_type.split(',').map(t => t.trim().toLowerCase());
+      const actionTypes = (a.action_type || '').split(',').map(t => t.trim().toLowerCase());
       if (!filterTypes.some(ft => actionTypes.includes(ft))) return false;
     }
     if (filterRating) {
