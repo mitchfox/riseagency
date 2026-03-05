@@ -52,7 +52,6 @@ async function clientSideTrim(
 
   onProgress?.("Loading video...");
 
-  // Create offscreen video
   const video = document.createElement("video");
   video.crossOrigin = "anonymous";
   video.muted = false;
@@ -65,16 +64,33 @@ async function clientSideTrim(
     setTimeout(() => reject(new Error("Video load timeout")), 30000);
   });
 
-  const canvas = document.createElement("canvas");
-  canvas.width = video.videoWidth || 1280;
-  canvas.height = video.videoHeight || 720;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas context unavailable");
+  // Prefer direct captureStream on the video element (no canvas quality loss)
+  const useDirectCapture = typeof (video as any).captureStream === "function";
 
-  // Set up MediaRecorder on canvas stream
-  const stream = canvas.captureStream(30);
+  let stream: MediaStream;
 
-  // Try to capture audio
+  if (useDirectCapture) {
+    stream = (video as any).captureStream(60);
+  } else {
+    // Canvas fallback for browsers without video.captureStream
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d")!;
+    stream = canvas.captureStream(60);
+
+    // We'll need to pump frames to the canvas
+    const pumpCanvas = () => {
+      if (!video.paused && !video.ended) {
+        ctx.drawImage(video, 0, 0);
+      }
+    };
+    const canvasInterval = setInterval(pumpCanvas, 1000 / 60);
+    // Store cleanup ref on video for later
+    (video as any)._canvasInterval = canvasInterval;
+  }
+
+  // Capture audio
   try {
     const audioCtx = new AudioContext();
     const source = audioCtx.createMediaElementSource(video);
@@ -86,10 +102,17 @@ async function clientSideTrim(
     // No audio or already captured
   }
 
-  const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
-    ? "video/webm;codecs=vp9"
-    : "video/webm";
-  const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 });
+  // Codec selection: prefer VP9+Opus for best quality
+  const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
+    ? "video/webm;codecs=vp9,opus"
+    : MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+      ? "video/webm;codecs=vp9"
+      : "video/webm";
+
+  const recorder = new MediaRecorder(stream, {
+    mimeType,
+    videoBitsPerSecond: 25_000_000,
+  });
   const chunks: Blob[] = [];
 
   recorder.ondataavailable = (e) => {
@@ -114,31 +137,39 @@ async function clientSideTrim(
   recorder.start();
   video.play();
 
-  // Draw frames to canvas until end time
+  // Wait until end time using requestVideoFrameCallback if available, else rAF
   await new Promise<void>((resolve) => {
-    const drawFrame = () => {
+    const checkEnd = () => {
       if (video.currentTime >= end || video.paused || video.ended) {
         video.pause();
         recorder.stop();
         resolve();
         return;
       }
-      ctx.drawImage(video, 0, 0);
-      requestAnimationFrame(drawFrame);
+      if ("requestVideoFrameCallback" in video) {
+        (video as any).requestVideoFrameCallback(checkEnd);
+      } else {
+        requestAnimationFrame(checkEnd);
+      }
     };
-    requestAnimationFrame(drawFrame);
+
+    if ("requestVideoFrameCallback" in video) {
+      (video as any).requestVideoFrameCallback(checkEnd);
+    } else {
+      requestAnimationFrame(checkEnd);
+    }
   });
 
   const blob = await recordingDone;
 
   // Clean up
+  if ((video as any)._canvasInterval) clearInterval((video as any)._canvasInterval);
   video.pause();
   video.removeAttribute("src");
   video.load();
 
   onProgress?.("Uploading clip...");
 
-  // Upload to clips/ prefix
   const clipPath = `clips/${clipId}.webm`;
   const { error: uploadError } = await supabase.storage
     .from("analysis-videos")
