@@ -5,6 +5,7 @@ import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
 import { supabase } from "@/integrations/supabase/client";
 import { insertStaffNotification } from "@/lib/staffNotifications";
+import { t } from "@/lib/portalTranslations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1677,14 +1678,14 @@ const Dashboard = () => {
                 className="w-full justify-center font-bebas uppercase text-xl px-6 py-6 bg-card hover:bg-card/80 border-t-2 border-gold border-x-0 border-b-2 !text-gold hover:!text-gold z-50 rounded-none"
                 >
                   <span>
-                    {activeTab === "hub" && "Hub"}
-                    {activeTab === "analysis" && "Analysis"}
-                    {activeTab === "physical" && "Programming"}
-                    {activeTab === "invoices" && "Key Documents"}
-                    {activeTab === "updates" && "Updates"}
-                    {activeTab === "highlights" && "Highlights"}
-                    {activeTab === "transfer-hub" && "Transfer Hub"}
-                    {activeTab === "nutrition" && "Nutrition"}
+                    {activeTab === "hub" && t(playerData?.portal_language, "hub")}
+                    {activeTab === "analysis" && t(playerData?.portal_language, "analysis")}
+                    {activeTab === "physical" && t(playerData?.portal_language, "programming")}
+                    {activeTab === "invoices" && t(playerData?.portal_language, "key_documents")}
+                    {activeTab === "updates" && t(playerData?.portal_language, "updates")}
+                    {activeTab === "highlights" && t(playerData?.portal_language, "highlights")}
+                    {activeTab === "transfer-hub" && t(playerData?.portal_language, "transfer_hub")}
+                    {activeTab === "nutrition" && t(playerData?.portal_language, "nutrition")}
                   </span>
                   <ChevronDown className="ml-2 h-5 w-5" />
                 </Button>
@@ -1696,22 +1697,22 @@ const Dashboard = () => {
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAnalysisSub(false); }}
                       className="flex items-center gap-2 text-gold/70 hover:text-gold font-bebas uppercase text-sm px-2 py-1 transition-colors"
                     >
-                      <ChevronLeft className="h-4 w-4" />
-                      Back
+                       <ChevronLeft className="h-4 w-4" />
+                      {t(playerData?.portal_language, "back")}
                     </button>
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 sm:gap-2">
                       {[
-                        { value: "performance", label: "Performance", icon: <Activity className="h-5 w-5 sm:h-6 sm:w-6" /> },
-                        { value: "form", label: "Form", icon: <LineChart className="h-5 w-5 sm:h-6 sm:w-6" /> },
-                        { value: "video-reports", label: "Video Reports", icon: <Video className="h-5 w-5 sm:h-6 sm:w-6" /> },
-                        { value: "data", label: "Data", icon: <Database className="h-5 w-5 sm:h-6 sm:w-6" /> },
-                        { value: "comparisons", label: "Comparisons", icon: <Users className="h-5 w-5 sm:h-6 sm:w-6" /> },
-                        { value: "scouting", label: "Scouting", icon: <Search className="h-5 w-5 sm:h-6 sm:w-6" /> },
-                        { value: "positional-guides", label: "Positional", icon: <Compass className="h-5 w-5 sm:h-6 sm:w-6" /> },
-                        { value: "schemes", label: "Schemes", icon: <Layers className="h-5 w-5 sm:h-6 sm:w-6" /> },
-                        { value: "concepts", label: "Concepts", icon: <Brain className="h-5 w-5 sm:h-6 sm:w-6" /> },
-                        { value: "cognisance", label: "Cognisance", icon: <Eye className="h-5 w-5 sm:h-6 sm:w-6" /> },
-                        { value: "other", label: "Other", icon: <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "performance", label: t(playerData?.portal_language, "performance"), icon: <Activity className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "form", label: t(playerData?.portal_language, "form"), icon: <LineChart className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "video-reports", label: t(playerData?.portal_language, "video_reports"), icon: <Video className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "data", label: t(playerData?.portal_language, "data"), icon: <Database className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "comparisons", label: t(playerData?.portal_language, "comparisons"), icon: <Users className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "scouting", label: t(playerData?.portal_language, "scouting"), icon: <Search className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "positional-guides", label: t(playerData?.portal_language, "positional"), icon: <Compass className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "schemes", label: t(playerData?.portal_language, "schemes"), icon: <Layers className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "concepts", label: t(playerData?.portal_language, "concepts"), icon: <Brain className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "cognisance", label: t(playerData?.portal_language, "cognisance"), icon: <Eye className="h-5 w-5 sm:h-6 sm:w-6" /> },
+                        { value: "other", label: t(playerData?.portal_language, "other"), icon: <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6" /> },
                       ].map((tab) => (
                         <DropdownMenuItem
                           key={tab.value}
@@ -1735,15 +1736,15 @@ const Dashboard = () => {
                 ) : (
                   <div className="grid gap-1.5 sm:gap-2" style={{ gridTemplateColumns: '0.8fr 1.4fr 0.8fr', gridTemplateRows: 'auto auto auto' }}>
                     {[
-                      { tab: "analysis", label: "Analysis", icon: <BarChart3 className="h-6 w-6 sm:h-7 sm:w-7" />, isAnalysis: true },
-                      { tab: "physical", label: "Programming", icon: <Calendar className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                      { tab: "nutrition", label: "Nutrition", icon: <UtensilsCrossed className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                      { tab: "invoices", label: "Key Documents", icon: <FileText className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                      { tab: "hub", label: "Hub", icon: <TrendingUp className="h-8 w-8 sm:h-9 sm:w-9" />, isHub: true },
-                      { tab: "updates", label: "Updates", icon: <Bell className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                      { tab: "highlights", label: "Highlights", icon: <Play className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                      { tab: "transfer-hub", label: "Transfer Hub", icon: <RefreshCw className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                      { tab: "profile", label: "View Profile", icon: <Eye className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                      { tab: "analysis", label: t(playerData?.portal_language, "analysis"), icon: <BarChart3 className="h-6 w-6 sm:h-7 sm:w-7" />, isAnalysis: true },
+                      { tab: "physical", label: t(playerData?.portal_language, "programming"), icon: <Calendar className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                      { tab: "nutrition", label: t(playerData?.portal_language, "nutrition"), icon: <UtensilsCrossed className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                      { tab: "invoices", label: t(playerData?.portal_language, "key_documents"), icon: <FileText className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                      { tab: "hub", label: t(playerData?.portal_language, "hub"), icon: <TrendingUp className="h-8 w-8 sm:h-9 sm:w-9" />, isHub: true },
+                      { tab: "updates", label: t(playerData?.portal_language, "updates"), icon: <Bell className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                      { tab: "highlights", label: t(playerData?.portal_language, "highlights"), icon: <Play className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                      { tab: "transfer-hub", label: t(playerData?.portal_language, "transfer_hub"), icon: <RefreshCw className="h-6 w-6 sm:h-7 sm:w-7" /> },
+                      { tab: "profile", label: t(playerData?.portal_language, "view_profile"), icon: <Eye className="h-6 w-6 sm:h-7 sm:w-7" /> },
                     ].map((item) => (
                       <DropdownMenuItem
                         key={item.tab}
@@ -1841,7 +1842,7 @@ const Dashboard = () => {
                 <CardContent className="py-6">
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-semibold text-foreground">Uploading clip...</span>
+                      <span className="text-sm font-semibold text-foreground">{t(playerData?.portal_language, "uploading_clip")}</span>
                       <span className="text-2xl font-bebas text-primary">{uploadProgress}%</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
@@ -1861,17 +1862,17 @@ const Dashboard = () => {
                   <Tabs value={activeAnalysisTab} onValueChange={setActiveAnalysisTab} className="w-full">
                     <TabsList className="grid grid-cols-3 sm:grid-cols-4 w-full h-auto bg-transparent p-0 gap-0 mb-0 rounded-none">
                       {[
-                        { value: "performance", label: "Performance" },
-                        { value: "form", label: "Form" },
-                        { value: "video-reports", label: "Video Reports" },
-                        { value: "data", label: "Data" },
-                        { value: "comparisons", label: "Comparisons" },
-                        { value: "scouting", label: "Scouting" },
-                        { value: "positional-guides", label: "Positional" },
-                        { value: "schemes", label: "Schemes" },
-                        { value: "concepts", label: "Concepts" },
-                        { value: "cognisance", label: "Cognisance" },
-                        { value: "other", label: "Other" },
+                        { value: "performance", label: t(playerData?.portal_language, "performance") },
+                        { value: "form", label: t(playerData?.portal_language, "form") },
+                        { value: "video-reports", label: t(playerData?.portal_language, "video_reports") },
+                        { value: "data", label: t(playerData?.portal_language, "data") },
+                        { value: "comparisons", label: t(playerData?.portal_language, "comparisons") },
+                        { value: "scouting", label: t(playerData?.portal_language, "scouting") },
+                        { value: "positional-guides", label: t(playerData?.portal_language, "positional") },
+                        { value: "schemes", label: t(playerData?.portal_language, "schemes") },
+                        { value: "concepts", label: t(playerData?.portal_language, "concepts") },
+                        { value: "cognisance", label: t(playerData?.portal_language, "cognisance") },
+                        { value: "other", label: t(playerData?.portal_language, "other") },
                       ].map((tab) => (
                         <TabsTrigger
                           key={tab.value}
@@ -1888,13 +1889,13 @@ const Dashboard = () => {
                     <CardHeader marble>
                       <div className="container mx-auto px-4">
                         <CardTitle className="font-heading tracking-tight">
-                          Performance Analysis
+                          {t(playerData?.portal_language, "performance_analysis")}
                         </CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent className="container mx-auto px-4 space-y-4">
                       {analyses.length === 0 ? (
-                        <PortalEmptyState icon="performance" title="No performance reports yet" description="Your reports will appear here after each match." />
+                        <PortalEmptyState icon="performance" title={t(playerData?.portal_language, "no_performance_reports")} description={t(playerData?.portal_language, "reports_will_appear")} />
                       ) : (
                         <div className="space-y-3">
                           {analyses.map((analysis) => (
@@ -4847,6 +4848,7 @@ const Dashboard = () => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
           setTimeout(() => setNavDropdownOpen(true), 300);
         }}
+        lang={playerData?.portal_language}
       />
     </div>
   );

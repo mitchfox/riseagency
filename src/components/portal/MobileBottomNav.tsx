@@ -1,19 +1,21 @@
 import { motion } from "framer-motion";
 import { TrendingUp, BarChart3, Calendar, MoreHorizontal } from "lucide-react";
+import { t } from "@/lib/portalTranslations";
 
 interface MobileBottomNavProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onMoreClick: () => void;
+  lang?: string | null;
 }
 
-const tabs = [
-  { id: "hub", label: "HUB", icon: TrendingUp },
-  { id: "analysis", label: "ANALYSIS", icon: BarChart3 },
-  { id: "physical", label: "PROGRAMMING", icon: Calendar },
-];
+export const MobileBottomNav = ({ activeTab, onTabChange, onMoreClick, lang }: MobileBottomNavProps) => {
+  const tabs = [
+    { id: "hub", label: t(lang, "hub"), icon: TrendingUp },
+    { id: "analysis", label: t(lang, "analysis"), icon: BarChart3 },
+    { id: "physical", label: t(lang, "programming"), icon: Calendar },
+  ];
 
-export const MobileBottomNav = ({ activeTab, onTabChange, onMoreClick }: MobileBottomNavProps) => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-md border-t border-border/50 safe-area-bottom">
       <div className="grid grid-cols-4 h-16">
@@ -64,7 +66,7 @@ export const MobileBottomNav = ({ activeTab, onTabChange, onMoreClick }: MobileB
           >
             <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
           </motion.div>
-          <span className="text-[9px] font-bebas tracking-wider text-muted-foreground">MORE</span>
+          <span className="text-[9px] font-bebas tracking-wider text-muted-foreground">{t(lang, "more")}</span>
         </button>
       </div>
     </nav>
