@@ -717,31 +717,83 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     const targetMatchSeconds = parseFloat(overrideMinute) * 60;
 
     if (syncHalf === "2nd") {
-      // Second half: store separately so we know after this video time, minutes reset to 45+
+      const newSecondHalfOffset = targetMatchSeconds - currentVideoTime;
+      const newSecondHalfVideoTime = currentVideoTime;
+
+      // Persist to DB
+      const { error } = await supabase
+        .from("video_analyses")
+        .update({ second_half_offset: newSecondHalfOffset, second_half_video_time: newSecondHalfVideoTime })
+        .eq("id", selectedVideo.id);
+
+      if (error) {
+        toast.error("Failed to save 2nd half sync");
+        return;
+      }
+
+      // Retroactively adjust existing clips that fall in the second half
+      const oldOffset = selectedVideo.match_minute_offset;
+      const adjustedClips = selectedVideo.clips.map(clip => {
+        // Determine if this clip is in the second half by its video start time
+        if (clip.start >= newSecondHalfVideoTime) {
+          // Recalculate minute using new second half offset instead of first half offset
+          const correctMatchSeconds = Math.max(0, clip.start + newSecondHalfOffset);
+          const mins = Math.floor(correctMatchSeconds / 60);
+          const rawSecs = Math.floor(correctMatchSeconds % 60);
+          const roundedSecs = Math.floor(rawSecs / 5) * 5;
+          const newMinute = `${mins}.${roundedSecs.toString().padStart(2, '0')}`;
+          return { ...clip, minute: newMinute, label: `Clip ${newMinute}` };
+        }
+        return clip;
+      });
+
+      // Save adjusted clips to DB
+      await supabase
+        .from("video_analyses")
+        .update({ clips: adjustedClips as any })
+        .eq("id", selectedVideo.id);
+
       const updated = {
         ...selectedVideo,
-        second_half_offset: targetMatchSeconds - currentVideoTime,
-        second_half_video_time: currentVideoTime,
+        second_half_offset: newSecondHalfOffset,
+        second_half_video_time: newSecondHalfVideoTime,
+        clips: adjustedClips,
       };
       setSelectedVideo(updated);
       setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
       setShowTimestampOverride(false);
       setOverrideMinute("");
-      toast.success(`2nd half synced: this point is now ${overrideMinute}'`);
+      toast.success(`2nd half synced: this point is now ${overrideMinute}'. ${adjustedClips.filter((c, i) => c.minute !== selectedVideo.clips[i]?.minute).length} clip timestamps adjusted.`);
     } else {
       const newOffset = targetMatchSeconds - currentVideoTime;
+
+      // Retroactively adjust existing clips that fall in the first half
+      const adjustedClips = selectedVideo.clips.map(clip => {
+        const isSecondHalf = selectedVideo.second_half_video_time !== null && clip.start >= selectedVideo.second_half_video_time;
+        if (!isSecondHalf) {
+          const correctMatchSeconds = Math.max(0, clip.start + newOffset);
+          const mins = Math.floor(correctMatchSeconds / 60);
+          const rawSecs = Math.floor(correctMatchSeconds % 60);
+          const roundedSecs = Math.floor(rawSecs / 5) * 5;
+          const newMinute = `${mins}.${roundedSecs.toString().padStart(2, '0')}`;
+          return { ...clip, minute: newMinute, label: `Clip ${newMinute}` };
+        }
+        return clip;
+      });
+
       const { error } = await supabase
         .from("video_analyses")
-        .update({ match_minute_offset: newOffset })
+        .update({ match_minute_offset: newOffset, clips: adjustedClips as any })
         .eq("id", selectedVideo.id);
 
       if (!error) {
-        const updated = { ...selectedVideo, match_minute_offset: newOffset };
+        const updated = { ...selectedVideo, match_minute_offset: newOffset, clips: adjustedClips };
         setSelectedVideo(updated);
         setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
         setShowTimestampOverride(false);
         setOverrideMinute("");
-        toast.success(`1st half synced: this point is now ${overrideMinute}'`);
+        const adjustedCount = adjustedClips.filter((c, i) => c.minute !== selectedVideo.clips[i]?.minute).length;
+        toast.success(`1st half synced: this point is now ${overrideMinute}'.${adjustedCount > 0 ? ` ${adjustedCount} clip timestamps adjusted.` : ''}`);
       }
     }
   };
