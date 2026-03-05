@@ -1436,6 +1436,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   nationality: "",
                   representation_status: "other",
                   visible_on_stars_page: false,
+                  portal_language: "en",
                   image_url: "",
                   hover_image_url: "",
                   club: "",
