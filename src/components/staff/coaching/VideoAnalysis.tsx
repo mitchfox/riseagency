@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEditor";
+import { ZonePitchSelector, type ZonePoint } from "@/components/report/ZonePitchSelector";
 import { AnnotationCanvas } from "@/components/staff/annotations/AnnotationCanvas";
 import type { AnnotationProject, Klip, AnnotationElement } from "@/components/staff/annotations/AnnotationProjects";
 import { computeVisibleElements } from "@/lib/annotationRenderUtils";
@@ -46,6 +47,7 @@ interface Clip {
   created_at: string;
   minute?: string;
   action_score?: number | null;
+  zone_details?: { zone: number; sub?: number; direction?: "forward" | "backward" }[];
   ai_status?: 'pending' | 'accepted' | 'rejected';
   ai_reason?: string;
   ai_suggested_action?: string;
@@ -294,11 +296,27 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   };
 
   // Sort action types by frequency of use (most used first), then alphabetical
+  // Normalise to Title Case to prevent duplicates like "1v1 defending" vs "1v1 Defending"
   const allActionTypes = useMemo(() => {
-    const merged = new Set([...DEFAULT_ACTION_TYPES, ...knownActionTypes]);
-    return [...merged].sort((a, b) => {
-      const freqA = actionTypeFrequency[a] || 0;
-      const freqB = actionTypeFrequency[b] || 0;
+    const normalised = new Map<string, string>();
+    [...DEFAULT_ACTION_TYPES, ...knownActionTypes].forEach(t => {
+      const tc = toTitleCase(t);
+      if (!normalised.has(tc.toLowerCase())) {
+        normalised.set(tc.toLowerCase(), tc);
+      }
+    });
+    const unique = [...normalised.values()];
+    // Merge frequency counts for case variants
+    const mergedFreq: Record<string, number> = {};
+    unique.forEach(t => {
+      const key = t.toLowerCase();
+      mergedFreq[t] = Object.entries(actionTypeFrequency)
+        .filter(([k]) => k.toLowerCase() === key)
+        .reduce((sum, [, v]) => sum + v, 0);
+    });
+    return unique.sort((a, b) => {
+      const freqA = mergedFreq[a] || 0;
+      const freqB = mergedFreq[b] || 0;
       if (freqB !== freqA) return freqB - freqA;
       return a.localeCompare(b);
     });
@@ -549,7 +567,14 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
   const handleUpdateClipAction = async (clipId: string, action_type: string) => {
     if (!selectedVideo) return;
-    const updatedClips = selectedVideo.clips.map(c => c.id === clipId ? { ...c, action_type } : c);
+    const normalised = toTitleCase(action_type);
+    const updatedClips = selectedVideo.clips.map(c => c.id === clipId ? { ...c, action_type: normalised } : c);
+    await saveClips(updatedClips);
+  };
+
+  const handleUpdateClipZones = async (clipId: string, zone_details: Clip['zone_details']) => {
+    if (!selectedVideo) return;
+    const updatedClips = selectedVideo.clips.map(c => c.id === clipId ? { ...c, zone_details } : c);
     await saveClips(updatedClips);
   };
 
@@ -1138,6 +1163,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         action_description: c.action_description,
         notes: c.notes,
         action_score: c.action_score,
+        zone_details: c.zone_details,
       })),
       matchMinuteOffset: selectedVideo.match_minute_offset,
       getClipAnnotations,
@@ -1428,7 +1454,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       const insertData: any = {
         analysis_id: reportAnalysisId,
         action_number: insertAfterNumber + 1,
-        action_type: attachClip.action_type || "other",
+        action_type: toTitleCase(attachClip.action_type || "other"),
         action_description: attachClip.action_description || "",
         notes: attachClip.notes || null,
         video_url: clipUrl,
@@ -1436,6 +1462,10 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         minute: parseClipMinuteToNumber(attachClip.minute) ?? getMatchMinute(attachClip.start, selectedVideo.match_minute_offset),
       };
       if (annotations) insertData.clip_annotations = annotations;
+      if (attachClip.zone_details?.length) {
+        insertData.zone_details = attachClip.zone_details;
+        insertData.zone = attachClip.zone_details[0].zone;
+      }
 
       const { error } = await supabase
         .from("performance_report_actions")
@@ -1790,6 +1820,13 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                     value={clip.action_type}
                     onChange={(v) => handleUpdateClipAction(clip.id, v)}
                     actionTypes={allActionTypes}
+                    compact
+                  />
+
+                  <ZonePitchSelector
+                    value={(clip.zone_details || []) as ZonePoint[]}
+                    onChange={(zd) => handleUpdateClipZones(clip.id, zd as Clip['zone_details'])}
+                    actionType={clip.action_type}
                     compact
                   />
 
@@ -2502,7 +2539,7 @@ function ActionTypeCombobox({
   );
 
   const handleSelect = (v: string) => {
-    onChange(v);
+    onChange(toTitleCase(v));
     setOpen(false);
     setSearch("");
   };

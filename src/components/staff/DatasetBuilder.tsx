@@ -163,10 +163,9 @@ export const DatasetBuilder = () => {
     }
   };
 
-  const handleExport = async (includeYolo: boolean) => {
-    const framesToExport = frames.filter((f) => !f.exported);
+  const doExport = async (framesToExport: DatasetFrame[], includeYolo: boolean, markExported: boolean) => {
     if (framesToExport.length === 0) {
-      toast.info("No unexported frames to export");
+      toast.info("No frames to export");
       return;
     }
 
@@ -186,14 +185,12 @@ export const DatasetBuilder = () => {
         const num = countByType[frame.action_type];
         const fileName = `${frame.action_type}${num}.png`;
 
-        // Download image
         try {
           const resp = await fetch(frame.image_url);
           const blob = await resp.blob();
           zip.file(`${frame.action_type}/${fileName}`, blob);
 
           if (includeYolo && frame.annotations?.length > 0) {
-            // YOLO format: class x_center y_center width height (normalised)
             const lines = frame.annotations.map((a, idx) => {
               const xc = a.x + a.width / 2;
               const yc = a.y + a.height / 2;
@@ -217,12 +214,13 @@ export const DatasetBuilder = () => {
       a.click();
       URL.revokeObjectURL(url);
 
-      // Mark as exported
-      const ids = framesToExport.map((f) => f.id);
-      await supabase
-        .from("dataset_frames")
-        .update({ exported: true })
-        .in("id", ids);
+      if (markExported) {
+        const ids = framesToExport.map((f) => f.id);
+        await supabase
+          .from("dataset_frames")
+          .update({ exported: true })
+          .in("id", ids);
+      }
 
       fetchFrames();
       toast.success(`Exported ${framesToExport.length} frames`);
@@ -233,6 +231,9 @@ export const DatasetBuilder = () => {
     setExporting(false);
     setExportProgress(0);
   };
+
+  const handleExport = (includeYolo: boolean) => doExport(frames.filter(f => !f.exported), includeYolo, true);
+  const handleExportAll = (includeYolo: boolean) => doExport(frames, includeYolo, false);
 
   const unexportedCount = frames.filter((f) => !f.exported).length;
   const framesByType: Record<string, number> = {};
@@ -255,10 +256,16 @@ export const DatasetBuilder = () => {
             <RefreshCw className="h-4 w-4 mr-1.5" />
             Refresh
           </Button>
+          {frames.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => handleExportAll(true)} disabled={exporting}>
+              {exporting ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Download className="h-4 w-4 mr-1.5" />}
+              Export All ({frames.length})
+            </Button>
+          )}
           {unexportedCount > 0 && (
             <Button size="sm" onClick={() => handleExport(true)} disabled={exporting}>
               {exporting ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Download className="h-4 w-4 mr-1.5" />}
-              Export {unexportedCount} frames
+              Export {unexportedCount} new
             </Button>
           )}
         </div>
@@ -314,8 +321,8 @@ export const DatasetBuilder = () => {
               <TableHead className="w-12">#</TableHead>
               <TableHead>Type</TableHead>
               <TableHead className="hidden md:table-cell">Description</TableHead>
-              <TableHead className="hidden sm:table-cell">Minute</TableHead>
               <TableHead className="w-24">Frames</TableHead>
+              <TableHead className="w-16">Captured</TableHead>
               <TableHead className="w-20"></TableHead>
             </TableRow>
           </TableHeader>
@@ -344,10 +351,16 @@ export const DatasetBuilder = () => {
                     <TableCell className="hidden md:table-cell text-sm text-muted-foreground max-w-[300px] truncate">
                       {clip.action_description || "-"}
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell text-sm">{clip.minute || "-"}</TableCell>
                     <TableCell>
                       {clipFrameCount > 0 && (
                         <Badge variant="secondary" className="text-xs">{clipFrameCount}</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {clipFrameCount > 0 ? (
+                        <span className="text-green-600">✓</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -431,6 +444,7 @@ export const DatasetBuilder = () => {
                 imageUrl={capturedImageUrl}
                 annotations={annotations}
                 onChange={setAnnotations}
+                actionTypes={actionTypes}
               />
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
