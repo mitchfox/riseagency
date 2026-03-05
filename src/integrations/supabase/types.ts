@@ -1286,6 +1286,47 @@ export type Database = {
         }
         Relationships: []
       }
+      dataset_frames: {
+        Row: {
+          action_id: string | null
+          action_type: string
+          annotations: Json | null
+          created_at: string | null
+          exported: boolean | null
+          frame_time: number
+          id: string
+          image_url: string
+        }
+        Insert: {
+          action_id?: string | null
+          action_type: string
+          annotations?: Json | null
+          created_at?: string | null
+          exported?: boolean | null
+          frame_time?: number
+          id?: string
+          image_url: string
+        }
+        Update: {
+          action_id?: string | null
+          action_type?: string
+          annotations?: Json | null
+          created_at?: string | null
+          exported?: boolean | null
+          frame_time?: number
+          id?: string
+          image_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dataset_frames_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "performance_report_actions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_templates: {
         Row: {
           created_at: string

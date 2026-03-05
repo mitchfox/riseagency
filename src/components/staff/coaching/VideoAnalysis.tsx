@@ -26,6 +26,7 @@ import { AIPlayerDetection } from "./AIPlayerDetection";
 import { RoboflowTracking } from "./RoboflowTracking";
 import { fetchPlayerActionFrequencies } from "@/lib/playerActionFrequency";
 import { playTick, playSuccess } from "@/lib/soundEffects";
+import { startExportJob, subscribeToExportProgress, isExportRunning, getActiveExport, type ExportProgress } from "@/lib/backgroundExportService";
 
 interface Annotation {
   id: string;
@@ -1109,91 +1110,70 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
   const handleExportToReport = async () => {
     if (!selectedVideo || !selectedReportId) return;
-    setExporting(true);
+    if (isExportRunning()) {
+      toast.error("An export is already in progress");
+      return;
+    }
 
     const clips = selectedVideo.clips || [];
+    if (clips.length === 0) return;
+
+    // Initialise progress UI immediately
     const statuses: Record<string, "pending" | "done" | "skipped" | "error"> = {};
     clips.forEach(c => { statuses[c.id] = "pending"; });
     setExportClipProgress({ current: 0, total: clips.length, statuses: { ...statuses } });
+    setExporting(true);
 
-    try {
-      // Fetch existing actions for this report to detect already-added clips
-      const { data: existingActions } = await supabase
-        .from("performance_report_actions")
-        .select("clip_id, action_number")
-        .eq("analysis_id", selectedReportId);
+    // Fire and forget — the background service will complete even if we navigate away
+    startExportJob({
+      id: `${selectedVideo.id}_${Date.now()}`,
+      videoId: selectedVideo.id,
+      videoUrl: selectedVideo.video_url,
+      reportId: selectedReportId,
+      clips: clips.map(c => ({
+        id: c.id,
+        start: c.start,
+        end: c.end,
+        action_type: c.action_type,
+        action_description: c.action_description,
+        notes: c.notes,
+        action_score: c.action_score,
+      })),
+      matchMinuteOffset: selectedVideo.match_minute_offset,
+      getClipAnnotations,
+    });
 
-      const existingClipIds = new Set((existingActions || []).map(a => a.clip_id).filter(Boolean));
-      let nextNumber = Math.max(...(existingActions || []).map(a => a.action_number || 0), 0) + 1;
-
-      let success = 0;
-      let skipped = 0;
-
-      for (let i = 0; i < clips.length; i++) {
-        const clip = clips[i];
-        setExportClipProgress(prev => ({ ...prev, current: i + 1 }));
-
-        // Skip already-added clips
-        if (existingClipIds.has(clip.id)) {
-          statuses[clip.id] = "skipped";
-          setExportClipProgress(prev => ({ ...prev, statuses: { ...statuses } }));
-          skipped++;
-          continue;
-        }
-
-        try {
-          let clipUrl: string | null = null;
-          try {
-            clipUrl = await extractClipFile(selectedVideo.video_url, clip.id, clip.start, clip.end);
-          } catch (err) {
-            console.error('Clip extraction failed, using fragment URL:', err);
-            clipUrl = `${selectedVideo.video_url}#t=${clip.start},${clip.end}`;
-          }
-
-          const annotations = getClipAnnotations(clip.id);
-
-          const { error } = await supabase
-            .from("performance_report_actions")
-            .insert({
-              analysis_id: selectedReportId,
-              action_number: nextNumber,
-              minute: getMatchMinute(clip.start, selectedVideo.match_minute_offset),
-              action_type: clip.action_type || "other",
-              action_description: clip.action_description || "",
-              notes: clip.notes || null,
-              video_url: clipUrl,
-              video_analysis_id: selectedVideo.id,
-              clip_id: clip.id,
-              is_successful: true,
-              action_score: clip.action_score ?? 0,
-              ...(annotations ? { clip_annotations: annotations } : {}),
-            });
-
-          if (error) throw error;
-
-          nextNumber++;
-          success++;
-          statuses[clip.id] = "done";
-          playTick();
-        } catch (err) {
-          console.error(`Failed to export clip ${clip.id}:`, err);
-          statuses[clip.id] = "error";
-        }
-        setExportClipProgress(prev => ({ ...prev, statuses: { ...statuses } }));
-      }
-
-      const parts = [`${success} exported`];
-      if (skipped > 0) parts.push(`${skipped} already existed`);
-      playSuccess();
-      toast.success(parts.join(', '));
-      setShowExportDialog(false);
-      setSelectedReportId("");
-    } catch (err: any) {
-      toast.error(err.message || "Export failed");
-    }
-    setExporting(false);
-    setExportClipProgress({ current: 0, total: 0, statuses: {} });
+    // Close the dialog — export continues in background
+    setShowExportDialog(false);
+    setSelectedReportId("");
+    toast.info("Export started — it will continue in the background");
   };
+
+  // Subscribe to background export progress
+  useEffect(() => {
+    const unsub = subscribeToExportProgress((progress) => {
+      setExportClipProgress({
+        current: progress.current,
+        total: progress.total,
+        statuses: progress.statuses,
+      });
+      if (progress.finished) {
+        setExporting(false);
+        setExportClipProgress({ current: 0, total: 0, statuses: {} });
+      }
+    });
+    // Restore active export state on mount
+    const active = getActiveExport();
+    if (active && !active.finished) {
+      setExporting(true);
+      setExportClipProgress({
+        current: active.current,
+        total: active.total,
+        statuses: active.statuses,
+      });
+    }
+    return unsub;
+  }, []);
 
   const toDotTime = (seconds: number) => {
     const safe = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
