@@ -1670,7 +1670,7 @@ const Dashboard = () => {
         <div className="fixed top-28 left-0 right-0 z-20 bg-destructive/90 backdrop-blur-sm text-destructive-foreground py-2 px-4">
           <div className="container mx-auto text-center text-sm font-medium">
             <WifiOff className="inline-block h-4 w-4 mr-2" />
-            You're offline. Some content may not be available.
+            {t(playerData?.portal_language, "offline_notice")}
           </div>
         </div>
       )}
@@ -1919,7 +1919,9 @@ const Dashboard = () => {
                               <div className="flex items-center justify-between gap-2 mb-2">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="text-xs text-muted-foreground">
-                                    {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
+                                    {new Date(analysis.analysis_date).toLocaleDateString(
+                                      normalizePortalLanguage(playerData?.portal_language) === "fr" ? "fr-FR" : "en-GB"
+                                    )}
                                   </span>
                                   {analysis.opponent && (
                                     <>
