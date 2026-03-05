@@ -15,22 +15,37 @@ export async function trimAndUploadClip(
   end: number,
   onProgress?: (msg: string) => void
 ): Promise<string> {
-  // ── 1. Server-side trim (preferred) ──
+  // ── 1. Check size & attempt server-side trim (preferred) ──
   try {
-    onProgress?.("Trimming on server...");
-    const { data, error } = await invokeEdgeFunction<{ url: string }>(
-      "trim-video-clip",
-      { body: { sourceUrl, start, end, clipId } }
-    );
-
-    if (!error && data?.url) {
-      onProgress?.("Done");
-      return data.url;
+    // Quick HEAD check to skip server call for large files
+    let skipServer = false;
+    try {
+      const head = await fetch(sourceUrl.split("#")[0], { method: "HEAD" });
+      const size = parseInt(head.headers.get("content-length") || "0", 10);
+      if (size > 200 * 1024 * 1024) {
+        console.log(`Source ${(size / 1048576).toFixed(0)}MB exceeds server limit, using client encoder`);
+        skipServer = true;
+      }
+    } catch {
+      // HEAD failed, try server anyway
     }
 
-    console.warn("Server-side trim failed, falling back to client:", error?.message);
+    if (!skipServer) {
+      onProgress?.("Trimming on server...");
+      const { data, error } = await invokeEdgeFunction<{ url: string }>(
+        "trim-video-clip",
+        { body: { sourceUrl, start, end, clipId } }
+      );
+
+      if (!error && data?.url) {
+        onProgress?.("Done");
+        return data.url;
+      }
+
+      console.log("Server trim unavailable, using client encoder:", error?.message);
+    }
   } catch (err) {
-    console.warn("Server-side trim unavailable, falling back to client:", err);
+    console.log("Server trim unavailable, using client encoder:", err);
   }
 
   // ── 2. Client-side canvas fallback ──
