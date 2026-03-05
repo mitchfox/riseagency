@@ -16,9 +16,10 @@ interface Props {
   imageUrl: string;
   annotations: BBox[];
   onChange: (annotations: BBox[]) => void;
+  actionTypes?: string[];
 }
 
-export const DatasetAnnotationCanvas = ({ imageUrl, annotations, onChange }: Props) => {
+export const DatasetAnnotationCanvas = ({ imageUrl, annotations, onChange, actionTypes = [] }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [drawing, setDrawing] = useState(false);
   const [startPos, setStartPos] = useState<{ x: number; y: number } | null>(null);
