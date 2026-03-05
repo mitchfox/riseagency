@@ -3,35 +3,30 @@
  * Keys are English defaults; values are translations per language code.
  */
 
-type TranslationKey =
-  | "hub" | "analysis" | "programming" | "key_documents" | "updates"
-  | "highlights" | "transfer_hub" | "nutrition" | "view_profile" | "more"
-  | "back" | "performance" | "form" | "video_reports" | "data"
-  | "comparisons" | "scouting" | "positional" | "schemes" | "concepts"
-  | "cognisance" | "other" | "performance_analysis" | "uploading_clip"
-  | "no_performance_reports" | "reports_will_appear"
-  | "next_match" | "overview" | "current_programme" | "schedule"
-  | "sessions" | "exercises" | "download" | "view" | "delete"
-  | "upload_clip" | "your_clips" | "no_clips_yet" | "clips_appear_here"
-  | "match_highlights" | "best_clips" | "no_highlights"
-  | "loading" | "log_out" | "settings" | "notifications"
-  | "injury_log" | "match_clipper" | "quick_stats" | "r90_chart"
-  | "coach_availability" | "availability"
-  | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"
-  | "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun"
-  | "week_start_date" | "week_start"
-  | "select_position" | "no_schemes_for_position" | "select_position_prompt"
-  | "team_scheme" | "opposition_scheme" | "select_scheme"
-  | "goalkeeper" | "centre_back" | "full_back" | "midfielder" | "winger" | "striker"
-  | "days" | "hours" | "mins" | "secs"
-  | "no_upcoming_fixtures" | "match_day"
-  | "r90_score" | "minutes_played" | "result" | "opponent"
-  | "no_data_available" | "no_comparisons"
-  | "score_history" | "latest_reports" | "view_all"
-  | "refresh" | "close"
-  | "aphorism_of_the_day";
+type TranslationKey = string;
 
-const translations: Record<string, Record<TranslationKey, string>> = {
+// New keys that all languages need - English defaults
+const extendedKeys: Record<string, string> = {
+  coach_availability: "Coach Availability",
+  availability: "Availability",
+  monday: "Monday", tuesday: "Tuesday", wednesday: "Wednesday",
+  thursday: "Thursday", friday: "Friday", saturday: "Saturday", sunday: "Sunday",
+  mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun",
+  week_start_date: "Week Start Date", week_start: "Week Start",
+  select_position: "Select Position", no_schemes_for_position: "No tactical schemes available for this position yet.",
+  select_position_prompt: "Select a position to view tactical schemes.",
+  team_scheme: "Team Scheme", opposition_scheme: "Opposition Scheme", select_scheme: "Select scheme",
+  goalkeeper: "Goalkeeper", centre_back: "Centre Back", full_back: "Full Back",
+  midfielder: "Midfielder", winger: "Winger", striker: "Striker",
+  days: "days", hours: "hours", mins: "mins", secs: "secs",
+  no_upcoming_fixtures: "No upcoming fixtures", match_day: "Match Day",
+  r90_score: "R90 Score", minutes_played: "Minutes Played", result: "Result", opponent: "Opponent",
+  no_data_available: "No data available", no_comparisons: "No comparisons available",
+  score_history: "Score History", latest_reports: "Latest Reports", view_all: "View All",
+  refresh: "Refresh", close: "Close",
+  aphorism_of_the_day: "Thought of the Day",
+  select_opposition_scheme: "Select opposition scheme",
+};
   en: {
     hub: "Hub",
     analysis: "Analysis",
