@@ -42,6 +42,60 @@ const getScoreBgColor = (avg: number): string => {
   return "bg-red-700 text-white";
 };
 
+// Penalty box border segments
+// Top box (attacking end, zones 16-18)
+// Bottom box (defensive end, zones 1-3)
+type BorderSide = 'top' | 'right' | 'bottom' | 'left';
+interface BoxLine { zone: number; sub: number; side: BorderSide }
+
+const PENALTY_BOX_LINES: BoxLine[] = [
+  // === TOP BOX (zones 16, 17, 18) ===
+  // Left side of box (zone 16, between col 1 and col 2)
+  { zone: 16, sub: 8, side: 'right' },
+  { zone: 16, sub: 5, side: 'right' },
+  // Bottom edge
+  { zone: 16, sub: 6, side: 'bottom' },  // zone 16 right col
+  { zone: 17, sub: 4, side: 'bottom' },  // zone 17 full width
+  { zone: 17, sub: 5, side: 'bottom' },
+  { zone: 17, sub: 6, side: 'bottom' },
+  { zone: 18, sub: 4, side: 'bottom' },  // zone 18 left col
+  // Right side of box (zone 18, between col 0 and col 1)
+  { zone: 18, sub: 7, side: 'right' },
+  { zone: 18, sub: 4, side: 'right' },
+
+  // === BOTTOM BOX (zones 1, 2, 3) — mirrored ===
+  // Left side of box (zone 1, between col 1 and col 2)
+  { zone: 1, sub: 2, side: 'right' },
+  { zone: 1, sub: 5, side: 'right' },
+  // Top edge
+  { zone: 1, sub: 6, side: 'top' },     // zone 1 right col
+  { zone: 2, sub: 4, side: 'top' },     // zone 2 full width
+  { zone: 2, sub: 5, side: 'top' },
+  { zone: 2, sub: 6, side: 'top' },
+  { zone: 3, sub: 4, side: 'top' },     // zone 3 left col
+  // Right side of box (zone 3, between col 0 and col 1)
+  { zone: 3, sub: 1, side: 'right' },
+  { zone: 3, sub: 4, side: 'right' },
+];
+
+// Build a lookup set for fast checking
+const BOX_LINE_SET = new Set(
+  PENALTY_BOX_LINES.map(l => `${l.zone}.${l.sub}.${l.side}`)
+);
+
+const hasBoxLine = (zone: number, sub: number, side: BorderSide): boolean => {
+  return BOX_LINE_SET.has(`${zone}.${sub}.${side}`);
+};
+
+const getBoxBorderStyle = (zone: number, sub: number): string => {
+  const borders: string[] = [];
+  if (hasBoxLine(zone, sub, 'top')) borders.push('border-t-[2px] border-t-white/40');
+  if (hasBoxLine(zone, sub, 'right')) borders.push('border-r-[2px] border-r-white/40');
+  if (hasBoxLine(zone, sub, 'bottom')) borders.push('border-b-[2px] border-b-white/40');
+  if (hasBoxLine(zone, sub, 'left')) borders.push('border-l-[2px] border-l-white/40');
+  return borders.join(' ');
+};
+
 export const ZonePerformance = ({ actions }: ZonePerformanceProps) => {
   const [showSubZones, setShowSubZones] = useState(false);
 
@@ -127,13 +181,12 @@ export const ZonePerformance = ({ actions }: ZonePerformanceProps) => {
         </div>
 
         {showSubZones ? (
-          /* 162-zone view with pitch markings */
+          /* 162-zone view with pitch markings and penalty boxes */
           <div className="relative">
-            {/* Halfway line between row 3 and 4 (zones 7-9 and 10-12) */}
             <div className="grid grid-rows-6 gap-px p-1 relative">
               {ZONE_GRID.map((row, ri) => (
                 <div key={ri} className="relative">
-                  {/* Halfway line after row index 2 (between zones 10-12 and 7-9) */}
+                  {/* Halfway line between zones 10-12 and 7-9 */}
                   {ri === 3 && (
                     <div className="absolute -top-[1px] left-0 right-0 h-[2px] bg-white/30 z-10" />
                   )}
@@ -147,12 +200,13 @@ export const ZonePerformance = ({ actions }: ZonePerformanceProps) => {
                                 const key = `${zone}.${sub}`;
                                 const avg = subZoneAvg[key];
                                 const hasValue = avg !== undefined;
+                                const boxBorders = getBoxBorderStyle(zone, sub);
                                 return (
                                   <div
                                     key={sub}
                                     className={`aspect-square flex items-center justify-center ${
                                       hasValue ? getScoreBgColor(avg) : 'bg-green-900/30'
-                                    }`}
+                                    } ${boxBorders}`}
                                     title={hasValue ? `Zone ${zone}.${sub}: avg ${avg.toFixed(3)}` : `Zone ${zone}.${sub}`}
                                   />
                                 );

@@ -478,24 +478,32 @@ export const CreatePerformanceReportDialog = ({
     // Auto-calculate per90 ONLY for rate-based stats (xG, xA, xC, xGChain types)
     // Do NOT calculate per90 for count-based stats (dribbles, passes, shots, touches, etc.)
     const rateBasedStatPrefixes = ['xg', 'xa', 'xc', 'xgchain'];
-    const updatedStats: Record<string, string> = { ...additionalStats };
-    Object.keys(additionalStats).forEach(key => {
-      if (!key.endsWith('_per90')) {
-        const keyLower = key.toLowerCase();
-        const isRateBasedStat = rateBasedStatPrefixes.some(prefix => keyLower.includes(prefix));
-        if (isRateBasedStat) {
-          const per90Key = `${key}_per90`;
-          updatedStats[per90Key] = calculatePer90(additionalStats[key]);
+    setAdditionalStats(prev => {
+      const updatedStats: Record<string, string> = { ...prev };
+      let changed = false;
+      Object.keys(prev).forEach(key => {
+        if (!key.endsWith('_per90')) {
+          const keyLower = key.toLowerCase();
+          const isRateBasedStat = rateBasedStatPrefixes.some(prefix => keyLower.includes(prefix));
+          if (isRateBasedStat) {
+            const per90Key = `${key}_per90`;
+            const newVal = calculatePer90(prev[key]);
+            if (updatedStats[per90Key] !== newVal) {
+              updatedStats[per90Key] = newVal;
+              changed = true;
+            }
+          }
         }
-      }
+      });
+      return changed ? updatedStats : prev;
     });
-    setAdditionalStats(updatedStats);
   }, [minutesPlayed, strikerStats.xGChain, strikerStats.xG_adj, strikerStats.xA_adj, 
       strikerStats.movement_in_behind_xC, strikerStats.movement_down_side_xC, 
       strikerStats.triple_threat_xC, strikerStats.movement_to_feet_xC, 
       strikerStats.crossing_movement_xC, strikerStats.interceptions, 
       strikerStats.regains_adj, strikerStats.turnovers_adj, strikerStats.progressive_passes_adj,
-      ...Object.values(additionalStats)]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      JSON.stringify(additionalStats)]);
 
   // Auto-calculate xGChain and xGChain_per90 directly from actions
   useEffect(() => {
@@ -1144,6 +1152,8 @@ export const CreatePerformanceReportDialog = ({
             action_type: action.action_type || "",
             action_description: action.action_description || "",
             notes: action.notes || "",
+            video_url: action.video_url || null,
+            recorded_stat: action.recorded_stat as unknown as RecordedStat | null,
             zone: action.zone || null,
             zone_details: (action as any).zone_details || null,
           }));
