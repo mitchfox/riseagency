@@ -24,6 +24,7 @@ import { sortPlayersByRepresentation, getStatusLabel, groupPlayersByStatus } fro
 import { toTitleCase } from "@/lib/titleCase";
 import { AIPlayerDetection } from "./AIPlayerDetection";
 import { fetchPlayerActionFrequencies } from "@/lib/playerActionFrequency";
+import { playTick, playSuccess } from "@/lib/soundEffects";
 
 interface Annotation {
   id: string;
@@ -1172,6 +1173,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
           nextNumber++;
           success++;
           statuses[clip.id] = "done";
+          playTick();
         } catch (err) {
           console.error(`Failed to export clip ${clip.id}:`, err);
           statuses[clip.id] = "error";
@@ -1181,6 +1183,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
       const parts = [`${success} exported`];
       if (skipped > 0) parts.push(`${skipped} already existed`);
+      playSuccess();
       toast.success(parts.join(', '));
       setShowExportDialog(false);
       setSelectedReportId("");
