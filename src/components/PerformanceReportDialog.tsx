@@ -1033,9 +1033,9 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                             )}
                           </div>
                           <div className="font-medium text-xs mt-1 truncate">{toTitleCase(action.action_type)}</div>
-                          <div className="text-[10px] text-foreground/80 line-clamp-2">{action.action_description}</div>
+                          <div className="text-[10px] text-foreground/80">{action.action_description}</div>
                           {action.notes && (
-                            <div className="text-[9px] text-muted-foreground italic mt-1 pt-1 border-t border-border/50 truncate">
+                            <div className="text-[9px] text-muted-foreground italic mt-1 pt-1 border-t border-border/50 break-words">
                               {action.notes}
                             </div>
                           )}

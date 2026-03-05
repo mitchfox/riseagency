@@ -411,7 +411,7 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
                       vs {currentClip.opponent} {currentClip.minute != null && `· ${currentClip.minute}'`}
                     </p>
                     {currentClip.action_description && (
-                      <p className="text-xs text-white/60 mt-0.5 line-clamp-2">{currentClip.action_description}</p>
+                      <p className="text-xs text-white/60 mt-0.5">{currentClip.action_description}</p>
                     )}
                   </div>
 
