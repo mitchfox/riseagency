@@ -4649,6 +4649,7 @@ const Dashboard = () => {
       <CoachAvailability
         open={coachAvailabilityOpen}
         onOpenChange={setCoachAvailabilityOpen}
+        portalLanguage={playerData?.portal_language}
       />
 
       {/* Test Input Dialog */}
