@@ -186,7 +186,7 @@ export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName
           <div className="flex items-center gap-2 mt-2">
             <p className="text-primary font-bold text-sm">{t(portalLanguage, "match_day")}!</p>
             {preMatchAnalysis && (
-              <PreMatchButton analysis={preMatchAnalysis} />
+              <PreMatchButton analysis={preMatchAnalysis} portalLanguage={portalLanguage} />
             )}
           </div>
         )}
