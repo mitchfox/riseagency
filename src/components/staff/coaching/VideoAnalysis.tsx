@@ -1147,6 +1147,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         action_description: c.action_description,
         notes: c.notes,
         action_score: c.action_score,
+        zone_details: c.zone_details,
       })),
       matchMinuteOffset: selectedVideo.match_minute_offset,
       getClipAnnotations,
