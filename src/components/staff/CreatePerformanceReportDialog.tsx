@@ -2074,314 +2074,288 @@ export const CreatePerformanceReportDialog = ({
               ))}
             </div>
 
-            {/* Desktop Table View */}
-            <div className="hidden sm:block overflow-x-auto border rounded-lg">
-              <table className="w-full">
-                <thead className="bg-accent">
-                  <tr>
-                    <th className="text-left p-2 text-sm font-semibold">#</th>
-                    <th className="text-left p-2 text-sm font-semibold">Minute</th>
-                    <th className="text-left p-2 text-sm font-semibold">Score</th>
-                    <th className="text-left p-2 text-sm font-semibold">Type</th>
-                    <th className="text-left p-2 text-sm font-semibold">Description</th>
-                    <th className="text-left p-2 text-sm font-semibold">Notes</th>
-                    <th className="w-20"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {actions.map((action, index) => (
-                    <React.Fragment key={index}>
-                      <tr
-                        className={`border-t transition-colors ${dragOverAction === index ? 'ring-2 ring-primary bg-primary/5' : ''}`}
-                        onDragOver={(e) => { e.preventDefault(); setDragOverAction(index); }}
-                        onDragEnter={(e) => { e.preventDefault(); setDragOverAction(index); }}
-                        onDragLeave={() => setDragOverAction(null)}
-                        onDrop={(e) => handleActionDrop(e, index)}
-                      >
-                        <td className="p-2 text-sm">{action.action_number}</td>
-                      <td className="p-2">
+            {/* Desktop Two-Line View */}
+            <div className="hidden sm:block space-y-1">
+              {actions.map((action, index) => (
+                <React.Fragment key={index}>
+                  <div
+                    className={`border rounded-lg p-2 space-y-2 transition-colors ${dragOverAction === index ? 'ring-2 ring-primary bg-primary/5' : 'bg-background'}`}
+                    onDragOver={(e) => { e.preventDefault(); setDragOverAction(index); }}
+                    onDragEnter={(e) => { e.preventDefault(); setDragOverAction(index); }}
+                    onDragLeave={() => setDragOverAction(null)}
+                    onDrop={(e) => handleActionDrop(e, index)}
+                  >
+                    {/* Line 1: #, Type, Description, Notes, Zone, Clip */}
+                    <div className="flex items-start gap-2">
+                      <span className="text-sm font-medium text-muted-foreground pt-2 shrink-0 w-6 text-center">{action.action_number}</span>
+
+                      <div className="relative shrink-0">
                         <Input
-                          type="text"
-                          value={action.minute}
-                          onChange={(e) => updateAction(index, "minute", e.target.value)}
-                          placeholder="45"
-                          className="w-20 text-sm"
+                          value={action.action_type}
+                          onChange={(e) => {
+                            updateAction(index, "action_type", e.target.value);
+                            setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
+                          }}
+                          onFocus={() => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: true }))}
+                          onBlur={() => {
+                            setTimeout(() => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200);
+                            if (action.action_type) updateAction(index, "action_type", canonicalActionType(action.action_type));
+                          }}
+                          placeholder="Type"
+                          className="w-36 text-sm h-9 pr-7"
                         />
-                      </td>
-                      <td className="p-2">
-                        <div className="flex items-center gap-1">
-                          <Input
-                            type="number"
-                            step="0.00001"
-                            value={action.action_score}
-                            onChange={(e) => updateAction(index, "action_score", e.target.value)}
-                            placeholder="0.15"
-                            className="w-20 text-sm"
-                          />
-                          <Button
-                            onClick={() => openR90Viewer(index)}
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 shrink-0 [&>svg]:hover:text-black"
-                            title="R90 Ratings Reference"
+                        {action.action_type && (
+                          <button
+                            type="button"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              updateAction(index, "action_type", "");
+                            }}
                           >
-                            <Search className="h-4 w-4 text-primary hover:text-black" />
-                          </Button>
-                          <Input
-                            value={actionSearchFilters[index] || ''}
-                            onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
-                            placeholder="Search R90..."
-                            className="h-8 text-[10px] w-28 px-2"
-                          />
-                        </div>
-                      </td>
-                      <td className="p-2">
-                        <div className="relative">
-                          <Input
-                            value={action.action_type}
-                            onChange={(e) => {
-                              updateAction(index, "action_type", e.target.value);
-                              setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
-                            }}
-                            onFocus={() => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: true }))}
-                            onBlur={() => {
-                              setTimeout(() => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200);
-                              if (action.action_type) updateAction(index, "action_type", canonicalActionType(action.action_type));
-                            }}
-                            placeholder="Type or select"
-                            className="w-40 text-sm h-9 pr-7"
-                          />
-                          {action.action_type && (
-                            <button
-                              type="button"
-                              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                updateAction(index, "action_type", "");
-                              }}
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          )}
-                          {actionTypePopoverOpen[1000 + index] && (
-                            <div className="absolute z-50 mt-1 w-64 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
-                              {actionTypes
-                                .filter(type => !action.action_type || type.toLowerCase().includes(action.action_type.toLowerCase()))
-                                .slice(0, 15)
-                                .map((type) => (
-                                  <button
-                                    key={type}
-                                    type="button"
-                                    className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-accent flex justify-between items-center"
-                                    onMouseDown={(e) => {
-                                      e.preventDefault();
-                                      updateAction(index, "action_type", type);
-                                      setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
-                                    }}
-                                  >
-                                    <span>{type}</span>
-                                    <span className="text-xs text-muted-foreground">{actionTypeFrequencyMap[type] || 0}</span>
-                                  </button>
-                                ))}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-2 relative">
-                        <div className="relative">
-                          <Textarea
-                            value={action.action_description}
-                            onChange={(e) => {
-                              updateAction(index, "action_description", e.target.value);
-                              setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
-                            }}
-                            onFocus={() => {
-                              if (action.action_type && getDescriptionsForType(action.action_type).length > 0) {
-                                setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
-                              }
-                            }}
-                            onBlur={() => {
-                              setTimeout(() => setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200);
-                            }}
-                            placeholder="Describe"
-                            className="min-w-[180px] min-h-[40px] text-sm"
-                            rows={1}
-                          />
-                          {descriptionPopoverOpen[1000 + index] && action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
-                            <div className="absolute z-50 mt-1 w-72 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
-                              {getDescriptionsForType(action.action_type)
-                                .filter(desc => !action.action_description || desc.toLowerCase().includes(action.action_description.toLowerCase()))
-                                .slice(0, 12)
-                                .map((desc, di) => (
-                                  <button
-                                    key={di}
-                                    type="button"
-                                    className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent"
-                                    onMouseDown={(e) => {
-                                      e.preventDefault();
-                                      updateAction(index, "action_description", desc);
-                                      setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
-                                    }}
-                                  >
-                                    {desc}
-                                  </button>
-                                ))}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-2">
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                        {actionTypePopoverOpen[1000 + index] && (
+                          <div className="absolute z-50 mt-1 w-64 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                            {actionTypes
+                              .filter(type => !action.action_type || type.toLowerCase().includes(action.action_type.toLowerCase()))
+                              .slice(0, 15)
+                              .map((type) => (
+                                <button
+                                  key={type}
+                                  type="button"
+                                  className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-accent flex justify-between items-center"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    updateAction(index, "action_type", type);
+                                    setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
+                                  }}
+                                >
+                                  <span>{type}</span>
+                                  <span className="text-xs text-muted-foreground">{actionTypeFrequencyMap[type] || 0}</span>
+                                </button>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="relative flex-1 min-w-0">
                         <Textarea
-                          value={action.notes}
-                          onChange={(e) => updateAction(index, "notes", e.target.value)}
-                          placeholder="Notes"
-                          className="min-w-[140px] min-h-[40px] text-sm"
+                          value={action.action_description}
+                          onChange={(e) => {
+                            updateAction(index, "action_description", e.target.value);
+                            setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
+                          }}
+                          onFocus={() => {
+                            if (action.action_type && getDescriptionsForType(action.action_type).length > 0) {
+                              setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
+                            }
+                          }}
+                          onBlur={() => {
+                            setTimeout(() => setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200);
+                          }}
+                          placeholder="Description"
+                          className="min-h-[36px] text-sm"
                           rows={1}
                         />
-                      </td>
-                      <td className="p-2">
-                        <div className="flex gap-1">
-                          {/* Zone selector - desktop */}
-                          <ZonePitchSelector
-                            value={action.zone_details || (action.zone ? [{ zone: action.zone }] : [])}
-                            onChange={(zd) => { updateAction(index, 'zone_details', zd as any); updateAction(index, 'zone', (zd.length ? zd[0].zone : null) as any); }}
-                            actionType={action.action_type}
-                          />
-                          {/* Record Stat button */}
-                          <ActionStatRecorder
-                            currentStat={action.recorded_stat || null}
-                            onStatRecorded={(stat) => updateAction(index, 'recorded_stat', stat)}
-                          />
-                          {action.id ? (
-                            <ActionVideoUpload
-                              actionId={action.id}
-                              currentVideoUrl={action.video_url || null}
-                              onVideoUploaded={(videoUrl) => {
-                                updateAction(index, 'video_url', videoUrl);
-                              }}
-                              analysisId={analysisId}
-                            />
-                          ) : (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="inline-flex items-center justify-center h-8 w-8 text-muted-foreground">
-                                  <span className="text-xs">💾</span>
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>Save report first to add video clips</TooltipContent>
-                            </Tooltip>
-                          )}
-                          <Button
-                            onClick={() => removeAction(index)}
-                            size="icon"
-                            variant="ghost"
-                            className="text-destructive h-8 w-8"
-                            disabled={actions.length === 1}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            onClick={() => moveAction(index, 'up')}
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            disabled={index === 0}
-                          >
-                            <ArrowUp className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            onClick={() => moveAction(index, 'down')}
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            disabled={index === actions.length - 1}
-                          >
-                            <ArrowDown className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                    {/* Suggested R90 Scores - shown when search has text */}
-                    {actionSearchFilters[index]?.trim() && (
-                      <tr>
-                        <td colSpan={7} className="p-0">
-                          <div className="p-2 bg-muted/20 space-y-1 max-h-40 overflow-y-auto">
-                            {getFilteredScores(index).map((item, scoreIdx) => {
-                              const isSelected = selectedScores[index]?.has(scoreIdx) ?? false;
-                              const filteredScores = getFilteredScores(index);
-                              return (
-                                <div key={scoreIdx} className="flex items-start gap-2">
-                                  <Checkbox
-                                    checked={isSelected}
-                                    onCheckedChange={(checked) => {
-                                      const newSelected = { ...selectedScores };
-                                      if (!newSelected[index]) {
-                                        newSelected[index] = new Set();
-                                      }
-                                      if (checked) {
-                                        newSelected[index].add(scoreIdx);
-                                      } else {
-                                        newSelected[index].delete(scoreIdx);
-                                      }
-                                      setSelectedScores(newSelected);
-                                      
-                                      const selectedIndices = checked 
-                                        ? [...Array.from(newSelected[index] || []), scoreIdx]
-                                        : Array.from(newSelected[index] || []).filter(i => i !== scoreIdx);
-                                      
-                                      const totalScore = selectedIndices.reduce((sum, idx) => {
-                                        const score = filteredScores[idx]?.score;
-                                        const numScore = typeof score === 'number' ? score : (typeof score === 'string' && !isNaN(parseFloat(score)) ? parseFloat(score) : 0);
-                                        return sum + numScore;
-                                      }, 0);
-                                      
-                                      updateAction(index, "action_score", totalScore.toString());
-                                    }}
-                                    className="mt-0.5"
-                                  />
-                                  <label className="font-mono flex-1 cursor-pointer text-xs text-muted-foreground">
-                                    {item.title} {formatScoreWithFrequency(item.score)}
-                                  </label>
-                                </div>
-                              );
-                            })}
-                            {getFilteredScores(index).length === 0 && (
-                              <p className="text-muted-foreground text-center py-1 text-xs">No matching scores</p>
-                            )}
+                        {descriptionPopoverOpen[1000 + index] && action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
+                          <div className="absolute z-50 mt-1 w-72 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                            {getDescriptionsForType(action.action_type)
+                              .filter(desc => !action.action_description || desc.toLowerCase().includes(action.action_description.toLowerCase()))
+                              .slice(0, 12)
+                              .map((desc, di) => (
+                                <button
+                                  key={di}
+                                  type="button"
+                                  className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    updateAction(index, "action_description", desc);
+                                    setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
+                                  }}
+                                >
+                                  {desc}
+                                </button>
+                              ))}
                           </div>
-                        </td>
-                      </tr>
-                    )}
-                    
-                    {/* Insert Action & Update Row (Desktop) */}
-                    <tr className="border-t border-dashed hover:bg-accent/50 transition-colors">
-                      <td colSpan={7} className="p-1 text-center">
-                        <div className="flex gap-2 justify-center">
-                          <Button
-                            onClick={() => insertActionAt(index + 1)}
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 text-xs flex-1"
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add New Action
-                          </Button>
-                          <Button
-                            onClick={handleSave}
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs flex-1"
-                            disabled={loading || deleting}
-                          >
-                            {loading ? "Saving..." : "Update Report"}
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
+                        )}
+                      </div>
+
+                      <Textarea
+                        value={action.notes}
+                        onChange={(e) => updateAction(index, "notes", e.target.value)}
+                        placeholder="Notes"
+                        className="min-w-[120px] max-w-[180px] min-h-[36px] text-sm shrink-0"
+                        rows={1}
+                      />
+
+                      <ZonePitchSelector
+                        value={action.zone_details || (action.zone ? [{ zone: action.zone }] : [])}
+                        onChange={(zd) => { updateAction(index, 'zone_details', zd as any); updateAction(index, 'zone', (zd.length ? zd[0].zone : null) as any); }}
+                        actionType={action.action_type}
+                      />
+
+                      {action.id ? (
+                        <ActionVideoUpload
+                          actionId={action.id}
+                          currentVideoUrl={action.video_url || null}
+                          onVideoUploaded={(videoUrl) => {
+                            updateAction(index, 'video_url', videoUrl);
+                          }}
+                          analysisId={analysisId}
+                        />
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex items-center justify-center h-8 w-8 text-muted-foreground shrink-0">
+                              <span className="text-xs">💾</span>
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>Save report first to add video clips</TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
+
+                    {/* Line 2: R90 Reference, Search R90, Score | Delete, Reorder */}
+                    <div className="flex items-center gap-2 pl-8">
+                      <Button
+                        onClick={() => openR90Viewer(index)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs shrink-0 [&>svg]:hover:text-black"
+                        title="R90 Ratings Reference"
+                      >
+                        <Search className="h-3.5 w-3.5 text-primary mr-1" />
+                        R90
+                      </Button>
+                      <Input
+                        value={actionSearchFilters[index] || ''}
+                        onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
+                        placeholder="Search R90..."
+                        className="h-7 text-xs w-32 px-2"
+                      />
+                      <Input
+                        type="number"
+                        step="0.00001"
+                        value={action.action_score}
+                        onChange={(e) => updateAction(index, "action_score", e.target.value)}
+                        placeholder="Score"
+                        className="w-24 h-7 text-sm"
+                      />
+                      <Input
+                        type="text"
+                        value={action.minute}
+                        onChange={(e) => updateAction(index, "minute", e.target.value)}
+                        placeholder="Min"
+                        className="w-16 h-7 text-sm"
+                      />
+
+                      <div className="flex-1" />
+
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <Button
+                          onClick={() => removeAction(index)}
+                          size="icon"
+                          variant="ghost"
+                          className="text-destructive h-7 w-7"
+                          disabled={actions.length === 1}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          onClick={() => moveAction(index, 'up')}
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          disabled={index === 0}
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          onClick={() => moveAction(index, 'down')}
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          disabled={index === actions.length - 1}
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Suggested R90 Scores */}
+                  {actionSearchFilters[index]?.trim() && (
+                    <div className="ml-8 p-2 bg-muted/20 space-y-1 max-h-40 overflow-y-auto rounded border">
+                      {getFilteredScores(index).map((item, scoreIdx) => {
+                        const isSelected = selectedScores[index]?.has(scoreIdx) ?? false;
+                        const filteredScores = getFilteredScores(index);
+                        return (
+                          <div key={scoreIdx} className="flex items-start gap-2">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(checked) => {
+                                const newSelected = { ...selectedScores };
+                                if (!newSelected[index]) {
+                                  newSelected[index] = new Set();
+                                }
+                                if (checked) {
+                                  newSelected[index].add(scoreIdx);
+                                } else {
+                                  newSelected[index].delete(scoreIdx);
+                                }
+                                setSelectedScores(newSelected);
+                                
+                                const selectedIndices = checked 
+                                  ? [...Array.from(newSelected[index] || []), scoreIdx]
+                                  : Array.from(newSelected[index] || []).filter(i => i !== scoreIdx);
+                                
+                                const totalScore = selectedIndices.reduce((sum, idx) => {
+                                  const score = filteredScores[idx]?.score;
+                                  const numScore = typeof score === 'number' ? score : (typeof score === 'string' && !isNaN(parseFloat(score)) ? parseFloat(score) : 0);
+                                  return sum + numScore;
+                                }, 0);
+                                
+                                updateAction(index, "action_score", totalScore.toString());
+                              }}
+                              className="mt-0.5"
+                            />
+                            <label className="font-mono flex-1 cursor-pointer text-xs text-muted-foreground">
+                              {item.title} {formatScoreWithFrequency(item.score)}
+                            </label>
+                          </div>
+                        );
+                      })}
+                      {getFilteredScores(index).length === 0 && (
+                        <p className="text-muted-foreground text-center py-1 text-xs">No matching scores</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Insert Action Row */}
+                  <div className="flex gap-2 justify-center py-0.5">
+                    <Button
+                      onClick={() => insertActionAt(index + 1)}
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 text-xs flex-1"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add New Action
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      size="sm"
+                      variant="outline"
+                      className="h-6 text-xs flex-1"
+                      disabled={loading || deleting}
+                    >
+                      {loading ? "Saving..." : "Update Report"}
+                    </Button>
+                  </div>
+                </React.Fragment>
+              ))}
             </div>
             
           </div>
