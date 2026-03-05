@@ -640,8 +640,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     <p className="font-bold text-sm md:text-base truncate">{analysis.player_name}</p>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">Date</p>
-                    <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t(portalLanguage, "date")}</p>
+                    <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString(portalLocale)}</p>
                   </div>
                   <div>
                     <p className="text-xs md:text-sm text-muted-foreground">Opponent</p>
