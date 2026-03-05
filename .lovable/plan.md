@@ -1,130 +1,28 @@
 
 
-## Two-Part Plan
+## Fix: Low Quality Client-Side Clip Encoding
 
-This covers the immediate text truncation fix and the large AI features package.
+### Problem
+The edge function can't handle large match videos (4GB+), so every clip falls back to client-side canvas recording at **30fps / 8Mbps WebM**. This produces noticeably laggy, low-quality clips compared to the original footage. The canvas intermediary adds another quality loss layer.
 
----
+### Solution
+Dramatically improve the client-side encoding pipeline:
 
-### Part 1: Fix Truncated Notes (Quick Fix)
+1. **Skip the canvas entirely** — use `video.captureStream()` directly on the `<video>` element instead of routing through a canvas. This captures decoded frames at native quality without the canvas redraw overhead. Falls back to canvas only if `captureStream` is unsupported.
 
-**Problem**: Notes on performance report actions are cut off with `...` via `truncate` and `line-clamp` classes, making them unreadable on mobile.
+2. **Increase capture framerate** — from 30fps to 60fps for smooth playback.
 
-**Files to change:**
+3. **Increase bitrate** — from 8Mbps to 25Mbps. This is the single biggest quality lever.
 
-1. **`src/components/PerformanceReportDialog.tsx`**
-   - Line 1036: Remove `line-clamp-2` from action description div, allow full text
-   - Line 1038: Remove `truncate` from notes div, allow full wrap
-   - These are in the mobile card layout (the `md:hidden` block)
+4. **Better codec selection** — prefer VP9 with opus audio codec (`video/webm;codecs=vp9,opus`).
 
-2. **`src/components/ClippedActionsPlayer.tsx`**
-   - Line 137: Remove `line-clamp-2` from description
-   - Line 139: Remove `line-clamp-2` from notes
+5. **Use `requestVideoFrameCallback`** where available — this syncs frame capture to the video's actual decode rate rather than the display's animation frame rate, eliminating dropped/duplicate frames.
 
-3. **`src/components/portal/AnalysisVideoReports.tsx`**
-   - Line 414: Remove `line-clamp-2` from clip description
+### Files Changed
 
-All replacements simply remove the truncation classes so text wraps naturally across as many lines as needed.
-
----
-
-### Part 2: AI Features Package
-
-This is a large feature set. Here is the implementation plan broken into phases.
-
-#### 2A. Collapsible AI Shell Suggestions
-
-**New components:**
-- `src/components/staff/AiShellSuggestions.tsx` - collapsible tab component with player selector
-- Sections: Athlete Centre, Analysis, Data, Player Management
-
-**New database table:** `ai_shell_suggestions`
-- `id`, `section` (enum), `player_id`, `shell_type`, `preview_text`, `shell_content` (JSONB), `created_at`
-
-**New database table:** `ai_shell_decisions`
-- `id`, `suggestion_id`, `player_id`, `staff_user_id`, `decision` (accepted/rejected), `created_at`
-
-**New edge function:** `generate-shell-suggestions`
-- Takes section + player context, queries recent data, calls Gemini to produce structural shells
-- Returns preview lines for each shell
-
-**Behaviour:**
-- Collapsed tab at top of each section
-- Opening requires player selection first
-- Accept inserts as editable draft; Reject hides for session
-- Decision history feeds future prioritisation
-
-#### 2B. Player-Specific Action Dropdown Intelligence
-
-**New database table:** `player_action_frequencies`
-- `player_id`, `action_type`, `frequency_count`, `last_used_at`, `position_weight`
-
-**Changes to existing components:**
-- Performance report action type dropdown and video analysis action type dropdown
-- Query last 5 reports for selected player, calculate frequency + recency weights
-- Sort dropdown accordingly, persist per player
-
-This builds on the existing frequency sorting (memory reference: action-type-frequency-sorting) but makes it player-specific rather than global.
-
-#### 2C. Video Tracking Integration (Roboflow)
-
-**New edge function:** `process-video-frames`
-- Accepts frame images (base64) at configurable sampling rate
-- Sends to Roboflow API for player/ball detection
-- Applies pitch homography mapping to 18/162 zone grids
-- Returns structured JSON per the specified format
-
-**Requirements:**
-- Roboflow API key (will need to be added as a secret)
-- A trained Roboflow model endpoint for player/ball detection
-- Configurable frame sampling rate (default 5 fps)
-
-**Frontend integration:**
-- New "AI Track" button in Video Analysis
-- Frame extraction from video element at configured rate
-- Batch upload to edge function
-- Results displayed as overlay markers on video
-
-#### 2D. Rule-Based Action Suggestion Engine
-
-**New module:** `src/lib/actionSuggestionEngine.ts`
-- Pure TypeScript, consumes Roboflow JSON output
-- Possession approximation: ball overlapping player across consecutive frames
-- Shot heuristic: ball near player then rapid displacement toward goal zone
-- Duel heuristic: two player boxes close with possession change
-
-**Database:**
-- Suggested actions inserted into `performance_report_actions` with a new `status` field (values: `confirmed`, `suggested`)
-- Requires migration to add `status` column
-
-**UI:**
-- Suggested actions shown with distinct styling and Confirm/Dismiss buttons
-- Confirmed actions become regular report entries
-
-#### 2E. Match Flow Automation
-
-**Changes to fixture creation flow:**
-- On fixture confirmation: auto-create linked draft performance report
-- Auto-create pre-match analysis shell
-- When report set to Live: prompt highlight compilation suggestion, check for duplicate clip exports
-
-**Batch mode:**
-- New "Batch Generate" button in Match Flow
-- Select multiple players, shared fixture data populates draft shells for each
-
----
-
-### Implementation Order
-
-1. **Part 1** (notes fix) - immediate
-2. **2B** (action dropdown intelligence) - builds on existing patterns
-3. **2A** (shell suggestions) - new UI + edge function
-4. **2E** (match flow automation) - workflow changes
-5. **2C** (Roboflow) - requires API key setup
-6. **2D** (suggestion engine) - depends on 2C output
-
-### Prerequisites
-
-- **Roboflow API key** will need to be provided and stored as a secret before 2C can function
-- A trained Roboflow model for player/ball detection must exist
+**`src/lib/clientClipExtractor.ts`**
+- Replace canvas pipeline with direct `video.captureStream(60)` 
+- Bump `videoBitsPerSecond` to `25_000_000`
+- Use `requestVideoFrameCallback` for frame-accurate capture with canvas fallback
+- Keep canvas path as fallback for browsers without `captureStream`
 
