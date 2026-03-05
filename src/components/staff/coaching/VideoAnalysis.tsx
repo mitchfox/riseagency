@@ -23,6 +23,7 @@ import { computeVisibleElements } from "@/lib/annotationRenderUtils";
 import { sortPlayersByRepresentation, getStatusLabel, groupPlayersByStatus } from "@/lib/playerSorting";
 import { toTitleCase } from "@/lib/titleCase";
 import { AIPlayerDetection } from "./AIPlayerDetection";
+import { RoboflowTracking } from "./RoboflowTracking";
 import { fetchPlayerActionFrequencies } from "@/lib/playerActionFrequency";
 import { playTick, playSuccess } from "@/lib/soundEffects";
 
@@ -1598,6 +1599,12 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       description: c.action_description || c.label || undefined,
                     })),
                 ]}
+              />
+            )}
+            {selectedVideo.video_url && (
+              <RoboflowTracking
+                videoRef={videoRef as React.RefObject<HTMLVideoElement>}
+                videoUrl={selectedVideo.video_url}
               />
             )}
           </div>
