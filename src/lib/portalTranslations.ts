@@ -15,7 +15,21 @@ type TranslationKey =
   | "upload_clip" | "your_clips" | "no_clips_yet" | "clips_appear_here"
   | "match_highlights" | "best_clips" | "no_highlights"
   | "loading" | "log_out" | "settings" | "notifications"
-  | "injury_log" | "match_clipper" | "quick_stats" | "r90_chart";
+  | "injury_log" | "match_clipper" | "quick_stats" | "r90_chart"
+  | "coach_availability" | "availability"
+  | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"
+  | "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun"
+  | "week_start_date" | "week_start"
+  | "select_position" | "no_schemes_for_position" | "select_position_prompt"
+  | "team_scheme" | "opposition_scheme" | "select_scheme"
+  | "goalkeeper" | "centre_back" | "full_back" | "midfielder" | "winger" | "striker"
+  | "days" | "hours" | "mins" | "secs"
+  | "no_upcoming_fixtures" | "match_day"
+  | "r90_score" | "minutes_played" | "result" | "opponent"
+  | "no_data_available" | "no_comparisons"
+  | "score_history" | "latest_reports" | "view_all"
+  | "refresh" | "close"
+  | "aphorism_of_the_day";
 
 const translations: Record<string, Record<TranslationKey, string>> = {
   en: {
