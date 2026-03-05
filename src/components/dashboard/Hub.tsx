@@ -523,7 +523,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                 onClick={onNavigateToSchedule}
                 className="flex items-center justify-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
               >
-                See All
+                {t(portalLanguage, "view_all")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
@@ -636,7 +636,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                 onClick={onNavigateToForm || onNavigateToAnalysis}
                 className="flex items-center justify-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
               >
-                See All
+                {t(portalLanguage, "view_all")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
@@ -826,7 +826,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                   onClick={onNavigateToAnalysis}
                   className="flex items-center justify-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
                 >
-                  See All
+                  {t(portalLanguage, "view_all")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
