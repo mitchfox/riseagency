@@ -2079,7 +2079,8 @@ export const CreatePerformanceReportDialog = ({
               {actions.map((action, index) => (
                 <React.Fragment key={index}>
                   <div
-                    className={`border rounded-lg p-2 space-y-2 transition-colors ${dragOverAction === index ? 'ring-2 ring-primary bg-primary/5' : 'bg-background'}`}
+                    className={`border rounded-lg p-2 space-y-2 transition-all duration-500 ${dragOverAction === index ? 'ring-2 ring-primary bg-primary/5' : 'bg-background'} animate-in fade-in slide-in-from-bottom-2`}
+                    style={{ animationDelay: `${index * 30}ms` }}
                     onDragOver={(e) => { e.preventDefault(); setDragOverAction(index); }}
                     onDragEnter={(e) => { e.preventDefault(); setDragOverAction(index); }}
                     onDragLeave={() => setDragOverAction(null)}
@@ -2201,16 +2202,20 @@ export const CreatePerformanceReportDialog = ({
                     </div>
 
                     {/* Line 2: Zone, Search R90, R90 Reference, Score | Clip | Delete, Reorder */}
-                    <div className="flex items-center gap-2 rounded-md border bg-card/50 p-2">
-                      <div className="flex items-center gap-2 rounded-md border bg-background px-2 py-1">
-                        <div className="w-6 shrink-0 flex justify-center">
+                     <div className="flex items-center gap-2 rounded-md border bg-card/50 p-2">
+                      {/* Zone selector - own bordered box */}
+                      <div className="flex items-center rounded-md border border-[hsl(43,49%,61%)]/30 bg-background px-2 py-1 shrink-0">
+                        <div className="w-6 flex justify-center">
                           <ZonePitchSelector
                             value={action.zone_details || (action.zone ? [{ zone: action.zone }] : [])}
                             onChange={(zd) => { updateAction(index, 'zone_details', zd as any); updateAction(index, 'zone', (zd.length ? zd[0].zone : null) as any); }}
                             actionType={action.action_type}
                           />
                         </div>
+                      </div>
 
+                      {/* R90 search + reference + score */}
+                      <div className="flex items-center gap-2 rounded-md border border-border/50 bg-background px-2 py-1">
                         <Input
                           value={actionSearchFilters[index] || ''}
                           onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
