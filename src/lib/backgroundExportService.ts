@@ -21,6 +21,7 @@ export interface ExportJob {
     action_description?: string;
     notes?: string | null;
     action_score?: number;
+    zone_details?: { zone: number; sub?: number; direction?: "forward" | "backward" }[];
   }>;
   matchMinuteOffset?: number;
   getClipAnnotations?: (clipId: string) => any;
@@ -138,6 +139,7 @@ export async function startExportJob(job: ExportJob): Promise<void> {
             is_successful: true,
             action_score: clip.action_score ?? 0,
             ...(annotations ? { clip_annotations: annotations } : {}),
+            ...(clip.zone_details?.length ? { zone_details: clip.zone_details, zone: clip.zone_details[0].zone } : {}),
           };
 
         const { error } = await supabase
