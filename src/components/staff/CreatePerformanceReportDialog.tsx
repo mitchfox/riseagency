@@ -33,6 +33,7 @@ import { logActivity } from "@/lib/activityLogger";
 import { ReportLanguageSelector } from "./ReportLanguageSelector";
 import { parseMinuteToSeconds } from "@/lib/actionSorting";
 import { ZonePitchSelector, type ZonePoint } from "@/components/report/ZonePitchSelector";
+import { fetchPlayerActionFrequencies, canonicalActionType } from "@/lib/playerActionFrequency";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -593,12 +594,6 @@ export const CreatePerformanceReportDialog = ({
     });
   }, [actions, minutesPlayed]);
 
-  /** Canonical action type: trim, collapse spaces, title-case */
-  const canonicalActionType = (raw: string): string => {
-    if (!raw) return raw;
-    return toTitleCase(raw.trim().replace(/\s{2,}/g, ' '));
-  };
-
   /** Look up descriptions using canonical key so case/spacing variants still match */
   const getDescriptionsForType = (actionType: string): string[] => {
     const canon = canonicalActionType(actionType);
@@ -606,55 +601,10 @@ export const CreatePerformanceReportDialog = ({
   };
 
   const fetchActionTypes = async () => {
-    // Paginated fetch to overcome 1000-row default limit
-    let allRows: { action_type: string | null; action_description: string | null }[] = [];
-    const PAGE = 1000;
-    let from = 0;
-    let keepGoing = true;
-    while (keepGoing) {
-      const { data, error } = await supabase
-        .from("performance_report_actions")
-        .select("action_type, action_description")
-        .not("action_type", "is", null)
-        .range(from, from + PAGE - 1);
-      if (error || !data) break;
-      allRows = allRows.concat(data);
-      if (data.length < PAGE) keepGoing = false;
-      from += PAGE;
-    }
-
-    // Build frequency map keyed by canonical action type
-    const freqMap: Record<string, number> = {};
-    const descMap: Record<string, Record<string, number>> = {};
-
-    allRows.forEach(item => {
-      const canon = canonicalActionType(item.action_type || '');
-      if (!canon) return;
-      freqMap[canon] = (freqMap[canon] || 0) + 1;
-
-      if (item.action_description && item.action_description.trim()) {
-        if (!descMap[canon]) descMap[canon] = {};
-        const desc = item.action_description.trim();
-        descMap[canon][desc] = (descMap[canon][desc] || 0) + 1;
-      }
-    });
-
-    // Sort types by frequency desc, then alphabetically
-    const sorted = Object.keys(freqMap).sort((a, b) => {
-      const diff = freqMap[b] - freqMap[a];
-      return diff !== 0 ? diff : a.localeCompare(b);
-    });
-    setActionTypes(sorted);
-    setActionTypeFrequencyMap(freqMap);
-
-    // Sort descriptions by frequency within each type
-    const sortedDescs: Record<string, string[]> = {};
-    Object.entries(descMap).forEach(([type, counts]) => {
-      sortedDescs[type] = Object.entries(counts)
-        .sort((a, b) => b[1] - a[1])
-        .map(([desc]) => desc);
-    });
-    setDescriptionsByType(sortedDescs);
+    const result = await fetchPlayerActionFrequencies(playerId);
+    setActionTypes(result.sortedTypes);
+    setActionTypeFrequencyMap(result.frequencyMap);
+    setDescriptionsByType(result.descriptionsByType);
   };
 
   const fetchPlayerClub = async () => {
