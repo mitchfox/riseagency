@@ -132,11 +132,11 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
           feed.push({
             id: `report-${r.id}`,
             type: "report",
-            title: `Performance Report: ${r.opponent || "Match"}`,
-            subtitle: `R90: ${r.r90_score} — ${format(new Date(r.analysis_date), "d MMM yyyy")}`,
-            description: r.performance_overview || `Match performance rated at R90 ${r.r90_score}. ${r.minutes_played ? `${r.minutes_played} minutes played.` : ''}`,
+            title: `${t(portalLanguage, "performance_report")}: ${r.opponent || t(portalLanguage, "match")}`,
+            subtitle: `R90: ${r.r90_score} — ${new Date(r.analysis_date).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}`,
+            description: r.performance_overview || `${t(portalLanguage, "match_performance_rated_at_r90")} ${r.r90_score}. ${r.minutes_played ? `${r.minutes_played} ${t(portalLanguage, "minutes_played_suffix")}` : ''}`,
             timestamp: r.analysis_date,
-            linkLabel: "Open Report",
+            linkLabel: t(portalLanguage, "open_report"),
             onClick: () => onOpenReport?.(r.id),
           });
         });
@@ -281,7 +281,7 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
                           <p className="text-xs font-medium truncate">{item.title}</p>
                         </div>
                         <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-                          {formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}
+                          {formatRelative(item.timestamp)}
                         </p>
                       </div>
                     </button>
@@ -318,7 +318,7 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
 
                     <div className="flex items-center gap-2 pt-1">
                       <span className="text-[10px] text-muted-foreground">
-                        {format(new Date(selectedItem.timestamp), "d MMM yyyy 'at' HH:mm")}
+                        {formatAbsolute(selectedItem.timestamp)}
                       </span>
                     </div>
 
