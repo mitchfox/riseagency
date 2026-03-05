@@ -99,15 +99,19 @@ export const DatasetAnnotationCanvas = ({ imageUrl, annotations, onChange }: Pro
   const LABEL_COLORS: Record<string, string> = {
     player: "hsl(var(--primary))",
     ball: "hsl(var(--destructive))",
-    goalkeeper: "hsl(142, 76%, 36%)",
   };
+
+  // Build dynamic label list from action types + player/ball
+  const allLabels = ["player", "ball", ...actionTypes.filter(t => t !== "player" && t !== "ball")];
+
+  const getLabelColor = (label: string) => LABEL_COLORS[label] || "hsl(var(--accent))";
 
   return (
     <div className="space-y-3">
       {/* Label selector */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <span className="text-sm font-medium">Label:</span>
-        {["player", "ball", "goalkeeper"].map((label) => (
+        {allLabels.slice(0, 8).map((label) => (
           <Button
             key={label}
             variant={currentLabel === label ? "default" : "outline"}
@@ -118,6 +122,17 @@ export const DatasetAnnotationCanvas = ({ imageUrl, annotations, onChange }: Pro
             {label}
           </Button>
         ))}
+        {allLabels.length > 8 && (
+          <select
+            value={currentLabel}
+            onChange={(e) => setCurrentLabel(e.target.value)}
+            className="h-8 text-xs border rounded px-2 bg-background"
+          >
+            {allLabels.map(l => (
+              <option key={l} value={l}>{l}</option>
+            ))}
+          </select>
+        )}
         <Input
           value={currentLabel}
           onChange={(e) => setCurrentLabel(e.target.value)}

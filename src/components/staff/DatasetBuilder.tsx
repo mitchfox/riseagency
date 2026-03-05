@@ -163,10 +163,9 @@ export const DatasetBuilder = () => {
     }
   };
 
-  const handleExport = async (includeYolo: boolean) => {
-    const framesToExport = frames.filter((f) => !f.exported);
+  const doExport = async (framesToExport: DatasetFrame[], includeYolo: boolean, markExported: boolean) => {
     if (framesToExport.length === 0) {
-      toast.info("No unexported frames to export");
+      toast.info("No frames to export");
       return;
     }
 
@@ -186,14 +185,12 @@ export const DatasetBuilder = () => {
         const num = countByType[frame.action_type];
         const fileName = `${frame.action_type}${num}.png`;
 
-        // Download image
         try {
           const resp = await fetch(frame.image_url);
           const blob = await resp.blob();
           zip.file(`${frame.action_type}/${fileName}`, blob);
 
           if (includeYolo && frame.annotations?.length > 0) {
-            // YOLO format: class x_center y_center width height (normalised)
             const lines = frame.annotations.map((a, idx) => {
               const xc = a.x + a.width / 2;
               const yc = a.y + a.height / 2;
@@ -217,12 +214,13 @@ export const DatasetBuilder = () => {
       a.click();
       URL.revokeObjectURL(url);
 
-      // Mark as exported
-      const ids = framesToExport.map((f) => f.id);
-      await supabase
-        .from("dataset_frames")
-        .update({ exported: true })
-        .in("id", ids);
+      if (markExported) {
+        const ids = framesToExport.map((f) => f.id);
+        await supabase
+          .from("dataset_frames")
+          .update({ exported: true })
+          .in("id", ids);
+      }
 
       fetchFrames();
       toast.success(`Exported ${framesToExport.length} frames`);
@@ -233,6 +231,9 @@ export const DatasetBuilder = () => {
     setExporting(false);
     setExportProgress(0);
   };
+
+  const handleExport = (includeYolo: boolean) => doExport(frames.filter(f => !f.exported), includeYolo, true);
+  const handleExportAll = (includeYolo: boolean) => doExport(frames, includeYolo, false);
 
   const unexportedCount = frames.filter((f) => !f.exported).length;
   const framesByType: Record<string, number> = {};
