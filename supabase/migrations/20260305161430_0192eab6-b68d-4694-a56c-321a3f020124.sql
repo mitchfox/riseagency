@@ -1,0 +1,2 @@
+ALTER TABLE public.players DROP CONSTRAINT IF EXISTS players_representation_status_check;
+ALTER TABLE public.players ADD CONSTRAINT players_representation_status_check CHECK (representation_status = ANY (ARRAY['represented'::text, 'mandated'::text, 'previously_mandated'::text, 'scouted'::text, 'other'::text, 'fuel_for_football'::text]));

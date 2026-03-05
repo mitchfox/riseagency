@@ -5,7 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ImageIcon, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import { ImageIcon, X, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 interface AddPlayerDialogProps {
@@ -59,6 +61,10 @@ export const AddPlayerDialog = ({
               <TabsList className="flex w-full overflow-x-auto overflow-y-hidden scrollbar-hide gap-1 h-auto p-1 bg-muted rounded-md mb-4">
                 <TabsTrigger value="basic" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Basic</TabsTrigger>
                 <TabsTrigger value="career" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Career</TabsTrigger>
+                <TabsTrigger value="bio" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Bio</TabsTrigger>
+                <TabsTrigger value="tactical" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Schemes</TabsTrigger>
+                <TabsTrigger value="stats" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Stats</TabsTrigger>
+                <TabsTrigger value="links" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Links</TabsTrigger>
               </TabsList>
 
               {/* Basic Info Tab */}
@@ -76,12 +82,13 @@ export const AddPlayerDialog = ({
                   </div>
                   
                   <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="email" className="text-sm">Email</Label>
+                    <Label htmlFor="email" className="text-sm">Email / Username</Label>
                     <Input
                       id="email"
-                      type="email"
+                      type="text"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="Email or username"
                       className="h-10 sm:h-11"
                     />
                   </div>
@@ -122,6 +129,29 @@ export const AddPlayerDialog = ({
                         className="h-10 sm:h-11"
                       />
                     </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="dateOfBirth" className="text-sm">Date of Birth</Label>
+                    <Input
+                      id="dateOfBirth"
+                      type="date"
+                      value={formData.dateOfBirth || ''}
+                      onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                      className="h-10 sm:h-11"
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="whatsapp" className="text-sm">WhatsApp Number</Label>
+                    <Input
+                      id="whatsapp"
+                      value={formData.whatsapp || ''}
+                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                      placeholder="+1234567890"
+                      className="h-10 sm:h-11"
+                    />
                   </div>
                 </div>
 
@@ -243,7 +273,7 @@ export const AddPlayerDialog = ({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="represented">Represented</SelectItem>
-                        <SelectItem value="fuel_for_football">Fuel for Football</SelectItem>
+                        <SelectItem value="fuel_for_football">Fuel For Football</SelectItem>
                         <SelectItem value="mandated">Mandated</SelectItem>
                         <SelectItem value="previously_mandated">Previously Mandated</SelectItem>
                         <SelectItem value="scouted">Scouted</SelectItem>
@@ -342,6 +372,389 @@ export const AddPlayerDialog = ({
                     onChange={(e) => setFormData({ ...formData, league: e.target.value })}
                     placeholder="e.g., La Liga"
                   />
+                </div>
+              </TabsContent>
+
+              {/* Bio & Strengths Tab */}
+              <TabsContent value="bio" className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bioText">Bio Text</Label>
+                  <Textarea
+                    id="bioText"
+                    value={formData.bioText}
+                    onChange={(e) => setFormData({ ...formData, bioText: e.target.value })}
+                    rows={4}
+                    placeholder="Player biography..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Strengths & Play Style</Label>
+                  {formData.strengths?.map((strength: string, index: number) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={strength}
+                        onChange={(e) => {
+                          const newStrengths = [...formData.strengths];
+                          newStrengths[index] = e.target.value;
+                          setFormData({ ...formData, strengths: newStrengths });
+                        }}
+                        placeholder="e.g., Exceptional dribbling ability"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => {
+                          const newStrengths = formData.strengths.filter((_: any, i: number) => i !== index);
+                          setFormData({ ...formData, strengths: newStrengths });
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFormData({ ...formData, strengths: [...(formData.strengths || []), ""] });
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Strength
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>External Links (in Bio)</Label>
+                  {formData.externalLinks?.map((link: any, index: number) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={link.label}
+                        onChange={(e) => {
+                          const newLinks = [...formData.externalLinks];
+                          newLinks[index].label = e.target.value;
+                          setFormData({ ...formData, externalLinks: newLinks });
+                        }}
+                        placeholder="Label (e.g., Transfermarkt)"
+                        className="flex-1"
+                      />
+                      <Input
+                        value={link.url}
+                        onChange={(e) => {
+                          const newLinks = [...formData.externalLinks];
+                          newLinks[index].url = e.target.value;
+                          setFormData({ ...formData, externalLinks: newLinks });
+                        }}
+                        placeholder="URL"
+                        className="flex-[2]"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => {
+                          const newLinks = formData.externalLinks.filter((_: any, i: number) => i !== index);
+                          setFormData({ ...formData, externalLinks: newLinks });
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFormData({ 
+                        ...formData, 
+                        externalLinks: [...(formData.externalLinks || []), { label: "", url: "" }] 
+                      });
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add External Link
+                  </Button>
+                </div>
+              </TabsContent>
+
+              {/* Tactical Schemes Tab */}
+              <TabsContent value="tactical" className="space-y-4">
+                <Label>Tactical Schemes</Label>
+                {formData.tacticalSchemes?.map((scheme: any, index: number) => (
+                  <Card key={index} className="p-4 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-medium">Scheme {index + 1}</h4>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          const newSchemes = formData.tacticalSchemes.filter((_: any, i: number) => i !== index);
+                          setFormData({ ...formData, tacticalSchemes: newSchemes });
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        value={scheme.formation || ""}
+                        onChange={(e) => {
+                          const newSchemes = [...formData.tacticalSchemes];
+                          newSchemes[index].formation = e.target.value;
+                          setFormData({ ...formData, tacticalSchemes: newSchemes });
+                        }}
+                        placeholder="Formation (e.g., 4-3-3)"
+                      />
+                      <Input
+                        value={(Array.isArray(scheme.positions) ? scheme.positions : []).join(", ")}
+                        onChange={(e) => {
+                          const newSchemes = [...formData.tacticalSchemes];
+                          newSchemes[index].positions = e.target.value.split(",").map((p: string) => p.trim()).filter((p: string) => p);
+                          setFormData({ ...formData, tacticalSchemes: newSchemes });
+                        }}
+                        placeholder="Positions (e.g., CM, RCM)"
+                      />
+                      <Input
+                        value={scheme.teamName || ""}
+                        onChange={(e) => {
+                          const newSchemes = [...formData.tacticalSchemes];
+                          newSchemes[index].teamName = e.target.value;
+                          setFormData({ ...formData, tacticalSchemes: newSchemes });
+                        }}
+                        placeholder="Team Name"
+                      />
+                      <Input
+                        value={scheme.matches || ""}
+                        onChange={(e) => {
+                          const newSchemes = [...formData.tacticalSchemes];
+                          const value = e.target.value;
+                          newSchemes[index].matches = isNaN(Number(value)) ? value : parseInt(value);
+                          setFormData({ ...formData, tacticalSchemes: newSchemes });
+                        }}
+                        placeholder="Matches (e.g., 15 or 'CURRENT CLUB')"
+                      />
+                    </div>
+                  </Card>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setFormData({ 
+                      ...formData, 
+                      tacticalSchemes: [
+                        ...(formData.tacticalSchemes || []), 
+                        {
+                          formation: "",
+                          positions: [],
+                          teamName: "",
+                          matches: 0,
+                          clubLogo: "",
+                          playerImage: "",
+                        }
+                      ] 
+                    });
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Scheme
+                </Button>
+              </TabsContent>
+
+              {/* Stats Tab */}
+              <TabsContent value="stats" className="space-y-4 sm:space-y-6 pt-2">
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Season Stats</Label>
+                  <div className="space-y-3">
+                    {formData.seasonStats?.map((stat: any, index: number) => (
+                      <div key={index} className="flex flex-col sm:flex-row gap-2 p-3 sm:p-2 border rounded-lg sm:border-0 sm:rounded-none">
+                        <div className="flex flex-col sm:flex-row gap-2 flex-1">
+                          <Input
+                            value={stat.header}
+                            onChange={(e) => {
+                              const newStats = [...formData.seasonStats];
+                              newStats[index].header = e.target.value;
+                              setFormData({ ...formData, seasonStats: newStats });
+                            }}
+                            placeholder="Goals"
+                            className="flex-1 h-11 sm:h-10"
+                          />
+                          <Input
+                            value={stat.value}
+                            onChange={(e) => {
+                              const newStats = [...formData.seasonStats];
+                              newStats[index].value = e.target.value;
+                              setFormData({ ...formData, seasonStats: newStats });
+                            }}
+                            placeholder="15"
+                            className="flex-1 h-11 sm:h-10"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => {
+                            const newStats = formData.seasonStats.filter((_: any, i: number) => i !== index);
+                            setFormData({ ...formData, seasonStats: newStats });
+                          }}
+                          className="w-full sm:w-10 h-11 sm:h-10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="ml-2 sm:hidden">Delete</span>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFormData({ 
+                        ...formData, 
+                        seasonStats: [...(formData.seasonStats || []), { header: "", value: "" }] 
+                      });
+                    }}
+                    className="w-full sm:w-auto h-11 sm:h-9"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Season Stat
+                  </Button>
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Top Stats</Label>
+                  <div className="space-y-3">
+                    {formData.topStats?.map((stat: any, index: number) => (
+                      <div key={index} className="space-y-2 p-3 border rounded-lg">
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <Input
+                            value={stat.label}
+                            onChange={(e) => {
+                              const newStats = [...formData.topStats];
+                              newStats[index].label = e.target.value;
+                              setFormData({ ...formData, topStats: newStats });
+                            }}
+                            placeholder="Pass Accuracy"
+                            className="flex-1 h-11 sm:h-10"
+                          />
+                          <Input
+                            value={stat.value}
+                            onChange={(e) => {
+                              const newStats = [...formData.topStats];
+                              newStats[index].value = e.target.value;
+                              setFormData({ ...formData, topStats: newStats });
+                            }}
+                            placeholder="89%"
+                            className="flex-1 h-11 sm:h-10"
+                          />
+                        </div>
+                        <Input
+                          value={stat.description || ""}
+                          onChange={(e) => {
+                            const newStats = [...formData.topStats];
+                            newStats[index].description = e.target.value;
+                            setFormData({ ...formData, topStats: newStats });
+                          }}
+                          placeholder="Description (optional)"
+                          className="h-11 sm:h-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            const newStats = formData.topStats.filter((_: any, i: number) => i !== index);
+                            setFormData({ ...formData, topStats: newStats });
+                          }}
+                          className="w-full h-11 sm:h-9"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Top Stat
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFormData({ 
+                        ...formData, 
+                        topStats: [...(formData.topStats || []), { label: "", value: "", description: "" }] 
+                      });
+                    }}
+                    className="w-full sm:w-auto h-11 sm:h-9"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Top Stat
+                  </Button>
+                </div>
+              </TabsContent>
+
+              {/* Links Tab */}
+              <TabsContent value="links" className="space-y-4">
+                <div className="space-y-2">
+                  <Label>External Profile Links</Label>
+                  <p className="text-sm text-muted-foreground">
+                    These appear as separate link buttons on the player profile
+                  </p>
+                  {formData.links?.map((link: any, index: number) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={link.label}
+                        onChange={(e) => {
+                          const newLinks = [...formData.links];
+                          newLinks[index].label = e.target.value;
+                          setFormData({ ...formData, links: newLinks });
+                        }}
+                        placeholder="Label (e.g., Transfermarkt)"
+                        className="flex-1"
+                      />
+                      <Input
+                        value={link.url}
+                        onChange={(e) => {
+                          const newLinks = [...formData.links];
+                          newLinks[index].url = e.target.value;
+                          setFormData({ ...formData, links: newLinks });
+                        }}
+                        placeholder="URL"
+                        className="flex-[2]"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => {
+                          const newLinks = formData.links.filter((_: any, i: number) => i !== index);
+                          setFormData({ ...formData, links: newLinks });
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFormData({ 
+                        ...formData, 
+                        links: [...(formData.links || []), { label: "", url: "" }] 
+                      });
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Link
+                  </Button>
                 </div>
               </TabsContent>
             </Tabs>
