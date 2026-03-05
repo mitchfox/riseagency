@@ -1182,15 +1182,14 @@ export const CreatePerformanceReportDialog = ({
     setActions((prevActions) => {
       const newActions = [...prevActions];
       newActions[index] = { ...newActions[index], [field]: value } as PerformanceAction;
-
-      // When minute is set/changed, re-sort all actions chronologically
-      if (field === 'minute' && typeof value === 'string' && value.trim() !== '') {
-        return sortActionsChronologically(newActions);
-      }
-
       return newActions;
     });
   };
+
+  // Sort actions on minute blur instead of every keystroke
+  const handleMinuteBlur = useCallback(() => {
+    setActions((prev) => sortActionsChronologically(prev));
+  }, []);
 
   // Extract keywords from description for better matching
   const getKeywords = (text: string) => {
@@ -1872,6 +1871,7 @@ export const CreatePerformanceReportDialog = ({
                         type="text"
                         value={action.minute}
                         onChange={(e) => updateAction(index, "minute", e.target.value)}
+                        onBlur={handleMinuteBlur}
                         placeholder="45"
                         className="text-sm"
                       />
@@ -2093,6 +2093,7 @@ export const CreatePerformanceReportDialog = ({
                         type="text"
                         value={action.minute}
                         onChange={(e) => updateAction(index, "minute", e.target.value)}
+                        onBlur={handleMinuteBlur}
                         placeholder="Min"
                         className="w-16 h-9 text-sm shrink-0"
                       />
