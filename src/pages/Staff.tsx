@@ -211,17 +211,43 @@ const Staff = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Check URL parameters for section and player
+  // Restore tabs and active section from localStorage / URL on mount
+  useEffect(() => {
+    if (!isStaff) return;
+    const urlSection = searchParams.get('section');
+    
+    // Restore saved tabs if none currently open
+    try {
+      const savedTabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
+      if (savedTabs.length === 0) {
+        // First visit or cleared - seed with current section
+        const initial = urlSection || 'overview';
+        localStorage.setItem('staff_open_tabs', JSON.stringify([initial]));
+        setTabsVersion(v => v + 1);
+      }
+    } catch {}
+
+    // Determine which section to show
+    const section = urlSection || localStorage.getItem('staff_active_tab') || 'overview';
+    setExpandedSection(section as any);
+    setSearchParams({ section }, { replace: true });
+
+    // Expand parent category
+    const cats = buildCategories();
+    const parentCat = cats.find(c => c.sections.some(s => s.id === section));
+    if (parentCat) setExpandedCategory(parentCat.id);
+  }, [isStaff]);
+
+  // Keep URL in sync with section changes from searchParams
   useEffect(() => {
     const section = searchParams.get('section');
-    if (section && isStaff) {
+    if (section && isStaff && section !== expandedSection) {
       setExpandedSection(section as any);
-      // Also expand the parent category
       const cats = buildCategories();
       const parentCat = cats.find(c => c.sections.some(s => s.id === section));
       if (parentCat) setExpandedCategory(parentCat.id);
     }
-  }, [searchParams, isStaff]);
+  }, [searchParams]);
 
   // Keyboard shortcut for search
   // Persist pinned sections
@@ -313,6 +339,8 @@ const Staff = () => {
     // Always navigate to the section - never toggle off by clicking the same one
     setExpandedSection(section as any);
     setSearchParams({ section });
+    // Persist active tab for session restoration
+    localStorage.setItem('staff_active_tab', section);
     // Update the active tab to reflect the new section
     try {
       const tabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
