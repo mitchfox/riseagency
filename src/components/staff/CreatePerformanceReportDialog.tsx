@@ -2241,15 +2241,6 @@ export const CreatePerformanceReportDialog = ({
                       </td>
                       <td className="p-2">
                         <div className="flex gap-1">
-                          <Button
-                            onClick={() => openR90Viewer(index)}
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 [&>svg]:hover:text-black"
-                            title="R90 Ratings Reference"
-                          >
-                            <Search className="h-4 w-4 text-primary hover:text-black" />
-                          </Button>
                           {/* Zone selector - desktop */}
                           <ZonePitchSelector
                             value={action.zone_details || (action.zone ? [{ zone: action.zone }] : [])}
@@ -2310,19 +2301,10 @@ export const CreatePerformanceReportDialog = ({
                         </div>
                       </td>
                     </tr>
-                    {/* Suggested R90 Scores - inline search next to label */}
-                    <tr>
-                      <td colSpan={7} className="p-0">
-                        <div className="px-2 py-1.5 bg-muted/30 flex items-center gap-2">
-                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">Suggested R90 Scores</span>
-                          <Input
-                            value={actionSearchFilters[index] || ''}
-                            onChange={(e) => setActionSearchFilters(prev => ({ ...prev, [index]: e.target.value }))}
-                            placeholder="Search action..."
-                            className="h-6 text-[10px] flex-1 max-w-[200px] px-2"
-                          />
-                        </div>
-                        {actionSearchFilters[index]?.trim() && (
+                    {/* Suggested R90 Scores - shown when search has text */}
+                    {actionSearchFilters[index]?.trim() && (
+                      <tr>
+                        <td colSpan={7} className="p-0">
                           <div className="p-2 bg-muted/20 space-y-1 max-h-40 overflow-y-auto">
                             {getFilteredScores(index).map((item, scoreIdx) => {
                               const isSelected = selectedScores[index]?.has(scoreIdx) ?? false;
@@ -2343,7 +2325,6 @@ export const CreatePerformanceReportDialog = ({
                                       }
                                       setSelectedScores(newSelected);
                                       
-                                      // Calculate sum of selected scores and update action
                                       const selectedIndices = checked 
                                         ? [...Array.from(newSelected[index] || []), scoreIdx]
                                         : Array.from(newSelected[index] || []).filter(i => i !== scoreIdx);
@@ -2368,9 +2349,9 @@ export const CreatePerformanceReportDialog = ({
                               <p className="text-muted-foreground text-center py-1 text-xs">No matching scores</p>
                             )}
                           </div>
-                        )}
-                      </td>
-                    </tr>
+                        </td>
+                      </tr>
+                    )}
                     
                     {/* Insert Action & Update Row (Desktop) */}
                     <tr className="border-t border-dashed hover:bg-accent/50 transition-colors">
