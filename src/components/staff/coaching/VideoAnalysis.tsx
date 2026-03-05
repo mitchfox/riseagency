@@ -266,8 +266,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         annotations: (v.annotations as any as Annotation[]) || [],
         clips: (v.clips as any as Clip[]) || [],
         match_minute_offset: Number(v.match_minute_offset) || 0,
-        second_half_offset: null,
-        second_half_video_time: null,
+        second_half_offset: v.second_half_offset != null ? Number(v.second_half_offset) : null,
+        second_half_video_time: v.second_half_video_time != null ? Number(v.second_half_video_time) : null,
         part_number: (v as any).part_number ?? null,
         group_id: (v as any).group_id ?? null,
         total_parts: (v as any).total_parts ?? null,
@@ -385,8 +385,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 annotations: [] as Annotation[],
                 clips: [] as Clip[],
                 match_minute_offset: 0,
-                second_half_offset: null,
-                second_half_video_time: null,
+                second_half_offset: (inserted as any).second_half_offset ?? null,
+                second_half_video_time: (inserted as any).second_half_video_time ?? null,
                 part_number: (inserted as any).part_number ?? null,
                 group_id: (inserted as any).group_id ?? null,
                 total_parts: (inserted as any).total_parts ?? null,
@@ -497,7 +497,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       if (error) throw error;
 
       if (data) {
-        const entry: VideoAnalysisEntry = { ...data, annotations: [] as Annotation[], clips: [] as Clip[], match_minute_offset: 0, second_half_offset: null, second_half_video_time: null, part_number: null, group_id: null, total_parts: null };
+        const entry: VideoAnalysisEntry = { ...data, annotations: [] as Annotation[], clips: [] as Clip[], match_minute_offset: 0, second_half_offset: (data as any).second_half_offset ?? null, second_half_video_time: (data as any).second_half_video_time ?? null, part_number: null, group_id: null, total_parts: null };
         setVideos(prev => [entry, ...prev]);
         setSelectedVideo(entry);
         setShowUpload(false);
