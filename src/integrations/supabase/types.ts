@@ -5308,6 +5308,8 @@ export type Database = {
           opponent: string | null
           part_number: number | null
           player_id: string | null
+          second_half_offset: number | null
+          second_half_video_time: number | null
           source: string
           title: string
           total_parts: number | null
@@ -5327,6 +5329,8 @@ export type Database = {
           opponent?: string | null
           part_number?: number | null
           player_id?: string | null
+          second_half_offset?: number | null
+          second_half_video_time?: number | null
           source?: string
           title: string
           total_parts?: number | null
@@ -5346,6 +5350,8 @@ export type Database = {
           opponent?: string | null
           part_number?: number | null
           player_id?: string | null
+          second_half_offset?: number | null
+          second_half_video_time?: number | null
           source?: string
           title?: string
           total_parts?: number | null
