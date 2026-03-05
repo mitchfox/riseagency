@@ -1842,7 +1842,7 @@ const Dashboard = () => {
                 <CardContent className="py-6">
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-semibold text-foreground">Uploading clip...</span>
+                      <span className="text-sm font-semibold text-foreground">{t(playerData?.portal_language, "uploading_clip")}</span>
                       <span className="text-2xl font-bebas text-primary">{uploadProgress}%</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
@@ -1889,13 +1889,13 @@ const Dashboard = () => {
                     <CardHeader marble>
                       <div className="container mx-auto px-4">
                         <CardTitle className="font-heading tracking-tight">
-                          Performance Analysis
+                          {t(playerData?.portal_language, "performance_analysis")}
                         </CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent className="container mx-auto px-4 space-y-4">
                       {analyses.length === 0 ? (
-                        <PortalEmptyState icon="performance" title="No performance reports yet" description="Your reports will appear here after each match." />
+                        <PortalEmptyState icon="performance" title={t(playerData?.portal_language, "no_performance_reports")} description={t(playerData?.portal_language, "reports_will_appear")} />
                       ) : (
                         <div className="space-y-3">
                           {analyses.map((analysis) => (
