@@ -23,6 +23,7 @@ import { computeVisibleElements } from "@/lib/annotationRenderUtils";
 import { sortPlayersByRepresentation, getStatusLabel, groupPlayersByStatus } from "@/lib/playerSorting";
 import { toTitleCase } from "@/lib/titleCase";
 import { AIPlayerDetection } from "./AIPlayerDetection";
+import { fetchPlayerActionFrequencies } from "@/lib/playerActionFrequency";
 
 interface Annotation {
   id: string;
@@ -82,6 +83,7 @@ const ACTION_COLOURS: Record<string, string> = {
   attacking: "bg-orange-500/20 text-orange-400 border-orange-500/30",
   individual: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
 };
+
 
 
 interface VideoAnalysisProps {
@@ -193,6 +195,13 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     fetchVideos();
   }, [defaultPlayerId]);
 
+  // Re-fetch action types when selected video's player changes
+  useEffect(() => {
+    if (selectedVideo?.player_id) {
+      fetchKnownActionTypes(selectedVideo.player_id);
+    }
+  }, [selectedVideo?.player_id]);
+
   useEffect(() => {
     const loadHistoricalLearningExamples = async () => {
       const playerId = selectedVideo?.player_id;
@@ -267,20 +276,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     if (data) setPlayers(sortPlayersByRepresentation(data));
   };
 
-  const fetchKnownActionTypes = async () => {
-    const { data } = await supabase
-      .from("performance_report_actions")
-      .select("action_type")
-      .not("action_type", "is", null);
-    if (data) {
-      const allTypes = data.map(d => d.action_type).filter(Boolean) as string[];
-      const unique = [...new Set(allTypes.map(t => toTitleCase(t)))];
-      // Build frequency counts for sorting
-      const counts: Record<string, number> = {};
-      allTypes.forEach(t => { counts[t] = (counts[t] || 0) + 1; });
-      setKnownActionTypes(unique);
-      setActionTypeFrequency(counts);
-    }
+  const fetchKnownActionTypes = async (forPlayerId?: string | null) => {
+    const pid = forPlayerId ?? selectedVideo?.player_id ?? (newPlayerId || null);
+    const result = await fetchPlayerActionFrequencies(pid);
+    setKnownActionTypes(result.sortedTypes);
+    setActionTypeFrequency(result.frequencyMap);
   };
 
   const handleRefreshData = async () => {
