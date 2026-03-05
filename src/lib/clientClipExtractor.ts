@@ -70,7 +70,8 @@ async function clientSideTrim(
   let stream: MediaStream;
 
   if (useDirectCapture) {
-    stream = (video as any).captureStream(60);
+    // Use 0 to capture every painted frame at the video's native rate
+    stream = (video as any).captureStream(0);
   } else {
     // Canvas fallback for browsers without video.captureStream
     const canvas = document.createElement("canvas");
@@ -109,9 +110,14 @@ async function clientSideTrim(
       ? "video/webm;codecs=vp9"
       : "video/webm";
 
+  // Scale bitrate based on resolution for quality preservation
+  const pixels = (video.videoWidth || 1280) * (video.videoHeight || 720);
+  // ~40Mbps for 1080p, scales proportionally
+  const targetBitrate = Math.max(25_000_000, Math.round((pixels / (1920 * 1080)) * 40_000_000));
+
   const recorder = new MediaRecorder(stream, {
     mimeType,
-    videoBitsPerSecond: 25_000_000,
+    videoBitsPerSecond: targetBitrate,
   });
   const chunks: Blob[] = [];
 
