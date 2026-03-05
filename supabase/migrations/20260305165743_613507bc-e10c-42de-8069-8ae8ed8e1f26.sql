@@ -1,0 +1,1 @@
+ALTER TABLE public.players ADD COLUMN portal_language text DEFAULT 'en';
