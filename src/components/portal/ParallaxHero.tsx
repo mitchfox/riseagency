@@ -83,11 +83,35 @@ export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName
 
   if (images.length === 0) return null;
 
+  const translatedPosition = useMemo(() => {
+    if (!position) return null;
+    const mappedKey = ({
+      GK: "goalkeeper",
+      Goalkeeper: "goalkeeper",
+      FB: "full_back",
+      "Full-Back": "full_back",
+      CB: "centre_back",
+      "Centre-Back": "centre_back",
+      CM: "midfielder",
+      CDM: "midfielder",
+      AM: "midfielder",
+      CAM: "midfielder",
+      W: "winger",
+      LW: "winger",
+      RW: "winger",
+      ST: "striker",
+      CF: "striker",
+      Striker: "striker",
+    } as Record<string, string>)[position] ?? null;
+
+    return mappedKey ? t(portalLanguage, mappedKey) : position;
+  }, [position, portalLanguage]);
+
   const units = countdown ? [
-    { label: "DAYS", value: countdown.days },
-    { label: "HRS", value: countdown.hours },
-    { label: "MIN", value: countdown.minutes },
-    { label: "SEC", value: countdown.seconds },
+    { label: t(portalLanguage, "days").toUpperCase(), value: countdown.days },
+    { label: t(portalLanguage, "hours").toUpperCase(), value: countdown.hours },
+    { label: t(portalLanguage, "mins").toUpperCase(), value: countdown.minutes },
+    { label: t(portalLanguage, "secs").toUpperCase(), value: countdown.seconds },
   ] : [];
 
   return (
