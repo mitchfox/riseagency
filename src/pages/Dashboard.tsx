@@ -5,7 +5,7 @@ import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
 import { supabase } from "@/integrations/supabase/client";
 import { insertStaffNotification } from "@/lib/staffNotifications";
-import { t } from "@/lib/portalTranslations";
+import { t, normalizePortalLanguage } from "@/lib/portalTranslations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1553,18 +1553,28 @@ const Dashboard = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center" className="w-80 max-h-96 overflow-y-auto bg-card border-2 border-gold z-50">
                 <div className="px-4 py-3 border-b border-border">
-                  <h3 className="font-semibold">Recent Notifications</h3>
+                  <h3 className="font-semibold">{t(playerData?.portal_language, "recent_notifications")}</h3>
                 </div>
                 <div className="py-2">
                   {(() => {
                     const notifications: Array<{ type: string; title: string; subtitle: string; date: Date; onClick?: () => void }> = [];
-                    
+                    const languageCode = normalizePortalLanguage(playerData?.portal_language);
+                    const locale = languageCode === "fr" ? "fr-FR" : languageCode === "es" ? "es-ES" : languageCode === "pt" ? "pt-PT" : languageCode === "de" ? "de-DE" : languageCode === "it" ? "it-IT" : "en-GB";
+                    const relativeFormatter = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+                    const formatRelative = (date: Date) => {
+                      const diffMs = date.getTime() - Date.now();
+                      const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+                      if (Math.abs(diffHours) < 24) return relativeFormatter.format(diffHours, "hour");
+                      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+                      return relativeFormatter.format(diffDays, "day");
+                    };
+
                     // Add recent analyses
                     analyses.slice(0, 3).forEach(analysis => {
                       notifications.push({
                         type: 'analysis',
-                        title: 'New Performance Report',
-                        subtitle: `${analysis.opponent || 'Match'} - ${format(parseISO(analysis.analysis_date), 'MMM d')}`,
+                        title: t(playerData?.portal_language, "new_performance_report"),
+                        subtitle: `${analysis.opponent || t(playerData?.portal_language, "match")} - ${new Date(analysis.analysis_date).toLocaleDateString(locale, { month: "short", day: "numeric" })}`,
                         date: parseISO(analysis.analysis_date),
                         onClick: () => {
                           setActiveTab('analysis');
@@ -1572,24 +1582,24 @@ const Dashboard = () => {
                         }
                       });
                     });
-                    
+
                     // Add recent programs
                     programs.filter(p => p.is_current).slice(0, 2).forEach(program => {
                       notifications.push({
                         type: 'program',
-                        title: 'Training Program',
+                        title: t(playerData?.portal_language, "training_program"),
                         subtitle: program.program_name,
                         date: parseISO(program.created_at),
                         onClick: () => setActiveTab('physical')
                       });
                     });
-                    
+
                     // Add recent concepts
                     concepts.slice(0, 2).forEach(concept => {
                       notifications.push({
                         type: 'concept',
-                        title: 'New Concept',
-                        subtitle: concept.title || 'Analysis',
+                        title: t(playerData?.portal_language, "new_concept"),
+                        subtitle: concept.title || t(playerData?.portal_language, "analysis"),
                         date: parseISO(concept.created_at),
                         onClick: () => {
                           setActiveTab('analysis');
@@ -1597,31 +1607,30 @@ const Dashboard = () => {
                         }
                       });
                     });
-                    
+
                     // Add recent updates
                     updates.slice(0, 2).forEach(update => {
                       notifications.push({
                         type: 'update',
-                        title: 'New Update',
+                        title: t(playerData?.portal_language, "new_update"),
                         subtitle: update.title,
                         date: parseISO(update.date),
                         onClick: () => setActiveTab('updates')
                       });
                     });
-                    
-                    // Sort by date and take most recent 5
+
                     const sortedNotifications = notifications
                       .sort((a, b) => b.date.getTime() - a.date.getTime())
                       .slice(0, 5);
-                    
+
                     if (sortedNotifications.length === 0) {
                       return (
                         <div className="px-4 py-6 text-center text-sm text-muted-foreground">
-                          No recent notifications
+                          {t(playerData?.portal_language, "no_recent_notifications")}
                         </div>
                       );
                     }
-                    
+
                     return sortedNotifications.map((notif, idx) => (
                       <div 
                         key={idx}
@@ -1633,22 +1642,7 @@ const Dashboard = () => {
                           <div className="flex-1">
                             <p className="text-sm font-medium">{notif.title}</p>
                             <p className="text-xs text-muted-foreground mt-1">{notif.subtitle}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {(() => {
-                                const now = new Date();
-                                const diffMs = now.getTime() - notif.date.getTime();
-                                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-                                
-                                if (diffDays === 0) {
-                                  if (diffHours === 0) return 'Just now';
-                                  if (diffHours === 1) return '1 hour ago';
-                                  return `${diffHours} hours ago`;
-                                }
-                                if (diffDays === 1) return '1 day ago';
-                                return `${diffDays} days ago`;
-                              })()}
-                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">{formatRelative(notif.date)}</p>
                           </div>
                         </div>
                       </div>
@@ -1676,7 +1670,7 @@ const Dashboard = () => {
         <div className="fixed top-28 left-0 right-0 z-20 bg-destructive/90 backdrop-blur-sm text-destructive-foreground py-2 px-4">
           <div className="container mx-auto text-center text-sm font-medium">
             <WifiOff className="inline-block h-4 w-4 mr-2" />
-            You're offline. Some content may not be available.
+            {t(playerData?.portal_language, "offline_notice")}
           </div>
         </div>
       )}
@@ -1925,7 +1919,9 @@ const Dashboard = () => {
                               <div className="flex items-center justify-between gap-2 mb-2">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="text-xs text-muted-foreground">
-                                    {new Date(analysis.analysis_date).toLocaleDateString('en-GB')}
+                                    {new Date(analysis.analysis_date).toLocaleDateString(
+                                      normalizePortalLanguage(playerData?.portal_language) === "fr" ? "fr-FR" : "en-GB"
+                                    )}
                                   </span>
                                   {analysis.opponent && (
                                     <>

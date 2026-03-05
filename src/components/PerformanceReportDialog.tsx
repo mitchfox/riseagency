@@ -18,6 +18,7 @@ import { PitchHeatmap } from "@/components/report/PitchHeatmap";
 import { ZonePerformance } from "@/components/report/ZonePerformance";
 import { toTitleCase } from "@/lib/titleCase";
 import { sortActionsByMinute } from "@/lib/actionSorting";
+import { t, normalizePortalLanguage } from "@/lib/portalTranslations";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -89,6 +90,9 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [filterTypes, setFilterTypes] = useState<string[]>([]);
   const [filterRating, setFilterRating] = useState<string | null>(null);
   const [filterHasNotes, setFilterHasNotes] = useState(false);
+
+  const portalLanguage = isPortalView ? (localStorage.getItem("portal_language_hint") || "en") : "en";
+  const portalLocale = normalizePortalLanguage(portalLanguage) === "fr" ? "fr-FR" : "en-GB";
 
   // Pre-fetch data when analysisId changes (even before dialog opens)
   useEffect(() => {
@@ -636,8 +640,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     <p className="font-bold text-sm md:text-base truncate">{analysis.player_name}</p>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">Date</p>
-                    <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t(portalLanguage, "date")}</p>
+                    <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString(portalLocale)}</p>
                   </div>
                   <div>
                     <p className="text-xs md:text-sm text-muted-foreground">Opponent</p>

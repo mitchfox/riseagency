@@ -12,6 +12,7 @@ const extendedKeys: Record<string, string> = {
   monday: "Monday", tuesday: "Tuesday", wednesday: "Wednesday",
   thursday: "Thursday", friday: "Friday", saturday: "Saturday", sunday: "Sunday",
   mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun",
+  today: "Today",
   week_start_date: "Week Start Date", week_start: "Week Start",
   select_position: "Select Position", no_schemes_for_position: "No tactical schemes available for this position yet.",
   select_position_prompt: "Select a position to view tactical schemes.",
@@ -19,12 +20,21 @@ const extendedKeys: Record<string, string> = {
   goalkeeper: "Goalkeeper", centre_back: "Centre Back", full_back: "Full Back",
   midfielder: "Midfielder", winger: "Winger", striker: "Striker",
   days: "days", hours: "hours", mins: "mins", secs: "secs",
+  next_fixture: "Next Fixture", pre_match: "Pre-Match", view_pre_match_analysis: "View Pre-Match Analysis",
   no_upcoming_fixtures: "No upcoming fixtures", match_day: "Match Day",
   r90_score: "R90 Score", minutes_played: "Minutes Played", result: "Result", opponent: "Opponent",
+  date: "Date", at: "at",
   no_data_available: "No data available", no_comparisons: "No comparisons available",
   score_history: "Score History", latest_reports: "Latest Reports", view_all: "View All",
   refresh: "Refresh", close: "Close",
   aphorism_of_the_day: "Thought of the Day",
+  recent_notifications: "Recent Notifications", no_recent_notifications: "No recent notifications",
+  new_performance_report: "New Performance Report", training_program: "Training Program", new_concept: "New Concept", new_update: "New Update",
+  just_now: "Just now", one_hour_ago: "1 hour ago", hours_ago: "hours ago", one_day_ago: "1 day ago", days_ago: "days ago",
+  offline_notice: "You're offline. Some content may not be available.",
+  open_report: "Open Report", performance_report: "Performance Report", match: "Match",
+  match_performance_rated_at_r90: "Match performance rated at R90",
+  minutes_played_suffix: "minutes played.",
   select_opposition_scheme: "Select opposition scheme",
 };
 
@@ -555,7 +565,7 @@ const translations: Record<string, Record<string, string>> = {
  * Get a translated label for the portal.
  * Falls back to English if the language or key is missing.
  */
-function normalizePortalLanguage(lang: string | null | undefined): string {
+export function normalizePortalLanguage(lang: string | null | undefined): string {
   const raw = (lang || "en").trim().toLowerCase();
 
   const aliases: Record<string, string> = {
@@ -593,6 +603,7 @@ const frExtended: Record<string, string> = {
   monday: "Lundi", tuesday: "Mardi", wednesday: "Mercredi",
   thursday: "Jeudi", friday: "Vendredi", saturday: "Samedi", sunday: "Dimanche",
   mon: "Lun", tue: "Mar", wed: "Mer", thu: "Jeu", fri: "Ven", sat: "Sam", sun: "Dim",
+  today: "Aujourd'hui",
   week_start_date: "Date de Début", week_start: "Début",
   select_position: "Choisir une Position",
   no_schemes_for_position: "Pas encore de schémas tactiques pour cette position.",
@@ -600,14 +611,23 @@ const frExtended: Record<string, string> = {
   team_scheme: "Schéma d'Équipe", opposition_scheme: "Schéma Adverse",
   select_scheme: "Choisir un schéma", select_opposition_scheme: "Choisir un schéma adverse",
   goalkeeper: "Gardien", centre_back: "Défenseur Central", full_back: "Latéral",
-  midfielder: "Milieu de Terrain", winger: "Ailier", striker: "Attaquant",
+  midfielder: "Milieu de terrain", winger: "Ailier", striker: "Attaquant",
   days: "jours", hours: "heures", mins: "min", secs: "sec",
+  next_fixture: "Prochain Match", pre_match: "Pré-Match", view_pre_match_analysis: "Voir l'analyse pré-match",
   no_upcoming_fixtures: "Pas de matchs à venir", match_day: "Jour de Match",
   r90_score: "Score R90", minutes_played: "Minutes Jouées", result: "Résultat", opponent: "Adversaire",
+  date: "Date", at: "à",
   no_data_available: "Aucune donnée disponible", no_comparisons: "Aucune comparaison disponible",
   score_history: "Historique des Scores", latest_reports: "Derniers Rapports", view_all: "Voir Tout",
   refresh: "Actualiser", close: "Fermer",
   aphorism_of_the_day: "Pensée du Jour",
+  recent_notifications: "Notifications Récentes", no_recent_notifications: "Aucune notification récente",
+  new_performance_report: "Nouveau rapport de performance", training_program: "Programme d'entraînement", new_concept: "Nouveau concept", new_update: "Nouvelle mise à jour",
+  just_now: "À l'instant", one_hour_ago: "Il y a 1 heure", hours_ago: "heures", one_day_ago: "Il y a 1 jour", days_ago: "jours",
+  offline_notice: "Vous êtes hors ligne. Certains contenus peuvent ne pas être disponibles.",
+  open_report: "Ouvrir le rapport", performance_report: "Rapport de performance", match: "Match",
+  match_performance_rated_at_r90: "Performance du match notée à R90",
+  minutes_played_suffix: "minutes jouées.",
 };
 
 // Merge extended translations into all languages

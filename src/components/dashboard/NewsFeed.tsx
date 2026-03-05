@@ -3,10 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Inbox, ArrowRight, FileText, Trophy, Video, BarChart3, Dumbbell, Eye, Bell } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
+import { t, normalizePortalLanguage } from "@/lib/portalTranslations";
 
 interface FeedItem {
   id: string;
@@ -22,6 +22,7 @@ interface FeedItem {
 interface NewsFeedProps {
   playerId: string;
   playerName: string;
+  portalLanguage?: string | null;
   onNavigateToAnalysis?: () => void;
   onNavigateToForm?: () => void;
   onOpenReport?: (id: string) => void;
@@ -60,18 +61,44 @@ const markAsRead = (id: string) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify([...read]));
 };
 
-export const NewsFeed = ({ playerId, playerName, onNavigateToAnalysis, onNavigateToForm, onOpenReport }: NewsFeedProps) => {
+export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAnalysis, onNavigateToForm, onOpenReport }: NewsFeedProps) => {
   const navigate = useNavigate();
   const [items, setItems] = React.useState<FeedItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [readItems, setReadItems] = React.useState<Set<string>>(new Set());
   const [selectedItem, setSelectedItem] = React.useState<FeedItem | null>(null);
 
+  const langCode = normalizePortalLanguage(portalLanguage);
+  const locale = langCode === "fr" ? "fr-FR" : langCode === "es" ? "es-ES" : langCode === "pt" ? "pt-PT" : langCode === "de" ? "de-DE" : langCode === "it" ? "it-IT" : "en-GB";
+
+  const formatRelative = (value: string) => {
+    const target = new Date(value);
+    const now = new Date();
+    const diffMs = target.getTime() - now.getTime();
+    const hours = Math.round(diffMs / (1000 * 60 * 60));
+    const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+
+    if (Math.abs(hours) < 24) {
+      return rtf.format(hours, "hour");
+    }
+
+    return rtf.format(days, "day");
+  };
+
+  const formatAbsolute = (value: string) =>
+    new Date(value).toLocaleString(locale, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+
   React.useEffect(() => {
     setReadItems(getReadItems());
   }, []);
-
-  // Auto-select first unread item
   React.useEffect(() => {
     if (items.length > 0 && !selectedItem) {
       const firstUnread = items.find(item => !readItems.has(item.id));
@@ -105,11 +132,11 @@ export const NewsFeed = ({ playerId, playerName, onNavigateToAnalysis, onNavigat
           feed.push({
             id: `report-${r.id}`,
             type: "report",
-            title: `Performance Report: ${r.opponent || "Match"}`,
-            subtitle: `R90: ${r.r90_score} — ${format(new Date(r.analysis_date), "d MMM yyyy")}`,
-            description: r.performance_overview || `Match performance rated at R90 ${r.r90_score}. ${r.minutes_played ? `${r.minutes_played} minutes played.` : ''}`,
+            title: `${t(portalLanguage, "performance_report")}: ${r.opponent || t(portalLanguage, "match")}`,
+            subtitle: `R90: ${r.r90_score} — ${new Date(r.analysis_date).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}`,
+            description: r.performance_overview || `${t(portalLanguage, "match_performance_rated_at_r90")} ${r.r90_score}. ${r.minutes_played ? `${r.minutes_played} ${t(portalLanguage, "minutes_played_suffix")}` : ''}`,
             timestamp: r.analysis_date,
-            linkLabel: "Open Report",
+            linkLabel: t(portalLanguage, "open_report"),
             onClick: () => onOpenReport?.(r.id),
           });
         });
@@ -254,7 +281,7 @@ export const NewsFeed = ({ playerId, playerName, onNavigateToAnalysis, onNavigat
                           <p className="text-xs font-medium truncate">{item.title}</p>
                         </div>
                         <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-                          {formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}
+                          {formatRelative(item.timestamp)}
                         </p>
                       </div>
                     </button>
@@ -291,7 +318,7 @@ export const NewsFeed = ({ playerId, playerName, onNavigateToAnalysis, onNavigat
 
                     <div className="flex items-center gap-2 pt-1">
                       <span className="text-[10px] text-muted-foreground">
-                        {format(new Date(selectedItem.timestamp), "d MMM yyyy 'at' HH:mm")}
+                        {formatAbsolute(selectedItem.timestamp)}
                       </span>
                     </div>
 

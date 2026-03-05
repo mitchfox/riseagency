@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
+import { t } from "@/lib/portalTranslations";
 
 interface ParallaxHeroProps {
   imageUrl: string | null;
@@ -12,11 +13,12 @@ interface ParallaxHeroProps {
   playerName: string;
   clubName?: string;
   position?: string;
+  portalLanguage?: string | null;
   nextFixture?: { home_team: string; away_team: string; match_date: string; match_time?: string | null; venue?: string } | null;
   preMatchAnalysis?: { id: string; home_team: string; away_team: string } | null;
 }
 
-export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName, clubName, position, nextFixture, preMatchAnalysis }: ParallaxHeroProps) => {
+export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName, clubName, position, portalLanguage, nextFixture, preMatchAnalysis }: ParallaxHeroProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -81,11 +83,40 @@ export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName
 
   if (images.length === 0) return null;
 
+  const positionKeyMap: Record<string, string> = {
+    GK: "goalkeeper",
+    Goalkeeper: "goalkeeper",
+    FB: "full_back",
+    "Full-Back": "full_back",
+    "Fullback": "full_back",
+    CB: "centre_back",
+    "Centre-Back": "centre_back",
+    "Center-Back": "centre_back",
+    CM: "midfielder",
+    "Central Midfielder": "midfielder",
+    CDM: "midfielder",
+    "Central Defensive-Midfielder": "midfielder",
+    AM: "midfielder",
+    CAM: "midfielder",
+    "Attacking Midfielder": "midfielder",
+    W: "winger",
+    LW: "winger",
+    RW: "winger",
+    Winger: "winger",
+    ST: "striker",
+    CF: "striker",
+    "Centre-Forward": "striker",
+    Striker: "striker",
+  };
+
+  const mappedPositionKey = position ? positionKeyMap[position] : null;
+  const translatedPosition = mappedPositionKey ? t(portalLanguage, mappedPositionKey) : position;
+
   const units = countdown ? [
-    { label: "DAYS", value: countdown.days },
-    { label: "HRS", value: countdown.hours },
-    { label: "MIN", value: countdown.minutes },
-    { label: "SEC", value: countdown.seconds },
+    { label: t(portalLanguage, "days").toUpperCase(), value: countdown.days },
+    { label: t(portalLanguage, "hours").toUpperCase(), value: countdown.hours },
+    { label: t(portalLanguage, "mins").toUpperCase(), value: countdown.minutes },
+    { label: t(portalLanguage, "secs").toUpperCase(), value: countdown.seconds },
   ] : [];
 
   return (
@@ -122,9 +153,9 @@ export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName
           {playerName}
         </h1>
         <div className="flex items-center gap-2 mt-1">
-          {position && (
+          {translatedPosition && (
             <span className="text-xs md:text-sm font-semibold text-primary bg-black/60 px-2 py-0.5 rounded">
-              {position}
+              {translatedPosition}
             </span>
           )}
           {clubName && (
@@ -152,17 +183,17 @@ export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName
                   </div>
                 ))}
               </div>
-              {preMatchAnalysis && (
-                <PreMatchButton analysis={preMatchAnalysis} />
-              )}
+                {preMatchAnalysis && (
+                  <PreMatchButton analysis={preMatchAnalysis} portalLanguage={portalLanguage} />
+                )}
             </div>
           </div>
         )}
         {countdown?.passed && nextFixture && (
           <div className="flex items-center gap-2 mt-2">
-            <p className="text-primary font-bold text-sm">Match day!</p>
+            <p className="text-primary font-bold text-sm">{t(portalLanguage, "match_day")}!</p>
             {preMatchAnalysis && (
-              <PreMatchButton analysis={preMatchAnalysis} />
+              <PreMatchButton analysis={preMatchAnalysis} portalLanguage={portalLanguage} />
             )}
           </div>
         )}
@@ -171,7 +202,7 @@ export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName
   );
 };
 
-const PreMatchButton = ({ analysis }: { analysis: { id: string; home_team: string; away_team: string } }) => {
+const PreMatchButton = ({ analysis, portalLanguage }: { analysis: { id: string; home_team: string; away_team: string }; portalLanguage?: string | null }) => {
   const navigate = useNavigate();
   return (
     <Button
@@ -184,7 +215,7 @@ const PreMatchButton = ({ analysis }: { analysis: { id: string; home_team: strin
       }}
     >
       <Eye className="h-3 w-3" />
-      Pre-Match
+      {t(portalLanguage, "pre_match")}
     </Button>
   );
 };

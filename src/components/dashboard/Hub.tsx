@@ -17,7 +17,7 @@ import { ParallaxHero } from "@/components/portal/ParallaxHero";
 import { checkAndFireConfetti } from "@/lib/confetti";
 
 // Helper: fetches next fixture for player's club and renders ParallaxHero with countdown
-const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints }: { playerData: any; marketingImages: string[]; imageFocalPoints: string[] }) => {
+const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints, portalLanguage }: { playerData: any; marketingImages: string[]; imageFocalPoints: string[]; portalLanguage?: string | null }) => {
   const [nextFixture, setNextFixture] = React.useState<{ home_team: string; away_team: string; match_date: string; match_time?: string | null; venue?: string } | null>(null);
   const [preMatchAnalysis, setPreMatchAnalysis] = React.useState<{ id: string; home_team: string; away_team: string } | null>(null);
 
@@ -118,6 +118,7 @@ const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints
       playerName={playerData?.name || "Player"}
       clubName={playerData?.current_club}
       position={playerData?.position}
+      portalLanguage={portalLanguage}
       nextFixture={nextFixture}
       preMatchAnalysis={preMatchAnalysis}
     />
@@ -241,7 +242,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
         <div className="space-y-2 pr-6">
           <div className="font-bold text-white text-base mb-1">{data.result} {data.opponent}</div>
           {data.minutesPlayed && (
-            <div className="text-xs text-white/60">Minutes Played: {data.minutesPlayed}</div>
+            <div className="text-xs text-white/60">{t(portalLanguage, "minutes_played")}: {data.minutesPlayed}</div>
           )}
           {stats && (
             <div className="space-y-1 pt-2 border-t border-white/20">
@@ -500,6 +501,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
           playerData={playerData}
           marketingImages={marketingImages}
           imageFocalPoints={imageFocalPoints}
+          portalLanguage={portalLanguage}
         />
       )}
 
@@ -536,10 +538,10 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                   className="p-2 md:p-4 flex flex-col items-center justify-center rounded-lg bg-[hsl(43,49%,61%)] text-black"
                 >
                   <div className="text-center">
-                    <div className="text-sm md:text-2xl font-bold mb-1">{format(new Date(), 'd')}<sup className="text-[8px] md:text-sm">th</sup></div>
+                    <div className="text-sm md:text-2xl font-bold mb-1">{format(new Date(), 'd')}</div>
                     <div className="text-[8px] md:text-sm font-medium italic">
-                      <span className="md:hidden">Today</span>
-                      <span className="hidden md:inline">Today</span>
+                      <span className="md:hidden">{t(portalLanguage, "today")}</span>
+                      <span className="hidden md:inline">{t(portalLanguage, "today")}</span>
                     </div>
                   </div>
                 </div>
@@ -614,6 +616,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
           <NewsFeed
             playerId={playerData.id}
             playerName={playerData.name || "Player"}
+            portalLanguage={portalLanguage}
             onNavigateToAnalysis={onNavigateToAnalysis}
             onOpenReport={(id) => {
               setSelectedReportId(id);
@@ -628,7 +631,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
             <div className="flex items-center justify-between container mx-auto px-4 pr-6">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">Form</CardTitle>
+                <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">{t(portalLanguage, "form")}</CardTitle>
               </div>
               <Button 
                 variant="ghost" 
@@ -806,7 +809,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                 </ResponsiveContainer>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No performance data yet</p>
+              <p className="text-sm text-muted-foreground">{t(portalLanguage, "no_data_available")}</p>
             )}
           </CardContent>
         </Card>
@@ -818,7 +821,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
               <div className="flex items-center justify-between container mx-auto px-4 pr-6">
                 <div className="flex items-center gap-2">
                   <Trophy className="h-5 w-5 mt-[1px]" />
-                  <CardTitle className="font-heading tracking-tight ml-[9px]">Performance</CardTitle>
+                  <CardTitle className="font-heading tracking-tight ml-[9px]">{t(portalLanguage, "performance")}</CardTitle>
                 </div>
                 <Button 
                   variant="ghost" 
@@ -972,9 +975,10 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
           <Card className="relative overflow-hidden border-gold bg-gold/30">
             <CardContent className="relative py-3 px-3 text-center space-y-3">
               <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg inline-block">
-                <p className="text-base md:text-xl font-bold text-gold leading-relaxed tracking-wide">
-                  {dailyAphorism.featured_text}
-                </p>
+                 <p className="text-[10px] uppercase tracking-wide text-gold/80 mb-2">{t(portalLanguage, "aphorism_of_the_day")}</p>
+                 <p className="text-base md:text-xl font-bold text-gold leading-relaxed tracking-wide">
+                   {dailyAphorism.featured_text}
+                 </p>
               </div>
               {dailyAphorism.author && (
                 <div className="bg-black/90 backdrop-blur-sm px-4 py-2 rounded-lg inline-block">
