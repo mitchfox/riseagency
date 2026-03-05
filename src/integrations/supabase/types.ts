@@ -3392,6 +3392,7 @@ export type Database = {
           nutrition_next_program_notes: string | null
           nutrition_programming_notes: string | null
           player_list_order: number | null
+          portal_language: string | null
           position: string
           preferred_currency: string | null
           programming_notes: string | null
@@ -3425,6 +3426,7 @@ export type Database = {
           nutrition_next_program_notes?: string | null
           nutrition_programming_notes?: string | null
           player_list_order?: number | null
+          portal_language?: string | null
           position: string
           preferred_currency?: string | null
           programming_notes?: string | null
@@ -3458,6 +3460,7 @@ export type Database = {
           nutrition_next_program_notes?: string | null
           nutrition_programming_notes?: string | null
           player_list_order?: number | null
+          portal_language?: string | null
           position?: string
           preferred_currency?: string | null
           programming_notes?: string | null

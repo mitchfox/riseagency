@@ -57,6 +57,7 @@ interface Player {
   agent_notes?: string | null;
   next_program_notes?: string | null;
   programming_notes?: string | null;
+  portal_language?: string | null;
 }
 
 interface PlayerStats {
@@ -120,6 +121,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     nationality: "",
     representation_status: "",
     visible_on_stars_page: false,
+    portal_language: "en",
     image_url: "",
     hover_image_url: "",
     
@@ -756,6 +758,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       nationality: player.nationality,
       representation_status: player.representation_status || "",
       visible_on_stars_page: player.visible_on_stars_page || false,
+      portal_language: player.portal_language || "en",
       image_url: player.image_url || "",
       hover_image_url: player.hover_image_url || "",
       
@@ -1211,6 +1214,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           visible_on_stars_page: formData.visible_on_stars_page,
           links: formData.links.length > 0 ? formData.links : null,
           highlighted_match: formData.highlightedMatch || null,
+          portal_language: formData.portal_language || "en",
         })
         .eq("id", editingPlayer.id);
 
@@ -1432,6 +1436,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   nationality: "",
                   representation_status: "other",
                   visible_on_stars_page: false,
+                  portal_language: "en",
                   image_url: "",
                   hover_image_url: "",
                   club: "",
@@ -3463,6 +3468,36 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         />
                       </div>
                     </div>
+                  </div>
+
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label className="text-sm">Portal Language</Label>
+                    <Select value={formData.portal_language} onValueChange={(v) => setFormData({ ...formData, portal_language: v })}>
+                      <SelectTrigger className="h-10 sm:h-11">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[
+                          { code: "en", label: "English", flag: "🇬🇧" },
+                          { code: "es", label: "Español", flag: "🇪🇸" },
+                          { code: "pt", label: "Português", flag: "🇵🇹" },
+                          { code: "fr", label: "Français", flag: "🇫🇷" },
+                          { code: "de", label: "Deutsch", flag: "🇩🇪" },
+                          { code: "it", label: "Italiano", flag: "🇮🇹" },
+                          { code: "pl", label: "Polski", flag: "🇵🇱" },
+                          { code: "cs", label: "Čeština", flag: "🇨🇿" },
+                          { code: "ru", label: "Русский", flag: "🇷🇺" },
+                          { code: "tr", label: "Türkçe", flag: "🇹🇷" },
+                        ].map((lang) => (
+                          <SelectItem key={lang.code} value={lang.code}>
+                            <span className="flex items-center gap-2">
+                              <span>{lang.flag}</span>
+                              <span>{lang.label}</span>
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-1.5 sm:space-y-2">
