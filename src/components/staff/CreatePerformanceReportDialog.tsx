@@ -1945,46 +1945,47 @@ export const CreatePerformanceReportDialog = ({
                   
                   <div>
                     <Label className="text-xs">Description *</Label>
-                    <Textarea
-                      value={action.action_description}
-                      onChange={(e) => updateAction(index, "action_description", e.target.value)}
-                      placeholder="Describe the action"
-                      className="text-sm min-h-[60px]"
-                      rows={2}
-                    />
-                    {action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
-                      <Popover open={descriptionPopoverOpen[index] || false} onOpenChange={(open) => setDescriptionPopoverOpen(prev => ({ ...prev, [index]: open }))}>
-                        <PopoverTrigger asChild>
-                          <Button variant="ghost" size="sm" className="mt-1 h-6 text-[10px] text-muted-foreground w-full justify-between">
-                            <span>Previous descriptions</span>
-                            <ChevronDown className="h-3 w-3" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                          <Command>
-                            <CommandInput placeholder="Filter descriptions..." />
-                            <CommandList>
-                              <CommandEmpty>No matching descriptions</CommandEmpty>
-                              <CommandGroup>
-                                {getDescriptionsForType(action.action_type).map((desc, di) => (
-                                  <CommandItem
-                                    key={di}
-                                    value={desc}
-                                    onSelect={() => {
-                                      updateAction(index, "action_description", desc);
-                                      setDescriptionPopoverOpen(prev => ({ ...prev, [index]: false }));
-                                    }}
-                                    className="text-xs"
-                                  >
-                                    {desc}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    )}
+                    <div className="relative">
+                      <Textarea
+                        value={action.action_description}
+                        onChange={(e) => {
+                          updateAction(index, "action_description", e.target.value);
+                          setDescriptionPopoverOpen(prev => ({ ...prev, [index]: true }));
+                        }}
+                        onFocus={() => {
+                          if (action.action_type && getDescriptionsForType(action.action_type).length > 0) {
+                            setDescriptionPopoverOpen(prev => ({ ...prev, [index]: true }));
+                          }
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => setDescriptionPopoverOpen(prev => ({ ...prev, [index]: false })), 200);
+                        }}
+                        placeholder="Describe the action"
+                        className="text-sm min-h-[60px]"
+                        rows={2}
+                      />
+                      {descriptionPopoverOpen[index] && action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
+                        <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                          {getDescriptionsForType(action.action_type)
+                            .filter(desc => !action.action_description || desc.toLowerCase().includes(action.action_description.toLowerCase()))
+                            .slice(0, 12)
+                            .map((desc, di) => (
+                              <button
+                                key={di}
+                                type="button"
+                                className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  updateAction(index, "action_description", desc);
+                                  setDescriptionPopoverOpen(prev => ({ ...prev, [index]: false }));
+                                }}
+                              >
+                                {desc}
+                              </button>
+                            ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div>
@@ -2170,46 +2171,47 @@ export const CreatePerformanceReportDialog = ({
                         </div>
                       </td>
                       <td className="p-2 relative">
-                        <Textarea
-                          value={action.action_description}
-                          onChange={(e) => updateAction(index, "action_description", e.target.value)}
-                          placeholder="Describe"
-                          className="min-w-[180px] min-h-[40px] text-sm"
-                          rows={1}
-                        />
-                        {action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
-                          <Popover open={descriptionPopoverOpen[1000 + index] || false} onOpenChange={(open) => setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: open }))}>
-                            <PopoverTrigger asChild>
-                              <Button variant="ghost" size="sm" className="mt-0.5 h-5 text-[9px] text-muted-foreground w-full justify-between px-1">
-                                <span>Suggestions</span>
-                                <ChevronDown className="h-3 w-3" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-72 p-0" align="start">
-                              <Command>
-                                <CommandInput placeholder="Filter descriptions..." />
-                                <CommandList>
-                                  <CommandEmpty>No matching descriptions</CommandEmpty>
-                                  <CommandGroup>
-                                    {getDescriptionsForType(action.action_type).map((desc, di) => (
-                                      <CommandItem
-                                        key={di}
-                                        value={desc}
-                                        onSelect={() => {
-                                          updateAction(index, "action_description", desc);
-                                          setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
-                                        }}
-                                        className="text-xs"
-                                      >
-                                        {desc}
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </CommandList>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
-                        )}
+                        <div className="relative">
+                          <Textarea
+                            value={action.action_description}
+                            onChange={(e) => {
+                              updateAction(index, "action_description", e.target.value);
+                              setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
+                            }}
+                            onFocus={() => {
+                              if (action.action_type && getDescriptionsForType(action.action_type).length > 0) {
+                                setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
+                              }
+                            }}
+                            onBlur={() => {
+                              setTimeout(() => setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200);
+                            }}
+                            placeholder="Describe"
+                            className="min-w-[180px] min-h-[40px] text-sm"
+                            rows={1}
+                          />
+                          {descriptionPopoverOpen[1000 + index] && action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
+                            <div className="absolute z-50 mt-1 w-72 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                              {getDescriptionsForType(action.action_type)
+                                .filter(desc => !action.action_description || desc.toLowerCase().includes(action.action_description.toLowerCase()))
+                                .slice(0, 12)
+                                .map((desc, di) => (
+                                  <button
+                                    key={di}
+                                    type="button"
+                                    className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      updateAction(index, "action_description", desc);
+                                      setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
+                                    }}
+                                  >
+                                    {desc}
+                                  </button>
+                                ))}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="p-2">
                         <Textarea

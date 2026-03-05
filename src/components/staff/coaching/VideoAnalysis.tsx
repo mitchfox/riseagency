@@ -1169,10 +1169,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       getClipAnnotations,
     });
 
-    // Close the dialog — export continues in background
+    // Close the dialog
     setShowExportDialog(false);
     setSelectedReportId("");
-    toast.info("Export started — it will continue in the background");
   };
 
   // Subscribe to background export progress

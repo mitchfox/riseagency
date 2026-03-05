@@ -130,17 +130,17 @@ export async function startExportJob(job: ExportJob): Promise<void> {
             analysis_id: job.reportId,
             action_number: nextNumber,
             minute: getMatchMinute(clip.start, job.matchMinuteOffset),
-            action_type: clip.action_type || "other",
+            action_type: clip.action_type || "",
             action_description: clip.action_description || "",
             notes: clip.notes || null,
             video_url: clipUrl,
             video_analysis_id: job.videoId,
             clip_id: clip.id,
             is_successful: true,
-            action_score: clip.action_score ?? 0,
             ...(annotations ? { clip_annotations: annotations } : {}),
             ...(clip.zone_details?.length ? { zone_details: clip.zone_details, zone: clip.zone_details[0].zone } : {}),
           };
+          if (clip.action_score != null) insertRow.action_score = clip.action_score;
 
         const { error } = await supabase
           .from("performance_report_actions")
