@@ -943,9 +943,15 @@ const Dashboard = () => {
             }
           }
           
-          // Only merge if bioData is a valid object
+          // Only merge if bioData is a valid object, but preserve critical player fields
           if (bioData && typeof bioData === 'object' && !Array.isArray(bioData)) {
-            parsedPlayerData = { ...playerData, ...bioData };
+            const preservedFields = {
+              portal_language: playerData.portal_language,
+              id: playerData.id,
+              email: playerData.email,
+              name: playerData.name,
+            };
+            parsedPlayerData = { ...playerData, ...bioData, ...preservedFields };
           }
         }
       } catch (e) {
