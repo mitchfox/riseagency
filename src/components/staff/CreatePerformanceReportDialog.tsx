@@ -1827,7 +1827,7 @@ export const CreatePerformanceReportDialog = ({
                   className="gap-1.5 h-7 text-xs"
                 >
                   <Video className="h-3.5 w-3.5" />
-                  Video Editor
+                  Clip Edit
                 </Button>
               )}
             </div>
