@@ -54,6 +54,7 @@ import { PlayerMatchClipper } from "@/components/portal/PlayerMatchClipper";
 import { PortalEmptyState } from "@/components/portal/PortalEmptyState";
 import { SectionDivider } from "@/components/portal/SectionDivider";
 import { MobileBottomNav } from "@/components/portal/MobileBottomNav";
+import { PortalMusicPlayer } from "@/components/portal/PortalMusicPlayer";
 
 interface Analysis {
   id: string;
@@ -4857,6 +4858,12 @@ const Dashboard = () => {
         open={performanceReportDialogOpen}
         onOpenChange={setPerformanceReportDialogOpen}
         analysisId={selectedReportAnalysisId}
+      />
+
+      {/* Portal Music Player */}
+      <PortalMusicPlayer
+        tracks={(portalSettings?.music_tracks as any[] || []).map((t: any) => ({ url: t.url || '', name: t.name || 'Track' }))}
+        enabled={portalSettings?.show_music_player === true}
       />
 
       {/* Mobile Bottom Navigation */}
