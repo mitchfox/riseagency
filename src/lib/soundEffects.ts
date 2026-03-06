@@ -117,3 +117,22 @@ export const playWelcome = () => {
     haptic([20, 40, 20]);
   } catch { /* silent fail */ }
 };
+
+/** Soft swoosh for section/tab navigation */
+export const playSectionSwitch = () => {
+  try {
+    const ctx = getCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(400, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.12);
+    haptic(8);
+  } catch { /* silent fail */ }
+};
