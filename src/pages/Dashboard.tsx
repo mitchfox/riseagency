@@ -55,6 +55,7 @@ import { PortalEmptyState } from "@/components/portal/PortalEmptyState";
 import { SectionDivider } from "@/components/portal/SectionDivider";
 import { MobileBottomNav } from "@/components/portal/MobileBottomNav";
 import { PortalMusicPlayer } from "@/components/portal/PortalMusicPlayer";
+import { PortalMusicControls } from "@/components/portal/PortalMusicControls";
 
 interface Analysis {
   id: string;
@@ -1652,6 +1653,8 @@ const Dashboard = () => {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
+            {/* Music controls between notifications and coach availability */}
+            <PortalMusicControls />
             <Button
               variant="outline"
               size="sm"
