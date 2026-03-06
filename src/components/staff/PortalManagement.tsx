@@ -347,6 +347,7 @@ export const PortalManagement = () => {
     setHasChanges(true);
   };
 
+  const visibleCount = settings
     ? ALL_FEATURES.filter(f => (settings as any)[f.key] === true).length
     : 0;
   const totalCount = ALL_FEATURES.length;
