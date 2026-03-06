@@ -1323,32 +1323,45 @@ const Dashboard = () => {
 
   const fetchPortalSettings = async (playerId: string) => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("player_portal_settings")
         .select("*")
         .eq("player_id", playerId)
         .maybeSingle();
-      if (data) setPortalSettings(data);
+
+      if (error) throw error;
+
+      const localWelcomeSeen = localStorage.getItem(`player_welcome_seen_${playerId}`) === "true";
+      if (data) {
+        setPortalSettings(data);
+      } else {
+        setPortalSettings({
+          player_id: playerId,
+          has_seen_welcome_modal: localWelcomeSeen,
+        });
+      }
     } catch (error) {
       console.error("Error fetching portal settings:", error);
     }
   };
 
   const markWelcomeSeen = async (playerId: string) => {
+    const localKey = `player_welcome_seen_${playerId}`;
+
     try {
-      const { error } = await supabase
-        .from("player_portal_settings")
-        .upsert({ player_id: playerId, has_seen_welcome_modal: true }, { onConflict: "player_id" });
+      localStorage.setItem(localKey, "true");
+      sessionStorage.setItem(localKey, "true");
 
+      const { error } = await supabase.rpc("mark_welcome_seen", { _player_id: playerId });
       if (error) throw error;
-
+    } catch (error) {
+      console.error("Error marking welcome modal as seen:", error);
+    } finally {
       setPortalSettings((prev: any) => ({
         ...(prev || {}),
         player_id: playerId,
         has_seen_welcome_modal: true,
       }));
-    } catch (error) {
-      console.error("Error marking welcome modal as seen:", error);
     }
   };
 
@@ -1518,7 +1531,10 @@ const Dashboard = () => {
           playerName={playerData.name || ""}
           playerId={playerData.id}
           portalLanguage={playerData.portal_language}
-          hasSeenWelcome={portalSettings?.has_seen_welcome_modal === true}
+          hasSeenWelcome={
+            portalSettings?.has_seen_welcome_modal === true ||
+            localStorage.getItem(`player_welcome_seen_${playerData.id}`) === "true"
+          }
           hasAnalyses={analyses.length > 0}
           hasPerformanceReports={analyses.some((a: any) => a.r90_score != null)}
           onNavigate={(tab, subTab) => {
