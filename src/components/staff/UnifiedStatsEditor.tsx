@@ -470,19 +470,36 @@ export const UnifiedStatsEditor = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <Label className="text-sm font-semibold">Match Statistics</Label>
-        <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
-          setIsAddDialogOpen(open);
-          if (!open) {
-            resetNewStatForm();
-            setEditingStatKey(null);
-          }
-        }}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="h-7">
-              <Plus className="h-3 w-3 mr-1" />
-              Add Stat
+        <div className="flex items-center gap-2">
+          {actions && actions.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSuggestWithAI}
+              disabled={aiLoading}
+              className="h-7 gap-1.5"
+            >
+              {aiLoading ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Sparkles className="w-3 h-3" />
+              )}
+              {aiLoading ? 'Analysing...' : 'Suggest with AI'}
             </Button>
-          </DialogTrigger>
+          )}
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+            setIsAddDialogOpen(open);
+            if (!open) {
+              resetNewStatForm();
+              setEditingStatKey(null);
+            }
+          }}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="h-7">
+                <Plus className="h-3 w-3 mr-1" />
+                Add Stat
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add New Stat</DialogTitle>
