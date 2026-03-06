@@ -141,12 +141,8 @@ export const StaffMusicPlayer = () => {
     }
   }, [currentTrack, validTracks.length, handleSkip]);
 
-  // Create audio element once
+  // Cleanup on unmount
   useEffect(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-      audioRef.current.preload = "auto";
-    }
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
