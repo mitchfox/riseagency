@@ -211,9 +211,95 @@ export const UnifiedStatsEditor = ({
   stats,
   onStatsChange,
   minutesPlayed,
+  actions,
 }: UnifiedStatsEditorProps) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingStatKey, setEditingStatKey] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const handleSuggestWithAI = async () => {
+    if (!actions || actions.length === 0) {
+      toast.error('No performance actions to analyse');
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const { data, error } = await invokeEdgeFunction('suggest-match-stats', {
+        body: {
+          actions: actions.map(a => ({
+            action_number: a.action_number,
+            minute: a.minute,
+            action_score: a.action_score,
+            action_type: a.action_type,
+            action_description: a.action_description,
+            notes: a.notes,
+            zone: a.zone || null,
+          })),
+          statDefinitions: STAT_TYPE_CONFIGS.map(c => ({ key: c.key, name: c.name, mode: c.mode })),
+          existingStats: stats.map(s => ({ key: s.key, type: s.type, successful: s.successful, total: s.total, count: s.count, score: s.score })),
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) { toast.error(data.error); return; }
+
+      const suggestions = data?.suggestions || [];
+      if (suggestions.length === 0) {
+        toast.info('No stat suggestions found from the actions');
+        return;
+      }
+
+      // Merge suggestions into existing stats
+      const updatedStats = [...stats];
+      let addedCount = 0;
+      let updatedCount = 0;
+
+      for (const suggestion of suggestions) {
+        const config = STAT_TYPE_CONFIGS.find(c => c.key === suggestion.stat_key);
+        const displayName = config?.name || suggestion.stat_key;
+        const existingIdx = updatedStats.findIndex(s => s.key === suggestion.stat_key);
+
+        const newStat: UnifiedStat = {
+          key: suggestion.stat_key,
+          displayName,
+          type: suggestion.stat_type,
+          isFromActions: false,
+        };
+
+        if (suggestion.stat_type === 'success_fail') {
+          newStat.successful = suggestion.successful ?? 0;
+          newStat.total = suggestion.total ?? 0;
+        } else if (suggestion.stat_type === 'count') {
+          newStat.count = suggestion.count ?? 0;
+        } else if (suggestion.stat_type === 'score') {
+          newStat.score = suggestion.score ?? 0;
+          if (shouldShowPer90(suggestion.stat_key) && minutesPlayed > 0) {
+            newStat.per90 = ((newStat.score / minutesPlayed) * 90).toFixed(3);
+          }
+        }
+
+        if (existingIdx >= 0) {
+          updatedStats[existingIdx] = { ...updatedStats[existingIdx], ...newStat };
+          updatedCount++;
+        } else {
+          updatedStats.push(newStat);
+          addedCount++;
+        }
+      }
+
+      onStatsChange(updatedStats);
+      const parts = [];
+      if (addedCount) parts.push(`${addedCount} added`);
+      if (updatedCount) parts.push(`${updatedCount} updated`);
+      toast.success(`AI suggested stats: ${parts.join(', ')}`);
+    } catch (err: any) {
+      console.error('AI match stats error:', err);
+      toast.error('Failed to get AI suggestions');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
