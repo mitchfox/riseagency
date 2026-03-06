@@ -15,6 +15,7 @@ interface ZonePitchSelectorProps {
   onChange: (zones: ZonePoint[]) => void;
   actionType?: string; // to detect pass actions
   compact?: boolean;
+  popoverClassName?: string;
 }
 
 // Major zone layout: 3 columns x 6 rows, bottom-left is zone 1
@@ -64,7 +65,7 @@ const getMultiplierDisplay = (zone: number): string => {
   return "0%";
 };
 
-export const ZonePitchSelector = ({ value, onChange, actionType, compact = false }: ZonePitchSelectorProps) => {
+export const ZonePitchSelector = ({ value, onChange, actionType, compact = false, popoverClassName }: ZonePitchSelectorProps) => {
   const [open, setOpen] = useState(false);
   const [expandedZone, setExpandedZone] = useState<number | null>(null);
   const showPass = isPassAction(actionType);
@@ -130,7 +131,7 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[340px] p-3" align="center" side="left">
+      <PopoverContent className={`w-[340px] p-3 ${popoverClassName || ''}`} align="center" side="left">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold">

@@ -111,7 +111,7 @@ export const VideoActionEditor = ({
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2 bg-black/90 border-b border-border/30 shrink-0">
           <div className="flex items-center gap-3">
-            <span className="text-primary font-bold text-sm">VIDEO EDITOR</span>
+            <span className="text-primary font-bold text-sm">CLIP EDIT</span>
             <span className="text-xs text-white/60">
               {safePos + 1} / {clippedIndices.length} clipped actions
             </span>
@@ -176,6 +176,7 @@ export const VideoActionEditor = ({
                   updateAction(realIndex, 'zone', (zd.length ? zd[0].zone : null) as any);
                 }}
                 actionType={current.action_type}
+                popoverClassName="z-[300]"
               />
             </div>
           </div>
@@ -255,7 +256,7 @@ export const VideoActionEditor = ({
                   value={current.action_score}
                   onChange={(e) => updateAction(realIndex, "action_score", e.target.value)}
                   placeholder="Score"
-                  className="h-8 text-sm"
+                  className="h-8 text-sm border-[hsl(43,49%,61%)]/50 focus-visible:ring-[hsl(43,49%,61%)]/30"
                 />
               </div>
               <div className="flex items-center gap-1.5 ml-auto">
