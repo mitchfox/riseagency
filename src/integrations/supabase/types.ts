@@ -5580,6 +5580,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      mark_welcome_seen: { Args: { _player_id: string }; Returns: undefined }
       setup_app_settings: { Args: never; Returns: undefined }
     }
     Enums: {
