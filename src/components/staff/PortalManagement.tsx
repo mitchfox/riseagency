@@ -305,7 +305,48 @@ export const PortalManagement = () => {
     setHasChanges(true);
   };
 
-  const visibleCount = settings
+  // Music track handlers
+  const handleMusicFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !settings) return;
+    e.target.value = "";
+    setUploadingMusic(true);
+    try {
+      const fileName = `music-${settings.player_id}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const { error: uploadError } = await supabase.storage
+        .from("marketing-gallery")
+        .upload(`portal-music/${fileName}`, file, { contentType: file.type, upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage
+        .from("marketing-gallery")
+        .getPublicUrl(`portal-music/${fileName}`);
+      const trackName = file.name.replace(/\.[^.]+$/, '');
+      const newTracks = [...settings.music_tracks, { url: urlData.publicUrl, name: trackName }];
+      setSettings({ ...settings, music_tracks: newTracks });
+      setHasChanges(true);
+      toast.success("Track added");
+    } catch (err: any) {
+      toast.error("Upload failed: " + err.message);
+    } finally {
+      setUploadingMusic(false);
+    }
+  };
+
+  const handleRemoveTrack = (index: number) => {
+    if (!settings) return;
+    const newTracks = settings.music_tracks.filter((_, i) => i !== index);
+    setSettings({ ...settings, music_tracks: newTracks });
+    setHasChanges(true);
+  };
+
+  const handleTrackNameChange = (index: number, name: string) => {
+    if (!settings) return;
+    const newTracks = [...settings.music_tracks];
+    newTracks[index] = { ...newTracks[index], name };
+    setSettings({ ...settings, music_tracks: newTracks });
+    setHasChanges(true);
+  };
+
     ? ALL_FEATURES.filter(f => (settings as any)[f.key] === true).length
     : 0;
   const totalCount = ALL_FEATURES.length;
