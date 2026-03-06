@@ -115,6 +115,7 @@ const COMPONENT_FEATURES: FeatureItem[] = [
   { key: 'show_video_reports', label: 'Video Reports', description: 'Analysis video reports' },
   { key: 'show_data_tab', label: 'Data Tab', description: 'Statistical data tables' },
   { key: 'show_performance_reports', label: 'Performance Reports', description: 'Downloadable performance PDFs' },
+  { key: 'show_music_player', label: 'Music Player', description: 'Background music player on portal' },
 ];
 
 const ALL_FEATURES = [...SECTION_FEATURES, ...COMPONENT_FEATURES];
@@ -142,6 +143,8 @@ export const PortalManagement = () => {
   const [cropImageSrc, setCropImageSrc] = useState("");
   const [editingHeroIndex, setEditingHeroIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const musicFileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingMusic, setUploadingMusic] = useState(false);
 
   useEffect(() => { fetchPlayers(); }, []);
   useEffect(() => {
