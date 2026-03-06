@@ -567,6 +567,59 @@ export const PortalManagement = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Music Tracks */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Music className="h-5 w-5" />
+                  Music Tracks
+                </CardTitle>
+                <Button size="sm" variant="outline" onClick={() => musicFileInputRef.current?.click()} disabled={uploadingMusic}>
+                  <Upload className="h-3.5 w-3.5 mr-1" />
+                  {uploadingMusic ? "Uploading..." : "Add Track"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Audio tracks for the player's portal music player. Toggle visibility in components above.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <input
+                ref={musicFileInputRef}
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                onChange={handleMusicFileSelect}
+              />
+
+              {settings.music_tracks.length === 0 ? (
+                <div className="border-2 border-dashed rounded-lg p-8 text-center text-muted-foreground">
+                  <Music className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No tracks yet. Upload audio files to build the player's playlist.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {settings.music_tracks.map((track, index) => (
+                    <div key={index} className="flex items-center gap-2 rounded-lg border p-2.5 bg-background">
+                      <Music className="h-4 w-4 text-primary shrink-0" />
+                      <Input
+                        value={track.name}
+                        onChange={(e) => handleTrackNameChange(index, e.target.value)}
+                        className="h-7 text-sm flex-1"
+                        placeholder="Track name"
+                      />
+                      <audio src={track.url} controls className="h-8 max-w-[180px]" />
+                      <Button size="sm" variant="destructive" className="h-7 text-xs px-2" onClick={() => handleRemoveTrack(index)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       )}
 
