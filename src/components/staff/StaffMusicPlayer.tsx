@@ -72,17 +72,19 @@ export const StaffMusicPlayer = () => {
     hudTimer.current = setTimeout(() => setShowHUD(false), 5000);
   }, []);
 
-  const ensureAudio = useCallback(() => {
+  const playTrack = useCallback((index: number) => {
+    if (validTracks.length === 0) return;
     if (!audioRef.current) {
       audioRef.current = new Audio();
       audioRef.current.preload = "auto";
+      audioRef.current.addEventListener("ended", () => {
+        window.dispatchEvent(new Event("staff-music-ended"));
+      });
+      audioRef.current.addEventListener("error", () => {
+        window.dispatchEvent(new Event("staff-music-error"));
+      });
     }
-    return audioRef.current;
-  }, []);
-
-  const playTrack = useCallback((index: number) => {
-    if (validTracks.length === 0) return;
-    const audio = ensureAudio();
+    const audio = audioRef.current;
     const track = validTracks[index % validTracks.length];
     if (!track) return;
     audio.src = track.url;
@@ -101,7 +103,7 @@ export const StaffMusicPlayer = () => {
         if (validTracks.length > 1) playTrack((index + 1) % validTracks.length);
       }
     });
-  }, [validTracks, flashHUD, ensureAudio]);
+  }, [validTracks, flashHUD]);
 
   const handleSkip = useCallback(() => {
     if (validTracks.length === 0) return;
@@ -109,37 +111,57 @@ export const StaffMusicPlayer = () => {
   }, [currentIndex, validTracks.length, playTrack]);
 
   const handlePlayPause = useCallback(() => {
-    const audio = ensureAudio();
-    if (isPlaying) {
-      audio.pause();
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause();
       setIsPlaying(false);
     } else if (currentTrack) {
-      audio.volume = volume.current;
-      if (!audio.src || audio.src !== currentTrack.url) {
-        audio.src = currentTrack.url;
-        audio.load();
+      if (!audioRef.current) {
+        playTrack(currentIndex);
+        return;
       }
-      audio.play().then(() => {
+      audioRef.current.volume = volume.current;
+      if (!audioRef.current.src || audioRef.current.src !== currentTrack.url) {
+        audioRef.current.src = currentTrack.url;
+        audioRef.current.load();
+      }
+      audioRef.current.play().then(() => {
         setIsPlaying(true);
         flashHUD();
       }).catch(() => {});
     } else if (validTracks.length > 0) {
       playTrack(0);
     }
-  }, [isPlaying, currentTrack, flashHUD, validTracks.length, playTrack, ensureAudio]);
+  }, [isPlaying, currentTrack, currentIndex, flashHUD, validTracks.length, playTrack]);
 
-  const handleEnded = useCallback(() => {
-    if (validTracks.length > 1) handleSkip();
-    else if (validTracks.length === 1) playTrack(0);
-  }, [validTracks.length, handleSkip, playTrack]);
-
-  const handleError = useCallback(() => {
-    if (currentTrack) {
-      failedUrls.current.add(currentTrack.url);
-      if (validTracks.length > 1) handleSkip();
-      else setIsPlaying(false);
-    }
-  }, [currentTrack, validTracks.length, handleSkip]);
+  // Handle ended/error via custom events (since Audio is created programmatically)
+  useEffect(() => {
+    const onEnded = () => {
+      if (validTracks.length > 1) {
+        const next = (currentIndex + 1) % validTracks.length;
+        playTrack(next);
+      } else if (validTracks.length === 1) {
+        playTrack(0);
+      }
+    };
+    const onError = () => {
+      const track = validTracks[currentIndex % validTracks.length];
+      if (track) {
+        failedUrls.current.add(track.url);
+        if (validTracks.length > 1) {
+          const next = (currentIndex + 1) % validTracks.length;
+          playTrack(next);
+        } else {
+          setIsPlaying(false);
+        }
+      }
+    };
+    window.addEventListener("staff-music-ended", onEnded);
+    window.addEventListener("staff-music-error", onError);
+    return () => {
+      window.removeEventListener("staff-music-ended", onEnded);
+      window.removeEventListener("staff-music-error", onError);
+    };
+  }, [currentIndex, validTracks, playTrack]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -156,13 +178,6 @@ export const StaffMusicPlayer = () => {
 
   return (
     <>
-      <audio
-        ref={audioRef}
-        onEnded={handleEnded}
-        onError={handleError}
-        preload="auto"
-        style={{ display: "none" }}
-      />
 
       {/* Header controls */}
       <div className="flex items-center gap-0.5">
