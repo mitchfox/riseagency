@@ -137,9 +137,8 @@ export const VideoActionEditor = ({
           </div>
         </div>
 
-        {/* Video area with nav arrows */}
+        {/* Video area with nav arrows + zone overlay */}
         <div className="relative flex-1 min-h-0 flex items-center justify-center bg-black">
-          {/* Left arrow */}
           <button
             onClick={handlePrev}
             disabled={safePos === 0}
@@ -159,7 +158,6 @@ export const VideoActionEditor = ({
             onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
           />
 
-          {/* Right arrow */}
           <button
             onClick={handleNext}
             disabled={safePos === clippedIndices.length - 1}
@@ -167,12 +165,26 @@ export const VideoActionEditor = ({
           >
             <ChevronRight className="h-6 w-6" />
           </button>
+
+          {/* Zone overlay top-right */}
+          <div className="absolute top-3 right-3 z-20">
+            <div className="rounded-md border border-[hsl(43,49%,61%)]/30 bg-black/60 backdrop-blur-sm px-2 py-1.5">
+              <ZonePitchSelector
+                value={current.zone_details || (current.zone ? [{ zone: current.zone }] : [])}
+                onChange={(zd) => {
+                  updateAction(realIndex, 'zone_details', zd as any);
+                  updateAction(realIndex, 'zone', (zd.length ? zd[0].zone : null) as any);
+                }}
+                actionType={current.action_type}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Editing fields */}
-        <div className="bg-card border-t border-border/30 px-4 py-3 shrink-0 overflow-y-auto max-h-[45vh]">
-          <div className="space-y-3 max-w-4xl mx-auto">
-            {/* Row 1: Action #, Minute, Type, Score */}
+        {/* Compact editing fields */}
+        <div className="bg-card border-t border-border/30 px-4 py-2.5 shrink-0">
+          <div className="space-y-2 max-w-5xl mx-auto">
+            {/* Row 1: Action #, Minute, Type, Score, R90 Search, R90 DB */}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-bold text-primary shrink-0">
                 #{current.action_number}
@@ -246,81 +258,12 @@ export const VideoActionEditor = ({
                   className="h-8 text-sm"
                 />
               </div>
-            </div>
-
-            {/* Row 2: Description */}
-            <div className="relative">
-              <Label className="text-xs text-muted-foreground mb-1 block">Description</Label>
-              <Textarea
-                value={current.action_description}
-                onChange={(e) => {
-                  updateAction(realIndex, "action_description", e.target.value);
-                  setDescPopoverOpen(true);
-                }}
-                onFocus={() => {
-                  if (current.action_type && getDescriptionsForType(current.action_type).length > 0) {
-                    setDescPopoverOpen(true);
-                  }
-                }}
-                onBlur={() => setTimeout(() => setDescPopoverOpen(false), 200)}
-                placeholder="Describe the action"
-                className="text-sm min-h-[40px]"
-                rows={2}
-              />
-              {descPopoverOpen && current.action_type && getDescriptionsForType(current.action_type).length > 0 && (
-                <div className="absolute z-50 mt-1 w-full max-h-40 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
-                  {getDescriptionsForType(current.action_type)
-                    .filter(desc => !current.action_description || desc.toLowerCase().includes(current.action_description.toLowerCase()))
-                    .slice(0, 10)
-                    .map((desc, di) => (
-                      <button
-                        key={di}
-                        type="button"
-                        className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          updateAction(realIndex, "action_description", desc);
-                          setDescPopoverOpen(false);
-                        }}
-                      >
-                        {desc}
-                      </button>
-                    ))}
-                </div>
-              )}
-            </div>
-
-            {/* Row 3: Notes */}
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Notes</Label>
-              <Textarea
-                value={current.notes}
-                onChange={(e) => updateAction(realIndex, "notes", e.target.value)}
-                placeholder="Optional notes"
-                className="text-sm min-h-[40px]"
-                rows={2}
-              />
-            </div>
-
-            {/* Row 4: Zone + R90 Search */}
-            <div className="flex items-start gap-3 flex-wrap">
-              <div className="flex items-center gap-2 rounded-md border border-[hsl(43,49%,61%)]/30 bg-background px-2 py-1.5">
-                <ZonePitchSelector
-                  value={current.zone_details || (current.zone ? [{ zone: current.zone }] : [])}
-                  onChange={(zd) => {
-                    updateAction(realIndex, 'zone_details', zd as any);
-                    updateAction(realIndex, 'zone', (zd.length ? zd[0].zone : null) as any);
-                  }}
-                  actionType={current.action_type}
-                />
-              </div>
-
-              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+              <div className="flex items-center gap-1.5 ml-auto">
                 <Input
                   value={searchFilter}
                   onChange={(e) => setSearchFilter(e.target.value)}
                   placeholder="Search R90..."
-                  className="h-8 text-xs flex-1"
+                  className="h-8 text-xs w-36"
                 />
                 <Button
                   onClick={() => openR90Viewer(realIndex)}
@@ -331,6 +274,56 @@ export const VideoActionEditor = ({
                   <Search className="h-3.5 w-3.5 text-primary mr-1" />
                   R90
                 </Button>
+              </div>
+            </div>
+
+            {/* Row 2: Description + Notes side by side */}
+            <div className="flex items-start gap-3">
+              <div className="relative flex-1">
+                <Input
+                  value={current.action_description}
+                  onChange={(e) => {
+                    updateAction(realIndex, "action_description", e.target.value);
+                    setDescPopoverOpen(true);
+                  }}
+                  onFocus={() => {
+                    if (current.action_type && getDescriptionsForType(current.action_type).length > 0) {
+                      setDescPopoverOpen(true);
+                    }
+                  }}
+                  onBlur={() => setTimeout(() => setDescPopoverOpen(false), 200)}
+                  placeholder="Description"
+                  className="h-8 text-sm"
+                />
+                {descPopoverOpen && current.action_type && getDescriptionsForType(current.action_type).length > 0 && (
+                  <div className="absolute z-50 mt-1 w-full max-h-40 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                    {getDescriptionsForType(current.action_type)
+                      .filter(desc => !current.action_description || desc.toLowerCase().includes(current.action_description.toLowerCase()))
+                      .slice(0, 10)
+                      .map((desc, di) => (
+                        <button
+                          key={di}
+                          type="button"
+                          className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            updateAction(realIndex, "action_description", desc);
+                            setDescPopoverOpen(false);
+                          }}
+                        >
+                          {desc}
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <Input
+                  value={current.notes}
+                  onChange={(e) => updateAction(realIndex, "notes", e.target.value)}
+                  placeholder="Notes"
+                  className="h-8 text-sm"
+                />
               </div>
             </div>
 
