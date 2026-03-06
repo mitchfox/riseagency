@@ -36,10 +36,21 @@ export interface UnifiedStat {
   isCalculated?: boolean; // Whether this is auto-calculated from other stats
 }
 
+interface PerformanceActionForAI {
+  action_number: number;
+  minute: string;
+  action_score: string;
+  action_type: string;
+  action_description: string;
+  notes: string;
+  zone?: number | null;
+}
+
 interface UnifiedStatsEditorProps {
   stats: UnifiedStat[];
   onStatsChange: (stats: UnifiedStat[]) => void;
   minutesPlayed: number;
+  actions?: PerformanceActionForAI[];
 }
 
 // Stat types that should show per90 (score-based stats)
