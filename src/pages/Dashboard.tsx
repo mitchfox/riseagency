@@ -134,7 +134,7 @@ const Dashboard = () => {
   const [updates, setUpdates] = useState<Update[]>([]);
   const [activeTab, setActiveTab] = useState("hub");
   const [activeAnalysisTab, setActiveAnalysisTab] = useState("performance");
-  const [portalLanguageHint, setPortalLanguageHint] = useState<string>(() => localStorage.getItem("portal_language_hint") || "en");
+  const [portalLanguageHint, setPortalLanguageHint] = useState<string>("en");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [visibleClipsCount, setVisibleClipsCount] = useState(10); // Show 10 clips initially
   const [isOnline, setIsOnline] = useState(navigator.onLine);

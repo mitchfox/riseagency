@@ -283,9 +283,7 @@ const Staff = () => {
         return;
       }
       if (e.key === "Escape") {
-        setExpandedSection('overview');
-        setExpandedCategory('overview');
-        setSearchParams({ section: 'overview' });
+        // Don't go to overview — just close any open dialogs/modals
         return;
       }
       // Number keys 1-9 to jump to categories
