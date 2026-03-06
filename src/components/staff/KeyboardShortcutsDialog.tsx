@@ -7,7 +7,7 @@ interface KeyboardShortcutsDialogProps {
 
 const shortcuts = [
   { keys: ["⌘", "K"], description: "Open search" },
-  { keys: ["Esc"], description: "Back to overview" },
+  { keys: ["Esc"], description: "Exit video / close dialog" },
   { keys: ["↑", "↓"], description: "Navigate sections" },
   { keys: ["1-9"], description: "Jump to category" },
   { keys: ["?"], description: "Show shortcuts" },

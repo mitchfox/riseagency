@@ -98,6 +98,8 @@ import { HighlightCompiler } from "@/components/staff/HighlightCompiler";
 import { DatasetBuilder } from "@/components/staff/DatasetBuilder";
 import { ExportProgressFloat } from "@/components/staff/ExportProgressFloat";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
+import { StaffMusicPlayer } from "@/components/staff/StaffMusicPlayer";
+import { playSectionSwitch } from "@/lib/soundEffects";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTheme } from "next-themes";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
@@ -283,9 +285,7 @@ const Staff = () => {
         return;
       }
       if (e.key === "Escape") {
-        setExpandedSection('overview');
-        setExpandedCategory('overview');
-        setSearchParams({ section: 'overview' });
+        // Don't go to overview — just close any open dialogs/modals
         return;
       }
       // Number keys 1-9 to jump to categories
@@ -337,6 +337,7 @@ const Staff = () => {
 
   const handleSectionToggle = (section: string) => {
     // Always navigate to the section - never toggle off by clicking the same one
+    playSectionSwitch();
     setExpandedSection(section as any);
     setSearchParams({ section });
     // Persist active tab for session restoration
@@ -1244,8 +1245,9 @@ const Staff = () => {
             })()}
           </div>
 
-          {/* Right side: theme toggle + notifications — always far right */}
-          <div className="flex items-center gap-3 shrink-0 ml-auto">
+          {/* Right side: music + theme toggle + notifications — always far right */}
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
+            <StaffMusicPlayer />
             <Button
               variant="ghost"
               size="icon"
