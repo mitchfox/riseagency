@@ -72,11 +72,19 @@ export const StaffMusicPlayer = () => {
     hudTimer.current = setTimeout(() => setShowHUD(false), 5000);
   }, []);
 
+  const ensureAudio = useCallback(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.preload = "auto";
+    }
+    return audioRef.current;
+  }, []);
+
   const playTrack = useCallback((index: number) => {
-    if (!audioRef.current || validTracks.length === 0) return;
+    if (validTracks.length === 0) return;
+    const audio = ensureAudio();
     const track = validTracks[index % validTracks.length];
     if (!track) return;
-    const audio = audioRef.current;
     audio.src = track.url;
     audio.volume = volume.current;
     audio.load();
@@ -84,11 +92,16 @@ export const StaffMusicPlayer = () => {
       setIsPlaying(true);
       setCurrentIndex(index % validTracks.length);
       flashHUD();
-    }).catch(() => {
-      failedUrls.current.add(track.url);
-      if (validTracks.length > 1) playTrack((index + 1) % validTracks.length);
+    }).catch((err) => {
+      if (err?.name === 'NotAllowedError') {
+        setCurrentIndex(index % validTracks.length);
+        setIsPlaying(false);
+      } else {
+        failedUrls.current.add(track.url);
+        if (validTracks.length > 1) playTrack((index + 1) % validTracks.length);
+      }
     });
-  }, [validTracks, flashHUD]);
+  }, [validTracks, flashHUD, ensureAudio]);
 
   const handleSkip = useCallback(() => {
     if (validTracks.length === 0) return;
@@ -96,20 +109,24 @@ export const StaffMusicPlayer = () => {
   }, [currentIndex, validTracks.length, playTrack]);
 
   const handlePlayPause = useCallback(() => {
-    if (!audioRef.current) return;
+    const audio = ensureAudio();
     if (isPlaying) {
-      audioRef.current.pause();
+      audio.pause();
       setIsPlaying(false);
     } else if (currentTrack) {
-      audioRef.current.volume = volume.current;
-      audioRef.current.play().then(() => {
+      audio.volume = volume.current;
+      if (!audio.src || audio.src !== currentTrack.url) {
+        audio.src = currentTrack.url;
+        audio.load();
+      }
+      audio.play().then(() => {
         setIsPlaying(true);
         flashHUD();
       }).catch(() => {});
     } else if (validTracks.length > 0) {
       playTrack(0);
     }
-  }, [isPlaying, currentTrack, flashHUD, validTracks.length, playTrack]);
+  }, [isPlaying, currentTrack, flashHUD, validTracks.length, playTrack, ensureAudio]);
 
   const handleEnded = useCallback(() => {
     if (validTracks.length > 1) handleSkip();
@@ -124,12 +141,8 @@ export const StaffMusicPlayer = () => {
     }
   }, [currentTrack, validTracks.length, handleSkip]);
 
-  // Create audio element once
+  // Cleanup on unmount
   useEffect(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-      audioRef.current.preload = "auto";
-    }
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
