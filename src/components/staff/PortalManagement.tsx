@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { toast } from "sonner";
-import { Monitor, Eye, EyeOff, Image, Save, RotateCcw, Upload, Trash2, GripVertical, User, Move } from "lucide-react";
+import { Monitor, Eye, EyeOff, Image, Save, RotateCcw, Upload, Trash2, GripVertical, User, Move, Music } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { ImageCropDialog } from "./ImageCropDialog";
 
 interface Player {
@@ -47,9 +48,12 @@ interface PortalSettings {
   show_video_reports: boolean;
   show_data_tab: boolean;
   show_performance_reports: boolean;
+  show_music_player: boolean;
   // Hero
   hero_images: string[];
   hero_focal_points: string[];
+  // Music
+  music_tracks: { url: string; name: string }[];
 }
 
 const DEFAULT_SETTINGS: Omit<PortalSettings, 'player_id'> = {
@@ -76,8 +80,10 @@ const DEFAULT_SETTINGS: Omit<PortalSettings, 'player_id'> = {
   show_video_reports: true,
   show_data_tab: true,
   show_performance_reports: true,
+  show_music_player: false,
   hero_images: [],
   hero_focal_points: [],
+  music_tracks: [],
 };
 
 type FeatureItem = { key: string; label: string; description: string };
@@ -109,6 +115,7 @@ const COMPONENT_FEATURES: FeatureItem[] = [
   { key: 'show_video_reports', label: 'Video Reports', description: 'Analysis video reports' },
   { key: 'show_data_tab', label: 'Data Tab', description: 'Statistical data tables' },
   { key: 'show_performance_reports', label: 'Performance Reports', description: 'Downloadable performance PDFs' },
+  { key: 'show_music_player', label: 'Music Player', description: 'Background music player on portal' },
 ];
 
 const ALL_FEATURES = [...SECTION_FEATURES, ...COMPONENT_FEATURES];
@@ -136,6 +143,8 @@ export const PortalManagement = () => {
   const [cropImageSrc, setCropImageSrc] = useState("");
   const [editingHeroIndex, setEditingHeroIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const musicFileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingMusic, setUploadingMusic] = useState(false);
 
   useEffect(() => { fetchPlayers(); }, []);
   useEffect(() => {
@@ -175,6 +184,7 @@ export const PortalManagement = () => {
         ...data,
         hero_images: (data.hero_images as string[]) || [],
         hero_focal_points: (data.hero_focal_points as string[]) || [],
+        music_tracks: (data.music_tracks as any[] || []) as { url: string; name: string }[],
         // Ensure new columns have defaults
         show_aphorisms: data.show_aphorisms ?? true,
         show_quick_stats: data.show_quick_stats ?? true,
@@ -185,6 +195,7 @@ export const PortalManagement = () => {
         show_video_reports: data.show_video_reports ?? true,
         show_data_tab: data.show_data_tab ?? true,
         show_performance_reports: data.show_performance_reports ?? true,
+        show_music_player: data.show_music_player ?? false,
       } as PortalSettings);
     } else {
       setSettings({ player_id: playerId, ...DEFAULT_SETTINGS });
@@ -291,6 +302,48 @@ export const PortalManagement = () => {
     const newFocalPoints = [...settings.hero_focal_points];
     newFocalPoints[index] = focalPoint;
     setSettings({ ...settings, hero_focal_points: newFocalPoints });
+    setHasChanges(true);
+  };
+
+  // Music track handlers
+  const handleMusicFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !settings) return;
+    e.target.value = "";
+    setUploadingMusic(true);
+    try {
+      const fileName = `music-${settings.player_id}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const { error: uploadError } = await supabase.storage
+        .from("marketing-gallery")
+        .upload(`portal-music/${fileName}`, file, { contentType: file.type, upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage
+        .from("marketing-gallery")
+        .getPublicUrl(`portal-music/${fileName}`);
+      const trackName = file.name.replace(/\.[^.]+$/, '');
+      const newTracks = [...settings.music_tracks, { url: urlData.publicUrl, name: trackName }];
+      setSettings({ ...settings, music_tracks: newTracks });
+      setHasChanges(true);
+      toast.success("Track added");
+    } catch (err: any) {
+      toast.error("Upload failed: " + err.message);
+    } finally {
+      setUploadingMusic(false);
+    }
+  };
+
+  const handleRemoveTrack = (index: number) => {
+    if (!settings) return;
+    const newTracks = settings.music_tracks.filter((_, i) => i !== index);
+    setSettings({ ...settings, music_tracks: newTracks });
+    setHasChanges(true);
+  };
+
+  const handleTrackNameChange = (index: number, name: string) => {
+    if (!settings) return;
+    const newTracks = [...settings.music_tracks];
+    newTracks[index] = { ...newTracks[index], name };
+    setSettings({ ...settings, music_tracks: newTracks });
     setHasChanges(true);
   };
 
@@ -508,6 +561,59 @@ export const PortalManagement = () => {
                           </Button>
                         </div>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Music Tracks */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Music className="h-5 w-5" />
+                  Music Tracks
+                </CardTitle>
+                <Button size="sm" variant="outline" onClick={() => musicFileInputRef.current?.click()} disabled={uploadingMusic}>
+                  <Upload className="h-3.5 w-3.5 mr-1" />
+                  {uploadingMusic ? "Uploading..." : "Add Track"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Audio tracks for the player's portal music player. Toggle visibility in components above.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <input
+                ref={musicFileInputRef}
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                onChange={handleMusicFileSelect}
+              />
+
+              {settings.music_tracks.length === 0 ? (
+                <div className="border-2 border-dashed rounded-lg p-8 text-center text-muted-foreground">
+                  <Music className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No tracks yet. Upload audio files to build the player's playlist.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {settings.music_tracks.map((track, index) => (
+                    <div key={index} className="flex items-center gap-2 rounded-lg border p-2.5 bg-background">
+                      <Music className="h-4 w-4 text-primary shrink-0" />
+                      <Input
+                        value={track.name}
+                        onChange={(e) => handleTrackNameChange(index, e.target.value)}
+                        className="h-7 text-sm flex-1"
+                        placeholder="Track name"
+                      />
+                      <audio src={track.url} controls className="h-8 max-w-[180px]" />
+                      <Button size="sm" variant="destructive" className="h-7 text-xs px-2" onClick={() => handleRemoveTrack(index)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   ))}
                 </div>

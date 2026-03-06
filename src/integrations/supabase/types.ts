@@ -3047,6 +3047,7 @@ export type Database = {
           hero_focal_points: Json | null
           hero_images: Json | null
           id: string
+          music_tracks: Json | null
           player_id: string
           show_analysis: boolean
           show_aphorisms: boolean
@@ -3059,6 +3060,7 @@ export type Database = {
           show_injury_log: boolean
           show_key_documents: boolean
           show_match_clipper: boolean
+          show_music_player: boolean
           show_news_feed: boolean
           show_nutrition: boolean
           show_performance_reports: boolean
@@ -3078,6 +3080,7 @@ export type Database = {
           hero_focal_points?: Json | null
           hero_images?: Json | null
           id?: string
+          music_tracks?: Json | null
           player_id: string
           show_analysis?: boolean
           show_aphorisms?: boolean
@@ -3090,6 +3093,7 @@ export type Database = {
           show_injury_log?: boolean
           show_key_documents?: boolean
           show_match_clipper?: boolean
+          show_music_player?: boolean
           show_news_feed?: boolean
           show_nutrition?: boolean
           show_performance_reports?: boolean
@@ -3109,6 +3113,7 @@ export type Database = {
           hero_focal_points?: Json | null
           hero_images?: Json | null
           id?: string
+          music_tracks?: Json | null
           player_id?: string
           show_analysis?: boolean
           show_aphorisms?: boolean
@@ -3121,6 +3126,7 @@ export type Database = {
           show_injury_log?: boolean
           show_key_documents?: boolean
           show_match_clipper?: boolean
+          show_music_player?: boolean
           show_news_feed?: boolean
           show_nutrition?: boolean
           show_performance_reports?: boolean
