@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { X, ChevronLeft, ChevronRight, Save, Search, ChevronDown } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Save, Search, ChevronDown, SkipForward } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ZonePitchSelector, type ZonePoint } from "@/components/report/ZonePitchSelector";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -115,6 +117,35 @@ export const VideoActionEditor = ({
             <span className="text-xs text-white/60">
               {safePos + 1} / {clippedIndices.length} clipped actions
             </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 gap-1 text-white/70 hover:text-white hover:bg-white/20 text-xs">
+                  <SkipForward className="h-3 w-3" />
+                  Jump to
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2 z-[300]" align="start">
+                <ScrollArea className="max-h-60">
+                  <div className="space-y-0.5">
+                    {clippedIndices.map(({ action, index }, pos) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setCurrentPos(pos);
+                          setSearchFilter("");
+                          setSelectedScores(new Set());
+                        }}
+                        className={`w-full text-left px-2 py-1.5 rounded text-xs hover:bg-accent transition-colors flex items-center gap-2 ${pos === safePos ? 'bg-primary/20 text-primary font-semibold' : ''}`}
+                      >
+                        <span className="font-mono font-bold">#{action.action_number}</span>
+                        <span className="truncate text-muted-foreground">{action.action_type || 'Untitled'}</span>
+                        {action.minute && <span className="ml-auto text-muted-foreground shrink-0">{action.minute}'</span>}
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="flex items-center gap-2">
             <Button
