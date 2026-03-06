@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { toast } from "sonner";
-import { Monitor, Eye, EyeOff, Image, Save, RotateCcw, Upload, Trash2, GripVertical, User, Move } from "lucide-react";
+import { Monitor, Eye, EyeOff, Image, Save, RotateCcw, Upload, Trash2, GripVertical, User, Move, Music } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { ImageCropDialog } from "./ImageCropDialog";
 
 interface Player {
@@ -47,9 +48,12 @@ interface PortalSettings {
   show_video_reports: boolean;
   show_data_tab: boolean;
   show_performance_reports: boolean;
+  show_music_player: boolean;
   // Hero
   hero_images: string[];
   hero_focal_points: string[];
+  // Music
+  music_tracks: { url: string; name: string }[];
 }
 
 const DEFAULT_SETTINGS: Omit<PortalSettings, 'player_id'> = {
@@ -76,8 +80,10 @@ const DEFAULT_SETTINGS: Omit<PortalSettings, 'player_id'> = {
   show_video_reports: true,
   show_data_tab: true,
   show_performance_reports: true,
+  show_music_player: false,
   hero_images: [],
   hero_focal_points: [],
+  music_tracks: [],
 };
 
 type FeatureItem = { key: string; label: string; description: string };
