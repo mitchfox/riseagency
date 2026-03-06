@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown, ChevronsUpDown, Check } from "lucide-react";
+import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown, ChevronsUpDown, Check, Video } from "lucide-react";
+import { VideoActionEditor } from "./VideoActionEditor";
 import { VisibilityStatusButton, VisibilityStatus } from "./VisibilityStatusButton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -1798,10 +1799,36 @@ export const CreatePerformanceReportDialog = ({
             />
           </div>
 
+          {/* Video Action Editor */}
+          <VideoActionEditor
+            open={videoEditorOpen}
+            onOpenChange={setVideoEditorOpen}
+            actions={actions}
+            updateAction={updateAction}
+            onSave={handleSave}
+            saving={loading}
+            allR90Ratings={allR90Ratings}
+            openR90Viewer={openSmartR90Viewer}
+            actionTypes={actionTypes}
+            actionTypeFrequencyMap={actionTypeFrequencyMap}
+            getDescriptionsForType={getDescriptionsForType}
+          />
+
           {/* Performance Actions */}
           <div>
-            <div className="mb-4">
+            <div className="mb-4 flex items-center gap-3">
               <Label className="text-base sm:text-lg font-semibold">Performance Actions *</Label>
+              {actions.some(a => a.video_url) && (
+                <Button
+                  onClick={() => setVideoEditorOpen(true)}
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-7 text-xs"
+                >
+                  <Video className="h-3.5 w-3.5" />
+                  Video Editor
+                </Button>
+              )}
             </div>
             
             {/* Action Stats Summary removed - now integrated into Additional Statistics section */}
