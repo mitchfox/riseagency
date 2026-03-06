@@ -181,6 +181,7 @@ export const PortalManagement = () => {
         ...data,
         hero_images: (data.hero_images as string[]) || [],
         hero_focal_points: (data.hero_focal_points as string[]) || [],
+        music_tracks: (data.music_tracks as any[] || []) as { url: string; name: string }[],
         // Ensure new columns have defaults
         show_aphorisms: data.show_aphorisms ?? true,
         show_quick_stats: data.show_quick_stats ?? true,
@@ -191,6 +192,7 @@ export const PortalManagement = () => {
         show_video_reports: data.show_video_reports ?? true,
         show_data_tab: data.show_data_tab ?? true,
         show_performance_reports: data.show_performance_reports ?? true,
+        show_music_player: data.show_music_player ?? false,
       } as PortalSettings);
     } else {
       setSettings({ player_id: playerId, ...DEFAULT_SETTINGS });
