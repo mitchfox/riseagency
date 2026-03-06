@@ -54,11 +54,18 @@ export const PortalMusicPlayer = ({ tracks, enabled }: PortalMusicPlayerProps) =
       setIsPlaying(true);
       setCurrentIndex(index % validTracks.length);
       flashHUD();
-    }).catch(() => {
-      // Track failed to load, mark it and try next
-      failedUrls.current.add(track.url);
-      if (validTracks.length > 1) {
-        playTrack((index + 1) % validTracks.length);
+    }).catch((err) => {
+      // Don't mark as failed for autoplay policy blocks (NotAllowedError)
+      // Only mark as failed for actual media errors
+      if (err?.name === 'NotAllowedError') {
+        // Autoplay blocked - just set index without playing
+        setCurrentIndex(index % validTracks.length);
+        setIsPlaying(false);
+      } else {
+        failedUrls.current.add(track.url);
+        if (validTracks.length > 1) {
+          playTrack((index + 1) % validTracks.length);
+        }
       }
     });
   }, [validTracks, flashHUD]);
