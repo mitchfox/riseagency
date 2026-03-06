@@ -1727,6 +1727,7 @@ export const CreatePerformanceReportDialog = ({
                   setFixtureStats(updatedFixture);
                 }}
                 minutesPlayed={parseInt(minutesPlayed) || 0}
+                actions={actions}
               />
             </CollapsibleContent>
           </Collapsible>
