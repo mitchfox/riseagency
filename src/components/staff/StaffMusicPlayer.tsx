@@ -109,20 +109,24 @@ export const StaffMusicPlayer = () => {
   }, [currentIndex, validTracks.length, playTrack]);
 
   const handlePlayPause = useCallback(() => {
-    if (!audioRef.current) return;
+    const audio = ensureAudio();
     if (isPlaying) {
-      audioRef.current.pause();
+      audio.pause();
       setIsPlaying(false);
     } else if (currentTrack) {
-      audioRef.current.volume = volume.current;
-      audioRef.current.play().then(() => {
+      audio.volume = volume.current;
+      if (!audio.src || audio.src !== currentTrack.url) {
+        audio.src = currentTrack.url;
+        audio.load();
+      }
+      audio.play().then(() => {
         setIsPlaying(true);
         flashHUD();
       }).catch(() => {});
     } else if (validTracks.length > 0) {
       playTrack(0);
     }
-  }, [isPlaying, currentTrack, flashHUD, validTracks.length, playTrack]);
+  }, [isPlaying, currentTrack, flashHUD, validTracks.length, playTrack, ensureAudio]);
 
   const handleEnded = useCallback(() => {
     if (validTracks.length > 1) handleSkip();
