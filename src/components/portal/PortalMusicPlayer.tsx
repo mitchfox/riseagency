@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Music, Pause, Play, SkipForward, Volume2, VolumeX } from "lucide-react";
+import { Pause, Play, SkipForward } from "lucide-react";
 
 interface MusicTrack {
   url: string;
@@ -12,34 +12,164 @@ interface PortalMusicPlayerProps {
   enabled: boolean;
 }
 
+/**
+ * NFSU2-inspired music player for the portal.
+ * - Autoplays on portal open (requires prior user gesture to unlock AudioContext)
+ * - Slides in a "Now Playing" HUD from the bottom-right when a new track starts
+ * - Fades music when portal videos play
+ * - Exposes header controls via a global event bus
+ */
 export const PortalMusicPlayer = ({ tracks, enabled }: PortalMusicPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [showWidget, setShowWidget] = useState(false);
+  const [showHUD, setShowHUD] = useState(false);
   const [fadedOut, setFadedOut] = useState(false);
-  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const volume = useRef(0.4);
+  const hudTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const volume = useRef(0.35);
+  const hasAutoPlayed = useRef(false);
+  const failedUrls = useRef<Set<string>>(new Set());
 
-  const currentTrack = tracks[currentIndex] || null;
+  const validTracks = tracks.filter(t => t.url && !failedUrls.current.has(t.url));
+  const currentTrack = validTracks[currentIndex % validTracks.length] || null;
 
-  // Listen for video/clip playback events to fade music out
+  // Flash the NFSU2 HUD
+  const flashHUD = useCallback(() => {
+    setShowHUD(true);
+    if (hudTimer.current) clearTimeout(hudTimer.current);
+    hudTimer.current = setTimeout(() => setShowHUD(false), 5000);
+  }, []);
+
+  // Play a specific track
+  const playTrack = useCallback((index: number) => {
+    if (!audioRef.current || validTracks.length === 0) return;
+    const track = validTracks[index % validTracks.length];
+    if (!track) return;
+
+    const audio = audioRef.current;
+    audio.src = track.url;
+    audio.volume = volume.current;
+    audio.load();
+    audio.play().then(() => {
+      setIsPlaying(true);
+      setCurrentIndex(index % validTracks.length);
+      flashHUD();
+    }).catch(() => {
+      // Track failed to load, mark it and try next
+      failedUrls.current.add(track.url);
+      if (validTracks.length > 1) {
+        playTrack((index + 1) % validTracks.length);
+      }
+    });
+  }, [validTracks, flashHUD]);
+
+  // Skip to next
+  const handleSkip = useCallback(() => {
+    if (validTracks.length === 0) return;
+    const next = (currentIndex + 1) % validTracks.length;
+    playTrack(next);
+  }, [currentIndex, validTracks.length, playTrack]);
+
+  // Toggle play/pause
+  const handlePlayPause = useCallback(() => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else if (currentTrack) {
+      audioRef.current.volume = volume.current;
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+        flashHUD();
+      }).catch(() => {});
+    }
+  }, [isPlaying, currentTrack, flashHUD]);
+
+  // Auto-advance on track end
+  const handleEnded = useCallback(() => {
+    if (validTracks.length > 1) {
+      handleSkip();
+    } else if (validTracks.length === 1) {
+      // Replay single track
+      playTrack(0);
+    }
+  }, [validTracks.length, handleSkip, playTrack]);
+
+  // Handle load errors
+  const handleError = useCallback(() => {
+    if (currentTrack) {
+      failedUrls.current.add(currentTrack.url);
+      if (validTracks.length > 1) {
+        handleSkip();
+      } else {
+        setIsPlaying(false);
+      }
+    }
+  }, [currentTrack, validTracks.length, handleSkip]);
+
+  // Autoplay on portal open
+  useEffect(() => {
+    if (!enabled || validTracks.length === 0 || hasAutoPlayed.current) return;
+    hasAutoPlayed.current = true;
+
+    // Create audio element
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.preload = "auto";
+    }
+
+    // Small delay to let portal render, then autoplay
+    const timer = setTimeout(() => {
+      playTrack(0);
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [enabled, validTracks.length, playTrack]);
+
+  // Expose controls globally for header buttons
+  useEffect(() => {
+    const handleGlobalPlay = () => handlePlayPause();
+    const handleGlobalSkip = () => handleSkip();
+
+    window.addEventListener("portal-music-toggle", handleGlobalPlay);
+    window.addEventListener("portal-music-skip", handleGlobalSkip);
+
+    // Broadcast state for header
+    const broadcastState = () => {
+      window.dispatchEvent(new CustomEvent("portal-music-state", {
+        detail: { isPlaying, trackName: currentTrack?.name || "", enabled: enabled && validTracks.length > 0 }
+      }));
+    };
+    broadcastState();
+
+    return () => {
+      window.removeEventListener("portal-music-toggle", handleGlobalPlay);
+      window.removeEventListener("portal-music-skip", handleGlobalSkip);
+    };
+  }, [handlePlayPause, handleSkip, isPlaying, currentTrack, enabled, validTracks.length]);
+
+  // Broadcast state changes
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("portal-music-state", {
+      detail: { isPlaying, trackName: currentTrack?.name || "", enabled: enabled && validTracks.length > 0 }
+    }));
+  }, [isPlaying, currentTrack, enabled, validTracks.length]);
+
+  // Video fade logic
   useEffect(() => {
     if (!enabled) return;
 
     const handleVideoPlay = () => {
       setFadedOut(true);
-      if (audioRef.current) {
-        // Fade volume down
+      if (audioRef.current && isPlaying) {
         const fade = setInterval(() => {
           if (audioRef.current && audioRef.current.volume > 0.02) {
-            audioRef.current.volume = Math.max(0, audioRef.current.volume - 0.05);
+            audioRef.current.volume = Math.max(0, audioRef.current.volume - 0.04);
           } else {
             clearInterval(fade);
             audioRef.current?.pause();
           }
-        }, 50);
+        }, 40);
       }
     };
 
@@ -48,37 +178,34 @@ export const PortalMusicPlayer = ({ tracks, enabled }: PortalMusicPlayerProps) =
       if (audioRef.current && isPlaying) {
         audioRef.current.volume = 0;
         audioRef.current.play().catch(() => {});
-        // Fade volume back up
         const fade = setInterval(() => {
           if (audioRef.current && audioRef.current.volume < volume.current - 0.02) {
-            audioRef.current.volume = Math.min(volume.current, audioRef.current.volume + 0.05);
+            audioRef.current.volume = Math.min(volume.current, audioRef.current.volume + 0.04);
           } else {
             if (audioRef.current) audioRef.current.volume = volume.current;
             clearInterval(fade);
           }
-        }, 50);
+        }, 40);
       }
     };
 
-    // Listen on all video elements
     const observer = new MutationObserver(() => {
       document.querySelectorAll("video").forEach((v) => {
-        if (!(v as any).__musicListener) {
+        if (!(v as any).__musicFade) {
           v.addEventListener("play", handleVideoPlay);
           v.addEventListener("pause", handleVideoPause);
           v.addEventListener("ended", handleVideoPause);
-          (v as any).__musicListener = true;
+          (v as any).__musicFade = true;
         }
       });
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
-    // Attach to existing videos
     document.querySelectorAll("video").forEach((v) => {
       v.addEventListener("play", handleVideoPlay);
       v.addEventListener("pause", handleVideoPause);
       v.addEventListener("ended", handleVideoPause);
-      (v as any).__musicListener = true;
+      (v as any).__musicFade = true;
     });
 
     return () => {
@@ -91,184 +218,125 @@ export const PortalMusicPlayer = ({ tracks, enabled }: PortalMusicPlayerProps) =
     };
   }, [enabled, isPlaying]);
 
-  const showAndHide = useCallback(() => {
-    setShowWidget(true);
-    if (hideTimer.current) clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => setShowWidget(false), 4000);
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      if (hudTimer.current) clearTimeout(hudTimer.current);
+    };
   }, []);
 
-  const handlePlayPause = () => {
-    if (!audioRef.current || !currentTrack) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.volume = volume.current;
-      audioRef.current.play().catch(() => {});
-      setIsPlaying(true);
-      showAndHide();
-    }
-  };
-
-  const handleSkip = () => {
-    if (tracks.length === 0) return;
-    const next = (currentIndex + 1) % tracks.length;
-    setCurrentIndex(next);
-    if (audioRef.current) {
-      audioRef.current.src = tracks[next].url;
-      if (isPlaying) {
-        audioRef.current.volume = volume.current;
-        audioRef.current.play().catch(() => {});
-        showAndHide();
-      }
-    }
-  };
-
-  const handleEnded = () => {
-    if (tracks.length > 1) {
-      handleSkip();
-    } else {
-      setIsPlaying(false);
-    }
-  };
-
-  const toggleMute = () => {
-    if (audioRef.current) {
-      audioRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  if (!enabled || tracks.length === 0) return null;
+  if (!enabled || validTracks.length === 0) return null;
 
   return (
     <>
+      {/* Hidden audio with event handlers */}
       <audio
         ref={audioRef}
-        src={currentTrack?.url}
         onEnded={handleEnded}
+        onError={handleError}
         preload="auto"
+        style={{ display: "none" }}
       />
 
-      {/* Floating trigger button - always visible bottom-right */}
-      <motion.button
-        onClick={() => {
-          if (!isPlaying) handlePlayPause();
-          else setShowWidget((v) => !v);
-        }}
-        className="fixed bottom-20 right-4 z-50 w-10 h-10 rounded-full flex items-center justify-center shadow-lg border border-border/50 backdrop-blur-md"
-        style={{
-          background: "linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%)",
-        }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: fadedOut ? 0.3 : 1, scale: 1 }}
-        transition={{ delay: 1, duration: 0.4 }}
-      >
-        <Music className="h-4 w-4 text-primary" />
-        {isPlaying && !fadedOut && (
-          <motion.span
-            className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary"
-            animate={{ scale: [1, 1.3, 1] }}
-            transition={{ repeat: Infinity, duration: 1.5 }}
-          />
-        )}
-      </motion.button>
-
-      {/* NFS Underground 2 style "Now Playing" widget */}
+      {/* ═══ NFSU2 "Now Playing" HUD ═══ */}
       <AnimatePresence>
-        {showWidget && !fadedOut && (
+        {showHUD && !fadedOut && (
           <motion.div
-            initial={{ x: 300, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 300, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed bottom-32 right-4 z-50 w-64 overflow-hidden rounded-xl border border-primary/20 shadow-2xl backdrop-blur-xl"
-            style={{
-              background: "linear-gradient(145deg, hsl(var(--card) / 0.95) 0%, hsl(var(--background) / 0.9) 100%)",
-              boxShadow: "0 0 30px hsl(var(--primary) / 0.15), inset 0 1px 0 hsl(var(--primary) / 0.1)",
-            }}
+            initial={{ x: 400, opacity: 0, skewX: -2 }}
+            animate={{ x: 0, opacity: 1, skewX: 0 }}
+            exit={{ x: 400, opacity: 0, skewX: -2 }}
+            transition={{ type: "spring", stiffness: 200, damping: 25 }}
+            className="fixed bottom-24 md:bottom-8 right-0 z-[60]"
           >
-            {/* Top accent bar */}
-            <div
-              className="h-0.5 w-full"
-              style={{
-                background: "linear-gradient(90deg, transparent, hsl(var(--primary)), transparent)",
-              }}
-            />
+            {/* Main HUD container - NFSU2 angular style */}
+            <div className="relative w-80 overflow-hidden">
+              {/* Diagonal cut background */}
+              <div
+                className="relative overflow-hidden"
+                style={{
+                  clipPath: "polygon(8% 0%, 100% 0%, 100% 100%, 0% 100%)",
+                }}
+              >
+                {/* Dark backdrop with blue/gold gradient accent */}
+                <div
+                  className="px-8 py-4"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(var(--background) / 0.97) 0%, hsl(220 20% 8% / 0.98) 60%, hsl(220 30% 12% / 0.95) 100%)",
+                  }}
+                >
+                  {/* Top accent line - electric blue to gold */}
+                  <div className="absolute top-0 left-0 right-0 h-[2px]"
+                    style={{
+                      background: "linear-gradient(90deg, transparent 5%, hsl(200 100% 50%) 30%, hsl(43 49% 61%) 70%, transparent 95%)",
+                    }}
+                  />
 
-            <div className="p-3">
-              {/* Now Playing label */}
-              <div className="flex items-center gap-1.5 mb-2">
-                <div className="flex gap-[2px]">
-                  {[0, 1, 2, 3].map((i) => (
-                    <motion.div
-                      key={i}
-                      className="w-[3px] rounded-full bg-primary"
-                      animate={
-                        isPlaying
-                          ? { height: ["4px", `${8 + i * 3}px`, "4px"] }
-                          : { height: "4px" }
-                      }
-                      transition={{
-                        repeat: Infinity,
-                        duration: 0.6 + i * 0.15,
-                        ease: "easeInOut",
-                      }}
-                    />
-                  ))}
+                  {/* "NOW PLAYING" label */}
+                  <div className="flex items-center gap-2 mb-1.5">
+                    {/* Animated equaliser bars */}
+                    <div className="flex gap-[2px] items-end h-4">
+                      {[0, 1, 2, 3, 4].map((i) => (
+                        <motion.div
+                          key={i}
+                          className="w-[2px] rounded-sm"
+                          style={{ backgroundColor: "hsl(43 49% 61%)" }}
+                          animate={
+                            isPlaying
+                              ? { height: ["3px", `${6 + i * 3}px`, "3px"] }
+                              : { height: "3px" }
+                          }
+                          transition={{
+                            repeat: Infinity,
+                            duration: 0.5 + i * 0.1,
+                            ease: "easeInOut",
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <span
+                      className="text-[10px] font-bebas tracking-[0.3em] uppercase"
+                      style={{ color: "hsl(43 49% 61%)" }}
+                    >
+                      Now Playing
+                    </span>
+                  </div>
+
+                  {/* Track name - large, bold */}
+                  <p className="text-sm font-bold text-foreground truncate tracking-wide">
+                    {currentTrack?.name || "Unknown Track"}
+                  </p>
+
+                  {/* Subtle progress shimmer */}
+                  <motion.div
+                    className="h-[1px] mt-2 rounded-full"
+                    style={{ backgroundColor: "hsl(43 49% 61% / 0.3)" }}
+                    initial={{ scaleX: 0, originX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 4.5, ease: "linear" }}
+                  />
+
+                  {/* Bottom accent */}
+                  <div className="absolute bottom-0 left-0 right-0 h-[1px]"
+                    style={{
+                      background: "linear-gradient(90deg, transparent 5%, hsl(43 49% 61% / 0.4) 50%, transparent 95%)",
+                    }}
+                  />
                 </div>
-                <span className="text-[10px] uppercase tracking-widest text-primary/70 font-semibold">
-                  Now Playing
-                </span>
               </div>
 
-              {/* Track name */}
-              <p className="text-sm font-semibold text-foreground truncate mb-3">
-                {currentTrack?.name || "Unknown Track"}
-              </p>
-
-              {/* Controls */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={handlePlayPause}
-                  className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 hover:bg-primary/20 transition-colors"
-                >
-                  {isPlaying ? (
-                    <Pause className="h-3.5 w-3.5 text-primary" />
-                  ) : (
-                    <Play className="h-3.5 w-3.5 text-primary ml-0.5" />
-                  )}
-                </button>
-                {tracks.length > 1 && (
-                  <button
-                    onClick={handleSkip}
-                    className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 hover:bg-primary/20 transition-colors"
-                  >
-                    <SkipForward className="h-3.5 w-3.5 text-primary" />
-                  </button>
-                )}
-                <button
-                  onClick={toggleMute}
-                  className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 hover:bg-primary/20 transition-colors ml-auto"
-                >
-                  {isMuted ? (
-                    <VolumeX className="h-3.5 w-3.5 text-muted-foreground" />
-                  ) : (
-                    <Volume2 className="h-3.5 w-3.5 text-primary" />
-                  )}
-                </button>
-              </div>
+              {/* Angular side accent */}
+              <div
+                className="absolute top-0 left-0 w-[3px] h-full"
+                style={{
+                  background: "linear-gradient(180deg, hsl(200 100% 50%), hsl(43 49% 61%))",
+                  clipPath: "polygon(0 5%, 100% 0%, 100% 100%, 0 95%)",
+                }}
+              />
             </div>
-
-            {/* Bottom accent */}
-            <div
-              className="h-0.5 w-full"
-              style={{
-                background: "linear-gradient(90deg, transparent, hsl(var(--primary) / 0.5), transparent)",
-              }}
-            />
           </motion.div>
         )}
       </AnimatePresence>
