@@ -1334,6 +1334,24 @@ const Dashboard = () => {
     }
   };
 
+  const markWelcomeSeen = async (playerId: string) => {
+    try {
+      const { error } = await supabase
+        .from("player_portal_settings")
+        .upsert({ player_id: playerId, has_seen_welcome_modal: true }, { onConflict: "player_id" });
+
+      if (error) throw error;
+
+      setPortalSettings((prev: any) => ({
+        ...(prev || {}),
+        player_id: playerId,
+        has_seen_welcome_modal: true,
+      }));
+    } catch (error) {
+      console.error("Error marking welcome modal as seen:", error);
+    }
+  };
+
   const fetchInvoices = async (email: string | undefined) => {
     if (!email) return;
     
@@ -1500,12 +1518,14 @@ const Dashboard = () => {
           playerName={playerData.name || ""}
           playerId={playerData.id}
           portalLanguage={playerData.portal_language}
+          hasSeenWelcome={portalSettings?.has_seen_welcome_modal === true}
           hasAnalyses={analyses.length > 0}
           hasPerformanceReports={analyses.some((a: any) => a.r90_score != null)}
           onNavigate={(tab, subTab) => {
             setActiveTab(tab);
             if (subTab) setActiveAnalysisTab(subTab);
           }}
+          onMarkSeen={() => markWelcomeSeen(playerData.id)}
         />
       )}
       {/* Header with Logo */}

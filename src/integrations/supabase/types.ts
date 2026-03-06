@@ -3044,6 +3044,7 @@ export type Database = {
       player_portal_settings: {
         Row: {
           created_at: string
+          has_seen_welcome_modal: boolean
           hero_focal_points: Json | null
           hero_images: Json | null
           id: string
@@ -3077,6 +3078,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          has_seen_welcome_modal?: boolean
           hero_focal_points?: Json | null
           hero_images?: Json | null
           id?: string
@@ -3110,6 +3112,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          has_seen_welcome_modal?: boolean
           hero_focal_points?: Json | null
           hero_images?: Json | null
           id?: string

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Video, Dumbbell, ClipboardList, TrendingUp, ArrowRight } from "lucide-react";
@@ -8,9 +8,11 @@ interface PortalWelcomeModalProps {
   playerName: string;
   playerId: string;
   portalLanguage?: string | null;
+  hasSeenWelcome?: boolean;
   hasAnalyses: boolean;
   hasPerformanceReports: boolean;
   onNavigate: (tab: string, subTab?: string) => void;
+  onMarkSeen?: () => Promise<void> | void;
 }
 
 const getWelcomeCopy = (lang?: string | null) => {
@@ -109,28 +111,39 @@ export const PortalWelcomeModal = ({
   playerName,
   playerId,
   portalLanguage,
+  hasSeenWelcome = false,
   hasAnalyses,
   hasPerformanceReports,
   onNavigate,
+  onMarkSeen,
 }: PortalWelcomeModalProps) => {
   const [open, setOpen] = useState(false);
+  const hasMarkedRef = useRef(false);
 
   useEffect(() => {
-    const key = `portal_welcome_seen_${playerId}`;
-    const seen = localStorage.getItem(key);
-    if (!seen) {
-      const timer = setTimeout(() => setOpen(true), 800);
-      return () => clearTimeout(timer);
-    }
+    hasMarkedRef.current = false;
   }, [playerId]);
 
-  const handleDismiss = () => {
-    localStorage.setItem(`portal_welcome_seen_${playerId}`, "true");
+  useEffect(() => {
+    if (hasSeenWelcome) {
+      setOpen(false);
+      return;
+    }
+
+    const timer = setTimeout(() => setOpen(true), 800);
+    return () => clearTimeout(timer);
+  }, [playerId, hasSeenWelcome]);
+
+  const handleDismiss = async () => {
+    if (!hasMarkedRef.current) {
+      hasMarkedRef.current = true;
+      await onMarkSeen?.();
+    }
     setOpen(false);
   };
 
   const handleNavigate = (tab: string, subTab?: string) => {
-    handleDismiss();
+    void handleDismiss();
     onNavigate(tab, subTab);
   };
 
