@@ -121,6 +121,10 @@ export const PortalWelcomeModal = ({
   const hasMarkedRef = useRef(false);
 
   useEffect(() => {
+    hasMarkedRef.current = false;
+  }, [playerId]);
+
+  useEffect(() => {
     if (hasSeenWelcome) {
       setOpen(false);
       return;
