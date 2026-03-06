@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Responsi
 import { User, Calendar, MapPin, Trophy, Pencil, Check, X } from "lucide-react";
 import { METRIC_CATEGORIES, ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
 import { supabase } from "@/integrations/supabase/client";
+import { PitchHeatmap } from "@/components/report/PitchHeatmap";
+import { ZonePerformance } from "@/components/report/ZonePerformance";
 import { toast } from "sonner";
 
 interface Analysis {
@@ -67,6 +69,8 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
   const [activeStatCategory, setActiveStatCategory] = useState("Shooting");
   const [editingCell, setEditingCell] = useState<{ analysisId: string; metricKey: string } | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [seasonZoneActions, setSeasonZoneActions] = useState<Array<{ action_number: number; action_score: number; zone?: number | null; zone_details?: { zone: number; sub?: number }[] | null }>>([]);
+  const [seasonZoneLoading, setSeasonZoneLoading] = useState(false);
 
   const toggleMatch = (id: string) => {
     setSelectedIds(prev => {
@@ -130,6 +134,59 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
       .filter(sd => seasonAverages[sd.key] != null)
       .map(sd => ({ metric: sd.label, value: seasonAverages[sd.key] }));
   }, [seasonAverages]);
+
+  const last40AnalysisIds = useMemo(() => {
+    return [...analyses]
+      .sort((a, b) => b.analysis_date.localeCompare(a.analysis_date))
+      .slice(0, 40)
+      .map(a => a.id);
+  }, [analyses]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchSeasonZoneActions = async () => {
+      if (last40AnalysisIds.length === 0) {
+        if (isMounted) setSeasonZoneActions([]);
+        return;
+      }
+
+      setSeasonZoneLoading(true);
+
+      const { data, error } = await supabase
+        .from("performance_report_actions")
+        .select("action_score, zone, zone_details")
+        .in("analysis_id", last40AnalysisIds);
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.error("Error fetching season zone data:", error);
+        setSeasonZoneActions([]);
+        setSeasonZoneLoading(false);
+        return;
+      }
+
+      const parsedActions = (data || [])
+        .filter((a: any) => typeof a?.action_score === "number")
+        .filter((a: any) => a?.zone != null || (Array.isArray(a?.zone_details) && a.zone_details.length > 0))
+        .map((a: any, index: number) => ({
+          action_number: index + 1,
+          action_score: Number(a.action_score),
+          zone: a.zone ?? null,
+          zone_details: Array.isArray(a.zone_details) ? a.zone_details : null,
+        }));
+
+      setSeasonZoneActions(parsedActions);
+      setSeasonZoneLoading(false);
+    };
+
+    void fetchSeasonZoneActions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [last40AnalysisIds]);
 
   const handleStartEdit = (analysisId: string, metricKey: string, currentValue: number | null) => {
     setEditingCell({ analysisId, metricKey });
@@ -329,6 +386,29 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
               ))}
             </TableBody>
           </Table>
+        </div>
+
+        {/* Season zone aggregate (last 40 reports) */}
+        <div className="bg-card border rounded-lg p-4 space-y-4">
+          <div>
+            <h4 className="font-semibold">Season Heat Map & Zone Performance</h4>
+            <p className="text-xs text-muted-foreground">Aggregated from the latest 40 reports.</p>
+          </div>
+
+          {seasonZoneLoading ? (
+            <p className="text-sm text-muted-foreground">Loading zone data…</p>
+          ) : seasonZoneActions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No zone data available in the latest 40 reports.</p>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="rounded-lg border p-3">
+                <PitchHeatmap actions={seasonZoneActions} />
+              </div>
+              <div className="rounded-lg border p-3">
+                <ZonePerformance actions={seasonZoneActions} />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Visual Stats */}
