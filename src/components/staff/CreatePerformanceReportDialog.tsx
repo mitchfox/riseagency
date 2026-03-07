@@ -546,6 +546,11 @@ export const CreatePerformanceReportDialog = ({
   useEffect(() => {
     // Guard: skip during initial edit-mode load to prevent overwriting saved stats
     if (isEditMode && !initialLoadDoneRef.current) return;
+    // Skip the first sync after edit-mode load completes (actions were just populated from DB)
+    if (skipNextActionSyncRef.current) {
+      skipNextActionSyncRef.current = false;
+      return;
+    }
 
     const actionRecordedStats = aggregateRecordedStats(actions);
     const minutes = parseInt(minutesPlayed) || 0;
@@ -1036,6 +1041,7 @@ export const CreatePerformanceReportDialog = ({
             zone: action.zone || null,
             zone_details: (action as any).zone_details || null,
           }));
+        skipNextActionSyncRef.current = true;
         setActions(sortActionsChronologically(mappedActions));
         
         // R90 scores are now fetched once and filtered locally - no per-action fetching needed
