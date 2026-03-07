@@ -1057,6 +1057,7 @@ export const CreatePerformanceReportDialog = ({
 
   const resetForm = () => {
     initialLoadDoneRef.current = false;
+    skipNextActionSyncRef.current = false;
     setR90Score("");
     setMinutesPlayed("");
     setOpponent("");
