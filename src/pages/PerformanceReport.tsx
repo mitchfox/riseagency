@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, MessageSquareText, Filter, X, ImageIcon, MapPin } from "lucide-react";
+import { Download, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, MessageSquareText, Filter, X, ImageIcon, MapPin, Grid3X3 } from "lucide-react";
 import { toast } from "sonner";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { SEO } from "@/components/SEO";
@@ -17,6 +17,7 @@ import { STAT_TYPE_CONFIGS, StatTypeConfig } from "@/components/staff/ActionStat
 import { R90FlowChart } from "@/components/report/R90FlowChart";
 import { ActionHeatmap } from "@/components/report/ActionHeatmap";
 import { PitchHeatmap } from "@/components/report/PitchHeatmap";
+import { ZonePerformance } from "@/components/report/ZonePerformance";
 import { ChanceCreationFlow } from "@/components/report/ChanceCreationFlow";
 import { RankedActionsPlayer } from "@/components/report/RankedActionsPlayer";
 import { toTitleCase } from "@/lib/titleCase";
@@ -80,6 +81,7 @@ const PerformanceReport = () => {
   const [showChanceCreation, setShowChanceCreation] = useState(false);
   const [showRankedPlayer, setShowRankedPlayer] = useState(false);
   const [showPitchHeatmap, setShowPitchHeatmap] = useState(false);
+  const [showZonePerformance, setShowZonePerformance] = useState(false);
   const [rankedMode, setRankedMode] = useState<"chronological" | "ranked" | "noted">("chronological");
   const [showClippedActions, setShowClippedActions] = useState(false);
   const [showFilteredPlayer, setShowFilteredPlayer] = useState(false);
@@ -498,9 +500,14 @@ const PerformanceReport = () => {
                 <BarChart3 className="h-3.5 w-3.5 mr-1.5" />Period Grade Map
               </Button>
               {actions.some(a => a.zone || (a.zone_details && a.zone_details.length > 0)) && (
-                <Button variant={showPitchHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowPitchHeatmap(!showPitchHeatmap); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }} className="text-xs">
-                  <MapPin className="h-3.5 w-3.5 mr-1.5" />Pitch Heatmap
-                </Button>
+                <>
+                  <Button variant={showPitchHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowPitchHeatmap(!showPitchHeatmap); setShowZonePerformance(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }} className="text-xs">
+                    <MapPin className="h-3.5 w-3.5 mr-1.5" />Pitch Heatmap
+                  </Button>
+                  <Button variant={showZonePerformance ? "default" : "outline"} size="sm" onClick={() => { setShowZonePerformance(!showZonePerformance); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }} className="text-xs">
+                    <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />Zone Performance
+                  </Button>
+                </>
               )}
               {analysis.striker_stats && ['crossing_movement_xC', 'movement_in_behind_xC', 'movement_down_side_xC', 'triple_threat_xC', 'movement_to_feet_xC'].some(k => (analysis.striker_stats as any)?.[k] > 0) && (
                 <Button variant="outline" size="sm" onClick={() => { setShowChanceCreation(!showChanceCreation); setShowR90Flow(false); setShowHeatmap(false); }} className="text-xs">
@@ -538,6 +545,11 @@ const PerformanceReport = () => {
           {/* Pitch Heatmap */}
           {showPitchHeatmap && (
             <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><PitchHeatmap actions={actions} /></CardContent></Card>
+          )}
+
+          {/* Zone Performance */}
+          {showZonePerformance && (
+            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ZonePerformance actions={actions} /></CardContent></Card>
           )}
 
           {/* Chance Creation Flow */}
