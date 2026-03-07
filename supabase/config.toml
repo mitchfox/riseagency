@@ -117,3 +117,5 @@ verify_jwt = true
 [functions.process-video-frames]
 verify_jwt = true
 
+[functions.scrape-transfermarkt]
+verify_jwt = false

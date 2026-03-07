@@ -207,6 +207,7 @@ export const CreatePerformanceReportDialog = ({
   const [placeholderMinutes, setPlaceholderMinutes] = useState("");
   const initialVisibilityRef = useRef<VisibilityStatus | null>(null);
   const initialLoadDoneRef = useRef(false);
+  const skipNextActionSyncRef = useRef(false);
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -448,6 +449,7 @@ export const CreatePerformanceReportDialog = ({
         // Create mode
         setIsEditMode(false);
         resetForm();
+        fetchPreviousReportStats();
       }
       fetchFixtures();
       fetchPlayerClub();
@@ -545,6 +547,11 @@ export const CreatePerformanceReportDialog = ({
   useEffect(() => {
     // Guard: skip during initial edit-mode load to prevent overwriting saved stats
     if (isEditMode && !initialLoadDoneRef.current) return;
+    // Skip the first sync after edit-mode load completes (actions were just populated from DB)
+    if (skipNextActionSyncRef.current) {
+      skipNextActionSyncRef.current = false;
+      return;
+    }
 
     const actionRecordedStats = aggregateRecordedStats(actions);
     const minutes = parseInt(minutesPlayed) || 0;
@@ -670,6 +677,101 @@ export const CreatePerformanceReportDialog = ({
       }
     } catch (error: any) {
       console.error("Error fetching player club:", error);
+    }
+  };
+
+  // Fetch previous report's stat types to pre-populate in create mode
+  const fetchPreviousReportStats = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("player_analysis")
+        .select("striker_stats")
+        .eq("player_id", playerId)
+        .not("striker_stats", "is", null)
+        .order("analysis_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error || !data?.striker_stats) return;
+
+      const stats = data.striker_stats as Record<string, any>;
+      const loadedStats: UnifiedStat[] = [];
+      const processedKeys = new Set<string>();
+
+      // Find paired success/total stats
+      const pairedStats = new Map<string, { successful?: number; total?: number }>();
+      Object.keys(stats).forEach(key => {
+        if (key === 'stats_order') return;
+        if (key.endsWith('_per90')) return;
+        if (key.endsWith('_successful')) {
+          const baseKey = key.replace('_successful', '');
+          if (!pairedStats.has(baseKey)) pairedStats.set(baseKey, {});
+          pairedStats.get(baseKey)!.successful = 0;
+        } else if (key.endsWith('_total')) {
+          const baseKey = key.replace('_total', '');
+          if (!pairedStats.has(baseKey)) pairedStats.set(baseKey, {});
+          pairedStats.get(baseKey)!.total = 0;
+        }
+      });
+
+      // Add paired stats as success_fail type (empty values)
+      pairedStats.forEach((_, baseKey) => {
+        processedKeys.add(baseKey);
+        processedKeys.add(`${baseKey}_successful`);
+        processedKeys.add(`${baseKey}_total`);
+
+        const config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) =>
+          c.key === baseKey || c.key === baseKey.toLowerCase().replace(/\s+/g, '_')
+        );
+        const displayName = config?.name || baseKey
+          .split('_')
+          .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ');
+
+        loadedStats.push({
+          key: config?.key || baseKey,
+          displayName,
+          type: 'success_fail',
+          successful: 0,
+          total: 0,
+          isFromActions: false,
+        });
+      });
+
+      // Add remaining single stats (empty values)
+      Object.keys(stats).forEach(key => {
+        if (processedKeys.has(key) || key === 'stats_order') return;
+        if (key.endsWith('_per90') || key.endsWith('_successful') || key.endsWith('_total')) return;
+
+        const value = stats[key];
+        if (typeof value !== 'number') return;
+
+        const config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) =>
+          c.key === key || c.key === key.toLowerCase().replace(/\s+/g, '_')
+        );
+        const displayName = config?.name || key
+          .split('_')
+          .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ');
+
+        const keyLower = key.toLowerCase();
+        const isScoreType = config?.mode === 'score' || ['xg', 'xa', 'xc', 'xgchain', 'ratio'].some(p => keyLower.includes(p));
+
+        loadedStats.push({
+          key: config?.key || key,
+          displayName,
+          type: isScoreType ? 'score' : 'count',
+          ...(isScoreType ? { score: 0 } : { count: 0 }),
+          isFromActions: false,
+        });
+      });
+
+      if (loadedStats.length > 0) {
+        setUnifiedStats(loadedStats);
+        setShowStrikerStats(true);
+      }
+    } catch (error) {
+      console.error("Error fetching previous report stats:", error);
     }
   };
 
@@ -1035,6 +1137,7 @@ export const CreatePerformanceReportDialog = ({
             zone: action.zone || null,
             zone_details: (action as any).zone_details || null,
           }));
+        skipNextActionSyncRef.current = true;
         setActions(sortActionsChronologically(mappedActions));
         
         // R90 scores are now fetched once and filtered locally - no per-action fetching needed
@@ -1050,6 +1153,7 @@ export const CreatePerformanceReportDialog = ({
 
   const resetForm = () => {
     initialLoadDoneRef.current = false;
+    skipNextActionSyncRef.current = false;
     setR90Score("");
     setMinutesPlayed("");
     setOpponent("");

@@ -1545,7 +1545,7 @@ const Dashboard = () => {
         />
       )}
       {/* Header with Logo */}
-      <header className="sticky top-0 bg-background/80 backdrop-blur-md border-b border-border z-50">
+      <header className="sticky top-0 bg-background/80 backdrop-blur-md border-b border-border z-50 pwa-safe-top">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center h-16">
             <img 

@@ -1061,7 +1061,7 @@ const Staff = () => {
       />
 
       {/* Header with Logo - always visible */}
-       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pwa-safe-top">
         <div className="flex items-center h-16 px-4 relative">
           {/* Centre logo — absolutely positioned, never moves */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
@@ -1401,7 +1401,7 @@ const Staff = () => {
         {/* Sidebar Collapse Toggle Button */}
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className={`fixed ${isMobile ? 'top-20' : 'top-20'} left-2 z-20 p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border shadow-lg hover:bg-background transition-all duration-300 ${
+          className={`fixed ${isMobile ? 'top-20' : 'top-20'} left-2 z-20 p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border shadow-lg hover:bg-background transition-all duration-300 pwa-toggle-top ${
             sidebarCollapsed ? 'opacity-50 hover:opacity-100' : ''
           }`}
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -1414,7 +1414,7 @@ const Staff = () => {
         </button>
 
         {/* Left Sidebar - Fixed */}
-        <div className={`fixed ${isMobile ? 'top-16' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 ${
+        <div className={`fixed ${isMobile ? 'top-16' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 pwa-sidebar-top ${
           sidebarCollapsed ? 'w-0 border-0 opacity-0 pointer-events-none' : 'w-14 md:w-24'
         }`}>
           {/* Pinned Sections */}
@@ -1580,7 +1580,7 @@ const Staff = () => {
         </div>
 
         {/* Main Content Area */}
-        <main className={`flex-1 overflow-y-auto scrollbar-thin relative z-10 transition-all duration-300 pt-20 ${
+        <main className={`flex-1 overflow-y-auto scrollbar-thin relative z-10 transition-all duration-300 pt-20 pwa-content-offset ${
           sidebarCollapsed ? 'ml-0' : 'ml-14 md:ml-24'
         } ${isMobile ? 'pb-[60px]' : ''}`}>
           {expandedSection ? (
