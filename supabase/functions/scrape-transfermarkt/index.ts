@@ -26,13 +26,27 @@ interface PlayerResult {
 
 const TM_API = 'https://tmapi-alpha.transfermarkt.technology';
 
-// Nationality ID to name mapping for filtering
-const NATIONALITY_MAP: Record<string, number> = {
-  '189': 189, '190': 190, '191': 191, '192': 192, '193': 193,
-  '50': 50, '157': 157, '40': 40, '75': 75, '122': 122,
-  '136': 136, '24': 24, '9': 9, '125': 125, '152': 152,
-  '54': 54, '31': 31, '68': 68, '185': 185, '32': 32,
-  '14': 14, '39': 39,
+// Nationality ID to name mapping
+const NATIONALITY_NAMES: Record<number, string> = {
+  189: 'England', 190: 'Scotland', 191: 'Wales', 192: 'Northern Ireland',
+  193: 'Republic of Ireland', 50: 'France', 157: 'Spain', 40: 'Germany',
+  75: 'Italy', 122: 'Netherlands', 136: 'Portugal', 24: 'Brazil',
+  9: 'Argentina', 125: 'Nigeria', 152: 'Senegal', 54: 'Ghana',
+  31: 'Cameroon', 68: 'Jamaica', 185: 'USA', 32: 'Canada',
+  14: 'Australia', 39: 'Belgium', 10: 'Armenia', 15: 'Austria',
+  22: 'Bosnia-Herzegovina', 25: 'Bulgaria', 34: 'Chile', 36: 'Colombia',
+  37: 'Costa Rica', 38: 'Croatia', 41: 'Czech Republic', 42: 'Denmark',
+  43: 'Ecuador', 44: 'Egypt', 46: 'Estonia', 48: 'Finland',
+  51: 'Gabon', 55: 'Greece', 57: 'Guinea', 59: 'Honduras',
+  60: 'Hungary', 62: 'Iceland', 63: 'Iran', 64: 'Iraq',
+  66: 'Ivory Coast', 67: 'Japan', 69: 'South Korea', 70: 'Kosovo',
+  72: 'Latvia', 76: 'Lithuania', 78: 'Luxembourg', 80: 'Mali',
+  84: 'Mexico', 86: 'Montenegro', 87: 'Morocco', 95: 'New Zealand',
+  100: 'Norway', 107: 'Paraguay', 108: 'Peru', 110: 'Poland',
+  113: 'DR Congo', 114: 'Romania', 115: 'Russia', 120: 'Serbia',
+  126: 'Slovakia', 127: 'Slovenia', 128: 'South Africa', 140: 'Sweden',
+  141: 'Switzerland', 160: 'Tunisia', 161: 'Turkey', 163: 'Ukraine',
+  170: 'Uruguay', 171: 'Uzbekistan', 172: 'Venezuela', 176: 'Zimbabwe',
 };
 
 // Position group mapping
