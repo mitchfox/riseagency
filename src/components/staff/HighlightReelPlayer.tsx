@@ -152,6 +152,8 @@ export const HighlightReelPlayer = ({ clips, projectName, isOpen, onClose }: Hig
               <ChevronRight className="w-6 h-6" />
             </Button>
           </div>
+          {/* Bottom safe spacer bar */}
+          <div className="w-full h-8 md:h-0 bg-background/90 shrink-0" />
         </div>
       </DialogContent>
     </Dialog>

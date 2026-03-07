@@ -2896,16 +2896,19 @@ export const CreatePerformanceReportDialog = ({
   if (inline) {
     return (
       <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
-        {/* X close button in top right corner - safe area aware */}
+        {/* Top safe spacer bar for mobile */}
+        <div className="w-full h-10 md:h-0 bg-background shrink-0" />
+
+        {/* X close button in top right corner */}
         <button 
           onClick={handleClose}
-          className="fixed top-[max(1rem,env(safe-area-inset-top))] right-4 z-50 p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+          className="fixed top-12 md:top-4 right-4 z-50 p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
           aria-label="Close"
         >
           <X className="w-5 h-5" />
         </button>
         
-        <div className="container max-w-6xl mx-auto pt-[max(4rem,calc(env(safe-area-inset-top)+3rem))] pb-[max(1.5rem,env(safe-area-inset-bottom))] px-4">
+        <div className="container max-w-6xl mx-auto pt-6 pb-10 md:pb-6 px-4">
           {/* Header with back button */}
           <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur z-10 py-3 md:py-4 border-b mb-6">
             <Button variant="ghost" onClick={handleClose} className="gap-2">
