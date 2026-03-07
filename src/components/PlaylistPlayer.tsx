@@ -300,8 +300,8 @@ export const PlaylistPlayer = ({
             </div>
           </div>
 
-          {/* Bottom Bar: Previous / Title / Remove / Next - safe area padding */}
-          <div className="bg-background/90 backdrop-blur-sm p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center justify-between gap-2 md:gap-4">
+          {/* Bottom Bar: Previous / Title / Remove / Next */}
+          <div className="bg-background/90 backdrop-blur-sm p-4 flex items-center justify-between gap-2 md:gap-4">
             <Button
               onClick={goToPrevious}
               disabled={currentIndex === 0}
@@ -350,6 +350,8 @@ export const PlaylistPlayer = ({
               <ChevronRight className="w-6 h-6" />
             </Button>
           </div>
+          {/* Bottom safe spacer bar */}
+          <div className="w-full h-8 md:h-0 bg-background/90 shrink-0" />
         </div>
       </DialogContent>
     </Dialog>
