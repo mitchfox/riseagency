@@ -547,6 +547,11 @@ const PerformanceReport = () => {
             <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><PitchHeatmap actions={actions} /></CardContent></Card>
           )}
 
+          {/* Zone Performance */}
+          {showZonePerformance && (
+            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ZonePerformance actions={actions} /></CardContent></Card>
+          )}
+
           {/* Chance Creation Flow */}
           {showChanceCreation && analysis.striker_stats && (
             <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ChanceCreationFlow strikerStats={analysis.striker_stats as Record<string, any>} /></CardContent></Card>
