@@ -285,7 +285,16 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
       case "performance_improvement": {
         const improvements = data?.improvements || [];
         const playerName = data?.player_name || "Player";
-        return improvements.length > 0 ? `${playerName}: ${improvements[0]}` : `${playerName} showed improvement`;
+        const opponent = data?.opponent || "";
+        const r90Current = data?.r90_current;
+        const r90Previous = data?.r90_previous;
+        const parts: string[] = [];
+        if (opponent) parts.push(`vs ${opponent}`);
+        if (r90Previous != null && r90Current != null) {
+          parts.push(`R90: ${Number(r90Previous).toFixed(2)} → ${Number(r90Current).toFixed(2)}`);
+        }
+        if (improvements.length > 1) parts.push(`+${improvements.length - (r90Current ? 1 : 0)} more`);
+        return `${playerName} ${parts.join(' · ')}`;
       }
       case "contract_signed":
         return data?.player_name ? `${data.player_name} signed a contract` : "New contract signed";
