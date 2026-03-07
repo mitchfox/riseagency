@@ -2896,18 +2896,18 @@ export const CreatePerformanceReportDialog = ({
   if (inline) {
     return (
       <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
-        {/* X close button in top right corner */}
+        {/* X close button in top right corner - safe area aware */}
         <button 
           onClick={handleClose}
-          className="fixed top-4 right-4 z-50 p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+          className="fixed top-[max(1rem,env(safe-area-inset-top))] right-4 z-50 p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
           aria-label="Close"
         >
           <X className="w-5 h-5" />
         </button>
         
-        <div className="container max-w-6xl mx-auto pt-16 pb-6 px-4">
+        <div className="container max-w-6xl mx-auto pt-[max(4rem,calc(env(safe-area-inset-top)+3rem))] pb-[max(1.5rem,env(safe-area-inset-bottom))] px-4">
           {/* Header with back button */}
-          <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur z-10 py-4 border-b mb-6">
+          <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur z-10 py-3 md:py-4 border-b mb-6">
             <Button variant="ghost" onClick={handleClose} className="gap-2">
               <ArrowLeft className="w-4 h-4" /> Back to Player
             </Button>
@@ -2949,7 +2949,7 @@ export const CreatePerformanceReportDialog = ({
             </div>
           </div>
 
-          <h1 className="text-2xl font-bold mb-6">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</h1>
+          <h1 className="text-lg md:text-2xl font-bold mb-6 truncate">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</h1>
           
           {mainContent}
         </div>

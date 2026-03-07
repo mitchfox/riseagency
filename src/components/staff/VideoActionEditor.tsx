@@ -110,12 +110,12 @@ export const VideoActionEditor = ({
       <DialogContent className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-black border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none [&>button.absolute]:hidden">
         <DialogTitle className="sr-only">Video Action Editor</DialogTitle>
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2 bg-black/90 border-b border-border/30 shrink-0">
-          <div className="flex items-center gap-3">
-            <span className="text-primary font-bold text-sm">CLIP EDIT</span>
-            <span className="text-xs text-white/60">
-              {safePos + 1} / {clippedIndices.length} clipped actions
+        {/* Header - with safe area top padding for mobile standalone */}
+        <div className="flex items-center justify-between px-4 py-2 bg-black/90 border-b border-border/30 shrink-0 pt-[max(0.5rem,env(safe-area-inset-top))]">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+            <span className="text-primary font-bold text-xs md:text-sm shrink-0">CLIP EDIT</span>
+            <span className="text-xs text-white/60 shrink-0">
+              {safePos + 1}/{clippedIndices.length}
             </span>
             <Popover>
               <PopoverTrigger asChild>
@@ -213,24 +213,24 @@ export const VideoActionEditor = ({
           </div>
         </div>
 
-        {/* Compact editing fields */}
-        <div className="bg-card border-t border-border/30 px-4 py-2.5 shrink-0">
-          <div className="space-y-2 max-w-5xl mx-auto">
-            {/* Row 1: Action #, Minute, Type, Score, R90 Search, R90 DB */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-bold text-primary shrink-0">
+        {/* Compact editing fields - with safe area bottom padding */}
+        <div className="bg-card border-t border-border/30 px-3 md:px-4 py-2 md:py-2.5 shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          <div className="space-y-1.5 md:space-y-2 max-w-5xl mx-auto">
+            {/* Row 1: Action #, Minute, Type, Score — stacks better on mobile */}
+            <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
+              <span className="text-xs md:text-sm font-bold text-primary shrink-0">
                 #{current.action_number}
               </span>
-              <div className="w-20">
+              <div className="w-16 md:w-20">
                 <Input
                   type="text"
                   value={current.minute}
                   onChange={(e) => updateAction(realIndex, "minute", e.target.value)}
                   placeholder="Min"
-                  className="h-8 text-sm"
+                  className="h-7 md:h-8 text-xs md:text-sm"
                 />
               </div>
-              <div className="relative flex-1 min-w-[140px] max-w-[200px]">
+              <div className="relative flex-1 min-w-[100px] md:min-w-[140px] max-w-[200px]">
                 <Input
                   value={current.action_type}
                   onChange={(e) => {
@@ -243,7 +243,7 @@ export const VideoActionEditor = ({
                     if (current.action_type) updateAction(realIndex, "action_type", canonicalActionType(current.action_type));
                   }}
                   placeholder="Action type"
-                  className="h-8 text-sm pr-7"
+                  className="h-7 md:h-8 text-xs md:text-sm pr-6"
                 />
                 {current.action_type && (
                   <button
@@ -258,7 +258,7 @@ export const VideoActionEditor = ({
                   </button>
                 )}
                 {typePopoverOpen && (
-                  <div className="absolute z-50 mt-1 w-64 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                  <div className="absolute z-50 mt-1 w-56 md:w-64 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
                     {actionTypes
                       .filter(type => !current.action_type || type.toLowerCase().includes(current.action_type.toLowerCase()))
                       .slice(0, 15)
@@ -266,52 +266,52 @@ export const VideoActionEditor = ({
                         <button
                           key={type}
                           type="button"
-                          className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-accent flex justify-between items-center"
+                          className="w-full text-left px-2 py-1.5 text-xs md:text-sm rounded hover:bg-accent flex justify-between items-center"
                           onMouseDown={(e) => {
                             e.preventDefault();
                             updateAction(realIndex, "action_type", type);
                             setTypePopoverOpen(false);
                           }}
                         >
-                          <span>{type}</span>
-                          <span className="text-xs text-muted-foreground">{actionTypeFrequencyMap[type] || 0}</span>
+                          <span className="truncate">{type}</span>
+                          <span className="text-xs text-muted-foreground ml-1">{actionTypeFrequencyMap[type] || 0}</span>
                         </button>
                       ))}
                   </div>
                 )}
               </div>
-              <div className="w-24">
+              <div className="w-20 md:w-24">
                 <Input
                   type="number"
                   step="0.00001"
                   value={current.action_score}
                   onChange={(e) => updateAction(realIndex, "action_score", e.target.value)}
                   placeholder="Score"
-                  className="h-8 text-sm border-[hsl(43,49%,61%)]/50 focus-visible:ring-[hsl(43,49%,61%)]/30"
+                  className="h-7 md:h-8 text-xs md:text-sm border-[hsl(43,49%,61%)]/50 focus-visible:ring-[hsl(43,49%,61%)]/30"
                 />
               </div>
-              <div className="flex items-center gap-1.5 ml-auto">
+              <div className="flex items-center gap-1 md:gap-1.5 ml-auto">
                 <Input
                   value={searchFilter}
                   onChange={(e) => setSearchFilter(e.target.value)}
-                  placeholder="Search R90..."
-                  className="h-8 text-xs w-36"
+                  placeholder="R90..."
+                  className="h-7 md:h-8 text-xs w-20 md:w-36"
                 />
                 <Button
                   onClick={() => openR90Viewer(realIndex)}
                   size="sm"
                   variant="ghost"
-                  className="h-8 text-xs shrink-0"
+                  className="h-7 md:h-8 text-xs shrink-0 px-2"
                 >
-                  <Search className="h-3.5 w-3.5 text-primary mr-1" />
-                  R90
+                  <Search className="h-3 w-3 md:h-3.5 md:w-3.5 text-primary" />
+                  <span className="hidden md:inline ml-1">R90</span>
                 </Button>
               </div>
             </div>
 
-            {/* Row 2: Description + Notes side by side */}
-            <div className="flex items-start gap-3">
-              <div className="relative flex-1">
+            {/* Row 2: Description + Notes — stack on mobile */}
+            <div className="flex flex-col md:flex-row items-start gap-1.5 md:gap-3">
+              <div className="relative w-full md:flex-1">
                 <Input
                   value={current.action_description}
                   onChange={(e) => {
@@ -325,7 +325,7 @@ export const VideoActionEditor = ({
                   }}
                   onBlur={() => setTimeout(() => setDescPopoverOpen(false), 200)}
                   placeholder="Description"
-                  className="h-8 text-sm"
+                  className="h-7 md:h-8 text-xs md:text-sm"
                 />
                 {descPopoverOpen && current.action_type && getDescriptionsForType(current.action_type).length > 0 && (
                   <div className="absolute z-50 mt-1 w-full max-h-40 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
@@ -349,12 +349,12 @@ export const VideoActionEditor = ({
                   </div>
                 )}
               </div>
-              <div className="flex-1">
+              <div className="w-full md:flex-1">
                 <Input
                   value={current.notes}
                   onChange={(e) => updateAction(realIndex, "notes", e.target.value)}
                   placeholder="Notes"
-                  className="h-8 text-sm"
+                  className="h-7 md:h-8 text-xs md:text-sm"
                 />
               </div>
             </div>
