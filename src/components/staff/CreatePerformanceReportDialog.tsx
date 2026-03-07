@@ -206,6 +206,7 @@ export const CreatePerformanceReportDialog = ({
   const [placeholderRawScore, setPlaceholderRawScore] = useState("");
   const [placeholderMinutes, setPlaceholderMinutes] = useState("");
   const initialVisibilityRef = useRef<VisibilityStatus | null>(null);
+  const initialLoadDoneRef = useRef(false);
 
   // Key stats
   const [r90Score, setR90Score] = useState("");
@@ -542,6 +543,9 @@ export const CreatePerformanceReportDialog = ({
 
   // Sync unified stats when actions change (from recorded stats)
   useEffect(() => {
+    // Guard: skip during initial edit-mode load to prevent overwriting saved stats
+    if (isEditMode && !initialLoadDoneRef.current) return;
+
     const actionRecordedStats = aggregateRecordedStats(actions);
     const minutes = parseInt(minutesPlayed) || 0;
     
@@ -1040,10 +1044,12 @@ export const CreatePerformanceReportDialog = ({
       toast.error("Failed to load performance report data");
     } finally {
       setLoadingData(false);
+      initialLoadDoneRef.current = true;
     }
   };
 
   const resetForm = () => {
+    initialLoadDoneRef.current = false;
     setR90Score("");
     setMinutesPlayed("");
     setOpponent("");
