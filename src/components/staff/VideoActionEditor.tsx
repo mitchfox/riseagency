@@ -110,8 +110,11 @@ export const VideoActionEditor = ({
       <DialogContent className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-black border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none [&>button.absolute]:hidden">
         <DialogTitle className="sr-only">Video Action Editor</DialogTitle>
 
-        {/* Header - with safe area top padding for mobile standalone */}
-        <div className="flex items-center justify-between px-4 py-2 bg-black/90 border-b border-border/30 shrink-0 pt-[max(0.5rem,env(safe-area-inset-top))]">
+        {/* Top safe spacer bar */}
+        <div className="w-full h-10 md:h-0 bg-black shrink-0" />
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-2 bg-black/90 border-b border-border/30 shrink-0">
           <div className="flex items-center gap-2 md:gap-3 min-w-0">
             <span className="text-primary font-bold text-xs md:text-sm shrink-0">CLIP EDIT</span>
             <span className="text-xs text-white/60 shrink-0">
