@@ -211,8 +211,11 @@ export const PlaylistPlayer = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] h-[90vh] p-0">
         <div ref={containerRef} className="relative w-full h-full bg-black flex flex-col">
-          {/* Top Bar with Position Number and Close - safe area padding */}
-          <div className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-4 pt-[max(1rem,env(safe-area-inset-top))] gap-4 pointer-events-none">
+          {/* Top safe spacer bar */}
+          <div className="w-full h-10 md:h-0 bg-black shrink-0" />
+
+          {/* Top Bar with Position Number and Close */}
+          <div className="absolute top-10 md:top-0 left-0 right-0 z-50 flex items-start justify-between p-4 gap-4 pointer-events-none">
             {/* Position Number - Top Left */}
             <div className="bg-background/95 backdrop-blur-sm rounded-lg px-4 md:px-6 py-2 md:py-3 shadow-xl border border-border/50 pointer-events-auto">
               <div className="text-3xl md:text-5xl font-bold text-foreground">

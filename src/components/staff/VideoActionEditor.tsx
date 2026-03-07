@@ -216,8 +216,8 @@ export const VideoActionEditor = ({
           </div>
         </div>
 
-        {/* Compact editing fields - with safe area bottom padding */}
-        <div className="bg-card border-t border-border/30 px-3 md:px-4 py-2 md:py-2.5 shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        {/* Compact editing fields */}
+        <div className="bg-card border-t border-border/30 px-3 md:px-4 py-2 md:py-2.5 shrink-0">
           <div className="space-y-1.5 md:space-y-2 max-w-5xl mx-auto">
             {/* Row 1: Action #, Minute, Type, Score — stacks better on mobile */}
             <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
@@ -402,6 +402,9 @@ export const VideoActionEditor = ({
             )}
           </div>
         </div>
+
+        {/* Bottom safe spacer bar */}
+        <div className="w-full h-8 md:h-0 bg-card shrink-0" />
       </DialogContent>
     </Dialog>
   );
