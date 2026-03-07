@@ -262,7 +262,7 @@ async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerR
     name: p.name,
     position: p.position,
     age: p.age.toString(),
-    nationality: '', // We have nationalityId but not name; could map if needed
+    nationality: NATIONALITY_NAMES[p.nationalityId] || '',
     club: clubNameCache.get(p.clubId) || p.clubId,
     marketValue: p.marketValue,
     contractUntil: p.contractUntil,
