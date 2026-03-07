@@ -775,7 +775,7 @@ export const CreatePerformanceReportDialog = ({
     }
   };
 
-
+  const fetchFixtures = async () => {
     console.log('fetchFixtures called for playerId:', playerId);
     try {
       const { data: playerFixtures, error: pfError } = await supabase
