@@ -207,6 +207,7 @@ export const CreatePerformanceReportDialog = ({
   const [placeholderMinutes, setPlaceholderMinutes] = useState("");
   const initialVisibilityRef = useRef<VisibilityStatus | null>(null);
   const initialLoadDoneRef = useRef(false);
+  const skipNextActionSyncRef = useRef(false);
 
   // Key stats
   const [r90Score, setR90Score] = useState("");

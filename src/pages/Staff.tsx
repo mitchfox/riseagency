@@ -1061,7 +1061,7 @@ const Staff = () => {
       />
 
       {/* Header with Logo - always visible */}
-       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pwa-safe-top">
         <div className="flex items-center h-16 px-4 relative">
           {/* Centre logo — absolutely positioned, never moves */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
