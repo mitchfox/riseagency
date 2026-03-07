@@ -411,6 +411,9 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
                         
                         {group.notifications.slice(0, 10).map((notification) => {
                           const isRead = notification.read_by?.includes(userId);
+                          const isImprovement = notification.event_type === 'performance_improvement';
+                          const improvementData = isImprovement ? notification.event_data : null;
+                          
                           return (
                             <div
                               key={notification.id}
@@ -423,9 +426,32 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
                                 <p className={`text-sm ${!isRead ? "font-medium" : ""}`}>
                                   {getNotificationTitle(notification)}
                                 </p>
-                                <p className="text-xs text-muted-foreground truncate">
-                                  {getNotificationBody(notification)}
-                                </p>
+                                
+                                {/* Rich improvement report card */}
+                                {isImprovement && improvementData?.improvements?.length > 0 ? (
+                                  <div className="mt-1.5 space-y-1.5">
+                                    <p className="text-xs text-muted-foreground">
+                                      {improvementData.player_name} vs {improvementData.opponent}
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-1">
+                                      {(improvementData.improvements as string[]).map((imp: string, i: number) => {
+                                        const hasArrow = imp.includes('→');
+                                        const hasPct = imp.includes('+');
+                                        return (
+                                          <div key={i} className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded px-2 py-1">
+                                            <TrendingUp className="h-3 w-3 text-emerald-500 flex-shrink-0" />
+                                            <span className="text-[10px] text-emerald-400 truncate">{imp}</span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {getNotificationBody(notification)}
+                                  </p>
+                                )}
+                                
                                 <p className="text-xs text-muted-foreground/70 mt-0.5">
                                   {format(new Date(notification.created_at), "MMM d, h:mm a")}
                                 </p>
