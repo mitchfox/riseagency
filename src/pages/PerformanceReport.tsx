@@ -81,6 +81,8 @@ const PerformanceReport = () => {
   const [showChanceCreation, setShowChanceCreation] = useState(false);
   const [showRankedPlayer, setShowRankedPlayer] = useState(false);
   const [showPitchHeatmap, setShowPitchHeatmap] = useState(false);
+  const [showZonePerformance, setShowZonePerformance] = useState(false);
+  const [showChanceCreation, setShowChanceCreation] = useState(false);
   const [rankedMode, setRankedMode] = useState<"chronological" | "ranked" | "noted">("chronological");
   const [showClippedActions, setShowClippedActions] = useState(false);
   const [showFilteredPlayer, setShowFilteredPlayer] = useState(false);
