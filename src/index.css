@@ -210,6 +210,26 @@ All colors MUST be HSL.
       padding-top: env(safe-area-inset-top, 0px);
       padding-bottom: env(safe-area-inset-bottom, 0px);
     }
+    
+    /* PWA safe area top offset for fixed headers */
+    .pwa-safe-top {
+      top: env(safe-area-inset-top, 0px) !important;
+    }
+    
+    /* PWA content push - accounts for header + safe area */
+    .pwa-content-offset {
+      padding-top: calc(5rem + env(safe-area-inset-top, 0px)) !important;
+    }
+    
+    /* PWA sidebar top offset - accounts for header height + safe area */
+    .pwa-sidebar-top {
+      top: calc(4rem + env(safe-area-inset-top, 0px)) !important;
+    }
+    
+    /* PWA sidebar toggle top offset */
+    .pwa-toggle-top {
+      top: calc(5rem + env(safe-area-inset-top, 0px)) !important;
+    }
   }
 
   body {
