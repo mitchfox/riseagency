@@ -442,7 +442,9 @@ export const CreatePerformanceReportDialog = ({
       fetchAllR90Ratings(); // Fetch all R90 ratings once for local filtering
       fetchPreviousFixtureStats();
       if (analysisId) {
-        // Edit mode
+        // Edit mode - reset guards before fetching
+        initialLoadDoneRef.current = false;
+        skipNextActionSyncRef.current = false;
         setIsEditMode(true);
         fetchExistingData();
       } else {
@@ -547,6 +549,8 @@ export const CreatePerformanceReportDialog = ({
   useEffect(() => {
     // Guard: skip during initial edit-mode load to prevent overwriting saved stats
     if (isEditMode && !initialLoadDoneRef.current) return;
+    // Guard: skip while data is actively loading
+    if (loadingData) return;
     // Skip the first sync after edit-mode load completes (actions were just populated from DB)
     if (skipNextActionSyncRef.current) {
       skipNextActionSyncRef.current = false;
@@ -607,7 +611,7 @@ export const CreatePerformanceReportDialog = ({
       
       return newStats;
     });
-  }, [actions, minutesPlayed]);
+  }, [actions, minutesPlayed, isEditMode, loadingData]);
 
   /** Look up descriptions using canonical key so case/spacing variants still match */
   const getDescriptionsForType = (actionType: string): string[] => {
@@ -854,6 +858,9 @@ export const CreatePerformanceReportDialog = ({
   const fetchExistingData = async () => {
     if (!analysisId) return;
     
+    // Reset guard BEFORE any state changes to prevent action-sync effect from firing mid-load
+    initialLoadDoneRef.current = false;
+    skipNextActionSyncRef.current = false;
     setLoadingData(true);
     try {
       // Fetch analysis data
