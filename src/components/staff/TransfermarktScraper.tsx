@@ -6,9 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Search, ExternalLink, UserX, Users, X } from "lucide-react";
+import { Loader2, Search, ExternalLink, UserX, Users, X, UserPlus, Check } from "lucide-react";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SearchFilters {
   position?: string;
@@ -69,7 +71,6 @@ const NATIONALITIES = [
   { value: '125', label: 'Nigeria' },
   { value: '152', label: 'Senegal' },
   { value: '54', label: 'Ghana' },
-  { value: '31', label: 'Cameroon' },
   { value: '68', label: 'Jamaica' },
   { value: '185', label: 'USA' },
   { value: '32', label: 'Canada' },
@@ -113,12 +114,16 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
   const [totalFound, setTotalFound] = useState(0);
   const [filters, setFilters] = useState<SearchFilters>({});
   const [hasSearched, setHasSearched] = useState(false);
+  const [addingPlayers, setAddingPlayers] = useState<Set<number>>(new Set());
+  const [addedPlayers, setAddedPlayers] = useState<Set<number>>(new Set());
+  const isMobile = useIsMobile();
 
   if (!visible) return null;
 
   const handleSearch = async () => {
     setSearching(true);
     setHasSearched(true);
+    setAddedPlayers(new Set());
     try {
       const { data, error } = await invokeEdgeFunction<any>('scrape-transfermarkt', {
         body: {
@@ -150,6 +155,36 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
       toast.error(error?.message || "Failed to search Transfermarkt. Try again.");
     } finally {
       setSearching(false);
+    }
+  };
+
+  const handleAddToDatabase = async (player: PlayerResult, idx: number) => {
+    setAddingPlayers(prev => new Set(prev).add(idx));
+    try {
+      const age = parseInt(player.age);
+      const isYouth = !isNaN(age) && age < 18;
+      const tableName = isYouth ? 'player_outreach_youth' : 'player_outreach_pro';
+
+      const { error } = await supabase.from(tableName).insert({
+        player_name: player.name,
+        position: player.position || null,
+        nationality: player.nationality || null,
+        current_club: player.club || null,
+        age: !isNaN(age) ? age : null,
+        notes: `Source: Transfermarkt\nAgent: ${player.agentStatus === 'no_agent' ? 'No Agent' : 'Family Agent'}\nMarket Value: ${player.marketValue || 'N/A'}\nProfile: ${player.transfermarktUrl}`,
+      });
+
+      if (error) throw error;
+      setAddedPlayers(prev => new Set(prev).add(idx));
+      toast.success(`${player.name} added to ${isYouth ? 'Youth' : 'Pro'} outreach`);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to add player');
+    } finally {
+      setAddingPlayers(prev => {
+        const next = new Set(prev);
+        next.delete(idx);
+        return next;
+      });
     }
   };
 
@@ -271,50 +306,115 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
                 {totalFound} total results scanned
               </Badge>
             </div>
-            <div className="rounded-md border overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Player</TableHead>
-                    <TableHead>Position</TableHead>
-                    <TableHead>Age</TableHead>
-                    <TableHead>Nationality</TableHead>
-                    <TableHead>Club</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[70px]">Link</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {results.map((player, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell className="font-medium">{player.name}</TableCell>
-                      <TableCell className="text-sm">{player.position || '-'}</TableCell>
-                      <TableCell>{player.age || '-'}</TableCell>
-                      <TableCell className="text-sm">{player.nationality || '-'}</TableCell>
-                      <TableCell className="text-sm">{player.club || '-'}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={player.agentStatus === 'no_agent'
-                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                            : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                          }
-                        >
-                          {player.agentStatus === 'no_agent' ? 'No Agent' : 'Family Agent'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                          <a href={player.transfermarktUrl} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
+
+            {/* Mobile: compact card layout */}
+            {isMobile ? (
+              <div className="space-y-2">
+                {results.map((player, idx) => (
+                  <div key={idx} className="p-3 rounded-md border bg-card flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">{player.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{player.position} · {player.age} · {player.club}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <a href={player.transfermarktUrl} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      </Button>
+                      {addedPlayers.has(idx) ? (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-green-500" disabled>
+                          <Check className="h-4 w-4" />
                         </Button>
-                      </TableCell>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={addingPlayers.has(idx)}
+                          onClick={() => handleAddToDatabase(player, idx)}
+                        >
+                          {addingPlayers.has(idx) ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <UserPlus className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* Desktop: full table */
+              <div className="rounded-md border overflow-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Player</TableHead>
+                      <TableHead>Position</TableHead>
+                      <TableHead>Age</TableHead>
+                      <TableHead>Nationality</TableHead>
+                      <TableHead>Club</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-[70px]">Link</TableHead>
+                      <TableHead className="w-[70px]">Add</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {results.map((player, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="font-medium">{player.name}</TableCell>
+                        <TableCell className="text-sm">{player.position || '-'}</TableCell>
+                        <TableCell>{player.age || '-'}</TableCell>
+                        <TableCell className="text-sm">{player.nationality || '-'}</TableCell>
+                        <TableCell className="text-sm">{player.club || '-'}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={player.agentStatus === 'no_agent'
+                              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                              : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                            }
+                          >
+                            {player.agentStatus === 'no_agent' ? 'No Agent' : 'Family Agent'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                            <a href={player.transfermarktUrl} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          </Button>
+                        </TableCell>
+                        <TableCell>
+                          {addedPlayers.has(idx) ? (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-green-500" disabled>
+                              <Check className="h-3.5 w-3.5" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              disabled={addingPlayers.has(idx)}
+                              onClick={() => handleAddToDatabase(player, idx)}
+                              title="Add to Player Outreach"
+                            >
+                              {addingPlayers.has(idx) ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <UserPlus className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </div>
         ) : hasSearched ? (
           <div className="flex flex-col items-center justify-center py-16 gap-2 text-muted-foreground">
