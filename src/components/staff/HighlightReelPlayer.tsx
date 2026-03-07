@@ -81,8 +81,11 @@ export const HighlightReelPlayer = ({ clips, projectName, isOpen, onClose }: Hig
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] h-[90vh] p-0">
         <div ref={containerRef} className="relative w-full h-full bg-black flex flex-col">
+          {/* Top safe spacer bar */}
+          <div className="w-full h-10 md:h-0 bg-black shrink-0" />
+
           {/* Top Bar */}
-          <div className="absolute top-0 left-0 right-0 z-50 flex items-start justify-between p-4 pt-[max(1rem,env(safe-area-inset-top))] gap-4 pointer-events-none">
+          <div className="absolute top-10 md:top-0 left-0 right-0 z-50 flex items-start justify-between p-4 gap-4 pointer-events-none">
             <div className="bg-background/95 backdrop-blur-sm rounded-lg px-4 md:px-6 py-2 md:py-3 shadow-xl border border-border/50 pointer-events-auto">
               <div className="text-3xl md:text-5xl font-bold text-foreground">
                 {currentIndex + 1}
@@ -111,7 +114,7 @@ export const HighlightReelPlayer = ({ clips, projectName, isOpen, onClose }: Hig
           </div>
 
           {/* Bottom Bar */}
-          <div className="bg-background/90 backdrop-blur-sm p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center justify-between gap-2 md:gap-4">
+          <div className="bg-background/90 backdrop-blur-sm p-4 flex items-center justify-between gap-2 md:gap-4">
             <Button onClick={goToPrevious} disabled={currentIndex === 0} variant="outline" size="lg">
               <ChevronLeft className="w-6 h-6" />
               <span className="hidden md:inline">Previous</span>
@@ -149,6 +152,8 @@ export const HighlightReelPlayer = ({ clips, projectName, isOpen, onClose }: Hig
               <ChevronRight className="w-6 h-6" />
             </Button>
           </div>
+          {/* Bottom safe spacer bar */}
+          <div className="w-full h-8 md:h-0 bg-background/90 shrink-0" />
         </div>
       </DialogContent>
     </Dialog>

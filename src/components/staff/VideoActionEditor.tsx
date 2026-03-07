@@ -110,8 +110,11 @@ export const VideoActionEditor = ({
       <DialogContent className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-black border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none [&>button.absolute]:hidden">
         <DialogTitle className="sr-only">Video Action Editor</DialogTitle>
 
-        {/* Header - with safe area top padding for mobile standalone */}
-        <div className="flex items-center justify-between px-4 py-2 bg-black/90 border-b border-border/30 shrink-0 pt-[max(0.5rem,env(safe-area-inset-top))]">
+        {/* Top safe spacer bar */}
+        <div className="w-full h-10 md:h-0 bg-black shrink-0" />
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-2 bg-black/90 border-b border-border/30 shrink-0">
           <div className="flex items-center gap-2 md:gap-3 min-w-0">
             <span className="text-primary font-bold text-xs md:text-sm shrink-0">CLIP EDIT</span>
             <span className="text-xs text-white/60 shrink-0">
@@ -213,8 +216,8 @@ export const VideoActionEditor = ({
           </div>
         </div>
 
-        {/* Compact editing fields - with safe area bottom padding */}
-        <div className="bg-card border-t border-border/30 px-3 md:px-4 py-2 md:py-2.5 shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        {/* Compact editing fields */}
+        <div className="bg-card border-t border-border/30 px-3 md:px-4 py-2 md:py-2.5 shrink-0">
           <div className="space-y-1.5 md:space-y-2 max-w-5xl mx-auto">
             {/* Row 1: Action #, Minute, Type, Score — stacks better on mobile */}
             <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
@@ -399,6 +402,9 @@ export const VideoActionEditor = ({
             )}
           </div>
         </div>
+
+        {/* Bottom safe spacer bar */}
+        <div className="w-full h-8 md:h-0 bg-card shrink-0" />
       </DialogContent>
     </Dialog>
   );
