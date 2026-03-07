@@ -9,7 +9,6 @@ interface SearchFilters {
   ageMax?: number;
   nationality?: string;
   countryPlayingIn?: string;
-  contractUntil?: string;
 }
 
 interface PlayerResult {
@@ -25,183 +24,254 @@ interface PlayerResult {
   transfermarktUrl: string;
 }
 
-const HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-  'Accept-Language': 'en-GB,en;q=0.9',
-  'Accept-Encoding': 'gzip, deflate',
-  'Referer': 'https://www.transfermarkt.co.uk/',
+const TM_API = 'https://tmapi-alpha.transfermarkt.technology';
+
+// Nationality ID to name mapping
+const NATIONALITY_NAMES: Record<number, string> = {
+  189: 'England', 190: 'Scotland', 191: 'Wales', 192: 'Northern Ireland',
+  193: 'Republic of Ireland', 50: 'France', 157: 'Spain', 40: 'Germany',
+  75: 'Italy', 122: 'Netherlands', 136: 'Portugal', 24: 'Brazil',
+  9: 'Argentina', 125: 'Nigeria', 152: 'Senegal', 54: 'Ghana',
+  31: 'Cameroon', 68: 'Jamaica', 185: 'USA', 32: 'Canada',
+  14: 'Australia', 39: 'Belgium', 10: 'Armenia', 15: 'Austria',
+  22: 'Bosnia-Herzegovina', 25: 'Bulgaria', 34: 'Chile', 36: 'Colombia',
+  37: 'Costa Rica', 38: 'Croatia', 41: 'Czech Republic', 42: 'Denmark',
+  43: 'Ecuador', 44: 'Egypt', 46: 'Estonia', 48: 'Finland',
+  51: 'Gabon', 55: 'Greece', 57: 'Guinea', 59: 'Honduras',
+  60: 'Hungary', 62: 'Iceland', 63: 'Iran', 64: 'Iraq',
+  66: 'Ivory Coast', 67: 'Japan', 69: 'South Korea', 70: 'Kosovo',
+  72: 'Latvia', 76: 'Lithuania', 78: 'Luxembourg', 80: 'Mali',
+  84: 'Mexico', 86: 'Montenegro', 87: 'Morocco', 95: 'New Zealand',
+  100: 'Norway', 107: 'Paraguay', 108: 'Peru', 110: 'Poland',
+  113: 'DR Congo', 114: 'Romania', 115: 'Russia', 120: 'Serbia',
+  126: 'Slovakia', 127: 'Slovenia', 128: 'South Africa', 140: 'Sweden',
+  141: 'Switzerland', 160: 'Tunisia', 161: 'Turkey', 163: 'Ukraine',
+  170: 'Uruguay', 171: 'Uzbekistan', 172: 'Venezuela', 176: 'Zimbabwe',
 };
 
-function mapPosition(position: string): string {
-  const positionMap: Record<string, string> = {
-    'goalkeeper': '1',
-    'centre-back': '3',
-    'left-back': '4',
-    'right-back': '2',
-    'defensive midfield': '6',
-    'central midfield': '8',
-    'attacking midfield': '10',
-    'left winger': '7',
-    'right winger': '11',
-    'centre-forward': '9',
-    'striker': '9',
-    'defender': '3,4,2',
-    'midfielder': '6,8,10',
-    'forward': '7,9,11',
-    'winger': '7,11',
-  };
-  return positionMap[position.toLowerCase()] || '';
+// Position group mapping
+const POSITION_FILTERS: Record<string, string[]> = {
+  'goalkeeper': ['Goalkeeper'],
+  'centre-back': ['Centre-Back'],
+  'left-back': ['Left-Back'],
+  'right-back': ['Right-Back'],
+  'defensive midfield': ['Defensive Midfield'],
+  'central midfield': ['Central Midfield'],
+  'attacking midfield': ['Attacking Midfield'],
+  'left winger': ['Left Winger'],
+  'right winger': ['Right Winger'],
+  'centre-forward': ['Centre-Forward'],
+};
+
+async function fetchJSON(url: string): Promise<any> {
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      'Accept': 'application/json',
+    },
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`API error ${response.status}: ${text.substring(0, 200)}`);
+  }
+  return response.json();
 }
 
-async function searchTransfermarkt(filters: SearchFilters): Promise<{ players: PlayerResult[]; totalFound: number }> {
-  // Use transfermarkt.co.uk (English version) detailed search
-  const params = new URLSearchParams();
-  
-  // Required params for the search form
-  params.set('Ession_id', '');
-  
-  if (filters.position) {
-    const mapped = mapPosition(filters.position);
-    if (mapped) params.set('position', mapped);
+async function getClubIds(competitionId: string): Promise<string[]> {
+  const data = await fetchJSON(`${TM_API}/competition/${competitionId}/table?seasonId=2025`);
+  if (!data.success || !data.data?.tables?.[0]?.clubs) {
+    console.log('No table data for competition:', competitionId);
+    return [];
   }
-  if (filters.ageMin) params.set('ageMin', filters.ageMin.toString());
-  if (filters.ageMax) params.set('ageMax', filters.ageMax.toString());
-  if (filters.nationality) params.set('land_id', filters.nationality);
-  if (filters.countryPlayingIn) params.set('wettbewerb_id', filters.countryPlayingIn);
-  if (filters.contractUntil) params.set('vertrag_bis', filters.contractUntil);
-  
-  // Filter for players without agent
-  params.set('spielerberater', '0');
+  return data.data.tables[0].clubs.map((c: any) => c.clubId);
+}
 
-  const searchUrl = `https://www.transfermarkt.co.uk/detailsuche/spielerdetail/suche?${params.toString()}`;
-  console.log('Searching:', searchUrl);
-
+async function getSquadPlayerIds(clubId: string): Promise<string[]> {
   try {
-    const response = await fetch(searchUrl, { headers: HEADERS, redirect: 'follow' });
-    
-    if (!response.ok) {
-      console.log('Search returned status:', response.status);
-      // Try alternative: use the .com domain
-      return await searchFallback(filters);
-    }
-
-    const html = await response.text();
-    console.log('Got HTML response, length:', html.length);
-    
-    const players = parseResults(html);
-    console.log('Parsed players:', players.length);
-    
-    return { players, totalFound: players.length };
-  } catch (error) {
-    console.error('Primary search failed:', error);
-    return await searchFallback(filters);
+    const data = await fetchJSON(`${TM_API}/club/${clubId}/squad?seasonId=2025`);
+    if (!data.success || !data.data?.playerIds) return [];
+    return data.data.playerIds;
+  } catch (e) {
+    console.error(`Failed to get squad for club ${clubId}:`, e);
+    return [];
   }
 }
 
-async function searchFallback(filters: SearchFilters): Promise<{ players: PlayerResult[]; totalFound: number }> {
-  // Fallback: try .com domain
-  const params = new URLSearchParams();
-  params.set('Ession_id', '');
-  if (filters.position) {
-    const mapped = mapPosition(filters.position);
-    if (mapped) params.set('position', mapped);
-  }
-  if (filters.ageMin) params.set('ageMin', filters.ageMin.toString());
-  if (filters.ageMax) params.set('ageMax', filters.ageMax.toString());
-  if (filters.nationality) params.set('land_id', filters.nationality);
-  if (filters.countryPlayingIn) params.set('wettbewerb_id', filters.countryPlayingIn);
-  params.set('spielerberater', '0');
+interface PlayerProfile {
+  id: string;
+  name: string;
+  age: number;
+  position: string;
+  positionGroup: string;
+  nationalityId: number;
+  secondNationalityId: number;
+  clubId: string;
+  clubName: string;
+  marketValue: string;
+  contractUntil: string;
+  agentStatus: 'no_agent' | 'family_agent' | 'unknown';
+  agentName: string;
+  relativeUrl: string;
+}
 
-  const searchUrl = `https://www.transfermarkt.com/detailsuche/spielerdetail/suche?${params.toString()}`;
-  console.log('Fallback search:', searchUrl);
-
+async function getPlayerProfile(playerId: string): Promise<PlayerProfile | null> {
   try {
-    const response = await fetch(searchUrl, { headers: HEADERS, redirect: 'follow' });
-    if (!response.ok) {
-      console.log('Fallback also failed:', response.status);
-      return { players: [], totalFound: 0 };
-    }
-    const html = await response.text();
-    const players = parseResults(html);
-    return { players, totalFound: players.length };
-  } catch (error) {
-    console.error('Fallback search failed:', error);
-    return { players: [], totalFound: 0 };
-  }
-}
+    const data = await fetchJSON(`${TM_API}/player/${playerId}`);
+    if (!data.success || !data.data) return null;
 
-function parseResults(html: string): PlayerResult[] {
-  const results: PlayerResult[] = [];
-  
-  // Parse player rows from the detailed search results table
-  // TM uses <tr class="odd"> and <tr class="even"> for result rows
-  const rowPattern = /<tr[^>]*class="[^"]*(?:odd|even)[^"]*"[^>]*>([\s\S]*?)<\/tr>/gi;
-  let match;
-  
-  while ((match = rowPattern.exec(html)) !== null) {
-    const row = match[1];
-    
-    // Extract player link and name
-    const nameMatch = row.match(/<a[^>]*href="(\/[^"]*\/profil\/spieler\/\d+)"[^>]*(?:title="([^"]*)")?[^>]*>([^<]+)<\/a>/);
-    if (!nameMatch) continue;
-    
-    const url = nameMatch[1];
-    const name = (nameMatch[2] || nameMatch[3] || '').trim();
-    if (!name) continue;
-    
-    // Extract position
-    const posMatch = row.match(/<td[^>]*>([^<]*(?:Forward|Midfielder|Defender|Goalkeeper|Striker|Winger|Centre-Back|Left-Back|Right-Back|Centre Forward|Attacking Midfield|Central Midfield|Defensive Midfield|Left Midfield|Right Midfield|Left Winger|Right Winger|Second Striker)[^<]*)<\/td>/i);
-    const position = posMatch ? posMatch[1].trim() : '';
-    
-    // Extract age
-    const ageMatch = row.match(/>\s*(\d{1,2})\s*<\/td>/);
-    const age = ageMatch ? ageMatch[1] : '';
-    
-    // Extract nationality from flag
-    const natMatch = row.match(/<img[^>]*class="[^"]*flaggenrahmen[^"]*"[^>]*(?:title|alt)="([^"]*)"[^>]*>/);
-    const nationality = natMatch ? natMatch[1] : '';
-    
-    // Extract club
-    const clubMatch = row.match(/<a[^>]*href="\/[^"]*\/startseite\/verein\/\d+"[^>]*(?:title="([^"]*)")?[^>]*>([^<]*)<\/a>/);
-    const club = clubMatch ? (clubMatch[1] || clubMatch[2] || '').trim() : '';
-    
-    // Extract market value
-    const valueMatch = row.match(/(?:€|£|\$)\s*[\d.,]+[mkMK]?/);
-    const marketValue = valueMatch ? valueMatch[0] : '';
-    
-    // Extract contract end
-    const contractMatch = row.match(/(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})/);
-    const contractUntil = contractMatch ? contractMatch[1] : '';
-    
-    // Check agent status
+    const p = data.data;
+    const attrs = p.attributes || {};
+    const agency = attrs.consultantAgency;
+    const agencyId = attrs.consultantAgencyId;
+
+    // Determine agent status
     let agentStatus: 'no_agent' | 'family_agent' | 'unknown' = 'unknown';
-    const noAgentMatch = row.match(/(?:ohne\s*berater|no\s*agent|kein\s*berater|-\s*<\/td>)/i);
-    const familyMatch = row.match(/(?:family|father|mother|brother|sister|uncle|relative|parent)/i);
-    
-    if (noAgentMatch) {
+    let agentName = '';
+
+    if (!agencyId || agencyId === 0) {
       agentStatus = 'no_agent';
-    } else if (familyMatch) {
+    } else if (agency?.isSpecialConsultantAgency) {
+      // Special agencies include "Relatives" / family members
       agentStatus = 'family_agent';
+      agentName = agency.name || '';
     } else {
-      // Since we searched with spielerberater=0 (no agent filter), mark as no_agent by default
-      agentStatus = 'no_agent';
+      agentStatus = 'unknown'; // Has a professional agent
+      agentName = agency?.name || '';
     }
-    
-    results.push({
-      name,
-      position,
-      age,
-      nationality,
-      club,
+
+    // Get club name from assignments
+    let clubName = '';
+    const currentClub = p.clubAssignments?.find((a: any) => a.type === 'current');
+    if (currentClub) {
+      clubName = currentClub.clubId; // We'll resolve later if needed
+    }
+
+    // Format market value
+    let marketValue = '';
+    if (p.marketValueDetails?.current?.compact) {
+      const mv = p.marketValueDetails.current.compact;
+      marketValue = `${mv.prefix}${mv.content}${mv.suffix}`;
+    }
+
+    // Format contract
+    let contractUntil = '';
+    if (attrs.contractUntil) {
+      const d = new Date(attrs.contractUntil);
+      contractUntil = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+    }
+
+    return {
+      id: p.id,
+      name: p.name || '',
+      age: p.lifeDates?.age || 0,
+      position: attrs.position?.name || attrs.positionGroupName || '',
+      positionGroup: attrs.positionGroup || '',
+      nationalityId: p.nationalityDetails?.nationalities?.nationalityId || 0,
+      secondNationalityId: p.nationalityDetails?.nationalities?.secondNationalityId || 0,
+      clubId: currentClub?.clubId || '',
+      clubName,
       marketValue,
       contractUntil,
       agentStatus,
-      transfermarktUrl: `https://www.transfermarkt.co.uk${url}`,
-    });
+      agentName,
+      relativeUrl: p.relativeUrl || '',
+    };
+  } catch (e) {
+    console.error(`Failed to get player ${playerId}:`, e);
+    return null;
   }
-  
+}
+
+// Fetch in parallel batches to avoid overwhelming the API
+async function batchFetch<T>(items: string[], fn: (id: string) => Promise<T | null>, batchSize = 25): Promise<T[]> {
+  const results: T[] = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map(fn));
+    for (const r of batchResults) {
+      if (r) results.push(r);
+    }
+  }
   return results;
+}
+
+// Get club names by fetching club data
+const clubNameCache = new Map<string, string>();
+async function getClubName(clubId: string): Promise<string> {
+  if (clubNameCache.has(clubId)) return clubNameCache.get(clubId)!;
+  try {
+    const data = await fetchJSON(`${TM_API}/club/${clubId}`);
+    const name = data.data?.name || clubId;
+    clubNameCache.set(clubId, name);
+    return name;
+  } catch {
+    return clubId;
+  }
+}
+
+async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerResult[]; totalFound: number }> {
+  const competitionId = filters.countryPlayingIn || 'GB1';
+  console.log('Searching competition:', competitionId);
+
+  // Step 1: Get all club IDs from the league table
+  const clubIds = await getClubIds(competitionId);
+  console.log('Found clubs:', clubIds.length);
+  if (clubIds.length === 0) {
+    return { players: [], totalFound: 0 };
+  }
+
+  // Step 2: Get all player IDs from all clubs (parallel)
+  const squadResults = await Promise.all(clubIds.map(getSquadPlayerIds));
+  const allPlayerIds = [...new Set(squadResults.flat())];
+  console.log('Total unique players:', allPlayerIds.length);
+
+  // Step 3: Get player profiles (batched parallel)
+  const profiles = await batchFetch(allPlayerIds, getPlayerProfile, 25);
+  console.log('Fetched profiles:', profiles.length);
+
+  // Step 4: Filter for unrepresented players
+  let filtered = profiles.filter(p => p.agentStatus === 'no_agent' || p.agentStatus === 'family_agent');
+  console.log('Unrepresented players:', filtered.length);
+
+  // Apply additional filters
+  if (filters.ageMin) {
+    filtered = filtered.filter(p => p.age >= filters.ageMin!);
+  }
+  if (filters.ageMax) {
+    filtered = filtered.filter(p => p.age <= filters.ageMax!);
+  }
+  if (filters.nationality) {
+    const natId = parseInt(filters.nationality);
+    filtered = filtered.filter(p => p.nationalityId === natId || p.secondNationalityId === natId);
+  }
+  if (filters.position) {
+    const posNames = POSITION_FILTERS[filters.position.toLowerCase()];
+    if (posNames) {
+      filtered = filtered.filter(p => posNames.some(pn => p.position.toLowerCase().includes(pn.toLowerCase())));
+    }
+  }
+
+  console.log('After filters:', filtered.length);
+
+  // Get club names for filtered players
+  const uniqueClubIds = [...new Set(filtered.map(p => p.clubId).filter(Boolean))];
+  await Promise.all(uniqueClubIds.map(getClubName));
+
+  // Convert to result format
+  const players: PlayerResult[] = filtered.map(p => ({
+    name: p.name,
+    position: p.position,
+    age: p.age.toString(),
+    nationality: NATIONALITY_NAMES[p.nationalityId] || '',
+    club: clubNameCache.get(p.clubId) || p.clubId,
+    marketValue: p.marketValue,
+    contractUntil: p.contractUntil,
+    agentStatus: p.agentStatus,
+    agentName: p.agentName,
+    transfermarktUrl: p.relativeUrl ? `https://www.transfermarkt.co.uk${p.relativeUrl}` : '',
+  }));
+
+  return { players, totalFound: allPlayerIds.length };
 }
 
 Deno.serve(async (req) => {
@@ -212,29 +282,24 @@ Deno.serve(async (req) => {
   try {
     const { filters } = await req.json();
     const searchFilters: SearchFilters = filters || {};
-    
-    console.log('Received filters:', JSON.stringify(searchFilters));
-    
-    const { players, totalFound } = await searchTransfermarkt(searchFilters);
 
-    // Filter to only show players without agents or with family agents
-    const filteredPlayers = players.filter(
-      p => p.agentStatus === 'no_agent' || p.agentStatus === 'family_agent'
-    );
+    console.log('Received filters:', JSON.stringify(searchFilters));
+
+    const { players, totalFound } = await searchPlayers(searchFilters);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        players: filteredPlayers,
+      JSON.stringify({
+        success: true,
+        players,
         totalFound,
-        filteredCount: filteredPlayers.length,
+        filteredCount: players.length,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Scraper error:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Scraper failed' }),
+      JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Search failed' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
