@@ -59,13 +59,20 @@ const ageGroups = [
   { value: 'D', label: 'D - U16' },
 ] as const;
 
-const getPriorityColor = (priority: string | null) => {
+const getPriorityClasses = (priority: string | null) => {
   switch (priority) {
-    case 'high': return 'hsl(0, 70%, 50%)';
-    case 'medium': return 'hsl(43, 49%, 61%)';
-    case 'low': return 'hsl(140, 50%, 50%)';
-    default: return 'hsl(0, 0%, 40%)';
+    case 'high': return 'border-destructive/60 bg-destructive/10 text-destructive';
+    case 'medium': return 'border-accent/60 bg-accent/25 text-foreground';
+    case 'low': return 'border-primary/50 bg-primary/10 text-primary';
+    default: return 'border-border bg-muted/40 text-muted-foreground';
   }
+};
+
+const ageGroupLabelMap: Record<'A' | 'B' | 'C' | 'D', string> = {
+  A: 'First Team',
+  B: 'U21',
+  C: 'U18',
+  D: 'U16',
 };
 
 // Draggable prospect card
