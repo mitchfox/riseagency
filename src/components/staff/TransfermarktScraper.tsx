@@ -480,7 +480,7 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
           </div>
         ) : displayResults.length > 0 ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="outline" className="text-xs">
                 <UserX className="h-3 w-3 mr-1" />
                 {displayResults.length} unrepresented player{displayResults.length !== 1 ? 's' : ''}
@@ -493,6 +493,23 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
                   {results.length} before client filters
                 </Badge>
               )}
+              <div className="ml-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddAllToDatabase}
+                  disabled={addingAll || allAdded}
+                  className="h-8 text-xs"
+                >
+                  {addingAll ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Adding...</>
+                  ) : allAdded ? (
+                    <><Check className="h-3.5 w-3.5 mr-1.5" /> All Added</>
+                  ) : (
+                    <><Users className="h-3.5 w-3.5 mr-1.5" /> Add All to Database</>
+                  )}
+                </Button>
+              </div>
             </div>
 
             {/* Mobile: compact card layout */}
