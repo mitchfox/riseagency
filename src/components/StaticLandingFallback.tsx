@@ -210,12 +210,12 @@ export function StaticLandingFallback({ performanceReason }: StaticLandingFallba
             </nav>
           </div>
 
-          {/* Language & Select Role */}
+          {/* Select Role & Language */}
           <div className="flex flex-col items-center gap-2 mt-2">
-            <LanguageMapSelector />
             <span className="text-[9px] font-bebas uppercase tracking-[0.15em] text-white/30">
               {t("landing.select_role_enter", "Select Your Role To Enter Site")}
             </span>
+            <LanguageMapSelector />
           </div>
         </div>
       </div>

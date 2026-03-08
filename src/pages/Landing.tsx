@@ -307,15 +307,7 @@ function LandingContent() {
         <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
       </div>
       
-      {/* Language Selector - Mobile only */}
-      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+124px)] flex flex-col items-center" style={{
-        left: '50%',
-        transform: 'translateX(-50%)'
-      }}>
-        <div className="scale-[1.2]">
-          <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
-        </div>
-      </div>
+      {/* Mobile language selector is now inline in the bottom section */}
       
       {/* Portal, Staff & Scouts links - subtle top right */}
       <div className="absolute top-6 md:top-8 right-2 md:right-4 z-50 flex items-center gap-3">
@@ -363,6 +355,18 @@ function LandingContent() {
             transform: 'translateY(-25px) translateX(-4px)'
           }}>
               
+              {/* Select role text */}
+              <div className="text-center">
+                <span className="text-[10px] font-bebas uppercase tracking-[0.15em] text-white/40">
+                  {t("landing.select_role_enter", "Select Your Role To Enter Site")}
+                </span>
+              </div>
+
+              {/* Language selector */}
+              <div className="scale-[1.2] py-1">
+                <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
+              </div>
+
               {/* Buttons row - with divider line */}
               <div className="border-t border-primary/40 pt-1 pb-1 flex justify-center" style={{
               width: '42%'
@@ -405,12 +409,6 @@ function LandingContent() {
                 </nav>
               </div>
               
-              {/* Select role text - mobile */}
-              <div className="text-center pt-0">
-                <span className="text-[10px] font-bebas uppercase tracking-[0.15em] text-white/40">
-                  {t("landing.select_role_enter", "Select Your Role To Enter Site")}
-                </span>
-              </div>
             </div>
           </div>
         </div>
