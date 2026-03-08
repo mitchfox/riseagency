@@ -379,9 +379,39 @@ export const RadialMenu = () => {
       },
     ],
     scouts: [
-      { to: "/learnmore", labelKey: "header.what_we_look_for", fallback: "WHAT WE SEEK", Icon: Search, angle: 0 },
-      { to: "/login", labelKey: "header.portal", fallback: "PORTAL", Icon: Users, angle: 60 },
-      { to: "/scouts", labelKey: "header.jobs", fallback: "OPPORTUNITIES", Icon: Briefcase, angle: 120 },
+      { 
+        to: "/learnmore", 
+        labelKey: "header.what_we_look_for", 
+        fallback: "WHAT WE SEEK", 
+        Icon: Search, 
+        angle: 0,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(0),
+          component: WhatWeLookForQuadrantCard,
+        },
+      },
+      { 
+        to: "/login", 
+        labelKey: "header.portal", 
+        fallback: "PORTAL", 
+        Icon: Users, 
+        angle: 60,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(60),
+          component: PortalQuadrantCard,
+        },
+      },
+      { 
+        to: "/scouts", 
+        labelKey: "header.jobs", 
+        fallback: "OPPORTUNITIES", 
+        Icon: Briefcase, 
+        angle: 120,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(120),
+          component: OpportunitiesQuadrantCard,
+        },
+      },
       { 
         to: "/stars", 
         labelKey: "header.stars", 
