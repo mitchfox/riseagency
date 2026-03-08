@@ -364,7 +364,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             matches: ps.matches || 0,
             minutes: ps.minutes || 0,
             clean_sheets: ps.clean_sheets || null,
-            saves: ps.saves || null
+            saves: ps.saves || null,
+            external_player_id: (ps as any).external_player_id || null,
           };
         });
       }
