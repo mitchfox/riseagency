@@ -328,6 +328,7 @@ export const AthleteCentre = () => {
           <Select value={selectedPlayer || ""} onValueChange={(val) => {
             setSelectedPlayer(val);
             localStorage.setItem('athleteCentre_lastPlayer', val);
+            addRecentPlayer(val);
           }}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a player..." />
