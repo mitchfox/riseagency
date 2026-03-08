@@ -999,7 +999,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                   className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1 md:py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors ml-auto md:ml-0"
                 >
                   <ZoomOut className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="text-xs md:text-sm font-medium">Back</span>
+                  <span className="text-xs md:text-sm font-medium">{t("map.back", "Back")}</span>
                 </button>
               </div>
             </div>
