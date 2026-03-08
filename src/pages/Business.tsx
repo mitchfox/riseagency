@@ -647,7 +647,7 @@ const Business = () => {
                       {t(item.titleKey, item.titleFallback)}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {item.descFallback}
+                      {t(item.descKey, item.descFallback)}
                     </p>
                     
                     {/* Arrow for mobile */}
