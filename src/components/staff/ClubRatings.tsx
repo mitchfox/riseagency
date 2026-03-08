@@ -362,10 +362,12 @@ export const ClubRatings = () => {
           Rate clubs from R1 (highest) to R5 (lowest). Click a club logo area to upload.
         </p>
         <div className="flex items-center gap-2 mt-2 flex-wrap">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search clubs or countries..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 h-9" />
-          </div>
+          <StaffSearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search clubs or countries..."
+            className="flex-1 min-w-[200px]"
+          />
           {unknownCount > 0 && (
             <Button
               variant="outline"

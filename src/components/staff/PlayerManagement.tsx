@@ -4278,10 +4278,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             <DialogTitle>Assign Analysis to Player</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Input
-              placeholder="Search analyses..."
+            <StaffSearchInput
               value={analysisSearchQuery}
-              onChange={(e) => setAnalysisSearchQuery(e.target.value)}
+              onChange={setAnalysisSearchQuery}
+              placeholder="Search analyses..."
             />
             <ScrollArea className="h-[400px] border rounded-md p-4">
               <div className="space-y-2">

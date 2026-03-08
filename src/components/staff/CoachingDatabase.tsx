@@ -1358,13 +1358,12 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
             {/* Filters - Show based on table type */}
             {activeTab !== 'coaching_aphorisms' && activeTab !== 'tactical_schemes' && (
               <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder={`Search ${config.label.toLowerCase()}...`}
-                    className="pl-9"
-                  />
-                </div>
+                <StaffSearchInput
+                  value=""
+                  onChange={() => {}}
+                  placeholder={`Search ${config.label.toLowerCase()}...`}
+                  className="flex-1"
+                />
                 
                 {activeTab === 'coaching_exercises' && (
                   <>

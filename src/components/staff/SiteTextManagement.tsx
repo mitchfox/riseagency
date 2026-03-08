@@ -394,15 +394,12 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         <CardContent className="space-y-4">
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search text content..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+            <StaffSearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search text content..."
+              className="flex-1"
+            />
             <Select value={selectedPage} onValueChange={setSelectedPage}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filter by page" />
