@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Link2, Loader2 } from "lucide-react";
 import { sortPlayersByRepresentation, getStatusLabel } from "@/lib/playerSorting";
@@ -33,6 +34,8 @@ interface Player {
   id: string;
   name: string;
   club?: string | null;
+  club_logo?: string | null;
+  representation_status?: string | null;
 }
 
 interface AnalysisQuickLinkProps {
@@ -40,6 +43,8 @@ interface AnalysisQuickLinkProps {
   setFormData: (data: any) => void;
   analysisType: "pre-match" | "post-match";
   defaultOpen?: boolean;
+  taggedPlayerIds?: string[];
+  setTaggedPlayerIds?: (ids: string[]) => void;
 }
 
 export const AnalysisQuickLink = ({
@@ -47,6 +52,8 @@ export const AnalysisQuickLink = ({
   setFormData,
   analysisType,
   defaultOpen = true,
+  taggedPlayerIds,
+  setTaggedPlayerIds,
 }: AnalysisQuickLinkProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -55,13 +62,15 @@ export const AnalysisQuickLink = ({
   const [selectedFixtureId, setSelectedFixtureId] = useState<string>("none");
   const [loadingPlayers, setLoadingPlayers] = useState(true);
   const [loadingFixtures, setLoadingFixtures] = useState(false);
+  const [playerSearch, setPlayerSearch] = useState("");
+  const [recentPlayerIds, setRecentPlayerIds] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchPlayers = async () => {
       try {
         const { data, error } = await supabase
           .from("players")
-          .select("id, name, club, representation_status")
+          .select("id, name, club, club_logo, representation_status")
           .order("name");
 
         if (error) throw error;
@@ -73,12 +82,74 @@ export const AnalysisQuickLink = ({
       }
     };
 
+    const fetchRecentActivity = async () => {
+      try {
+        // Get players with the most recently created analyses/reports
+        const { data: recentAnalyses } = await supabase
+          .from("player_analysis")
+          .select("player_id, created_at")
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        const { data: recentTags } = await supabase
+          .from("analysis_player_tags")
+          .select("player_id, created_at")
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        // Combine and dedupe, keeping order of most recent
+        const seen = new Set<string>();
+        const ordered: string[] = [];
+        const all = [
+          ...(recentAnalyses || []).map(r => r.player_id),
+          ...(recentTags || []).map(r => r.player_id),
+        ];
+        // Sort by how many recent entries they have (most active first)
+        for (const pid of all) {
+          if (!seen.has(pid)) {
+            seen.add(pid);
+            ordered.push(pid);
+          }
+        }
+        setRecentPlayerIds(ordered);
+      } catch {
+        // Non-critical
+      }
+    };
+
     fetchPlayers();
+    fetchRecentActivity();
   }, []);
+
+  // Sort players: recently active first, then by representation status
+  const sortedPlayers = useMemo(() => {
+    const sorted = sortPlayersByRepresentation(players);
+    if (recentPlayerIds.length === 0) return sorted;
+
+    const recentSet = new Set(recentPlayerIds);
+    const recentIndexMap = new Map(recentPlayerIds.map((id, i) => [id, i]));
+
+    const recent = sorted
+      .filter((p: any) => recentSet.has(p.id))
+      .sort((a: any, b: any) => (recentIndexMap.get(a.id) ?? 999) - (recentIndexMap.get(b.id) ?? 999));
+    const rest = sorted.filter((p: any) => !recentSet.has(p.id));
+
+    return [...recent, ...rest];
+  }, [players, recentPlayerIds]);
+
+  // Filter by search
+  const filteredPlayers = useMemo(() => {
+    if (!playerSearch.trim()) return sortedPlayers;
+    const q = playerSearch.toLowerCase();
+    return sortedPlayers.filter((p: any) =>
+      p.name.toLowerCase().includes(q) ||
+      (p.club && p.club.toLowerCase().includes(q))
+    );
+  }, [sortedPlayers, playerSearch]);
 
   // Auto-apply when fixture is selected
   useEffect(() => {
-    if (selectedPlayerId && selectedPlayerId !== "none" && 
+    if (selectedPlayerId && selectedPlayerId !== "none" &&
         selectedFixtureId && selectedFixtureId !== "none") {
       handleApplyFixture();
     }
@@ -87,6 +158,13 @@ export const AnalysisQuickLink = ({
   useEffect(() => {
     if (selectedPlayerId && selectedPlayerId !== "none") {
       fetchPlayerFixtures(selectedPlayerId);
+
+      // Auto-tag the player
+      if (setTaggedPlayerIds && taggedPlayerIds) {
+        if (!taggedPlayerIds.includes(selectedPlayerId)) {
+          setTaggedPlayerIds([...taggedPlayerIds, selectedPlayerId]);
+        }
+      }
     } else {
       setPlayerFixtures([]);
       setSelectedFixtureId("none");
@@ -125,7 +203,7 @@ export const AnalysisQuickLink = ({
     }
   };
 
-  const handleApplyFixture = () => {
+  const handleApplyFixture = async () => {
     if (selectedFixtureId === "none") {
       toast.error("Please select a fixture first");
       return;
@@ -147,7 +225,7 @@ export const AnalysisQuickLink = ({
       playerTeam = "away";
     }
 
-    // Determine opponent name for opposition analysis default title
+    // Determine opponent name
     const opponentName = playerTeam === "home" ? fixture.away_team : playerTeam === "away" ? fixture.home_team : fixture.away_team;
 
     const updateData: any = {
@@ -159,18 +237,64 @@ export const AnalysisQuickLink = ({
       away_score: fixture.away_score,
     };
 
+    // Auto-generate title
     if (analysisType === "pre-match") {
       if (playerTeam) {
         updateData.player_team = playerTeam;
       }
-      // Default title for opposition analysis
-      if (!formData.title || formData.title === "") {
-        updateData.title = `Opposition Analysis - ${opponentName}`;
-      }
+      updateData.title = `Opposition Analysis - ${opponentName}`;
     }
 
     if (analysisType === "post-match") {
       updateData.player_name = player.name.toUpperCase();
+      updateData.title = `${player.name.toUpperCase()} vs ${opponentName}`;
+    }
+
+    // Auto-fill player's club logo and colour from club_logo
+    if (player.club_logo && playerTeam) {
+      if (playerTeam === "home") {
+        updateData.home_team_logo = player.club_logo;
+      } else {
+        updateData.away_team_logo = player.club_logo;
+      }
+    }
+
+    // Try to pull team bg colours from the most recent analysis with the same team names
+    try {
+      const { data: prevAnalysis } = await supabase
+        .from("analyses")
+        .select("home_team, away_team, home_team_logo, away_team_logo, home_team_bg_color, away_team_bg_color")
+        .or(`home_team.ilike.%${fixture.home_team}%,away_team.ilike.%${fixture.home_team}%`)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (prevAnalysis && prevAnalysis.length > 0) {
+        for (const prev of prevAnalysis) {
+          const prevHome = prev.home_team?.toLowerCase() || "";
+          const prevAway = prev.away_team?.toLowerCase() || "";
+
+          // Match home team
+          if (prevHome.includes(homeTeamLower) || homeTeamLower.includes(prevHome)) {
+            if (!updateData.home_team_logo && prev.home_team_logo) updateData.home_team_logo = prev.home_team_logo;
+            if (!updateData.home_team_bg_color && prev.home_team_bg_color) updateData.home_team_bg_color = prev.home_team_bg_color;
+          }
+          if (prevAway.includes(homeTeamLower) || homeTeamLower.includes(prevAway)) {
+            if (!updateData.home_team_logo && prev.away_team_logo) updateData.home_team_logo = prev.away_team_logo;
+            if (!updateData.home_team_bg_color && prev.away_team_bg_color) updateData.home_team_bg_color = prev.away_team_bg_color;
+          }
+          // Match away team
+          if (prevHome.includes(awayTeamLower) || awayTeamLower.includes(prevHome)) {
+            if (!updateData.away_team_logo && prev.home_team_logo) updateData.away_team_logo = prev.home_team_logo;
+            if (!updateData.away_team_bg_color && prev.home_team_bg_color) updateData.away_team_bg_color = prev.home_team_bg_color;
+          }
+          if (prevAway.includes(awayTeamLower) || awayTeamLower.includes(prevAway)) {
+            if (!updateData.away_team_logo && prev.away_team_logo) updateData.away_team_logo = prev.away_team_logo;
+            if (!updateData.away_team_bg_color && prev.away_team_bg_color) updateData.away_team_bg_color = prev.away_team_bg_color;
+          }
+        }
+      }
+    } catch {
+      // Non-critical — colours will just need manual entry
     }
 
     setFormData(updateData);
@@ -178,13 +302,13 @@ export const AnalysisQuickLink = ({
   };
 
   const formatFixtureLabel = (fixture: Fixture) => {
-    const date = new Date(fixture.match_date).toLocaleDateString('en-GB', { 
-      day: '2-digit', 
-      month: 'short', 
-      year: 'numeric' 
+    const date = new Date(fixture.match_date).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
     });
-    const score = fixture.home_score !== null && fixture.away_score !== null 
-      ? ` (${fixture.home_score}-${fixture.away_score})` 
+    const score = fixture.home_score !== null && fixture.away_score !== null
+      ? ` (${fixture.home_score}-${fixture.away_score})`
       : '';
     return `${fixture.home_team} vs ${fixture.away_team}${score} - ${date}`;
   };
@@ -202,17 +326,29 @@ export const AnalysisQuickLink = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <Label className="text-xs">Player</Label>
-          <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId} disabled={loadingPlayers}>
+          <Input
+            placeholder="Search player..."
+            value={playerSearch}
+            onChange={(e) => setPlayerSearch(e.target.value)}
+            className="h-8 text-xs mb-1"
+          />
+          <Select value={selectedPlayerId} onValueChange={(val) => {
+            setSelectedPlayerId(val);
+            setPlayerSearch("");
+          }} disabled={loadingPlayers}>
             <SelectTrigger className="h-9">
               <SelectValue placeholder="Select a player" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">Select a player</SelectItem>
-              {sortPlayersByRepresentation(players).map((player: any) => (
+              {filteredPlayers.map((player: any, idx: number) => (
                 <SelectItem key={player.id} value={player.id}>
                   {player.name}
-                  {player.representation_status && player.representation_status !== 'other' && (
-                    <span className="text-xs text-muted-foreground ml-1">({getStatusLabel(player.representation_status)})</span>
+                  {player.club && (
+                    <span className="text-xs text-muted-foreground ml-1">({player.club})</span>
+                  )}
+                  {idx < recentPlayerIds.indexOf(player.id) + 1 && recentPlayerIds.indexOf(player.id) < 5 && (
+                    <span className="text-[10px] text-primary ml-1">●</span>
                   )}
                 </SelectItem>
               ))}
@@ -222,7 +358,7 @@ export const AnalysisQuickLink = ({
 
         <div>
           <Label className="text-xs">Fixture</Label>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 mt-[calc(2rem+0.25rem)]">
             <Select value={selectedFixtureId} onValueChange={setSelectedFixtureId} disabled={loadingFixtures || playerFixtures.length === 0}>
               <SelectTrigger className="h-9 flex-1">
                 <SelectValue placeholder={loadingFixtures ? "Loading..." : selectedPlayerId === "none" ? "Select player first" : playerFixtures.length === 0 ? "No fixtures" : "Select a fixture"} />
