@@ -447,7 +447,17 @@ export const RadialMenu = () => {
       },
     ],
     coaches: [
-      { to: "/login", labelKey: "header.portal", fallback: "PORTAL", Icon: Users, angle: 0 },
+      { 
+        to: "/login", 
+        labelKey: "header.portal", 
+        fallback: "PORTAL", 
+        Icon: Users, 
+        angle: 0,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(0),
+          component: PortalQuadrantCard,
+        },
+      },
       { 
         to: "/performance", 
         labelKey: "header.performance", 
@@ -465,6 +475,10 @@ export const RadialMenu = () => {
         fallback: "COACHING", 
         Icon: Target, 
         angle: 144,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(144),
+          component: CoachingQuadrantCard,
+        },
       },
       { 
         to: "/between-the-lines", 
