@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Edit, Trash2, Search, FileText, Save, GripVertical, Download, Copy } from "lucide-react";
+import { StaffSearchInput } from "./StaffSearchInput";
 
 interface SiteText {
   id: string;

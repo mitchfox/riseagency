@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Camera, Download, Trash2, RefreshCw, Search, Loader2, X, Play } from "lucide-react";
+import { StaffSearchInput } from "./StaffSearchInput";
 import { DatasetFrameCapture } from "./DatasetFrameCapture";
 import { DatasetAnnotationCanvas, type BBox } from "./DatasetAnnotationCanvas";
 import JSZip from "jszip";

@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { Plus, Edit, Trash2, Search, Languages, RefreshCw, Globe } from "lucide-react";
+import { StaffSearchInput } from "./StaffSearchInput";
 
 interface Translation {
   id: string;

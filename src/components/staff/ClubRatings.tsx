@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Building2, Upload, Search, ImagePlus, Wand2, Merge } from "lucide-react";
+import { StaffSearchInput } from "./StaffSearchInput";
 import { toast } from "sonner";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
