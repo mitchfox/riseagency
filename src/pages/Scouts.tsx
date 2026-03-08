@@ -68,6 +68,27 @@ const getDomainTranslation = (domain: string, t: (key: string, fallback?: string
   return translations[domain] || domain;
 };
 
+const toLegacySkillSlug = (value: string): string =>
+  value.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/^_+|_+$/g, '');
+
+const toCompactSkillSlug = (value: string): string =>
+  value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+
+const getBestTranslation = (
+  t: (key: string, fallback?: string) => string,
+  primaryKey: string,
+  secondaryKey: string,
+  fallback: string
+): string => {
+  const primary = t(primaryKey);
+  if (primary !== primaryKey) return primary;
+
+  const secondary = t(secondaryKey);
+  if (secondary !== secondaryKey) return secondary;
+
+  return fallback;
+};
+
 const Scouts = () => {
   const { t } = useLanguage();
   const [selectedPosition, setSelectedPosition] = useState<ScoutingPosition>(SCOUTING_POSITIONS[0]);
