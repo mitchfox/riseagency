@@ -3622,6 +3622,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         <SelectItem value="fuel_for_football">Fuel For Football</SelectItem>
                         <SelectItem value="mandated">Mandated</SelectItem>
                         <SelectItem value="previously_mandated">Previously Mandated</SelectItem>
+                        <SelectItem value="prospect">Prospect</SelectItem>
                         <SelectItem value="scouted">Scouted</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>

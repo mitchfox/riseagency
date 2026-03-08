@@ -335,25 +335,28 @@ const Staff = () => {
     return () => document.removeEventListener("keydown", down);
   }, [expandedCategory, expandedSection]);
 
-  const handleSectionToggle = (section: string) => {
+  const handleSectionToggle = (section: string, replaceCurrentTab = false) => {
     // Always navigate to the section - never toggle off by clicking the same one
     playSectionSwitch();
     setExpandedSection(section as any);
     setSearchParams({ section });
     // Persist active tab for session restoration
     localStorage.setItem('staff_active_tab', section);
-    // Update the active tab to reflect the new section
+    // Update tabs
     try {
       const tabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
       if (tabs.length > 0) {
-        // Find the currently active tab and replace it with the new section
-        const activeIdx = tabs.indexOf(expandedSection as string);
-        if (activeIdx !== -1 && !tabs.includes(section)) {
-          tabs[activeIdx] = section;
-          localStorage.setItem('staff_open_tabs', JSON.stringify(tabs));
-          setTabsVersion(v => v + 1);
-        } else if (!tabs.includes(section)) {
-          // If current section isn't in tabs, add this one
+        if (replaceCurrentTab) {
+          // Only replace when explicitly requested (clicking an existing tab)
+          const activeIdx = tabs.indexOf(expandedSection as string);
+          if (activeIdx !== -1 && !tabs.includes(section)) {
+            tabs[activeIdx] = section;
+            localStorage.setItem('staff_open_tabs', JSON.stringify(tabs));
+            setTabsVersion(v => v + 1);
+          }
+        }
+        // Always ensure the section exists in tabs
+        if (!tabs.includes(section)) {
           tabs.push(section);
           localStorage.setItem('staff_open_tabs', JSON.stringify(tabs.slice(-12)));
           setTabsVersion(v => v + 1);
