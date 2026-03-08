@@ -193,10 +193,10 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, isDragging }: {
               className="text-[10px] h-5 px-1.5 font-bebas tracking-wider"
               style={{ color: 'hsl(43, 49%, 61%)', borderColor: 'hsl(43, 49%, 61% / 0.3)' }}
             >
-              {prospect.age_group}
+              {ageGroupLabelMap[prospect.age_group]}
             </Badge>
-            {prospect.age && (
-              <span className="text-[10px] text-muted-foreground">{prospect.age}y</span>
+            {typeof prospect.age === 'number' && (
+              <span className="text-[10px] text-muted-foreground">Age {prospect.age}</span>
             )}
           </div>
           <div className="flex items-center gap-1">
