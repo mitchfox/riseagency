@@ -832,20 +832,19 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
             })}
           </div>
 
-            {/* Legend */}
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground pt-4 border-t">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded border-2" style={{ borderColor: 'hsl(0, 70%, 50%)' }} />
-                <span>High</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded border-2" style={{ borderColor: 'hsl(43, 49%, 61%)' }} />
-                <span>Medium</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded border-2" style={{ borderColor: 'hsl(140, 50%, 50%)' }} />
-                <span>Low</span>
-              </div>
+          {/* Legend */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground pt-4 border-t">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 rounded border-2" style={{ borderColor: 'hsl(0, 70%, 50%)' }} />
+              <span>High</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 rounded border-2" style={{ borderColor: 'hsl(43, 49%, 61%)' }} />
+              <span>Medium</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 rounded border-2" style={{ borderColor: 'hsl(140, 50%, 50%)' }} />
+              <span>Low</span>
             </div>
           </div>
         </TabsContent>
