@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Music, Upload, Trash2, ExternalLink, Plus, Play, Link } from "lucide-react";
+import { Music, Upload, Trash2, ExternalLink, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -45,8 +45,7 @@ export const MusicStudio = () => {
           <TabsTrigger value="portalmusic">Portal Music</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="suno" className="mt-4" forceMount={activeTab !== "suno" ? undefined : undefined}>
-          <div className="hidden data-[state=inactive]:hidden" />
+        <TabsContent value="suno" className="mt-4">
           <SunoTab />
         </TabsContent>
 
@@ -60,37 +59,151 @@ export const MusicStudio = () => {
 
 // ─── Suno AI Tab ─────────────────────────────────────────────────────────────
 
+const SUNO_SONGS_KEY = "musicStudio_sunoSongs";
+
+interface SunoSong {
+  id: string;
+  url: string;
+  title: string;
+  addedAt: string;
+}
+
+const extractSunoId = (url: string): string | null => {
+  const match = url.match(/suno\.com\/song\/([a-zA-Z0-9-]+)/);
+  if (match) return match[1];
+  if (/^[a-f0-9-]{36}$/.test(url.trim())) return url.trim();
+  return null;
+};
+
 const SunoTab = () => {
+  const [songs, setSongs] = useState<SunoSong[]>(() => {
+    try { return JSON.parse(localStorage.getItem(SUNO_SONGS_KEY) || "[]"); }
+    catch { return []; }
+  });
+  const [newUrl, setNewUrl] = useState("");
+  const [newTitle, setNewTitle] = useState("");
+
+  const saveSongs = (updated: SunoSong[]) => {
+    setSongs(updated);
+    try { localStorage.setItem(SUNO_SONGS_KEY, JSON.stringify(updated)); } catch {}
+  };
+
+  const handleAddSong = () => {
+    const id = extractSunoId(newUrl);
+    if (!id) {
+      toast.error("Please paste a valid Suno song URL (e.g. https://suno.com/song/...)");
+      return;
+    }
+    if (songs.some(s => s.id === id)) {
+      toast.error("This song has already been added.");
+      return;
+    }
+    const song: SunoSong = {
+      id,
+      url: `https://suno.com/song/${id}`,
+      title: newTitle.trim() || `Track ${songs.length + 1}`,
+      addedAt: new Date().toISOString(),
+    };
+    saveSongs([song, ...songs]);
+    setNewUrl("");
+    setNewTitle("");
+    toast.success("Song added");
+  };
+
+  const handleRemoveSong = (id: string) => {
+    saveSongs(songs.filter(s => s.id !== id));
+  };
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Music className="h-5 w-5" />
-            Suno AI
-          </CardTitle>
-          <Button variant="outline" size="sm" asChild>
-            <a href="https://suno.com" target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-3.5 w-3.5 mr-1" />
-              Open in new tab
-            </a>
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Create music with AI directly from within the portal. Generated tracks can then be assigned to player portals in the Portal Music tab.
-        </p>
-      </CardHeader>
-      <CardContent>
-        <div className="w-full rounded-lg overflow-hidden border" style={{ height: "calc(100vh - 280px)", minHeight: "500px" }}>
-          <iframe
-            src="https://suno.com"
-            className="w-full h-full border-0"
-            allow="microphone; clipboard-write"
-            title="Suno AI Music Generator"
-          />
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Music className="h-5 w-5" />
+              Suno AI
+            </CardTitle>
+            <Button variant="outline" size="sm" asChild>
+              <a href="https://suno.com/create" target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                Open Suno
+              </a>
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Open Suno to create music with AI, then paste the song link below to save and preview it here. Songs can be downloaded from Suno and uploaded to player portals in the Portal Music tab.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Add song form */}
+          <div className="flex items-end gap-2 flex-wrap">
+            <div className="flex-1 min-w-[200px] space-y-1">
+              <label className="text-xs text-muted-foreground">Suno song URL</label>
+              <Input
+                value={newUrl}
+                onChange={e => setNewUrl(e.target.value)}
+                placeholder="https://suno.com/song/..."
+                className="h-9"
+                onKeyDown={e => e.key === "Enter" && handleAddSong()}
+              />
+            </div>
+            <div className="w-48 space-y-1">
+              <label className="text-xs text-muted-foreground">Title (optional)</label>
+              <Input
+                value={newTitle}
+                onChange={e => setNewTitle(e.target.value)}
+                placeholder="Track name"
+                className="h-9"
+                onKeyDown={e => e.key === "Enter" && handleAddSong()}
+              />
+            </div>
+            <Button size="sm" onClick={handleAddSong} disabled={!newUrl.trim()} className="h-9">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add
+            </Button>
+          </div>
+
+          {/* Song list with embeds */}
+          {songs.length === 0 ? (
+            <div className="border-2 border-dashed rounded-lg p-10 text-center text-muted-foreground">
+              <Music className="h-10 w-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm font-medium">No songs saved yet</p>
+              <p className="text-xs mt-1">Open Suno to create a track, then paste the link here to preview and manage it.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {songs.map(song => (
+                <div key={song.id} className="rounded-xl border overflow-hidden bg-background">
+                  <iframe
+                    src={`https://suno.com/embed/${song.id}`}
+                    className="w-full border-0"
+                    style={{ height: "160px" }}
+                    allow="autoplay"
+                    title={song.title}
+                  />
+                  <div className="flex items-center justify-between px-3 py-2 border-t">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Music className="h-3.5 w-3.5 text-primary shrink-0" />
+                      <span className="text-sm font-medium truncate">{song.title}</span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button size="sm" variant="ghost" className="h-7 px-2" asChild>
+                        <a href={song.url} target="_blank" rel="noopener noreferrer" title="Open in Suno">
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive hover:text-destructive" onClick={() => handleRemoveSong(song.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
@@ -215,7 +328,6 @@ const PortalMusicTab = () => {
     if (!selectedPlayerId) return;
     setSaving(true);
     try {
-      // Upsert into player_portal_settings
       const { error } = await supabase
         .from("player_portal_settings")
         .upsert(
@@ -224,7 +336,6 @@ const PortalMusicTab = () => {
         );
       if (error) throw error;
 
-      // Update local state
       setPlayers(prev => prev.map(p =>
         p.id === selectedPlayerId ? { ...p, music_tracks: tracks } : p
       ));
@@ -242,7 +353,6 @@ const PortalMusicTab = () => {
 
   return (
     <div className="space-y-4">
-      {/* Player selector */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -254,7 +364,7 @@ const PortalMusicTab = () => {
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Select value={selectedPlayerId} onValueChange={handlePlayerChange}>
               <SelectTrigger className="max-w-xs">
                 <SelectValue placeholder="Select player" />
@@ -288,7 +398,6 @@ const PortalMusicTab = () => {
             onChange={handleFileSelect}
           />
 
-          {/* Track list */}
           {selectedPlayerId && tracks.length === 0 ? (
             <div className="border-2 border-dashed rounded-lg p-8 text-center text-muted-foreground">
               <Music className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -316,7 +425,6 @@ const PortalMusicTab = () => {
         </CardContent>
       </Card>
 
-      {/* Summary of all players with tracks */}
       {playersWithTracks.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
