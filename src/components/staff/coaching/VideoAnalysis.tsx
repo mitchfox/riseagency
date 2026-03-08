@@ -25,6 +25,7 @@ import { sortPlayersByRepresentation, getStatusLabel, groupPlayersByStatus } fro
 import { toTitleCase } from "@/lib/titleCase";
 import { AIPlayerDetection } from "./AIPlayerDetection";
 import { RoboflowTracking } from "./RoboflowTracking";
+import { AICommentaryClipper } from "./AICommentaryClipper";
 import { fetchPlayerActionFrequencies } from "@/lib/playerActionFrequency";
 import { playTick, playSuccess } from "@/lib/soundEffects";
 import { startExportJob, subscribeToExportProgress, isExportRunning, getActiveExport, type ExportProgress } from "@/lib/backgroundExportService";
