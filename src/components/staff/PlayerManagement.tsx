@@ -150,6 +150,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     }[],
     seasonStats: [] as { header: string; value: string }[],
     topStats: [] as { label: string; value: string; description?: string }[],
+    externalPlayerId: "",
     
     // Separate links field
     links: [] as { label: string; url: string }[],
