@@ -412,7 +412,7 @@ const Scouts = () => {
                       ? 'w-12 h-3 bg-primary shadow-lg shadow-primary/50'
                       : 'w-3 h-3 bg-muted hover:bg-muted-foreground/50'
                   }`}
-                  aria-label={t('scouts.go_to_slide', 'Go to slide')}
+                  aria-label={`${t('scouts.go_to_slide', 'Go to slide')} ${index + 1}`}
                 />
               ))}
             </div>
