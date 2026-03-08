@@ -1460,6 +1460,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   tacticalSchemes: [],
                   seasonStats: [],
                   topStats: [],
+                  externalPlayerId: "",
                   links: [],
                   highlightedMatch: null,
                 });
