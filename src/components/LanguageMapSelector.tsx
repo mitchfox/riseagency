@@ -205,7 +205,7 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
                   </div>
                 ) : (
                   <span className="text-sm font-bebas uppercase tracking-wider text-white/40">
-                    Select a language
+                    {t('menu.select_a_language', 'Select a language')}
                   </span>
                 )}
               </div>
