@@ -310,7 +310,7 @@ function LandingContent() {
       {/* Mobile language selector is now inline in the bottom section */}
       
       {/* Portal, Staff & Scouts links - subtle top right */}
-      <div className="absolute top-[30px] md:top-8 right-2 md:right-4 z-50 flex items-center gap-3">
+      <div className="absolute top-[34px] md:top-8 right-2 md:right-4 z-50 flex items-center gap-3">
         <Link to="/staff" className="text-white/20 hover:text-white/50 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
           {t("header.staff", "Staff")}
         </Link>
