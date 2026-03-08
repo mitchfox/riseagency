@@ -118,9 +118,17 @@ setTimeout(() => {
       removeSplash();
     }, 1000);
     
-    // Fallback: Always remove splash after 6 seconds max (for offline scenarios)
+    // Fallback: Always remove splash after 4 seconds max (reduced from 6 for faster recovery)
     setTimeout(() => {
       removeSplash();
-    }, 6000);
+    }, 4000);
   }
 }, 100);
+
+// Safety net: ensure splash is ALWAYS removed after 5 seconds regardless of state
+setTimeout(() => {
+  const splash = document.getElementById('loading-splash');
+  if (splash) {
+    splash.remove();
+  }
+}, 5000);
