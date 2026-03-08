@@ -300,7 +300,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
     try {
       const { data, error } = await supabase
         .from("players")
-        .select("id, name, representation_status")
+        .select("id, name, representation_status, club, club_logo")
         .order("name");
 
       if (error) throw error;
