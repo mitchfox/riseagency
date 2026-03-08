@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Star, TrendingUp, Users, Shield, BarChart3, Dumbbell, Video, BookOpen } from "lucide-react";

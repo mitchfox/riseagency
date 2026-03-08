@@ -1265,11 +1265,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     scouted: players.filter(p => p.representation_status === 'scouted'),
   };
 
-  // State for collapsed sections - other, scouted, fuel_for_football collapsed by default
+  // State for collapsed sections - other, scouted, fuel_for_football, prospect collapsed by default
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     other: true,
     scouted: true,
     fuel_for_football: true,
+    prospect: true,
   });
 
   const toggleSection = (section: string) => {
@@ -1284,6 +1285,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const mandatedPlayers = groupedPlayers.mandated;
   const previouslyMandatedPlayers = groupedPlayers.previously_mandated;
   const fuelForFootballPlayers = groupedPlayers.fuel_for_football;
+  const prospectPlayers = groupedPlayers.prospect;
   const otherPlayers = groupedPlayers.other;
   const scoutedPlayers = groupedPlayers.scouted;
 
