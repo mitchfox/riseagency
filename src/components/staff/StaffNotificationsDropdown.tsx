@@ -174,8 +174,14 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
   };
 
   const markCategoryAsRead = async (category: string) => {
+    // Include merged event types (e.g. player_turning_18 merges into player_birthday)
+    const mergedTypes = Object.entries(MERGE_MAP)
+      .filter(([, target]) => target === category)
+      .map(([source]) => source);
+    const allTypes = [category, ...mergedTypes];
+
     const categoryNotifications = notifications.filter(
-      (n) => n.event_type === category && !n.read_by?.includes(userId)
+      (n) => allTypes.includes(n.event_type) && !n.read_by?.includes(userId)
     );
 
     for (const notification of categoryNotifications) {
