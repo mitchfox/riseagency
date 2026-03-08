@@ -10,6 +10,9 @@ const corsHeaders = {
  * 1. Players reaching contactable age (based on recruitment_age_rules)
  * 2. Players turning 18
  * 3. Player birthdays (today)
+ * 
+ * Sources: player_outreach_youth, player_outreach_pro (have date_of_birth column),
+ *          and main players table (date_of_birth column OR bio JSON dateOfBirth field)
  */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -31,16 +34,32 @@ Deno.serve(async (req) => {
     const [youthResult, proResult, mainPlayersResult] = await Promise.all([
       supabase.from('player_outreach_youth').select('id, player_name, date_of_birth, current_club, nationality'),
       supabase.from('player_outreach_pro').select('id, player_name, date_of_birth, current_club, nationality'),
-      supabase.from('players').select('id, name, date_of_birth, club, nationality'),
+      supabase.from('players').select('id, name, date_of_birth, club, nationality, bio'),
     ]);
 
     const youthPlayers = (youthResult.data || []).map(p => ({ ...p, name: p.player_name, current_club: p.current_club, player_type: 'youth' }));
     const proPlayers = (proResult.data || []).map(p => ({ ...p, name: p.player_name, current_club: p.current_club, player_type: 'pro' }));
-    const mainPlayers = (mainPlayersResult.data || []).map(p => ({ ...p, current_club: p.club, player_type: 'main' }));
+    
+    // For main players, try date_of_birth column first, then fall back to bio JSON
+    const mainPlayers = (mainPlayersResult.data || []).map(p => {
+      let dob = p.date_of_birth;
+      if (!dob && p.bio) {
+        try {
+          const bioData = typeof p.bio === 'string' ? JSON.parse(p.bio) : p.bio;
+          if (bioData?.dateOfBirth) {
+            dob = bioData.dateOfBirth;
+          }
+        } catch {
+          // ignore parse errors
+        }
+      }
+      return { ...p, date_of_birth: dob, current_club: p.club, player_type: 'main' };
+    });
+    
     const players = [...youthPlayers, ...proPlayers, ...mainPlayers].filter(p => p.date_of_birth);
 
     if (players.length === 0) {
-      return new Response(JSON.stringify({ message: 'No players found' }), {
+      return new Response(JSON.stringify({ message: 'No players with date_of_birth found' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -77,6 +96,8 @@ Deno.serve(async (req) => {
       if (!player.date_of_birth) continue;
 
       const dob = new Date(player.date_of_birth);
+      if (isNaN(dob.getTime())) continue; // Skip invalid dates
+      
       const dobMonth = dob.getMonth() + 1;
       const dobDay = dob.getDate();
 
@@ -132,11 +153,9 @@ Deno.serve(async (req) => {
             (r: any) => r.country?.toLowerCase() === clubEntry.country?.toLowerCase()
           );
           if (rule?.min_contact_age != null) {
-            // Calculate precise age in years
             const diffMs = today.getTime() - dob.getTime();
             const preciseAge = diffMs / (365.25 * 24 * 60 * 60 * 1000);
 
-            // Check if they became contactable today (precise age crossed the threshold)
             const yesterdayMs = today.getTime() - 86400000;
             const preciseAgeYesterday = (yesterdayMs - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
 
@@ -171,11 +190,12 @@ Deno.serve(async (req) => {
       if (insertError) throw insertError;
     }
 
-    console.log(`[Player Milestones] Created ${notifications.length} notifications`);
+    console.log(`[Player Milestones] Created ${notifications.length} notifications from ${players.length} players checked`);
 
     return new Response(
       JSON.stringify({
         success: true,
+        players_checked: players.length,
         notifications_created: notifications.length,
         details: notifications.map(n => n.body),
       }),
