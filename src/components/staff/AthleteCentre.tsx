@@ -454,7 +454,17 @@ export const AthleteCentre = () => {
               <div className="p-3 md:p-6">
                 {/* ═══ Match Flow Tab ═══ */}
                 <TabsContent value="matchflow" className="mt-0">
-                  <MatchFlowTab selectedPlayer={selectedPlayer} currentPlayer={currentPlayer} />
+                  <MatchFlowTab 
+                    selectedPlayer={selectedPlayer} 
+                    currentPlayer={currentPlayer}
+                    initialOpenSections={resumedSession?.openSections}
+                    initialInlineReport={resumedSession?.inlineReport ? {
+                      playerId: resumedSession.inlineReport.playerId,
+                      playerName: resumedSession.inlineReport.playerName,
+                      analysisId: resumedSession.inlineReport.analysisId,
+                    } : null}
+                    onSessionChange={handleMatchFlowSessionChange}
+                  />
                 </TabsContent>
 
                 {/* ═══ Development Tab ═══ */}
