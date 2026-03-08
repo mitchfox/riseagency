@@ -242,7 +242,9 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
       case "comparison_request":
         return "Comparison Requested";
       case "player_birthday":
-        return "Player Birthday";
+        return notification.event_data?.age ? `Player Turning ${notification.event_data.age}` : "Player Birthday";
+      case "player_turning_18":
+        return "Player Turning 18";
       default:
         return "Notification";
     }
