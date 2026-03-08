@@ -1639,6 +1639,26 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         )}
 
 
+        {/* Visibility Status */}
+        {!isConcept && (
+          <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+            <Label className="text-sm font-medium whitespace-nowrap">Status</Label>
+            <Select
+              value={formData.visibility_status || 'live'}
+              onValueChange={(val) => setFormData({ ...formData, visibility_status: val })}
+            >
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="live">Live</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="hidden">Hidden</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
           <Button onClick={handleSave}>{isConcept ? "Save Concept" : "Save Analysis"}</Button>
