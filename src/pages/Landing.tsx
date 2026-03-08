@@ -352,7 +352,8 @@ function LandingContent() {
 
             {/* Mobile Layout - pushed down with proper divider lines */}
             <div className="md:hidden flex flex-col items-center gap-0 mt-0 hover-text-no-shift" style={{
-            transform: 'translateY(-25px) translateX(-4px)'
+            transform: 'translateY(-25px) translateX(-4px)',
+            paddingBottom: '12px'
           }}>
               
               {/* Select role text */}

@@ -114,7 +114,7 @@ export function StaticLandingFallback({ performanceReason }: StaticLandingFallba
       </div>
 
       {/* Bottom Section - Navigation */}
-      <div className="relative z-10 w-full pb-6 md:pb-10">
+      <div className="relative z-10 w-full pb-10 md:pb-10">
         {/* Desktop Navigation */}
         <div className="hidden md:block">
           <nav className="flex items-center justify-center gap-1 mb-4">
