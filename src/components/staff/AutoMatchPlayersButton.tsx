@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
+import { Progress } from "@/components/ui/progress";
 
 interface MatchResult {
   player_id: string;
@@ -16,9 +18,10 @@ interface MatchResult {
   tm_club?: string;
   tm_position?: string;
   tm_market_value?: string;
-  tm_portrait_url?: string;
   error?: string;
 }
+
+const BATCH_SIZE = 10;
 
 export const AutoMatchPlayersButton = ({ onComplete }: { onComplete?: () => void }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -27,6 +30,7 @@ export const AutoMatchPlayersButton = ({ onComplete }: { onComplete?: () => void
   const [results, setResults] = useState<MatchResult[]>([]);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
 
   const handleSearch = async () => {
     setDialogOpen(true);
@@ -34,31 +38,80 @@ export const AutoMatchPlayersButton = ({ onComplete }: { onComplete?: () => void
     setFetchError(null);
     setResults([]);
     setSelected({});
+    setProgress({ current: 0, total: 0 });
 
     try {
-      const { data, error } = await invokeEdgeFunction('auto-match-players', {});
+      // Fetch all players
+      const { data: players, error: playersError } = await supabase
+        .from('players')
+        .select('id, name')
+        .order('name');
 
-      if (error) throw error;
-      if (!data?.results) throw new Error('No results returned');
+      if (playersError) throw playersError;
 
-      setResults(data.results);
+      // Get existing external IDs to skip those
+      const { data: existingStats } = await supabase
+        .from('player_stats')
+        .select('player_id, external_player_id');
 
-      // Auto-select all matched players
-      const autoSelect: Record<string, boolean> = {};
-      data.results.forEach((r: MatchResult) => {
-        if (r.status === 'matched' && r.external_id) {
-          autoSelect[r.player_id] = true;
+      const existingMap: Record<string, string> = {};
+      existingStats?.forEach(s => {
+        if (s.external_player_id) existingMap[s.player_id] = s.external_player_id;
+      });
+
+      // Split into players needing matching vs already set
+      const alreadySet: MatchResult[] = [];
+      const toSearch: Array<{ id: string; name: string }> = [];
+
+      (players || []).forEach(p => {
+        if (existingMap[p.id]) {
+          alreadySet.push({
+            player_id: p.id,
+            player_name: p.name,
+            status: 'already_set',
+            external_id: existingMap[p.id],
+          });
+        } else {
+          toSearch.push({ id: p.id, name: p.name });
         }
       });
-      setSelected(autoSelect);
 
-      const summary = data.summary;
-      if (summary.matched > 0) {
-        toast.success(`Found ${summary.matched} match${summary.matched !== 1 ? 'es' : ''}`);
+      setProgress({ current: 0, total: toSearch.length });
+      const allResults: MatchResult[] = [...alreadySet];
+      const autoSelect: Record<string, boolean> = {};
+
+      // Process in batches
+      for (let i = 0; i < toSearch.length; i += BATCH_SIZE) {
+        const batch = toSearch.slice(i, i + BATCH_SIZE);
+
+        const { data, error } = await invokeEdgeFunction('auto-match-players', {
+          body: { players: batch },
+        });
+
+        if (error) {
+          console.error('Batch error:', error);
+          batch.forEach(p => {
+            allResults.push({ player_id: p.id, player_name: p.name, status: 'error', error: 'Batch failed' });
+          });
+        } else if (data?.results) {
+          data.results.forEach((r: MatchResult) => {
+            allResults.push(r);
+            if (r.status === 'matched' && r.external_id) {
+              autoSelect[r.player_id] = true;
+            }
+          });
+        }
+
+        setProgress({ current: Math.min(i + BATCH_SIZE, toSearch.length), total: toSearch.length });
+        setResults([...allResults]);
+        setSelected({ ...autoSelect });
       }
-      if (summary.not_found > 0) {
-        toast.info(`${summary.not_found} player${summary.not_found !== 1 ? 's' : ''} not found on Transfermarkt`);
-      }
+
+      const matched = allResults.filter(r => r.status === 'matched').length;
+      const notFound = allResults.filter(r => r.status === 'not_found').length;
+
+      if (matched > 0) toast.success(`Found ${matched} match${matched !== 1 ? 'es' : ''}`);
+      if (notFound > 0) toast.info(`${notFound} player${notFound !== 1 ? 's' : ''} not found`);
     } catch (err: any) {
       console.error('Auto-match error:', err);
       setFetchError(err.message || 'Failed to search players');
@@ -88,7 +141,7 @@ export const AutoMatchPlayersButton = ({ onComplete }: { onComplete?: () => void
 
       if (error) throw error;
 
-      toast.success(`${data?.applied || 0} player${(data?.applied || 0) !== 1 ? 's' : ''} linked to Transfermarkt`);
+      toast.success(`${data?.applied || 0} player${(data?.applied || 0) !== 1 ? 's' : ''} linked`);
       setDialogOpen(false);
       onComplete?.();
     } catch (err: any) {
@@ -123,14 +176,21 @@ export const AutoMatchPlayersButton = ({ onComplete }: { onComplete?: () => void
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="w-[95vw] max-w-3xl max-h-[85vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Auto-Match Players to Transfermarkt</DialogTitle>
+            <DialogTitle>Auto-Match Players</DialogTitle>
           </DialogHeader>
 
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
+            <div className="flex flex-col items-center justify-center py-12 gap-4">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Searching Transfermarkt for all players...</p>
-              <p className="text-xs text-muted-foreground">This may take a couple of minutes</p>
+              <p className="text-sm text-muted-foreground">
+                Searching Transfermarkt... {progress.current}/{progress.total}
+              </p>
+              {progress.total > 0 && (
+                <Progress value={(progress.current / progress.total) * 100} className="w-64" />
+              )}
+              {matched.length > 0 && (
+                <p className="text-xs text-emerald-500">{matched.length} matched so far</p>
+              )}
             </div>
           ) : fetchError ? (
             <div className="py-8 text-center">
@@ -195,7 +255,7 @@ export const AutoMatchPlayersButton = ({ onComplete }: { onComplete?: () => void
                             onCheckedChange={() => toggleSelect(result.player_id)}
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-medium text-sm">{result.player_name}</span>
                               <span className="text-xs text-muted-foreground">→</span>
                               <span className="text-sm text-emerald-500">{result.tm_name}</span>
@@ -233,6 +293,20 @@ export const AutoMatchPlayersButton = ({ onComplete }: { onComplete?: () => void
                       </div>
                     </div>
                   )}
+
+                  {/* Errors */}
+                  {errors.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-sm font-medium text-destructive">Errors</p>
+                      <div className="text-xs text-muted-foreground space-y-0.5">
+                        {errors.map((result) => (
+                          <div key={result.player_id} className="py-0.5">
+                            {result.player_name} — {result.error || 'Multiple results'}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
 
@@ -247,7 +321,7 @@ export const AutoMatchPlayersButton = ({ onComplete }: { onComplete?: () => void
                 </div>
               )}
 
-              {matched.length === 0 && (
+              {matched.length === 0 && results.length > 0 && (
                 <div className="flex justify-end pt-2 border-t">
                   <Button variant="outline" onClick={() => setDialogOpen(false)}>Close</Button>
                 </div>
