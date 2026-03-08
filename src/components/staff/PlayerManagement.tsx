@@ -1254,13 +1254,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   
   const selectedPlayerSeasonStats = selectedPlayer ? getSeasonStats(selectedPlayer) : null;
 
-  // Group players by representation status in order: represented, mandated, previously_mandated, fuel_for_football, other, scouted
+  // Group players by representation status in order: represented, mandated, previously_mandated, fuel_for_football, prospect, other, scouted
   const groupedPlayers = {
     represented: players.filter(p => p.representation_status === 'represented'),
     mandated: players.filter(p => p.representation_status === 'mandated'),
     previously_mandated: players.filter(p => p.representation_status === 'previously_mandated'),
     fuel_for_football: players.filter(p => p.representation_status === 'fuel_for_football'),
-    other: players.filter(p => (p.representation_status === 'other' || !p.representation_status) && p.representation_status !== 'scouted'),
+    prospect: players.filter(p => p.representation_status === 'prospect'),
+    other: players.filter(p => (p.representation_status === 'other' || !p.representation_status) && p.representation_status !== 'scouted' && p.representation_status !== 'prospect'),
     scouted: players.filter(p => p.representation_status === 'scouted'),
   };
 
