@@ -419,7 +419,7 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
           .single();
 
         if (!cErr && created) {
-          fromProspects.push({ ...created, _source: 'prospects' as const });
+          fromProspects.push({ ...created, _source: 'prospects' as const } as Prospect);
         }
       }
 
