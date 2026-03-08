@@ -461,6 +461,19 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
                                         );
                                       })}
                                     </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 text-[10px] text-emerald-400 hover:text-emerald-300 px-2 mt-1"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setImprovementReport(improvementData);
+                                        setOpen(false);
+                                      }}
+                                    >
+                                      <ExternalLink className="h-3 w-3 mr-1" />
+                                      View Report
+                                    </Button>
                                   </div>
                                 ) : (
                                   <p className="text-xs text-muted-foreground truncate">
