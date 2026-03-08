@@ -311,7 +311,11 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
       case "comparison_request":
         return data?.player_name ? `Comparison requested for ${data.player_name}` : "New comparison request";
       case "player_birthday":
-        return data?.player_name ? `${data.player_name}'s birthday today` : "Player birthday today";
+        return data?.player_name
+          ? `${data.player_name} turns ${data.age || '?'} today`
+          : "Player birthday today";
+      case "player_turning_18":
+        return data?.player_name ? `${data.player_name} turns 18 today` : "Player turning 18 today";
       default:
         return notification.body || "";
     }

@@ -21,6 +21,7 @@ import { EditHighlightDialog } from "./EditHighlightDialog";
 import { UploadPlayerImageDialog } from "./UploadPlayerImageDialog";
 import { AddPlayerDialog } from "./AddPlayerDialog";
 import { HighlightedMatchForm } from "./HighlightedMatchForm";
+import { SyncPlayerStatsButton } from "./SyncPlayerStatsButton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
