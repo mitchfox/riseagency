@@ -127,8 +127,8 @@ const Scouts = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-full">
       <SEO 
-        title="For Scouts - Join RISE Network"
-        description="Join RISE's scouting network. Access our database, competitive incentives, and forever commission structure."
+        title={t('scouts.seo_title', 'For Scouts - Join RISE Network')}
+        description={t('scouts.seo_description', "Join RISE's scouting network. Access our database, competitive incentives, and forever commission structure.")}
         image="/og-preview-scouts.png"
         url="/scouts"
       />
