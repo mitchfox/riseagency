@@ -88,9 +88,20 @@ const MATCH_FLOW_SECTIONS = [
   { id: "highlightcompiler", label: "Highlight Compiler", icon: Film, description: "Compile highlight reels" },
 ];
 
-const MatchFlowTab = ({ selectedPlayer, currentPlayer }: { selectedPlayer: string | null; currentPlayer: Player | null }) => {
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
-  const [inlineReport, setInlineReport] = useState<InlineReportState | null>(null);
+const MatchFlowTab = ({ selectedPlayer, currentPlayer, initialOpenSections, initialInlineReport, onSessionChange }: { 
+  selectedPlayer: string | null; 
+  currentPlayer: Player | null;
+  initialOpenSections?: Record<string, boolean>;
+  initialInlineReport?: InlineReportState | null;
+  onSessionChange?: (openSections: Record<string, boolean>, inlineReport: InlineReportState | null) => void;
+}) => {
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(initialOpenSections || {});
+  const [inlineReport, setInlineReport] = useState<InlineReportState | null>(initialInlineReport || null);
+
+  // Notify parent of session changes for persistence
+  useEffect(() => {
+    onSessionChange?.(openSections, inlineReport);
+  }, [openSections, inlineReport]);
 
   const toggleSection = (id: string) => {
     setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
