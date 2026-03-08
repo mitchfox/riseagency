@@ -104,6 +104,37 @@ async function fetchPlayerSeasonStats(externalId: string): Promise<SeasonStats |
   }
 }
 
+async function searchTransfermarkt(playerName: string): Promise<Array<{ id: string; name: string }> | null> {
+  const query = encodeURIComponent(playerName.trim());
+  const url = `https://www.transfermarkt.co.uk/schnellsuche/ergebnis/schnellsuche?query=${query}`;
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-GB,en;q=0.9',
+      },
+    });
+    if (!response.ok) { await response.text(); return null; }
+    const html = await response.text();
+    const playerSection = html.match(/Search results for players[\s\S]*?<table class="items">([\s\S]*?)<\/table>/);
+    if (!playerSection) return [];
+    const results: Array<{ id: string; name: string }> = [];
+    const rowRegex = /<tr class="(?:odd|even)">([\s\S]*?)<\/tr>/g;
+    let rowMatch;
+    while ((rowMatch = rowRegex.exec(playerSection[1])) !== null) {
+      const row = rowMatch[1];
+      const idMatch = row.match(/\/profil\/spieler\/(\d+)/);
+      const nameMatch = row.match(/title="([^"]+)"[^>]*href="[^"]*\/profil\/spieler/);
+      if (idMatch) results.push({ id: idMatch[1], name: nameMatch?.[1] || 'Unknown' });
+    }
+    return results;
+  } catch (e) {
+    console.error(`TM search failed for "${playerName}":`, e);
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
