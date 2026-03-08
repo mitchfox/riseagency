@@ -409,12 +409,6 @@ function LandingContent() {
                 </nav>
               </div>
               
-              {/* Select role text - mobile */}
-              <div className="text-center pt-0">
-                <span className="text-[10px] font-bebas uppercase tracking-[0.15em] text-white/40">
-                  {t("landing.select_role_enter", "Select Your Role To Enter Site")}
-                </span>
-              </div>
             </div>
           </div>
         </div>
