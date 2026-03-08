@@ -1216,7 +1216,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           links: formData.links.length > 0 ? formData.links : null,
           highlighted_match: formData.highlightedMatch || null,
           portal_language: formData.portal_language || "en",
-        })
+          date_of_birth: formData.dateOfBirth || null,
+        } as any)
         .eq("id", editingPlayer.id);
 
       if (error) throw error;
