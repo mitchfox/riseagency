@@ -616,18 +616,21 @@ const Business = () => {
                     step: "01",
                     titleKey: "business.discovery",
                     titleFallback: "Discovery",
+                    descKey: "business.discovery_desc",
                     descFallback: "We learn your brand, goals, and vision to find the perfect talent match."
                   },
                   {
                     step: "02",
                     titleKey: "business.strategy",
                     titleFallback: "Strategy",
+                    descKey: "business.strategy_desc",
                     descFallback: "We craft a bespoke partnership framework with clear deliverables and metrics."
                   },
                   {
                     step: "03",
                     titleKey: "business.execution",
                     titleFallback: "Execution",
+                    descKey: "business.execution_desc",
                     descFallback: "We manage every detail from contracts to content to final delivery."
                   }
                 ].map((item, index) => (
