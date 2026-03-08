@@ -86,8 +86,8 @@ const Coaches = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-full" key="coaches-page">
       <SEO 
-        title="For Coaches - Representation | RISE Agency"
-        description="Professional representation for coaching excellence. We showcase achievements, foster connections, and secure opportunities."
+        title={t('coaches.seo_title', 'For Coaches - Representation | RISE Agency')}
+        description={t('coaches.seo_desc', 'Professional representation for coaching excellence. We showcase achievements, foster connections, and secure opportunities.')}
         image="/og-preview-coaches.png"
         url="/coaches"
       />
