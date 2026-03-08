@@ -1459,6 +1459,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Players</h2>
               <div className="flex items-center gap-2">
+                <AutoMatchPlayersButton onComplete={fetchPlayers} />
                 <SyncPlayerStatsButton onSynced={fetchPlayers} />
                 <Button onClick={() => {
                   setFormData({
