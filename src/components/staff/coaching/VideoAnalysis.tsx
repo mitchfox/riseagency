@@ -1669,6 +1669,30 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 videoUrl={selectedVideo.video_url}
               />
             )}
+            {selectedVideo.video_url && selectedVideo.player_id && (() => {
+              const player = players.find(p => p.id === selectedVideo.player_id);
+              return player ? (
+                <AICommentaryClipper
+                  videoUrl={selectedVideo.video_url}
+                  playerName={player.name}
+                  onClipsAccepted={async (newClips) => {
+                    if (!selectedVideo) return;
+                    const clips: Clip[] = newClips.map(c => ({
+                      id: crypto.randomUUID(),
+                      start: c.start,
+                      end: c.end,
+                      label: c.label,
+                      action_type: '',
+                      action_description: '',
+                      notes: '',
+                      created_at: new Date().toISOString(),
+                      minute: toDotTime(c.start),
+                    }));
+                    await saveClips([...selectedVideo.clips, ...clips]);
+                  }}
+                />
+              ) : null;
+            })()}
           </div>
         </div>
 
