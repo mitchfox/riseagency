@@ -64,6 +64,7 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [improvementReport, setImprovementReport] = useState<any>(null);
 
   const fetchNotifications = async () => {
     try {
