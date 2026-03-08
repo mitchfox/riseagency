@@ -27,15 +27,17 @@ Deno.serve(async (req) => {
     const todayMonth = today.getMonth() + 1;
     const todayDay = today.getDate();
 
-    // Fetch all players from both outreach tables
-    const [youthResult, proResult] = await Promise.all([
+    // Fetch all players from outreach tables AND the main players table
+    const [youthResult, proResult, mainPlayersResult] = await Promise.all([
       supabase.from('player_outreach_youth').select('id, player_name, date_of_birth, current_club, nationality'),
       supabase.from('player_outreach_pro').select('id, player_name, date_of_birth, current_club, nationality'),
+      supabase.from('players').select('id, name, date_of_birth, club, nationality'),
     ]);
 
-    const youthPlayers = (youthResult.data || []).map(p => ({ ...p, name: p.player_name, player_type: 'youth' }));
-    const proPlayers = (proResult.data || []).map(p => ({ ...p, name: p.player_name, player_type: 'pro' }));
-    const players = [...youthPlayers, ...proPlayers].filter(p => p.date_of_birth);
+    const youthPlayers = (youthResult.data || []).map(p => ({ ...p, name: p.player_name, current_club: p.current_club, player_type: 'youth' }));
+    const proPlayers = (proResult.data || []).map(p => ({ ...p, name: p.player_name, current_club: p.current_club, player_type: 'pro' }));
+    const mainPlayers = (mainPlayersResult.data || []).map(p => ({ ...p, current_club: p.club, player_type: 'main' }));
+    const players = [...youthPlayers, ...proPlayers, ...mainPlayers].filter(p => p.date_of_birth);
 
     if (players.length === 0) {
       return new Response(JSON.stringify({ message: 'No players found' }), {

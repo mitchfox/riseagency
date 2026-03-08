@@ -67,6 +67,7 @@ const SignContract = lazy(() => import("./pages/SignContract"));
 const Jobs = lazy(() => import("./pages/Jobs"));
 const AgentRequests = lazy(() => import("./pages/AgentRequests"));
 const ClubDirection = lazy(() => import("./pages/ClubDirection"));
+const RiseWithUs = lazy(() => import("./pages/RiseWithUs"));
 const FluidCursor = lazy(() => import("./components/FluidCursor"));
 
 // Loading fallback component
@@ -176,6 +177,7 @@ const App = () => {
                       <Route path="/auth/callback" element={<AuthCallback />} />
                       <Route path="/staff/update-password" element={<UpdatePassword />} />
                       <Route path="/sign/:token" element={<SignContract />} />
+                      <Route path="/risewithus/:slug" element={<RiseWithUs />} />
                       <Route path="/error" element={<NotFound />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />

@@ -2125,6 +2125,57 @@ export type Database = {
           },
         ]
       }
+      nutrition_recipes: {
+        Row: {
+          calories: string | null
+          carbs: string | null
+          category: string
+          created_at: string | null
+          description: string | null
+          fat: string | null
+          id: string
+          image_url: string | null
+          ingredients: string | null
+          method: string | null
+          protein: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          calories?: string | null
+          carbs?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          fat?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: string | null
+          method?: string | null
+          protein?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          calories?: string | null
+          carbs?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          fat?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: string | null
+          method?: string | null
+          protein?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       open_access_issues: {
         Row: {
           canva_draft_link: string | null
@@ -3229,6 +3280,55 @@ export type Database = {
             columns: ["player_id"]
             isOneToOne: false
             referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_recipe_assignments: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_visible: boolean | null
+          phase_name: string | null
+          player_id: string
+          recipe_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_visible?: boolean | null
+          phase_name?: string | null
+          player_id: string
+          recipe_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_visible?: boolean | null
+          phase_name?: string | null
+          player_id?: string
+          recipe_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_recipe_assignments_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_recipe_assignments_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_recipe_assignments_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "nutrition_recipes"
             referencedColumns: ["id"]
           },
         ]

@@ -640,53 +640,51 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
             )}
           </div>
 
-          {/* Prospect Board Grid - Full visibility without horizontal scroll */}
-          <div className="w-full">
-            <div className="w-full">
+          {/* Prospect Board Grid - Responsive with horizontal scroll on mobile */}
+          <div className="w-full overflow-x-auto -mx-2 px-2">
+            <div className="min-w-[600px]">
               {/* Header Row */}
-              <div className={`grid ${isMobile ? 'grid-cols-3' : 'grid-cols-6'} gap-2 mb-2`}>
-                <div className={`${isMobile ? 'p-2' : 'p-3'} text-center font-bebas uppercase ${isMobile ? 'text-xs' : 'text-sm'} rounded-lg`} style={{ backgroundColor: 'hsl(0, 0%, 20%)', color: 'hsl(0, 0%, 100%)' }}>
-                  {isMobile ? 'Age' : 'Age Group'}
+              <div className="grid grid-cols-6 gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+                <div className="p-2 sm:p-3 text-center font-bebas uppercase text-[10px] sm:text-sm rounded-lg" style={{ backgroundColor: 'hsl(0, 0%, 20%)', color: 'hsl(0, 0%, 100%)' }}>
+                  Age
                 </div>
-                {(isMobile ? stages.slice(0, 2) : stages).map(stage => (
+                {stages.map(stage => (
                   <div 
                     key={stage.value}
-                    className={`${isMobile ? 'p-2' : 'p-3'} text-center font-bebas uppercase ${isMobile ? 'text-xs' : 'text-sm'} rounded-lg`}
+                    className="p-2 sm:p-3 text-center font-bebas uppercase text-[10px] sm:text-sm rounded-lg"
                     style={{ backgroundColor: 'hsl(43, 49%, 61%)', color: 'hsl(0, 0%, 0%)' }}
                   >
-                    {isMobile ? stage.label.split(' ')[0] : stage.label}
+                    {stage.label}
                   </div>
                 ))}
               </div>
 
               {/* Grid Rows */}
               {ageGroups.map(ageGroup => (
-                <div key={ageGroup.value} className={`grid ${isMobile ? 'grid-cols-3' : 'grid-cols-6'} gap-2 mb-2`}>
+                <div key={ageGroup.value} className="grid grid-cols-6 gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
                   {/* Age Group Label */}
                   <div 
-                    className={`${isMobile ? 'p-2' : 'p-3'} rounded-lg flex flex-col items-center justify-center border`}
+                    className="p-2 sm:p-3 rounded-lg flex flex-col items-center justify-center border"
                     style={{ 
                       backgroundColor: 'hsl(0, 0%, 15%)',
                       borderColor: 'rgba(255, 255, 255, 0.1)'
                     }}
                   >
-                    <div className={`font-bebas ${isMobile ? 'text-lg' : 'text-2xl'}`} style={{ color: 'hsl(43, 49%, 61%)' }}>
+                    <div className="font-bebas text-lg sm:text-2xl" style={{ color: 'hsl(43, 49%, 61%)' }}>
                       {ageGroup.value}
                     </div>
-                    {!isMobile && (
-                      <div className="text-xs text-muted-foreground">
-                        {ageGroup.label.split(' - ')[1]}
-                      </div>
-                    )}
+                    <div className="text-[9px] sm:text-xs text-muted-foreground hidden sm:block">
+                      {ageGroup.label.split(' - ')[1]}
+                    </div>
                   </div>
 
                   {/* Stage Cells */}
-                  {(isMobile ? stages.slice(0, 2) : stages).map(stage => {
+                  {stages.map(stage => {
                     const cellProspects = getProspectsForCell(ageGroup.value, stage.value);
                     return (
                       <div 
                         key={stage.value}
-                        className={`${isMobile ? 'p-1' : 'p-2'} rounded-lg ${isMobile ? 'min-h-[80px]' : 'min-h-[120px]'} border`}
+                        className="p-1 sm:p-2 rounded-lg min-h-[70px] sm:min-h-[120px] border"
                         style={{ 
                           backgroundColor: 'hsl(0, 0%, 10%)',
                           borderColor: 'rgba(255, 255, 255, 0.1)'
@@ -697,7 +695,7 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
                             {cellProspects.map(prospect => (
                               <div
                                 key={prospect.id}
-                                className={`group relative ${isMobile ? 'p-1' : 'p-2'} rounded border hover:scale-105 transition-transform ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
+                                className={`group relative p-1 sm:p-2 rounded border hover:scale-105 transition-transform ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
                                 style={{ 
                                   backgroundColor: 'hsl(0, 0%, 20%)',
                                   borderColor: getPriorityColor(prospect.priority),
@@ -705,16 +703,16 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
                                 }}
                                 onClick={isAdmin ? () => handleEdit(prospect) : undefined}
                               >
-                                <div className={`${isMobile ? 'text-[9px]' : 'text-xs'} font-bold truncate max-w-full`} style={{ color: 'hsl(43, 49%, 61%)' }}>
-                                  {isMobile ? prospect.name.substring(0, 12) : prospect.name}
+                                <div className="text-[9px] sm:text-xs font-bold truncate max-w-full" style={{ color: 'hsl(43, 49%, 61%)' }}>
+                                  {prospect.name}
                                 </div>
-                                {!isMobile && prospect.position && (
-                                  <div className="text-[10px] text-muted-foreground truncate">
+                                {prospect.position && (
+                                  <div className="text-[8px] sm:text-[10px] text-muted-foreground truncate hidden sm:block">
                                     {prospect.position}
                                   </div>
                                 )}
-                                {!isMobile && prospect.current_club && (
-                                  <div className="text-[10px] text-muted-foreground truncate">
+                                {prospect.current_club && (
+                                  <div className="text-[8px] sm:text-[10px] text-muted-foreground truncate hidden sm:block">
                                     {prospect.current_club}
                                   </div>
                                 )}
@@ -739,7 +737,7 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
                             ))}
                           </div>
                         ) : (
-                          <div className="h-full flex items-center justify-center text-xs text-muted-foreground opacity-30">
+                          <div className="h-full flex items-center justify-center text-[9px] sm:text-xs text-muted-foreground opacity-30">
                             Empty
                           </div>
                         )}
@@ -751,18 +749,18 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
             </div>
 
             {/* Legend */}
-            <div className={`flex ${isMobile ? 'flex-col' : 'items-center'} gap-4 text-sm text-muted-foreground pt-4 border-t`}>
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground pt-4 border-t">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded border-2" style={{ borderColor: 'hsl(0, 70%, 50%)' }} />
-                <span>High Priority</span>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded border-2" style={{ borderColor: 'hsl(0, 70%, 50%)' }} />
+                <span>High</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded border-2" style={{ borderColor: 'hsl(43, 49%, 61%)' }} />
-                <span>Medium Priority</span>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded border-2" style={{ borderColor: 'hsl(43, 49%, 61%)' }} />
+                <span>Medium</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded border-2" style={{ borderColor: 'hsl(140, 50%, 50%)' }} />
-                <span>Low Priority</span>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded border-2" style={{ borderColor: 'hsl(140, 50%, 50%)' }} />
+                <span>Low</span>
               </div>
             </div>
           </div>

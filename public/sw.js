@@ -2,7 +2,7 @@
 // RISE Football Agency - Progressive Web App Service Worker
 // ================================================================
 // Cache version - increment to force cache refresh
-const CACHE_VERSION = 'rise-v1.9.0';
+const CACHE_VERSION = 'rise-v2.0.0';
 const CACHE_NAME = `${CACHE_VERSION}`;
 const ASSETS_CACHE = `${CACHE_VERSION}-assets`;
 

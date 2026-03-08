@@ -1607,11 +1607,13 @@ export const CreatePerformanceReportDialog = ({
           if (improvements.length > 0) {
             // Upsert: find existing notification for this analysis_id and update it, or create new
             const dedupeKey = `improvement_${analysisIdToUse}`;
+            
+            // Use contains filter which is more reliable with JSONB
             const { data: existing } = await supabase
               .from('staff_notification_events')
               .select('id')
               .eq('event_type', 'performance_improvement')
-              .filter('event_data->>dedupe_key', 'eq', dedupeKey)
+              .contains('event_data', { dedupe_key: dedupeKey })
               .limit(1);
 
             const notifPayload = {
