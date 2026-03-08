@@ -67,6 +67,7 @@ const SignContract = lazy(() => import("./pages/SignContract"));
 const Jobs = lazy(() => import("./pages/Jobs"));
 const AgentRequests = lazy(() => import("./pages/AgentRequests"));
 const ClubDirection = lazy(() => import("./pages/ClubDirection"));
+const RiseWithUs = lazy(() => import("./pages/RiseWithUs"));
 const FluidCursor = lazy(() => import("./components/FluidCursor"));
 
 // Loading fallback component
