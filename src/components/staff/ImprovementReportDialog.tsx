@@ -54,7 +54,7 @@ export const ImprovementReportDialog = ({ open, onOpenChange, data }: Improvemen
       const originalBg = ref.current.style.backgroundColor;
       ref.current.style.backgroundColor = "#000000";
       const canvas = await html2canvas(ref.current, {
-        backgroundColor: "#000000",
+        background: "#000000",
         useCORS: true,
         scale: 2,
       });
