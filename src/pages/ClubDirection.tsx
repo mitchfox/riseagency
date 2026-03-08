@@ -37,48 +37,91 @@ const ClubDirection = () => {
   const services = [
     {
       icon: Target,
-      title: "Strategic Planning",
-      description: "Comprehensive squad planning aligned with your club's vision and financial parameters.",
-      features: ["Short and long-term squad analysis", "Budget optimisation", "Competitive positioning"],
+      titleKey: "club_direction.svc1_title",
+      titleFallback: "Strategic Planning",
+      descKey: "club_direction.svc1_desc",
+      descFallback: "Comprehensive squad planning aligned with your club's vision and financial parameters.",
+      features: [
+        { key: "club_direction.svc1_f1", fallback: "Short and long-term squad analysis" },
+        { key: "club_direction.svc1_f2", fallback: "Budget optimisation" },
+        { key: "club_direction.svc1_f3", fallback: "Competitive positioning" },
+      ],
       image: clubStrategy
     },
     {
       icon: Search,
-      title: "Talent Identification",
-      description: "Access our European scouting network to find players that fit your specific requirements.",
-      features: ["Bespoke player shortlists", "Video analysis packages", "Background verification"],
+      titleKey: "club_direction.svc2_title",
+      titleFallback: "Talent Identification",
+      descKey: "club_direction.svc2_desc",
+      descFallback: "Access our European scouting network to find players that fit your specific requirements.",
+      features: [
+        { key: "club_direction.svc2_f1", fallback: "Bespoke player shortlists" },
+        { key: "club_direction.svc2_f2", fallback: "Video analysis packages" },
+        { key: "club_direction.svc2_f3", fallback: "Background verification" },
+      ],
       image: clubAnalysis
     },
     {
       icon: BarChart3,
-      title: "Performance Analysis",
-      description: "Data-driven insights to evaluate current squad performance and identify improvement areas.",
-      features: ["Individual player reports", "Team tactical analysis", "Opposition scouting"]
+      titleKey: "club_direction.svc3_title",
+      titleFallback: "Performance Analysis",
+      descKey: "club_direction.svc3_desc",
+      descFallback: "Data-driven insights to evaluate current squad performance and identify improvement areas.",
+      features: [
+        { key: "club_direction.svc3_f1", fallback: "Individual player reports" },
+        { key: "club_direction.svc3_f2", fallback: "Team tactical analysis" },
+        { key: "club_direction.svc3_f3", fallback: "Opposition scouting" },
+      ]
     },
     {
       icon: TrendingUp,
-      title: "Development Pathways",
-      description: "Structured development programmes for academy and first team integration.",
-      features: ["Youth development frameworks", "Loan strategy consultation", "Progression planning"]
+      titleKey: "club_direction.svc4_title",
+      titleFallback: "Development Pathways",
+      descKey: "club_direction.svc4_desc",
+      descFallback: "Structured development programmes for academy and first team integration.",
+      features: [
+        { key: "club_direction.svc4_f1", fallback: "Youth development frameworks" },
+        { key: "club_direction.svc4_f2", fallback: "Loan strategy consultation" },
+        { key: "club_direction.svc4_f3", fallback: "Progression planning" },
+      ]
     },
     {
       icon: Users,
-      title: "Staff Development",
-      description: "Support for coaching staff development and departmental alignment.",
-      features: ["Coaching consultation", "Staff structure review", "Best practice sharing"]
+      titleKey: "club_direction.svc5_title",
+      titleFallback: "Staff Development",
+      descKey: "club_direction.svc5_desc",
+      descFallback: "Support for coaching staff development and departmental alignment.",
+      features: [
+        { key: "club_direction.svc5_f1", fallback: "Coaching consultation" },
+        { key: "club_direction.svc5_f2", fallback: "Staff structure review" },
+        { key: "club_direction.svc5_f3", fallback: "Best practice sharing" },
+      ]
     },
     {
       icon: Zap,
-      title: "Market Intelligence",
-      description: "Real-time market insights and player availability across European leagues.",
-      features: ["Transfer market updates", "Contract situation monitoring", "Valuation guidance"]
+      titleKey: "club_direction.svc6_title",
+      titleFallback: "Market Intelligence",
+      descKey: "club_direction.svc6_desc",
+      descFallback: "Real-time market insights and player availability across European leagues.",
+      features: [
+        { key: "club_direction.svc6_f1", fallback: "Transfer market updates" },
+        { key: "club_direction.svc6_f2", fallback: "Contract situation monitoring" },
+        { key: "club_direction.svc6_f3", fallback: "Valuation guidance" },
+      ]
     }
   ];
 
   const caseStudies = [
-    { title: "Academy Pipeline", stat: "74", desc: "Professionals developed through our network" },
-    { title: "Big 5 Placements", stat: "18", desc: "Players placed in Europe's elite leagues" },
-    { title: "Transfer Value", stat: "£100M+", desc: "Combined transfer fees generated" }
+    { titleKey: "club_direction.case1_title", titleFallback: "Academy Pipeline", stat: "74", descKey: "club_direction.case1_desc", descFallback: "Professionals developed through our network" },
+    { titleKey: "club_direction.case2_title", titleFallback: "Big 5 Placements", stat: "18", descKey: "club_direction.case2_desc", descFallback: "Players placed in Europe's elite leagues" },
+    { titleKey: "club_direction.case3_title", titleFallback: "Transfer Value", stat: "£100M+", descKey: "club_direction.case3_desc", descFallback: "Combined transfer fees generated" }
+  ];
+
+  const processSteps = [
+    { step: "01", titleKey: "club_direction.step1_title", titleFallback: "Initial Consultation", descKey: "club_direction.step1_desc", descFallback: "We meet to understand your club's vision, challenges, and objectives.", icon: Target },
+    { step: "02", titleKey: "club_direction.step2_title", titleFallback: "Assessment", descKey: "club_direction.step2_desc", descFallback: "Comprehensive review of your current setup and requirements.", icon: Search },
+    { step: "03", titleKey: "club_direction.step3_title", titleFallback: "Strategy", descKey: "club_direction.step3_desc", descFallback: "A tailored plan aligned with your goals and budget.", icon: Lightbulb },
+    { step: "04", titleKey: "club_direction.step4_title", titleFallback: "Implementation", descKey: "club_direction.step4_desc", descFallback: "Ongoing support and guidance to achieve results.", icon: TrendingUp },
   ];
 
   const nextSlide = () => {
@@ -131,7 +174,7 @@ const ClubDirection = () => {
               size="lg" 
               className="btn-shine font-bebas uppercase tracking-wider text-lg"
             >
-              Arrange a Consultation
+              {t('club_direction.hero_cta', 'Arrange a Consultation')}
             </Button>
           </ScrollReveal>
         </section>
@@ -144,7 +187,7 @@ const ClubDirection = () => {
                 {t('club_direction.why_title', 'WHY WORK WITH')} <span className="text-primary">{t('club_direction.why_highlight', 'RISE?')}</span>
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto italic">
-                National exclusivity for our club partners means undivided time and resources for your success.
+                {t('club_direction.why_desc', 'National exclusivity for our club partners means undivided time and resources for your success.')}
               </p>
             </ScrollReveal>
 
@@ -155,7 +198,7 @@ const ClubDirection = () => {
                 <div className="relative h-full min-h-[400px] rounded-2xl overflow-hidden group">
                   <img 
                     src={clubStrategy} 
-                    alt="Strategic Planning" 
+                    alt={t('club_direction.svc1_title', 'Strategic Planning')} 
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
@@ -163,8 +206,8 @@ const ClubDirection = () => {
                     <div className="w-14 h-14 rounded-xl bg-primary/20 backdrop-blur-sm flex items-center justify-center mb-4">
                       <Target className="h-7 w-7 text-primary" />
                     </div>
-                    <h3 className="text-3xl font-bebas uppercase tracking-wider text-white mb-2">Strategic Planning</h3>
-                    <p className="text-white/80">Comprehensive squad planning aligned with your vision</p>
+                    <h3 className="text-3xl font-bebas uppercase tracking-wider text-white mb-2">{t('club_direction.svc1_title', 'Strategic Planning')}</h3>
+                    <p className="text-white/80">{t('club_direction.bento_strategic', 'Comprehensive squad planning aligned with your vision')}</p>
                   </div>
                 </div>
               </ScrollReveal>
@@ -173,7 +216,7 @@ const ClubDirection = () => {
               <ScrollReveal delay={0.2} className="col-span-1">
                 <div className="h-full bg-card border border-border/50 rounded-2xl p-6 flex flex-col justify-center items-center text-center hover:border-primary/30 transition-colors">
                   <div className="text-5xl md:text-6xl font-bebas text-primary mb-2">100+</div>
-                  <p className="text-sm text-muted-foreground">Club Connections Across Europe</p>
+                  <p className="text-sm text-muted-foreground">{t('club_direction.stat_connections', 'Club Connections Across Europe')}</p>
                 </div>
               </ScrollReveal>
 
@@ -181,7 +224,7 @@ const ClubDirection = () => {
               <ScrollReveal delay={0.3} className="col-span-1">
                 <div className="h-full bg-card border border-border/50 rounded-2xl p-6 flex flex-col justify-center items-center text-center hover:border-primary/30 transition-colors">
                   <div className="text-5xl md:text-6xl font-bebas text-primary mb-2">15+</div>
-                  <p className="text-sm text-muted-foreground">Years Combined Experience</p>
+                  <p className="text-sm text-muted-foreground">{t('club_direction.stat_experience', 'Years Combined Experience')}</p>
                 </div>
               </ScrollReveal>
 
@@ -190,14 +233,14 @@ const ClubDirection = () => {
                 <div className="relative h-full min-h-[200px] rounded-2xl overflow-hidden group">
                   <img 
                     src={clubAnalysis} 
-                    alt="Performance Analysis" 
+                    alt={t('club_direction.svc3_title', 'Performance Analysis')} 
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <div className="flex items-center gap-2">
                       <BarChart3 className="h-5 w-5 text-primary" />
-                      <span className="text-white font-bebas uppercase tracking-wider">Analysis</span>
+                      <span className="text-white font-bebas uppercase tracking-wider">{t('club_direction.bento_analysis', 'Analysis')}</span>
                     </div>
                   </div>
                 </div>
@@ -207,8 +250,8 @@ const ClubDirection = () => {
               <ScrollReveal delay={0.5} className="col-span-1">
                 <div className="h-full bg-primary/10 border border-primary/20 rounded-2xl p-6 flex flex-col justify-center items-center text-center">
                   <Shield className="h-10 w-10 text-primary mb-4" />
-                  <h4 className="text-lg font-bebas uppercase tracking-wider mb-1">National Exclusivity</h4>
-                  <p className="text-xs text-muted-foreground">Undivided attention</p>
+                  <h4 className="text-lg font-bebas uppercase tracking-wider mb-1">{t('club_direction.bento_exclusivity', 'National Exclusivity')}</h4>
+                  <p className="text-xs text-muted-foreground">{t('club_direction.bento_exclusivity_desc', 'Undivided attention')}</p>
                 </div>
               </ScrollReveal>
 
@@ -217,16 +260,16 @@ const ClubDirection = () => {
                 <div className="relative h-[200px] rounded-2xl overflow-hidden group">
                   <img 
                     src={clubNetwork} 
-                    alt="European Network" 
+                    alt={t('club_direction.bento_network', 'European Network')} 
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
                   <div className="absolute left-0 top-0 bottom-0 p-6 flex flex-col justify-center">
                     <div className="flex items-center gap-3 mb-2">
                       <Globe className="h-8 w-8 text-primary" />
-                      <span className="text-2xl font-bebas uppercase tracking-wider text-white">European Network</span>
+                      <span className="text-2xl font-bebas uppercase tracking-wider text-white">{t('club_direction.bento_network', 'European Network')}</span>
                     </div>
-                    <p className="text-white/70 text-sm max-w-xs">Direct relationships with key decision-makers across Europe's top leagues</p>
+                    <p className="text-white/70 text-sm max-w-xs">{t('club_direction.bento_network_desc', "Direct relationships with key decision-makers across Europe's top leagues")}</p>
                   </div>
                 </div>
               </ScrollReveal>
@@ -235,16 +278,16 @@ const ClubDirection = () => {
               <ScrollReveal delay={0.7} className="col-span-1">
                 <div className="h-full bg-card border border-border/50 rounded-2xl p-6 flex flex-col justify-center items-center text-center hover:border-primary/30 transition-colors">
                   <Eye className="h-8 w-8 text-primary mb-3" />
-                  <h4 className="text-lg font-bebas uppercase tracking-wider mb-1">Data-Driven</h4>
-                  <p className="text-xs text-muted-foreground">Insights across all of Europe</p>
+                  <h4 className="text-lg font-bebas uppercase tracking-wider mb-1">{t('club_direction.bento_data', 'Data-Driven')}</h4>
+                  <p className="text-xs text-muted-foreground">{t('club_direction.bento_data_desc', 'Insights across all of Europe')}</p>
                 </div>
               </ScrollReveal>
 
               <ScrollReveal delay={0.8} className="col-span-1">
                 <div className="h-full bg-card border border-border/50 rounded-2xl p-6 flex flex-col justify-center items-center text-center hover:border-primary/30 transition-colors">
                   <Lightbulb className="h-8 w-8 text-primary mb-3" />
-                  <h4 className="text-lg font-bebas uppercase tracking-wider mb-1">Proactive</h4>
-                  <p className="text-xs text-muted-foreground">Ahead of the curve</p>
+                  <h4 className="text-lg font-bebas uppercase tracking-wider mb-1">{t('club_direction.bento_proactive', 'Proactive')}</h4>
+                  <p className="text-xs text-muted-foreground">{t('club_direction.bento_proactive_desc', 'Ahead of the curve')}</p>
                 </div>
               </ScrollReveal>
             </div>
@@ -259,7 +302,7 @@ const ClubDirection = () => {
                 {t('club_direction.services_title', 'OUR')} <span className="text-primary">{t('club_direction.services_highlight', 'SERVICES')}</span>
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Comprehensive support tailored to your club's specific needs and objectives
+                {t('club_direction.services_desc', "Comprehensive support tailored to your club's specific needs and objectives")}
               </p>
             </ScrollReveal>
 
@@ -273,16 +316,16 @@ const ClubDirection = () => {
                       <service.icon className="h-7 w-7 text-primary" />
                     </div>
                     <h3 className="text-2xl font-bebas uppercase tracking-wider mb-3">
-                      {service.title}
+                      {t(service.titleKey, service.titleFallback)}
                     </h3>
                     <p className="text-muted-foreground mb-6">
-                      {service.description}
+                      {t(service.descKey, service.descFallback)}
                     </p>
                     <ul className="space-y-2">
                       {service.features.map((feature, idx) => (
                         <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
                           <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                          <span>{feature}</span>
+                          <span>{t(feature.key, feature.fallback)}</span>
                         </li>
                       ))}
                     </ul>
@@ -298,7 +341,7 @@ const ClubDirection = () => {
           <div className="container mx-auto px-4">
             <ScrollReveal className="text-center mb-12">
               <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider mb-4">
-                PROVEN <span className="text-primary">RESULTS</span>
+                {t('club_direction.results_title', 'PROVEN')} <span className="text-primary">{t('club_direction.results_highlight', 'RESULTS')}</span>
               </h2>
             </ScrollReveal>
 
@@ -320,8 +363,8 @@ const ClubDirection = () => {
                       <div key={index} className="w-full flex-shrink-0 px-4">
                         <div className="bg-card border border-border/50 rounded-2xl p-12 text-center">
                           <div className="text-7xl md:text-9xl font-bebas text-primary mb-4">{study.stat}</div>
-                          <h3 className="text-2xl font-bebas uppercase tracking-wider mb-2">{study.title}</h3>
-                          <p className="text-muted-foreground">{study.desc}</p>
+                          <h3 className="text-2xl font-bebas uppercase tracking-wider mb-2">{t(study.titleKey, study.titleFallback)}</h3>
+                          <p className="text-muted-foreground">{t(study.descKey, study.descFallback)}</p>
                         </div>
                       </div>
                     ))}
@@ -363,20 +406,15 @@ const ClubDirection = () => {
               </ScrollReveal>
 
               <div className="grid md:grid-cols-4 gap-6">
-                {[
-                  { step: "01", title: "Initial Consultation", desc: "We meet to understand your club's vision, challenges, and objectives.", icon: Target },
-                  { step: "02", title: "Assessment", desc: "Comprehensive review of your current setup and requirements.", icon: Search },
-                  { step: "03", title: "Strategy", desc: "A tailored plan aligned with your goals and budget.", icon: Lightbulb },
-                  { step: "04", title: "Implementation", desc: "Ongoing support and guidance to achieve results.", icon: TrendingUp }
-                ].map((item, index) => (
+                {processSteps.map((item, index) => (
                   <ScrollReveal key={index} delay={index * 0.15}>
                     <div className="relative p-6 bg-card border border-border/50 rounded-2xl hover:border-primary/30 transition-colors h-full">
                       <div className="text-5xl font-bebas text-primary/20 mb-2">{item.step}</div>
                       <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                         <item.icon className="h-5 w-5 text-primary" />
                       </div>
-                      <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">{item.title}</h3>
-                      <p className="text-sm text-muted-foreground">{item.desc}</p>
+                      <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">{t(item.titleKey, item.titleFallback)}</h3>
+                      <p className="text-sm text-muted-foreground">{t(item.descKey, item.descFallback)}</p>
                       
                       {index < 3 && (
                         <div className="hidden md:block absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
@@ -398,7 +436,7 @@ const ClubDirection = () => {
               {t('club_direction.cta_title', 'READY TO')} <span className="text-primary">{t('club_direction.cta_highlight', 'ELEVATE YOUR CLUB?')}</span>
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Let's discuss how we can help your club achieve its goals
+              {t('club_direction.cta_desc', "Let's discuss how we can help your club achieve its goals")}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
@@ -406,7 +444,7 @@ const ClubDirection = () => {
                 size="lg" 
                 className="btn-shine font-bebas uppercase tracking-wider text-lg"
               >
-                Arrange a Meeting
+                {t('club_direction.cta_meeting', 'Arrange a Meeting')}
               </Button>
               <Button 
                 asChild
@@ -415,7 +453,7 @@ const ClubDirection = () => {
                 className="font-bebas uppercase tracking-wider"
               >
                 <Link to="/clubs">
-                  Learn More
+                  {t('club_direction.cta_learn', 'Learn More')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
