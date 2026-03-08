@@ -155,10 +155,10 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, isDragging }: {
 
         {/* Centre: avatar + name */}
         <div className="flex items-center gap-3 my-1">
-          <Avatar className="h-12 w-12 border-2 shrink-0" style={{ borderColor: `${priorityColor}66` }}>
-            <AvatarImage src={prospect.profile_image_url || ""} alt={prospect.name} />
+          <Avatar className="h-14 w-14 border-2 shrink-0 rounded-lg" style={{ borderColor: `${priorityColor}66` }}>
+            <AvatarImage src={prospect.profile_image_url || ""} alt={prospect.name} className="object-cover object-top" />
             <AvatarFallback
-              className="text-xs font-bold"
+              className="text-xs font-bold rounded-lg"
               style={{ background: `${priorityColor}22`, color: priorityColor }}
             >
               {initials}
@@ -170,12 +170,14 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, isDragging }: {
             </div>
             {prospect.current_club && (
               <div className="flex items-center gap-1 mt-0.5">
+                {prospect.club_logo_url && <img src={prospect.club_logo_url} alt="Club logo" className="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" />}
                 <Shield className="w-3 h-3 text-muted-foreground/60 shrink-0" />
                 <span className="text-[10px] text-muted-foreground truncate">{prospect.current_club}</span>
               </div>
             )}
             {prospect.nationality && (
               <div className="flex items-center gap-1 mt-0.5">
+                <img src={getCountryFlagUrl(prospect.nationality)} alt={prospect.nationality} className="w-4 h-3 object-cover rounded-sm shrink-0" loading="lazy" />
                 <MapPin className="w-3 h-3 text-muted-foreground/60 shrink-0" />
                 <span className="text-[10px] text-muted-foreground truncate">{prospect.nationality}</span>
               </div>
