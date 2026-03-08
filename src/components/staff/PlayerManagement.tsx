@@ -22,6 +22,7 @@ import { UploadPlayerImageDialog } from "./UploadPlayerImageDialog";
 import { AddPlayerDialog } from "./AddPlayerDialog";
 import { HighlightedMatchForm } from "./HighlightedMatchForm";
 import { SyncPlayerStatsButton } from "./SyncPlayerStatsButton";
+import { AutoMatchPlayersButton } from "./AutoMatchPlayersButton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -1458,6 +1459,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Players</h2>
               <div className="flex items-center gap-2">
+                <AutoMatchPlayersButton onComplete={fetchPlayers} />
                 <SyncPlayerStatsButton onSynced={fetchPlayers} />
                 <Button onClick={() => {
                   setFormData({
