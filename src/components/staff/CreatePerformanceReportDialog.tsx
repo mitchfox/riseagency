@@ -1544,37 +1544,37 @@ export const CreatePerformanceReportDialog = ({
 
       toast.success(`Performance report ${analysisId ? 'updated' : 'created'} successfully`);
 
-      // Prompt highlight compilation when report transitions to Live
-      const wentLive = visibilityStatus === "live" && initialVisibilityRef.current !== "live";
-      if (wentLive && analysisId) {
-        playSuccess();
-        setTimeout(() => {
-          toast("Report is now live! Consider compiling highlights for this player.", {
-            duration: 8000,
-            action: {
-              label: "Open Highlights",
-              onClick: () => {
-                // Navigate to highlight compiler section
-                const event = new CustomEvent("navigate-highlight-compiler", { detail: { playerId } });
-                window.dispatchEvent(event);
-              },
-            },
-          });
-        }, 600);
-        initialVisibilityRef.current = "live";
-      }
-
-      // Refresh action type + description cache so newly entered types/descriptions are available
-      fetchActionTypes();
-      logActivity({
-        action: analysisId ? 'updated' : 'created',
-        entityType: 'performance_report',
-        entityId: analysisIdToUse || null,
-        entityName: `${playerName} vs ${opponent}`,
-      });
-
-      // Check for performance improvements and upsert a single consolidated notification per report
+      // Post-save operations (non-blocking)
       try {
+        // Prompt highlight compilation when report transitions to Live
+        const wentLive = visibilityStatus === "live" && initialVisibilityRef.current !== "live";
+        if (wentLive && analysisId) {
+          playSuccess();
+          setTimeout(() => {
+            toast("Report is now live! Consider compiling highlights for this player.", {
+              duration: 8000,
+              action: {
+                label: "Open Highlights",
+                onClick: () => {
+                  const event = new CustomEvent("navigate-highlight-compiler", { detail: { playerId } });
+                  window.dispatchEvent(event);
+                },
+              },
+            });
+          }, 600);
+          initialVisibilityRef.current = "live";
+        }
+
+        // Refresh action type + description cache
+        fetchActionTypes();
+        logActivity({
+          action: analysisId ? 'updated' : 'created',
+          entityType: 'performance_report',
+          entityId: analysisIdToUse || null,
+          entityName: `${playerName} vs ${opponent}`,
+        });
+
+        // Check for performance improvements
         const { data: recentReports } = await supabase
           .from("player_analysis")
           .select("r90_score, fixture_stats, opponent, analysis_date")
@@ -1605,10 +1605,7 @@ export const CreatePerformanceReportDialog = ({
           } catch { /* fixture_stats parsing issue - ignore */ }
 
           if (improvements.length > 0) {
-            // Upsert: find existing notification for this analysis_id and update it, or create new
             const dedupeKey = `improvement_${analysisIdToUse}`;
-            
-            // Use contains filter which is more reliable with JSONB
             const { data: existing } = await supabase
               .from('staff_notification_events')
               .select('id')
@@ -1634,7 +1631,6 @@ export const CreatePerformanceReportDialog = ({
             };
 
             if (existing && existing.length > 0) {
-              // Update existing notification so we don't spam
               await supabase.from('staff_notification_events')
                 .update({ ...notifPayload, read_by: [] })
                 .eq('id', existing[0].id);
@@ -1643,8 +1639,9 @@ export const CreatePerformanceReportDialog = ({
             }
           }
         }
-      } catch (notifErr) {
-        console.warn("Non-blocking: performance notification failed:", notifErr);
+      } catch (postSaveErr) {
+        // Non-blocking: don't show error toast for post-save operations
+        console.warn("Non-blocking post-save operation failed:", postSaveErr);
       }
       
       // Only close dialog and call onSuccess in create mode
