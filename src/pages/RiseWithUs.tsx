@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { Star, TrendingUp, Users, Shield, BarChart3, Dumbbell, Video, BookOpen } from "lucide-react";
+import { Star, TrendingUp, Users, Shield, BarChart3, Dumbbell, Video, BookOpen, ChevronRight } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import NotFound from "./NotFound";
 
 interface ProspectPlayer {
@@ -17,17 +19,31 @@ interface ProspectPlayer {
 
 const RiseWithUs = () => {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const [player, setPlayer] = useState<ProspectPlayer | null>(null);
+  const [prospects, setProspects] = useState<ProspectPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  // If no slug, show prospect picker; if slug, show the player page
+  const isPickerMode = !slug;
+
   useEffect(() => {
-    const fetchPlayer = async () => {
-      if (!slug) { setNotFound(true); setLoading(false); return; }
-      
-      // Convert slug back to name: "firstname-lastname" -> search
+    const fetchData = async () => {
+      if (isPickerMode) {
+        // Fetch all prospects for the picker
+        const { data } = await supabase
+          .from("players")
+          .select("id, name, position, image_url, club, nationality")
+          .eq("representation_status", "prospect")
+          .order("name");
+        setProspects(data || []);
+        setLoading(false);
+        return;
+      }
+
+      // Slug mode: find specific prospect
       const searchName = slug.replace(/-/g, " ");
-      
       const { data, error } = await supabase
         .from("players")
         .select("id, name, position, image_url, club, nationality")
@@ -42,13 +58,83 @@ const RiseWithUs = () => {
       }
       setLoading(false);
     };
-    fetchPlayer();
-  }, [slug]);
+    fetchData();
+  }, [slug, isPickerMode]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  // Picker mode: list all prospects
+  if (isPickerMode) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Helmet>
+          <meta name="robots" content="noindex, nofollow" />
+          <title>Rise With Us - RISE Football Agency</title>
+        </Helmet>
+        <section className="py-20 px-4">
+          <div className="max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center mb-12"
+            >
+              <p className="text-sm uppercase tracking-[0.3em] text-primary mb-4 font-bebas">Select a player</p>
+              <h1 className="text-5xl md:text-7xl font-bebas uppercase tracking-wider text-foreground mb-4">
+                Rise With Us
+              </h1>
+              <p className="text-lg text-muted-foreground">Choose a prospect to view their personalised page.</p>
+            </motion.div>
+
+            {prospects.length === 0 ? (
+              <p className="text-center text-muted-foreground">No prospects found.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {prospects.map((p, i) => {
+                  const slug = p.name.toLowerCase().replace(/\s+/g, "-");
+                  return (
+                    <motion.div
+                      key={p.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                    >
+                      <Card
+                        className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all group"
+                        onClick={() => navigate(`/risewithus/${slug}`)}
+                      >
+                        <CardContent className="p-4 flex items-center gap-4">
+                          <Avatar className="h-14 w-14 shrink-0">
+                            <AvatarImage src={p.image_url || ""} alt={p.name} />
+                            <AvatarFallback className="text-sm font-semibold">
+                              {p.name.split(" ").map(n => n[0]).join("")}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold truncate">{p.name}</h3>
+                            <p className="text-sm text-muted-foreground">{p.position}</p>
+                            {p.club && <p className="text-xs text-muted-foreground/70">{p.club}</p>}
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+        <footer className="py-8 px-4 border-t text-center">
+          <p className="text-xs text-muted-foreground">
+            This page is a private invitation and is not indexed by search engines.
+          </p>
+        </footer>
       </div>
     );
   }
@@ -59,13 +145,13 @@ const RiseWithUs = () => {
 
   const services = [
     { icon: BarChart3, title: "Performance Analysis", description: "Every match broken down with expert tactical insights, key moments and areas for growth. We help you understand your game better than anyone." },
-    { icon: TrendingUp, title: "Development Tracking", description: "Monitor your progress with benchmarks, R90 scores, and detailed statistics that show exactly how you're improving over time." },
+    { icon: TrendingUp, title: "Development Tracking", description: "Monitor your progress with benchmarks, R90 scores and detailed statistics that show exactly how you're improving over time." },
     { icon: Dumbbell, title: "Physical Programming", description: "Strength, power and speed programmes built specifically for your position and development needs. Nutrition guidance included." },
     { icon: Video, title: "Video Analysis", description: "Professional clip editing and analysis of your performances. Highlight reels, tactical breakdowns and improvement sequences." },
     { icon: Users, title: "Network & Exposure", description: "Connections across European football. Clubs, scouts, coaches and decision-makers who need to know about you." },
-    { icon: Shield, title: "Career Management", description: "Contract guidance, club negotiations, and strategic career planning. We protect your interests and maximise your potential." },
+    { icon: Shield, title: "Career Management", description: "Contract guidance, club negotiations and strategic career planning. We protect your interests and maximise your potential." },
     { icon: BookOpen, title: "Education & Mentoring", description: "Off-pitch development through our coaching resources, mental performance support and professional guidance." },
-    { icon: Star, title: "Personal Portal", description: "Your own dedicated portal with all your analysis, programmes, stats, and development materials in one place." },
+    { icon: Star, title: "Personal Portal", description: "Your own dedicated portal with all your analysis, programmes, stats and development materials in one place." },
   ];
 
   return (
@@ -113,8 +199,8 @@ const RiseWithUs = () => {
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed max-w-3xl mx-auto">
               RISE is a football agency built differently. We combine elite-level performance analysis, 
-              physical programming, and career management into one integrated service. Every player we 
-              work with gets a dedicated portal, personalised development plans, and direct access to 
+              physical programming and career management into one integrated service. Every player we 
+              work with gets a dedicated portal, personalised development plans and direct access to 
               our network across European football.
             </p>
           </motion.div>
@@ -159,7 +245,7 @@ const RiseWithUs = () => {
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mx-auto mb-8">
               Every RISE player gets their own personal portal, accessible from any device. It's where 
-              all your match analysis, performance reports, training programmes, and development materials 
+              all your match analysis, performance reports, training programmes and development materials 
               live. Everything in one place, designed around you.
             </p>
           </motion.div>

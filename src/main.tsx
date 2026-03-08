@@ -1,3 +1,26 @@
+// PWA route persistence: save current route to localStorage on every navigation
+// This ensures the PWA opens to the last visited page instead of the landing page
+(function() {
+  // Save current path for PWA cold-start restoration
+  const currentPath = window.location.pathname + window.location.search + window.location.hash;
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                (window.navigator as any).standalone === true;
+  
+  if (isPWA && currentPath === '/') {
+    // On PWA cold start at root, check if we have a saved route
+    const savedRoute = localStorage.getItem('pwa_last_route');
+    if (savedRoute && savedRoute !== '/' && savedRoute !== '/index.html') {
+      window.location.replace(savedRoute);
+    }
+  } else if (isPWA) {
+    // Save current route for next cold start (only meaningful routes)
+    const saveable = ['/portal', '/staff'];
+    if (saveable.some(r => currentPath.startsWith(r))) {
+      localStorage.setItem('pwa_last_route', currentPath);
+    }
+  }
+})();
+
 // Redirect www.{subdomain}.domain.com → {subdomain}.domain.com
 // Also translates English paths to localized paths for language subdomains
 // Must run before React renders to avoid flash of content

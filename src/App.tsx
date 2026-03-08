@@ -177,6 +177,7 @@ const App = () => {
                       <Route path="/auth/callback" element={<AuthCallback />} />
                       <Route path="/staff/update-password" element={<UpdatePassword />} />
                       <Route path="/sign/:token" element={<SignContract />} />
+                      <Route path="/risewithus" element={<RiseWithUs />} />
                       <Route path="/risewithus/:slug" element={<RiseWithUs />} />
                       <Route path="/error" element={<NotFound />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
