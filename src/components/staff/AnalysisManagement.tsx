@@ -1528,6 +1528,8 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             setFormData={setFormData}
             analysisType={activeView as "pre-match" | "post-match"}
             defaultOpen={true}
+            taggedPlayerIds={taggedPlayerIds}
+            setTaggedPlayerIds={setTaggedPlayerIds}
           />
         )}
 
