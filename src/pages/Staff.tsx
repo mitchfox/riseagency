@@ -94,6 +94,7 @@ import { NutritionSection } from "@/components/staff/programming/NutritionSectio
 import { MessagingCaseStudies } from "@/components/staff/MessagingCaseStudies";
 import { PortalManagement } from "@/components/staff/PortalManagement";
 import { VideoCompressor } from "@/components/staff/VideoCompressor";
+import { MusicStudio } from "@/components/staff/MusicStudio";
 import { HighlightCompiler } from "@/components/staff/HighlightCompiler";
 import { DatasetBuilder } from "@/components/staff/DatasetBuilder";
 import { ExportProgressFloat } from "@/components/staff/ExportProgressFloat";
@@ -105,7 +106,7 @@ import { useTheme } from "next-themes";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
 import marbleBackground from "@/assets/smudged-marble-overlay.png";
 import whiteMarbleBackground from "@/assets/white-marble-overlay.png";
-import { Palette, Tv } from "lucide-react";
+import { Palette, Tv, Music } from "lucide-react";
 import { 
   Calendar, 
   Users, 
@@ -160,7 +161,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'datasetbuilder' | '__grid_picker__' | null>('overview');
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'datasetbuilder' | 'musicstudio' | '__grid_picker__' | null>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -884,6 +885,7 @@ const Staff = () => {
           { id: 'streams', title: 'Streams', icon: Tv },
           { id: 'videocompressor', title: 'Video Compressor', icon: Film },
           { id: 'highlightcompiler', title: 'Highlight Compiler', icon: Film },
+          { id: 'musicstudio', title: 'Music Studio', icon: Music },
         ],
       },
       {
@@ -1037,6 +1039,7 @@ const Staff = () => {
     transferhub: ['transfers', 'outreach', 'clubs', 'deals'],
     portalmanagement: ['portal', 'features', 'visibility', 'hero', 'toggle'],
     highlightcompiler: ['highlight', 'compiler', 'reel', 'compilation', 'export', 'clips'],
+    musicstudio: ['music', 'suno', 'audio', 'tracks', 'playlist', 'portal music', 'songs'],
     datasetbuilder: ['dataset', 'training', 'roboflow', 'annotation', 'labelling', 'frames'],
   };
 
@@ -1650,6 +1653,7 @@ const Staff = () => {
                   {expandedSection === 'videocompressor' && <VideoCompressor />}
                   {expandedSection === 'highlightcompiler' && <HighlightCompiler />}
                   {expandedSection === 'datasetbuilder' && <DatasetBuilder />}
+                  {expandedSection === 'musicstudio' && <MusicStudio />}
                   {expandedSection === 'salesdeck' && <SalesDeck />}
                   
                   {expandedSection === 'publiccontent' && <PublicContentManagement isAdmin={isAdmin} />}
