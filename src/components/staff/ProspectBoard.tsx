@@ -311,7 +311,6 @@ const StageColumn = ({ stageValue, stageLabel, prospects: stageProspects, isAdmi
 export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);
-  const isMobile = useIsMobile();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
