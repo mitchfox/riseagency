@@ -5,8 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const TM_API = 'https://tmapi-alpha.transfermarkt.technology';
-
 interface SeasonStats {
   goals: number;
   assists: number;
@@ -14,95 +12,96 @@ interface SeasonStats {
   minutes: number;
 }
 
-async function fetchJSON(url: string): Promise<any> {
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      'Accept': 'application/json',
-    },
-  });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`${response.status}: ${text.substring(0, 200)}`);
-  }
-  return response.json();
+/**
+ * Determine the current football season year.
+ * Seasons run July-June, so Jan-June = previous year, July-Dec = current year.
+ * e.g. March 2026 => 25/26 season => year 2025
+ */
+function getCurrentSeasonYear(): number {
+  const now = new Date();
+  const month = now.getMonth(); // 0-indexed
+  const year = now.getFullYear();
+  return month < 7 ? year - 1 : year;
 }
 
+/**
+ * Scrape the Transfermarkt stats page for a player and extract the season totals
+ * from the <tfoot> of the compact stats table.
+ * 
+ * URL: https://www.transfermarkt.co.uk/x/leistungsdaten/spieler/{id}/saison/{year}
+ * The tfoot contains: Total label | hidden | Appearances | Goals | Assists | Yellow | 2nd Yellow | Red | Minutes
+ */
 async function fetchPlayerSeasonStats(externalId: string): Promise<SeasonStats | null> {
-  // Try multiple endpoint patterns for the TM API
-  const endpoints = [
-    `${TM_API}/player/${externalId}/stats?seasonId=2025`,
-    `${TM_API}/player/${externalId}/performance?seasonId=2025`,
-    `${TM_API}/player/${externalId}/season-stats?seasonId=2025`,
-  ];
+  const seasonYear = getCurrentSeasonYear();
+  const url = `https://www.transfermarkt.co.uk/x/leistungsdaten/spieler/${externalId}/saison/${seasonYear}`;
+  
+  console.log(`Fetching stats from: ${url}`);
 
-  for (const endpoint of endpoints) {
-    try {
-      const data = await fetchJSON(endpoint);
-      if (!data.success || !data.data) continue;
-
-      let totalGoals = 0;
-      let totalAssists = 0;
-      let totalMatches = 0;
-      let totalMinutes = 0;
-
-      // Try various data shapes the API might return
-      const competitions = data.data.competitionPerformances || data.data.competitions || data.data.competitionStats || [];
-      
-      for (const comp of competitions) {
-        const stats = comp.performance || comp.stats || comp;
-        totalGoals += parseInt(stats.goals || stats.goalsScored || '0', 10) || 0;
-        totalAssists += parseInt(stats.assists || '0', 10) || 0;
-        totalMatches += parseInt(stats.appearances || stats.matches || '0', 10) || 0;
-        totalMinutes += parseInt(stats.minutesPlayed || stats.minutes || '0', 10) || 0;
-      }
-
-      if (competitions.length === 0 && data.data.total) {
-        const t = data.data.total;
-        totalGoals = parseInt(t.goals || t.goalsScored || '0', 10) || 0;
-        totalAssists = parseInt(t.assists || '0', 10) || 0;
-        totalMatches = parseInt(t.appearances || t.matches || '0', 10) || 0;
-        totalMinutes = parseInt(t.minutesPlayed || t.minutes || '0', 10) || 0;
-      }
-
-      // Also try flat data shape
-      if (totalMatches === 0 && data.data.appearances) {
-        totalGoals = parseInt(data.data.goals || '0', 10) || 0;
-        totalAssists = parseInt(data.data.assists || '0', 10) || 0;
-        totalMatches = parseInt(data.data.appearances || '0', 10) || 0;
-        totalMinutes = parseInt(data.data.minutesPlayed || '0', 10) || 0;
-      }
-
-      if (totalMatches > 0 || totalGoals > 0) {
-        return { goals: totalGoals, assists: totalAssists, matches: totalMatches, minutes: totalMinutes };
-      }
-    } catch (e) {
-      console.log(`Endpoint ${endpoint} failed: ${e}`);
-      continue;
-    }
-  }
-
-  // Fallback: try the base player profile which we know works
   try {
-    const data = await fetchJSON(`${TM_API}/player/${externalId}`);
-    if (data.success && data.data) {
-      const p = data.data;
-      // Some profiles include season performance summary
-      const perf = p.performance || p.seasonStats || p.stats;
-      if (perf) {
-        return {
-          goals: parseInt(perf.goals || '0', 10) || 0,
-          assists: parseInt(perf.assists || '0', 10) || 0,
-          matches: parseInt(perf.appearances || perf.matches || '0', 10) || 0,
-          minutes: parseInt(perf.minutesPlayed || perf.minutes || '0', 10) || 0,
-        };
-      }
-    }
-  } catch (e) {
-    console.error(`Profile fallback failed for ${externalId}:`, e);
-  }
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-GB,en;q=0.9',
+      },
+    });
 
-  return null;
+    if (!response.ok) {
+      console.error(`HTTP ${response.status} for ${url}`);
+      return null;
+    }
+
+    const html = await response.text();
+
+    // Find the <table class="items"> ... <tfoot> ... </tfoot> section
+    // The tfoot total row has this structure:
+    // <td colspan="2">Total XX/XX:</td><td class="hide">&nbsp;</td>
+    // <td>Appearances</td><td>Goals</td><td>Assists</td><td>Yellow</td><td>2ndYellow</td><td>Red</td><td>Minutes'</td>
+    
+    const tfootMatch = html.match(/<table class="items">[\s\S]*?<tfoot>([\s\S]*?)<\/tfoot>/);
+    if (!tfootMatch) {
+      console.log(`No tfoot found in stats page for player ${externalId}`);
+      return null;
+    }
+
+    const tfootHtml = tfootMatch[1];
+    
+    // Extract all <td> values from the tfoot row
+    const tdValues: string[] = [];
+    const tdRegex = /<td[^>]*>([\s\S]*?)<\/td>/g;
+    let match;
+    while ((match = tdRegex.exec(tfootHtml)) !== null) {
+      // Strip HTML tags and trim
+      const text = match[1].replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
+      tdValues.push(text);
+    }
+
+    console.log(`Parsed tfoot values for ${externalId}:`, JSON.stringify(tdValues));
+
+    // Expected layout: [0]=Total label, [1]=hidden, [2]=Appearances, [3]=Goals, [4]=Assists, [5]=Yellow, [6]=2ndYellow, [7]=Red, [8]=Minutes
+    if (tdValues.length < 9) {
+      console.log(`Unexpected tfoot structure (${tdValues.length} cells) for player ${externalId}`);
+      return null;
+    }
+
+    const parseVal = (v: string): number => {
+      const cleaned = v.replace(/'/g, '').replace(/-/g, '0').replace(/\./g, '').trim();
+      return parseInt(cleaned, 10) || 0;
+    };
+
+    const stats: SeasonStats = {
+      matches: parseVal(tdValues[2]),
+      goals: parseVal(tdValues[3]),
+      assists: parseVal(tdValues[4]),
+      minutes: parseVal(tdValues[8]),
+    };
+
+    console.log(`Stats for ${externalId}: ${stats.matches} apps, ${stats.goals} goals, ${stats.assists} assists, ${stats.minutes} mins`);
+    return stats;
+  } catch (e) {
+    console.error(`Failed to fetch stats for player ${externalId}:`, e);
+    return null;
+  }
 }
 
 Deno.serve(async (req) => {
@@ -115,7 +114,6 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check if this is a preview-only request (don't apply changes)
     let previewOnly = false;
     try {
       const body = await req.json();
@@ -124,7 +122,6 @@ Deno.serve(async (req) => {
 
     console.log(`Starting player stats sync (preview: ${previewOnly})...`);
 
-    // Get all players who have an external ID configured
     const { data: playerStats, error: fetchError } = await supabase
       .from('player_stats')
       .select('id, player_id, external_player_id, goals, assists, matches, minutes')
@@ -146,7 +143,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get player names
     const playerIds = playerStats.map(ps => ps.player_id);
     const { data: players } = await supabase
       .from('players')
@@ -165,8 +161,8 @@ Deno.serve(async (req) => {
       player_name: string;
       status: string;
       error?: string;
-      old_stats?: { goals: number; assists: number; matches: number; minutes: number };
-      new_stats?: { goals: number; assists: number; matches: number; minutes: number };
+      old_stats?: SeasonStats;
+      new_stats?: SeasonStats;
     }> = [];
 
     for (const ps of playerStats) {
@@ -174,14 +170,14 @@ Deno.serve(async (req) => {
       const stats = await fetchPlayerSeasonStats(ps.external_player_id!);
 
       if (stats) {
-        const oldStats = {
+        const oldStats: SeasonStats = {
           goals: ps.goals || 0,
           assists: ps.assists || 0,
           matches: ps.matches || 0,
           minutes: ps.minutes || 0,
         };
 
-        const hasChange = 
+        const hasChange =
           stats.goals !== oldStats.goals ||
           stats.assists !== oldStats.assists ||
           stats.matches !== oldStats.matches ||
@@ -216,7 +212,8 @@ Deno.serve(async (req) => {
         results.push({ player_id: ps.player_id, player_name: playerName, status: 'fetch_failed', error: 'Could not retrieve stats from external source' });
       }
 
-      await new Promise(r => setTimeout(r, 300));
+      // Rate limit: wait between requests to avoid being blocked
+      await new Promise(r => setTimeout(r, 500));
     }
 
     console.log(`Sync complete: ${updated} changed, ${failed} failed`);
