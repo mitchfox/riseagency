@@ -342,27 +342,31 @@ const Staff = () => {
     setSearchParams({ section });
     // Persist active tab for session restoration
     localStorage.setItem('staff_active_tab', section);
-    // Update tabs
+    // Update tabs - use functional update pattern to avoid stale reads
     try {
       const tabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
-      if (tabs.length > 0) {
-        if (replaceCurrentTab) {
-          // Only replace when explicitly requested (clicking an existing tab)
-          const activeIdx = tabs.indexOf(expandedSection as string);
-          if (activeIdx !== -1 && !tabs.includes(section)) {
-            tabs[activeIdx] = section;
-            localStorage.setItem('staff_open_tabs', JSON.stringify(tabs));
-            setTabsVersion(v => v + 1);
-          }
-        }
-        // Always ensure the section exists in tabs
-        if (!tabs.includes(section)) {
-          tabs.push(section);
-          localStorage.setItem('staff_open_tabs', JSON.stringify(tabs.slice(-12)));
-          setTabsVersion(v => v + 1);
+      let updated = [...tabs];
+      
+      if (replaceCurrentTab) {
+        // Replace the previously active tab with the new section
+        const prevActive = localStorage.getItem('staff_active_tab_prev');
+        const activeIdx = prevActive ? updated.indexOf(prevActive) : -1;
+        if (activeIdx !== -1 && !updated.includes(section)) {
+          updated[activeIdx] = section;
         }
       }
+      
+      // Always ensure the section exists in tabs (add if missing)
+      if (!updated.includes(section)) {
+        updated.push(section);
+        updated = updated.slice(-12);
+      }
+      
+      localStorage.setItem('staff_open_tabs', JSON.stringify(updated));
+      setTabsVersion(v => v + 1);
     } catch {}
+    // Track previous active tab for replace operations
+    localStorage.setItem('staff_active_tab_prev', section);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
