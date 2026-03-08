@@ -18,24 +18,6 @@ import MessagePathways from "./MessagePathways";
 import { RecruitmentRulesTab } from "./RecruitmentRulesTab";
 import { ProspectBoard } from "./ProspectBoard";
 
-interface Prospect {
-  id: string;
-  name: string;
-  age: number | null;
-  position: string | null;
-  nationality: string | null;
-  current_club: string | null;
-  age_group: 'A' | 'B' | 'C' | 'D';
-  stage: 'scouted' | 'connected' | 'rapport_building' | 'rising' | 'rise';
-  profile_image_url: string | null;
-  contact_email: string | null;
-  contact_phone: string | null;
-  notes: string | null;
-  last_contact_date: string | null;
-  priority: 'low' | 'medium' | 'high' | null;
-  linked_player_id: string | null;
-}
-
 interface MarketingTemplate {
   id: string;
   recipient_type: string;
