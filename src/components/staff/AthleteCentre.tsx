@@ -209,6 +209,7 @@ export const AthleteCentre = () => {
   const [mainTab, setMainTab] = useState("matchflow");
   const [devTab, setDevTab] = useState("longterm");
   const [loading, setLoading] = useState(true);
+  const [resumedSession, setResumedSession] = useState<SessionState | null>(null);
   
   const [programs, setPrograms] = useState<PlayerProgram[]>([]);
   const [analyses, setAnalyses] = useState<PlayerAnalysis[]>([]);
