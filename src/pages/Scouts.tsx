@@ -68,6 +68,27 @@ const getDomainTranslation = (domain: string, t: (key: string, fallback?: string
   return translations[domain] || domain;
 };
 
+const toLegacySkillSlug = (value: string): string =>
+  value.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/^_+|_+$/g, '');
+
+const toCompactSkillSlug = (value: string): string =>
+  value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+
+const getBestTranslation = (
+  t: (key: string, fallback?: string) => string,
+  primaryKey: string,
+  secondaryKey: string,
+  fallback: string
+): string => {
+  const primary = t(primaryKey);
+  if (primary !== primaryKey) return primary;
+
+  const secondary = t(secondaryKey);
+  if (secondary !== secondaryKey) return secondary;
+
+  return fallback;
+};
+
 const Scouts = () => {
   const { t } = useLanguage();
   const [selectedPosition, setSelectedPosition] = useState<ScoutingPosition>(SCOUTING_POSITIONS[0]);
@@ -106,8 +127,8 @@ const Scouts = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-full">
       <SEO 
-        title="For Scouts - Join RISE Network"
-        description="Join RISE's scouting network. Access our database, competitive incentives, and forever commission structure."
+        title={t('scouts.seo_title', 'For Scouts - Join RISE Network')}
+        description={t('scouts.seo_description', "Join RISE's scouting network. Access our database, competitive incentives, and forever commission structure.")}
         image="/og-preview-scouts.png"
         url="/scouts"
       />
@@ -457,7 +478,8 @@ const Scouts = () => {
                               <div className="px-6 py-20 md:px-8">
                                 <div className="grid md:grid-cols-2 gap-4">
                                   {skills.map((skill, idx) => {
-                                    const skillKey = skill.skill_name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                                    const legacySkillKey = toLegacySkillSlug(skill.skill_name);
+                                    const compactSkillKey = toCompactSkillSlug(skill.skill_name);
                                     return (
                                       <div 
                                         key={idx} 
@@ -465,12 +487,12 @@ const Scouts = () => {
                                       >
                                         <div className={`${config.solidBg} px-5 py-3`}>
                                           <h4 className="font-bold text-black text-base">
-                                            {t(`scouts.skill_${skillKey}`, skill.skill_name)}
+                                            {getBestTranslation(t, `scouts.skill_${legacySkillKey}`, `scouts.skill_${compactSkillKey}`, skill.skill_name)}
                                           </h4>
                                         </div>
                                         <div className="px-5 py-4">
                                           <p className="text-sm text-muted-foreground leading-relaxed">
-                                            {t(`scouts.skill_${skillKey}_desc`, skill.description)}
+                                            {getBestTranslation(t, `scouts.skill_${legacySkillKey}_desc`, `scouts.skill_${compactSkillKey}_desc`, skill.description)}
                                           </p>
                                         </div>
                                       </div>
@@ -529,7 +551,12 @@ const Scouts = () => {
                             {t('scouts.opposition_analysis_desc', "Understanding the opponent's tactical approach, identifying weaknesses to exploit, and recognising their strengths to neutralise.")}
                           </p>
                           <div className="flex flex-wrap gap-2">
-                            {["High Press", "Low Block", "Counter Attack", "Possession"].map(style => (
+                            {[
+                              t('scouts.style_high_press', 'High Press'),
+                              t('scouts.style_low_block', 'Low Block'),
+                              t('scouts.style_counter_attack', 'Counter Attack'),
+                              t('scouts.style_possession', 'Possession')
+                            ].map(style => (
                               <Badge key={style} variant="secondary" className="bg-primary/20 border-primary/30">
                                 {style}
                               </Badge>

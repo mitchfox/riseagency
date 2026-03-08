@@ -999,7 +999,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                   className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1 md:py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors ml-auto md:ml-0"
                 >
                   <ZoomOut className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="text-xs md:text-sm font-medium">Back</span>
+                  <span className="text-xs md:text-sm font-medium">{t("map.back", "Back")}</span>
                 </button>
               </div>
             </div>
@@ -1422,7 +1422,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
           {/* Coverage Regions - Country -> Clubs from footballClubs */}
           <div id="coverage-regions-container" ref={coverageRef} className="bg-card rounded-lg p-3 border mt-3 flex-1 min-h-0 overflow-hidden flex flex-col group/coverage">
             <h4 className="font-bebas text-lg mb-1 flex-shrink-0 pl-5">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
-            <p className="text-xs italic text-primary mb-2 flex-shrink-0 pl-5">Players Scouted</p>
+            <p className="text-xs italic text-primary mb-2 flex-shrink-0 pl-5">{t("map.players_scouted", "Players Scouted")}</p>
             <div className="space-y-1 flex-1 min-h-0 max-h-[240px] overflow-y-auto transition-all relative pr-0.5 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-primary/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary/50">
               {(() => {
                 // Group footballClubs by country
@@ -1533,12 +1533,12 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                                 };
                                 
                                 const ageGroups = [
-                                  { name: "First Team", min: 18, max: 30, count: getSeededRandom(club.name + "first", 18, 30) },
-                                  { name: "Reserves/U23/U21", min: 4, max: 14, count: getSeededRandom(club.name + "reserves", 4, 14) },
-                                  { name: "U19", min: 14, max: 20, count: getSeededRandom(club.name + "u19", 14, 20) },
-                                  { name: "U16", min: 6, max: 17, count: getSeededRandom(club.name + "u16", 6, 17) },
-                                  { name: "U15", min: 1, max: 9, count: getSeededRandom(club.name + "u15", 1, 9) },
-                                  { name: "U14", min: 1, max: 4, count: getSeededRandom(club.name + "u14", 1, 4) },
+                                  { name: t("map.age_first_team", "First Team"), min: 18, max: 30, count: getSeededRandom(club.name + "first", 18, 30) },
+                                  { name: t("map.age_reserves", "Reserves/U23/U21"), min: 4, max: 14, count: getSeededRandom(club.name + "reserves", 4, 14) },
+                                  { name: t("map.age_u19", "U19"), min: 14, max: 20, count: getSeededRandom(club.name + "u19", 14, 20) },
+                                  { name: t("map.age_u16", "U16"), min: 6, max: 17, count: getSeededRandom(club.name + "u16", 6, 17) },
+                                  { name: t("map.age_u15", "U15"), min: 1, max: 9, count: getSeededRandom(club.name + "u15", 1, 9) },
+                                  { name: t("map.age_u14", "U14"), min: 1, max: 4, count: getSeededRandom(club.name + "u14", 1, 4) },
                                 ];
                                 
                                 return (
