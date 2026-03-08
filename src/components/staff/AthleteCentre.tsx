@@ -29,6 +29,8 @@ import { VideoAnalysis } from "@/components/staff/coaching/VideoAnalysis";
 import { AnnotationProjects } from "@/components/staff/annotations/AnnotationProjects";
 import { HighlightCompiler } from "@/components/staff/HighlightCompiler";
 import { AiShellSuggestions } from "@/components/staff/AiShellSuggestions";
+import { RecentPlayersBar, getRecentPlayerIds, addRecentPlayer } from "@/components/staff/RecentPlayersBar";
+import { SessionResumeBanner, saveSession, clearSession, type SessionState } from "@/components/staff/SessionResumeBanner";
 
 interface Player {
   id: string;
