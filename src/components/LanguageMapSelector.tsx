@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Globe, X } from "lucide-react";
+import { X } from "lucide-react";
 import europeMap from "@/assets/europe-outline.gif";
 
 type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr' | 'hr' | 'no';
@@ -41,7 +41,7 @@ interface LanguageMapSelectorProps {
 }
 
 export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSelectorProps) => {
-  const { language, switchLanguage } = useLanguage();
+  const { language, switchLanguage, t } = useLanguage();
   const [open, setOpen] = useState(false);
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -180,11 +180,11 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
               
               {/* Title */}
               <div className="absolute top-4 left-0 right-0 text-center">
-                <h3 className="text-lg md:text-2xl font-bebas uppercase tracking-[0.3em] text-primary">
-                  Select Language
+              <h3 className="text-lg md:text-2xl font-bebas uppercase tracking-[0.3em] text-primary">
+                  {t('menu.select_language', 'Select Language')}
                 </h3>
                 <p className="text-xs text-white/50 font-bebas tracking-wider mt-1 hidden md:block">
-                  Click a country to switch
+                  {t('menu.click_country', 'Click a country to switch')}
                 </p>
               </div>
               
@@ -205,7 +205,7 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
                   </div>
                 ) : (
                   <span className="text-sm font-bebas uppercase tracking-wider text-white/40">
-                    Select a language
+                    {t('menu.select_a_language', 'Select a language')}
                   </span>
                 )}
               </div>
@@ -254,7 +254,7 @@ export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSele
                   </button>
                 ) : (
                   <div className="w-full px-6 py-3 bg-white/10 text-white/40 font-bebas uppercase tracking-wider text-lg rounded text-center">
-                    Select a language
+                    {t('menu.select_a_language', 'Select a language')}
                   </div>
                 )}
               </div>

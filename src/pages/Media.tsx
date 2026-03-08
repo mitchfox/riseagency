@@ -100,8 +100,8 @@ const Media = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden" key="media-page">
       <SEO 
-        title="Media & Press - Request Interviews & Content | RISE Football Agency"
-        description="Media professionals can request interviews, access content, and arrange coverage of RISE Football Agency players and activities."
+        title={t('media.seo_title', 'Media & Press - Request Interviews & Content | RISE Football Agency')}
+        description={t('media.seo_desc', 'Media professionals can request interviews, access content, and arrange coverage of RISE Football Agency players and activities.')}
         image="/og-preview-media.png"
         url="/media"
       />
