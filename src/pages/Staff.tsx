@@ -1039,6 +1039,7 @@ const Staff = () => {
     transferhub: ['transfers', 'outreach', 'clubs', 'deals'],
     portalmanagement: ['portal', 'features', 'visibility', 'hero', 'toggle'],
     highlightcompiler: ['highlight', 'compiler', 'reel', 'compilation', 'export', 'clips'],
+    musicstudio: ['music', 'suno', 'audio', 'tracks', 'playlist', 'portal music', 'songs'],
     datasetbuilder: ['dataset', 'training', 'roboflow', 'annotation', 'labelling', 'frames'],
   };
 
