@@ -68,6 +68,15 @@ const getPriorityClasses = (priority: string | null) => {
   }
 };
 
+const getPriorityColor = (priority: string | null) => {
+  switch (priority) {
+    case 'high': return 'hsl(0, 70%, 50%)';
+    case 'medium': return 'hsl(43, 49%, 61%)';
+    case 'low': return 'hsl(140, 50%, 50%)';
+    default: return 'hsl(0, 0%, 40%)';
+  }
+};
+
 const ageGroupLabelMap: Record<'A' | 'B' | 'C' | 'D', string> = {
   A: 'First Team',
   B: 'U21',
