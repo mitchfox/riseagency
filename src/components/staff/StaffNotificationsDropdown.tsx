@@ -507,5 +507,12 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
         </ScrollArea>
       </DropdownMenuContent>
     </DropdownMenu>
+
+    <ImprovementReportDialog
+      open={!!improvementReport}
+      onOpenChange={(o) => { if (!o) setImprovementReport(null); }}
+      data={improvementReport}
+    />
+    </>
   );
 };
