@@ -36,24 +36,8 @@ const RECIPIENT_TYPES = [
 
 export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { isAdmin: boolean; initialTab?: 'prospects' | 'outreach' | 'templates' | 'pathways' }) => {
   const [activeTab, setActiveTab] = useState<string>(initialTab);
-  const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    age: "",
-    position: "",
-    nationality: "",
-    current_club: "",
-    age_group: "A" as 'A' | 'B' | 'C' | 'D',
-    stage: "scouted" as 'scouted' | 'connected' | 'rapport_building' | 'rising' | 'rise',
-    contact_email: "",
-    contact_phone: "",
-    notes: "",
-    priority: "medium" as 'low' | 'medium' | 'high',
-  });
 
   // Template management state
   const [templates, setTemplates] = useState<MarketingTemplate[]>([]);
@@ -78,167 +62,10 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
   const [applyParentName, setApplyParentName] = useState("");
   const [applyParentContact, setApplyParentContact] = useState("");
 
-  const ageGroups = [
-    { value: 'A', label: 'A - FIRST TEAM' },
-    { value: 'B', label: 'B - U21' },
-    { value: 'C', label: 'C - U18' },
-    { value: 'D', label: 'D - U16' },
-  ];
-
-  const stages = [
-    { value: 'scouted', label: 'SCOUTED' },
-    { value: 'connected', label: 'CONNECTED' },
-    { value: 'rapport_building', label: 'RAPPORT BUILDING' },
-    { value: 'rising', label: 'RISING' },
-    { value: 'rise', label: 'RISE' },
-  ];
-
   useEffect(() => {
-    fetchProspects();
     fetchTemplates();
+    setLoading(false);
   }, []);
-
-  const fetchProspects = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("prospects")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setProspects((data || []) as Prospect[]);
-    } catch (error: any) {
-      console.error("Error fetching prospects:", error);
-      toast.error("Failed to load prospects");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      const prospectData = {
-        name: formData.name,
-        age: formData.age ? parseInt(formData.age) : null,
-        position: formData.position || null,
-        nationality: formData.nationality || null,
-        current_club: formData.current_club || null,
-        age_group: formData.age_group,
-        stage: formData.stage,
-        contact_email: formData.contact_email || null,
-        contact_phone: formData.contact_phone || null,
-        notes: formData.notes || null,
-        priority: formData.priority,
-      };
-
-      if (editingProspect) {
-        const { error } = await supabase
-          .from("prospects")
-          .update(prospectData)
-          .eq("id", editingProspect.id);
-
-        if (error) throw error;
-        toast.success("Prospect updated successfully");
-      } else {
-        const { error } = await supabase
-          .from("prospects")
-          .insert([prospectData]);
-
-        if (error) throw error;
-        toast.success("Prospect added successfully");
-      }
-
-      setDialogOpen(false);
-      resetForm();
-      fetchProspects();
-    } catch (error: any) {
-      console.error("Error saving prospect:", error);
-      toast.error("Failed to save prospect");
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this prospect?")) return;
-
-    try {
-      const { error } = await supabase
-        .from("prospects")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-      toast.success("Prospect deleted successfully");
-      fetchProspects();
-    } catch (error: any) {
-      console.error("Error deleting prospect:", error);
-      toast.error("Failed to delete prospect");
-    }
-  };
-
-  const handleEdit = (prospect: Prospect) => {
-    setEditingProspect(prospect);
-    setFormData({
-      name: prospect.name,
-      age: prospect.age?.toString() || "",
-      position: prospect.position || "",
-      nationality: prospect.nationality || "",
-      current_club: prospect.current_club || "",
-      age_group: prospect.age_group,
-      stage: prospect.stage,
-      contact_email: prospect.contact_email || "",
-      contact_phone: prospect.contact_phone || "",
-      notes: prospect.notes || "",
-      priority: prospect.priority || "medium",
-    });
-    setDialogOpen(true);
-  };
-
-  const handleMoveStage = async (prospectId: string, newStage: typeof stages[number]['value']) => {
-    try {
-      const { error } = await supabase
-        .from("prospects")
-        .update({ stage: newStage })
-        .eq("id", prospectId);
-
-      if (error) throw error;
-      fetchProspects();
-    } catch (error: any) {
-      console.error("Error moving prospect:", error);
-      toast.error("Failed to move prospect");
-    }
-  };
-
-  const resetForm = () => {
-    setEditingProspect(null);
-    setFormData({
-      name: "",
-      age: "",
-      position: "",
-      nationality: "",
-      current_club: "",
-      age_group: "A",
-      stage: "scouted",
-      contact_email: "",
-      contact_phone: "",
-      notes: "",
-      priority: "medium",
-    });
-  };
-
-  const getProspectsForCell = (ageGroup: string, stage: string) => {
-    return prospects.filter(p => p.age_group === ageGroup && p.stage === stage);
-  };
-
-  const getPriorityColor = (priority: string | null) => {
-    switch (priority) {
-      case 'high': return 'hsl(0, 70%, 50%)';
-      case 'medium': return 'hsl(43, 49%, 61%)';
-      case 'low': return 'hsl(140, 50%, 50%)';
-      default: return 'hsl(0, 0%, 50%)';
-    }
-  };
 
   // Template management functions
   const fetchTemplates = async () => {
