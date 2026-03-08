@@ -14,7 +14,7 @@ import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Tro
 import { useState, useMemo, useRef, useEffect } from "react";
 import { StarsQuadrantCard } from "@/components/radial-menu/StarsQuadrantCard";
 import { NewsQuadrantCard } from "@/components/radial-menu/NewsQuadrantCard";
-import { PerformanceQuadrantCard, InsightsQuadrantCard, ContactQuadrantCard, YouthQuadrantCard, JourneyQuadrantCard, WhatWeLookForQuadrantCard, HowWeRiseQuadrantCard, FAQQuadrantCard } from "@/components/radial-menu/SimpleQuadrantCard";
+import { PerformanceQuadrantCard, InsightsQuadrantCard, ContactQuadrantCard, YouthQuadrantCard, JourneyQuadrantCard, WhatWeLookForQuadrantCard, HowWeRiseQuadrantCard, FAQQuadrantCard, RequestsQuadrantCard, PartnerQuadrantCard, PortalQuadrantCard, OpportunitiesQuadrantCard, CoachingQuadrantCard, PackagesQuadrantCard, ClubSupportQuadrantCard } from "@/components/radial-menu/SimpleQuadrantCard";
 import { calculateContentPlacement } from "@/lib/wedgeGeometry";
 
 export type QuadrantPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
