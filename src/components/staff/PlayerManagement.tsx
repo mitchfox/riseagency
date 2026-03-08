@@ -1226,6 +1226,20 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
       if (error) throw error;
 
+      // Upsert external player ID to player_stats
+      if (formData.externalPlayerId !== undefined) {
+        const { error: statsError } = await supabase
+          .from('player_stats')
+          .upsert({
+            player_id: editingPlayer.id,
+            external_player_id: formData.externalPlayerId || null,
+          }, { onConflict: 'player_id' });
+        
+        if (statsError) {
+          console.error('Failed to save external player ID:', statsError);
+        }
+      }
+
       toast.success("Player updated successfully");
       setIsEditDialogOpen(false);
       setImageFile(null);
