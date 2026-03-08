@@ -232,7 +232,17 @@ export const RadialMenu = () => {
       },
     ],
     clubs: [
-      { to: "/clubs", labelKey: "header.club_direction", fallback: "CLUB SUPPORT", Icon: Target, angle: 0 },
+      { 
+        to: "/clubs", 
+        labelKey: "header.club_direction", 
+        fallback: "CLUB SUPPORT", 
+        Icon: Target, 
+        angle: 0,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(0),
+          component: ClubSupportQuadrantCard,
+        },
+      },
       { 
         to: "/stars", 
         labelKey: "header.stars", 
