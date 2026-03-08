@@ -789,6 +789,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       })),
       seasonStats: Array.isArray(bioData?.seasonStats) ? bioData.seasonStats : [],
       topStats: Array.isArray(bioData?.topStats) ? bioData.topStats : [],
+      externalPlayerId: stats[player.id]?.external_player_id || "",
       
       // Separate links field
       links: linksArray,
