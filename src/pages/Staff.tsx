@@ -885,6 +885,7 @@ const Staff = () => {
           { id: 'streams', title: 'Streams', icon: Tv },
           { id: 'videocompressor', title: 'Video Compressor', icon: Film },
           { id: 'highlightcompiler', title: 'Highlight Compiler', icon: Film },
+          { id: 'musicstudio', title: 'Music Studio', icon: Music },
         ],
       },
       {
