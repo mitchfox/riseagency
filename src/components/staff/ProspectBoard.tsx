@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -10,7 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Plus, Trash2, GripVertical, MapPin, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { getCountryFlagUrl } from "@/lib/countryFlags";
 import {
   DndContext,
   DragOverlay,
@@ -34,13 +34,13 @@ interface Prospect {
   age_group: 'A' | 'B' | 'C' | 'D';
   stage: 'scouted' | 'connected' | 'rapport_building' | 'rising' | 'rise';
   profile_image_url: string | null;
+  club_logo_url?: string | null;
   contact_email: string | null;
   contact_phone: string | null;
   notes: string | null;
   last_contact_date: string | null;
   priority: 'low' | 'medium' | 'high' | null;
   linked_player_id: string | null;
-  // From players table sync
   _source: 'prospects' | 'players';
 }
 
@@ -59,6 +59,7 @@ const ageGroups = [
   { value: 'D', label: 'D - U16' },
 ] as const;
 
+
 const getPriorityColor = (priority: string | null) => {
   switch (priority) {
     case 'high': return 'hsl(0, 70%, 50%)';
@@ -66,6 +67,13 @@ const getPriorityColor = (priority: string | null) => {
     case 'low': return 'hsl(140, 50%, 50%)';
     default: return 'hsl(0, 0%, 40%)';
   }
+};
+
+const ageGroupLabelMap: Record<'A' | 'B' | 'C' | 'D', string> = {
+  A: 'First Team',
+  B: 'U21',
+  C: 'U18',
+  D: 'U16',
 };
 
 // Draggable prospect card
@@ -139,10 +147,10 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, isDragging }: {
 
         {/* Centre: avatar + name */}
         <div className="flex items-center gap-3 my-1">
-          <Avatar className="h-12 w-12 border-2 shrink-0" style={{ borderColor: `${priorityColor}66` }}>
-            <AvatarImage src={prospect.profile_image_url || ""} alt={prospect.name} />
+          <Avatar className="h-14 w-14 border-2 shrink-0 rounded-lg" style={{ borderColor: `${priorityColor}66` }}>
+            <AvatarImage src={prospect.profile_image_url || ""} alt={prospect.name} className="object-cover object-top" />
             <AvatarFallback
-              className="text-xs font-bold"
+              className="text-xs font-bold rounded-lg"
               style={{ background: `${priorityColor}22`, color: priorityColor }}
             >
               {initials}
@@ -154,12 +162,14 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, isDragging }: {
             </div>
             {prospect.current_club && (
               <div className="flex items-center gap-1 mt-0.5">
+                {prospect.club_logo_url && <img src={prospect.club_logo_url} alt="Club logo" className="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" />}
                 <Shield className="w-3 h-3 text-muted-foreground/60 shrink-0" />
                 <span className="text-[10px] text-muted-foreground truncate">{prospect.current_club}</span>
               </div>
             )}
             {prospect.nationality && (
               <div className="flex items-center gap-1 mt-0.5">
+                <img src={getCountryFlagUrl(prospect.nationality)} alt={prospect.nationality} className="w-4 h-3 object-cover rounded-sm shrink-0" loading="lazy" />
                 <MapPin className="w-3 h-3 text-muted-foreground/60 shrink-0" />
                 <span className="text-[10px] text-muted-foreground truncate">{prospect.nationality}</span>
               </div>
@@ -175,10 +185,10 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, isDragging }: {
               className="text-[10px] h-5 px-1.5 font-bebas tracking-wider"
               style={{ color: 'hsl(43, 49%, 61%)', borderColor: 'hsl(43, 49%, 61% / 0.3)' }}
             >
-              {prospect.age_group}
+              {ageGroupLabelMap[prospect.age_group]}
             </Badge>
-            {prospect.age && (
-              <span className="text-[10px] text-muted-foreground">{prospect.age}y</span>
+            {typeof prospect.age === 'number' && (
+              <span className="text-[10px] text-muted-foreground">Age {prospect.age}</span>
             )}
           </div>
           <div className="flex items-center gap-1">
@@ -304,7 +314,6 @@ const StageColumn = ({ stageValue, stageLabel, prospects: stageProspects, isAdmi
 export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);
-  const isMobile = useIsMobile();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -345,24 +354,34 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
       // Fetch players with representation_status = 'prospect'
       const { data: playersData, error: plError } = await supabase
         .from("players")
-        .select("id, name, position, image_url, club, nationality, date_of_birth")
+        .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth")
         .eq("representation_status", "prospect");
 
       if (plError) throw plError;
 
-      // Map prospects table data
-      const fromProspects: Prospect[] = (prospectsData || []).map(p => ({
-        ...p,
-        _source: 'prospects' as const,
-      } as Prospect));
+      const playerById = new Map((playersData || []).map((player) => [player.id, player]));
+
+      // Map prospects table data + enrich with linked player media
+      const fromProspects: Prospect[] = (prospectsData || []).map((p) => {
+        const linkedPlayer = p.linked_player_id ? playerById.get(p.linked_player_id) : undefined;
+
+        return {
+          ...p,
+          profile_image_url: p.profile_image_url || linkedPlayer?.image_url || null,
+          current_club: p.current_club || linkedPlayer?.club || null,
+          nationality: p.nationality || linkedPlayer?.nationality || null,
+          club_logo_url: linkedPlayer?.club_logo || null,
+          _source: 'prospects' as const,
+        } as Prospect;
+      });
 
       // Check which players are already linked
-      const linkedPlayerIds = new Set(fromProspects.filter(p => p.linked_player_id).map(p => p.linked_player_id));
+      const linkedPlayerIds = new Set(fromProspects.filter((p) => p.linked_player_id).map((p) => p.linked_player_id));
 
       // Create prospect entries for unlinked players
       const fromPlayers: Prospect[] = (playersData || [])
-        .filter(p => !linkedPlayerIds.has(p.id))
-        .map(p => {
+        .filter((p) => !linkedPlayerIds.has(p.id))
+        .map((p) => {
           let age: number | null = null;
           if (p.date_of_birth) {
             const dob = new Date(p.date_of_birth);
@@ -389,6 +408,7 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
             age_group: ageGroup,
             stage: 'scouted' as const,
             profile_image_url: p.image_url,
+            club_logo_url: p.club_logo || null,
             contact_email: null,
             contact_phone: null,
             notes: null,
