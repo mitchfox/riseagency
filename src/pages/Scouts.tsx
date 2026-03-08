@@ -478,7 +478,8 @@ const Scouts = () => {
                               <div className="px-6 py-20 md:px-8">
                                 <div className="grid md:grid-cols-2 gap-4">
                                   {skills.map((skill, idx) => {
-                                    const skillKey = skill.skill_name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                                    const legacySkillKey = toLegacySkillSlug(skill.skill_name);
+                                    const compactSkillKey = toCompactSkillSlug(skill.skill_name);
                                     return (
                                       <div 
                                         key={idx} 
@@ -486,12 +487,12 @@ const Scouts = () => {
                                       >
                                         <div className={`${config.solidBg} px-5 py-3`}>
                                           <h4 className="font-bold text-black text-base">
-                                            {t(`scouts.skill_${skillKey}`, skill.skill_name)}
+                                            {getBestTranslation(t, `scouts.skill_${legacySkillKey}`, `scouts.skill_${compactSkillKey}`, skill.skill_name)}
                                           </h4>
                                         </div>
                                         <div className="px-5 py-4">
                                           <p className="text-sm text-muted-foreground leading-relaxed">
-                                            {t(`scouts.skill_${skillKey}_desc`, skill.description)}
+                                            {getBestTranslation(t, `scouts.skill_${legacySkillKey}_desc`, `scouts.skill_${compactSkillKey}_desc`, skill.description)}
                                           </p>
                                         </div>
                                       </div>
