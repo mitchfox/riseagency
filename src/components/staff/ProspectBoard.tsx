@@ -351,24 +351,34 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
       // Fetch players with representation_status = 'prospect'
       const { data: playersData, error: plError } = await supabase
         .from("players")
-        .select("id, name, position, image_url, club, nationality, date_of_birth")
+        .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth")
         .eq("representation_status", "prospect");
 
       if (plError) throw plError;
 
-      // Map prospects table data
-      const fromProspects: Prospect[] = (prospectsData || []).map(p => ({
-        ...p,
-        _source: 'prospects' as const,
-      } as Prospect));
+      const playerById = new Map((playersData || []).map((player) => [player.id, player]));
+
+      // Map prospects table data + enrich with linked player media
+      const fromProspects: Prospect[] = (prospectsData || []).map((p) => {
+        const linkedPlayer = p.linked_player_id ? playerById.get(p.linked_player_id) : undefined;
+
+        return {
+          ...p,
+          profile_image_url: p.profile_image_url || linkedPlayer?.image_url || null,
+          current_club: p.current_club || linkedPlayer?.club || null,
+          nationality: p.nationality || linkedPlayer?.nationality || null,
+          club_logo_url: linkedPlayer?.club_logo || null,
+          _source: 'prospects' as const,
+        } as Prospect;
+      });
 
       // Check which players are already linked
-      const linkedPlayerIds = new Set(fromProspects.filter(p => p.linked_player_id).map(p => p.linked_player_id));
+      const linkedPlayerIds = new Set(fromProspects.filter((p) => p.linked_player_id).map((p) => p.linked_player_id));
 
       // Create prospect entries for unlinked players
       const fromPlayers: Prospect[] = (playersData || [])
-        .filter(p => !linkedPlayerIds.has(p.id))
-        .map(p => {
+        .filter((p) => !linkedPlayerIds.has(p.id))
+        .map((p) => {
           let age: number | null = null;
           if (p.date_of_birth) {
             const dob = new Date(p.date_of_birth);
@@ -395,6 +405,7 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
             age_group: ageGroup,
             stage: 'scouted' as const,
             profile_image_url: p.image_url,
+            club_logo_url: p.club_logo || null,
             contact_email: null,
             contact_phone: null,
             notes: null,
