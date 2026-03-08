@@ -3374,6 +3374,7 @@ export type Database = {
           assists: number | null
           clean_sheets: number | null
           created_at: string | null
+          external_player_id: string | null
           goals: number | null
           id: string
           matches: number | null
@@ -3386,6 +3387,7 @@ export type Database = {
           assists?: number | null
           clean_sheets?: number | null
           created_at?: string | null
+          external_player_id?: string | null
           goals?: number | null
           id?: string
           matches?: number | null
@@ -3398,6 +3400,7 @@ export type Database = {
           assists?: number | null
           clean_sheets?: number | null
           created_at?: string | null
+          external_player_id?: string | null
           goals?: number | null
           id?: string
           matches?: number | null
