@@ -104,6 +104,37 @@ async function fetchPlayerSeasonStats(externalId: string): Promise<SeasonStats |
   }
 }
 
+async function searchTransfermarkt(playerName: string): Promise<Array<{ id: string; name: string }> | null> {
+  const query = encodeURIComponent(playerName.trim());
+  const url = `https://www.transfermarkt.co.uk/schnellsuche/ergebnis/schnellsuche?query=${query}`;
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-GB,en;q=0.9',
+      },
+    });
+    if (!response.ok) { await response.text(); return null; }
+    const html = await response.text();
+    const playerSection = html.match(/Search results for players[\s\S]*?<table class="items">([\s\S]*?)<\/table>/);
+    if (!playerSection) return [];
+    const results: Array<{ id: string; name: string }> = [];
+    const rowRegex = /<tr class="(?:odd|even)">([\s\S]*?)<\/tr>/g;
+    let rowMatch;
+    while ((rowMatch = rowRegex.exec(playerSection[1])) !== null) {
+      const row = rowMatch[1];
+      const idMatch = row.match(/\/profil\/spieler\/(\d+)/);
+      const nameMatch = row.match(/title="([^"]+)"[^>]*href="[^"]*\/profil\/spieler/);
+      if (idMatch) results.push({ id: idMatch[1], name: nameMatch?.[1] || 'Unknown' });
+    }
+    return results;
+  } catch (e) {
+    console.error(`TM search failed for "${playerName}":`, e);
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -122,6 +153,67 @@ Deno.serve(async (req) => {
 
     console.log(`Starting player stats sync (preview: ${previewOnly})...`);
 
+    // Step 1: Auto-match players missing external IDs
+    const { data: allPlayers } = await supabase
+      .from('players')
+      .select('id, name');
+
+    if (allPlayers && allPlayers.length > 0) {
+      // Get existing player_stats records
+      const { data: existingStats } = await supabase
+        .from('player_stats')
+        .select('player_id, external_player_id');
+
+      const statsMap = new Map<string, string | null>();
+      existingStats?.forEach(s => statsMap.set(s.player_id, s.external_player_id));
+
+      // Find players without external IDs
+      const unmatchedPlayers = allPlayers.filter(p => {
+        const extId = statsMap.get(p.id);
+        return !extId || extId.trim() === '';
+      });
+
+      if (unmatchedPlayers.length > 0) {
+        console.log(`Auto-matching ${unmatchedPlayers.length} players without external IDs...`);
+        let matched = 0;
+
+        for (const player of unmatchedPlayers) {
+          try {
+            const tmResult = await searchTransfermarkt(player.name);
+            if (tmResult && tmResult.length > 0) {
+              const best = tmResult[0];
+              const lastName = player.name.toLowerCase().split(' ').pop() || '';
+              const tmLastName = best.name.toLowerCase().split(' ').pop() || '';
+              const nameMatch = best.name.toLowerCase().includes(lastName) || player.name.toLowerCase().includes(tmLastName);
+
+              if (nameMatch) {
+                // Check if player_stats row exists
+                const hasRow = statsMap.has(player.id);
+                if (hasRow) {
+                  await supabase
+                    .from('player_stats')
+                    .update({ external_player_id: best.id, updated_at: new Date().toISOString() })
+                    .eq('player_id', player.id);
+                } else {
+                  await supabase
+                    .from('player_stats')
+                    .insert({ player_id: player.id, external_player_id: best.id });
+                }
+                matched++;
+                console.log(`Matched "${player.name}" -> TM ID ${best.id} (${best.name})`);
+              }
+            }
+            // Rate limit between searches
+            await new Promise(r => setTimeout(r, 600));
+          } catch (e) {
+            console.error(`Auto-match failed for "${player.name}":`, e);
+          }
+        }
+        console.log(`Auto-match complete: ${matched}/${unmatchedPlayers.length} matched`);
+      }
+    }
+
+    // Step 2: Re-fetch all player_stats with external IDs and sync stats
     const { data: playerStats, error: fetchError } = await supabase
       .from('player_stats')
       .select('id, player_id, external_player_id, goals, assists, matches, minutes')
