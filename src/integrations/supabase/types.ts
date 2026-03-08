@@ -3487,6 +3487,7 @@ export type Database = {
           club_logo: string | null
           contracts_password: string | null
           created_at: string | null
+          date_of_birth: string | null
           email: string | null
           highlighted_match: Json | null
           highlights: Json | null
@@ -3521,6 +3522,7 @@ export type Database = {
           club_logo?: string | null
           contracts_password?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           email?: string | null
           highlighted_match?: Json | null
           highlights?: Json | null
@@ -3555,6 +3557,7 @@ export type Database = {
           club_logo?: string | null
           contracts_password?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           email?: string | null
           highlighted_match?: Json | null
           highlights?: Json | null
