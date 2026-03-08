@@ -212,15 +212,31 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
           // Handle case where text_key already includes page_name prefix
           const textKey = row.text_key;
           const pageName = row.page_name;
-          
+
           // If text_key already starts with page_name., don't duplicate
-          const key = textKey.startsWith(`${pageName}.`) 
-            ? textKey 
+          const key = textKey.startsWith(`${pageName}.`)
+            ? textKey
             : `${pageName}.${textKey}`;
-          
-          const value = row[column] as string | null;
-          // Fall back to English if translation is missing
-          translationMap.set(key, value || row.english || '');
+
+          const localizedValue = row[column] as string | null;
+          const englishValue = row.english || '';
+          const candidate = localizedValue || englishValue;
+
+          // Prevent duplicate-key rows with missing localized content from overwriting
+          // an already-localized value with English fallback.
+          const existing = translationMap.get(key);
+          if (!existing) {
+            translationMap.set(key, candidate);
+            return;
+          }
+
+          const existingIsEnglishFallback = existing === englishValue;
+          const candidateIsLocalized = !!localizedValue;
+
+          // Only replace when the new row provides a true localized value and current is fallback.
+          if (candidateIsLocalized && existingIsEnglishFallback) {
+            translationMap.set(key, candidate);
+          }
         });
 
         console.log('[Translation] Loaded', translationMap.size, 'translations. Sample keys:', Array.from(translationMap.keys()).slice(0, 5));
