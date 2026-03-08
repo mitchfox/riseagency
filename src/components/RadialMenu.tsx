@@ -306,6 +306,10 @@ export const RadialMenu = () => {
         fallback: "REQUESTS", 
         Icon: Target, 
         angle: 0,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(0),
+          component: RequestsQuadrantCard,
+        },
       },
       { 
         to: "/stars", 
@@ -368,6 +372,10 @@ export const RadialMenu = () => {
         fallback: "PARTNER", 
         Icon: Users, 
         angle: 309,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(309),
+          component: PartnerQuadrantCard,
+        },
       },
     ],
     scouts: [
