@@ -1953,7 +1953,20 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       <Edit className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
                       <span className="hidden md:inline">Edit</span>
                     </Button>
-                    {selectedPlayer?.email && (
+                    {selectedPlayer?.representation_status === 'prospect' ? (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          const slug = selectedPlayer!.name.toLowerCase().replace(/\s+/g, '-');
+                          window.open(`${window.location.origin}/risewithus/${slug}`, '_blank');
+                        }}
+                        className="flex-1 h-8 md:h-9 text-xs md:text-sm"
+                      >
+                        <Eye className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                        <span className="hidden md:inline">Rise With Us</span>
+                      </Button>
+                    ) : selectedPlayer?.email ? (
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -1974,7 +1987,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         <Eye className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
                         <span className="hidden md:inline">Portal</span>
                       </Button>
-                    )}
+                    ) : null}
                     <Button 
                       variant="outline" 
                       size="sm"
