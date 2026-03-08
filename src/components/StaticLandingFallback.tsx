@@ -97,6 +97,9 @@ export function StaticLandingFallback({ performanceReason }: StaticLandingFallba
           <LocalizedLink to="/portal" className="text-white/50 hover:text-white/80 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
             {t("header.portal", "Portal")}
           </LocalizedLink>
+          <Link to="/scout-login" className="text-white/50 hover:text-white/80 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
+            {t("header.scouts", "Scouts")}
+          </Link>
         </div>
       </div>
 
