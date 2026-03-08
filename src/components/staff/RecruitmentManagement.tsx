@@ -640,8 +640,10 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
             )}
           </div>
 
-          {/* Prospect Board Grid - Responsive with horizontal scroll on mobile */}
-          <div className="w-full overflow-x-auto -mx-2 px-2">
+          {/* Prospect Board - Desktop: Grid, Mobile: Stacked stages */}
+          
+          {/* Desktop Grid */}
+          <div className="hidden md:block w-full overflow-x-auto -mx-2 px-2">
             <div className="min-w-[600px]">
               {/* Header Row */}
               <div className="grid grid-cols-6 gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
@@ -707,17 +709,16 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
                                   {prospect.name}
                                 </div>
                                 {prospect.position && (
-                                  <div className="text-[8px] sm:text-[10px] text-muted-foreground truncate hidden sm:block">
+                                  <div className="text-[9px] sm:text-[10px] text-muted-foreground truncate">
                                     {prospect.position}
                                   </div>
                                 )}
                                 {prospect.current_club && (
-                                  <div className="text-[8px] sm:text-[10px] text-muted-foreground truncate hidden sm:block">
+                                  <div className="text-[9px] sm:text-[10px] text-muted-foreground truncate">
                                     {prospect.current_club}
                                   </div>
                                 )}
                                 
-                                {/* Quick Actions on Hover */}
                                 {isAdmin && (
                                   <div className="absolute top-0 right-0 hidden group-hover:flex gap-1 p-1">
                                     <Button
@@ -747,6 +748,89 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Mobile: Vertical stage cards */}
+          <div className="md:hidden space-y-3">
+            {stages.map(stage => {
+              const stageProspects = prospects.filter(p => p.stage === stage.value);
+              return (
+                <div key={stage.value} className="rounded-xl border overflow-hidden" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+                  <div 
+                    className="px-3 py-2 flex items-center justify-between"
+                    style={{ backgroundColor: 'hsl(43, 49%, 61%)' }}
+                  >
+                    <span className="font-bebas uppercase text-sm tracking-wider" style={{ color: 'hsl(0, 0%, 0%)' }}>
+                      {stage.label}
+                    </span>
+                    <Badge variant="secondary" className="text-[10px] h-5 bg-black/20 text-black border-0">
+                      {stageProspects.length}
+                    </Badge>
+                  </div>
+                  <div className="p-2 space-y-1.5" style={{ backgroundColor: 'hsl(0, 0%, 10%)' }}>
+                    {stageProspects.length === 0 ? (
+                      <div className="py-4 text-center text-xs text-muted-foreground opacity-40">
+                        No prospects
+                      </div>
+                    ) : (
+                      stageProspects.map(prospect => (
+                        <div
+                          key={prospect.id}
+                          className={`p-2.5 rounded-lg border-l-[3px] ${isAdmin ? 'active:scale-[0.98] cursor-pointer' : ''}`}
+                          style={{ 
+                            backgroundColor: 'hsl(0, 0%, 16%)',
+                            borderLeftColor: getPriorityColor(prospect.priority),
+                          }}
+                          onClick={isAdmin ? () => handleEdit(prospect) : undefined}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-bold truncate" style={{ color: 'hsl(43, 49%, 61%)' }}>
+                                {prospect.name}
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                {prospect.position && (
+                                  <span className="text-[11px] text-muted-foreground">{prospect.position}</span>
+                                )}
+                                {prospect.current_club && (
+                                  <span className="text-[11px] text-muted-foreground">· {prospect.current_club}</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <Badge 
+                                variant="outline" 
+                                className="text-[10px] h-5 px-1.5 font-bebas"
+                                style={{ color: 'hsl(43, 49%, 61%)', borderColor: 'hsl(43, 49%, 61% / 0.3)' }}
+                              >
+                                {prospect.age_group}
+                              </Badge>
+                              {prospect.age && (
+                                <span className="text-[10px] text-muted-foreground">{prospect.age}y</span>
+                              )}
+                              {isAdmin && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(prospect.id);
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
             {/* Legend */}
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground pt-4 border-t">
