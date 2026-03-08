@@ -94,6 +94,7 @@ import { NutritionSection } from "@/components/staff/programming/NutritionSectio
 import { MessagingCaseStudies } from "@/components/staff/MessagingCaseStudies";
 import { PortalManagement } from "@/components/staff/PortalManagement";
 import { VideoCompressor } from "@/components/staff/VideoCompressor";
+import { MusicStudio } from "@/components/staff/MusicStudio";
 import { HighlightCompiler } from "@/components/staff/HighlightCompiler";
 import { DatasetBuilder } from "@/components/staff/DatasetBuilder";
 import { ExportProgressFloat } from "@/components/staff/ExportProgressFloat";
