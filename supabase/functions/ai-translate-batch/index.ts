@@ -38,7 +38,7 @@ serve(async (req) => {
 
     const systemPrompt = `You are a professional translator for a football agency website. You will receive multiple texts marked with [TEXT_N]...[/TEXT_N] tags.
 
-Translate ALL texts into Spanish, Portuguese, French, German, Italian, Polish, Czech, Russian, and Turkish.
+Translate ALL texts into Spanish, Portuguese, French, German, Italian, Polish, Czech, Russian, Turkish, Croatian, and Norwegian.
 
 Important guidelines:
 - Keep the same tone and style as the original
@@ -58,7 +58,9 @@ Return ONLY a valid JSON object with this EXACT structure (no markdown, no code 
       "polish": "translation",
       "czech": "translation",
       "russian": "translation",
-      "turkish": "translation"
+      "turkish": "translation",
+      "croatian": "translation",
+      "norwegian": "translation"
     }
   ]
 }
