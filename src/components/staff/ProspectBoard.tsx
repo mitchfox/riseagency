@@ -354,7 +354,7 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
       const fromProspects: Prospect[] = (prospectsData || []).map(p => ({
         ...p,
         _source: 'prospects' as const,
-      }));
+      } as Prospect));
 
       // Check which players are already linked
       const linkedPlayerIds = new Set(fromProspects.filter(p => p.linked_player_id).map(p => p.linked_player_id));
