@@ -16,6 +16,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { PlayerOutreach } from "./PlayerOutreach";
 import MessagePathways from "./MessagePathways";
 import { RecruitmentRulesTab } from "./RecruitmentRulesTab";
+import { ProspectBoard } from "./ProspectBoard";
 
 interface Prospect {
   id: string;
