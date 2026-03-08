@@ -352,7 +352,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       if (playerIds.length > 0) {
         const { data: playerStatsData } = await supabase
           .from('player_stats')
-          .select('id, player_id, goals, assists, matches, minutes, clean_sheets, saves')
+          .select('id, player_id, goals, assists, matches, minutes, clean_sheets, saves, external_player_id')
           .in('player_id', playerIds);
         
         playerStatsData?.forEach(ps => {
