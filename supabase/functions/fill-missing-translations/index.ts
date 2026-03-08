@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     }
 
     // Process in batches of 15
-    const BATCH_SIZE = 15;
+    const BATCH_SIZE = 10;
     let totalUpdated = 0;
 
     for (let i = 0; i < rows.length; i += BATCH_SIZE) {
