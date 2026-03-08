@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { logActivity } from "@/lib/activityLogger";
-import { Pencil, Trash2, Plus, X, Sparkles, Database, Copy, Settings, Eye, Users, ChevronDown } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Sparkles, Database, Copy, Settings, Eye, Users, ChevronDown, FileEdit, EyeOff } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
 import {
   Dialog,
@@ -452,7 +453,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
       }
     } else {
       setEditingAnalysis(null);
-      setFormData({ analysis_type: type, points: [], matchups: [], starting_xi: [] });
+      setFormData({ analysis_type: type, points: [], matchups: [], starting_xi: [], visibility_status: 'live' });
       // In Athlete Centre context, keep the currently selected player pre-linked
       setSelectedPlayerId(defaultPlayerId || "none");
       setSelectedPerformanceReportId("none");
@@ -656,7 +657,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         'match_date', 'home_team_logo', 'away_team_logo', 'selected_scheme', 'starting_xi',
         'kit_primary_color', 'kit_secondary_color', 'kit_number_color', 'kit_collar_color',
         'kit_stripe_style', 'match_image_url', 'home_team_bg_color',
-        'away_team_bg_color', 'video_url', 'player_name'
+        'away_team_bg_color', 'video_url', 'player_name', 'visibility_status'
       ];
 
       const dataToSave: Record<string, any> = {
@@ -1638,6 +1639,26 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         )}
 
 
+        {/* Visibility Status */}
+        {!isConcept && (
+          <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+            <Label className="text-sm font-medium whitespace-nowrap">Status</Label>
+            <Select
+              value={formData.visibility_status || 'live'}
+              onValueChange={(val) => setFormData({ ...formData, visibility_status: val })}
+            >
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="live">Live</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="hidden">Hidden</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={handleCloseDialog}>Cancel</Button>
           <Button onClick={handleSave}>{isConcept ? "Save Concept" : "Save Analysis"}</Button>
@@ -1660,9 +1681,21 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
       <Card key={analysis.id} className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm sm:text-base truncate">
-              {analysis.title || `${analysis.home_team} vs ${analysis.away_team}`}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-sm sm:text-base truncate">
+                {analysis.title || `${analysis.home_team} vs ${analysis.away_team}`}
+              </h3>
+              {(analysis as any).visibility_status && (analysis as any).visibility_status !== "live" && (
+                <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${
+                  (analysis as any).visibility_status === "draft"
+                    ? "bg-yellow-500/20 text-yellow-400"
+                    : "bg-red-500/20 text-red-400"
+                }`}>
+                  {(analysis as any).visibility_status === "draft" ? <FileEdit className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
+                  {(analysis as any).visibility_status === "draft" ? "Draft" : "Hidden"}
+                </span>
+              )}
+            </div>
             <p className="text-xs sm:text-sm text-muted-foreground">
               {new Date(analysis.created_at).toLocaleDateString()}
             </p>
