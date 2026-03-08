@@ -439,7 +439,7 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
   return (
     <div className="space-y-4 sm:space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 h-auto sm:h-10">
+        <TabsList className="flex w-full overflow-x-auto overflow-y-hidden scrollbar-hide gap-1 h-auto p-1 bg-muted rounded-md">
           <TabsTrigger value="prospects" className="flex-1 text-xs sm:text-sm px-1 sm:px-2 py-2.5">
             <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Prospect Board</span>
