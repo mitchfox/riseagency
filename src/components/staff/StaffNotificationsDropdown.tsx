@@ -113,11 +113,18 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
     (n) => !n.read_by?.includes(userId)
   ).length;
 
+  // Map event types that should be merged into another category
+  const MERGE_MAP: Record<string, string> = {
+    player_turning_18: 'player_birthday',
+  };
+
   const groupNotificationsByCategory = (): CategoryGroup[] => {
     const groups: Map<string, CategoryGroup> = new Map();
     
     notifications.forEach((notification) => {
-      const eventType = notification.event_type;
+      const rawType = notification.event_type;
+      // Merge turning_18 into birthdays
+      const eventType = MERGE_MAP[rawType] || rawType;
       const config = CATEGORY_CONFIG[eventType] || { label: "Other", icon: Bell };
       
       if (!groups.has(eventType)) {
