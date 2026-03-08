@@ -56,8 +56,7 @@ export const ImprovementReportDialog = ({ open, onOpenChange, data }: Improvemen
       const canvas = await html2canvas(ref.current, {
         background: "#000000",
         useCORS: true,
-        scale: 2,
-      });
+      } as any);
       ref.current.style.backgroundColor = originalBg;
       const link = document.createElement("a");
       link.download = `${filename}.png`;
