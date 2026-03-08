@@ -59,14 +59,6 @@ const ageGroups = [
   { value: 'D', label: 'D - U16' },
 ] as const;
 
-const getPriorityClasses = (priority: string | null) => {
-  switch (priority) {
-    case 'high': return 'border-destructive/60 bg-destructive/10 text-destructive';
-    case 'medium': return 'border-accent/60 bg-accent/25 text-foreground';
-    case 'low': return 'border-primary/50 bg-primary/10 text-primary';
-    default: return 'border-border bg-muted/40 text-muted-foreground';
-  }
-};
 
 const getPriorityColor = (priority: string | null) => {
   switch (priority) {
