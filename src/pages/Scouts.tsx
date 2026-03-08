@@ -108,7 +108,7 @@ const getBestTranslation = (
 };
 
 const Scouts = () => {
-  const { t } = useLanguage();
+  const { t, translations } = useLanguage();
   const [selectedPosition, setSelectedPosition] = useState<ScoutingPosition>(SCOUTING_POSITIONS[0]);
   const [expandedDomain, setExpandedDomain] = useState<keyof typeof domainConfig | null>(null);
   const [selectedSlide, setSelectedSlide] = useState(0);
