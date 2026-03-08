@@ -1227,17 +1227,22 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
       if (error) throw error;
 
-      // Upsert external player ID to player_stats
+      // Save external player ID to player_stats
       if (formData.externalPlayerId !== undefined) {
-        const { error: statsError } = await supabase
-          .from('player_stats')
-          .upsert({
-            player_id: editingPlayer.id,
-            external_player_id: formData.externalPlayerId || null,
-          }, { onConflict: 'player_id' });
-        
-        if (statsError) {
-          console.error('Failed to save external player ID:', statsError);
+        const existingStats = stats[editingPlayer.id];
+        if (existingStats) {
+          await supabase
+            .from('player_stats')
+            .update({ external_player_id: formData.externalPlayerId || null })
+            .eq('id', existingStats.id);
+        } else {
+          await supabase
+            .from('player_stats')
+            .insert({
+              player_id: editingPlayer.id,
+              external_player_id: formData.externalPlayerId || null,
+              goals: 0, assists: 0, matches: 0, minutes: 0,
+            });
         }
       }
 
