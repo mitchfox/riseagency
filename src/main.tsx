@@ -1,23 +1,41 @@
-// PWA route persistence: save current route to localStorage on every navigation
-// This ensures the PWA opens to the last visited page instead of the landing page
+// PWA route persistence + scope guard: keep standalone app inside /portal or /staff
 (function() {
-  // Save current path for PWA cold-start restoration
-  const currentPath = window.location.pathname + window.location.search + window.location.hash;
-  const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
                 (window.navigator as any).standalone === true;
-  
-  if (isPWA && currentPath === '/') {
-    // On PWA cold start at root, check if we have a saved route
-    const savedRoute = localStorage.getItem('pwa_last_route');
-    if (savedRoute && savedRoute !== '/' && savedRoute !== '/index.html') {
-      window.location.replace(savedRoute);
-    }
-  } else if (isPWA) {
-    // Save current route for next cold start (only meaningful routes)
-    const saveable = ['/portal', '/staff'];
-    if (saveable.some(r => currentPath.startsWith(r))) {
-      localStorage.setItem('pwa_last_route', currentPath);
-    }
+
+  if (!isPWA) return;
+
+  const currentPathname = window.location.pathname;
+  const currentFullPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const ALLOWED_SCOPES = ['/portal', '/staff'] as const;
+  const LAST_ROUTE_KEY = 'pwa_last_route';
+  const LAST_SCOPE_KEY = 'pwa_last_scope';
+
+  const getScope = (pathname: string) =>
+    ALLOWED_SCOPES.find(scope => pathname === scope || pathname.startsWith(`${scope}/`)) ?? null;
+
+  const currentScope = getScope(currentPathname);
+
+  // Persist last valid in-scope location
+  if (currentScope) {
+    localStorage.setItem(LAST_ROUTE_KEY, currentFullPath);
+    localStorage.setItem(LAST_SCOPE_KEY, currentScope);
+    return;
+  }
+
+  // If user lands outside allowed PWA scopes, force them back into portal/staff
+  const savedRoute = localStorage.getItem(LAST_ROUTE_KEY);
+  const savedScope = localStorage.getItem(LAST_SCOPE_KEY);
+  const validSavedRoute =
+    !!savedRoute && ALLOWED_SCOPES.some(scope => savedRoute === scope || savedRoute.startsWith(`${scope}/`));
+  const fallbackScope =
+    savedScope && ALLOWED_SCOPES.includes(savedScope as (typeof ALLOWED_SCOPES)[number])
+      ? savedScope
+      : '/portal';
+
+  const redirectTarget = validSavedRoute ? savedRoute! : fallbackScope;
+  if (redirectTarget !== currentFullPath) {
+    window.location.replace(redirectTarget);
   }
 })();
 
