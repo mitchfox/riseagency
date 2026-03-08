@@ -78,7 +78,9 @@ const getBestTranslation = (
   t: (key: string, fallback?: string) => string,
   primaryKey: string,
   secondaryKey: string,
-  fallback: string
+  fallback: string,
+  translations?: Map<string, string>,
+  fuzzyKeyPrefix?: string
 ): string => {
   const primary = t(primaryKey);
   if (primary !== primaryKey) return primary;
@@ -86,11 +88,27 @@ const getBestTranslation = (
   const secondary = t(secondaryKey);
   if (secondary !== secondaryKey) return secondary;
 
+  if (translations && fuzzyKeyPrefix) {
+    const target = toCompactSkillSlug(fallback).replace(/_/g, '');
+    for (const key of translations.keys()) {
+      if (!key.startsWith(fuzzyKeyPrefix)) continue;
+
+      const keyTail = key.slice(fuzzyKeyPrefix.length);
+      const isDescKey = keyTail.endsWith('_desc');
+      const comparableTail = isDescKey ? keyTail.slice(0, -5) : keyTail;
+
+      if (comparableTail.replace(/_/g, '') === target) {
+        const value = t(key);
+        if (value !== key) return value;
+      }
+    }
+  }
+
   return fallback;
 };
 
 const Scouts = () => {
-  const { t } = useLanguage();
+  const { t, translations } = useLanguage();
   const [selectedPosition, setSelectedPosition] = useState<ScoutingPosition>(SCOUTING_POSITIONS[0]);
   const [expandedDomain, setExpandedDomain] = useState<keyof typeof domainConfig | null>(null);
   const [selectedSlide, setSelectedSlide] = useState(0);
@@ -394,7 +412,7 @@ const Scouts = () => {
                       ? 'w-12 h-3 bg-primary shadow-lg shadow-primary/50'
                       : 'w-3 h-3 bg-muted hover:bg-muted-foreground/50'
                   }`}
-                  aria-label={`Go to slide ${index + 1}`}
+                  aria-label={`${t('scouts.go_to_slide', 'Go to slide')} ${index + 1}`}
                 />
               ))}
             </div>
@@ -487,12 +505,12 @@ const Scouts = () => {
                                       >
                                         <div className={`${config.solidBg} px-5 py-3`}>
                                           <h4 className="font-bold text-black text-base">
-                                            {getBestTranslation(t, `scouts.skill_${legacySkillKey}`, `scouts.skill_${compactSkillKey}`, skill.skill_name)}
+                                            {getBestTranslation(t, `scouts.skill_${legacySkillKey}`, `scouts.skill_${compactSkillKey}`, skill.skill_name, translations, 'scouts.skill_')}
                                           </h4>
                                         </div>
                                         <div className="px-5 py-4">
                                           <p className="text-sm text-muted-foreground leading-relaxed">
-                                            {getBestTranslation(t, `scouts.skill_${legacySkillKey}_desc`, `scouts.skill_${compactSkillKey}_desc`, skill.description)}
+                                            {getBestTranslation(t, `scouts.skill_${legacySkillKey}_desc`, `scouts.skill_${compactSkillKey}_desc`, skill.description, translations, 'scouts.skill_')}
                                           </p>
                                         </div>
                                       </div>
