@@ -1714,8 +1714,67 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               </div>
             )}
 
+            {/* Prospect Players - Collapsible */}
+            {prospectPlayers.length > 0 && (
+              <div>
+                <button 
+                  className="flex items-center gap-2 text-lg font-semibold mb-4 text-primary hover:opacity-80 transition-opacity"
+                  onClick={() => toggleSection('prospect')}
+                >
+                  {collapsedSections.prospect ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+                  Prospect ({prospectPlayers.length})
+                </button>
+                {!collapsedSections.prospect && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                    {prospectPlayers.map((player) => {
+                      const playerStats = stats[player.id];
+                      return (
+                        <Card 
+                          key={player.id} 
+                          className="cursor-pointer hover:shadow-lg transition-all"
+                          onClick={() => handlePlayerSelect(player.id)}
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start gap-3">
+                              <Avatar className="w-16 h-16">
+                                <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
+                                <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold truncate">{player.name}</h3>
+                                <p className="text-sm text-muted-foreground">{player.position}</p>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                  <span>{player.age}y</span>
+                                  <span>•</span>
+                                  <span>{player.nationality}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            {playerStats && (
+                              <div className="grid grid-cols-2 gap-4 text-center">
+                                <div>
+                                  <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
+                                  <div className="text-muted-foreground">Matches</div>
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
+                                  <div className="text-muted-foreground">Minutes</div>
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Gold Border Separator */}
-            {(fuelForFootballPlayers.length > 0 || previouslyMandatedPlayers.length > 0 || groupedPlayers.mandated.length > 0) && groupedPlayers.other.length > 0 && (
+            {(fuelForFootballPlayers.length > 0 || previouslyMandatedPlayers.length > 0 || groupedPlayers.mandated.length > 0 || prospectPlayers.length > 0) && groupedPlayers.other.length > 0 && (
               <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
             )}
 
