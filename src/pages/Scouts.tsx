@@ -551,7 +551,12 @@ const Scouts = () => {
                             {t('scouts.opposition_analysis_desc', "Understanding the opponent's tactical approach, identifying weaknesses to exploit, and recognising their strengths to neutralise.")}
                           </p>
                           <div className="flex flex-wrap gap-2">
-                            {["High Press", "Low Block", "Counter Attack", "Possession"].map(style => (
+                            {[
+                              t('scouts.style_high_press', 'High Press'),
+                              t('scouts.style_low_block', 'Low Block'),
+                              t('scouts.style_counter_attack', 'Counter Attack'),
+                              t('scouts.style_possession', 'Possession')
+                            ].map(style => (
                               <Badge key={style} variant="secondary" className="bg-primary/20 border-primary/30">
                                 {style}
                               </Badge>
