@@ -1260,10 +1260,10 @@ export const RadialMenu = () => {
               {/* Title */}
               <div className="absolute top-4 left-0 right-0 text-center">
                 <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-[0.3em] text-primary">
-                  Select Language
+                  {t('menu.select_language', 'Select Language')}
                 </h3>
                 <p className="text-xs text-white/50 font-bebas tracking-wider mt-1">
-                  Click a country to switch
+                  {t('menu.click_country', 'Click a country to switch')}
                 </p>
               </div>
               
