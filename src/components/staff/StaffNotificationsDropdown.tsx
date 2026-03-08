@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Bell, Check, CheckCheck, ChevronDown, ChevronRight, Users, FileText, Film, ListMusic, Calendar, CheckSquare, Target, LogIn, BarChart3, Search, Send, Building2, TrendingUp, PenLine, GitCompare, Cake } from "lucide-react";
+import { Bell, Check, CheckCheck, ChevronDown, ChevronRight, Users, FileText, Film, ListMusic, Calendar, CheckSquare, Target, LogIn, BarChart3, Search, Send, Building2, TrendingUp, PenLine, GitCompare, Cake, ExternalLink } from "lucide-react";
+import { ImprovementReportDialog } from "./ImprovementReportDialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -55,6 +56,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType }
   contract_signed: { label: "Contracts Signed", icon: PenLine },
   comparison_request: { label: "Comparison Requests", icon: GitCompare },
   player_birthday: { label: "Player Birthdays", icon: Cake },
+  player_turning_18: { label: "Player Birthdays", icon: Cake },
 };
 
 export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdownProps) => {
@@ -62,6 +64,7 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [improvementReport, setImprovementReport] = useState<any>(null);
 
   const fetchNotifications = async () => {
     try {
@@ -112,11 +115,18 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
     (n) => !n.read_by?.includes(userId)
   ).length;
 
+  // Map event types that should be merged into another category
+  const MERGE_MAP: Record<string, string> = {
+    player_turning_18: 'player_birthday',
+  };
+
   const groupNotificationsByCategory = (): CategoryGroup[] => {
     const groups: Map<string, CategoryGroup> = new Map();
     
     notifications.forEach((notification) => {
-      const eventType = notification.event_type;
+      const rawType = notification.event_type;
+      // Merge turning_18 into birthdays
+      const eventType = MERGE_MAP[rawType] || rawType;
       const config = CATEGORY_CONFIG[eventType] || { label: "Other", icon: Bell };
       
       if (!groups.has(eventType)) {
@@ -164,8 +174,14 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
   };
 
   const markCategoryAsRead = async (category: string) => {
+    // Include merged event types (e.g. player_turning_18 merges into player_birthday)
+    const mergedTypes = Object.entries(MERGE_MAP)
+      .filter(([, target]) => target === category)
+      .map(([source]) => source);
+    const allTypes = [category, ...mergedTypes];
+
     const categoryNotifications = notifications.filter(
-      (n) => n.event_type === category && !n.read_by?.includes(userId)
+      (n) => allTypes.includes(n.event_type) && !n.read_by?.includes(userId)
     );
 
     for (const notification of categoryNotifications) {
@@ -234,7 +250,9 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
       case "comparison_request":
         return "Comparison Requested";
       case "player_birthday":
-        return "Player Birthday";
+        return notification.event_data?.age ? `Player Turning ${notification.event_data.age}` : "Player Birthday";
+      case "player_turning_18":
+        return "Player Turning 18";
       default:
         return "Notification";
     }
@@ -301,7 +319,11 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
       case "comparison_request":
         return data?.player_name ? `Comparison requested for ${data.player_name}` : "New comparison request";
       case "player_birthday":
-        return data?.player_name ? `${data.player_name}'s birthday today` : "Player birthday today";
+        return data?.player_name
+          ? `${data.player_name} turns ${data.age || '?'} today`
+          : "Player birthday today";
+      case "player_turning_18":
+        return data?.player_name ? `${data.player_name} turns 18 today` : "Player turning 18 today";
       default:
         return notification.body || "";
     }
@@ -310,6 +332,7 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
   const categoryGroups = groupNotificationsByCategory();
 
   return (
+    <>
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
@@ -445,6 +468,19 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
                                         );
                                       })}
                                     </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 text-[10px] text-emerald-400 hover:text-emerald-300 px-2 mt-1"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setImprovementReport(improvementData);
+                                        setOpen(false);
+                                      }}
+                                    >
+                                      <ExternalLink className="h-3 w-3 mr-1" />
+                                      View Report
+                                    </Button>
                                   </div>
                                 ) : (
                                   <p className="text-xs text-muted-foreground truncate">
@@ -478,5 +514,12 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
         </ScrollArea>
       </DropdownMenuContent>
     </DropdownMenu>
+
+    <ImprovementReportDialog
+      open={!!improvementReport}
+      onOpenChange={(o) => { if (!o) setImprovementReport(null); }}
+      data={improvementReport}
+    />
+    </>
   );
 };

@@ -21,6 +21,7 @@ import { EditHighlightDialog } from "./EditHighlightDialog";
 import { UploadPlayerImageDialog } from "./UploadPlayerImageDialog";
 import { AddPlayerDialog } from "./AddPlayerDialog";
 import { HighlightedMatchForm } from "./HighlightedMatchForm";
+import { SyncPlayerStatsButton } from "./SyncPlayerStatsButton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -1456,39 +1457,42 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             {/* Add Player Button */}
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Players</h2>
-              <Button onClick={() => {
-                setFormData({
-                  name: "",
-                  email: "",
-                  position: "",
-                  age: 18,
-                  nationality: "",
-                  representation_status: "other",
-                  visible_on_stars_page: false,
-                  portal_language: "en",
-                  image_url: "",
-                  hover_image_url: "",
-                  club: "",
-                  club_logo: "",
-                  league: "",
-                  bioText: "",
-                  dateOfBirth: "",
-                  number: "",
-                  whatsapp: "",
-                  externalLinks: [],
-                  strengths: [],
-                  tacticalSchemes: [],
-                  seasonStats: [],
-                  topStats: [],
-                  externalPlayerId: "",
-                  links: [],
-                  highlightedMatch: null,
-                });
-                setIsAddPlayerDialogOpen(true);
-              }}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Player
-              </Button>
+              <div className="flex items-center gap-2">
+                <SyncPlayerStatsButton onSynced={fetchPlayers} />
+                <Button onClick={() => {
+                  setFormData({
+                    name: "",
+                    email: "",
+                    position: "",
+                    age: 18,
+                    nationality: "",
+                    representation_status: "other",
+                    visible_on_stars_page: false,
+                    portal_language: "en",
+                    image_url: "",
+                    hover_image_url: "",
+                    club: "",
+                    club_logo: "",
+                    league: "",
+                    bioText: "",
+                    dateOfBirth: "",
+                    number: "",
+                    whatsapp: "",
+                    externalLinks: [],
+                    strengths: [],
+                    tacticalSchemes: [],
+                    seasonStats: [],
+                    topStats: [],
+                    externalPlayerId: "",
+                    links: [],
+                    highlightedMatch: null,
+                  });
+                  setIsAddPlayerDialogOpen(true);
+                }}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Player
+                </Button>
+              </div>
             </div>
             
             {/* Represented Players */}
