@@ -29,42 +29,42 @@ const Coaches = () => {
     {
       id: "results",
       icon: Trophy,
-      title: "RESULTS",
-      teaser: "Utilise our expertise to assess opponents and create game plans that lead to wins.",
+      title: t('coaches.service_results_title', 'RESULTS'),
+      teaser: t('coaches.service_results_teaser', 'Utilise our expertise to assess opponents and create game plans that lead to wins.'),
       fullContent: [
-        "We support coaches daily, offering individualised pre-match analysis, tactical insight, and mental readiness tools that translate directly into performance on match day."
+        t('coaches.service_results_p1', 'We support coaches daily, offering individualised pre-match analysis, tactical insight, and mental readiness tools that translate directly into performance on match day.')
       ]
     },
     {
       id: "foster",
       icon: TrendingUp,
-      title: "FOSTER",
-      teaser: "Maximise the physical capacity of your players with strategies that ensure long-term development.",
+      title: t('coaches.service_foster_title', 'FOSTER'),
+      teaser: t('coaches.service_foster_teaser', 'Maximise the physical capacity of your players with strategies that ensure long-term development.'),
       fullContent: [
-        "Through holistic, individualised performance support, we help coaches push players beyond perceived limits while maintaining alignment with club staff."
+        t('coaches.service_foster_p1', 'Through holistic, individualised performance support, we help coaches push players beyond perceived limits while maintaining alignment with club staff.')
       ]
     },
     {
       id: "allure",
       icon: Search,
-      title: "ALLURE",
-      teaser: "Through our vast network, we scout across the globe to ensure recruitment is tailored to your specific tactical approach to the game. Find and attract profiles that fit your needs.",
+      title: t('coaches.service_allure_title', 'ALLURE'),
+      teaser: t('coaches.service_allure_teaser', 'Through our vast network, we scout across the globe to ensure recruitment is tailored to your specific tactical approach to the game. Find and attract profiles that fit your needs.'),
       fullContent: [
-        "In a competitive market, the combination of greater finances, superior scouting and networking results in the greatest success on the pitch. Our work impacts all three to put you in the prime position to execute at a higher level than competitors. Ensure that you find, convince and sign the greatest and best-fitted talent each and every season; while simultaneously making wise decisions on the timing of departures for expert squad-building.",
-        "Our analysis extends across the entirety of professional football within Europe, allowing us to pick out players that club scouting networks can easily miss. Furthermore, our talent identification ensures prudent signings including undervalued players and key contributors to success on the pitch. We consider not only the raw ability and potential of players, but also their technical and tactical adaptability to your playstyle, as well as experience within related systems. This allows you to more easily coach the players in your team to reflect your vision on the pitch.",
-        "A major aspect to this is our broad network which spans across half of the globe with key decision-makers in clubs at all levels of the game. This combined with our reputation for recruiting great fits for our coaches allows us to tap into any market to ensure deals are completed."
+        t('coaches.service_allure_p1', 'In a competitive market, the combination of greater finances, superior scouting and networking results in the greatest success on the pitch. Our work impacts all three to put you in the prime position to execute at a higher level than competitors. Ensure that you find, convince and sign the greatest and best-fitted talent each and every season; while simultaneously making wise decisions on the timing of departures for expert squad-building.'),
+        t('coaches.service_allure_p2', 'Our analysis extends across the entirety of professional football within Europe, allowing us to pick out players that club scouting networks can easily miss. Furthermore, our talent identification ensures prudent signings including undervalued players and key contributors to success on the pitch. We consider not only the raw ability and potential of players, but also their technical and tactical adaptability to your playstyle, as well as experience within related systems. This allows you to more easily coach the players in your team to reflect your vision on the pitch.'),
+        t('coaches.service_allure_p3', 'A major aspect to this is our broad network which spans across half of the globe with key decision-makers in clubs at all levels of the game. This combined with our reputation for recruiting great fits for our coaches allows us to tap into any market to ensure deals are completed.')
       ]
     },
     {
       id: "sign",
       icon: FileSignature,
-      title: "SIGN",
-      teaser: "Negotiate improved contracts with confidence.",
+      title: t('coaches.service_sign_title', 'SIGN'),
+      teaser: t('coaches.service_sign_teaser', 'Negotiate improved contracts with confidence.'),
       fullContent: [
-        "Our role is then to negotiate the best possible contracts for our coaches. We recognise the sheer amount of dedication, hard work, and sacrifice that goes into a career, and we firmly believe in ensuring our coaches are fairly rewarded for their efforts.",
-        "Our team of agents and legal advisors understand the intricacies of the football industry and know how to advocate effectively for our clients. Our aim is to secure contracts that reflect not only your current performance, but also the value you bring to a team.",
-        "This is not limited to the financial aspect of the contract, though that is certainly important. We also consider a wide range of other factors that contribute to your overall career satisfaction and progression. This could include clauses around recruitment, freedom of movement, club obligations, bonuses, as well as key elements like image rights and sponsorship deals.",
-        "During negotiations, our team maintains constant communication with you, ensuring that you are always informed and involved in the process. We believe in transparency and will always explain the details of the proposed contract, including any potential risks and benefits."
+        t('coaches.service_sign_p1', 'Our role is then to negotiate the best possible contracts for our coaches. We recognise the sheer amount of dedication, hard work, and sacrifice that goes into a career, and we firmly believe in ensuring our coaches are fairly rewarded for their efforts.'),
+        t('coaches.service_sign_p2', 'Our team of agents and legal advisors understand the intricacies of the football industry and know how to advocate effectively for our clients. Our aim is to secure contracts that reflect not only your current performance, but also the value you bring to a team.'),
+        t('coaches.service_sign_p3', 'This is not limited to the financial aspect of the contract, though that is certainly important. We also consider a wide range of other factors that contribute to your overall career satisfaction and progression. This could include clauses around recruitment, freedom of movement, club obligations, bonuses, as well as key elements like image rights and sponsorship deals.'),
+        t('coaches.service_sign_p4', 'During negotiations, our team maintains constant communication with you, ensuring that you are always informed and involved in the process. We believe in transparency and will always explain the details of the proposed contract, including any potential risks and benefits.')
       ]
     }
   ];
