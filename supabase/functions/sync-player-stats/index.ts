@@ -122,6 +122,67 @@ Deno.serve(async (req) => {
 
     console.log(`Starting player stats sync (preview: ${previewOnly})...`);
 
+    // Step 1: Auto-match players missing external IDs
+    const { data: allPlayers } = await supabase
+      .from('players')
+      .select('id, name');
+
+    if (allPlayers && allPlayers.length > 0) {
+      // Get existing player_stats records
+      const { data: existingStats } = await supabase
+        .from('player_stats')
+        .select('player_id, external_player_id');
+
+      const statsMap = new Map<string, string | null>();
+      existingStats?.forEach(s => statsMap.set(s.player_id, s.external_player_id));
+
+      // Find players without external IDs
+      const unmatchedPlayers = allPlayers.filter(p => {
+        const extId = statsMap.get(p.id);
+        return !extId || extId.trim() === '';
+      });
+
+      if (unmatchedPlayers.length > 0) {
+        console.log(`Auto-matching ${unmatchedPlayers.length} players without external IDs...`);
+        let matched = 0;
+
+        for (const player of unmatchedPlayers) {
+          try {
+            const tmResult = await searchTransfermarkt(player.name);
+            if (tmResult && tmResult.length > 0) {
+              const best = tmResult[0];
+              const lastName = player.name.toLowerCase().split(' ').pop() || '';
+              const tmLastName = best.name.toLowerCase().split(' ').pop() || '';
+              const nameMatch = best.name.toLowerCase().includes(lastName) || player.name.toLowerCase().includes(tmLastName);
+
+              if (nameMatch) {
+                // Check if player_stats row exists
+                const hasRow = statsMap.has(player.id);
+                if (hasRow) {
+                  await supabase
+                    .from('player_stats')
+                    .update({ external_player_id: best.id, updated_at: new Date().toISOString() })
+                    .eq('player_id', player.id);
+                } else {
+                  await supabase
+                    .from('player_stats')
+                    .insert({ player_id: player.id, external_player_id: best.id });
+                }
+                matched++;
+                console.log(`Matched "${player.name}" -> TM ID ${best.id} (${best.name})`);
+              }
+            }
+            // Rate limit between searches
+            await new Promise(r => setTimeout(r, 600));
+          } catch (e) {
+            console.error(`Auto-match failed for "${player.name}":`, e);
+          }
+        }
+        console.log(`Auto-match complete: ${matched}/${unmatchedPlayers.length} matched`);
+      }
+    }
+
+    // Step 2: Re-fetch all player_stats with external IDs and sync stats
     const { data: playerStats, error: fetchError } = await supabase
       .from('player_stats')
       .select('id, player_id, external_player_id, goals, assists, matches, minutes')
