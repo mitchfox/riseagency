@@ -665,7 +665,7 @@ const Business = () => {
             <div className="text-center mt-10">
               <LocalizedLink to="/packages">
                 <Button size="lg" className="btn-shine font-bebas uppercase tracking-wider text-lg px-8" hoverEffect>
-                  Start Your Journey
+                  {t('business.start_journey', 'Start Your Journey')}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </LocalizedLink>
