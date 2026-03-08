@@ -1533,12 +1533,12 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                                 };
                                 
                                 const ageGroups = [
-                                  { name: "First Team", min: 18, max: 30, count: getSeededRandom(club.name + "first", 18, 30) },
-                                  { name: "Reserves/U23/U21", min: 4, max: 14, count: getSeededRandom(club.name + "reserves", 4, 14) },
-                                  { name: "U19", min: 14, max: 20, count: getSeededRandom(club.name + "u19", 14, 20) },
-                                  { name: "U16", min: 6, max: 17, count: getSeededRandom(club.name + "u16", 6, 17) },
-                                  { name: "U15", min: 1, max: 9, count: getSeededRandom(club.name + "u15", 1, 9) },
-                                  { name: "U14", min: 1, max: 4, count: getSeededRandom(club.name + "u14", 1, 4) },
+                                  { name: t("map.age_first_team", "First Team"), min: 18, max: 30, count: getSeededRandom(club.name + "first", 18, 30) },
+                                  { name: t("map.age_reserves", "Reserves/U23/U21"), min: 4, max: 14, count: getSeededRandom(club.name + "reserves", 4, 14) },
+                                  { name: t("map.age_u19", "U19"), min: 14, max: 20, count: getSeededRandom(club.name + "u19", 14, 20) },
+                                  { name: t("map.age_u16", "U16"), min: 6, max: 17, count: getSeededRandom(club.name + "u16", 6, 17) },
+                                  { name: t("map.age_u15", "U15"), min: 1, max: 9, count: getSeededRandom(club.name + "u15", 1, 9) },
+                                  { name: t("map.age_u14", "U14"), min: 1, max: 4, count: getSeededRandom(club.name + "u14", 1, 4) },
                                 ];
                                 
                                 return (
