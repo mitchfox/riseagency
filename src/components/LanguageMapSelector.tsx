@@ -41,7 +41,7 @@ interface LanguageMapSelectorProps {
 }
 
 export const LanguageMapSelector = ({ onOpenChange, className }: LanguageMapSelectorProps) => {
-  const { language, switchLanguage } = useLanguage();
+  const { language, switchLanguage, t } = useLanguage();
   const [open, setOpen] = useState(false);
 
   const handleOpenChange = (newOpen: boolean) => {
