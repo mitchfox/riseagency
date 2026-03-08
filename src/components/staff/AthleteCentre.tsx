@@ -324,7 +324,6 @@ export const AthleteCentre = () => {
     { value: "video", label: "Video Reports", icon: Film },
     { value: "analysis", label: "Analysis", icon: LineChart },
   ];
-  }, [players, selectedPlayer]);
 
   const handleSelectPlayer = (val: string) => {
     setSelectedPlayer(val);
