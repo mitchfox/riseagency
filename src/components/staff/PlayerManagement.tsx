@@ -70,6 +70,7 @@ interface PlayerStats {
   minutes: number;
   clean_sheets: number | null;
   saves: number | null;
+  external_player_id?: string | null;
 }
 
 const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
