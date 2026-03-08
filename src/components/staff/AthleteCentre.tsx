@@ -289,6 +289,11 @@ export const AthleteCentre = () => {
 
   const currentPlayer = players.find(p => p.id === selectedPlayer);
 
+  const recentPlayers = useMemo(() => {
+    const ids = getRecentPlayerIds();
+    return ids.map(id => players.find(p => p.id === id)).filter(Boolean) as Player[];
+  }, [players, selectedPlayer]);
+
   const handleSaveFocuses = async () => {
     if (!selectedPlayer) return;
     setSaving(true);
@@ -319,10 +324,6 @@ export const AthleteCentre = () => {
     { value: "video", label: "Video Reports", icon: Film },
     { value: "analysis", label: "Analysis", icon: LineChart },
   ];
-
-  const recentPlayers = useMemo(() => {
-    const ids = getRecentPlayerIds();
-    return ids.map(id => players.find(p => p.id === id)).filter(Boolean) as Player[];
   }, [players, selectedPlayer]);
 
   const handleSelectPlayer = (val: string) => {
