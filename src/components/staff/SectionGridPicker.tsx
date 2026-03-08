@@ -36,6 +36,7 @@ const SECTION_PREVIEWS: Record<string, string> = {
   designstudio: "Graphic design workspace with templates",
   annotations: "Video annotation projects and frame-by-frame tagging",
   videoanalysis: "Full video analysis with clips and timestamps",
+  musicstudio: "Suno AI music creation and portal music admin",
   streams: "Live stream management and channel setup",
   coaching: "Drills, sessions and exercise database",
   analysis: "Pre-match and post-match analysis builder",

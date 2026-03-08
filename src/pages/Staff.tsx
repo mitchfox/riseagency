@@ -1653,6 +1653,7 @@ const Staff = () => {
                   {expandedSection === 'videocompressor' && <VideoCompressor />}
                   {expandedSection === 'highlightcompiler' && <HighlightCompiler />}
                   {expandedSection === 'datasetbuilder' && <DatasetBuilder />}
+                  {expandedSection === 'musicstudio' && <MusicStudio />}
                   {expandedSection === 'salesdeck' && <SalesDeck />}
                   
                   {expandedSection === 'publiccontent' && <PublicContentManagement isAdmin={isAdmin} />}
