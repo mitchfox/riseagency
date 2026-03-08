@@ -90,7 +90,7 @@ export function StaticLandingFallback({ performanceReason }: StaticLandingFallba
         />
         
         {/* Portal & Staff links */}
-        <div className="absolute top-[30px] md:top-8 right-4 flex items-center gap-3">
+        <div className="absolute top-[34px] md:top-8 right-4 flex items-center gap-3">
           <Link to="/staff" className="text-white/50 hover:text-white/80 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
             {t("header.staff", "Staff")}
           </Link>
