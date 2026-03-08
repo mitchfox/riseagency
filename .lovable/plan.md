@@ -1,78 +1,130 @@
 
 
-# Speed-Up Features for Athlete Centre
+## Two-Part Plan
 
-Four features to implement based on your selections.
-
----
-
-## 1. Auto-Create Report Shell from Fixture Confirmation
-
-**What exists:** Already partially implemented in `PlayerFixtures.tsx` (line 467) — a draft `player_analysis` row is created when a fixture is saved. Also creates a pre-match analysis shell via batch mode.
-
-**What to add:** Extend this so confirming/saving a fixture also creates a linked pre-match analysis shell (if one doesn't exist) with opponent, date, and competition pre-filled. Surface a toast with a "Go to Report" action that opens the reports section directly.
-
-**Changes:**
-- `src/components/staff/PlayerFixtures.tsx` — after fixture creation, also insert an `analyses` row (type: pre-match) if batch mode hasn't already done so
-- `src/components/staff/AthleteCentre.tsx` — expose a callback from MatchFlowTab so fixture creation can programmatically open the reports section
+This covers the immediate text truncation fix and the large AI features package.
 
 ---
 
-## 2. Quick-Switch Recent Players
+### Part 1: Fix Truncated Notes (Quick Fix)
 
-**What to build:** A horizontal row of the last 5 accessed players shown above the main Select dropdown, using avatar thumbnails with names. Clicking one instantly switches context.
+**Problem**: Notes on performance report actions are cut off with `...` via `truncate` and `line-clamp` classes, making them unreadable on mobile.
 
-**Changes:**
-- `src/components/staff/AthleteCentre.tsx`:
-  - Store recent player IDs in localStorage (`athleteCentre_recentPlayers`, max 5, most recent first)
-  - Update the list each time a player is selected
-  - Render a row of clickable avatar chips above the Select, each showing the player's image and first name
-  - Clicking a chip sets `selectedPlayer` and updates localStorage
+**Files to change:**
 
----
+1. **`src/components/PerformanceReportDialog.tsx`**
+   - Line 1036: Remove `line-clamp-2` from action description div, allow full text
+   - Line 1038: Remove `truncate` from notes div, allow full wrap
+   - These are in the mobile card layout (the `md:hidden` block)
 
-## 3. "Continue from Last Session" Resume Button
+2. **`src/components/ClippedActionsPlayer.tsx`**
+   - Line 137: Remove `line-clamp-2` from description
+   - Line 139: Remove `line-clamp-2` from notes
 
-**What to build:** When a staff member opens Athlete Centre, show a small banner if they were previously editing a specific report or had a specific Match Flow section open. One click resumes that exact state.
+3. **`src/components/portal/AnalysisVideoReports.tsx`**
+   - Line 414: Remove `line-clamp-2` from clip description
 
-**Changes:**
-- `src/components/staff/AthleteCentre.tsx`:
-  - Persist `openSections` state to localStorage on change (`athleteCentre_openSections`)
-  - Persist `mainTab` and `devTab` to localStorage
-  - When `inlineReport` is set, save it to localStorage; on mount, if a saved inline report exists, show a banner: "Continue editing [Player]'s report vs [Opponent]?" with Resume/Dismiss buttons
-  - Resume restores the player selection, opens the correct section, and sets `inlineReport`
+All replacements simply remove the truncation classes so text wraps naturally across as many lines as needed.
 
 ---
 
-## 4. AI Commentary Auto-Clipper (Video Analysis)
+### Part 2: AI Features Package
 
-**What to build:** A new feature within the Video Analysis module. Staff upload/play a match video. An "AI Commentary Clipper" button sends the audio track to ElevenLabs Speech-to-Text (batch transcription via edge function), which returns timestamped words. The system scans the transcript for the selected player's name (and common variants/surnames). For each mention, it auto-creates a clip spanning 5 seconds before to 5 seconds after the timestamp.
+This is a large feature set. Here is the implementation plan broken into phases.
 
-**Changes:**
-- **New edge function** `supabase/functions/transcribe-commentary/index.ts`:
-  - Accepts a video/audio file URL and player name
-  - Downloads the audio, sends to ElevenLabs STT API (`scribe_v2`) with timestamps enabled
-  - Scans returned `words[]` for player name matches (surname, full name, common nicknames)
-  - Returns an array of `{ start, end, timestamp, context }` clip suggestions
-  - Requires `ELEVENLABS_API_KEY` secret (need to check if exists, likely needs adding)
+#### 2A. Collapsible AI Shell Suggestions
 
-- **New UI component** `src/components/staff/coaching/AICommentaryClipper.tsx`:
-  - Button in the Video Analysis detail view: "AI Commentary Clipper"
-  - Shows progress while transcribing
-  - Displays detected mentions with timestamps and surrounding text context
-  - "Accept All" / individual accept/dismiss per mention
-  - Accepted mentions are inserted as clips into the video's clip list with label "Commentary mention - [timestamp context]"
+**New components:**
+- `src/components/staff/AiShellSuggestions.tsx` - collapsible tab component with player selector
+- Sections: Athlete Centre, Analysis, Data, Player Management
 
-- **`src/components/staff/coaching/VideoAnalysis.tsx`** — add the AICommentaryClipper button alongside the existing AI Player Detection button
+**New database table:** `ai_shell_suggestions`
+- `id`, `section` (enum), `player_id`, `shell_type`, `preview_text`, `shell_content` (JSONB), `created_at`
 
-**Secret required:** `ELEVENLABS_API_KEY` — will need to prompt for this before implementation.
+**New database table:** `ai_shell_decisions`
+- `id`, `suggestion_id`, `player_id`, `staff_user_id`, `decision` (accepted/rejected), `created_at`
+
+**New edge function:** `generate-shell-suggestions`
+- Takes section + player context, queries recent data, calls Gemini to produce structural shells
+- Returns preview lines for each shell
+
+**Behaviour:**
+- Collapsed tab at top of each section
+- Opening requires player selection first
+- Accept inserts as editable draft; Reject hides for session
+- Decision history feeds future prioritisation
+
+#### 2B. Player-Specific Action Dropdown Intelligence
+
+**New database table:** `player_action_frequencies`
+- `player_id`, `action_type`, `frequency_count`, `last_used_at`, `position_weight`
+
+**Changes to existing components:**
+- Performance report action type dropdown and video analysis action type dropdown
+- Query last 5 reports for selected player, calculate frequency + recency weights
+- Sort dropdown accordingly, persist per player
+
+This builds on the existing frequency sorting (memory reference: action-type-frequency-sorting) but makes it player-specific rather than global.
+
+#### 2C. Video Tracking Integration (Roboflow)
+
+**New edge function:** `process-video-frames`
+- Accepts frame images (base64) at configurable sampling rate
+- Sends to Roboflow API for player/ball detection
+- Applies pitch homography mapping to 18/162 zone grids
+- Returns structured JSON per the specified format
+
+**Requirements:**
+- Roboflow API key (will need to be added as a secret)
+- A trained Roboflow model endpoint for player/ball detection
+- Configurable frame sampling rate (default 5 fps)
+
+**Frontend integration:**
+- New "AI Track" button in Video Analysis
+- Frame extraction from video element at configured rate
+- Batch upload to edge function
+- Results displayed as overlay markers on video
+
+#### 2D. Rule-Based Action Suggestion Engine
+
+**New module:** `src/lib/actionSuggestionEngine.ts`
+- Pure TypeScript, consumes Roboflow JSON output
+- Possession approximation: ball overlapping player across consecutive frames
+- Shot heuristic: ball near player then rapid displacement toward goal zone
+- Duel heuristic: two player boxes close with possession change
+
+**Database:**
+- Suggested actions inserted into `performance_report_actions` with a new `status` field (values: `confirmed`, `suggested`)
+- Requires migration to add `status` column
+
+**UI:**
+- Suggested actions shown with distinct styling and Confirm/Dismiss buttons
+- Confirmed actions become regular report entries
+
+#### 2E. Match Flow Automation
+
+**Changes to fixture creation flow:**
+- On fixture confirmation: auto-create linked draft performance report
+- Auto-create pre-match analysis shell
+- When report set to Live: prompt highlight compilation suggestion, check for duplicate clip exports
+
+**Batch mode:**
+- New "Batch Generate" button in Match Flow
+- Select multiple players, shared fixture data populates draft shells for each
 
 ---
 
-## Implementation Order
+### Implementation Order
 
-1. Quick-switch recent players (fastest, pure frontend)
-2. Continue from last session (pure frontend)
-3. Auto-create report shell (small backend touch)
-4. AI Commentary Clipper (new edge function + UI + API key)
+1. **Part 1** (notes fix) - immediate
+2. **2B** (action dropdown intelligence) - builds on existing patterns
+3. **2A** (shell suggestions) - new UI + edge function
+4. **2E** (match flow automation) - workflow changes
+5. **2C** (Roboflow) - requires API key setup
+6. **2D** (suggestion engine) - depends on 2C output
+
+### Prerequisites
+
+- **Roboflow API key** will need to be provided and stored as a secret before 2C can function
+- A trained Roboflow model for player/ball detection must exist
 

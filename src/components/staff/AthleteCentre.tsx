@@ -29,6 +29,8 @@ import { VideoAnalysis } from "@/components/staff/coaching/VideoAnalysis";
 import { AnnotationProjects } from "@/components/staff/annotations/AnnotationProjects";
 import { HighlightCompiler } from "@/components/staff/HighlightCompiler";
 import { AiShellSuggestions } from "@/components/staff/AiShellSuggestions";
+import { RecentPlayersBar, getRecentPlayerIds, addRecentPlayer } from "@/components/staff/RecentPlayersBar";
+import { SessionResumeBanner, saveSession, clearSession, type SessionState } from "@/components/staff/SessionResumeBanner";
 
 interface Player {
   id: string;
@@ -86,9 +88,20 @@ const MATCH_FLOW_SECTIONS = [
   { id: "highlightcompiler", label: "Highlight Compiler", icon: Film, description: "Compile highlight reels" },
 ];
 
-const MatchFlowTab = ({ selectedPlayer, currentPlayer }: { selectedPlayer: string | null; currentPlayer: Player | null }) => {
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
-  const [inlineReport, setInlineReport] = useState<InlineReportState | null>(null);
+const MatchFlowTab = ({ selectedPlayer, currentPlayer, initialOpenSections, initialInlineReport, onSessionChange }: { 
+  selectedPlayer: string | null; 
+  currentPlayer: Player | null;
+  initialOpenSections?: Record<string, boolean>;
+  initialInlineReport?: InlineReportState | null;
+  onSessionChange?: (openSections: Record<string, boolean>, inlineReport: InlineReportState | null) => void;
+}) => {
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(initialOpenSections || {});
+  const [inlineReport, setInlineReport] = useState<InlineReportState | null>(initialInlineReport || null);
+
+  // Notify parent of session changes for persistence
+  useEffect(() => {
+    onSessionChange?.(openSections, inlineReport);
+  }, [openSections, inlineReport]);
 
   const toggleSection = (id: string) => {
     setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
@@ -196,6 +209,7 @@ export const AthleteCentre = () => {
   const [mainTab, setMainTab] = useState("matchflow");
   const [devTab, setDevTab] = useState("longterm");
   const [loading, setLoading] = useState(true);
+  const [resumedSession, setResumedSession] = useState<SessionState | null>(null);
   
   const [programs, setPrograms] = useState<PlayerProgram[]>([]);
   const [analyses, setAnalyses] = useState<PlayerAnalysis[]>([]);
@@ -275,6 +289,11 @@ export const AthleteCentre = () => {
 
   const currentPlayer = players.find(p => p.id === selectedPlayer);
 
+  const recentPlayers = useMemo(() => {
+    const ids = getRecentPlayerIds();
+    return ids.map(id => players.find(p => p.id === id)).filter(Boolean) as Player[];
+  }, [players, selectedPlayer]);
+
   const handleSaveFocuses = async () => {
     if (!selectedPlayer) return;
     setSaving(true);
@@ -306,15 +325,53 @@ export const AthleteCentre = () => {
     { value: "analysis", label: "Analysis", icon: LineChart },
   ];
 
+  const handleSelectPlayer = (val: string) => {
+    setSelectedPlayer(val);
+    localStorage.setItem('athleteCentre_lastPlayer', val);
+    addRecentPlayer(val);
+    setResumedSession(null);
+  };
+
+  const handleResumeSession = (session: SessionState) => {
+    setSelectedPlayer(session.playerId);
+    localStorage.setItem('athleteCentre_lastPlayer', session.playerId);
+    addRecentPlayer(session.playerId);
+    setMainTab(session.mainTab || "matchflow");
+    setResumedSession(session);
+  };
+
+  // Persist session on meaningful state changes
+  const handleMatchFlowSessionChange = (openSections: Record<string, boolean>, inlineReport: InlineReportState | null) => {
+    if (!selectedPlayer || !currentPlayer) return;
+    saveSession({
+      playerId: selectedPlayer,
+      playerName: currentPlayer.name,
+      mainTab,
+      openSections,
+      inlineReport: inlineReport ? {
+        playerId: inlineReport.playerId,
+        playerName: inlineReport.playerName,
+        analysisId: inlineReport.analysisId,
+      } : undefined,
+    });
+  };
+
   return (
     <div className="space-y-4">
+      {/* Resume Banner */}
+      <SessionResumeBanner onResume={handleResumeSession} />
+
+      {/* Recent Players */}
+      <RecentPlayersBar
+        recentPlayers={recentPlayers}
+        selectedPlayerId={selectedPlayer}
+        onSelect={handleSelectPlayer}
+      />
+
       {/* Player Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex-1">
-          <Select value={selectedPlayer || ""} onValueChange={(val) => {
-            setSelectedPlayer(val);
-            localStorage.setItem('athleteCentre_lastPlayer', val);
-          }}>
+          <Select value={selectedPlayer || ""} onValueChange={handleSelectPlayer}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a player..." />
             </SelectTrigger>
@@ -397,7 +454,17 @@ export const AthleteCentre = () => {
               <div className="p-3 md:p-6">
                 {/* ═══ Match Flow Tab ═══ */}
                 <TabsContent value="matchflow" className="mt-0">
-                  <MatchFlowTab selectedPlayer={selectedPlayer} currentPlayer={currentPlayer} />
+                  <MatchFlowTab 
+                    selectedPlayer={selectedPlayer} 
+                    currentPlayer={currentPlayer}
+                    initialOpenSections={resumedSession?.openSections}
+                    initialInlineReport={resumedSession?.inlineReport ? {
+                      playerId: resumedSession.inlineReport.playerId,
+                      playerName: resumedSession.inlineReport.playerName,
+                      analysisId: resumedSession.inlineReport.analysisId,
+                    } : null}
+                    onSessionChange={handleMatchFlowSessionChange}
+                  />
                 </TabsContent>
 
                 {/* ═══ Development Tab ═══ */}

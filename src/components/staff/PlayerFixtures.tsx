@@ -485,6 +485,27 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
         }
       } catch { /* non-blocking */ }
 
+      // Auto-create pre-match analysis shell
+      try {
+        const homeTeam = manualFixture.home_team || "";
+        const awayTeam = manualFixture.away_team || "";
+        const { error: analysisErr } = await supabase
+          .from("analyses")
+          .insert({
+            analysis_type: "pre-match",
+            title: `Pre-Match: ${homeTeam} vs ${awayTeam}`,
+            match_date: manualFixture.match_date,
+            home_team: homeTeam,
+            away_team: awayTeam,
+            fixture_id: newFixture.id,
+            player_name: playerName,
+            visibility_status: "draft",
+          });
+        if (!analysisErr) {
+          toast.info("Pre-match analysis shell created");
+        }
+      } catch { /* non-blocking */ }
+
       handleCloseDialog();
       fetchPlayerFixtures();
       fetchAllFixtures();
