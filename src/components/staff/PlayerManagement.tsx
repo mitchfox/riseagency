@@ -4268,6 +4268,18 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       Add Top Stat
                     </Button>
                   </div>
+                  <div className="space-y-3 pt-4 border-t border-border/50">
+                    <Label className="text-sm font-medium">Auto Stats Sync</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Enter the player's external profile ID to automatically sync appearances, goals, assists and minutes every two weeks.
+                    </p>
+                    <Input
+                      value={formData.externalPlayerId}
+                      onChange={(e) => setFormData({ ...formData, externalPlayerId: e.target.value })}
+                      placeholder="e.g. 551309"
+                      className="h-11 sm:h-10"
+                    />
+                  </div>
                 </TabsContent>
 
                 {/* Links Tab */}
