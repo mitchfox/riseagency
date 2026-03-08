@@ -14,7 +14,6 @@ interface MatchResult {
   tm_club?: string;
   tm_position?: string;
   tm_market_value?: string;
-  tm_portrait_url?: string;
   error?: string;
 }
 
@@ -24,7 +23,6 @@ async function searchTransfermarkt(playerName: string): Promise<{
   club: string;
   position: string;
   marketValue: string;
-  portraitUrl: string;
 }[] | null> {
   const query = encodeURIComponent(playerName.trim());
   const url = `https://www.transfermarkt.co.uk/schnellsuche/ergebnis/schnellsuche?query=${query}`;
@@ -45,46 +43,23 @@ async function searchTransfermarkt(playerName: string): Promise<{
 
     const html = await response.text();
 
-    // Check for player results section
     const playerSection = html.match(/Search results for players[\s\S]*?<table class="items">([\s\S]*?)<\/table>/);
-    if (!playerSection) {
-      return [];
-    }
+    if (!playerSection) return [];
 
     const tableHtml = playerSection[1];
-    const results: Array<{
-      id: string;
-      name: string;
-      club: string;
-      position: string;
-      marketValue: string;
-      portraitUrl: string;
-    }> = [];
+    const results: Array<{ id: string; name: string; club: string; position: string; marketValue: string }> = [];
 
-    // Extract player rows from tbody
     const rowRegex = /<tr class="(?:odd|even)">([\s\S]*?)<\/tr>/g;
     let rowMatch;
     while ((rowMatch = rowRegex.exec(tableHtml)) !== null) {
       const row = rowMatch[1];
-
-      // Extract player ID from profile link
       const idMatch = row.match(/\/profil\/spieler\/(\d+)/);
       if (!idMatch) continue;
 
-      // Extract player name from title attribute
       const nameMatch = row.match(/title="([^"]+)"[^>]*href="[^"]*\/profil\/spieler/);
-      
-      // Extract club name
       const clubMatch = row.match(/title="([^"]+)"[^>]*href="[^"]*\/startseite\/verein/);
-      
-      // Extract position
       const posMatch = row.match(/<td class="zentriert">([A-Z]{1,3})<\/td>/);
-      
-      // Extract market value
       const mvMatch = row.match(/<td class="rechts hauptlink">([^<]*)<\/td>/);
-
-      // Extract portrait URL
-      const portraitMatch = row.match(/src="(https:\/\/img\.a\.transfermarkt\.technology\/portrait[^"]+)"/);
 
       results.push({
         id: idMatch[1],
@@ -92,7 +67,6 @@ async function searchTransfermarkt(playerName: string): Promise<{
         club: clubMatch?.[1] || 'Unknown',
         position: posMatch?.[1] || '',
         marketValue: mvMatch?.[1] || '',
-        portraitUrl: portraitMatch?.[1] || '',
       });
     }
 
@@ -113,20 +87,14 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    let applyMatches: Record<string, string> | null = null;
-    try {
-      const body = await req.json();
-      applyMatches = body?.apply || null;
-    } catch { /* no body */ }
+    const body = await req.json().catch(() => ({}));
 
-    // If applying matches, update the database
-    if (applyMatches && typeof applyMatches === 'object') {
-      console.log(`Applying ${Object.keys(applyMatches).length} matches...`);
+    // MODE 1: Apply matches
+    if (body.apply && typeof body.apply === 'object') {
+      console.log(`Applying ${Object.keys(body.apply).length} matches...`);
       let applied = 0;
-      let errors = 0;
 
-      for (const [playerId, externalId] of Object.entries(applyMatches)) {
-        // Ensure player_stats row exists
+      for (const [playerId, externalId] of Object.entries(body.apply)) {
         const { data: existing } = await supabase
           .from('player_stats')
           .select('id')
@@ -134,100 +102,52 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (existing) {
-          const { error } = await supabase
+          await supabase
             .from('player_stats')
-            .update({ external_player_id: externalId, updated_at: new Date().toISOString() })
+            .update({ external_player_id: externalId as string, updated_at: new Date().toISOString() })
             .eq('player_id', playerId);
-          if (error) { errors++; console.error(`Update error for ${playerId}:`, error); }
-          else { applied++; }
         } else {
-          const { error } = await supabase
+          await supabase
             .from('player_stats')
-            .insert({ player_id: playerId, external_player_id: externalId });
-          if (error) { errors++; console.error(`Insert error for ${playerId}:`, error); }
-          else { applied++; }
+            .insert({ player_id: playerId, external_player_id: externalId as string });
         }
+        applied++;
       }
 
       return new Response(
-        JSON.stringify({ success: true, applied, errors }),
+        JSON.stringify({ success: true, applied }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Otherwise, search and match players
-    const { data: players, error: fetchError } = await supabase
-      .from('players')
-      .select('id, name')
-      .order('name');
-
-    if (fetchError) {
+    // MODE 2: Search a batch of players
+    // Expects { players: [{ id, name }], offset?: number }
+    const playerBatch: Array<{ id: string; name: string }> = body.players || [];
+    
+    if (playerBatch.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch players' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: true, results: [], message: 'No players to search' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get existing external IDs
-    const { data: existingStats } = await supabase
-      .from('player_stats')
-      .select('player_id, external_player_id');
-
-    const existingMap: Record<string, string> = {};
-    existingStats?.forEach(s => {
-      if (s.external_player_id) existingMap[s.player_id] = s.external_player_id;
-    });
-
+    // Process max 10 players per call to stay within timeout
+    const batch = playerBatch.slice(0, 10);
     const results: MatchResult[] = [];
-    let searchCount = 0;
 
-    for (const player of players || []) {
-      // Skip players who already have an external ID
-      if (existingMap[player.id]) {
-        results.push({
-          player_id: player.id,
-          player_name: player.name,
-          status: 'already_set',
-          external_id: existingMap[player.id],
-        });
-        continue;
-      }
-
+    for (const player of batch) {
       const searchResults = await searchTransfermarkt(player.name);
-      searchCount++;
 
       if (searchResults === null) {
-        results.push({
-          player_id: player.id,
-          player_name: player.name,
-          status: 'error',
-          error: 'Search request failed',
-        });
+        results.push({ player_id: player.id, player_name: player.name, status: 'error', error: 'Search request failed' });
       } else if (searchResults.length === 0) {
-        results.push({
-          player_id: player.id,
-          player_name: player.name,
-          status: 'not_found',
-        });
-      } else if (searchResults.length === 1) {
-        results.push({
-          player_id: player.id,
-          player_name: player.name,
-          status: 'matched',
-          external_id: searchResults[0].id,
-          tm_name: searchResults[0].name,
-          tm_club: searchResults[0].club,
-          tm_position: searchResults[0].position,
-          tm_market_value: searchResults[0].marketValue,
-          tm_portrait_url: searchResults[0].portraitUrl,
-        });
+        results.push({ player_id: player.id, player_name: player.name, status: 'not_found' });
       } else {
-        // Multiple results - use the first one but flag it
         const best = searchResults[0];
-        // Check if the first result name closely matches
-        const nameMatch = best.name.toLowerCase().includes(player.name.toLowerCase().split(' ').pop() || '') ||
-                          player.name.toLowerCase().includes(best.name.toLowerCase().split(' ').pop() || '');
-        
+        const lastName = player.name.toLowerCase().split(' ').pop() || '';
+        const tmLastName = best.name.toLowerCase().split(' ').pop() || '';
+        const nameMatch = best.name.toLowerCase().includes(lastName) || player.name.toLowerCase().includes(tmLastName);
+
         results.push({
           player_id: player.id,
           player_name: player.name,
@@ -237,33 +157,17 @@ Deno.serve(async (req) => {
           tm_club: best.club,
           tm_position: best.position,
           tm_market_value: best.marketValue,
-          tm_portrait_url: best.portraitUrl,
         });
       }
 
-      // Rate limit: 500ms between searches
-      if (searchCount % 5 === 0) {
-        await new Promise(r => setTimeout(r, 1000));
-      } else {
-        await new Promise(r => setTimeout(r, 500));
-      }
+      // Rate limit between searches
+      await new Promise(r => setTimeout(r, 600));
     }
 
-    console.log(`Auto-match complete: ${results.filter(r => r.status === 'matched').length} matched, ${results.filter(r => r.status === 'not_found').length} not found`);
+    console.log(`Batch complete: ${results.filter(r => r.status === 'matched').length} matched out of ${batch.length}`);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        results,
-        summary: {
-          total: results.length,
-          matched: results.filter(r => r.status === 'matched').length,
-          not_found: results.filter(r => r.status === 'not_found').length,
-          multiple: results.filter(r => r.status === 'multiple').length,
-          already_set: results.filter(r => r.status === 'already_set').length,
-          errors: results.filter(r => r.status === 'error').length,
-        },
-      }),
+      JSON.stringify({ success: true, results }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
