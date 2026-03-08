@@ -70,6 +70,7 @@ interface PlayerStats {
   minutes: number;
   clean_sheets: number | null;
   saves: number | null;
+  external_player_id?: string | null;
 }
 
 const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
@@ -150,6 +151,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     }[],
     seasonStats: [] as { header: string; value: string }[],
     topStats: [] as { label: string; value: string; description?: string }[],
+    externalPlayerId: "",
     
     // Separate links field
     links: [] as { label: string; url: string }[],
@@ -350,7 +352,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       if (playerIds.length > 0) {
         const { data: playerStatsData } = await supabase
           .from('player_stats')
-          .select('id, player_id, goals, assists, matches, minutes, clean_sheets, saves')
+          .select('id, player_id, goals, assists, matches, minutes, clean_sheets, saves, external_player_id')
           .in('player_id', playerIds);
         
         playerStatsData?.forEach(ps => {
@@ -362,7 +364,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             matches: ps.matches || 0,
             minutes: ps.minutes || 0,
             clean_sheets: ps.clean_sheets || null,
-            saves: ps.saves || null
+            saves: ps.saves || null,
+            external_player_id: (ps as any).external_player_id || null,
           };
         });
       }
@@ -788,6 +791,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       })),
       seasonStats: Array.isArray(bioData?.seasonStats) ? bioData.seasonStats : [],
       topStats: Array.isArray(bioData?.topStats) ? bioData.topStats : [],
+      externalPlayerId: stats[player.id]?.external_player_id || "",
       
       // Separate links field
       links: linksArray,
@@ -1223,6 +1227,25 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
       if (error) throw error;
 
+      // Save external player ID to player_stats
+      if (formData.externalPlayerId !== undefined) {
+        const existingStats = stats[editingPlayer.id];
+        if (existingStats) {
+          await supabase
+            .from('player_stats')
+            .update({ external_player_id: formData.externalPlayerId || null })
+            .eq('id', existingStats.id);
+        } else {
+          await supabase
+            .from('player_stats')
+            .insert({
+              player_id: editingPlayer.id,
+              external_player_id: formData.externalPlayerId || null,
+              goals: 0, assists: 0, matches: 0, minutes: 0,
+            });
+        }
+      }
+
       toast.success("Player updated successfully");
       setIsEditDialogOpen(false);
       setImageFile(null);
@@ -1457,6 +1480,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   tacticalSchemes: [],
                   seasonStats: [],
                   topStats: [],
+                  externalPlayerId: "",
                   links: [],
                   highlightedMatch: null,
                 });
@@ -4249,6 +4273,18 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       <Plus className="h-4 w-4 mr-2" />
                       Add Top Stat
                     </Button>
+                  </div>
+                  <div className="space-y-3 pt-4 border-t border-border/50">
+                    <Label className="text-sm font-medium">Auto Stats Sync</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Enter the player's external profile ID to automatically sync appearances, goals, assists and minutes every two weeks.
+                    </p>
+                    <Input
+                      value={formData.externalPlayerId}
+                      onChange={(e) => setFormData({ ...formData, externalPlayerId: e.target.value })}
+                      placeholder="e.g. 551309"
+                      className="h-11 sm:h-10"
+                    />
                   </div>
                 </TabsContent>
 
