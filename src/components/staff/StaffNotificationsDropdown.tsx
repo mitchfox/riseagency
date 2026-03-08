@@ -326,6 +326,7 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
   const categoryGroups = groupNotificationsByCategory();
 
   return (
+    <>
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
