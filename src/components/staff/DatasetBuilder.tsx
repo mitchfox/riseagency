@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Camera, Download, Trash2, RefreshCw, Search, Loader2, X, Play } from "lucide-react";
+import { StaffSearchInput } from "./StaffSearchInput";
 import { DatasetFrameCapture } from "./DatasetFrameCapture";
 import { DatasetAnnotationCanvas, type BBox } from "./DatasetAnnotationCanvas";
 import JSZip from "jszip";
@@ -291,15 +292,12 @@ export const DatasetBuilder = () => {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search clips..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <StaffSearchInput
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Search clips..."
+          className="flex-1"
+        />
         <Select value={actionFilter} onValueChange={setActionFilter}>
           <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder="All action types" />

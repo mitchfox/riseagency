@@ -169,6 +169,7 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
   const [hasSearched, setHasSearched] = useState(false);
   const [addingPlayers, setAddingPlayers] = useState<Set<number>>(new Set());
   const [addedPlayers, setAddedPlayers] = useState<Set<number>>(new Set());
+  const [addingAll, setAddingAll] = useState(false);
   const isMobile = useIsMobile();
 
   if (!visible) return null;
@@ -251,23 +252,28 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
     }
   };
 
+  const addPlayerToDatabase = async (player: PlayerResult, idx: number): Promise<boolean> => {
+    const age = parseInt(player.age);
+    const isYouth = !isNaN(age) && age < 18;
+    const tableName = isYouth ? 'player_outreach_youth' : 'player_outreach_pro';
+
+    const { error } = await supabase.from(tableName).insert({
+      player_name: player.name,
+      position: player.position || null,
+      nationality: player.nationality || null,
+      current_club: player.club || null,
+      age: !isNaN(age) ? age : null,
+      notes: `Source: Transfermarkt\nAgent: ${player.agentStatus === 'no_agent' ? 'No Agent' : 'Family Agent'}\nMarket Value: ${player.marketValue || 'N/A'}\nProfile: ${player.transfermarktUrl}`,
+    });
+
+    if (error) throw error;
+    return isYouth;
+  };
+
   const handleAddToDatabase = async (player: PlayerResult, idx: number) => {
     setAddingPlayers(prev => new Set(prev).add(idx));
     try {
-      const age = parseInt(player.age);
-      const isYouth = !isNaN(age) && age < 18;
-      const tableName = isYouth ? 'player_outreach_youth' : 'player_outreach_pro';
-
-      const { error } = await supabase.from(tableName).insert({
-        player_name: player.name,
-        position: player.position || null,
-        nationality: player.nationality || null,
-        current_club: player.club || null,
-        age: !isNaN(age) ? age : null,
-        notes: `Source: Transfermarkt\nAgent: ${player.agentStatus === 'no_agent' ? 'No Agent' : 'Family Agent'}\nMarket Value: ${player.marketValue || 'N/A'}\nProfile: ${player.transfermarktUrl}`,
-      });
-
-      if (error) throw error;
+      const isYouth = await addPlayerToDatabase(player, idx);
       setAddedPlayers(prev => new Set(prev).add(idx));
       toast.success(`${player.name} added to ${isYouth ? 'Youth' : 'Pro'} outreach`);
     } catch (error: any) {
@@ -281,7 +287,40 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
     }
   };
 
+  const handleAddAllToDatabase = async () => {
+    const unadded = displayResults
+      .map((player, idx) => ({ player, idx }))
+      .filter(({ idx }) => !addedPlayers.has(idx));
+
+    if (unadded.length === 0) {
+      toast.info("All players have already been added");
+      return;
+    }
+
+    setAddingAll(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const { player, idx } of unadded) {
+      try {
+        await addPlayerToDatabase(player, idx);
+        setAddedPlayers(prev => new Set(prev).add(idx));
+        successCount++;
+      } catch {
+        failCount++;
+      }
+    }
+
+    setAddingAll(false);
+    if (failCount === 0) {
+      toast.success(`Added all ${successCount} players to outreach`);
+    } else {
+      toast.warning(`Added ${successCount} players, ${failCount} failed`);
+    }
+  };
+
   const displayResults = filteredResults;
+  const allAdded = displayResults.length > 0 && displayResults.every((_, idx) => addedPlayers.has(idx));
 
   return (
     <div className="space-y-5">
@@ -441,7 +480,7 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
           </div>
         ) : displayResults.length > 0 ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="outline" className="text-xs">
                 <UserX className="h-3 w-3 mr-1" />
                 {displayResults.length} unrepresented player{displayResults.length !== 1 ? 's' : ''}
@@ -454,6 +493,23 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
                   {results.length} before client filters
                 </Badge>
               )}
+              <div className="ml-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddAllToDatabase}
+                  disabled={addingAll || allAdded}
+                  className="h-8 text-xs"
+                >
+                  {addingAll ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Adding...</>
+                  ) : allAdded ? (
+                    <><Check className="h-3.5 w-3.5 mr-1.5" /> All Added</>
+                  ) : (
+                    <><Users className="h-3.5 w-3.5 mr-1.5" /> Add All to Database</>
+                  )}
+                </Button>
+              </div>
             </div>
 
             {/* Mobile: compact card layout */}

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image as ImageIcon, X, Download, FileDown, Pencil } from "lucide-react";
+import { StaffSearchInput } from "./StaffSearchInput";
 import { logActivity } from "@/lib/activityLogger";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
@@ -4278,10 +4279,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             <DialogTitle>Assign Analysis to Player</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Input
-              placeholder="Search analyses..."
+            <StaffSearchInput
               value={analysisSearchQuery}
-              onChange={(e) => setAnalysisSearchQuery(e.target.value)}
+              onChange={setAnalysisSearchQuery}
+              placeholder="Search analyses..."
             />
             <ScrollArea className="h-[400px] border rounded-md p-4">
               <div className="space-y-2">

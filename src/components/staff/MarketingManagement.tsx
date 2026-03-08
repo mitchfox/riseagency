@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Calendar as CalendarIcon, Image, Upload, Trash2, Play, List, Folder, ChevronDown, Plus, Users, Tag, Download, Pencil } from "lucide-react";
+import { StaffSearchInput } from "./StaffSearchInput";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { VideoPreviewCard } from "./VideoPreviewCard";
@@ -865,14 +866,11 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="relative">
-              <Input
-                placeholder="Search clips..."
-                value={clipSearchQuery}
-                onChange={(e) => setClipSearchQuery(e.target.value)}
-                className="w-full"
-              />
-            </div>
+            <StaffSearchInput
+              value={clipSearchQuery}
+              onChange={setClipSearchQuery}
+              placeholder="Search clips..."
+            />
             {playerHighlights.filter(player => {
               let highlights = player.highlights as any;
               if (typeof highlights === 'string') {
