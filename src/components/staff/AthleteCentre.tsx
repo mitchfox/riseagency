@@ -320,8 +320,54 @@ export const AthleteCentre = () => {
     { value: "analysis", label: "Analysis", icon: LineChart },
   ];
 
+  const recentPlayers = useMemo(() => {
+    const ids = getRecentPlayerIds();
+    return ids.map(id => players.find(p => p.id === id)).filter(Boolean) as Player[];
+  }, [players, selectedPlayer]);
+
+  const handleSelectPlayer = (val: string) => {
+    setSelectedPlayer(val);
+    localStorage.setItem('athleteCentre_lastPlayer', val);
+    addRecentPlayer(val);
+    setResumedSession(null);
+  };
+
+  const handleResumeSession = (session: SessionState) => {
+    setSelectedPlayer(session.playerId);
+    localStorage.setItem('athleteCentre_lastPlayer', session.playerId);
+    addRecentPlayer(session.playerId);
+    setMainTab(session.mainTab || "matchflow");
+    setResumedSession(session);
+  };
+
+  // Persist session on meaningful state changes
+  const handleMatchFlowSessionChange = (openSections: Record<string, boolean>, inlineReport: InlineReportState | null) => {
+    if (!selectedPlayer || !currentPlayer) return;
+    saveSession({
+      playerId: selectedPlayer,
+      playerName: currentPlayer.name,
+      mainTab,
+      openSections,
+      inlineReport: inlineReport ? {
+        playerId: inlineReport.playerId,
+        playerName: inlineReport.playerName,
+        analysisId: inlineReport.analysisId,
+      } : undefined,
+    });
+  };
+
   return (
     <div className="space-y-4">
+      {/* Resume Banner */}
+      <SessionResumeBanner onResume={handleResumeSession} />
+
+      {/* Recent Players */}
+      <RecentPlayersBar
+        recentPlayers={recentPlayers}
+        selectedPlayerId={selectedPlayer}
+        onSelect={handleSelectPlayer}
+      />
+
       {/* Player Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex-1">
