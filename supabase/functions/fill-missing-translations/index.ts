@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     // Fetch all rows that have any missing language
     const condition = ALL_LANGUAGES.map(l => `${l}.is.null,${l}.eq.`).join(',');
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/translations?select=id,text_key,english,${ALL_LANGUAGES.join(',')}&or=(${condition})&limit=500`,
+      `${SUPABASE_URL}/rest/v1/translations?select=id,text_key,english,${ALL_LANGUAGES.join(',')}&or=(${condition})&limit=30`,
       {
         headers: {
           'apikey': SUPABASE_SERVICE_ROLE_KEY,
