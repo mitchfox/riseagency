@@ -307,15 +307,7 @@ function LandingContent() {
         <LanguageMapSelector onOpenChange={setLanguagePopupOpen} />
       </div>
       
-      {/* Language Selector - Mobile only */}
-      <div className="md:hidden absolute z-[50] pointer-events-auto top-[calc(50%+124px)] flex flex-col items-center" style={{
-        left: '50%',
-        transform: 'translateX(-50%)'
-      }}>
-        <div className="scale-[1.2]">
-          <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
-        </div>
-      </div>
+      {/* Mobile language selector is now inline in the bottom section */}
       
       {/* Portal, Staff & Scouts links - subtle top right */}
       <div className="absolute top-6 md:top-8 right-2 md:right-4 z-50 flex items-center gap-3">
