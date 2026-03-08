@@ -70,6 +70,10 @@ const RiseWithUs = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+        <title>Rise With Us - RISE Football Agency</title>
+      </Helmet>
       {/* Hero */}
       <section className="relative py-20 md:py-32 px-4 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-background to-background" />
