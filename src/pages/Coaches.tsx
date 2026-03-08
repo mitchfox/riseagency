@@ -77,10 +77,10 @@ const Coaches = () => {
   ];
 
   const approachImages = [
-    { src: realisePotentialReport, label: 'Tactical Analysis' },
-    { src: realisePotentialAnalysis, label: 'Match Preparation' },
-    { src: realisePotentialSessions, label: 'Development Plans' },
-    { src: realisePotentialPaos, label: 'Performance Insights' }
+    { src: realisePotentialReport, label: t('coaches.approach_tactical', 'Tactical Analysis') },
+    { src: realisePotentialAnalysis, label: t('coaches.approach_match', 'Match Preparation') },
+    { src: realisePotentialSessions, label: t('coaches.approach_dev', 'Development Plans') },
+    { src: realisePotentialPaos, label: t('coaches.approach_perf', 'Performance Insights') }
   ];
 
   return (
