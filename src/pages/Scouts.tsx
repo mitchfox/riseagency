@@ -505,12 +505,12 @@ const Scouts = () => {
                                       >
                                         <div className={`${config.solidBg} px-5 py-3`}>
                                           <h4 className="font-bold text-black text-base">
-                                            {getBestTranslation(t, `scouts.skill_${legacySkillKey}`, `scouts.skill_${compactSkillKey}`, skill.skill_name)}
+                                            {getBestTranslation(t, `scouts.skill_${legacySkillKey}`, `scouts.skill_${compactSkillKey}`, skill.skill_name, translations, 'scouts.skill_')}
                                           </h4>
                                         </div>
                                         <div className="px-5 py-4">
                                           <p className="text-sm text-muted-foreground leading-relaxed">
-                                            {getBestTranslation(t, `scouts.skill_${legacySkillKey}_desc`, `scouts.skill_${compactSkillKey}_desc`, skill.description)}
+                                            {getBestTranslation(t, `scouts.skill_${legacySkillKey}_desc`, `scouts.skill_${compactSkillKey}_desc`, skill.description, translations, 'scouts.skill_')}
                                           </p>
                                         </div>
                                       </div>
