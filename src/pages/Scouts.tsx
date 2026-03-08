@@ -78,13 +78,31 @@ const getBestTranslation = (
   t: (key: string, fallback?: string) => string,
   primaryKey: string,
   secondaryKey: string,
-  fallback: string
+  fallback: string,
+  translations?: Map<string, string>,
+  fuzzyKeyPrefix?: string
 ): string => {
   const primary = t(primaryKey);
   if (primary !== primaryKey) return primary;
 
   const secondary = t(secondaryKey);
   if (secondary !== secondaryKey) return secondary;
+
+  if (translations && fuzzyKeyPrefix) {
+    const target = toCompactSkillSlug(fallback).replace(/_/g, '');
+    for (const key of translations.keys()) {
+      if (!key.startsWith(fuzzyKeyPrefix)) continue;
+
+      const keyTail = key.slice(fuzzyKeyPrefix.length);
+      const isDescKey = keyTail.endsWith('_desc');
+      const comparableTail = isDescKey ? keyTail.slice(0, -5) : keyTail;
+
+      if (comparableTail.replace(/_/g, '') === target) {
+        const value = t(key);
+        if (value !== key) return value;
+      }
+    }
+  }
 
   return fallback;
 };
