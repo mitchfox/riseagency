@@ -14,7 +14,7 @@ import { Home, Star, TrendingUp, BookOpen, Newspaper, MessageCircle, Target, Tro
 import { useState, useMemo, useRef, useEffect } from "react";
 import { StarsQuadrantCard } from "@/components/radial-menu/StarsQuadrantCard";
 import { NewsQuadrantCard } from "@/components/radial-menu/NewsQuadrantCard";
-import { PerformanceQuadrantCard, InsightsQuadrantCard, ContactQuadrantCard, YouthQuadrantCard, JourneyQuadrantCard, WhatWeLookForQuadrantCard, HowWeRiseQuadrantCard, FAQQuadrantCard } from "@/components/radial-menu/SimpleQuadrantCard";
+import { PerformanceQuadrantCard, InsightsQuadrantCard, ContactQuadrantCard, YouthQuadrantCard, JourneyQuadrantCard, WhatWeLookForQuadrantCard, HowWeRiseQuadrantCard, FAQQuadrantCard, RequestsQuadrantCard, PartnerQuadrantCard, PortalQuadrantCard, OpportunitiesQuadrantCard, CoachingQuadrantCard, PackagesQuadrantCard, ClubSupportQuadrantCard } from "@/components/radial-menu/SimpleQuadrantCard";
 import { calculateContentPlacement } from "@/lib/wedgeGeometry";
 
 export type QuadrantPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
@@ -232,7 +232,17 @@ export const RadialMenu = () => {
       },
     ],
     clubs: [
-      { to: "/clubs", labelKey: "header.club_direction", fallback: "CLUB SUPPORT", Icon: Target, angle: 0 },
+      { 
+        to: "/clubs", 
+        labelKey: "header.club_direction", 
+        fallback: "CLUB SUPPORT", 
+        Icon: Target, 
+        angle: 0,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(0),
+          component: ClubSupportQuadrantCard,
+        },
+      },
       { 
         to: "/stars", 
         labelKey: "header.stars", 
@@ -296,6 +306,10 @@ export const RadialMenu = () => {
         fallback: "REQUESTS", 
         Icon: Target, 
         angle: 0,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(0),
+          component: RequestsQuadrantCard,
+        },
       },
       { 
         to: "/stars", 
@@ -358,12 +372,46 @@ export const RadialMenu = () => {
         fallback: "PARTNER", 
         Icon: Users, 
         angle: 309,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(309),
+          component: PartnerQuadrantCard,
+        },
       },
     ],
     scouts: [
-      { to: "/learnmore", labelKey: "header.what_we_look_for", fallback: "WHAT WE SEEK", Icon: Search, angle: 0 },
-      { to: "/login", labelKey: "header.portal", fallback: "PORTAL", Icon: Users, angle: 60 },
-      { to: "/scouts", labelKey: "header.jobs", fallback: "OPPORTUNITIES", Icon: Briefcase, angle: 120 },
+      { 
+        to: "/learnmore", 
+        labelKey: "header.what_we_look_for", 
+        fallback: "WHAT WE SEEK", 
+        Icon: Search, 
+        angle: 0,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(0),
+          component: WhatWeLookForQuadrantCard,
+        },
+      },
+      { 
+        to: "/login", 
+        labelKey: "header.portal", 
+        fallback: "PORTAL", 
+        Icon: Users, 
+        angle: 60,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(60),
+          component: PortalQuadrantCard,
+        },
+      },
+      { 
+        to: "/scouts", 
+        labelKey: "header.jobs", 
+        fallback: "OPPORTUNITIES", 
+        Icon: Briefcase, 
+        angle: 120,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(120),
+          component: OpportunitiesQuadrantCard,
+        },
+      },
       { 
         to: "/stars", 
         labelKey: "header.stars", 
@@ -399,7 +447,17 @@ export const RadialMenu = () => {
       },
     ],
     coaches: [
-      { to: "/login", labelKey: "header.portal", fallback: "PORTAL", Icon: Users, angle: 0 },
+      { 
+        to: "/login", 
+        labelKey: "header.portal", 
+        fallback: "PORTAL", 
+        Icon: Users, 
+        angle: 0,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(0),
+          component: PortalQuadrantCard,
+        },
+      },
       { 
         to: "/performance", 
         labelKey: "header.performance", 
@@ -417,6 +475,10 @@ export const RadialMenu = () => {
         fallback: "COACHING", 
         Icon: Target, 
         angle: 144,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(144),
+          component: CoachingQuadrantCard,
+        },
       },
       { 
         to: "/between-the-lines", 
@@ -510,7 +572,17 @@ export const RadialMenu = () => {
       },
     ],
     business: [
-      { to: "/packages", labelKey: "header.packages", fallback: "PACKAGES", Icon: Package, angle: 0 },
+      { 
+        to: "/packages", 
+        labelKey: "header.packages", 
+        fallback: "PACKAGES", 
+        Icon: Package, 
+        angle: 0,
+        quadrantCard: {
+          position: getQuadrantPositionForAngle(0),
+          component: PackagesQuadrantCard,
+        },
+      },
       { 
         to: "/stars", 
         labelKey: "header.stars", 
@@ -1188,10 +1260,10 @@ export const RadialMenu = () => {
               {/* Title */}
               <div className="absolute top-4 left-0 right-0 text-center">
                 <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-[0.3em] text-primary">
-                  Select Language
+                  {t('menu.select_language', 'Select Language')}
                 </h3>
                 <p className="text-xs text-white/50 font-bebas tracking-wider mt-1">
-                  Click a country to switch
+                  {t('menu.click_country', 'Click a country to switch')}
                 </p>
               </div>
               

@@ -29,30 +29,30 @@ const Clubs = () => {
     {
       id: "strategise",
       icon: Target,
-      title: "STRATEGISE",
-      teaser: "Using our expertise, apply both tried and trusted principles alongside innovative methods to gain an advantage over competing clubs.",
+      title: t('clubs.service_strategise_title', 'STRATEGISE'),
+      teaser: t('clubs.service_strategise_teaser', 'Using our expertise, apply both tried and trusted principles alongside innovative methods to gain an advantage over competing clubs.'),
       fullContent: [
-        "In order to beat the competition, effective and innovative strategies must be employed. We work to build winning sides both in the short and long term through our bespoke approach. National exclusivity guarantees undivided time and resources for greater domestic success.",
-        "Our strategy-building is rooted in fully understanding organisational culture, decision-makers, and football philosophy. This enables truly tailored solutions and sustainable success."
+        t('clubs.service_strategise_p1', 'In order to beat the competition, effective and innovative strategies must be employed. We work to build winning sides both in the short and long term through our bespoke approach. National exclusivity guarantees undivided time and resources for greater domestic success.'),
+        t('clubs.service_strategise_p2', 'Our strategy-building is rooted in fully understanding organisational culture, decision-makers, and football philosophy. This enables truly tailored solutions and sustainable success.')
       ]
     },
     {
       id: "recruit",
       icon: Users,
-      title: "RECRUIT",
-      teaser: "Call on our knowledge in scouting and data analysis to recruit undervalued talent that will take your team to a higher level.",
+      title: t('clubs.service_recruit_title', 'RECRUIT'),
+      teaser: t('clubs.service_recruit_teaser', 'Call on our knowledge in scouting and data analysis to recruit undervalued talent that will take your team to a higher level.'),
       fullContent: [
-        "In a competitive market, greater finances, superior scouting and networking determine success. Our work impacts all three to ensure expert squad-building and intelligent recruitment decisions.",
-        "Our Europe-wide analysis identifies players others miss, prioritising technical and tactical fit alongside potential and value."
+        t('clubs.service_recruit_p1', 'In a competitive market, greater finances, superior scouting and networking determine success. Our work impacts all three to ensure expert squad-building and intelligent recruitment decisions.'),
+        t('clubs.service_recruit_p2', 'Our Europe-wide analysis identifies players others miss, prioritising technical and tactical fit alongside potential and value.')
       ]
     },
     {
       id: "optimise",
       icon: TrendingUp,
-      title: "OPTIMISE",
-      teaser: "Improve the provision of performance services across the club to maximise match-day results.",
+      title: t('clubs.service_optimise_title', 'OPTIMISE'),
+      teaser: t('clubs.service_optimise_teaser', 'Improve the provision of performance services across the club to maximise match-day results.'),
       fullContent: [
-        "Our unique performance expertise allows clubs to develop personnel, align staff, and improve on-pitch results. We break down silos, support coach development, and provide timely, actionable insights."
+        t('clubs.service_optimise_p1', 'Our unique performance expertise allows clubs to develop personnel, align staff, and improve on-pitch results. We break down silos, support coach development, and provide timely, actionable insights.')
       ]
     }
   ];
@@ -65,17 +65,17 @@ const Clubs = () => {
   ];
 
   const approachImages = [
-    { src: realisePotentialReport, label: 'R90 Performance Reports' },
-    { src: realisePotentialAnalysis, label: 'Match Analysis' },
-    { src: realisePotentialSessions, label: 'Development Sessions' },
-    { src: realisePotentialPaos, label: 'Player Action Overviews' }
+    { src: realisePotentialReport, label: t('clubs.approach_report', 'R90 Performance Reports') },
+    { src: realisePotentialAnalysis, label: t('clubs.approach_analysis', 'Match Analysis') },
+    { src: realisePotentialSessions, label: t('clubs.approach_sessions', 'Development Sessions') },
+    { src: realisePotentialPaos, label: t('clubs.approach_paos', 'Player Action Overviews') }
   ];
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-full" key="clubs-page">
       <SEO 
-        title="For Clubs - Strategic Partnerships | RISE Agency"
-        description="Work with RISE to strategise, recruit, and optimise your squad. Access our network of players and development programmes."
+        title={t('clubs.seo_title', 'For Clubs - Strategic Partnerships | RISE Agency')}
+        description={t('clubs.seo_desc', 'Work with RISE to strategise, recruit, and optimise your squad. Access our network of players and development programmes.')}
         image="/og-preview-clubs.png"
         url="/clubs"
       />
@@ -169,7 +169,7 @@ const Clubs = () => {
                   
                   <Collapsible>
                     <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all">
-                      <span className="text-sm uppercase tracking-wider text-primary font-medium">Read More</span>
+                      <span className="text-sm uppercase tracking-wider text-primary font-medium">{t('clubs.read_more', 'Read More')}</span>
                       <ChevronDown className="h-4 w-4 text-primary transition-transform group-data-[state=open]:rotate-180" />
                     </CollapsibleTrigger>
                     <CollapsibleContent className="mt-6 space-y-4 text-muted-foreground leading-relaxed">
@@ -208,8 +208,8 @@ const Clubs = () => {
                           <Shield className="w-6 h-6 text-primary" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">National Exclusivity</h3>
-                          <p className="text-muted-foreground">We offer exclusive partnerships within domestic leagues, ensuring your club receives our undivided attention and resources for greater success.</p>
+                          <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">{t('clubs.exclusivity_title', 'National Exclusivity')}</h3>
+                          <p className="text-muted-foreground">{t('clubs.exclusivity_desc', 'We offer exclusive partnerships within domestic leagues, ensuring your club receives our undivided attention and resources for greater success.')}</p>
                         </div>
                       </div>
                       
@@ -218,8 +218,8 @@ const Clubs = () => {
                           <BarChart3 className="w-6 h-6 text-primary" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">Data-Driven Insights</h3>
-                          <p className="text-muted-foreground">Our analysis extends across the entirety of professional football within Europe, identifying opportunities that traditional scouting networks can miss.</p>
+                          <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">{t('clubs.data_title', 'Data-Driven Insights')}</h3>
+                          <p className="text-muted-foreground">{t('clubs.data_desc', 'Our analysis extends across the entirety of professional football within Europe, identifying opportunities that traditional scouting networks can miss.')}</p>
                         </div>
                       </div>
                       
@@ -228,8 +228,8 @@ const Clubs = () => {
                           <Zap className="w-6 h-6 text-primary" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">Proactive Strategy</h3>
-                          <p className="text-muted-foreground">Unlike reactive organisations, we stay ahead of key developments in the footballing landscape to avoid future pitfalls and seize opportunities first.</p>
+                          <h3 className="text-xl font-bebas uppercase tracking-wider mb-2">{t('clubs.strategy_title', 'Proactive Strategy')}</h3>
+                          <p className="text-muted-foreground">{t('clubs.strategy_desc', 'Unlike reactive organisations, we stay ahead of key developments in the footballing landscape to avoid future pitfalls and seize opportunities first.')}</p>
                         </div>
                       </div>
                     </div>
@@ -268,13 +268,13 @@ const Clubs = () => {
                     <div className="grid grid-cols-2 gap-3 mt-6">
                       <div className="p-4 border border-border/50 bg-card/30 rounded-lg text-center">
                         <Globe className="w-8 h-8 text-primary mx-auto mb-2" />
-                        <h4 className="text-sm font-bebas uppercase tracking-wider mb-1">European Network</h4>
-                        <p className="text-xs text-muted-foreground">Key decision-makers across half the globe</p>
+                        <h4 className="text-sm font-bebas uppercase tracking-wider mb-1">{t('clubs.network_title', 'European Network')}</h4>
+                        <p className="text-xs text-muted-foreground">{t('clubs.network_desc', 'Key decision-makers across half the globe')}</p>
                       </div>
                       <div className="p-4 border border-border/50 bg-card/30 rounded-lg text-center">
                         <Handshake className="w-8 h-8 text-primary mx-auto mb-2" />
-                        <h4 className="text-sm font-bebas uppercase tracking-wider mb-1">Trusted Partners</h4>
-                        <p className="text-xs text-muted-foreground">Reputation for recruiting great fits</p>
+                        <h4 className="text-sm font-bebas uppercase tracking-wider mb-1">{t('clubs.partners_title', 'Trusted Partners')}</h4>
+                        <p className="text-xs text-muted-foreground">{t('clubs.partners_desc', 'Reputation for recruiting great fits')}</p>
                       </div>
                     </div>
                   </div>
@@ -300,7 +300,7 @@ const Clubs = () => {
                 {t('clubs.cta_subtitle', 'Schedule a consultation to discuss how we can support your objectives.')}
               </p>
               <div className="inline-block bg-black/90 px-6 py-3 rounded-lg mb-6">
-                <p className="text-white font-bebas uppercase tracking-wider text-lg">Contact Us Today</p>
+                <p className="text-white font-bebas uppercase tracking-wider text-lg">{t('clubs.contact_today', 'Contact Us Today')}</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 
