@@ -1422,7 +1422,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
           {/* Coverage Regions - Country -> Clubs from footballClubs */}
           <div id="coverage-regions-container" ref={coverageRef} className="bg-card rounded-lg p-3 border mt-3 flex-1 min-h-0 overflow-hidden flex flex-col group/coverage">
             <h4 className="font-bebas text-lg mb-1 flex-shrink-0 pl-5">{t("map.coverage_regions", "COVERAGE REGIONS")}</h4>
-            <p className="text-xs italic text-primary mb-2 flex-shrink-0 pl-5">Players Scouted</p>
+            <p className="text-xs italic text-primary mb-2 flex-shrink-0 pl-5">{t("map.players_scouted", "Players Scouted")}</p>
             <div className="space-y-1 flex-1 min-h-0 max-h-[240px] overflow-y-auto transition-all relative pr-0.5 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-primary/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-primary/50">
               {(() => {
                 // Group footballClubs by country
