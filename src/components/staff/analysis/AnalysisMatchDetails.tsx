@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Crop } from "lucide-react";
+import { Plus, X, Crop, ArrowLeftRight } from "lucide-react";
 import { sortPlayersByRepresentation, getStatusLabel } from "@/lib/playerSorting";
 import {
   Collapsible,
