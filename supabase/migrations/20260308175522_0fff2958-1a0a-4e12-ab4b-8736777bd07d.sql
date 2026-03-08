@@ -1,0 +1,1 @@
+ALTER TABLE public.analyses ADD COLUMN IF NOT EXISTS visibility_status text NOT NULL DEFAULT 'live';

@@ -218,6 +218,7 @@ export type Database = {
           title: string | null
           updated_at: string
           video_url: string | null
+          visibility_status: string
         }
         Insert: {
           analysis_type: string
@@ -259,6 +260,7 @@ export type Database = {
           title?: string | null
           updated_at?: string
           video_url?: string | null
+          visibility_status?: string
         }
         Update: {
           analysis_type?: string
@@ -300,6 +302,7 @@ export type Database = {
           title?: string | null
           updated_at?: string
           video_url?: string | null
+          visibility_status?: string
         }
         Relationships: [
           {
