@@ -55,6 +55,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType }
   contract_signed: { label: "Contracts Signed", icon: PenLine },
   comparison_request: { label: "Comparison Requests", icon: GitCompare },
   player_birthday: { label: "Player Birthdays", icon: Cake },
+  player_turning_18: { label: "Player Birthdays", icon: Cake },
 };
 
 export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdownProps) => {
