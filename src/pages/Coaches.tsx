@@ -185,7 +185,7 @@ const Coaches = () => {
                     
                     <Collapsible>
                       <CollapsibleTrigger className="group flex items-center gap-3 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all">
-                        <span className="text-sm uppercase tracking-wider text-primary font-medium">Read More</span>
+                        <span className="text-sm uppercase tracking-wider text-primary font-medium">{t('coaches.read_more', 'Read More')}</span>
                         <ChevronDown className="h-4 w-4 text-primary transition-transform group-data-[state=open]:rotate-180" />
                       </CollapsibleTrigger>
                       <CollapsibleContent className="mt-6 space-y-4 text-muted-foreground leading-relaxed">

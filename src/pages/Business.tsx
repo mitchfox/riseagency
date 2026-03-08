@@ -373,8 +373,8 @@ const Business = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden" key="business-page">
       <SEO 
-        title="Business Solutions - Commercial Football Partnerships | RISE Agency"
-        description="Partner with RISE for strategic commercial partnerships, sponsorship opportunities, and business development in professional football."
+        title={t('business.seo_title', 'Business Solutions - Commercial Football Partnerships | RISE Agency')}
+        description={t('business.seo_desc', 'Partner with RISE for strategic commercial partnerships, sponsorship opportunities, and business development in professional football.')}
         image="/og-preview-business.png"
         url="/business"
       />
