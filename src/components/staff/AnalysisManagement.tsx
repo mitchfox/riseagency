@@ -1681,9 +1681,21 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
       <Card key={analysis.id} className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm sm:text-base truncate">
-              {analysis.title || `${analysis.home_team} vs ${analysis.away_team}`}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-sm sm:text-base truncate">
+                {analysis.title || `${analysis.home_team} vs ${analysis.away_team}`}
+              </h3>
+              {(analysis as any).visibility_status && (analysis as any).visibility_status !== "live" && (
+                <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${
+                  (analysis as any).visibility_status === "draft"
+                    ? "bg-yellow-500/20 text-yellow-400"
+                    : "bg-red-500/20 text-red-400"
+                }`}>
+                  {(analysis as any).visibility_status === "draft" ? <FileEdit className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
+                  {(analysis as any).visibility_status === "draft" ? "Draft" : "Hidden"}
+                </span>
+              )}
+            </div>
             <p className="text-xs sm:text-sm text-muted-foreground">
               {new Date(analysis.created_at).toLocaleDateString()}
             </p>
