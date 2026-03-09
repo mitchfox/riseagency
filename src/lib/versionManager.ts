@@ -8,9 +8,13 @@ const CHECK_INTERVAL_MS = 60000; // Check every minute
 function isLovablePreview(): boolean {
   try {
     const hostname = window.location.hostname;
-    return hostname.includes('lovableproject.com') || 
+    return hostname.startsWith('id-preview--') ||
+           hostname.includes('lovable.app') ||
+           hostname.includes('lovableproject.com') ||
            hostname.includes('localhost') ||
-           hostname.includes('127.0.0.1');
+           hostname.includes('127.0.0.1') ||
+           window.location.search.includes('__lovable_token') ||
+           window.self !== window.top;
   } catch {
     return false;
   }
