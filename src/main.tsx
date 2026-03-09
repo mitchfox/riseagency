@@ -107,7 +107,15 @@ import "./index.css";
 
 // Register service worker with update detection - wrapped in try-catch to prevent console errors
 const isLovablePreviewEnv = window.location.hostname.startsWith('id-preview--') ||
-                            window.location.search.includes('__lovable_token');
+                             window.location.search.includes('__lovable_token');
+
+// If a SW was previously installed, remove it in Lovable preview to prevent reload loops
+if (isLovablePreviewEnv && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((regs) => regs.forEach((r) => r.unregister())).catch(() => {});
+  if ('caches' in window) {
+    caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))).catch(() => {});
+  }
+}
 
 if ('serviceWorker' in navigator && !isLovablePreviewEnv) {
   window.addEventListener('load', async () => {
