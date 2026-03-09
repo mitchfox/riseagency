@@ -430,7 +430,10 @@ function LandingContent() {
                 <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
               </div>
             </div>
-      
+          </div>
+        </div>
+      </div>
+
       {/* Dialogs */}
       <RepresentationDialog open={showRepresentation} onOpenChange={setShowRepresentation} />
       <DeclareInterestPlayerDialog open={showDeclareInterest} onOpenChange={setShowDeclareInterest} starsOnly />
