@@ -351,69 +351,85 @@ function LandingContent() {
 
 
             {/* Mobile Layout - pushed down with proper divider lines */}
-            <div className="md:hidden flex flex-col items-center gap-0 mt-0 hover-text-no-shift" style={{
-            transform: 'translateY(-25px) translateX(-4px)',
-            paddingBottom: '12px'
-          }}>
-              
-              {/* Language selector (above buttons on mobile) */}
-              <div className="scale-[1.2] py-1">
-                <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
-              </div>
-
+            <div
+              className="md:hidden flex flex-col items-center gap-0 mt-0 hover-text-no-shift"
+              style={{
+                transform: 'translateY(-25px) translateX(-4px)',
+                paddingBottom: '6px',
+              }}
+            >
               {/* Buttons row - with divider line */}
-              <div className="border-t border-primary/40 pt-1 pb-1 flex justify-center" style={{
-              width: '42%'
-            }}>
+              <div
+                className="border-t border-primary/40 pt-0.5 pb-0 flex justify-center"
+                style={{ width: '42%' }}
+              >
                 <div className="flex gap-1.5">
-                  <Button onClick={() => setShowRepresentation(true)} variant="outline" size="sm" className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-[10px] px-2 h-5" hoverEffect>
+                  <Button
+                    onClick={() => setShowRepresentation(true)}
+                    variant="outline"
+                    size="sm"
+                    className="font-bebas uppercase tracking-wider border-primary/50 text-primary hover:bg-primary/10 hover:text-primary text-[10px] px-2 h-5"
+                    hoverEffect
+                  >
                     {t("landing.represent_me", "Represent Me")}
                   </Button>
-                  <Button onClick={() => setShowDeclareInterest(true)} size="sm" className="btn-shine font-bebas uppercase tracking-wider text-[10px] px-2 h-5" hoverEffect>
+                  <Button
+                    onClick={() => setShowDeclareInterest(true)}
+                    size="sm"
+                    className="btn-shine font-bebas uppercase tracking-wider text-[10px] px-2 h-5"
+                    hoverEffect
+                  >
                     {t("landing.declare_interest_short", "Declare Interest")}
                   </Button>
                 </div>
               </div>
 
               {/* Select role text (directly above roles) */}
-              <div className="text-center pt-1">
+              <div className="text-center pt-0.5">
                 <span className="text-[10px] font-bebas uppercase tracking-[0.15em] text-white/40">
                   {t("landing.select_role_enter", "Select Your Role To Enter Site")}
                 </span>
               </div>
-              
+
               {/* Top row: Players, Coaches, Clubs - with divider */}
-              <div className="border-t border-primary/40 pt-0.5 pb-0.5" style={{
-              width: '60%'
-            }}>
+              <div className="border-t border-primary/40 pt-0.5 pb-0.5" style={{ width: '60%' }}>
                 <nav className="flex items-center justify-center gap-1">
-                  {mobileNavLinks.slice(0, 3).map((link, index) => <div key={link.to} className="flex items-center">
-                      <button onClick={() => navigateToRole(link.to)} className="px-2 py-0.5 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap">
+                  {mobileNavLinks.slice(0, 3).map((link, index) => (
+                    <div key={link.to} className="flex items-center">
+                      <button
+                        onClick={() => navigateToRole(link.to)}
+                        className="px-2 py-0.5 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                      >
                         <HoverText text={t(link.labelKey, link.fallback)} />
                       </button>
                       {index < 2 && <div className="w-px h-3 bg-primary/40" />}
-                    </div>)}
+                    </div>
+                  ))}
                 </nav>
               </div>
-              
+
               {/* Bottom row: Agents, Scouts, Business, Media - widest */}
-              <div className="border-t border-primary/40 pt-0.5" style={{
-              width: '82%'
-            }}>
+              <div className="border-t border-primary/40 pt-0.5" style={{ width: '82%' }}>
                 <nav className="flex items-center justify-center gap-1">
-                  {mobileNavLinks.slice(3).map((link, index) => <div key={link.to} className="flex items-center">
-                      <button onClick={() => navigateToRole(link.to)} className="px-2 py-0.5 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap">
+                  {mobileNavLinks.slice(3).map((link, index) => (
+                    <div key={link.to} className="flex items-center">
+                      <button
+                        onClick={() => navigateToRole(link.to)}
+                        className="px-2 py-0.5 text-[17px] font-bebas uppercase tracking-[0.15em] text-white/80 hover:text-primary transition-colors duration-300 whitespace-nowrap"
+                      >
                         <HoverText text={t(link.labelKey, link.fallback)} />
                       </button>
                       {index < 3 && <div className="w-px h-3 bg-primary/40" />}
-                    </div>)}
+                    </div>
+                  ))}
                 </nav>
               </div>
-              
+
+              {/* Language selector (below roles on mobile) */}
+              <div className="pt-0.5 scale-[1.2]">
+                <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
       
       {/* Dialogs */}
       <RepresentationDialog open={showRepresentation} onOpenChange={setShowRepresentation} />
