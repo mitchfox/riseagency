@@ -275,17 +275,19 @@ const ClubNetworkManagement = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="contacts" className="w-full">
-        <TabsList>
-          <TabsTrigger value="contacts">Contacts</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="pathways">Message Pathways</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="inline-flex w-max sm:w-auto">
+            <TabsTrigger value="contacts">Contacts</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="pathways">Pathways</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="contacts" className="mt-6">
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Club Network Contacts</h2>
-              <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold">Club Network Contacts</h2>
+              <div className="flex gap-2 w-full sm:w-auto">
                 <Button 
                   variant="outline" 
                   size="icon"
@@ -294,7 +296,7 @@ const ClubNetworkManagement = () => {
                 >
                   <Settings className="h-4 w-4" />
                 </Button>
-                <Button onClick={openAddDialog}>
+                <Button onClick={openAddDialog} className="flex-1 sm:flex-none">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Contact
                 </Button>
@@ -323,7 +325,7 @@ const ClubNetworkManagement = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <div className="flex gap-1">
+              <div className="flex flex-wrap gap-1">
                 {(['name', 'club_name', 'country'] as SortField[]).map(f => (
                   <Button
                     key={f}
@@ -347,26 +349,26 @@ const ClubNetworkManagement = () => {
               {filteredContacts.map((contact) => (
                 <div
                   key={contact.id}
-                  className="p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors"
+                  className="p-3 sm:p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors"
                 >
-                  <div className="flex justify-between items-start">
-                    <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+                    <div className="flex gap-3 sm:gap-4 w-full sm:w-auto">
                       {contact.image_url && (
                         <img
                           src={contact.image_url}
                           alt={contact.name}
-                          className="w-16 h-16 object-cover rounded"
+                          className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded shrink-0"
                         />
                       )}
-                      <div>
-                        <h3 className="font-semibold text-lg">{contact.name}</h3>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-base sm:text-lg truncate">{contact.name}</h3>
                         {contact.position && (
-                          <p className="text-sm text-muted-foreground">{contact.position}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">{contact.position}</p>
                         )}
                         {contact.club_name && (
-                          <p className="text-sm text-muted-foreground mt-0.5 font-medium">{contact.club_name}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 font-medium truncate">{contact.club_name}</p>
                         )}
-                        <div className="mt-2 flex items-center gap-3">
+                        <div className="mt-1.5 sm:mt-2 flex items-center gap-3">
                           {contact.phone && (
                             <button
                               onClick={(e) => {
@@ -376,7 +378,7 @@ const ClubNetworkManagement = () => {
                               className="text-muted-foreground/60 hover:text-emerald-500 transition-colors"
                               title={`WhatsApp: ${contact.phone}`}
                             >
-                              <FaWhatsapp className="h-5 w-5" />
+                              <FaWhatsapp className="h-4 w-4 sm:h-5 sm:w-5" />
                             </button>
                           )}
                           {contact.email && (
@@ -388,7 +390,7 @@ const ClubNetworkManagement = () => {
                               className="text-muted-foreground/60 hover:text-primary transition-colors"
                               title={`Email: ${contact.email}`}
                             >
-                              <Mail className="h-5 w-5" />
+                              <Mail className="h-4 w-4 sm:h-5 sm:w-5" />
                             </button>
                           )}
                         </div>
@@ -406,7 +408,7 @@ const ClubNetworkManagement = () => {
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 shrink-0 self-end sm:self-start">
                       <Button
                         variant="outline"
                         size="sm"

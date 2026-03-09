@@ -590,7 +590,49 @@ export const InvoiceManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             ) : (
               <Card>
                 <CardContent className="p-0">
-                  <ScrollArea className="w-full">
+                  {/* Mobile card view */}
+                  <div className="sm:hidden space-y-3 p-3">
+                    {filteredInvoices.length === 0 ? (
+                      <p className="text-center py-8 text-muted-foreground">No invoices found</p>
+                    ) : (
+                      filteredInvoices.map((invoice) => {
+                        const remaining = invoice.amount - (invoice.amount_paid || 0);
+                        const isPartiallyPaid = (invoice.amount_paid || 0) > 0 && remaining > 0;
+                        return (
+                          <div key={invoice.id} className="border rounded-lg p-3 space-y-2">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <span className="font-mono text-sm font-medium">{invoice.invoice_number}</span>
+                                {invoice.billing_month && <span className="text-xs text-muted-foreground ml-2">{invoice.billing_month}</span>}
+                              </div>
+                              {getStatusBadge(invoice.status)}
+                            </div>
+                            <div className="flex items-baseline justify-between">
+                              <span className="text-lg font-bold">{invoice.amount.toFixed(2)} {invoice.currency}</span>
+                              {isPartiallyPaid && (
+                                <span className="text-xs text-primary">Paid: {(invoice.amount_paid || 0).toFixed(2)}</span>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>Due: {format(new Date(invoice.due_date), 'dd/MM/yyyy')}</span>
+                              <span>{format(new Date(invoice.invoice_date), 'dd/MM/yyyy')}</span>
+                            </div>
+                            <div className="flex items-center justify-end gap-1 pt-1 border-t">
+                              {invoice.status !== 'paid' && remaining > 0 && (
+                                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openPayDialog(invoice)}>
+                                  <DollarSign className="w-3 h-3 mr-1" />
+                                  Pay
+                                </Button>
+                              )}
+                              {renderQuickActions(invoice)}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                  {/* Desktop table */}
+                  <ScrollArea className="w-full hidden sm:block">
                     <div className="min-w-[900px]">
                       <Table>
                         <TableHeader>

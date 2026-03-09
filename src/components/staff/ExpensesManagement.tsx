@@ -441,7 +441,7 @@ export const ExpensesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           {/* Filter */}
           <div className="flex gap-4">
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>

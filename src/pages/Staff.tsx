@@ -1056,7 +1056,7 @@ const Staff = () => {
   })).filter(category => category.sections.filter(s => !(s as any).isGroupLabel).length > 0);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden overflow-x-hidden">
       <ExportProgressFloat />
       {/* Marble background with more visible overlay */}
       <div 
@@ -1408,10 +1408,10 @@ const Staff = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Sidebar Collapse Toggle Button */}
+        {/* Sidebar Collapse Toggle Button - hidden on mobile, sidebar accessed via bottom sheet */}
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className={`fixed ${isMobile ? 'top-20' : 'top-20'} left-2 z-20 p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border shadow-lg hover:bg-background transition-all duration-300 pwa-toggle-top ${
+          className={`fixed ${isMobile ? 'hidden' : 'top-20'} left-2 z-20 p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border shadow-lg hover:bg-background transition-all duration-300 pwa-toggle-top ${
             sidebarCollapsed ? 'opacity-50 hover:opacity-100' : ''
           }`}
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -1423,8 +1423,8 @@ const Staff = () => {
           )}
         </button>
 
-        {/* Left Sidebar - Fixed */}
-        <div className={`fixed ${isMobile ? 'top-16' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 pwa-sidebar-top ${
+        {/* Left Sidebar - Hidden on mobile (use bottom sheet instead) */}
+        <div className={`fixed ${isMobile ? 'hidden' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 pwa-sidebar-top ${
           sidebarCollapsed ? 'w-0 border-0 opacity-0 pointer-events-none' : 'w-14 md:w-24'
         }`}>
           {/* Pinned Sections */}
@@ -1590,9 +1590,9 @@ const Staff = () => {
         </div>
 
         {/* Main Content Area */}
-        <main className={`flex-1 overflow-y-auto scrollbar-thin relative z-10 transition-all duration-300 pt-20 pwa-content-offset ${
-          sidebarCollapsed ? 'ml-0' : 'ml-14 md:ml-24'
-        } ${isMobile ? 'pb-[60px]' : ''}`}>
+        <main className={`flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin relative z-10 transition-all duration-300 pt-20 pwa-content-offset ${
+          isMobile ? 'ml-0' : sidebarCollapsed ? 'ml-0' : 'ml-14 md:ml-24'
+        } ${isMobile ? 'pb-[70px]' : ''}`}>
           {expandedSection ? (
             <div className="container mx-auto px-3 md:px-6 py-4 md:py-6">
               {/* Breadcrumb */}
@@ -1703,7 +1703,7 @@ const Staff = () => {
       </div>
 
       {/* Search Bar - At Bottom on Mobile */}
-      <div className={`border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${isMobile ? 'fixed bottom-0 left-0 right-0' : 'sticky bottom-0'} z-10 relative`}>
+      <div className={`border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${isMobile ? 'fixed bottom-0 left-0 right-0' : 'sticky bottom-0'} z-10 relative`} style={{ paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 0px)' : undefined }}>
         <div className="container mx-auto px-3 md:px-4 py-3">
           <div className="flex items-center justify-between gap-2 md:gap-4">
             {/* Mobile menu button */}
