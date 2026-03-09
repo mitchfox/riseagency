@@ -3,13 +3,19 @@
   const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
                 (window.navigator as any).standalone === true;
 
-  // Skip scope guard in Lovable preview environment (iframe or with __lovable_token)
-  const isLovablePreview = window.location.search.includes('__lovable_token') ||
+  // Skip scope guard in Lovable preview environment (mobile editor/preview can otherwise loop-reload)
+  const hostname = window.location.hostname;
+  const isLovablePreview = hostname.startsWith('id-preview--') ||
+                           window.location.search.includes('__lovable_token') ||
                            window.self !== window.top;
 
   if (!isPWA || isLovablePreview) return;
 
   const currentPathname = window.location.pathname;
+
+  // Don't force-redirect from the public landing page (prevents reload loops on mobile preview)
+  if (currentPathname === '/') return;
+
   const currentFullPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   const ALLOWED_SCOPES = ['/portal', '/staff'] as const;
   const LAST_ROUTE_KEY = 'pwa_last_route';

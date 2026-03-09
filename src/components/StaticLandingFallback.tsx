@@ -179,6 +179,14 @@ export function StaticLandingFallback({ performanceReason }: StaticLandingFallba
             </Button>
           </div>
 
+          {/* Select role & language */}
+          <div className="flex flex-col items-center gap-2 mt-1">
+            <span className="text-[9px] font-bebas uppercase tracking-[0.15em] text-white/30">
+              {t("landing.select_role_enter", "Select Your Role To Enter Site")}
+            </span>
+            <LanguageMapSelector />
+          </div>
+
           {/* Top row: Players, Coaches, Clubs */}
           <div className="border-t border-primary/30 pt-2 w-full max-w-[280px]">
             <nav className="flex items-center justify-center gap-1">
@@ -211,14 +219,6 @@ export function StaticLandingFallback({ performanceReason }: StaticLandingFallba
                 </div>
               ))}
             </nav>
-          </div>
-
-          {/* Select Role & Language */}
-          <div className="flex flex-col items-center gap-2 mt-2">
-            <span className="text-[9px] font-bebas uppercase tracking-[0.15em] text-white/30">
-              {t("landing.select_role_enter", "Select Your Role To Enter Site")}
-            </span>
-            <LanguageMapSelector />
           </div>
         </div>
       </div>
