@@ -321,6 +321,33 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
     }
   };
 
+  const handleShortlistPlayer = async (player: PlayerResult, idx: number) => {
+    setShortlistingPlayers(prev => new Set(prev).add(idx));
+    try {
+      const { error } = await supabase.from("transfermarkt_shortlist").insert({
+        player_name: player.name,
+        position: player.position || null,
+        age: parseInt(player.age) || null,
+        nationality: player.nationality || null,
+        club: player.club || null,
+        market_value: player.marketValue || null,
+        agent_status: player.agentStatus,
+        transfermarkt_url: player.transfermarktUrl || null,
+      });
+      if (error) throw error;
+      setShortlistedPlayers(prev => new Set(prev).add(idx));
+      toast.success(`${player.name} added to shortlist`);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to shortlist player");
+    } finally {
+      setShortlistingPlayers(prev => {
+        const next = new Set(prev);
+        next.delete(idx);
+        return next;
+      });
+    }
+  };
+
   const displayResults = filteredResults;
   const allAdded = displayResults.length > 0 && displayResults.every((_, idx) => addedPlayers.has(idx));
 
