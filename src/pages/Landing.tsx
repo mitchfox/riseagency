@@ -356,14 +356,7 @@ function LandingContent() {
             paddingBottom: '12px'
           }}>
               
-              {/* Select role text */}
-              <div className="text-center">
-                <span className="text-[10px] font-bebas uppercase tracking-[0.15em] text-white/40">
-                  {t("landing.select_role_enter", "Select Your Role To Enter Site")}
-                </span>
-              </div>
-
-              {/* Language selector */}
+              {/* Language selector (above buttons on mobile) */}
               <div className="scale-[1.2] py-1">
                 <LanguageMapSelector onOpenChange={setLanguagePopupOpen} className="mx-[20px]" />
               </div>
@@ -380,6 +373,13 @@ function LandingContent() {
                     {t("landing.declare_interest_short", "Declare Interest")}
                   </Button>
                 </div>
+              </div>
+
+              {/* Select role text (directly above roles) */}
+              <div className="text-center pt-1">
+                <span className="text-[10px] font-bebas uppercase tracking-[0.15em] text-white/40">
+                  {t("landing.select_role_enter", "Select Your Role To Enter Site")}
+                </span>
               </div>
               
               {/* Top row: Players, Coaches, Clubs - with divider */}
