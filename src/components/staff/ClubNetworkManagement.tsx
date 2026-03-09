@@ -283,9 +283,9 @@ const ClubNetworkManagement = () => {
 
         <TabsContent value="contacts" className="mt-6">
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Club Network Contacts</h2>
-              <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold">Club Network Contacts</h2>
+              <div className="flex gap-2 w-full sm:w-auto">
                 <Button 
                   variant="outline" 
                   size="icon"
@@ -294,7 +294,7 @@ const ClubNetworkManagement = () => {
                 >
                   <Settings className="h-4 w-4" />
                 </Button>
-                <Button onClick={openAddDialog}>
+                <Button onClick={openAddDialog} className="flex-1 sm:flex-none">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Contact
                 </Button>
