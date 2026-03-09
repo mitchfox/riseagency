@@ -745,18 +745,6 @@ function RoleSlider({
 export default function Landing() {
   const { isLowPerformance, isChecking, reason } = usePerformanceCheck();
 
-  // Lovable preview on small viewports can be unstable with the full 3D landing,
-  // so force the static fallback to prevent hard reload loops.
-  const isLovablePreviewEnv =
-    window.location.hostname.startsWith('id-preview--') ||
-    window.location.search.includes('__lovable_token') ||
-    window.self !== window.top;
-  const isMobileViewport = window.innerWidth <= 500;
-
-  if (isLovablePreviewEnv && isMobileViewport) {
-    return <StaticLandingFallback performanceReason="lovable-preview-mobile" />;
-  }
-
   // Show a simple loading state while checking performance
   if (isChecking) {
     return (
