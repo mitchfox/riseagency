@@ -1066,7 +1066,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           representation_status: formData.representation_status || 'other',
           visible_on_stars_page: formData.visible_on_stars_page,
           links: formData.links.length > 0 ? formData.links : null,
-          date_of_birth: formData.dateOfBirth || null,
+          date_of_birth: formatDateForDb(formData.dateOfBirth) || null,
         } as any);
 
       if (error) throw error;
