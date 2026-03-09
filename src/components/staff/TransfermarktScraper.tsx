@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Search, ExternalLink, UserX, Users, X, UserPlus, Check, Star } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, Search, ExternalLink, UserX, Users, X, Check, Star } from "lucide-react";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,6 +22,8 @@ interface SearchFilters {
   clubName?: string;
   marketValueMin?: number;
   marketValueMax?: number;
+  excludeLoans?: boolean;
+  contractStatus?: string; // 'any' | 'free_agent' | 'expiring_6m' | 'expiring_12m'
 }
 
 interface PlayerResult {
@@ -34,6 +37,7 @@ interface PlayerResult {
   agentStatus: 'no_agent' | 'family_agent' | 'unknown';
   agentName?: string;
   transfermarktUrl: string;
+  isLoan?: boolean;
 }
 
 interface TransfermarktScraperProps {
@@ -160,6 +164,14 @@ function parseMarketValue(mv: string): number | null {
   return null;
 }
 
+/** Parse DD/MM/YYYY contract date to a Date object */
+function parseContractDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  const match = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return null;
+  return new Date(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]));
+}
+
 export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperProps) => {
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<PlayerResult[]>([]);
@@ -167,25 +179,36 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
   const [totalFound, setTotalFound] = useState(0);
   const [filters, setFilters] = useState<SearchFilters>({});
   const [hasSearched, setHasSearched] = useState(false);
-  const [addingPlayers, setAddingPlayers] = useState<Set<number>>(new Set());
-  const [addedPlayers, setAddedPlayers] = useState<Set<number>>(new Set());
-  const [shortlistingPlayers, setShortlistingPlayers] = useState<Set<number>>(new Set());
-  const [shortlistedPlayers, setShortlistedPlayers] = useState<Set<number>>(new Set());
-  const [addingAll, setAddingAll] = useState(false);
+  const [shortlistingPlayers, setShortlistingPlayers] = useState<Set<string>>(new Set()); // by transfermarktUrl
+  const [shortlistedUrls, setShortlistedUrls] = useState<Set<string>>(new Set()); // URLs already in DB
   const isMobile = useIsMobile();
+
+  // Load existing shortlisted URLs from DB
+  useEffect(() => {
+    if (!visible) return;
+    const loadExisting = async () => {
+      const { data } = await supabase
+        .from("transfermarkt_shortlist")
+        .select("transfermarkt_url");
+      if (data) {
+        setShortlistedUrls(new Set(data.map(d => d.transfermarkt_url).filter(Boolean) as string[]));
+      }
+    };
+    loadExisting();
+  }, [visible]);
 
   if (!visible) return null;
 
   const applyClientFilters = (players: PlayerResult[]) => {
     let filtered = players;
 
-    // Club name filter (client-side)
+    // Club name filter
     if (filters.clubName?.trim()) {
       const search = filters.clubName.trim().toLowerCase();
       filtered = filtered.filter(p => p.club?.toLowerCase().includes(search));
     }
 
-    // Market value filter (client-side)
+    // Market value filter
     if (filters.marketValueMin != null || filters.marketValueMax != null) {
       filtered = filtered.filter(p => {
         const val = parseMarketValue(p.marketValue);
@@ -196,13 +219,43 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
       });
     }
 
+    // Exclude loan players
+    if (filters.excludeLoans) {
+      filtered = filtered.filter(p => !p.isLoan);
+    }
+
+    // Contract status filter
+    if (filters.contractStatus && filters.contractStatus !== 'any') {
+      const now = new Date();
+      filtered = filtered.filter(p => {
+        const contractEnd = parseContractDate(p.contractUntil);
+        
+        if (filters.contractStatus === 'free_agent') {
+          // No contract date or already expired
+          return !contractEnd || contractEnd <= now;
+        }
+        if (filters.contractStatus === 'expiring_6m') {
+          if (!contractEnd) return true; // No contract = include
+          const sixMonths = new Date(now);
+          sixMonths.setMonth(sixMonths.getMonth() + 6);
+          return contractEnd <= sixMonths;
+        }
+        if (filters.contractStatus === 'expiring_12m') {
+          if (!contractEnd) return true;
+          const twelveMonths = new Date(now);
+          twelveMonths.setMonth(twelveMonths.getMonth() + 12);
+          return contractEnd <= twelveMonths;
+        }
+        return true;
+      });
+    }
+
     return filtered;
   };
 
   const handleSearch = async () => {
     setSearching(true);
     setHasSearched(true);
-    setAddedPlayers(new Set());
     try {
       const { data, error } = await invokeEdgeFunction<any>('scrape-transfermarkt', {
         body: {
@@ -211,10 +264,11 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
             position: filters.position === 'any' ? undefined : filters.position,
             nationality: filters.nationality === 'any' ? undefined : filters.nationality,
             countryPlayingIn: filters.countryPlayingIn === 'any' ? undefined : filters.countryPlayingIn,
-            // Don't send client-side filters to server
             clubName: undefined,
             marketValueMin: undefined,
             marketValueMax: undefined,
+            excludeLoans: undefined,
+            contractStatus: undefined,
           },
           confederation: 'UEFA',
         },
@@ -246,83 +300,54 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
     }
   };
 
-  // Re-apply client filters when club/market value changes post-search
   const handleClientFilterChange = (newFilters: SearchFilters) => {
     setFilters(newFilters);
     if (results.length > 0) {
-      setFilteredResults(applyClientFilters(results));
+      const filtered = (() => {
+        let f = results;
+        if (newFilters.clubName?.trim()) {
+          const search = newFilters.clubName.trim().toLowerCase();
+          f = f.filter(p => p.club?.toLowerCase().includes(search));
+        }
+        if (newFilters.marketValueMin != null || newFilters.marketValueMax != null) {
+          f = f.filter(p => {
+            const val = parseMarketValue(p.marketValue);
+            if (val === null) return false;
+            if (newFilters.marketValueMin != null && val < newFilters.marketValueMin) return false;
+            if (newFilters.marketValueMax != null && val > newFilters.marketValueMax) return false;
+            return true;
+          });
+        }
+        if (newFilters.excludeLoans) {
+          f = f.filter(p => !p.isLoan);
+        }
+        if (newFilters.contractStatus && newFilters.contractStatus !== 'any') {
+          const now = new Date();
+          f = f.filter(p => {
+            const contractEnd = parseContractDate(p.contractUntil);
+            if (newFilters.contractStatus === 'free_agent') return !contractEnd || contractEnd <= now;
+            if (newFilters.contractStatus === 'expiring_6m') {
+              if (!contractEnd) return true;
+              const d = new Date(now); d.setMonth(d.getMonth() + 6);
+              return contractEnd <= d;
+            }
+            if (newFilters.contractStatus === 'expiring_12m') {
+              if (!contractEnd) return true;
+              const d = new Date(now); d.setMonth(d.getMonth() + 12);
+              return contractEnd <= d;
+            }
+            return true;
+          });
+        }
+        return f;
+      })();
+      setFilteredResults(filtered);
     }
   };
 
-  const addPlayerToDatabase = async (player: PlayerResult, idx: number): Promise<boolean> => {
-    const age = parseInt(player.age);
-    const isYouth = !isNaN(age) && age < 18;
-    const tableName = isYouth ? 'player_outreach_youth' : 'player_outreach_pro';
-
-    const { error } = await supabase.from(tableName).insert({
-      player_name: player.name,
-      position: player.position || null,
-      nationality: player.nationality || null,
-      current_club: player.club || null,
-      age: !isNaN(age) ? age : null,
-      notes: `Source: Transfermarkt\nAgent: ${player.agentStatus === 'no_agent' ? 'No Agent' : 'Family Agent'}\nMarket Value: ${player.marketValue || 'N/A'}\nProfile: ${player.transfermarktUrl}`,
-    });
-
-    if (error) throw error;
-    return isYouth;
-  };
-
-  const handleAddToDatabase = async (player: PlayerResult, idx: number) => {
-    setAddingPlayers(prev => new Set(prev).add(idx));
-    try {
-      const isYouth = await addPlayerToDatabase(player, idx);
-      setAddedPlayers(prev => new Set(prev).add(idx));
-      toast.success(`${player.name} added to ${isYouth ? 'Youth' : 'Pro'} outreach`);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to add player');
-    } finally {
-      setAddingPlayers(prev => {
-        const next = new Set(prev);
-        next.delete(idx);
-        return next;
-      });
-    }
-  };
-
-  const handleAddAllToDatabase = async () => {
-    const unadded = displayResults
-      .map((player, idx) => ({ player, idx }))
-      .filter(({ idx }) => !addedPlayers.has(idx));
-
-    if (unadded.length === 0) {
-      toast.info("All players have already been added");
-      return;
-    }
-
-    setAddingAll(true);
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const { player, idx } of unadded) {
-      try {
-        await addPlayerToDatabase(player, idx);
-        setAddedPlayers(prev => new Set(prev).add(idx));
-        successCount++;
-      } catch {
-        failCount++;
-      }
-    }
-
-    setAddingAll(false);
-    if (failCount === 0) {
-      toast.success(`Added all ${successCount} players to outreach`);
-    } else {
-      toast.warning(`Added ${successCount} players, ${failCount} failed`);
-    }
-  };
-
-  const handleShortlistPlayer = async (player: PlayerResult, idx: number) => {
-    setShortlistingPlayers(prev => new Set(prev).add(idx));
+  const handleShortlistPlayer = async (player: PlayerResult) => {
+    const url = player.transfermarktUrl;
+    setShortlistingPlayers(prev => new Set(prev).add(url));
     try {
       const { error } = await supabase.from("transfermarkt_shortlist").insert({
         player_name: player.name,
@@ -332,24 +357,23 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
         club: player.club || null,
         market_value: player.marketValue || null,
         agent_status: player.agentStatus,
-        transfermarkt_url: player.transfermarktUrl || null,
+        transfermarkt_url: url || null,
       });
       if (error) throw error;
-      setShortlistedPlayers(prev => new Set(prev).add(idx));
+      setShortlistedUrls(prev => new Set(prev).add(url));
       toast.success(`${player.name} added to shortlist`);
     } catch (error: any) {
       toast.error(error.message || "Failed to shortlist player");
     } finally {
       setShortlistingPlayers(prev => {
         const next = new Set(prev);
-        next.delete(idx);
+        next.delete(url);
         return next;
       });
     }
   };
 
   const displayResults = filteredResults;
-  const allAdded = displayResults.length > 0 && displayResults.every((_, idx) => addedPlayers.has(idx));
 
   return (
     <div className="space-y-5">
@@ -484,6 +508,33 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
               />
             </div>
 
+            {/* Contract Status */}
+            <div>
+              <Label className="text-xs font-medium mb-1.5 block">Contract Status</Label>
+              <Select value={filters.contractStatus || 'any'} onValueChange={v => handleClientFilterChange({ ...filters, contractStatus: v })}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Any" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any</SelectItem>
+                  <SelectItem value="free_agent">Free Agent / Expired</SelectItem>
+                  <SelectItem value="expiring_6m">Expiring within 6 months</SelectItem>
+                  <SelectItem value="expiring_12m">Expiring within 12 months</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Exclude Loans */}
+            <div className="flex items-end pb-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={filters.excludeLoans || false}
+                  onCheckedChange={(checked) => handleClientFilterChange({ ...filters, excludeLoans: checked === true })}
+                />
+                <span className="text-sm">Exclude loan players</span>
+              </label>
+            </div>
+
             {/* Search Button */}
             <div className="flex items-end">
               <Button onClick={handleSearch} disabled={searching} className="w-full h-9">
@@ -522,85 +573,61 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
                   {results.length} before client filters
                 </Badge>
               )}
-              <div className="ml-auto">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddAllToDatabase}
-                  disabled={addingAll || allAdded}
-                  className="h-8 text-xs"
-                >
-                  {addingAll ? (
-                    <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Adding...</>
-                  ) : allAdded ? (
-                    <><Check className="h-3.5 w-3.5 mr-1.5" /> All Added</>
-                  ) : (
-                    <><Users className="h-3.5 w-3.5 mr-1.5" /> Add All to Database</>
-                  )}
-                </Button>
-              </div>
             </div>
 
             {/* Mobile: compact card layout */}
             {isMobile ? (
               <div className="space-y-2">
-                {displayResults.map((player, idx) => (
-                  <div key={idx} className="p-3 rounded-md border bg-card flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm truncate">{player.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{player.position} · {player.age} · {player.club}</p>
-                      {player.marketValue && (
-                        <p className="text-xs text-primary font-medium">{player.marketValue}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                        <a href={player.transfermarktUrl} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </a>
-                      </Button>
-                      {shortlistedPlayers.has(idx) ? (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-500" disabled>
-                          <Star className="h-4 w-4 fill-current" />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          disabled={shortlistingPlayers.has(idx)}
-                          onClick={() => handleShortlistPlayer(player, idx)}
-                          title="Add to shortlist"
-                        >
-                          {shortlistingPlayers.has(idx) ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Star className="h-3.5 w-3.5" />
+                {displayResults.map((player, idx) => {
+                  const isShortlisted = shortlistedUrls.has(player.transfermarktUrl);
+                  const isShortlisting = shortlistingPlayers.has(player.transfermarktUrl);
+                  return (
+                    <div key={idx} className="p-3 rounded-md border bg-card flex items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm truncate">{player.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{player.position} · {player.age} · {player.club}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {player.marketValue && (
+                            <span className="text-xs text-primary font-medium">{player.marketValue}</span>
                           )}
-                        </Button>
-                      )}
-                      {addedPlayers.has(idx) ? (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-green-500" disabled>
-                          <Check className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          disabled={addingPlayers.has(idx)}
-                          onClick={() => handleAddToDatabase(player, idx)}
-                        >
-                          {addingPlayers.has(idx) ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <UserPlus className="h-3.5 w-3.5" />
+                          {player.contractUntil && (
+                            <span className="text-xs text-muted-foreground">📋 {player.contractUntil}</span>
                           )}
+                          {player.isLoan && (
+                            <Badge variant="outline" className="text-[10px] px-1 py-0">Loan</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                          <a href={player.transfermarktUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
                         </Button>
-                      )}
+                        {isShortlisted ? (
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-500" disabled>
+                            <Star className="h-4 w-4 fill-current" />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={isShortlisting}
+                            onClick={() => handleShortlistPlayer(player)}
+                            title="Add to shortlist"
+                          >
+                            {isShortlisting ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Star className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               /* Desktop: full table */
@@ -614,85 +641,73 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
                       <TableHead>Nationality</TableHead>
                       <TableHead>Club</TableHead>
                       <TableHead>Value</TableHead>
+                      <TableHead>Contract</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="w-[70px]">Link</TableHead>
                       <TableHead className="w-[70px]">Shortlist</TableHead>
-                      <TableHead className="w-[70px]">Add</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {displayResults.map((player, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell className="font-medium">{player.name}</TableCell>
-                        <TableCell className="text-sm">{player.position || '-'}</TableCell>
-                        <TableCell>{player.age || '-'}</TableCell>
-                        <TableCell className="text-sm">{player.nationality || '-'}</TableCell>
-                        <TableCell className="text-sm">{player.club || '-'}</TableCell>
-                        <TableCell className="text-sm font-medium text-primary">{player.marketValue || '-'}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={player.agentStatus === 'no_agent'
-                              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                              : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                            }
-                          >
-                            {player.agentStatus === 'no_agent' ? 'No Agent' : 'Family Agent'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                            <a href={player.transfermarktUrl} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          </Button>
-                        </TableCell>
-                        <TableCell>
-                          {shortlistedPlayers.has(idx) ? (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-500" disabled>
-                              <Star className="h-3.5 w-3.5 fill-current" />
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              disabled={shortlistingPlayers.has(idx)}
-                              onClick={() => handleShortlistPlayer(player, idx)}
-                              title="Add to shortlist"
+                    {displayResults.map((player, idx) => {
+                      const isShortlisted = shortlistedUrls.has(player.transfermarktUrl);
+                      const isShortlisting = shortlistingPlayers.has(player.transfermarktUrl);
+                      return (
+                        <TableRow key={idx}>
+                          <TableCell className="font-medium">
+                            {player.name}
+                            {player.isLoan && (
+                              <Badge variant="outline" className="ml-1.5 text-[10px] px-1 py-0">Loan</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm">{player.position || '-'}</TableCell>
+                          <TableCell>{player.age || '-'}</TableCell>
+                          <TableCell className="text-sm">{player.nationality || '-'}</TableCell>
+                          <TableCell className="text-sm">{player.club || '-'}</TableCell>
+                          <TableCell className="text-sm font-medium text-primary">{player.marketValue || '-'}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{player.contractUntil || '-'}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={player.agentStatus === 'no_agent'
+                                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                              }
                             >
-                              {shortlistingPlayers.has(idx) ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <Star className="h-3.5 w-3.5" />
-                              )}
+                              {player.agentStatus === 'no_agent' ? 'No Agent' : 'Family Agent'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                              <a href={player.transfermarktUrl} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </a>
                             </Button>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {addedPlayers.has(idx) ? (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-green-500" disabled>
-                              <Check className="h-3.5 w-3.5" />
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              disabled={addingPlayers.has(idx)}
-                              onClick={() => handleAddToDatabase(player, idx)}
-                              title="Add to Player Outreach"
-                            >
-                              {addingPlayers.has(idx) ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <UserPlus className="h-3.5 w-3.5" />
-                              )}
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          </TableCell>
+                          <TableCell>
+                            {isShortlisted ? (
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-500" disabled>
+                                <Star className="h-3.5 w-3.5 fill-current" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                disabled={isShortlisting}
+                                onClick={() => handleShortlistPlayer(player)}
+                                title="Add to shortlist"
+                              >
+                                {isShortlisting ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Star className="h-3.5 w-3.5" />
+                                )}
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
