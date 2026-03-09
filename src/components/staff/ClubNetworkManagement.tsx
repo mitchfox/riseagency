@@ -275,11 +275,13 @@ const ClubNetworkManagement = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="contacts" className="w-full">
-        <TabsList>
-          <TabsTrigger value="contacts">Contacts</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="pathways">Message Pathways</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="inline-flex w-max sm:w-auto">
+            <TabsTrigger value="contacts">Contacts</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="pathways">Pathways</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="contacts" className="mt-6">
           <div>
