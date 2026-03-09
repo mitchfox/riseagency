@@ -3,7 +3,11 @@
   const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
                 (window.navigator as any).standalone === true;
 
-  if (!isPWA) return;
+  // Skip scope guard in Lovable preview environment (iframe or with __lovable_token)
+  const isLovablePreview = window.location.search.includes('__lovable_token') ||
+                           window.self !== window.top;
+
+  if (!isPWA || isLovablePreview) return;
 
   const currentPathname = window.location.pathname;
   const currentFullPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
