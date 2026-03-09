@@ -169,6 +169,8 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
   const [hasSearched, setHasSearched] = useState(false);
   const [addingPlayers, setAddingPlayers] = useState<Set<number>>(new Set());
   const [addedPlayers, setAddedPlayers] = useState<Set<number>>(new Set());
+  const [shortlistingPlayers, setShortlistingPlayers] = useState<Set<number>>(new Set());
+  const [shortlistedPlayers, setShortlistedPlayers] = useState<Set<number>>(new Set());
   const [addingAll, setAddingAll] = useState(false);
   const isMobile = useIsMobile();
 
