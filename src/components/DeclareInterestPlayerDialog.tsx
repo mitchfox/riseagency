@@ -62,6 +62,9 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
       query = query.eq('visible_on_stars_page', true);
     }
     
+    // Exclude scouted and fuel_for_football players from public-facing lists
+    query = query.not('representation_status', 'in', '("scouted","fuel_for_football")');
+    
     const { data, error } = await query;
     
     if (!error && data) {

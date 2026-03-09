@@ -90,7 +90,7 @@ export function StaticLandingFallback({ performanceReason }: StaticLandingFallba
         />
         
         {/* Portal & Staff links */}
-        <div className="absolute top-[34px] md:top-8 right-4 flex items-center gap-3">
+        <div className="absolute top-[42px] md:top-8 right-4 flex items-center gap-3">
           <Link to="/staff" className="text-white/50 hover:text-white/80 text-xs font-bebas uppercase tracking-wider transition-colors duration-300">
             {t("header.staff", "Staff")}
           </Link>
@@ -104,11 +104,11 @@ export function StaticLandingFallback({ performanceReason }: StaticLandingFallba
       </div>
 
       {/* Center Section - Static Player Image */}
-      <div className="relative z-10 flex-1 flex items-center justify-center w-full max-w-lg mx-auto px-4">
+      <div className="relative z-10 flex-1 flex items-center justify-center w-full max-w-lg mx-auto px-4 min-h-0">
         <img 
           src="/assets/player-base.png"
           alt=""
-          className="max-h-[50vh] md:max-h-[55vh] w-auto object-contain opacity-90"
+          className="max-h-[45vh] md:max-h-[55vh] w-auto object-contain opacity-90"
           loading="eager"
         />
       </div>
