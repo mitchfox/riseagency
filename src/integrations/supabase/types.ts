@@ -3104,6 +3104,10 @@ export type Database = {
           id: string
           music_tracks: Json | null
           player_id: string
+          rise_with_us_closing: string | null
+          rise_with_us_intro: string | null
+          rise_with_us_show_portal: boolean | null
+          rise_with_us_show_services: boolean | null
           show_analysis: boolean
           show_aphorisms: boolean
           show_cognisance: boolean
@@ -3138,6 +3142,10 @@ export type Database = {
           id?: string
           music_tracks?: Json | null
           player_id: string
+          rise_with_us_closing?: string | null
+          rise_with_us_intro?: string | null
+          rise_with_us_show_portal?: boolean | null
+          rise_with_us_show_services?: boolean | null
           show_analysis?: boolean
           show_aphorisms?: boolean
           show_cognisance?: boolean
@@ -3172,6 +3180,10 @@ export type Database = {
           id?: string
           music_tracks?: Json | null
           player_id?: string
+          rise_with_us_closing?: string | null
+          rise_with_us_intro?: string | null
+          rise_with_us_show_portal?: boolean | null
+          rise_with_us_show_services?: boolean | null
           show_analysis?: boolean
           show_aphorisms?: boolean
           show_cognisance?: boolean
