@@ -1703,7 +1703,7 @@ const Staff = () => {
       </div>
 
       {/* Search Bar - At Bottom on Mobile */}
-      <div className={`border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${isMobile ? 'fixed bottom-0 left-0 right-0' : 'sticky bottom-0'} z-10 relative`}>
+      <div className={`border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${isMobile ? 'fixed bottom-0 left-0 right-0' : 'sticky bottom-0'} z-10 relative`} style={{ paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 0px)' : undefined }}>
         <div className="container mx-auto px-3 md:px-4 py-3">
           <div className="flex items-center justify-between gap-2 md:gap-4">
             {/* Mobile menu button */}
