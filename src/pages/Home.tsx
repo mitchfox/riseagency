@@ -1,4 +1,5 @@
 import { useMemo, lazy, Suspense } from 'react';
+import { Navigate } from 'react-router-dom';
 import { getSubdomainInfo } from '@/lib/subdomainUtils';
 import { PageLoading } from '@/components/LoadingSpinner';
 
@@ -27,8 +28,21 @@ const subdomainComponents: Record<string, React.LazyExoticComponent<React.Compon
   'business': Business,
 };
 
+// Detect Lovable preview environment
+const isLovablePreview = (() => {
+  const hostname = window.location.hostname;
+  return hostname.startsWith('id-preview--') ||
+         window.location.search.includes('__lovable_token') ||
+         (window.self !== window.top && (hostname.includes('lovable') || hostname.includes('localhost')));
+})();
+
 const Home = () => {
   const subdomainInfo = useMemo(() => getSubdomainInfo(), []);
+
+  // In Lovable preview, redirect to /staff to avoid landing page reload issues
+  if (isLovablePreview) {
+    return <Navigate to="/staff" replace />;
+  }
 
   // If we have a role subdomain with a matching component, render it
   if (subdomainInfo.type === 'role' && subdomainInfo.subdomain && subdomainComponents[subdomainInfo.subdomain]) {
