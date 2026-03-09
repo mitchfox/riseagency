@@ -616,6 +616,7 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
                       <TableHead>Value</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="w-[70px]">Link</TableHead>
+                      <TableHead className="w-[70px]">Shortlist</TableHead>
                       <TableHead className="w-[70px]">Add</TableHead>
                     </TableRow>
                   </TableHeader>
