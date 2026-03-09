@@ -160,13 +160,8 @@ export function StaticLandingFallback({ performanceReason }: StaticLandingFallba
 
         {/* Mobile Navigation */}
         <div className="md:hidden flex flex-col items-center gap-2 px-4">
-          {/* Language (above buttons on mobile) */}
-          <div className="mt-1">
-            <LanguageMapSelector />
-          </div>
-
           {/* Action Buttons */}
-          <div className="flex gap-2 mb-1">
+          <div className="flex gap-2 mb-0">
             <Button
               onClick={() => setShowRepresentation(true)}
               variant="outline"
@@ -185,7 +180,7 @@ export function StaticLandingFallback({ performanceReason }: StaticLandingFallba
           </div>
 
           {/* Select your role (directly above roles) */}
-          <span className="text-[9px] font-bebas uppercase tracking-[0.15em] text-white/30 mt-1">
+          <span className="text-[9px] font-bebas uppercase tracking-[0.15em] text-white/30 mt-0.5">
             {t("landing.select_role_enter", "Select Your Role To Enter Site")}
           </span>
 
@@ -221,6 +216,11 @@ export function StaticLandingFallback({ performanceReason }: StaticLandingFallba
                 </div>
               ))}
             </nav>
+          </div>
+
+          {/* Language (below roles on mobile) */}
+          <div className="mt-2">
+            <LanguageMapSelector />
           </div>
         </div>
       </div>
