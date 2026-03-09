@@ -104,11 +104,11 @@ export function StaticLandingFallback({ performanceReason }: StaticLandingFallba
       </div>
 
       {/* Center Section - Static Player Image */}
-      <div className="relative z-10 flex-1 flex items-center justify-center w-full max-w-lg mx-auto px-4">
+      <div className="relative z-10 flex-1 flex items-center justify-center w-full max-w-lg mx-auto px-4 min-h-0">
         <img 
           src="/assets/player-base.png"
           alt=""
-          className="max-h-[50vh] md:max-h-[55vh] w-auto object-contain opacity-90"
+          className="max-h-[45vh] md:max-h-[55vh] w-auto object-contain opacity-90"
           loading="eager"
         />
       </div>
