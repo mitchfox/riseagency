@@ -22,6 +22,7 @@ interface PlayerResult {
   agentStatus: 'no_agent' | 'family_agent' | 'unknown';
   agentName?: string;
   transfermarktUrl: string;
+  isLoan: boolean;
 }
 
 const TM_API = 'https://tmapi-alpha.transfermarkt.technology';
@@ -112,6 +113,7 @@ interface PlayerProfile {
   agentStatus: 'no_agent' | 'family_agent' | 'unknown';
   agentName: string;
   relativeUrl: string;
+  isLoan: boolean;
 }
 
 async function getPlayerProfile(playerId: string): Promise<PlayerProfile | null> {
@@ -131,19 +133,23 @@ async function getPlayerProfile(playerId: string): Promise<PlayerProfile | null>
     if (!agencyId || agencyId === 0) {
       agentStatus = 'no_agent';
     } else if (agency?.isSpecialConsultantAgency) {
-      // Special agencies include "Relatives" / family members
       agentStatus = 'family_agent';
       agentName = agency.name || '';
     } else {
-      agentStatus = 'unknown'; // Has a professional agent
+      agentStatus = 'unknown';
       agentName = agency?.name || '';
     }
 
-    // Get club name from assignments
+    // Get club name and loan status from assignments
     let clubName = '';
+    let isLoan = false;
     const currentClub = p.clubAssignments?.find((a: any) => a.type === 'current');
     if (currentClub) {
-      clubName = currentClub.clubId; // We'll resolve later if needed
+      clubName = currentClub.clubId;
+      // Check if current assignment is a loan
+      if (currentClub.isLoan === true || currentClub.transferType === 'loan' || currentClub.loanFrom) {
+        isLoan = true;
+      }
     }
 
     // Format market value
@@ -175,6 +181,7 @@ async function getPlayerProfile(playerId: string): Promise<PlayerProfile | null>
       agentStatus,
       agentName,
       relativeUrl: p.relativeUrl || '',
+      isLoan,
     };
   } catch (e) {
     console.error(`Failed to get player ${playerId}:`, e);
@@ -213,27 +220,22 @@ async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerR
   const competitionId = filters.countryPlayingIn || 'GB1';
   console.log('Searching competition:', competitionId);
 
-  // Step 1: Get all club IDs from the league table
   const clubIds = await getClubIds(competitionId);
   console.log('Found clubs:', clubIds.length);
   if (clubIds.length === 0) {
     return { players: [], totalFound: 0 };
   }
 
-  // Step 2: Get all player IDs from all clubs (parallel)
   const squadResults = await Promise.all(clubIds.map(getSquadPlayerIds));
   const allPlayerIds = [...new Set(squadResults.flat())];
   console.log('Total unique players:', allPlayerIds.length);
 
-  // Step 3: Get player profiles (batched parallel)
   const profiles = await batchFetch(allPlayerIds, getPlayerProfile, 25);
   console.log('Fetched profiles:', profiles.length);
 
-  // Step 4: Filter for unrepresented players
   let filtered = profiles.filter(p => p.agentStatus === 'no_agent' || p.agentStatus === 'family_agent');
   console.log('Unrepresented players:', filtered.length);
 
-  // Apply additional filters
   if (filters.ageMin) {
     filtered = filtered.filter(p => p.age >= filters.ageMin!);
   }
@@ -253,11 +255,9 @@ async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerR
 
   console.log('After filters:', filtered.length);
 
-  // Get club names for filtered players
   const uniqueClubIds = [...new Set(filtered.map(p => p.clubId).filter(Boolean))];
   await Promise.all(uniqueClubIds.map(getClubName));
 
-  // Convert to result format
   const players: PlayerResult[] = filtered.map(p => ({
     name: p.name,
     position: p.position,
@@ -269,6 +269,7 @@ async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerR
     agentStatus: p.agentStatus,
     agentName: p.agentName,
     transfermarktUrl: p.relativeUrl ? `https://www.transfermarkt.co.uk${p.relativeUrl}` : '',
+    isLoan: p.isLoan,
   }));
 
   return { players, totalFound: allPlayerIds.length };
