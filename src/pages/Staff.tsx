@@ -1408,10 +1408,10 @@ const Staff = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Sidebar Collapse Toggle Button */}
+        {/* Sidebar Collapse Toggle Button - hidden on mobile, sidebar accessed via bottom sheet */}
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className={`fixed ${isMobile ? 'top-20' : 'top-20'} left-2 z-20 p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border shadow-lg hover:bg-background transition-all duration-300 pwa-toggle-top ${
+          className={`fixed ${isMobile ? 'hidden' : 'top-20'} left-2 z-20 p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border shadow-lg hover:bg-background transition-all duration-300 pwa-toggle-top ${
             sidebarCollapsed ? 'opacity-50 hover:opacity-100' : ''
           }`}
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -1423,8 +1423,8 @@ const Staff = () => {
           )}
         </button>
 
-        {/* Left Sidebar - Fixed */}
-        <div className={`fixed ${isMobile ? 'top-16' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 pwa-sidebar-top ${
+        {/* Left Sidebar - Hidden on mobile (use bottom sheet instead) */}
+        <div className={`fixed ${isMobile ? 'hidden' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 pwa-sidebar-top ${
           sidebarCollapsed ? 'w-0 border-0 opacity-0 pointer-events-none' : 'w-14 md:w-24'
         }`}>
           {/* Pinned Sections */}
