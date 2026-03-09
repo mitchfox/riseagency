@@ -106,7 +106,10 @@ import App from "./App.tsx";
 import "./index.css";
 
 // Register service worker with update detection - wrapped in try-catch to prevent console errors
-if ('serviceWorker' in navigator) {
+const isLovablePreviewEnv = window.location.hostname.startsWith('id-preview--') ||
+                            window.location.search.includes('__lovable_token');
+
+if ('serviceWorker' in navigator && !isLovablePreviewEnv) {
   window.addEventListener('load', async () => {
     try {
       const registration = await navigator.serviceWorker.register('/sw.js');

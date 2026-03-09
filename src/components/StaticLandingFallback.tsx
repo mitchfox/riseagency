@@ -160,8 +160,13 @@ export function StaticLandingFallback({ performanceReason }: StaticLandingFallba
 
         {/* Mobile Navigation */}
         <div className="md:hidden flex flex-col items-center gap-2 px-4">
+          {/* Language (above buttons on mobile) */}
+          <div className="mt-1">
+            <LanguageMapSelector />
+          </div>
+
           {/* Action Buttons */}
-          <div className="flex gap-2 mb-2">
+          <div className="flex gap-2 mb-1">
             <Button
               onClick={() => setShowRepresentation(true)}
               variant="outline"
@@ -179,13 +184,10 @@ export function StaticLandingFallback({ performanceReason }: StaticLandingFallba
             </Button>
           </div>
 
-          {/* Select role & language */}
-          <div className="flex flex-col items-center gap-2 mt-1">
-            <span className="text-[9px] font-bebas uppercase tracking-[0.15em] text-white/30">
-              {t("landing.select_role_enter", "Select Your Role To Enter Site")}
-            </span>
-            <LanguageMapSelector />
-          </div>
+          {/* Select your role (directly above roles) */}
+          <span className="text-[9px] font-bebas uppercase tracking-[0.15em] text-white/30 mt-1">
+            {t("landing.select_role_enter", "Select Your Role To Enter Site")}
+          </span>
 
           {/* Top row: Players, Coaches, Clubs */}
           <div className="border-t border-primary/30 pt-2 w-full max-w-[280px]">
