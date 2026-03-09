@@ -1056,7 +1056,7 @@ const Staff = () => {
   })).filter(category => category.sections.filter(s => !(s as any).isGroupLabel).length > 0);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden overflow-x-hidden">
       <ExportProgressFloat />
       {/* Marble background with more visible overlay */}
       <div 
