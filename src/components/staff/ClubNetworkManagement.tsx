@@ -323,7 +323,7 @@ const ClubNetworkManagement = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <div className="flex gap-1">
+              <div className="flex flex-wrap gap-1">
                 {(['name', 'club_name', 'country'] as SortField[]).map(f => (
                   <Button
                     key={f}
