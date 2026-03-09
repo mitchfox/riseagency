@@ -648,6 +648,28 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
                           </Button>
                         </TableCell>
                         <TableCell>
+                          {shortlistedPlayers.has(idx) ? (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-500" disabled>
+                              <Star className="h-3.5 w-3.5 fill-current" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              disabled={shortlistingPlayers.has(idx)}
+                              onClick={() => handleShortlistPlayer(player, idx)}
+                              title="Add to shortlist"
+                            >
+                              {shortlistingPlayers.has(idx) ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Star className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           {addedPlayers.has(idx) ? (
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-green-500" disabled>
                               <Check className="h-3.5 w-3.5" />
