@@ -5305,6 +5305,66 @@ export type Database = {
         }
         Relationships: []
       }
+      transfermarkt_shortlist: {
+        Row: {
+          added_to_outreach: boolean
+          age: number | null
+          agent_status: string | null
+          club: string | null
+          contacted: boolean
+          contacted_at: string | null
+          contacted_by: string | null
+          created_at: string
+          id: string
+          market_value: string | null
+          nationality: string | null
+          notes: string | null
+          player_name: string
+          position: string | null
+          shortlisted_by: string | null
+          transfermarkt_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          added_to_outreach?: boolean
+          age?: number | null
+          agent_status?: string | null
+          club?: string | null
+          contacted?: boolean
+          contacted_at?: string | null
+          contacted_by?: string | null
+          created_at?: string
+          id?: string
+          market_value?: string | null
+          nationality?: string | null
+          notes?: string | null
+          player_name: string
+          position?: string | null
+          shortlisted_by?: string | null
+          transfermarkt_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          added_to_outreach?: boolean
+          age?: number | null
+          agent_status?: string | null
+          club?: string | null
+          contacted?: boolean
+          contacted_at?: string | null
+          contacted_by?: string | null
+          created_at?: string
+          id?: string
+          market_value?: string | null
+          nationality?: string | null
+          notes?: string | null
+          player_name?: string
+          position?: string | null
+          shortlisted_by?: string | null
+          transfermarkt_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       translations: {
         Row: {
           created_at: string

@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Search, ExternalLink, UserX, Users, X, UserPlus, Check } from "lucide-react";
+import { Loader2, Search, ExternalLink, UserX, Users, X, UserPlus, Check, Star } from "lucide-react";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -169,6 +169,8 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
   const [hasSearched, setHasSearched] = useState(false);
   const [addingPlayers, setAddingPlayers] = useState<Set<number>>(new Set());
   const [addedPlayers, setAddedPlayers] = useState<Set<number>>(new Set());
+  const [shortlistingPlayers, setShortlistingPlayers] = useState<Set<number>>(new Set());
+  const [shortlistedPlayers, setShortlistedPlayers] = useState<Set<number>>(new Set());
   const [addingAll, setAddingAll] = useState(false);
   const isMobile = useIsMobile();
 
@@ -316,6 +318,33 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
       toast.success(`Added all ${successCount} players to outreach`);
     } else {
       toast.warning(`Added ${successCount} players, ${failCount} failed`);
+    }
+  };
+
+  const handleShortlistPlayer = async (player: PlayerResult, idx: number) => {
+    setShortlistingPlayers(prev => new Set(prev).add(idx));
+    try {
+      const { error } = await supabase.from("transfermarkt_shortlist").insert({
+        player_name: player.name,
+        position: player.position || null,
+        age: parseInt(player.age) || null,
+        nationality: player.nationality || null,
+        club: player.club || null,
+        market_value: player.marketValue || null,
+        agent_status: player.agentStatus,
+        transfermarkt_url: player.transfermarktUrl || null,
+      });
+      if (error) throw error;
+      setShortlistedPlayers(prev => new Set(prev).add(idx));
+      toast.success(`${player.name} added to shortlist`);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to shortlist player");
+    } finally {
+      setShortlistingPlayers(prev => {
+        const next = new Set(prev);
+        next.delete(idx);
+        return next;
+      });
     }
   };
 
@@ -530,6 +559,26 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
                           <ExternalLink className="h-3.5 w-3.5" />
                         </a>
                       </Button>
+                      {shortlistedPlayers.has(idx) ? (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-500" disabled>
+                          <Star className="h-4 w-4 fill-current" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={shortlistingPlayers.has(idx)}
+                          onClick={() => handleShortlistPlayer(player, idx)}
+                          title="Add to shortlist"
+                        >
+                          {shortlistingPlayers.has(idx) ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Star className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                      )}
                       {addedPlayers.has(idx) ? (
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-green-500" disabled>
                           <Check className="h-4 w-4" />
@@ -567,6 +616,7 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
                       <TableHead>Value</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="w-[70px]">Link</TableHead>
+                      <TableHead className="w-[70px]">Shortlist</TableHead>
                       <TableHead className="w-[70px]">Add</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -596,6 +646,28 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
                               <ExternalLink className="h-3.5 w-3.5" />
                             </a>
                           </Button>
+                        </TableCell>
+                        <TableCell>
+                          {shortlistedPlayers.has(idx) ? (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-500" disabled>
+                              <Star className="h-3.5 w-3.5 fill-current" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              disabled={shortlistingPlayers.has(idx)}
+                              onClick={() => handleShortlistPlayer(player, idx)}
+                              title="Add to shortlist"
+                            >
+                              {shortlistingPlayers.has(idx) ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Star className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          )}
                         </TableCell>
                         <TableCell>
                           {addedPlayers.has(idx) ? (

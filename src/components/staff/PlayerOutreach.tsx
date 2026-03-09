@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Users, Search } from "lucide-react";
+import { Users, Search, Star } from "lucide-react";
 import { PlayerOutreachPanel } from "./PlayerOutreachPanel";
 import { TransfermarktScraper } from "./TransfermarktScraper";
+import { TransfermarktShortlist } from "./TransfermarktShortlist";
 
 export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   const [activeTab, setActiveTab] = useState("youth");
@@ -32,9 +33,13 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
       <TransfermarktScraper visible={scraperVisible} onClose={() => setScraperVisible(false)} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 h-auto sm:h-10">
+        <TabsList className="grid w-full grid-cols-3 h-auto sm:h-10">
           <TabsTrigger value="youth" className="text-sm sm:text-base py-2.5">Youth (U18)</TabsTrigger>
           <TabsTrigger value="pro" className="text-sm sm:text-base py-2.5">Pro</TabsTrigger>
+          <TabsTrigger value="shortlist" className="text-sm sm:text-base py-2.5">
+            <Star className="h-3.5 w-3.5 mr-1.5" />
+            Shortlist
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="youth" className="mt-4">
@@ -43,6 +48,10 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
 
         <TabsContent value="pro" className="mt-4">
           <PlayerOutreachPanel type="pro" />
+        </TabsContent>
+
+        <TabsContent value="shortlist" className="mt-4">
+          <TransfermarktShortlist />
         </TabsContent>
       </Tabs>
     </div>
