@@ -75,6 +75,23 @@ interface PlayerStats {
   external_player_id?: string | null;
 }
 
+// Convert DD/MM/YYYY or other formats to YYYY-MM-DD for the database
+const formatDateForDb = (dateStr: string): string | null => {
+  if (!dateStr) return null;
+  // Already in YYYY-MM-DD format (from HTML date input)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  // DD/MM/YYYY format (from bio JSON)
+  const ddmmyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (ddmmyyyy) {
+    const [, day, month, year] = ddmmyyyy;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+  // MM/DD/YYYY format
+  const mmddyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mmddyyyy) return null; // ambiguous, already handled above
+  return null;
+};
+
 const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
