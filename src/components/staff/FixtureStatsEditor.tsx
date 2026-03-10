@@ -155,7 +155,30 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      if (data?.fixtureStats) {
+      if (data?.multiplePlayersAvailable && data?.players) {
+        // Multiple players returned from SofaScore lineup — pick the first one for now
+        // TODO: Could add a player selector dialog
+        const playerNames = Object.keys(data.players);
+        const firstName = playerNames[0];
+        const playerData = data.players[firstName];
+        if (playerData?.stats && Object.keys(playerData.stats).length > 0) {
+          const suggestions: Record<string, AISuggestion> = {};
+          for (const [key, value] of Object.entries(playerData.stats as Record<string, number>)) {
+            suggestions[key] = {
+              value,
+              reasoning: `From SofaScore (${firstName}, ${playerData.team})`,
+              contributing_action_numbers: [],
+            };
+          }
+          setAiSuggestions(prev => ({ ...prev, ...suggestions }));
+          const count = Object.keys(playerData.stats).length;
+          toast.success(`Parsed ${count} stat${count !== 1 ? 's' : ''} from SofaScore for ${firstName}`);
+          setShowUrlInput(false);
+          setUrlInput("");
+        } else {
+          toast.info(`Found ${playerNames.length} players but no stats available yet`);
+        }
+      } else if (data?.fixtureStats) {
         const suggestions: Record<string, AISuggestion> = {};
         for (const [key, value] of Object.entries(data.fixtureStats as Record<string, number>)) {
           suggestions[key] = {

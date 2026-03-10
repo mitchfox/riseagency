@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, EyeOff, Calculator, GripVertical, Sparkles, Loader2 } from 'lucide-react';
+import { Plus, EyeOff, Calculator, GripVertical, Sparkles, Loader2, Check, X } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/edgeFunctionHelper';
 import { toast } from 'sonner';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -216,6 +216,16 @@ export const UnifiedStatsEditor = ({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingStatKey, setEditingStatKey] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<Array<{
+    stat_key: string;
+    stat_type: 'success_fail' | 'count' | 'score';
+    successful?: number;
+    total?: number;
+    count?: number;
+    score?: number;
+    reasoning: string;
+    contributing_action_numbers: number[];
+  }>>([]);
 
   const handleSuggestWithAI = async () => {
     if (!actions || actions.length === 0) {
@@ -250,55 +260,54 @@ export const UnifiedStatsEditor = ({
         return;
       }
 
-      // Merge suggestions into existing stats
-      const updatedStats = [...stats];
-      let addedCount = 0;
-      let updatedCount = 0;
-
-      for (const suggestion of suggestions) {
-        const config = STAT_TYPE_CONFIGS.find(c => c.key === suggestion.stat_key);
-        const displayName = config?.name || suggestion.stat_key;
-        const existingIdx = updatedStats.findIndex(s => s.key === suggestion.stat_key);
-
-        const newStat: UnifiedStat = {
-          key: suggestion.stat_key,
-          displayName,
-          type: suggestion.stat_type,
-          isFromActions: false,
-        };
-
-        if (suggestion.stat_type === 'success_fail') {
-          newStat.successful = suggestion.successful ?? 0;
-          newStat.total = suggestion.total ?? 0;
-        } else if (suggestion.stat_type === 'count') {
-          newStat.count = suggestion.count ?? 0;
-        } else if (suggestion.stat_type === 'score') {
-          newStat.score = suggestion.score ?? 0;
-          if (shouldShowPer90(suggestion.stat_key) && minutesPlayed > 0) {
-            newStat.per90 = ((newStat.score / minutesPlayed) * 90).toFixed(3);
-          }
-        }
-
-        if (existingIdx >= 0) {
-          updatedStats[existingIdx] = { ...updatedStats[existingIdx], ...newStat };
-          updatedCount++;
-        } else {
-          updatedStats.push(newStat);
-          addedCount++;
-        }
-      }
-
-      onStatsChange(updatedStats);
-      const parts = [];
-      if (addedCount) parts.push(`${addedCount} added`);
-      if (updatedCount) parts.push(`${updatedCount} updated`);
-      toast.success(`AI suggested stats: ${parts.join(', ')}`);
+      setAiSuggestions(suggestions);
+      toast.success(`AI suggested ${suggestions.length} stat${suggestions.length !== 1 ? 's' : ''} — click to accept`);
     } catch (err: any) {
       console.error('AI match stats error:', err);
       toast.error('Failed to get AI suggestions');
     } finally {
       setAiLoading(false);
     }
+  };
+
+  const handleAcceptSuggestion = (suggestion: typeof aiSuggestions[0]) => {
+    const config = STAT_TYPE_CONFIGS.find(c => c.key === suggestion.stat_key);
+    const displayName = config?.name || suggestion.stat_key;
+    const existingIdx = stats.findIndex(s => s.key === suggestion.stat_key);
+
+    const newStat: UnifiedStat = {
+      key: suggestion.stat_key,
+      displayName,
+      type: suggestion.stat_type,
+      isFromActions: false,
+    };
+
+    if (suggestion.stat_type === 'success_fail') {
+      newStat.successful = suggestion.successful ?? 0;
+      newStat.total = suggestion.total ?? 0;
+    } else if (suggestion.stat_type === 'count') {
+      newStat.count = suggestion.count ?? 0;
+    } else if (suggestion.stat_type === 'score') {
+      newStat.score = suggestion.score ?? 0;
+      if (shouldShowPer90(suggestion.stat_key) && minutesPlayed > 0) {
+        newStat.per90 = ((newStat.score / minutesPlayed) * 90).toFixed(3);
+      }
+    }
+
+    const updatedStats = [...stats];
+    if (existingIdx >= 0) {
+      updatedStats[existingIdx] = { ...updatedStats[existingIdx], ...newStat };
+    } else {
+      updatedStats.push(newStat);
+    }
+
+    onStatsChange(updatedStats);
+    setAiSuggestions(prev => prev.filter(s => s.stat_key !== suggestion.stat_key));
+    toast.success(`Accepted: ${displayName}`);
+  };
+
+  const handleDismissSuggestion = (statKey: string) => {
+    setAiSuggestions(prev => prev.filter(s => s.stat_key !== statKey));
   };
 
   const sensors = useSensors(
@@ -726,6 +735,76 @@ export const UnifiedStatsEditor = ({
             </div>
           </SortableContext>
         </DndContext>
+      )}
+
+      {/* AI Suggestions Panel */}
+      {aiSuggestions.length > 0 && (
+        <div className="mt-3 p-3 border rounded-lg bg-primary/5 border-primary/20 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-semibold text-primary">AI Suggestions ({aiSuggestions.length})</Label>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setAiSuggestions([])}
+              className="h-6 text-xs text-muted-foreground"
+            >
+              Dismiss all
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {aiSuggestions.map((suggestion) => {
+              const config = STAT_TYPE_CONFIGS.find(c => c.key === suggestion.stat_key);
+              const displayName = config?.name || suggestion.stat_key;
+              const valueDisplay = suggestion.stat_type === 'success_fail'
+                ? `${suggestion.successful ?? 0}/${suggestion.total ?? 0}`
+                : suggestion.stat_type === 'count'
+                  ? String(suggestion.count ?? 0)
+                  : (suggestion.score ?? 0).toFixed(2);
+
+              return (
+                <Popover key={suggestion.stat_key}>
+                  <PopoverTrigger asChild>
+                    <button className="flex items-center justify-between gap-2 p-2 rounded-md border border-primary/30 bg-background hover:bg-accent/50 transition-colors text-left w-full">
+                      <div className="min-w-0">
+                        <div className="text-xs font-medium truncate">{displayName}</div>
+                        <div className="text-sm font-bold font-mono text-primary">{valueDisplay}</div>
+                      </div>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <span className="p-1 rounded hover:bg-primary/10" onClick={(e) => { e.stopPropagation(); handleAcceptSuggestion(suggestion); }}>
+                          <Check className="h-3.5 w-3.5 text-green-600" />
+                        </span>
+                        <span className="p-1 rounded hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); handleDismissSuggestion(suggestion.stat_key); }}>
+                          <X className="h-3.5 w-3.5 text-destructive" />
+                        </span>
+                      </div>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 text-xs" align="start">
+                    <div className="space-y-2">
+                      <p className="font-medium">{displayName}: {valueDisplay}</p>
+                      <p className="text-muted-foreground">{suggestion.reasoning}</p>
+                      {suggestion.contributing_action_numbers.length > 0 && (
+                        <p className="text-muted-foreground">
+                          Contributing actions: #{suggestion.contributing_action_numbers.join(', #')}
+                        </p>
+                      )}
+                      <Button
+                        size="sm"
+                        className="w-full h-7 text-xs"
+                        onClick={() => handleAcceptSuggestion(suggestion)}
+                      >
+                        Accept suggestion
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* Auto-Calculated Stats Section */}
