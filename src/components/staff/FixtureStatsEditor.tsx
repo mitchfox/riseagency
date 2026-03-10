@@ -68,6 +68,9 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
   const [activeCategory, setActiveCategory] = useState("Shooting");
   const [aiSuggestions, setAiSuggestions] = useState<Record<string, AISuggestion>>({});
   const [aiLoading, setAiLoading] = useState(false);
+  const [urlInput, setUrlInput] = useState("");
+  const [urlParsing, setUrlParsing] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
 
   const handleChange = (key: string, value: string) => {
     const updated = { ...fixtureStats };
