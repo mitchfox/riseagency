@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Languages, Loader2 } from "lucide-react";
+import { Languages, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const LANGUAGES = [
+export const LANGUAGES = [
   { code: "en", label: "English", flag: "🇬🇧" },
   { code: "es", label: "Español", flag: "🇪🇸" },
   { code: "pt", label: "Português", flag: "🇵🇹" },
@@ -25,6 +25,21 @@ interface ReportLanguageSelectorProps {
   getTranslatableFields: () => Record<string, string>;
   /** Called with the translated fields to apply them */
   onTranslated: (translations: Record<string, string>) => void;
+  /** Current translated content stored in DB */
+  translatedContent?: TranslatedContent | null;
+  /** Called when translated content changes */
+  onTranslatedContentChange?: (content: TranslatedContent | null) => void;
+  /** Current editing tab: 'en' or language code */
+  activeTab?: string;
+  /** Called when tab changes */
+  onActiveTabChange?: (tab: string) => void;
+}
+
+export interface TranslatedContent {
+  language: string;
+  fields: Record<string, string>;
+  /** Snapshot of English fields at time of translation, for diff detection */
+  englishSnapshot?: Record<string, string>;
 }
 
 export const ReportLanguageSelector = ({
@@ -32,8 +47,13 @@ export const ReportLanguageSelector = ({
   onLanguageChange,
   getTranslatableFields,
   onTranslated,
+  translatedContent,
+  onTranslatedContentChange,
+  activeTab = "en",
+  onActiveTabChange,
 }: ReportLanguageSelectorProps) => {
   const [translating, setTranslating] = useState(false);
+  const [updatingTranslation, setUpdatingTranslation] = useState(false);
 
   const handleTranslateAll = async () => {
     if (selectedLanguage === "en") {
@@ -71,9 +91,17 @@ export const ReportLanguageSelector = ({
       }
 
       if (data?.translations) {
-        onTranslated(data.translations);
+        // Store translated content with English snapshot for future diff
+        const translatedData: TranslatedContent = {
+          language: selectedLanguage,
+          fields: data.translations,
+          englishSnapshot: { ...nonEmptyFields },
+        };
+        onTranslatedContentChange?.(translatedData);
+        onActiveTabChange?.(selectedLanguage);
+
         const lang = LANGUAGES.find(l => l.code === selectedLanguage);
-        toast.success(`Content translated to ${lang?.label || selectedLanguage}`);
+        toast.success(`Content translated to ${lang?.label || selectedLanguage}. Switch tabs to review.`);
       }
     } catch (err: any) {
       console.error("Translation error:", err);
@@ -83,8 +111,61 @@ export const ReportLanguageSelector = ({
     }
   };
 
+  const handleUpdateTranslation = async () => {
+    if (!translatedContent?.englishSnapshot) {
+      // No snapshot, re-translate everything
+      await handleTranslateAll();
+      return;
+    }
+
+    const currentFields = getTranslatableFields();
+    const snapshot = translatedContent.englishSnapshot;
+
+    // Find fields that changed since last translation
+    const changedFields: Record<string, string> = {};
+    for (const [key, value] of Object.entries(currentFields)) {
+      if (!value?.trim()) continue;
+      if (snapshot[key] !== value) {
+        changedFields[key] = value;
+      }
+    }
+
+    if (Object.keys(changedFields).length === 0) {
+      toast.info("No English content has changed since last translation");
+      return;
+    }
+
+    setUpdatingTranslation(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("translate-report-content", {
+        body: { fields: changedFields, targetLanguage: translatedContent.language },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.translations) {
+        const updatedContent: TranslatedContent = {
+          ...translatedContent,
+          fields: { ...translatedContent.fields, ...data.translations },
+          englishSnapshot: { ...currentFields },
+        };
+        onTranslatedContentChange?.(updatedContent);
+        const count = Object.keys(changedFields).length;
+        toast.success(`Updated ${count} changed field${count !== 1 ? 's' : ''}`);
+      }
+    } catch (err: any) {
+      console.error("Translation update error:", err);
+      toast.error("Update failed: " + (err.message || "Unknown error"));
+    } finally {
+      setUpdatingTranslation(false);
+    }
+  };
+
+  const hasTranslation = translatedContent && translatedContent.language === selectedLanguage;
+
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
       <Select value={selectedLanguage} onValueChange={onLanguageChange}>
         <SelectTrigger className="w-[160px] h-9">
           <SelectValue />
@@ -100,7 +181,8 @@ export const ReportLanguageSelector = ({
           ))}
         </SelectContent>
       </Select>
-      {selectedLanguage !== "en" && (
+
+      {selectedLanguage !== "en" && !hasTranslation && (
         <Button
           variant="outline"
           size="sm"
@@ -115,6 +197,71 @@ export const ReportLanguageSelector = ({
           )}
           {translating ? "Translating..." : "Translate All"}
         </Button>
+      )}
+
+      {hasTranslation && (
+        <>
+          {/* Tab switcher */}
+          <div className="flex rounded-md border overflow-hidden">
+            <button
+              onClick={() => onActiveTabChange?.("en")}
+              className={`px-3 py-1 text-xs font-medium transition-colors ${
+                activeTab === "en"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted hover:bg-accent text-muted-foreground"
+              }`}
+            >
+              🇬🇧 English
+            </button>
+            <button
+              onClick={() => onActiveTabChange?.(selectedLanguage)}
+              className={`px-3 py-1 text-xs font-medium transition-colors ${
+                activeTab === selectedLanguage
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted hover:bg-accent text-muted-foreground"
+              }`}
+            >
+              {LANGUAGES.find(l => l.code === selectedLanguage)?.flag}{" "}
+              {LANGUAGES.find(l => l.code === selectedLanguage)?.label}
+            </button>
+          </div>
+
+          {/* Update translation button - only on English tab */}
+          {activeTab === "en" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleUpdateTranslation}
+              disabled={updatingTranslation}
+              className="gap-1.5 whitespace-nowrap"
+            >
+              {updatingTranslation ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              {updatingTranslation ? "Updating..." : "Update Translation"}
+            </Button>
+          )}
+
+          {/* Re-translate button on translated tab */}
+          {activeTab === selectedLanguage && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTranslateAll}
+              disabled={translating}
+              className="gap-1.5 whitespace-nowrap"
+            >
+              {translating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Languages className="h-4 w-4" />
+              )}
+              {translating ? "Translating..." : "Re-translate All"}
+            </Button>
+          )}
+        </>
       )}
     </div>
   );

@@ -3,7 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileEdit, EyeOff, Radio, ChevronDown } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { FileEdit, EyeOff, Radio, ChevronDown, CalendarIcon, Clock } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export type VisibilityStatus = "draft" | "hidden" | "live";
 
@@ -14,6 +17,8 @@ interface VisibilityStatusButtonProps {
   placeholderMinutes?: string;
   onPlaceholderRawScoreChange?: (val: string) => void;
   onPlaceholderMinutesChange?: (val: string) => void;
+  estimatedReadyAt?: string | null;
+  onEstimatedReadyAtChange?: (val: string | null) => void;
 }
 
 const STATUS_CONFIG: Record<VisibilityStatus, { label: string; icon: typeof FileEdit; description: string; className: string }> = {
@@ -44,10 +49,39 @@ export const VisibilityStatusButton = ({
   placeholderMinutes,
   onPlaceholderRawScoreChange,
   onPlaceholderMinutesChange,
+  estimatedReadyAt,
+  onEstimatedReadyAtChange,
 }: VisibilityStatusButtonProps) => {
   const [open, setOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const config = STATUS_CONFIG[value];
   const Icon = config.icon;
+
+  const isDraft = value === "draft";
+  const readyDate = estimatedReadyAt ? new Date(estimatedReadyAt) : undefined;
+  const readyTime = readyDate ? format(readyDate, "HH:mm") : "";
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date) {
+      onEstimatedReadyAtChange?.(null);
+      return;
+    }
+    // Preserve existing time or default to 12:00
+    const existing = readyDate;
+    const hours = existing ? existing.getHours() : 12;
+    const mins = existing ? existing.getMinutes() : 0;
+    date.setHours(hours, mins, 0, 0);
+    onEstimatedReadyAtChange?.(date.toISOString());
+    setCalendarOpen(false);
+  };
+
+  const handleTimeChange = (time: string) => {
+    if (!time) return;
+    const [h, m] = time.split(":").map(Number);
+    const d = readyDate ? new Date(readyDate) : new Date();
+    d.setHours(h, m, 0, 0);
+    onEstimatedReadyAtChange?.(d.toISOString());
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -118,6 +152,59 @@ export const VisibilityStatusButton = ({
               <p className="text-xs text-muted-foreground">
                 R90 = {((parseFloat(placeholderRawScore) / parseInt(placeholderMinutes)) * 90).toFixed(2)}
               </p>
+            )}
+          </div>
+        )}
+
+        {/* Estimated Ready Time - shown for draft and hidden */}
+        {(isDraft || value === "hidden") && onEstimatedReadyAtChange && (
+          <div className="border-t mt-2 pt-2 space-y-2 px-1">
+            <p className="text-xs text-muted-foreground">Estimated ready by (shown to player):</p>
+            <div className="flex gap-2">
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "h-7 text-xs flex-1 justify-start",
+                      !readyDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="w-3 h-3 mr-1.5" />
+                    {readyDate ? format(readyDate, "dd MMM yyyy") : "Pick date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={readyDate}
+                    onSelect={handleDateSelect}
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              {readyDate && (
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-muted-foreground" />
+                  <Input
+                    type="time"
+                    value={readyTime}
+                    onChange={(e) => handleTimeChange(e.target.value)}
+                    className="h-7 text-xs w-24"
+                  />
+                </div>
+              )}
+            </div>
+            {readyDate && (
+              <button
+                onClick={() => onEstimatedReadyAtChange?.(null)}
+                className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+              >
+                Clear estimated time
+              </button>
             )}
           </div>
         )}
