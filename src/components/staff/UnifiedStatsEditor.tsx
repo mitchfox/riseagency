@@ -260,55 +260,54 @@ export const UnifiedStatsEditor = ({
         return;
       }
 
-      // Merge suggestions into existing stats
-      const updatedStats = [...stats];
-      let addedCount = 0;
-      let updatedCount = 0;
-
-      for (const suggestion of suggestions) {
-        const config = STAT_TYPE_CONFIGS.find(c => c.key === suggestion.stat_key);
-        const displayName = config?.name || suggestion.stat_key;
-        const existingIdx = updatedStats.findIndex(s => s.key === suggestion.stat_key);
-
-        const newStat: UnifiedStat = {
-          key: suggestion.stat_key,
-          displayName,
-          type: suggestion.stat_type,
-          isFromActions: false,
-        };
-
-        if (suggestion.stat_type === 'success_fail') {
-          newStat.successful = suggestion.successful ?? 0;
-          newStat.total = suggestion.total ?? 0;
-        } else if (suggestion.stat_type === 'count') {
-          newStat.count = suggestion.count ?? 0;
-        } else if (suggestion.stat_type === 'score') {
-          newStat.score = suggestion.score ?? 0;
-          if (shouldShowPer90(suggestion.stat_key) && minutesPlayed > 0) {
-            newStat.per90 = ((newStat.score / minutesPlayed) * 90).toFixed(3);
-          }
-        }
-
-        if (existingIdx >= 0) {
-          updatedStats[existingIdx] = { ...updatedStats[existingIdx], ...newStat };
-          updatedCount++;
-        } else {
-          updatedStats.push(newStat);
-          addedCount++;
-        }
-      }
-
-      onStatsChange(updatedStats);
-      const parts = [];
-      if (addedCount) parts.push(`${addedCount} added`);
-      if (updatedCount) parts.push(`${updatedCount} updated`);
-      toast.success(`AI suggested stats: ${parts.join(', ')}`);
+      setAiSuggestions(suggestions);
+      toast.success(`AI suggested ${suggestions.length} stat${suggestions.length !== 1 ? 's' : ''} — click to accept`);
     } catch (err: any) {
       console.error('AI match stats error:', err);
       toast.error('Failed to get AI suggestions');
     } finally {
       setAiLoading(false);
     }
+  };
+
+  const handleAcceptSuggestion = (suggestion: typeof aiSuggestions[0]) => {
+    const config = STAT_TYPE_CONFIGS.find(c => c.key === suggestion.stat_key);
+    const displayName = config?.name || suggestion.stat_key;
+    const existingIdx = stats.findIndex(s => s.key === suggestion.stat_key);
+
+    const newStat: UnifiedStat = {
+      key: suggestion.stat_key,
+      displayName,
+      type: suggestion.stat_type,
+      isFromActions: false,
+    };
+
+    if (suggestion.stat_type === 'success_fail') {
+      newStat.successful = suggestion.successful ?? 0;
+      newStat.total = suggestion.total ?? 0;
+    } else if (suggestion.stat_type === 'count') {
+      newStat.count = suggestion.count ?? 0;
+    } else if (suggestion.stat_type === 'score') {
+      newStat.score = suggestion.score ?? 0;
+      if (shouldShowPer90(suggestion.stat_key) && minutesPlayed > 0) {
+        newStat.per90 = ((newStat.score / minutesPlayed) * 90).toFixed(3);
+      }
+    }
+
+    const updatedStats = [...stats];
+    if (existingIdx >= 0) {
+      updatedStats[existingIdx] = { ...updatedStats[existingIdx], ...newStat };
+    } else {
+      updatedStats.push(newStat);
+    }
+
+    onStatsChange(updatedStats);
+    setAiSuggestions(prev => prev.filter(s => s.stat_key !== suggestion.stat_key));
+    toast.success(`Accepted: ${displayName}`);
+  };
+
+  const handleDismissSuggestion = (statKey: string) => {
+    setAiSuggestions(prev => prev.filter(s => s.stat_key !== statKey));
   };
 
   const sensors = useSensors(
