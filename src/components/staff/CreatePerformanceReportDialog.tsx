@@ -2957,6 +2957,8 @@ export const CreatePerformanceReportDialog = ({
                 placeholderMinutes={placeholderMinutes}
                 onPlaceholderRawScoreChange={setPlaceholderRawScore}
                 onPlaceholderMinutesChange={setPlaceholderMinutes}
+                estimatedReadyAt={estimatedReadyAt}
+                onEstimatedReadyAtChange={setEstimatedReadyAt}
               />
               <Button onClick={handleSave} disabled={loading} size="sm">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
