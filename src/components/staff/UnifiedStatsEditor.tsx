@@ -737,6 +737,76 @@ export const UnifiedStatsEditor = ({
         </DndContext>
       )}
 
+      {/* AI Suggestions Panel */}
+      {aiSuggestions.length > 0 && (
+        <div className="mt-3 p-3 border rounded-lg bg-primary/5 border-primary/20 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-semibold text-primary">AI Suggestions ({aiSuggestions.length})</Label>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setAiSuggestions([])}
+              className="h-6 text-xs text-muted-foreground"
+            >
+              Dismiss all
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {aiSuggestions.map((suggestion) => {
+              const config = STAT_TYPE_CONFIGS.find(c => c.key === suggestion.stat_key);
+              const displayName = config?.name || suggestion.stat_key;
+              const valueDisplay = suggestion.stat_type === 'success_fail'
+                ? `${suggestion.successful ?? 0}/${suggestion.total ?? 0}`
+                : suggestion.stat_type === 'count'
+                  ? String(suggestion.count ?? 0)
+                  : (suggestion.score ?? 0).toFixed(2);
+
+              return (
+                <Popover key={suggestion.stat_key}>
+                  <PopoverTrigger asChild>
+                    <button className="flex items-center justify-between gap-2 p-2 rounded-md border border-primary/30 bg-background hover:bg-accent/50 transition-colors text-left w-full">
+                      <div className="min-w-0">
+                        <div className="text-xs font-medium truncate">{displayName}</div>
+                        <div className="text-sm font-bold font-mono text-primary">{valueDisplay}</div>
+                      </div>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <span className="p-1 rounded hover:bg-primary/10" onClick={(e) => { e.stopPropagation(); handleAcceptSuggestion(suggestion); }}>
+                          <Check className="h-3.5 w-3.5 text-green-600" />
+                        </span>
+                        <span className="p-1 rounded hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); handleDismissSuggestion(suggestion.stat_key); }}>
+                          <X className="h-3.5 w-3.5 text-destructive" />
+                        </span>
+                      </div>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 text-xs" align="start">
+                    <div className="space-y-2">
+                      <p className="font-medium">{displayName}: {valueDisplay}</p>
+                      <p className="text-muted-foreground">{suggestion.reasoning}</p>
+                      {suggestion.contributing_action_numbers.length > 0 && (
+                        <p className="text-muted-foreground">
+                          Contributing actions: #{suggestion.contributing_action_numbers.join(', #')}
+                        </p>
+                      )}
+                      <Button
+                        size="sm"
+                        className="w-full h-7 text-xs"
+                        onClick={() => handleAcceptSuggestion(suggestion)}
+                      >
+                        Accept suggestion
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Auto-Calculated Stats Section */}
       {stats.length > 0 && (
         <CalculatedStatsSection stats={stats} minutesPlayed={minutesPlayed} />
