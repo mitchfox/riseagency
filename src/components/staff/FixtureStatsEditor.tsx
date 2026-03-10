@@ -9,7 +9,7 @@ import { METRIC_CATEGORIES } from "./ComparisonPlayerData";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
-import { Sparkles, Plus, Loader2, ArrowUpToLine } from "lucide-react";
+import { Sparkles, Plus, Loader2, ArrowUpToLine, Link2 } from "lucide-react";
 
 // Mapping from fixture stat keys to match statistics (unified stats) keys
 export const FIXTURE_TO_UNIFIED_MAP: Record<string, { key: string; type: 'count' | 'score' }> = {
