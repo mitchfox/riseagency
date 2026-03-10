@@ -455,6 +455,11 @@ const PerformanceReport = () => {
             <div className="text-center p-6 bg-background/90 rounded-xl border shadow-lg max-w-xs">
               <p className="font-semibold text-sm">Report In Progress</p>
               <p className="text-xs text-muted-foreground mt-1">This report is still being prepared. Check back soon.</p>
+              {analysis.estimated_ready_at && (
+                <p className="text-xs text-primary mt-2 font-medium">
+                  Expected by: {new Date(analysis.estimated_ready_at).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} at {new Date(analysis.estimated_ready_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              )}
             </div>
           </div>
         )}
