@@ -32,7 +32,7 @@ import { UnifiedStatsEditor, UnifiedStat, mergeStatsForEditor, unifiedStatsToStr
 import { FixtureStatsEditor, UNIFIED_TO_FIXTURE_MAP, FIXTURE_TO_UNIFIED_MAP } from "./FixtureStatsEditor";
 import { InlineFixtureCreator } from "./InlineFixtureCreator";
 import { logActivity } from "@/lib/activityLogger";
-import { ReportLanguageSelector } from "./ReportLanguageSelector";
+import { ReportLanguageSelector, TranslatedContent } from "./ReportLanguageSelector";
 import { parseMinuteToSeconds } from "@/lib/actionSorting";
 import { ZonePitchSelector, type ZonePoint } from "@/components/report/ZonePitchSelector";
 import { fetchPlayerActionFrequencies, canonicalActionType } from "@/lib/playerActionFrequency";
@@ -205,6 +205,9 @@ export const CreatePerformanceReportDialog = ({
   const [visibilityStatus, setVisibilityStatus] = useState<VisibilityStatus>("draft");
   const [placeholderRawScore, setPlaceholderRawScore] = useState("");
   const [placeholderMinutes, setPlaceholderMinutes] = useState("");
+  const [estimatedReadyAt, setEstimatedReadyAt] = useState<string | null>(null);
+  const [translatedContent, setTranslatedContent] = useState<TranslatedContent | null>(null);
+  const [activeTranslationTab, setActiveTranslationTab] = useState("en");
   const initialVisibilityRef = useRef<VisibilityStatus | null>(null);
   const initialLoadDoneRef = useRef(false);
   const skipNextActionSyncRef = useRef(false);
@@ -881,6 +884,11 @@ export const CreatePerformanceReportDialog = ({
       initialVisibilityRef.current = (analysisData as any).visibility_status || "draft";
       setPlaceholderRawScore((analysisData as any).placeholder_raw_score?.toString() || "");
       setPlaceholderMinutes((analysisData as any).placeholder_minutes?.toString() || "");
+      setEstimatedReadyAt((analysisData as any).estimated_ready_at || null);
+      setTranslatedContent((analysisData as any).translated_content || null);
+      if ((analysisData as any).translated_content?.language) {
+        setReportLanguage((analysisData as any).translated_content.language);
+      }
       setFixtureStats((analysisData.fixture_stats as Record<string, number>) || {});
       
       // Re-derive opponent from fixture data to reflect any changes to fixture
@@ -1426,6 +1434,8 @@ export const CreatePerformanceReportDialog = ({
             visibility_status: visibilityStatus,
             placeholder_raw_score: visibilityStatus === "hidden" && placeholderRawScore ? parseFloat(placeholderRawScore) : null,
             placeholder_minutes: visibilityStatus === "hidden" && placeholderMinutes ? parseInt(placeholderMinutes) : null,
+            estimated_ready_at: (visibilityStatus === "draft" || visibilityStatus === "hidden") ? estimatedReadyAt : null,
+            translated_content: translatedContent,
           } as any)
           .eq("id", analysisId);
 
@@ -1490,6 +1500,8 @@ export const CreatePerformanceReportDialog = ({
             visibility_status: visibilityStatus,
             placeholder_raw_score: visibilityStatus === "hidden" && placeholderRawScore ? parseFloat(placeholderRawScore) : null,
             placeholder_minutes: visibilityStatus === "hidden" && placeholderMinutes ? parseInt(placeholderMinutes) : null,
+            estimated_ready_at: (visibilityStatus === "draft" || visibilityStatus === "hidden") ? estimatedReadyAt : null,
+            translated_content: translatedContent,
           } as any)
           .select()
           .single();
@@ -1694,9 +1706,20 @@ export const CreatePerformanceReportDialog = ({
   const languageSelector = (
     <ReportLanguageSelector
       selectedLanguage={reportLanguage}
-      onLanguageChange={setReportLanguage}
+      onLanguageChange={(lang) => {
+        setReportLanguage(lang);
+        // If switching back to English, clear translated content
+        if (lang === "en") {
+          setTranslatedContent(null);
+          setActiveTranslationTab("en");
+        }
+      }}
       getTranslatableFields={getTranslatableFields}
       onTranslated={handleTranslated}
+      translatedContent={translatedContent}
+      onTranslatedContentChange={setTranslatedContent}
+      activeTab={activeTranslationTab}
+      onActiveTabChange={setActiveTranslationTab}
     />
   );
 
@@ -2556,6 +2579,8 @@ export const CreatePerformanceReportDialog = ({
                 placeholderMinutes={placeholderMinutes}
                 onPlaceholderRawScoreChange={setPlaceholderRawScore}
                 onPlaceholderMinutesChange={setPlaceholderMinutes}
+                estimatedReadyAt={estimatedReadyAt}
+                onEstimatedReadyAtChange={setEstimatedReadyAt}
               />
               <Button onClick={handleSave} disabled={loading || deleting} className="w-full sm:w-auto">
                 {loading ? (analysisId ? "Updating..." : "Creating...") : (analysisId ? "Update Report" : "Create Report")}
@@ -2943,6 +2968,8 @@ export const CreatePerformanceReportDialog = ({
                 placeholderMinutes={placeholderMinutes}
                 onPlaceholderRawScoreChange={setPlaceholderRawScore}
                 onPlaceholderMinutesChange={setPlaceholderMinutes}
+                estimatedReadyAt={estimatedReadyAt}
+                onEstimatedReadyAtChange={setEstimatedReadyAt}
               />
               <Button onClick={handleSave} disabled={loading} size="sm">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}

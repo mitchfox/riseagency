@@ -61,6 +61,8 @@ interface AnalysisDetails {
   visibility_status?: string;
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
+  estimated_ready_at?: string | null;
+  translated_content?: any | null;
 }
 
 const PerformanceReport = () => {
@@ -138,6 +140,8 @@ const PerformanceReport = () => {
         visibility_status: (analysisResult.data as any).visibility_status || "live",
         placeholder_raw_score: (analysisResult.data as any).placeholder_raw_score,
         placeholder_minutes: (analysisResult.data as any).placeholder_minutes,
+        estimated_ready_at: (analysisResult.data as any).estimated_ready_at,
+        translated_content: (analysisResult.data as any).translated_content,
       });
 
       if (actionsResult.error) throw actionsResult.error;
@@ -451,6 +455,11 @@ const PerformanceReport = () => {
             <div className="text-center p-6 bg-background/90 rounded-xl border shadow-lg max-w-xs">
               <p className="font-semibold text-sm">Report In Progress</p>
               <p className="text-xs text-muted-foreground mt-1">This report is still being prepared. Check back soon.</p>
+              {analysis.estimated_ready_at && (
+                <p className="text-xs text-primary mt-2 font-medium">
+                  Expected by: {new Date(analysis.estimated_ready_at).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} at {new Date(analysis.estimated_ready_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              )}
             </div>
           </div>
         )}

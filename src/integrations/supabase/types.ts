@@ -186,6 +186,7 @@ export type Database = {
           away_team_logo: string | null
           concept: string | null
           created_at: string
+          estimated_ready_at: string | null
           explanation: string | null
           fixture_id: string | null
           home_score: number | null
@@ -228,6 +229,7 @@ export type Database = {
           away_team_logo?: string | null
           concept?: string | null
           created_at?: string
+          estimated_ready_at?: string | null
           explanation?: string | null
           fixture_id?: string | null
           home_score?: number | null
@@ -270,6 +272,7 @@ export type Database = {
           away_team_logo?: string | null
           concept?: string | null
           created_at?: string
+          estimated_ready_at?: string | null
           explanation?: string | null
           fixture_id?: string | null
           home_score?: number | null
@@ -2496,6 +2499,7 @@ export type Database = {
           analysis_date: string
           analysis_writer_id: string | null
           created_at: string
+          estimated_ready_at: string | null
           fixture_id: string | null
           fixture_stats: Json | null
           id: string
@@ -2511,6 +2515,7 @@ export type Database = {
           r90_score: number | null
           result: string | null
           striker_stats: Json | null
+          translated_content: Json | null
           updated_at: string
           video_url: string | null
           visibility_status: string
@@ -2519,6 +2524,7 @@ export type Database = {
           analysis_date: string
           analysis_writer_id?: string | null
           created_at?: string
+          estimated_ready_at?: string | null
           fixture_id?: string | null
           fixture_stats?: Json | null
           id?: string
@@ -2534,6 +2540,7 @@ export type Database = {
           r90_score?: number | null
           result?: string | null
           striker_stats?: Json | null
+          translated_content?: Json | null
           updated_at?: string
           video_url?: string | null
           visibility_status?: string
@@ -2542,6 +2549,7 @@ export type Database = {
           analysis_date?: string
           analysis_writer_id?: string | null
           created_at?: string
+          estimated_ready_at?: string | null
           fixture_id?: string | null
           fixture_stats?: Json | null
           id?: string
@@ -2557,6 +2565,7 @@ export type Database = {
           r90_score?: number | null
           result?: string | null
           striker_stats?: Json | null
+          translated_content?: Json | null
           updated_at?: string
           video_url?: string | null
           visibility_status?: string

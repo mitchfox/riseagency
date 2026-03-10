@@ -122,3 +122,6 @@ verify_jwt = false
 
 [functions.sync-player-stats]
 verify_jwt = false
+
+[functions.parse-stats-url]
+verify_jwt = false

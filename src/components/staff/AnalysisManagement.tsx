@@ -657,7 +657,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         'match_date', 'home_team_logo', 'away_team_logo', 'selected_scheme', 'starting_xi',
         'kit_primary_color', 'kit_secondary_color', 'kit_number_color', 'kit_collar_color',
         'kit_stripe_style', 'match_image_url', 'home_team_bg_color',
-        'away_team_bg_color', 'video_url', 'player_name', 'visibility_status'
+        'away_team_bg_color', 'video_url', 'player_name', 'visibility_status', 'estimated_ready_at'
       ];
 
       const dataToSave: Record<string, any> = {
