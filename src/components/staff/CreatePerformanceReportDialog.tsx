@@ -1706,9 +1706,20 @@ export const CreatePerformanceReportDialog = ({
   const languageSelector = (
     <ReportLanguageSelector
       selectedLanguage={reportLanguage}
-      onLanguageChange={setReportLanguage}
+      onLanguageChange={(lang) => {
+        setReportLanguage(lang);
+        // If switching back to English, clear translated content
+        if (lang === "en") {
+          setTranslatedContent(null);
+          setActiveTranslationTab("en");
+        }
+      }}
       getTranslatableFields={getTranslatableFields}
       onTranslated={handleTranslated}
+      translatedContent={translatedContent}
+      onTranslatedContentChange={setTranslatedContent}
+      activeTab={activeTranslationTab}
+      onActiveTabChange={setActiveTranslationTab}
     />
   );
 
