@@ -61,6 +61,8 @@ interface AnalysisDetails {
   visibility_status?: string;
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
+  estimated_ready_at?: string | null;
+  translated_content?: any | null;
 }
 
 const PerformanceReport = () => {
