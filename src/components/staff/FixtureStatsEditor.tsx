@@ -85,7 +85,6 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
   const handleAcceptSuggestion = (key: string, value: number) => {
     const updated = { ...fixtureStats, [key]: value };
     onStatsChange(updated);
-    // Remove the suggestion after accepting
     setAiSuggestions(prev => {
       const next = { ...prev };
       delete next[key];
@@ -141,32 +140,105 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
     }
   };
 
+  const handleParseUrl = async () => {
+    if (!urlInput.trim()) {
+      toast.error('Please enter a URL');
+      return;
+    }
+
+    setUrlParsing(true);
+    try {
+      const { data, error } = await invokeEdgeFunction('parse-stats-url', {
+        body: { url: urlInput.trim() },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.fixtureStats) {
+        const suggestions: Record<string, AISuggestion> = {};
+        for (const [key, value] of Object.entries(data.fixtureStats as Record<string, number>)) {
+          suggestions[key] = {
+            value,
+            reasoning: `From ${data.source || 'external source'}`,
+            contributing_action_numbers: [],
+          };
+        }
+        setAiSuggestions(prev => ({ ...prev, ...suggestions }));
+        const count = Object.keys(data.fixtureStats).length;
+        toast.success(`Parsed ${count} stat${count !== 1 ? 's' : ''} from ${data.source || 'link'}${data.playerName ? ` (${data.playerName})` : ''}`);
+        setShowUrlInput(false);
+        setUrlInput("");
+      } else {
+        toast.info('No stats could be extracted from that page');
+      }
+    } catch (err: any) {
+      console.error('URL parse error:', err);
+      toast.error('Failed to parse stats: ' + (err.message || 'Unknown error'));
+    } finally {
+      setUrlParsing(false);
+    }
+  };
+
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <Label className="text-sm font-semibold">Fixture Stats</Label>
           <p className="text-xs text-muted-foreground">
             Raw match totals. Per-90 averages are calculated automatically for portal comparisons.
           </p>
         </div>
-        {actions && actions.length > 0 && (
+        <div className="flex items-center gap-1.5 shrink-0">
           <Button
             variant="outline"
             size="sm"
-            onClick={handleSuggestWithAI}
-            disabled={aiLoading}
-            className="gap-1.5 shrink-0"
+            onClick={() => setShowUrlInput(!showUrlInput)}
+            className="gap-1.5"
           >
-            {aiLoading ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="w-3.5 h-3.5" />
-            )}
-            {aiLoading ? 'Analysing...' : 'Suggest with AI'}
+            <Link2 className="w-3.5 h-3.5" />
+            Parse Link
           </Button>
-        )}
+          {actions && actions.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSuggestWithAI}
+              disabled={aiLoading}
+              className="gap-1.5"
+            >
+              {aiLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5" />
+              )}
+              {aiLoading ? 'Analysing...' : 'Suggest with AI'}
+            </Button>
+          )}
+        </div>
       </div>
+
+      {showUrlInput && (
+        <div className="flex gap-2 items-center p-2 bg-muted/50 rounded-md border">
+          <Input
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            placeholder="Paste SofaScore or FBRef match URL..."
+            className="h-8 text-sm flex-1"
+            onKeyDown={(e) => e.key === 'Enter' && handleParseUrl()}
+          />
+          <Button
+            size="sm"
+            onClick={handleParseUrl}
+            disabled={urlParsing || !urlInput.trim()}
+            className="h-8 gap-1.5"
+          >
+            {urlParsing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Link2 className="w-3.5 h-3.5" />}
+            {urlParsing ? 'Parsing...' : 'Parse'}
+          </Button>
+        </div>
+      )}
+
       <Tabs value={activeCategory} onValueChange={setActiveCategory}>
         <TabsList className="grid grid-cols-4 gap-1">
           {METRIC_CATEGORIES.map(cat => (
