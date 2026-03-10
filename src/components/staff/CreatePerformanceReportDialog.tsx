@@ -2568,6 +2568,8 @@ export const CreatePerformanceReportDialog = ({
                 placeholderMinutes={placeholderMinutes}
                 onPlaceholderRawScoreChange={setPlaceholderRawScore}
                 onPlaceholderMinutesChange={setPlaceholderMinutes}
+                estimatedReadyAt={estimatedReadyAt}
+                onEstimatedReadyAtChange={setEstimatedReadyAt}
               />
               <Button onClick={handleSave} disabled={loading || deleting} className="w-full sm:w-auto">
                 {loading ? (analysisId ? "Updating..." : "Creating...") : (analysisId ? "Update Report" : "Create Report")}
