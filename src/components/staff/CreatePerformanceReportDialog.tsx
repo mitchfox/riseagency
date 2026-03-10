@@ -32,7 +32,7 @@ import { UnifiedStatsEditor, UnifiedStat, mergeStatsForEditor, unifiedStatsToStr
 import { FixtureStatsEditor, UNIFIED_TO_FIXTURE_MAP, FIXTURE_TO_UNIFIED_MAP } from "./FixtureStatsEditor";
 import { InlineFixtureCreator } from "./InlineFixtureCreator";
 import { logActivity } from "@/lib/activityLogger";
-import { ReportLanguageSelector } from "./ReportLanguageSelector";
+import { ReportLanguageSelector, TranslatedContent } from "./ReportLanguageSelector";
 import { parseMinuteToSeconds } from "@/lib/actionSorting";
 import { ZonePitchSelector, type ZonePoint } from "@/components/report/ZonePitchSelector";
 import { fetchPlayerActionFrequencies, canonicalActionType } from "@/lib/playerActionFrequency";
