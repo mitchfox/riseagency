@@ -140,6 +140,8 @@ const PerformanceReport = () => {
         visibility_status: (analysisResult.data as any).visibility_status || "live",
         placeholder_raw_score: (analysisResult.data as any).placeholder_raw_score,
         placeholder_minutes: (analysisResult.data as any).placeholder_minutes,
+        estimated_ready_at: (analysisResult.data as any).estimated_ready_at,
+        translated_content: (analysisResult.data as any).translated_content,
       });
 
       if (actionsResult.error) throw actionsResult.error;
