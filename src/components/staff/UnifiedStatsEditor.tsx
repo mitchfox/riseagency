@@ -217,6 +217,16 @@ export const UnifiedStatsEditor = ({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingStatKey, setEditingStatKey] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<Array<{
+    stat_key: string;
+    stat_type: 'success_fail' | 'count' | 'score';
+    successful?: number;
+    total?: number;
+    count?: number;
+    score?: number;
+    reasoning: string;
+    contributing_action_numbers: number[];
+  }>>([]);
 
   const handleSuggestWithAI = async () => {
     if (!actions || actions.length === 0) {
