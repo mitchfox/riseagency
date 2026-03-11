@@ -496,15 +496,15 @@ const PerformanceReport = () => {
 
             {/* Clipped Actions Button */}
             {actions.filter(a => a.video_url).length > 0 && (
-              <Button
-                variant="default"
-                size="sm"
-                className="bg-risegold hover:bg-risegold/90 text-black font-semibold flex items-center gap-2 w-fit"
-                onClick={() => setShowClippedActions(true)}
-              >
-                <Play className="h-4 w-4" />
-                {actions.filter(a => a.video_url).length} Clips
-              </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="bg-risegold hover:bg-risegold/90 text-black font-semibold flex items-center gap-2 w-fit"
+                  onClick={() => setShowClippedActions(true)}
+                >
+                  <Play className="h-4 w-4" />
+                  {actions.filter(a => a.video_url).length} {t(reportLanguage, "clips_label")}
+                </Button>
             )}
           </div>
 
