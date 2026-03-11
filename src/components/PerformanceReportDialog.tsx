@@ -551,7 +551,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
           <div className="flex gap-1 md:gap-2 flex-shrink-0">
             <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="px-2 md:px-3" disabled={savingImage || loading}>
               <ImageIcon className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">{savingImage ? 'Saving...' : 'Save'}</span>
+              <span className="hidden md:inline">{savingImage ? t(reportLanguage, "saving_label") : t(reportLanguage, "save_label")}</span>
             </Button>
             <Button
               variant="outline"
