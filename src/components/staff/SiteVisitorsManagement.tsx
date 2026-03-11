@@ -483,6 +483,9 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   return (
     <div className="space-y-6">
+      {/* Diagnostics Section */}
+      <VisitorDiagnostics />
+
       {/* All-Time Stats Cards */}
       <div>
         <h3 className="text-sm font-medium text-muted-foreground mb-3">All Time</h3>
