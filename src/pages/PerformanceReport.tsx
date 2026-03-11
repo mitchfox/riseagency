@@ -74,6 +74,15 @@ const PerformanceReport = () => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [savingImage, setSavingImage] = useState(false);
 
+  // Translation helpers
+  const tc = analysis?.translated_content;
+  const hasTranslation = !!tc?.fields && !!tc?.language && tc.language !== "en";
+  const tf = (key: string, fallback: string) => hasTranslation && tc?.fields[key] ? tc.fields[key] : fallback;
+  const tAction = (index: number, field: string, fallback: string) => {
+    const k = `action_${index}_${field}`;
+    return hasTranslation && tc?.fields[k] ? tc.fields[k] : fallback;
+  };
+
   // Video/player states
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>("");
