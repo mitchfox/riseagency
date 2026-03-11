@@ -290,6 +290,7 @@ export const VideoActionEditor = ({
                 onChange={(val) => updateAction(realIndex, "action_score", val)}
                 className="w-20 md:w-24"
                 inputClassName="h-7 md:h-8 text-xs md:text-sm border-[hsl(43,49%,61%)]/50 focus-visible:ring-[hsl(43,49%,61%)]/30"
+                dropUp
               />
               <div className="flex items-center gap-1 md:gap-1.5 ml-auto">
                 <Input
