@@ -48,7 +48,7 @@ export const ClippedActionsPlayer = ({
   }, [open]);
 
   const handleVideoEnded = () => {
-    if (currentIndex < clips.length - 1) {
+    if (currentIndex < sortedClips.length - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
       setIsPlaying(false);
