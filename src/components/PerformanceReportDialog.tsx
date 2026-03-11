@@ -610,7 +610,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {analysis.placeholder_raw_score != null && (analysis.placeholder_minutes ?? 0) > 0 ? (
                 <div className="grid grid-cols-3 gap-4 max-w-md mx-auto p-4 bg-accent/20 rounded-lg">
                   <div className="text-center p-2">
-                    <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Raw Score</p>
+                    <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "raw_score")}</p>
                     <p className="text-base md:text-2xl font-bold">{analysis.placeholder_raw_score.toFixed(3)}</p>
                   </div>
                   <div className="text-center bg-primary text-primary-foreground rounded-lg p-2 md:p-4">
@@ -618,16 +618,16 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     <p className="text-lg md:text-3xl font-bold">{((analysis.placeholder_raw_score / analysis.placeholder_minutes!) * 90).toFixed(2)}</p>
                   </div>
                   <div className="text-center p-2">
-                    <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Mins</p>
+                    <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "mins_short")}</p>
                     <p className="text-base md:text-2xl font-bold">{analysis.placeholder_minutes}</p>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Placeholder stats are not set yet.</p>
+                <p className="text-sm text-muted-foreground">{t(reportLanguage, "placeholder_stats_not_set")}</p>
               )}
               <div className="bg-muted/50 rounded-lg p-4 max-w-sm mx-auto">
-                <p className="text-sm font-medium">This report is locked</p>
-                <p className="text-xs text-muted-foreground mt-1">Contact us to unlock the full performance breakdown.</p>
+                <p className="text-sm font-medium">{t(reportLanguage, "report_locked")}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t(reportLanguage, "contact_to_unlock_report")}</p>
               </div>
             </div>
           ) : (
