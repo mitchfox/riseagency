@@ -9,13 +9,15 @@ interface ScoreDropdownProps {
   className?: string;
   inputClassName?: string;
   disabled?: boolean;
+  /** Open dropdown upwards instead of downwards */
+  dropUp?: boolean;
 }
 
-// Cache scores globally so we only fetch once per session
-let cachedScores: { value: string; label: string; count: number }[] | null = null;
+// Cache all scores globally so we only fetch once per session
+let cachedScores: { value: string; count: number }[] | null = null;
 let fetchPromise: Promise<void> | null = null;
 
-async function loadCommonScores() {
+async function loadAllScores() {
   if (cachedScores) return;
   if (fetchPromise) { await fetchPromise; return; }
 
@@ -34,7 +36,6 @@ async function loadCommonScores() {
       if (error || !data) break;
       data.forEach((row: any) => {
         if (row.action_score == null) return;
-        // Round to avoid floating point noise, keep up to 5 decimals
         const key = String(parseFloat(Number(row.action_score).toFixed(5)));
         freq[key] = (freq[key] || 0) + 1;
       });
@@ -44,27 +45,31 @@ async function loadCommonScores() {
 
     cachedScores = Object.entries(freq)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 25)
-      .map(([val, count]) => ({
-        value: val,
-        label: val,
-        count,
-      }));
+      .map(([val, count]) => ({ value: val, count }));
   })();
 
   await fetchPromise;
 }
 
-export const ScoreDropdown = ({ value, onChange, className = "", inputClassName = "", disabled = false }: ScoreDropdownProps) => {
+export const ScoreDropdown = ({ value, onChange, className = "", inputClassName = "", disabled = false, dropUp = false }: ScoreDropdownProps) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [scores, setScores] = useState<{ value: string; label: string; count: number }[]>(cachedScores || []);
+  const [allScores, setAllScores] = useState<{ value: string; count: number }[]>(cachedScores || []);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    loadCommonScores().then(() => {
-      if (cachedScores) setScores(cachedScores);
+    loadAllScores().then(() => {
+      if (cachedScores) setAllScores(cachedScores);
     });
   }, []);
+
+  // Filter scores based on current input value
+  const inputStr = String(value ?? "");
+  const filtered = inputStr.trim()
+    ? allScores.filter((s) => s.value.startsWith(inputStr) || s.value.startsWith(inputStr.replace(/^-?0?\.?/, "")))
+    : allScores;
+
+  // Show filtered list, cap at 30 for performance
+  const displayScores = filtered.slice(0, 30);
 
   return (
     <div className={`relative ${className}`}>
@@ -93,9 +98,13 @@ export const ScoreDropdown = ({ value, onChange, className = "", inputClassName 
           <ChevronDown className="h-3 w-3" />
         </button>
       </div>
-      {dropdownOpen && scores.length > 0 && (
-        <div className="absolute z-50 mt-1 w-36 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
-          {scores.map((score) => (
+      {dropdownOpen && displayScores.length > 0 && (
+        <div
+          className={`absolute z-50 w-36 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md ${
+            dropUp ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
+        >
+          {displayScores.map((score) => (
             <button
               key={score.value}
               type="button"
@@ -108,7 +117,7 @@ export const ScoreDropdown = ({ value, onChange, className = "", inputClassName 
                 setDropdownOpen(false);
               }}
             >
-              <span>{score.label}</span>
+              <span>{score.value}</span>
               <span className="text-[10px] text-muted-foreground ml-2">×{score.count}</span>
             </button>
           ))}
