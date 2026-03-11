@@ -120,7 +120,7 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
       try {
         const { data: reports } = await supabase
           .from("player_analysis")
-          .select("id, analysis_date, opponent, r90_score, performance_overview, minutes_played")
+          .select("id, analysis_date, opponent, r90_score, performance_overview, minutes_played, visibility_status, translated_content")
           .eq("player_id", playerId)
           .not("r90_score", "is", null)
           .order("analysis_date", { ascending: false })
@@ -129,14 +129,18 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
         const liveReports = (reports || []).filter((r: any) => !r.visibility_status || r.visibility_status === "live");
 
         liveReports?.forEach((r: any) => {
+          const reportLanguage = getReportLanguage(r.translated_content, portalLanguage);
+          const reportOpponent = getTranslatedReportField(r.translated_content, "opponent", r.opponent || t(reportLanguage, "match"));
+          const reportOverview = getTranslatedReportField(r.translated_content, "performanceOverview", r.performance_overview || "");
+
           feed.push({
             id: `report-${r.id}`,
             type: "report",
-            title: `${t(portalLanguage, "performance_report")}: ${r.opponent || t(portalLanguage, "match")}`,
+            title: `${t(reportLanguage, "performance_report")}: ${reportOpponent}`,
             subtitle: `R90: ${r.r90_score} — ${new Date(r.analysis_date).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}`,
-            description: r.performance_overview || `${t(portalLanguage, "match_performance_rated_at_r90")} ${r.r90_score}. ${r.minutes_played ? `${r.minutes_played} ${t(portalLanguage, "minutes_played_suffix")}` : ''}`,
+            description: reportOverview || `${t(reportLanguage, "match_performance_rated_at_r90")} ${r.r90_score}. ${r.minutes_played ? `${r.minutes_played} ${t(reportLanguage, "minutes_played_suffix")}` : ''}`,
             timestamp: r.analysis_date,
-            linkLabel: t(portalLanguage, "open_report"),
+            linkLabel: t(reportLanguage, "open_report"),
             onClick: () => onOpenReport?.(r.id),
           });
         });
