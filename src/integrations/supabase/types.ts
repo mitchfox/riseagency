@@ -5635,6 +5635,93 @@ export type Database = {
         }
         Relationships: []
       }
+      visitor_diagnostics: {
+        Row: {
+          cache_names: string[] | null
+          connection_type: string | null
+          cookies_enabled: boolean | null
+          created_at: string
+          device_pixel_ratio: number | null
+          display_mode: string | null
+          errors: string[] | null
+          id: string
+          is_android: boolean | null
+          is_ios: boolean | null
+          is_pwa: boolean | null
+          is_standalone: boolean | null
+          local_storage_available: boolean | null
+          online: boolean | null
+          platform: string | null
+          pwa_last_route: string | null
+          pwa_last_scope: string | null
+          raw_data: Json | null
+          screen_height: number | null
+          screen_width: number | null
+          service_worker_status: string | null
+          sw_version: string | null
+          user_agent: string | null
+          viewport_height: number | null
+          viewport_width: number | null
+          visitor_name: string | null
+        }
+        Insert: {
+          cache_names?: string[] | null
+          connection_type?: string | null
+          cookies_enabled?: boolean | null
+          created_at?: string
+          device_pixel_ratio?: number | null
+          display_mode?: string | null
+          errors?: string[] | null
+          id?: string
+          is_android?: boolean | null
+          is_ios?: boolean | null
+          is_pwa?: boolean | null
+          is_standalone?: boolean | null
+          local_storage_available?: boolean | null
+          online?: boolean | null
+          platform?: string | null
+          pwa_last_route?: string | null
+          pwa_last_scope?: string | null
+          raw_data?: Json | null
+          screen_height?: number | null
+          screen_width?: number | null
+          service_worker_status?: string | null
+          sw_version?: string | null
+          user_agent?: string | null
+          viewport_height?: number | null
+          viewport_width?: number | null
+          visitor_name?: string | null
+        }
+        Update: {
+          cache_names?: string[] | null
+          connection_type?: string | null
+          cookies_enabled?: boolean | null
+          created_at?: string
+          device_pixel_ratio?: number | null
+          display_mode?: string | null
+          errors?: string[] | null
+          id?: string
+          is_android?: boolean | null
+          is_ios?: boolean | null
+          is_pwa?: boolean | null
+          is_standalone?: boolean | null
+          local_storage_available?: boolean | null
+          online?: boolean | null
+          platform?: string | null
+          pwa_last_route?: string | null
+          pwa_last_scope?: string | null
+          raw_data?: Json | null
+          screen_height?: number | null
+          screen_width?: number | null
+          service_worker_status?: string | null
+          sw_version?: string | null
+          user_agent?: string | null
+          viewport_height?: number | null
+          viewport_width?: number | null
+          visitor_name?: string | null
+        }
+        Relationships: []
+      }
       web_push_subscriptions: {
         Row: {
           created_at: string | null
