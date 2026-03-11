@@ -68,6 +68,7 @@ const Jobs = lazy(() => import("./pages/Jobs"));
 const AgentRequests = lazy(() => import("./pages/AgentRequests"));
 const ClubDirection = lazy(() => import("./pages/ClubDirection"));
 const RiseWithUs = lazy(() => import("./pages/RiseWithUs"));
+const Diagnostics = lazy(() => import("./pages/Diagnostics"));
 const FluidCursor = lazy(() => import("./components/FluidCursor"));
 
 // Loading fallback component
