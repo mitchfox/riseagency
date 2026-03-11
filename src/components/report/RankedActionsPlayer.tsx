@@ -89,13 +89,13 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
     setSwiping(false);
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 0.1) return "text-green-500";
-    if (score >= 0.05) return "text-green-400";
-    if (score > 0) return "text-lime-400";
-    if (score === 0) return "text-muted-foreground";
-    return "text-red-400";
+  const formatMinute = (minute: number) => {
+    const minPart = Math.floor(minute);
+    const secPart = Math.round((minute - minPart) * 100);
+    return `${minPart}.${secPart.toString().padStart(2, "0")}`;
   };
+
+  const getScoreColor = (score: number) => {
 
   const getModeLabel = () => {
     if (mode === "ranked") return t(language, "ranked_report");
