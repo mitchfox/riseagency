@@ -1013,7 +1013,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                               onClick={() => setShowFilteredPlayer(true)}
                             >
                               <Play className="h-3.5 w-3.5 mr-1.5" />
-                              Watch Selected ({filteredActions.filter(a => a.video_url).length})
+                              {t(reportLanguage, "watch_selected")} ({filteredActions.filter(a => a.video_url).length})
                             </Button>
                           </div>
                         )}
