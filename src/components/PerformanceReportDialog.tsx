@@ -1166,6 +1166,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
           }}
           videoUrl={selectedVideoUrl}
           actionTitle={selectedVideoTitle}
+          language={reportLanguage}
         />
       )}
 
