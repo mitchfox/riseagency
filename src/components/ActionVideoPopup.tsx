@@ -50,7 +50,7 @@ export const ActionVideoPopup = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl p-0 overflow-hidden bg-black">
+      <DialogContent className="w-[95vw] max-w-5xl p-0 overflow-hidden bg-black">
         <div className="relative">
           <div className="absolute top-2 right-2 z-10 flex gap-2">
             <Button
