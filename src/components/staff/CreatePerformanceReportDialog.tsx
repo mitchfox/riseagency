@@ -2171,7 +2171,6 @@ export const CreatePerformanceReportDialog = ({
                           setTimeout(() => setDescriptionPopoverOpen(prev => ({ ...prev, [index]: false })), 200);
                         }}
                         placeholder="Describe the action"
-                        className="text-sm min-h-[60px]"
                         rows={2}
                       />
                       {descriptionPopoverOpen[index] && action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
