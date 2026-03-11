@@ -1820,9 +1820,11 @@ export const CreatePerformanceReportDialog = ({
               <Label htmlFor="opponent">Opponent</Label>
               <Input
                 id="opponent"
-                value={opponent}
-                onChange={(e) => setOpponent(e.target.value)}
+                value={getDisplayValue('opponent', opponent)}
+                onChange={(e) => !isTranslatedView && setOpponent(e.target.value)}
                 placeholder="Auto-filled from fixture"
+                readOnly={isTranslatedView}
+                className={isTranslatedView ? "bg-muted/50" : ""}
               />
             </div>
             <div>
