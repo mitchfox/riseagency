@@ -113,11 +113,14 @@ export const ClippedActionsPlayer = ({
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-black/80 border-b border-border/30 shrink-0">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold">
-              {currentIndex + 1}/{clips.length}
+              {currentIndex + 1}/{sortedClips.length}
             </span>
-            <span className="text-white text-sm font-semibold">{currentClip.action_type}</span>
+            <div className="min-w-0">
+              <div className="text-white text-sm font-semibold truncate">{title || currentClip.action_type}</div>
+              <div className="text-white/70 text-xs truncate">{formatMinute(currentClip.minute)}' • {currentClip.action_type}</div>
+            </div>
           </div>
           <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:text-white hover:bg-white/20 h-10 w-10 min-w-[40px]">
             <X className="h-5 w-5" />
