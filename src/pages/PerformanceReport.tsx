@@ -673,7 +673,7 @@ const PerformanceReport = () => {
                 <CardTitle className="text-sm md:text-lg">Overview</CardTitle>
               </CardHeader>
               <CardContent className="p-2 md:p-4">
-                <p className="text-muted-foreground whitespace-pre-wrap text-center text-xs md:text-sm">{analysis.performance_overview}</p>
+                <p className="text-muted-foreground whitespace-pre-wrap text-center text-xs md:text-sm">{tf("performanceOverview", analysis.performance_overview)}</p>
               </CardContent>
             </Card>
           )}
