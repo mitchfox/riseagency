@@ -129,7 +129,7 @@ export const VideoActionEditor = ({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-56 p-2 z-[300]" align="start">
-                <ScrollArea className="max-h-60">
+               <ScrollArea className="max-h-[70vh]">
                   <div className="space-y-0.5">
                     {clippedIndices.map(({ action, index }, pos) => (
                       <button
