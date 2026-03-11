@@ -28,9 +28,10 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
-import { Eye, MapPin, Clock, RefreshCw, EyeOff, CalendarIcon, ShieldOff } from "lucide-react";
+import { Eye, MapPin, Clock, RefreshCw, EyeOff, CalendarIcon, ShieldOff, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { VisitorDiagnostics } from "./VisitorDiagnostics";
 import {
   AlertDialog,
   AlertDialogAction,
