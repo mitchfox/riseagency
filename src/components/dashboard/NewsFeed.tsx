@@ -156,15 +156,19 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
         tags?.forEach(t => {
           const a = (t as any).analyses;
           if (!a) return;
-          const typeLabel = a.analysis_type === "pre-match" ? "Pre-Match" : a.analysis_type === "post-match" ? "Post-Match" : a.analysis_type;
+          const typeLabel = a.analysis_type === "pre-match"
+            ? t(portalLanguage, "pre_match")
+            : a.analysis_type === "post-match"
+            ? t(portalLanguage, "post_match")
+            : a.analysis_type;
           feed.push({
             id: `analysis-${a.id}`,
             type: "analysis",
             title: `${typeLabel}: ${a.home_team || ""} vs ${a.away_team || ""}`,
-            subtitle: a.title || "New analysis available",
-            description: `You've been tagged in a ${typeLabel.toLowerCase()} analysis for ${a.home_team || ''} vs ${a.away_team || ''}.`,
+            subtitle: a.title || t(portalLanguage, "new_analysis_available"),
+            description: `${t(portalLanguage, "tagged_in_analysis_for")} ${a.home_team || ''} vs ${a.away_team || ''}.`,
             timestamp: t.created_at,
-            linkLabel: "View Analysis",
+            linkLabel: t(portalLanguage, "view_analysis"),
             onClick: () => {
               const slug = createAnalysisSlug(a.home_team || '', a.away_team || '', a.id);
               navigate(slug);
