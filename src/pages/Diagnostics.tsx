@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Check, Copy, AlertTriangle, CheckCircle, XCircle, Smartphone, Wifi, Monitor, HardDrive } from "lucide-react";
+import { Check, Copy, AlertTriangle, CheckCircle, XCircle, Smartphone, Wifi, Monitor, HardDrive, Play, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface DiagnosticResult {
@@ -27,9 +27,36 @@ export default function Diagnostics() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [rawData, setRawData] = useState<Record<string, any>>({});
+  const [landingTestRunning, setLandingTestRunning] = useState(false);
 
   useEffect(() => {
+    // Set up global error capture
+    const errors: string[] = [];
+    try {
+      const existing = localStorage.getItem('pwa_error_log');
+      if (existing) errors.push(...JSON.parse(existing));
+    } catch {}
+
+    const handleError = (event: ErrorEvent) => {
+      const msg = `${event.message} at ${event.filename}:${event.lineno}`;
+      errors.push(msg);
+      try { localStorage.setItem('pwa_error_log', JSON.stringify(errors.slice(-10))); } catch {}
+    };
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      const msg = `Unhandled rejection: ${event.reason?.message || event.reason}`;
+      errors.push(msg);
+      try { localStorage.setItem('pwa_error_log', JSON.stringify(errors.slice(-10))); } catch {}
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
+
     runDiagnostics();
+
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
+    };
   }, []);
 
   const runDiagnostics = async () => {
@@ -73,7 +100,6 @@ export default function Diagnostics() {
 
     // Service Worker
     let swStatus = "Not supported";
-    let swVersion = "N/A";
     if ('serviceWorker' in navigator) {
       try {
         const reg = await navigator.serviceWorker.getRegistration();
@@ -90,7 +116,6 @@ export default function Diagnostics() {
       }
     }
     raw.serviceWorkerStatus = swStatus;
-    raw.swVersion = swVersion;
 
     diag.push({
       label: "Service Worker",
@@ -163,7 +188,154 @@ export default function Diagnostics() {
     raw.manifestHref = (manifestLink as HTMLLinkElement)?.href || null;
     diag.push({ label: "Manifest", value: manifestLink ? "Found" : "Missing", status: manifestLink ? "ok" : "error" });
 
-    // Errors from console (check localStorage for any stored errors)
+    // Safe area support
+    const hasSafeArea = CSS.supports('padding-top: env(safe-area-inset-top)');
+    raw.hasSafeAreaSupport = hasSafeArea;
+    diag.push({ label: "Safe Area Support", value: hasSafeArea ? "Yes" : "No", status: "info" });
+
+    // ===== LANDING PAGE SPECIFIC TESTS =====
+
+    // 1. WebGL Support + Renderer Info
+    let webglStatus = "Not supported";
+    let webglRenderer = "Unknown";
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 64;
+      canvas.height = 64;
+      const gl = canvas.getContext("webgl2") as WebGL2RenderingContext | null
+        || canvas.getContext("webgl") as WebGLRenderingContext | null;
+      if (gl) {
+        webglStatus = gl instanceof WebGL2RenderingContext ? "WebGL2" : "WebGL1";
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        if (debugInfo) {
+          webglRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) as string;
+        }
+        // Test shader compilation (same pattern as landing page)
+        const vs = gl.createShader(gl.VERTEX_SHADER)!;
+        gl.shaderSource(vs, 'attribute vec4 p;void main(){gl_Position=p;}');
+        gl.compileShader(vs);
+        const vsOk = gl.getShaderParameter(vs, gl.COMPILE_STATUS);
+
+        const fs = gl.createShader(gl.FRAGMENT_SHADER)!;
+        gl.shaderSource(fs, 'precision mediump float;void main(){gl_FragColor=vec4(1.0);}');
+        gl.compileShader(fs);
+        const fsOk = gl.getShaderParameter(fs, gl.COMPILE_STATUS);
+
+        if (!vsOk || !fsOk) {
+          webglStatus += " (shader compilation failed)";
+        }
+
+        gl.deleteShader(vs);
+        gl.deleteShader(fs);
+        
+        // Lose context to free resources
+        const loseCtx = gl.getExtension('WEBGL_lose_context');
+        loseCtx?.loseContext();
+      }
+    } catch (e) {
+      webglStatus = `Error: ${(e as Error).message}`;
+    }
+    raw.webglStatus = webglStatus;
+    raw.webglRenderer = webglRenderer;
+
+    diag.push({ label: "WebGL", value: webglStatus, status: webglStatus.includes("Error") || webglStatus === "Not supported" ? "error" : webglStatus.includes("failed") ? "warning" : "ok" });
+    diag.push({ label: "GPU Renderer", value: webglRenderer.substring(0, 80), status: "info" });
+
+    // 2. Three.js Bundle Load Test
+    let threeJsStatus = "Not tested";
+    try {
+      const startTime = performance.now();
+      const three = await import('three');
+      const loadTime = Math.round(performance.now() - startTime);
+      
+      // Try creating a renderer (the critical path for landing page)
+      const testCanvas = document.createElement('canvas');
+      testCanvas.width = 64;
+      testCanvas.height = 64;
+      const renderer = new three.WebGLRenderer({ canvas: testCanvas, antialias: false, alpha: true });
+      renderer.dispose();
+      
+      threeJsStatus = `OK (loaded in ${loadTime}ms)`;
+    } catch (e) {
+      threeJsStatus = `FAILED: ${(e as Error).message}`;
+    }
+    raw.threeJsStatus = threeJsStatus;
+    diag.push({ label: "Three.js", value: threeJsStatus, status: threeJsStatus.startsWith("OK") ? "ok" : "error" });
+
+    // 3. Performance Check Simulation
+    let perfTier = "unknown";
+    let perfReason = "not checked";
+    try {
+      // Check reduced motion
+      const prefersReduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      if (prefersReduced) {
+        perfTier = "low";
+        perfReason = "prefers-reduced-motion";
+      } else {
+        const memory = (navigator as any).deviceMemory;
+        const cores = navigator.hardwareConcurrency;
+        
+        if (memory && memory <= 2) { perfTier = "low"; perfReason = `low-memory (${memory}GB)`; }
+        else if (cores && cores <= 2) { perfTier = "low"; perfReason = `low-cpu (${cores} cores)`; }
+        else if (memory && memory <= 4) { perfTier = "medium"; perfReason = `medium-memory (${memory}GB)`; }
+        else if (cores && cores <= 4) { perfTier = "medium"; perfReason = `medium-cpu (${cores} cores)`; }
+        else { perfTier = "high"; perfReason = `${cores || '?'} cores, ${memory || '?'}GB RAM`; }
+        
+        // Quick frame rate test
+        const fps = await new Promise<number>((resolve) => {
+          let frames = 0;
+          const start = performance.now();
+          const count = () => {
+            frames++;
+            if (performance.now() - start < 200) requestAnimationFrame(count);
+            else resolve(Math.round((frames / (performance.now() - start)) * 1000));
+          };
+          requestAnimationFrame(count);
+        });
+        
+        raw.measuredFps = fps;
+        if (fps < 25 && perfTier !== 'low') { perfTier = "low"; perfReason += ` + low-fps (${fps})`; }
+        else if (fps < 45 && perfTier === 'high') { perfTier = "medium"; perfReason += ` + medium-fps (${fps})`; }
+      }
+    } catch (e) {
+      perfReason = `Error: ${(e as Error).message}`;
+    }
+    raw.perfTier = perfTier;
+    raw.perfReason = perfReason;
+
+    diag.push({ label: "Performance Tier", value: `${perfTier} (${perfReason})`, status: perfTier === 'high' ? "ok" : perfTier === 'medium' ? "warning" : "error" });
+
+    // 4. Cached Bundle Integrity
+    let bundleStatus = "No caches";
+    if (cacheNames.length > 0) {
+      try {
+        let jsFiles = 0;
+        let totalSize = 0;
+        for (const cacheName of cacheNames) {
+          const cache = await caches.open(cacheName);
+          const keys = await cache.keys();
+          for (const req of keys) {
+            if (req.url.endsWith('.js') || req.url.includes('.js?')) {
+              jsFiles++;
+              try {
+                const resp = await cache.match(req);
+                if (resp) {
+                  const blob = await resp.clone().blob();
+                  totalSize += blob.size;
+                }
+              } catch {}
+            }
+          }
+        }
+        bundleStatus = `${jsFiles} JS files cached (${(totalSize / 1024).toFixed(0)}KB)`;
+      } catch (e) {
+        bundleStatus = `Error checking: ${(e as Error).message}`;
+      }
+    }
+    raw.bundleStatus = bundleStatus;
+    diag.push({ label: "Cached JS Bundles", value: bundleStatus, status: bundleStatus.includes("Error") ? "error" : "info" });
+
+    // 5. Stored Errors from previous sessions
     const storedErrors: string[] = [];
     try {
       const errLog = localStorage.getItem('pwa_error_log');
@@ -171,17 +343,42 @@ export default function Diagnostics() {
     } catch {}
     raw.storedErrors = storedErrors;
 
+    // Also check for landing-specific errors
+    let landingError = "";
+    try {
+      const le = localStorage.getItem('landing_crash_log');
+      if (le) {
+        const parsed = JSON.parse(le);
+        landingError = parsed.message || le;
+      }
+    } catch {}
+    raw.landingCrashLog = landingError;
+
+    if (landingError) {
+      diag.push({ label: "Landing Page Crash", value: landingError, status: "error" });
+    }
+
     if (storedErrors.length > 0) {
       diag.push({ label: "Stored Errors", value: storedErrors.slice(0, 3).join("; "), status: "error" });
     }
 
-    // Safe area support
-    const hasSafeArea = CSS.supports('padding-top: env(safe-area-inset-top)');
-    raw.hasSafeAreaSupport = hasSafeArea;
-    diag.push({ label: "Safe Area Support", value: hasSafeArea ? "Yes" : "No", status: "info" });
+    // 6. Static Mode Preference
+    const staticMode = localStorage.getItem('landing-static-mode');
+    raw.staticModeEnabled = staticMode === 'true';
+    if (staticMode === 'true') {
+      diag.push({ label: "Static Mode", value: "Enabled (user or auto)", status: "warning" });
+    }
 
     setResults(diag);
     setRawData(raw);
+  };
+
+  const testLandingPage = () => {
+    setLandingTestRunning(true);
+    // Clear previous crash log before testing
+    try { localStorage.removeItem('landing_crash_log'); } catch {}
+    // Navigate to landing with diag flag - it will capture errors and redirect back
+    window.location.href = '/?diag=1';
   };
 
   const handleSubmit = async () => {
@@ -214,7 +411,7 @@ export default function Diagnostics() {
         pwa_last_route: rawData.pwaLastRoute,
         pwa_last_scope: rawData.pwaLastScope,
         cache_names: rawData.cacheNames || [],
-        sw_version: rawData.swVersion,
+        sw_version: rawData.swVersion || 'N/A',
         errors: rawData.storedErrors || [],
         raw_data: rawData,
       } as any);
@@ -234,6 +431,15 @@ export default function Diagnostics() {
     const text = results.map(r => `${r.label}: ${r.value}`).join('\n');
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard");
+  };
+
+  const clearErrorLogs = () => {
+    try {
+      localStorage.removeItem('pwa_error_log');
+      localStorage.removeItem('landing_crash_log');
+      toast.success("Error logs cleared");
+      runDiagnostics();
+    } catch {}
   };
 
   return (
@@ -279,12 +485,46 @@ export default function Diagnostics() {
             <CardContent className="pt-4 pb-4 flex items-center gap-3">
               <HardDrive className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-xs text-muted-foreground">Caches</p>
-                <p className="text-sm font-medium">{rawData.cacheNames?.length || 0}</p>
+                <p className="text-xs text-muted-foreground">Perf Tier</p>
+                <p className={`text-sm font-medium ${rawData.perfTier === 'high' ? 'text-green-500' : rawData.perfTier === 'medium' ? 'text-yellow-500' : rawData.perfTier === 'low' ? 'text-red-500' : ''}`}>
+                  {rawData.perfTier || 'Checking...'}
+                </p>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Landing Page Test */}
+        <Card className="border-primary/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Play className="h-4 w-4" />
+              Landing Page Test
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Press the button below to test the landing page. It will attempt to load all landing page components (3D player, animations, WebGL) and capture any errors that occur.
+            </p>
+            <div className="flex gap-2">
+              <Button onClick={testLandingPage} disabled={landingTestRunning}>
+                {landingTestRunning ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Testing...</> : "Test Landing Page"}
+              </Button>
+              <Button variant="outline" onClick={clearErrorLogs}>
+                Clear Error Logs
+              </Button>
+            </div>
+            {rawData.landingCrashLog && (
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3">
+                <p className="text-sm font-medium text-destructive flex items-center gap-1">
+                  <AlertTriangle className="h-4 w-4" />
+                  Landing Page Crash Detected
+                </p>
+                <p className="text-xs text-destructive/80 mt-1 break-all">{rawData.landingCrashLog}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Detailed Results */}
         <Card>

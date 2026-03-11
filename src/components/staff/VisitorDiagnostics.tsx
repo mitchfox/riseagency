@@ -213,6 +213,54 @@ export const VisitorDiagnostics = () => {
                   )}
                 </div>
 
+                {/* Landing Page Tests (from raw_data) */}
+                {selectedReport.raw_data && (
+                  <div>
+                    <h4 className="text-sm font-semibold mb-2">Landing Page Tests</h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {selectedReport.raw_data.webglStatus && (
+                        <div className="col-span-2"><span className="text-muted-foreground">WebGL:</span> {selectedReport.raw_data.webglStatus}</div>
+                      )}
+                      {selectedReport.raw_data.webglRenderer && (
+                        <div className="col-span-2"><span className="text-muted-foreground">GPU:</span> {selectedReport.raw_data.webglRenderer}</div>
+                      )}
+                      {selectedReport.raw_data.threeJsStatus && (
+                        <div className="col-span-2">
+                          <span className="text-muted-foreground">Three.js:</span>{' '}
+                          <span className={selectedReport.raw_data.threeJsStatus.startsWith('OK') ? 'text-green-600' : 'text-red-600'}>
+                            {selectedReport.raw_data.threeJsStatus}
+                          </span>
+                        </div>
+                      )}
+                      {selectedReport.raw_data.perfTier && (
+                        <div>
+                          <span className="text-muted-foreground">Perf Tier:</span>{' '}
+                          <span className={selectedReport.raw_data.perfTier === 'high' ? 'text-green-600' : selectedReport.raw_data.perfTier === 'medium' ? 'text-yellow-600' : 'text-red-600'}>
+                            {selectedReport.raw_data.perfTier}
+                          </span>
+                        </div>
+                      )}
+                      {selectedReport.raw_data.perfReason && (
+                        <div><span className="text-muted-foreground">Reason:</span> {selectedReport.raw_data.perfReason}</div>
+                      )}
+                      {selectedReport.raw_data.measuredFps && (
+                        <div><span className="text-muted-foreground">FPS:</span> {selectedReport.raw_data.measuredFps}</div>
+                      )}
+                      {selectedReport.raw_data.bundleStatus && (
+                        <div className="col-span-2"><span className="text-muted-foreground">Cached Bundles:</span> {selectedReport.raw_data.bundleStatus}</div>
+                      )}
+                      {selectedReport.raw_data.landingCrashLog && (
+                        <div className="col-span-2 bg-destructive/10 p-2 rounded text-destructive text-xs">
+                          <strong>Landing Crash:</strong> {selectedReport.raw_data.landingCrashLog}
+                        </div>
+                      )}
+                      {selectedReport.raw_data.staticModeEnabled && (
+                        <div className="col-span-2"><span className="text-yellow-600">Static mode is enabled</span></div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Errors */}
                 {selectedReport.errors && selectedReport.errors.length > 0 && (
                   <div>

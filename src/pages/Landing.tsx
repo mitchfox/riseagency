@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Component, ReactNode, ErrorInfo } from "react";
 import { Link } from "react-router-dom";
 import { LocalizedLink } from "@/components/LocalizedLink";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
@@ -744,6 +744,42 @@ function RoleSlider({
 }
 export default function Landing() {
   const { isLowPerformance, isChecking, reason } = usePerformanceCheck();
+  const [crashError, setCrashError] = useState<Error | null>(null);
+
+  // Check for diag mode - if ?diag=1, add extra error capturing and redirect back
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('diag') === '1') {
+      // Set a timeout - if the page doesn't crash within 5s, redirect back with success
+      const timer = setTimeout(() => {
+        window.location.href = '/diagnostics';
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // Log crash to localStorage for diagnostics to pick up
+  useEffect(() => {
+    if (crashError) {
+      try {
+        localStorage.setItem('landing_crash_log', JSON.stringify({
+          message: crashError.message,
+          stack: crashError.stack,
+          timestamp: new Date().toISOString(),
+        }));
+        // Also append to pwa_error_log
+        const existing = JSON.parse(localStorage.getItem('pwa_error_log') || '[]');
+        existing.push(`Landing crash: ${crashError.message}`);
+        localStorage.setItem('pwa_error_log', JSON.stringify(existing.slice(-10)));
+      } catch {}
+
+      // If in diag mode, redirect back
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('diag') === '1') {
+        window.location.href = '/diagnostics';
+      }
+    }
+  }, [crashError]);
 
   // Show a simple loading state while checking performance
   if (isChecking) {
@@ -763,10 +799,44 @@ export default function Landing() {
     return <StaticLandingFallback performanceReason={reason} />;
   }
 
-  // Full experience for capable devices
+  // If crashed, show fallback
+  if (crashError) {
+    return <StaticLandingFallback performanceReason={`crash: ${crashError.message}`} />;
+  }
+
+  // Full experience for capable devices, wrapped in ErrorBoundary
   return (
-    <XRayProvider>
-      <LandingContent />
-    </XRayProvider>
+    <ErrorBoundary
+      onError={(error) => setCrashError(error)}
+      fallback={<StaticLandingFallback performanceReason={`crash: ${crashError?.message || 'unknown'}`} />}
+    >
+      <XRayProvider>
+        <LandingContent />
+      </XRayProvider>
+    </ErrorBoundary>
   );
+}
+
+// Landing-specific error boundary that captures errors to localStorage
+class ErrorBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode; onError: (error: Error) => void },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Landing ErrorBoundary caught:", error, errorInfo);
+    this.props.onError(error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
 }

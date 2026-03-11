@@ -1,52 +1,130 @@
 
 
-# Enhance Diagnostics to Catch Landing Page Failures
+## Two-Part Plan
 
-## The Problem
+This covers the immediate text truncation fix and the large AI features package.
 
-The current `/diagnostics` page checks generic browser capabilities (SW, cache, storage, viewport) but does NOT test the actual landing page components. The landing page has several complex subsystems that could silently fail:
+---
 
-1. **Three.js / WebGL 3D player rendering** (Player3DEffect) - could crash on specific GPU drivers
-2. **Performance check** (usePerformanceCheck) - GPU benchmark, frame rate test, or WebGL shader compilation could hang or error
-3. **Three.js bundle loading** - the lazy-loaded chunk could fail to download or parse
-4. **Service Worker serving stale/corrupt cached JS bundle** - SW could serve an old broken version
-5. **Unhandled JS errors** - runtime errors that crash React but aren't captured anywhere
+### Part 1: Fix Truncated Notes (Quick Fix)
 
-The diagnostics pass because they test basic APIs, not the actual code paths the landing page uses.
+**Problem**: Notes on performance report actions are cut off with `...` via `truncate` and `line-clamp` classes, making them unreadable on mobile.
 
-## Plan
+**Files to change:**
 
-### 1. Add Landing-Specific Tests to Diagnostics Page
+1. **`src/components/PerformanceReportDialog.tsx`**
+   - Line 1036: Remove `line-clamp-2` from action description div, allow full text
+   - Line 1038: Remove `truncate` from notes div, allow full wrap
+   - These are in the mobile card layout (the `md:hidden` block)
 
-Extend `src/pages/Diagnostics.tsx` to include:
+2. **`src/components/ClippedActionsPlayer.tsx`**
+   - Line 137: Remove `line-clamp-2` from description
+   - Line 139: Remove `line-clamp-2` from notes
 
-- **Three.js load test**: Dynamically import `three` and attempt to create a WebGLRenderer, capturing any errors
-- **Performance check simulation**: Run the same `usePerformanceCheck` logic and report the tier/reason
-- **Cached JS bundle integrity**: Check if the SW cache contains the main JS bundle and whether it's the correct version
-- **WebGL stress test**: Attempt the same shader compilation the landing page does (vertex + fragment shader)
-- **Error capture**: Add a global `window.onerror` and `unhandledrejection` listener that stores errors to localStorage, then display them in diagnostics
+3. **`src/components/portal/AnalysisVideoReports.tsx`**
+   - Line 414: Remove `line-clamp-2` from clip description
 
-### 2. Add Error Boundary Logging to Landing Page
+All replacements simply remove the truncation classes so text wraps naturally across as many lines as needed.
 
-In `src/pages/Landing.tsx`, wrap the landing content in an error boundary that:
-- Catches React render errors
-- Stores the error message + stack in localStorage (`pwa_error_log`)
-- Shows the StaticLandingFallback with an error indicator
-- These stored errors will then appear in the diagnostics page
+---
 
-### 3. Add "Test Landing Page" Button to Diagnostics
+### Part 2: AI Features Package
 
-Add a button that navigates to `/` with a query param like `?diag=1`, which:
-- Triggers the landing page to run with extra logging
-- Captures any errors and redirects back to `/diagnostics` with results
+This is a large feature set. Here is the implementation plan broken into phases.
 
-### 4. Enhance Staff Diagnostics Viewer
+#### 2A. Collapsible AI Shell Suggestions
 
-In `src/components/staff/VisitorDiagnostics.tsx`, display the new fields (Three.js status, performance tier, cached bundle info, stored errors) with appropriate status badges.
+**New components:**
+- `src/components/staff/AiShellSuggestions.tsx` - collapsible tab component with player selector
+- Sections: Athlete Centre, Analysis, Data, Player Management
 
-## Files to Edit
+**New database table:** `ai_shell_suggestions`
+- `id`, `section` (enum), `player_id`, `shell_type`, `preview_text`, `shell_content` (JSONB), `created_at`
 
-- `src/pages/Diagnostics.tsx` - Add Three.js, perf check, and bundle integrity tests
-- `src/pages/Landing.tsx` - Add error boundary wrapper that logs to localStorage
-- `src/components/staff/VisitorDiagnostics.tsx` - Display new diagnostic fields
+**New database table:** `ai_shell_decisions`
+- `id`, `suggestion_id`, `player_id`, `staff_user_id`, `decision` (accepted/rejected), `created_at`
+
+**New edge function:** `generate-shell-suggestions`
+- Takes section + player context, queries recent data, calls Gemini to produce structural shells
+- Returns preview lines for each shell
+
+**Behaviour:**
+- Collapsed tab at top of each section
+- Opening requires player selection first
+- Accept inserts as editable draft; Reject hides for session
+- Decision history feeds future prioritisation
+
+#### 2B. Player-Specific Action Dropdown Intelligence
+
+**New database table:** `player_action_frequencies`
+- `player_id`, `action_type`, `frequency_count`, `last_used_at`, `position_weight`
+
+**Changes to existing components:**
+- Performance report action type dropdown and video analysis action type dropdown
+- Query last 5 reports for selected player, calculate frequency + recency weights
+- Sort dropdown accordingly, persist per player
+
+This builds on the existing frequency sorting (memory reference: action-type-frequency-sorting) but makes it player-specific rather than global.
+
+#### 2C. Video Tracking Integration (Roboflow)
+
+**New edge function:** `process-video-frames`
+- Accepts frame images (base64) at configurable sampling rate
+- Sends to Roboflow API for player/ball detection
+- Applies pitch homography mapping to 18/162 zone grids
+- Returns structured JSON per the specified format
+
+**Requirements:**
+- Roboflow API key (will need to be added as a secret)
+- A trained Roboflow model endpoint for player/ball detection
+- Configurable frame sampling rate (default 5 fps)
+
+**Frontend integration:**
+- New "AI Track" button in Video Analysis
+- Frame extraction from video element at configured rate
+- Batch upload to edge function
+- Results displayed as overlay markers on video
+
+#### 2D. Rule-Based Action Suggestion Engine
+
+**New module:** `src/lib/actionSuggestionEngine.ts`
+- Pure TypeScript, consumes Roboflow JSON output
+- Possession approximation: ball overlapping player across consecutive frames
+- Shot heuristic: ball near player then rapid displacement toward goal zone
+- Duel heuristic: two player boxes close with possession change
+
+**Database:**
+- Suggested actions inserted into `performance_report_actions` with a new `status` field (values: `confirmed`, `suggested`)
+- Requires migration to add `status` column
+
+**UI:**
+- Suggested actions shown with distinct styling and Confirm/Dismiss buttons
+- Confirmed actions become regular report entries
+
+#### 2E. Match Flow Automation
+
+**Changes to fixture creation flow:**
+- On fixture confirmation: auto-create linked draft performance report
+- Auto-create pre-match analysis shell
+- When report set to Live: prompt highlight compilation suggestion, check for duplicate clip exports
+
+**Batch mode:**
+- New "Batch Generate" button in Match Flow
+- Select multiple players, shared fixture data populates draft shells for each
+
+---
+
+### Implementation Order
+
+1. **Part 1** (notes fix) - immediate
+2. **2B** (action dropdown intelligence) - builds on existing patterns
+3. **2A** (shell suggestions) - new UI + edge function
+4. **2E** (match flow automation) - workflow changes
+5. **2C** (Roboflow) - requires API key setup
+6. **2D** (suggestion engine) - depends on 2C output
+
+### Prerequisites
+
+- **Roboflow API key** will need to be provided and stored as a secret before 2C can function
+- A trained Roboflow model for player/ball detection must exist
 
