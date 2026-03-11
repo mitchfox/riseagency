@@ -58,6 +58,7 @@ interface AnalysisDetails {
   visibility_status?: string;
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
+  translated_content?: { language: string; fields: Record<string, string> } | null;
 }
 
 interface PerformanceReportDialogProps {
