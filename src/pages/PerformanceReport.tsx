@@ -790,7 +790,7 @@ const PerformanceReport = () => {
                           <span className={`text-xs font-bold ${getActionScoreColor(action.action_score)}`}>{action.action_score?.toFixed(3)}</span>
                         </div>
                         {action.video_url && (
-                          <button onClick={() => { setSelectedVideoUrl(action.video_url!); setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`); }} className="text-risegold hover:text-risegold/80 p-0.5 flex-shrink-0">
+                          <button onClick={() => { const translated = getTranslatedActionData(action); setSelectedVideoUrl(action.video_url!); setSelectedVideoTitle(`#${action.action_number} - ${translated.action_type}`); }} className="text-risegold hover:text-risegold/80 p-0.5 flex-shrink-0">
                             <Video className="h-3.5 w-3.5" />
                           </button>
                         )}
