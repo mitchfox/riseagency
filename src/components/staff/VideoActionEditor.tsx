@@ -330,7 +330,7 @@ export const VideoActionEditor = ({
                   className="h-7 md:h-8 text-xs md:text-sm"
                 />
                 {descPopoverOpen && current.action_type && getDescriptionsForType(current.action_type).length > 0 && (
-                  <div className="absolute z-50 mt-1 w-full max-h-40 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                  <div className="absolute z-50 bottom-full mb-1 w-full max-h-40 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
                     {getDescriptionsForType(current.action_type)
                       .filter(desc => !current.action_description || desc.toLowerCase().includes(current.action_description.toLowerCase()))
                       .slice(0, 10)
