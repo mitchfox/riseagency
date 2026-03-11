@@ -482,7 +482,7 @@ const PerformanceReport = () => {
               </div>
               <div>
                 <p className="text-xs md:text-sm text-muted-foreground">Date</p>
-                <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString('en-GB')}</p>
+                <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString(hasTranslation ? ({ fr: "fr-FR", es: "es-ES", pt: "pt-PT", de: "de-DE", it: "it-IT", pl: "pl-PL", cs: "cs-CZ", ru: "ru-RU", tr: "tr-TR" } as Record<string, string>)[tc!.language] || "en-GB" : "en-GB")}</p>
               </div>
               <div>
                 <p className="text-xs md:text-sm text-muted-foreground">Opponent</p>
