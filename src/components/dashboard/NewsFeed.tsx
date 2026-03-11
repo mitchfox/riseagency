@@ -240,7 +240,7 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
                 onClick={onNavigateToAnalysis}
                 className="flex items-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
               >
-                See All
+                {t(portalLanguage, "see_all")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             )}
