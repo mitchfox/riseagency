@@ -780,7 +780,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {showHeatmap && analysis.minutes_played && (
                 <Card className="overflow-hidden">
                   <CardContent className="p-3 md:p-6">
-                    <ActionHeatmap actions={actions} minutesPlayed={analysis.minutes_played} />
+                    <ActionHeatmap actions={actions} minutesPlayed={analysis.minutes_played} language={reportLanguage} />
                   </CardContent>
               </Card>
               )}
