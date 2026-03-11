@@ -2155,11 +2155,14 @@ export const CreatePerformanceReportDialog = ({
                     <Label className="text-xs">Description *</Label>
                     <div className="relative">
                       <Textarea
-                        value={action.action_description}
+                        value={getActionDisplayValue(index, 'description', action.action_description)}
                         onChange={(e) => {
+                          if (isTranslatedView) return;
                           updateAction(index, "action_description", e.target.value);
                           setDescriptionPopoverOpen(prev => ({ ...prev, [index]: true }));
                         }}
+                        readOnly={isTranslatedView}
+                        className={`text-sm min-h-[60px] ${isTranslatedView ? "bg-muted/50" : ""}`}
                         onFocus={() => {
                           if (action.action_type && getDescriptionsForType(action.action_type).length > 0) {
                             setDescriptionPopoverOpen(prev => ({ ...prev, [index]: true }));
