@@ -1237,6 +1237,15 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
           })}
       />
 
+      {/* Zone Clips Player */}
+      <ClippedActionsPlayer
+        open={showZonePlayer}
+        onOpenChange={setShowZonePlayer}
+        clips={zonePlayerClips}
+        language={reportLanguage}
+        title={zonePlayerTitle}
+      />
+
       <Dialog open={showR90Info} onOpenChange={setShowR90Info}>
         <DialogContent className="w-[95vw] max-w-[95vw] md:max-w-2xl max-h-[85vh] overflow-y-auto">
           <button
