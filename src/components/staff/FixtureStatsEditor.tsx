@@ -92,6 +92,13 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
     });
   };
 
+  const getActionHoverText = (actionNumber: number) => {
+    const action = actions?.find(a => a.action_number === actionNumber);
+    if (!action) return `Action #${actionNumber}`;
+
+    return `#${actionNumber} · min ${action.minute || '?'} · score ${action.action_score || 'N/A'} · ${action.action_description || action.action_type || 'No description'}`;
+  };
+
   const handleSuggestWithAI = async () => {
     if (!actions || actions.length === 0) {
       toast.error('No performance actions to analyse');

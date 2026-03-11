@@ -227,6 +227,17 @@ export const UnifiedStatsEditor = ({
     contributing_action_numbers: number[];
   }>>([]);
 
+  const actionDetailsByNumber = new Map(
+    (actions || []).map((action) => [
+      action.action_number,
+      {
+        description: action.action_description || action.action_type || 'No description',
+        score: action.action_score || 'N/A',
+        minute: action.minute || '?',
+      },
+    ])
+  );
+
   const handleSuggestWithAI = async () => {
     if (!actions || actions.length === 0) {
       toast.error('No performance actions to analyse');
