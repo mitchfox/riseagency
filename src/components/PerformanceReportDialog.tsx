@@ -740,7 +740,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                         className="text-xs"
                       >
                         <Film className="h-3.5 w-3.5 mr-1.5" />
-                        Full Match Video
+                        {t(reportLanguage, "full_match_video")}
                       </Button>
                       <Button
                         variant="outline"
@@ -749,7 +749,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                         className="text-xs"
                       >
                         <Award className="h-3.5 w-3.5 mr-1.5" />
-                        Ranked Actions
+                        {t(reportLanguage, "ranked_actions")}
                       </Button>
                       {actions.some(a => a.video_url && a.notes) && (
                         <Button
@@ -759,7 +759,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                           className="text-xs"
                         >
                           <MessageSquareText className="h-3.5 w-3.5 mr-1.5" />
-                          Noted Actions
+                          {t(reportLanguage, "noted_actions")}
                         </Button>
                       )}
                     </>
