@@ -706,7 +706,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                         className="text-xs"
                       >
                         <MapPin className="h-3.5 w-3.5 mr-1.5" />
-                        Pitch Heatmap
+                        {t(reportLanguage, "pitch_heatmap")}
                       </Button>
                       <Button
                         variant={showZonePerformance ? "default" : "outline"}
@@ -715,7 +715,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                         className="text-xs"
                       >
                         <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />
-                        Zone Performance
+                        {t(reportLanguage, "zone_performance")}
                       </Button>
                     </>
                   )}
