@@ -850,7 +850,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {advancedStats.length > 0 && (
                 <Card className="overflow-hidden">
                   <CardHeader className="py-1.5 md:py-2">
-                    <CardTitle className="text-sm md:text-lg">Match Statistics</CardTitle>
+                    <CardTitle className="text-sm md:text-lg">{t(reportLanguage, "match_statistics")}</CardTitle>
                   </CardHeader>
                   <CardContent className="p-2 md:p-4">
                     <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
