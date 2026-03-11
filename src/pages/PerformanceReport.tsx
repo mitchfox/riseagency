@@ -405,6 +405,33 @@ const PerformanceReport = () => {
 
   const hasActiveFilters = filterTypes.length > 0 || filterRating !== null || filterHasNotes;
 
+  const handleOpenZoneClips = (zone: number, sub?: number) => {
+    const clips = filterActionsByZone(actions, zone, sub)
+      .filter((action) => action.video_url)
+      .map((action) => {
+        const translated = getTranslatedActionData(action);
+        return {
+          id: translated.id,
+          action_number: translated.action_number,
+          action_type: translated.action_type,
+          action_description: translated.action_description,
+          video_url: translated.video_url!,
+          minute: translated.minute,
+          notes: translated.notes,
+        };
+      });
+
+    if (clips.length === 0) {
+      toast.error(t(reportLanguage, "no_zone_clips"));
+      return;
+    }
+
+    setZonePlayerTitle(sub ? `${t(reportLanguage, "zone_clips_title")} ${zone}.${sub}` : `${t(reportLanguage, "zone_clips_title")} ${zone}`);
+    setZonePlayerClips(clips);
+    setShowZonePlayer(true);
+  };
+
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
