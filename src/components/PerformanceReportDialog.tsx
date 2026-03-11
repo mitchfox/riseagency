@@ -728,7 +728,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                       className="text-xs"
                     >
                       <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
-                      Chance Creation Flow
+                      {t(reportLanguage, "chance_creation_flow")}
                     </Button>
                   )}
                   {actions.filter(a => a.video_url).length > 0 && (
