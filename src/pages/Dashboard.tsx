@@ -1597,7 +1597,8 @@ const Dashboard = () => {
                   {(() => {
                     const notifications: Array<{ type: string; title: string; subtitle: string; date: Date; onClick?: () => void }> = [];
                     const languageCode = normalizePortalLanguage(playerData?.portal_language);
-                    const locale = languageCode === "fr" ? "fr-FR" : languageCode === "es" ? "es-ES" : languageCode === "pt" ? "pt-PT" : languageCode === "de" ? "de-DE" : languageCode === "it" ? "it-IT" : "en-GB";
+                    const localeMap: Record<string, string> = { fr: "fr-FR", es: "es-ES", pt: "pt-PT", de: "de-DE", it: "it-IT", pl: "pl-PL", cs: "cs-CZ", ru: "ru-RU", tr: "tr-TR" };
+                    const locale = localeMap[languageCode] || "en-GB";
                     const relativeFormatter = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
                     const formatRelative = (date: Date) => {
                       const diffMs = date.getTime() - Date.now();
