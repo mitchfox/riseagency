@@ -189,6 +189,7 @@ export const VideoActionEditor = ({
             preload="auto"
             crossOrigin="anonymous"
             controls
+            loop
             className="w-full h-full object-contain"
             onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
           />
