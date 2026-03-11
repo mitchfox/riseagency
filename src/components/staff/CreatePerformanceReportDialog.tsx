@@ -2364,13 +2364,14 @@ export const CreatePerformanceReportDialog = ({
 
                       <div className="relative flex-1 min-w-0">
                         <Textarea
-                          value={action.action_description}
+                          value={getActionDisplayValue(index, 'description', action.action_description)}
                           onChange={(e) => {
+                            if (isTranslatedView) return;
                             updateAction(index, "action_description", e.target.value);
                             setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
                           }}
                           onFocus={() => {
-                            if (action.action_type && getDescriptionsForType(action.action_type).length > 0) {
+                            if (!isTranslatedView && action.action_type && getDescriptionsForType(action.action_type).length > 0) {
                               setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
                             }
                           }}
@@ -2378,7 +2379,8 @@ export const CreatePerformanceReportDialog = ({
                             setTimeout(() => setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200);
                           }}
                           placeholder="Description"
-                          className="min-h-[36px] text-sm"
+                          readOnly={isTranslatedView}
+                          className={`min-h-[36px] text-sm ${isTranslatedView ? "bg-muted/50" : ""}`}
                           rows={1}
                         />
                         {descriptionPopoverOpen[1000 + index] && action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
