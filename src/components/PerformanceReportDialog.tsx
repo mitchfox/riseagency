@@ -991,7 +991,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                         </div>
                         {/* Filter by notes */}
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Notes</p>
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">{t(reportLanguage, "notes_label")}</p>
                           <button
                             onClick={() => setFilterHasNotes(!filterHasNotes)}
                             className={`px-2 py-0.5 rounded text-[10px] transition-colors border ${
