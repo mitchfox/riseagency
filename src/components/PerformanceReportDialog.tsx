@@ -888,7 +888,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                   <CardHeader className="py-1.5 md:py-2 bg-primary/5">
                     <CardTitle className="text-sm md:text-lg flex items-center gap-2">
                       <Calculator className="h-4 w-4 text-primary" />
-                      <span className="text-primary">Calculated Ratios</span>
+                      <span className="text-primary">{t(reportLanguage, "calculated_ratios")}</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-2 md:p-4">
