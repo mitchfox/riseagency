@@ -551,7 +551,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
           <div className="flex gap-1 md:gap-2 flex-shrink-0">
             <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="px-2 md:px-3" disabled={savingImage || loading}>
               <ImageIcon className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">{savingImage ? 'Saving...' : 'Save'}</span>
+              <span className="hidden md:inline">{savingImage ? t(reportLanguage, "saving_label") : t(reportLanguage, "save_label")}</span>
             </Button>
             <Button
               variant="outline"
@@ -570,7 +570,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               disabled={!analysis}
             >
               <Link2 className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">Share</span>
+              <span className="hidden md:inline">{t(reportLanguage, "share_label")}</span>
             </Button>
             <Button onClick={() => onOpenChange(false)} variant="outline" size="sm" className="px-2 md:px-3">
               <X className="h-4 w-4 md:mr-2" />
@@ -686,7 +686,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     className="text-xs"
                   >
                     <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
-                    R90 Flow
+                    {t(reportLanguage, "r90_flow")}
                   </Button>
                   <Button
                     variant={showHeatmap ? "default" : "outline"}
@@ -771,7 +771,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {showR90Flow && analysis.minutes_played && (
                 <Card className="overflow-hidden">
                   <CardContent className="p-3 md:p-6">
-                    <R90FlowChart actions={actions} minutesPlayed={analysis.minutes_played} />
+                    <R90FlowChart actions={actions} minutesPlayed={analysis.minutes_played} language={reportLanguage} />
                   </CardContent>
                 </Card>
               )}
@@ -780,7 +780,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {showHeatmap && analysis.minutes_played && (
                 <Card className="overflow-hidden">
                   <CardContent className="p-3 md:p-6">
-                    <ActionHeatmap actions={actions} minutesPlayed={analysis.minutes_played} />
+                    <ActionHeatmap actions={actions} minutesPlayed={analysis.minutes_played} language={reportLanguage} />
                   </CardContent>
               </Card>
               )}
@@ -789,7 +789,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {showPitchHeatmap && (
                 <Card className="overflow-hidden">
                   <CardContent className="p-3 md:p-6">
-                    <PitchHeatmap actions={actions} />
+                    <PitchHeatmap actions={actions} language={reportLanguage} />
                   </CardContent>
                 </Card>
               )}
@@ -798,7 +798,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {showZonePerformance && (
                 <Card className="overflow-hidden">
                   <CardContent className="p-3 md:p-6">
-                    <ZonePerformance actions={actions} />
+                    <ZonePerformance actions={actions} language={reportLanguage} />
                   </CardContent>
                 </Card>
               )}
@@ -807,7 +807,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {showChanceCreation && analysis.striker_stats && (
                 <Card className="overflow-hidden">
                   <CardContent className="p-3 md:p-6">
-                    <ChanceCreationFlow strikerStats={analysis.striker_stats as Record<string, any>} />
+                    <ChanceCreationFlow strikerStats={analysis.striker_stats as Record<string, any>} language={reportLanguage} />
                   </CardContent>
                 </Card>
               )}
@@ -871,7 +871,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                           )}
                           {stat.per90Value !== undefined && (
                             <p className="text-[8px] md:text-xs text-muted-foreground mt-0.5">
-                              p90: {stat.per90Value}
+                              {t(reportLanguage, "per_90")}: {stat.per90Value}
                             </p>
                           )}
                         </div>
@@ -1129,6 +1129,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
       <ClippedActionsPlayer
         open={showClippedActions}
         onOpenChange={setShowClippedActions}
+        language={reportLanguage}
         clips={actions
           .filter(a => a.video_url)
           .map(a => ({
@@ -1147,6 +1148,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         open={showRankedPlayer}
         onOpenChange={setShowRankedPlayer}
         mode={rankedMode}
+        language={reportLanguage}
         clips={actions
           .filter(a => a.video_url)
           .map(a => ({
@@ -1166,6 +1168,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         open={showFilteredPlayer}
         onOpenChange={setShowFilteredPlayer}
         mode="chronological"
+        language={reportLanguage}
         clips={filteredActions
           .filter(a => a.video_url)
           .map(a => ({

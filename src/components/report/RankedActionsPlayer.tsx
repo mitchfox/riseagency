@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X, SkipForward, SkipBack } from "lucide-react";
+import { t } from "@/lib/portalTranslations";
 
 interface Clip {
   id: string;
@@ -19,9 +20,10 @@ interface RankedActionsPlayerProps {
   onOpenChange: (open: boolean) => void;
   clips: Clip[];
   mode: "chronological" | "ranked" | "noted";
+  language?: string;
 }
 
-export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedActionsPlayerProps) => {
+export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language = "en" }: RankedActionsPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -57,7 +59,6 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedA
   };
 
   const handleVideoEnd = () => {
-    // In noted mode, don't auto-advance
     if (mode === "noted") return;
     if (currentIndex < sortedClips.length - 1) {
       const next = currentIndex + 1;
@@ -95,6 +96,12 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedA
     return "text-red-400";
   };
 
+  const getModeLabel = () => {
+    if (mode === "ranked") return t(language, "ranked_report");
+    if (mode === "noted") return t(language, "noted_report");
+    return t(language, "match_report");
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -105,13 +112,13 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedA
         style={{ transform: swipeY > 0 ? `translateY(${swipeY}px)` : undefined, opacity: swipeY > 0 ? Math.max(0.3, 1 - swipeY / 300) : 1, transition: swiping ? 'none' : 'transform 0.3s ease, opacity 0.3s ease' }}
         className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-black border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none data-[state=open]:!slide-in-from-left-0 data-[state=open]:!slide-in-from-top-0">
         <DialogTitle className="sr-only">
-          {mode === "ranked" ? "Ranked" : mode === "noted" ? "Noted" : "Full Match"} Video Report
+          {getModeLabel()}
         </DialogTitle>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-black/80 border-b border-border/30 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <span className="text-primary font-bold text-sm">
-              {mode === "ranked" ? "RANKED" : mode === "noted" ? "NOTED" : "MATCH"} REPORT
+              {getModeLabel()}
             </span>
             <span className="text-xs text-white/60">
               {currentIndex + 1} / {sortedClips.length}
@@ -122,7 +129,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode }: RankedA
           </Button>
         </div>
 
-        {/* Video - fills remaining space */}
+        {/* Video */}
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
             ref={videoRef}

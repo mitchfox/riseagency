@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Grid3X3, LayoutGrid } from "lucide-react";
+import { t } from "@/lib/portalTranslations";
 
 interface ZoneAction {
   action_score: number;
@@ -9,6 +10,7 @@ interface ZoneAction {
 
 interface ZonePerformanceProps {
   actions: ZoneAction[];
+  language?: string;
 }
 
 const ZONE_GRID = [
@@ -26,7 +28,6 @@ const SUB_GRID = [
   [1, 2, 3],
 ];
 
-// Same colour scale used on performance report action rows
 const getScoreBgColor = (avg: number): string => {
   if (avg >= 0.15) return "bg-green-800 text-white";
   if (avg >= 0.1) return "bg-green-700 text-white";
@@ -42,43 +43,30 @@ const getScoreBgColor = (avg: number): string => {
   return "bg-red-700 text-white";
 };
 
-// Penalty box border segments
-// Top box (attacking end, zones 16-18)
-// Bottom box (defensive end, zones 1-3)
 type BorderSide = 'top' | 'right' | 'bottom' | 'left';
 interface BoxLine { zone: number; sub: number; side: BorderSide }
 
 const PENALTY_BOX_LINES: BoxLine[] = [
-  // === TOP BOX (zones 16, 17, 18) ===
-  // Left side of box (zone 16, between col 1 and col 2)
   { zone: 16, sub: 8, side: 'right' },
   { zone: 16, sub: 5, side: 'right' },
-  // Bottom edge
-  { zone: 16, sub: 6, side: 'bottom' },  // zone 16 right col
-  { zone: 17, sub: 4, side: 'bottom' },  // zone 17 full width
+  { zone: 16, sub: 6, side: 'bottom' },
+  { zone: 17, sub: 4, side: 'bottom' },
   { zone: 17, sub: 5, side: 'bottom' },
   { zone: 17, sub: 6, side: 'bottom' },
-  { zone: 18, sub: 4, side: 'bottom' },  // zone 18 left col
-  // Right side of box (zone 18, between col 0 and col 1)
+  { zone: 18, sub: 4, side: 'bottom' },
   { zone: 18, sub: 7, side: 'right' },
   { zone: 18, sub: 4, side: 'right' },
-
-  // === BOTTOM BOX (zones 1, 2, 3) — mirrored ===
-  // Left side of box (zone 1, between col 1 and col 2)
   { zone: 1, sub: 2, side: 'right' },
   { zone: 1, sub: 5, side: 'right' },
-  // Top edge
-  { zone: 1, sub: 6, side: 'top' },     // zone 1 right col
-  { zone: 2, sub: 4, side: 'top' },     // zone 2 full width
+  { zone: 1, sub: 6, side: 'top' },
+  { zone: 2, sub: 4, side: 'top' },
   { zone: 2, sub: 5, side: 'top' },
   { zone: 2, sub: 6, side: 'top' },
-  { zone: 3, sub: 4, side: 'top' },     // zone 3 left col
-  // Right side of box (zone 3, between col 0 and col 1)
+  { zone: 3, sub: 4, side: 'top' },
   { zone: 3, sub: 1, side: 'right' },
   { zone: 3, sub: 4, side: 'right' },
 ];
 
-// Build a lookup set for fast checking
 const BOX_LINE_SET = new Set(
   PENALTY_BOX_LINES.map(l => `${l.zone}.${l.sub}.${l.side}`)
 );
@@ -96,7 +84,7 @@ const getBoxBorderStyle = (zone: number, sub: number): string => {
   return borders.join(' ');
 };
 
-export const ZonePerformance = ({ actions }: ZonePerformanceProps) => {
+export const ZonePerformance = ({ actions, language = "en" }: ZonePerformanceProps) => {
   const [showSubZones, setShowSubZones] = useState(false);
 
   const { zoneAvg, subZoneAvg, zoneCount } = useMemo(() => {
@@ -144,7 +132,7 @@ export const ZonePerformance = ({ actions }: ZonePerformanceProps) => {
   if (!hasData) {
     return (
       <div className="text-center py-8 text-muted-foreground text-sm">
-        No zone data available
+        {t(language, "no_zone_data")}
       </div>
     );
   }
@@ -152,8 +140,7 @@ export const ZonePerformance = ({ actions }: ZonePerformanceProps) => {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold">Zone Performance</h4>
-        {/* Slider toggle between 18 and 162 */}
+        <h4 className="text-sm font-semibold">{t(language, "zone_performance")}</h4>
         <div
           className="relative flex items-center bg-muted rounded-full p-0.5 cursor-pointer w-[72px] h-7"
           onClick={() => setShowSubZones(!showSubZones)}
@@ -177,16 +164,14 @@ export const ZonePerformance = ({ actions }: ZonePerformanceProps) => {
 
       <div className="relative border border-border/50 rounded-md overflow-hidden bg-green-900/20">
         <div className="text-center text-[8px] text-muted-foreground py-0.5 bg-muted/30">
-          ↑ Attacking Direction ↑
+          ↑ {t(language, "attacking_direction")} ↑
         </div>
 
         {showSubZones ? (
-          /* 162-zone view with pitch markings and penalty boxes */
           <div className="relative">
             <div className="grid grid-rows-6 gap-px p-1 relative">
               {ZONE_GRID.map((row, ri) => (
                 <div key={ri} className="relative">
-                  {/* Halfway line between zones 10-12 and 7-9 */}
                   {ri === 3 && (
                     <div className="absolute -top-[1px] left-0 right-0 h-[2px] bg-white/30 z-10" />
                   )}
@@ -222,9 +207,7 @@ export const ZonePerformance = ({ actions }: ZonePerformanceProps) => {
             </div>
           </div>
         ) : (
-          /* 18-zone view with R90 scores */
           <div className="relative">
-            {/* Halfway line */}
             <div className="grid grid-rows-6 gap-1 p-1.5">
               {ZONE_GRID.map((row, ri) => (
                 <div key={ri} className="relative">
@@ -242,12 +225,12 @@ export const ZonePerformance = ({ actions }: ZonePerformanceProps) => {
                           className={`flex flex-col items-center justify-center py-3 rounded-sm transition-all ${
                             hasValue ? getScoreBgColor(avg) : 'bg-green-900/30 text-muted-foreground'
                           }`}
-                          title={hasValue ? `Zone ${zone}: avg ${avg.toFixed(3)} (${count} actions)` : `Zone ${zone}`}
+                          title={hasValue ? `Zone ${zone}: avg ${avg.toFixed(3)} (${count} ${t(language, "actions_label").toLowerCase()})` : `Zone ${zone}`}
                         >
                           {hasValue ? (
                             <>
                               <span className="text-sm font-bold">{avg.toFixed(3)}</span>
-                              <span className="text-[8px] opacity-70">{count} action{count !== 1 ? 's' : ''}</span>
+                              <span className="text-[8px] opacity-70">{count} {count !== 1 ? t(language, "actions_word") : t(language, "action_word")}</span>
                             </>
                           ) : (
                             <span className="text-[9px]">-</span>
@@ -263,7 +246,7 @@ export const ZonePerformance = ({ actions }: ZonePerformanceProps) => {
         )}
 
         <div className="text-center text-[8px] text-muted-foreground py-0.5 bg-muted/30">
-          Own Goal
+          {t(language, "own_goal")}
         </div>
       </div>
     </div>

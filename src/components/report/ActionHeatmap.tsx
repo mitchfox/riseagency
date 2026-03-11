@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { t } from "@/lib/portalTranslations";
 
 interface PerformanceAction {
   action_number: number;
@@ -10,6 +11,7 @@ interface PerformanceAction {
 interface ActionHeatmapProps {
   actions: PerformanceAction[];
   minutesPlayed: number;
+  language?: string;
 }
 
 // R90 rating colour scale
@@ -27,8 +29,7 @@ const getR90Color = (r90: number) => {
 };
 
 
-export const ActionHeatmap = ({ actions, minutesPlayed }: ActionHeatmapProps) => {
-  // Group actions into fixed 15-minute periods, only showing periods the player was active in
+export const ActionHeatmap = ({ actions, minutesPlayed, language = "en" }: ActionHeatmapProps) => {
   const blocks = useMemo(() => {
     const periods = [
       { start: 0, end: 15, label: "0-15'" },
@@ -39,32 +40,25 @@ export const ActionHeatmap = ({ actions, minutesPlayed }: ActionHeatmapProps) =>
       { start: 75, end: 90, label: "75-90+'" },
     ];
 
-    // Determine the player's active range using action minutes
-    // For subs, minutesPlayed is a duration (e.g. 26) but actions have absolute minutes (e.g. 64-90)
     const actionMinutes = actions.map(a => Math.floor(a.minute));
     const firstActionMinute = actionMinutes.length > 0 ? Math.min(...actionMinutes) : 0;
     const lastActionMinute = actionMinutes.length > 0 ? Math.max(...actionMinutes) : 0;
 
-    // Infer the absolute end minute from actions or minutesPlayed
     const endMinute = lastActionMinute > minutesPlayed ? Math.max(lastActionMinute + 1, minutesPlayed) : minutesPlayed;
-    // Infer start minute: if actions are beyond minutesPlayed, player is a sub
     const startMinute = endMinute > minutesPlayed ? Math.max(0, endMinute - minutesPlayed) : 0;
 
     const result: { range: string; actions: PerformanceAction[]; totalScore: number; count: number; r90: number }[] = [];
 
     for (const period of periods) {
-      // Skip periods entirely outside the player's active range
       if (period.end <= startMinute && minutesPlayed > 0) continue;
       if (period.start >= endMinute && minutesPlayed > 0) continue;
 
-      // For the last period (75-90+), include all actions >= 75
       const blockActions = period.start === 75
         ? actions.filter(a => Math.floor(a.minute) >= 75)
         : actions.filter(a => Math.floor(a.minute) >= period.start && Math.floor(a.minute) < period.end);
 
       const totalScore = blockActions.reduce((sum, a) => sum + a.action_score, 0);
 
-      // Calculate actual minutes played in this period
       const effectiveStart = Math.max(period.start, startMinute);
       const effectiveEnd = period.start === 75 ? Math.max(endMinute, 90) : Math.min(period.end, endMinute);
       const periodMinutes = Math.max(effectiveEnd - effectiveStart, 0);
@@ -86,7 +80,7 @@ export const ActionHeatmap = ({ actions, minutesPlayed }: ActionHeatmapProps) =>
   if (actions.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground text-sm">
-        No action data available
+        {t(language, "no_action_data")}
       </div>
     );
   }
@@ -94,8 +88,8 @@ export const ActionHeatmap = ({ actions, minutesPlayed }: ActionHeatmapProps) =>
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold">Period Grade Map</h4>
-        <span className="text-xs text-muted-foreground">{actions.length} actions across {minutesPlayed} min</span>
+        <h4 className="text-sm font-semibold">{t(language, "period_grade_map")}</h4>
+        <span className="text-xs text-muted-foreground">{actions.length} {t(language, "actions_across_min")} {minutesPlayed} {t(language, "min_short").toLowerCase()}</span>
       </div>
 
       <div className="grid grid-cols-6 gap-1">
@@ -110,11 +104,11 @@ export const ActionHeatmap = ({ actions, minutesPlayed }: ActionHeatmapProps) =>
                 backgroundColor: color,
                 opacity: block.count > 0 ? 0.85 : 0.2,
               }}
-              title={`${block.range}: ${block.count} actions, R90 ${block.r90.toFixed(2)}`}
+              title={`${block.range}: ${block.count} ${t(language, "actions_label").toLowerCase()}, R90 ${block.r90.toFixed(2)}`}
             >
               <span className="text-[10px] font-bold text-black drop-shadow-sm">{block.range}</span>
               <span className="text-[9px] text-black/70">
-                {block.count} act{block.count !== 1 ? "s" : ""}
+                {block.count} {block.count !== 1 ? t(language, "actions_word") : t(language, "action_word")}
               </span>
             </div>
           );

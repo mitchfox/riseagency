@@ -426,7 +426,7 @@ const PerformanceReport = () => {
           <div className="flex gap-1 md:gap-2 flex-shrink-0">
             <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="px-2 md:px-3" disabled={savingImage || loading}>
               <ImageIcon className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">{savingImage ? 'Saving...' : 'Save'}</span>
+              <span className="hidden md:inline">{savingImage ? t(reportLanguage, "saving_label") : t(reportLanguage, "save_label")}</span>
             </Button>
           </div>
         </div>
@@ -512,7 +512,7 @@ const PerformanceReport = () => {
           {actions.length > 0 && (
             <div className="flex flex-wrap gap-2">
               <Button variant={showR90Flow ? "default" : "outline"} size="sm" onClick={() => { setShowR90Flow(!showR90Flow); setShowHeatmap(false); }} className="text-xs">
-                <TrendingUp className="h-3.5 w-3.5 mr-1.5" />R90 Flow
+                <TrendingUp className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "r90_flow")}
               </Button>
               <Button variant={showHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); setShowChanceCreation(false); setShowPitchHeatmap(false); }} className="text-xs">
                 <BarChart3 className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "period_grade_map")}
@@ -552,27 +552,27 @@ const PerformanceReport = () => {
 
           {/* R90 Flow Chart */}
           {showR90Flow && analysis.minutes_played && (
-            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><R90FlowChart actions={actions} minutesPlayed={analysis.minutes_played} /></CardContent></Card>
+            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><R90FlowChart actions={actions} minutesPlayed={analysis.minutes_played} language={reportLanguage} /></CardContent></Card>
           )}
 
           {/* Action Heatmap */}
           {showHeatmap && analysis.minutes_played && (
-            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ActionHeatmap actions={actions} minutesPlayed={analysis.minutes_played} /></CardContent></Card>
+            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ActionHeatmap actions={actions} minutesPlayed={analysis.minutes_played} language={reportLanguage} /></CardContent></Card>
           )}
 
           {/* Pitch Heatmap */}
           {showPitchHeatmap && (
-            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><PitchHeatmap actions={actions} /></CardContent></Card>
+            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><PitchHeatmap actions={actions} language={reportLanguage} /></CardContent></Card>
           )}
 
           {/* Zone Performance */}
           {showZonePerformance && (
-            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ZonePerformance actions={actions} /></CardContent></Card>
+            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ZonePerformance actions={actions} language={reportLanguage} /></CardContent></Card>
           )}
 
           {/* Chance Creation Flow */}
           {showChanceCreation && analysis.striker_stats && (
-            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ChanceCreationFlow strikerStats={analysis.striker_stats as Record<string, any>} /></CardContent></Card>
+            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ChanceCreationFlow strikerStats={analysis.striker_stats as Record<string, any>} language={reportLanguage} /></CardContent></Card>
           )}
 
           {/* Key Stats */}
@@ -629,7 +629,7 @@ const PerformanceReport = () => {
                           <p className="text-sm md:text-lg font-bold">{stat.value}</p>
                         )}
                         {stat.per90Value !== undefined && (
-                          <p className="text-[8px] md:text-xs text-muted-foreground mt-0.5">p90: {stat.per90Value}</p>
+                          <p className="text-[8px] md:text-xs text-muted-foreground mt-0.5">{t(reportLanguage, "per_90")}: {stat.per90Value}</p>
                         )}
                       </div>
                     );
@@ -821,6 +821,7 @@ const PerformanceReport = () => {
         open={showClippedActions}
         onOpenChange={setShowClippedActions}
         clips={actions.filter(a => a.video_url).map(a => ({ id: a.id, action_number: a.action_number, action_type: a.action_type, action_description: a.action_description, video_url: a.video_url!, minute: a.minute, notes: a.notes }))}
+        language={reportLanguage}
       />
 
       {/* Ranked/Full Match Video Player */}
@@ -829,6 +830,7 @@ const PerformanceReport = () => {
         onOpenChange={setShowRankedPlayer}
         mode={rankedMode}
         clips={actions.filter(a => a.video_url).map(a => ({ id: a.id, action_number: a.action_number, action_type: a.action_type, action_description: a.action_description, action_score: a.action_score, video_url: a.video_url!, minute: a.minute, notes: a.notes }))}
+        language={reportLanguage}
       />
 
       {/* Filtered Video Player */}
@@ -837,6 +839,7 @@ const PerformanceReport = () => {
         onOpenChange={setShowFilteredPlayer}
         mode="chronological"
         clips={filteredActions.filter(a => a.video_url).map(a => ({ id: a.id, action_number: a.action_number, action_type: a.action_type, action_description: a.action_description, action_score: a.action_score, video_url: a.video_url!, minute: a.minute, notes: a.notes }))}
+        language={reportLanguage}
       />
 
       {/* R90 Info Dialog */}

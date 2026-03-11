@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, SkipBack, SkipForward, Play, Pause } from 'lucide-react';
+import { t } from '@/lib/portalTranslations';
 
 interface ClipAction {
   id: string;
@@ -17,12 +18,14 @@ interface ClippedActionsPlayerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clips: ClipAction[];
+  language?: string;
 }
 
 export const ClippedActionsPlayer = ({
   open,
   onOpenChange,
   clips,
+  language = "en",
 }: ClippedActionsPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -96,7 +99,7 @@ export const ClippedActionsPlayer = ({
         onTouchEnd={handleTouchEnd}
         style={{ transform: swipeY > 0 ? `translateY(${swipeY}px)` : undefined, opacity: swipeY > 0 ? Math.max(0.3, 1 - swipeY / 300) : 1, transition: swiping ? 'none' : 'transform 0.3s ease, opacity 0.3s ease' }}
         className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-black border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none data-[state=open]:!slide-in-from-left-0 data-[state=open]:!slide-in-from-top-0">
-        <DialogTitle className="sr-only">Full Match Video</DialogTitle>
+        <DialogTitle className="sr-only">{t(language, "full_match_video")}</DialogTitle>
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-black/80 border-b border-border/30 shrink-0">
@@ -111,7 +114,7 @@ export const ClippedActionsPlayer = ({
           </Button>
         </div>
 
-        {/* Video - fills remaining space */}
+        {/* Video */}
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
             ref={videoRef}

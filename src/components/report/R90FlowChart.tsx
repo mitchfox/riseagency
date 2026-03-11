@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
+import { t } from "@/lib/portalTranslations";
 
 interface PerformanceAction {
   action_number: number;
@@ -11,20 +12,17 @@ interface PerformanceAction {
 interface R90FlowChartProps {
   actions: PerformanceAction[];
   minutesPlayed: number;
+  language?: string;
 }
 
-export const R90FlowChart = ({ actions, minutesPlayed }: R90FlowChartProps) => {
+export const R90FlowChart = ({ actions, minutesPlayed, language = "en" }: R90FlowChartProps) => {
   const chartData = useMemo(() => {
     if (actions.length === 0 || !minutesPlayed) return [];
 
-    // Sort actions by minute
     const sorted = [...actions].sort((a, b) => a.minute - b.minute);
-
-    // Calculate the start minute (final action minute - minutes played)
     const lastActionMinute = Math.max(...sorted.map(a => Math.floor(a.minute)));
     const startMinute = Math.max(0, lastActionMinute - minutesPlayed);
 
-    // Build cumulative score, then interpolate minute-by-minute
     const actionPoints: { minute: number; score: number; label: string }[] = [];
     let cumulativeScore = 0;
 
@@ -37,11 +35,9 @@ export const R90FlowChart = ({ actions, minutesPlayed }: R90FlowChartProps) => {
       });
     });
 
-    // Generate a point for every minute from start to end
     const endMinute = Math.max(...actionPoints.map(a => a.minute));
     const points: { minute: number; r90: number; rawScore: number; label: string }[] = [];
 
-    // Build a map of cumulative score at each action minute
     const scoreAtMinute = new Map<number, { score: number; label: string }>();
     actionPoints.forEach(ap => {
       scoreAtMinute.set(ap.minute, { score: ap.score, label: ap.label });
@@ -69,7 +65,7 @@ export const R90FlowChart = ({ actions, minutesPlayed }: R90FlowChartProps) => {
   if (chartData.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground text-sm">
-        No action data available for R90 flow
+        {t(language, "no_action_data")}
       </div>
     );
   }
@@ -79,9 +75,9 @@ export const R90FlowChart = ({ actions, minutesPlayed }: R90FlowChartProps) => {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold">R90 Flow Through Match</h4>
+        <h4 className="text-sm font-semibold">{t(language, "r90_flow_through_match")}</h4>
         <span className="text-xs text-muted-foreground">
-          Final R90: <span className="font-bold text-foreground">{finalR90.toFixed(2)}</span>
+          {t(language, "final_r90")}: <span className="font-bold text-foreground">{finalR90.toFixed(2)}</span>
         </span>
       </div>
       <div className="h-[250px] md:h-[300px]">
@@ -96,7 +92,7 @@ export const R90FlowChart = ({ actions, minutesPlayed }: R90FlowChartProps) => {
               domain={['dataMin', 'dataMax']}
               tickFormatter={(value: number) => `${value}'`}
               ticks={chartData.filter(d => d.minute % 5 === 0).map(d => d.minute)}
-              label={{ value: "Minute", position: "insideBottom", offset: -5, style: { fill: "hsl(var(--muted-foreground))", fontSize: 10 } }}
+              label={{ value: t(language, "min_short"), position: "insideBottom", offset: -5, style: { fill: "hsl(var(--muted-foreground))", fontSize: 10 } }}
             />
             <YAxis
               stroke="hsl(var(--muted-foreground))"
@@ -114,7 +110,7 @@ export const R90FlowChart = ({ actions, minutesPlayed }: R90FlowChartProps) => {
                 if (name === "r90") return [value.toFixed(2), "R90"];
                 return [value, name];
               }}
-              labelFormatter={(label) => `Minute ${label}`}
+              labelFormatter={(label) => `${t(language, "min_short")} ${label}`}
             />
             <ReferenceLine y={1} stroke="hsl(var(--primary))" strokeDasharray="4 4" strokeWidth={1} />
             <Line
