@@ -1003,6 +1003,10 @@ Object.assign(translations.pl, {
   report_in_progress: "Raport w przygotowaniu", report_in_progress_message: "Ten raport jest jeszcze przygotowywany. Wróć wkrótce.",
   expected_by: "Planowany na", report_locked: "Ten raport jest zablokowany",
   contact_to_unlock_report: "Skontaktuj się z nami, aby odblokować pełną analizę.", clips_label: "klipy",
+  zone_word: "Strefa", avg_short: "Śr.", view_clips: "Zobacz klipy",
+  no_zone_clips: "Brak klipów dla tej strefy", zone_clips_title: "Strefa",
+  fullscreen: "Pełny ekran",
+  switch_to_at_a_glance: "Przełącz na widok ogólny", switch_to_in_depth: "Przełącz na widok szczegółowy",
 });
 
 Object.assign(translations.cs, {
