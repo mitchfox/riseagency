@@ -610,7 +610,7 @@ const PerformanceReport = () => {
 
           {/* Zone Performance */}
           {showZonePerformance && (
-            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ZonePerformance actions={actions} language={reportLanguage} /></CardContent></Card>
+            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ZonePerformance actions={actions} language={reportLanguage} onSelectZone={handleOpenZoneClips} /></CardContent></Card>
           )}
 
           {/* Chance Creation Flow */}
