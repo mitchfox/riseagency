@@ -15,6 +15,7 @@ import { formatScoreWithFrequency } from "@/lib/utils";
 import { calculateAdjustedScore, isDefensiveR90Category } from "@/lib/zoneMultipliers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { ScoreDropdown } from "./ScoreDropdown";
 
 interface PerformanceAction {
   id?: string;
