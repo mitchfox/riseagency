@@ -74,7 +74,7 @@ export const ClippedActionsPlayer = ({
     }
   };
 
-  const nextClip = clips[currentIndex + 1] ?? null;
+  const nextClip = sortedClips[currentIndex + 1] ?? null;
 
   if (!currentClip) return null;
 
