@@ -570,7 +570,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               disabled={!analysis}
             >
               <Link2 className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">Share</span>
+              <span className="hidden md:inline">{t(reportLanguage, "share_label")}</span>
             </Button>
             <Button onClick={() => onOpenChange(false)} variant="outline" size="sm" className="px-2 md:px-3">
               <X className="h-4 w-4 md:mr-2" />
