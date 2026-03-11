@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { formatScoreWithFrequency } from "@/lib/utils";
 import { canonicalActionType } from "@/lib/playerActionFrequency";
+import { ScoreDropdown } from "./ScoreDropdown";
 import type { RecordedStat } from "./ActionStatRecorder";
 
 interface PerformanceAction {
@@ -128,7 +129,7 @@ export const VideoActionEditor = ({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-56 p-2 z-[300]" align="start">
-                <ScrollArea className="max-h-60">
+               <ScrollArea className="max-h-[70vh]">
                   <div className="space-y-0.5">
                     {clippedIndices.map(({ action, index }, pos) => (
                       <button
@@ -188,6 +189,7 @@ export const VideoActionEditor = ({
             preload="auto"
             crossOrigin="anonymous"
             controls
+            loop
             className="w-full h-full object-contain"
             onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
           />
@@ -283,16 +285,12 @@ export const VideoActionEditor = ({
                   </div>
                 )}
               </div>
-              <div className="w-20 md:w-24">
-                <Input
-                  type="number"
-                  step="0.00001"
-                  value={current.action_score}
-                  onChange={(e) => updateAction(realIndex, "action_score", e.target.value)}
-                  placeholder="Score"
-                  className="h-7 md:h-8 text-xs md:text-sm border-[hsl(43,49%,61%)]/50 focus-visible:ring-[hsl(43,49%,61%)]/30"
-                />
-              </div>
+              <ScoreDropdown
+                value={current.action_score}
+                onChange={(val) => updateAction(realIndex, "action_score", val)}
+                className="w-20 md:w-24"
+                inputClassName="h-7 md:h-8 text-xs md:text-sm border-[hsl(43,49%,61%)]/50 focus-visible:ring-[hsl(43,49%,61%)]/30"
+              />
               <div className="flex items-center gap-1 md:gap-1.5 ml-auto">
                 <Input
                   value={searchFilter}

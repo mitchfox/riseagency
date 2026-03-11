@@ -15,6 +15,7 @@ import { formatScoreWithFrequency } from "@/lib/utils";
 import { calculateAdjustedScore, isDefensiveR90Category } from "@/lib/zoneMultipliers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { ScoreDropdown } from "./ScoreDropdown";
 
 interface PerformanceAction {
   id?: string;
@@ -511,18 +512,15 @@ export const ActionsByTypeDialog = ({
                                   </div>
                                   <div className="space-y-1">
                                     <Label className="text-xs">Score</Label>
-                                    <Input
-                                      type="number"
-                                      step="0.00001"
+                                    <ScoreDropdown
                                       value={edited.action_score ?? ""}
-                                      onChange={(e) => {
-                                        const raw = e.target.value;
+                                      onChange={(val) => {
                                         updateEditedAction(action.id!, {
-                                          action_score: raw === "" ? 0 : parseFloat(raw) || 0,
+                                          action_score: val === "" ? 0 : parseFloat(val) || 0,
                                         });
                                       }}
                                       disabled={!isAdmin}
-                                      className={`h-9 font-mono ${getActionScoreColor(edited.action_score)}`}
+                                      inputClassName={`h-9 font-mono ${getActionScoreColor(edited.action_score)}`}
                                     />
                                     {edited.zone && (
                                       <div className="text-xs text-muted-foreground mt-1">

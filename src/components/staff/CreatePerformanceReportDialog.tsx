@@ -36,6 +36,7 @@ import { ReportLanguageSelector, TranslatedContent } from "./ReportLanguageSelec
 import { parseMinuteToSeconds } from "@/lib/actionSorting";
 import { ZonePitchSelector, type ZonePoint } from "@/components/report/ZonePitchSelector";
 import { fetchPlayerActionFrequencies, canonicalActionType } from "@/lib/playerActionFrequency";
+import { ScoreDropdown } from "./ScoreDropdown";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -2421,13 +2422,11 @@ export const CreatePerformanceReportDialog = ({
                           <Search className="h-3.5 w-3.5 text-primary mr-1" />
                           R90
                         </Button>
-                        <Input
-                          type="number"
-                          step="0.00001"
+                        <ScoreDropdown
                           value={action.action_score}
-                          onChange={(e) => updateAction(index, "action_score", e.target.value)}
-                          placeholder="Score"
-                          className="w-24 h-7 text-sm"
+                          onChange={(val) => updateAction(index, "action_score", val)}
+                          className="w-24"
+                          inputClassName="h-7 text-sm"
                         />
                       </div>
 
