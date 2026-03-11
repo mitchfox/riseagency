@@ -657,11 +657,11 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString(portalLocale)}</p>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">Opponent</p>
-                    <p className="font-bold text-sm md:text-base truncate">{analysis.opponent || "N/A"}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t(portalLanguage, "opponent")}</p>
+                    <p className="font-bold text-sm md:text-base truncate">{tf("opponent", analysis.opponent) || "N/A"}</p>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">Result</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t(portalLanguage, "result")}</p>
                     <p className="font-bold text-sm md:text-base">{analysis.result || "N/A"}</p>
                   </div>
                 </div>
