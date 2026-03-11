@@ -180,6 +180,7 @@ const App = () => {
                       <Route path="/sign/:token" element={<SignContract />} />
                       <Route path="/risewithus" element={<RiseWithUs />} />
                       <Route path="/risewithus/:slug" element={<RiseWithUs />} />
+                      <Route path="/diagnostics" element={<Diagnostics />} />
                       <Route path="/error" element={<NotFound />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
