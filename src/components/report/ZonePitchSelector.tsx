@@ -116,7 +116,7 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
   const summary = value.length === 0 ? null : `${value.length} pt${value.length > 1 ? "s" : ""}`;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setExpandedZone(null); }}>
       <PopoverTrigger asChild>
         <Button
           variant={value.length > 0 ? "default" : "ghost"}
