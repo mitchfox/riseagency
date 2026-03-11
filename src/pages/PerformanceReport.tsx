@@ -719,10 +719,10 @@ const PerformanceReport = () => {
                       </div>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Notes</p>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">{t(reportLanguage, "notes_label")}</p>
                       <button onClick={() => setFilterHasNotes(!filterHasNotes)}
                         className={`px-2 py-0.5 rounded text-[10px] transition-colors border ${filterHasNotes ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/30 text-foreground/70 border-border hover:bg-muted/50'}`}>
-                        With Notes
+                        {t(reportLanguage, "with_notes")}
                       </button>
                     </div>
                     {hasActiveFilters && filteredActions.some(a => a.video_url) && (
