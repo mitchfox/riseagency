@@ -629,7 +629,7 @@ const PerformanceReport = () => {
                           <p className="text-sm md:text-lg font-bold">{stat.value}</p>
                         )}
                         {stat.per90Value !== undefined && (
-                          <p className="text-[8px] md:text-xs text-muted-foreground mt-0.5">p90: {stat.per90Value}</p>
+                          <p className="text-[8px] md:text-xs text-muted-foreground mt-0.5">{t(reportLanguage, "per_90")}: {stat.per90Value}</p>
                         )}
                       </div>
                     );
