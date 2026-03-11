@@ -686,7 +686,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     className="text-xs"
                   >
                     <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
-                    R90 Flow
+                    {t(reportLanguage, "r90_flow")}
                   </Button>
                   <Button
                     variant={showHeatmap ? "default" : "outline"}
