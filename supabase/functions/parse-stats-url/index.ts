@@ -3,7 +3,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Stat keys we want to extract
 const SOFASCORE_STAT_KEYS = [
   'goals', 'assists', 'totalShots', 'shotsOnTarget', 'keyPasses',
   'accuratePasses', 'totalPasses', 'passAccuracy', 'successfulDribbles',
@@ -12,43 +11,323 @@ const SOFASCORE_STAT_KEYS = [
   'totalCrosses', 'accurateLongBalls', 'totalLongBalls', 'foulsDrawn',
   'touches', 'expectedGoals', 'expectedAssists', 'progressivePasses',
   'minutesPlayed', 'rating',
-];
+] as const;
 
-// Extract embedded JSON data from SofaScore HTML (Next.js hydration, JSON-LD, inline data)
-function extractEmbeddedData(html: string): string {
-  const chunks: string[] = [];
+type SofaStatKey = (typeof SOFASCORE_STAT_KEYS)[number];
+type SofaPlayerStats = Record<string, Record<string, any>>;
 
-  // 1. __NEXT_DATA__ hydration script
-  const nextDataMatch = html.match(/<script\s+id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/i);
-  if (nextDataMatch) {
-    chunks.push('=== NEXT_DATA hydration ===\n' + nextDataMatch[1].substring(0, 20000));
+const SOFA_KEY_ALIASES: Record<SofaStatKey, string[]> = {
+  goals: ['goals', 'goal'],
+  assists: ['assists', 'assist'],
+  totalShots: ['totalshots', 'shots', 'shotstotal', 'totshots'],
+  shotsOnTarget: ['shotsontarget', 'ontargetshots', 'shots_on_target', 'sot'],
+  keyPasses: ['keypasses', 'keypass'],
+  accuratePasses: ['accuratepasses', 'successfulpasses', 'completedpasses'],
+  totalPasses: ['totalpasses', 'passes', 'passesattempted'],
+  passAccuracy: ['passaccuracy', 'passcompletion', 'passaccuracypercent'],
+  successfulDribbles: ['successfuldribbles', 'dribblescompleted', 'completeddribbles'],
+  totalDuels: ['totalduels', 'duels'],
+  duelsWon: ['duelswon', 'wonduels'],
+  aerialDuelsWon: ['aerialduelswon', 'aerialswon', 'wonduelsaerial'],
+  totalAerialDuels: ['totalaerialduels', 'aerialduels'],
+  tackles: ['tackles', 'tackleswon'],
+  interceptions: ['interceptions', 'interception'],
+  clearances: ['clearances', 'clearance'],
+  accurateCrosses: ['accuratecrosses', 'crossescompleted', 'successfulcrosses'],
+  totalCrosses: ['totalcrosses', 'crosses'],
+  accurateLongBalls: ['accuratelongballs', 'successfullongballs', 'longballscompleted'],
+  totalLongBalls: ['totallongballs', 'longballs'],
+  foulsDrawn: ['foulsdrawn', 'foulswon'],
+  touches: ['touches', 'balltouches'],
+  expectedGoals: ['expectedgoals', 'xg'],
+  expectedAssists: ['expectedassists', 'xa'],
+  progressivePasses: ['progressivepasses', 'progpasses'],
+  minutesPlayed: ['minutesplayed', 'minutes', 'minsplayed'],
+  rating: ['rating', 'sofascorerating', 'sofascoreratingvalue'],
+};
+
+const normaliseToken = (input: string) =>
+  input.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const ALIAS_TO_STAT_KEY: Record<string, SofaStatKey> = Object.entries(SOFA_KEY_ALIASES)
+  .flatMap(([statKey, aliases]) => aliases.map((alias) => [normaliseToken(alias), statKey as SofaStatKey] as const))
+  .reduce((acc, [alias, statKey]) => {
+    acc[alias] = statKey;
+    return acc;
+  }, {} as Record<string, SofaStatKey>);
+
+function tryMapStatKey(rawKey: string): SofaStatKey | null {
+  const mapped = ALIAS_TO_STAT_KEY[normaliseToken(rawKey)];
+  return mapped || null;
+}
+
+function coerceNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const cleaned = value.replace('%', '').trim();
+    if (!cleaned) return null;
+    const num = Number(cleaned);
+    return Number.isFinite(num) ? num : null;
+  }
+  return null;
+}
+
+function extractStatsFromNode(node: unknown, target: Record<string, number>) {
+  if (!node) return;
+
+  if (Array.isArray(node)) {
+    for (const item of node) extractStatsFromNode(item, target);
+    return;
   }
 
-  // 2. JSON-LD structured data
-  const jsonLdRegex = /<script\s+type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi;
-  let jsonLdMatch;
-  while ((jsonLdMatch = jsonLdRegex.exec(html)) !== null) {
-    chunks.push('=== JSON-LD ===\n' + jsonLdMatch[1].substring(0, 5000));
-  }
+  if (typeof node !== 'object') return;
 
-  // 3. Any script containing stat-like JSON objects (rating, statistics, player)
-  const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi;
-  let scriptMatch;
-  while ((scriptMatch = scriptRegex.exec(html)) !== null) {
-    const content = scriptMatch[1];
-    if (content.length > 50 && content.length < 100000 &&
-        (content.includes('"statistics"') || content.includes('"rating"') ||
-         content.includes('"player"') || content.includes('"incidents"') ||
-         content.includes('"lineups"'))) {
-      chunks.push('=== Inline script data ===\n' + content.substring(0, 15000));
+  const obj = node as Record<string, any>;
+
+  // Pattern: { name: "Key passes", value: 3 }
+  const label = obj.name || obj.label || obj.title || obj.statName;
+  const value = obj.value ?? obj.statValue ?? obj.totalValue;
+  if (typeof label === 'string') {
+    const mappedKey = tryMapStatKey(label);
+    const numValue = coerceNumber(value);
+    if (mappedKey && numValue !== null) {
+      target[mappedKey] = numValue;
     }
   }
 
-  return chunks.join('\n\n');
+  for (const [key, raw] of Object.entries(obj)) {
+    const mappedKey = tryMapStatKey(key);
+
+    if (mappedKey) {
+      const directValue = coerceNumber(raw);
+      if (directValue !== null) {
+        target[mappedKey] = directValue;
+      } else if (raw && typeof raw === 'object') {
+        const nestedValue = coerceNumber((raw as any).value ?? (raw as any).total ?? (raw as any).count);
+        if (nestedValue !== null) {
+          target[mappedKey] = nestedValue;
+        }
+      }
+    }
+
+    if (raw && typeof raw === 'object') {
+      extractStatsFromNode(raw, target);
+    }
+  }
 }
 
-// SofaScore HTML scraping + AI extraction with tool calling
-async function parseSofaScoreUrl(url: string, LOVABLE_API_KEY: string) {
+function isLikelyPlayerName(name: string): boolean {
+  if (!name || name.length < 3 || name.length > 60) return false;
+  if (/^(team|match|lineup|home|away|statistics)$/i.test(name.trim())) return false;
+  return /[a-zA-Z]/.test(name);
+}
+
+function extractPlayersFromEmbeddedData(html: string): SofaPlayerStats {
+  const players: SofaPlayerStats = {};
+  const nextDataMatch = html.match(/<script\s+id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/i);
+  if (!nextDataMatch) return players;
+
+  let root: any;
+  try {
+    root = JSON.parse(nextDataMatch[1]);
+  } catch {
+    return players;
+  }
+
+  const walk = (node: unknown, inheritedTeam?: string) => {
+    if (!node) return;
+
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item, inheritedTeam);
+      return;
+    }
+
+    if (typeof node !== 'object') return;
+    const obj = node as Record<string, any>;
+
+    const possibleTeam =
+      (typeof obj.team === 'object' && obj.team && typeof obj.team.name === 'string' ? obj.team.name : undefined) ||
+      (typeof obj.teamName === 'string' ? obj.teamName : undefined) ||
+      inheritedTeam;
+
+    const candidateName =
+      (typeof obj.player === 'object' && obj.player && typeof obj.player.name === 'string' ? obj.player.name : undefined) ||
+      (typeof obj.name === 'string' ? obj.name : undefined);
+
+    const statsSeed =
+      obj.statistics ||
+      obj.stats ||
+      obj.playerStatistics ||
+      (obj.player && obj.player.statistics ? obj.player.statistics : null) ||
+      obj;
+
+    if (candidateName && isLikelyPlayerName(candidateName)) {
+      const extracted: Record<string, number> = {};
+      extractStatsFromNode(statsSeed, extracted);
+
+      const statCount = Object.keys(extracted).length;
+      if (statCount >= 2) {
+        players[candidateName] = {
+          team: possibleTeam || 'Unknown',
+          ...players[candidateName],
+          ...extracted,
+        };
+      }
+    }
+
+    for (const value of Object.values(obj)) {
+      if (value && typeof value === 'object') {
+        walk(value, possibleTeam);
+      }
+    }
+  };
+
+  walk(root);
+  return players;
+}
+
+function extractEmbeddedContent(html: string): string {
+  const chunks: string[] = [];
+
+  const nextDataMatch = html.match(/<script\s+id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/i);
+  if (nextDataMatch) {
+    chunks.push(`NEXT_DATA JSON:\n${nextDataMatch[1].substring(0, 25000)}`);
+  }
+
+  const jsonLdRegex = /<script\s+type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi;
+  let ldMatch: RegExpExecArray | null;
+  while ((ldMatch = jsonLdRegex.exec(html)) !== null) {
+    chunks.push(`JSON-LD:\n${ldMatch[1].substring(0, 5000)}`);
+  }
+
+  const visibleText = html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .substring(0, 10000);
+
+  chunks.push(`Visible text:\n${visibleText}`);
+  return chunks.join('\n\n').substring(0, 40000);
+}
+
+async function parseSofaScoreWithAI(url: string, content: string, LOVABLE_API_KEY: string): Promise<SofaPlayerStats> {
+  const prompt = `Extract per-player SofaScore match stats from the content below.
+
+URL: ${url}
+
+Rules:
+- Return only players with at least 2 numerical stats.
+- Only include numbers explicitly found in the content.
+- Do not guess.
+- If a player has no goal evidence, goals must be 0 or omitted.
+- passAccuracy is 0-100.
+- rating is out of 10.
+
+Content:\n${content}`;
+
+  const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-3-flash-preview',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0,
+      tools: [
+        {
+          type: 'function',
+          function: {
+            name: 'report_player_stats',
+            description: 'Return extracted player match statistics',
+            parameters: {
+              type: 'object',
+              properties: {
+                players: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string' },
+                      team: { type: 'string' },
+                      goals: { type: 'number' },
+                      assists: { type: 'number' },
+                      totalShots: { type: 'number' },
+                      shotsOnTarget: { type: 'number' },
+                      keyPasses: { type: 'number' },
+                      accuratePasses: { type: 'number' },
+                      totalPasses: { type: 'number' },
+                      passAccuracy: { type: 'number' },
+                      successfulDribbles: { type: 'number' },
+                      totalDuels: { type: 'number' },
+                      duelsWon: { type: 'number' },
+                      aerialDuelsWon: { type: 'number' },
+                      totalAerialDuels: { type: 'number' },
+                      tackles: { type: 'number' },
+                      interceptions: { type: 'number' },
+                      clearances: { type: 'number' },
+                      accurateCrosses: { type: 'number' },
+                      totalCrosses: { type: 'number' },
+                      accurateLongBalls: { type: 'number' },
+                      totalLongBalls: { type: 'number' },
+                      foulsDrawn: { type: 'number' },
+                      touches: { type: 'number' },
+                      expectedGoals: { type: 'number' },
+                      expectedAssists: { type: 'number' },
+                      progressivePasses: { type: 'number' },
+                      minutesPlayed: { type: 'number' },
+                      rating: { type: 'number' },
+                    },
+                    required: ['name', 'team'],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ['players'],
+              additionalProperties: false,
+            },
+          },
+        },
+      ],
+      tool_choice: { type: 'function', function: { name: 'report_player_stats' } },
+    }),
+  });
+
+  if (!aiResponse.ok) {
+    const err = await aiResponse.text();
+    throw new Error(`AI extraction failed: ${aiResponse.status} ${err}`);
+  }
+
+  const aiData = await aiResponse.json();
+  const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+  if (!toolCall?.function?.arguments) return {};
+
+  const parsedArgs = typeof toolCall.function.arguments === 'string'
+    ? JSON.parse(toolCall.function.arguments)
+    : toolCall.function.arguments;
+
+  const result: SofaPlayerStats = {};
+  for (const player of parsedArgs.players || []) {
+    if (!player?.name) continue;
+    const cleaned: Record<string, any> = { team: player.team || 'Unknown' };
+
+    for (const key of SOFASCORE_STAT_KEYS) {
+      const num = coerceNumber(player[key]);
+      if (num !== null) cleaned[key] = num;
+    }
+
+    if (Object.keys(cleaned).filter(k => k !== 'team').length >= 2) {
+      result[player.name] = cleaned;
+    }
+  }
+
+  return result;
+}
+
+async function parseSofaScoreUrl(url: string, LOVABLE_API_KEY: string): Promise<SofaPlayerStats> {
   const pageResponse = await fetch(url, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -63,148 +342,31 @@ async function parseSofaScoreUrl(url: string, LOVABLE_API_KEY: string) {
 
   const html = await pageResponse.text();
 
-  // Extract embedded JSON data BEFORE stripping scripts
-  const embeddedData = extractEmbeddedData(html);
+  // 1) Deterministic extraction from embedded JSON first
+  const structuredPlayers = extractPlayersFromEmbeddedData(html);
+  const structuredCount = Object.keys(structuredPlayers).length;
 
-  // Also get visible text content (strip scripts/styles/tags)
-  const visibleText = html
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .substring(0, 10000);
-
-  const combinedContent = (embeddedData + '\n\n=== Visible page text ===\n' + visibleText).substring(0, 30000);
-
-  console.log('SofaScore content length:', combinedContent.length, 'embedded data length:', embeddedData.length);
-
-  const prompt = `You are a football statistics extractor. Given the following data from a SofaScore match page, extract individual player match statistics.
-
-Page URL: ${url}
-
-Page content (embedded JSON data + visible text):
-${combinedContent}
-
-CRITICAL RULES:
-- Only include a stat if you find an EXACT numerical value in the data above.
-- Do NOT guess or infer any statistic. If you cannot find it, omit it.
-- If a player did not score, goals MUST be 0, not omitted.
-- passAccuracy should be a percentage (0-100).
-- rating should be out of 10.
-- Extract stats for ALL players you can find data for.`;
-
-  const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0,
-      tools: [{
-        type: 'function',
-        function: {
-          name: 'report_player_stats',
-          description: 'Report extracted player statistics from a SofaScore match page.',
-          parameters: {
-            type: 'object',
-            properties: {
-              players: {
-                type: 'object',
-                description: 'Map of player name to their stats object',
-                additionalProperties: {
-                  type: 'object',
-                  properties: {
-                    team: { type: 'string' },
-                    goals: { type: 'number' },
-                    assists: { type: 'number' },
-                    totalShots: { type: 'number' },
-                    shotsOnTarget: { type: 'number' },
-                    keyPasses: { type: 'number' },
-                    accuratePasses: { type: 'number' },
-                    totalPasses: { type: 'number' },
-                    passAccuracy: { type: 'number' },
-                    successfulDribbles: { type: 'number' },
-                    totalDuels: { type: 'number' },
-                    duelsWon: { type: 'number' },
-                    aerialDuelsWon: { type: 'number' },
-                    totalAerialDuels: { type: 'number' },
-                    tackles: { type: 'number' },
-                    interceptions: { type: 'number' },
-                    clearances: { type: 'number' },
-                    accurateCrosses: { type: 'number' },
-                    totalCrosses: { type: 'number' },
-                    accurateLongBalls: { type: 'number' },
-                    totalLongBalls: { type: 'number' },
-                    foulsDrawn: { type: 'number' },
-                    touches: { type: 'number' },
-                    expectedGoals: { type: 'number' },
-                    expectedAssists: { type: 'number' },
-                    progressivePasses: { type: 'number' },
-                    minutesPlayed: { type: 'number' },
-                    rating: { type: 'number' },
-                  },
-                },
-              },
-            },
-            required: ['players'],
-            additionalProperties: false,
-          },
-        },
-      }],
-      tool_choice: { type: 'function', function: { name: 'report_player_stats' } },
-    }),
-  });
-
-  if (!aiResponse.ok) {
-    const errText = await aiResponse.text();
-    console.error('AI extraction failed:', aiResponse.status, errText);
-    throw new Error('AI extraction failed');
+  if (structuredCount > 0) {
+    return structuredPlayers;
   }
 
-  const aiData = await aiResponse.json();
+  // 2) AI fallback using embedded data + visible text
+  const embeddedContent = extractEmbeddedContent(html);
+  const aiPlayers = await parseSofaScoreWithAI(url, embeddedContent, LOVABLE_API_KEY);
 
-  // Extract from tool call response
-  const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-  let parsed: { players: Record<string, Record<string, any>> };
-
-  if (toolCall?.function?.arguments) {
-    const args = typeof toolCall.function.arguments === 'string'
-      ? JSON.parse(toolCall.function.arguments)
-      : toolCall.function.arguments;
-    parsed = args;
-  } else {
-    // Fallback: try parsing content directly
-    const rawContent = aiData.choices?.[0]?.message?.content || '';
-    console.log('No tool call found, raw content:', rawContent.substring(0, 500));
-    const jsonStr = rawContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    parsed = JSON.parse(jsonStr);
-  }
-
-  if (!parsed.players || Object.keys(parsed.players).length === 0) {
-    console.error('No players extracted. Embedded data length:', embeddedData.length);
+  if (Object.keys(aiPlayers).length === 0) {
     throw new Error('No player statistics found on SofaScore page. The match may not have detailed stats available yet.');
   }
 
-  // Validation: check stat density per player
-  for (const [name, stats] of Object.entries(parsed.players)) {
-    const statCount = Object.keys(stats).filter(k => k !== 'team' && typeof stats[k] === 'number').length;
-    console.log(`Player ${name}: ${statCount} stats extracted`);
-  }
-
-  return parsed.players;
+  return aiPlayers;
 }
 
-// Map SofaScore stat keys to our fixture stat keys
 function mapSofaScoreStats(stats: Record<string, any>): Record<string, number> {
   const mapped: Record<string, number> = {};
 
   const mapping: Record<string, string> = {
     goals: 'goals_per90',
-    assists: 'assists',
+    assists: 'assists_per90',
     totalShots: 'total_shots_per90',
     shotsOnTarget: 'shots_on_target_per90',
     keyPasses: 'key_passes_per90',
@@ -231,15 +393,13 @@ function mapSofaScoreStats(stats: Record<string, any>): Record<string, number> {
   };
 
   for (const [sofaKey, fixtureKey] of Object.entries(mapping)) {
-    if (stats[sofaKey] !== undefined && typeof stats[sofaKey] === 'number') {
-      mapped[fixtureKey] = stats[sofaKey];
-    }
+    const value = coerceNumber(stats[sofaKey]);
+    if (value !== null) mapped[fixtureKey] = value;
   }
 
   return mapped;
 }
 
-// FBRef / generic HTML parsing via AI
 async function parseHtmlWithAI(url: string, LOVABLE_API_KEY: string) {
   const pageResponse = await fetch(url, {
     headers: {
@@ -290,7 +450,7 @@ If you cannot find a particular stat, omit it. Return ONLY valid JSON, no explan
       'Authorization': `Bearer ${LOVABLE_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
+      model: 'google/gemini-3-flash-preview',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.1,
     }),
@@ -356,29 +516,34 @@ Deno.serve(async (req) => {
 
     if (isSofaScore) {
       const playerStats = await parseSofaScoreUrl(url, LOVABLE_API_KEY);
-      const playerNames = Object.keys(playerStats);
+
+      const allMapped: Record<string, { stats: Record<string, number>; team: string }> = {};
+      for (const [name, rawStats] of Object.entries(playerStats)) {
+        const stats = mapSofaScoreStats(rawStats);
+        if (Object.keys(stats).length > 0) {
+          allMapped[name] = {
+            stats,
+            team: rawStats.team || 'Unknown',
+          };
+        }
+      }
+
+      const playerNames = Object.keys(allMapped);
+      if (playerNames.length === 0) {
+        throw new Error('No mappable SofaScore stats were found for players on this page.');
+      }
 
       if (playerNames.length === 1) {
         const name = playerNames[0];
-        const mapped = mapSofaScoreStats(playerStats[name]);
         return new Response(JSON.stringify({
-          fixtureStats: mapped,
+          fixtureStats: allMapped[name].stats,
           unmapped: {},
           playerName: name,
           source: 'SofaScore',
-          statsCount: Object.keys(mapped).length,
+          statsCount: Object.keys(allMapped[name].stats).length,
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
-      }
-
-      // Multiple players — return all for frontend picker
-      const allMapped: Record<string, { stats: Record<string, number>; team: string }> = {};
-      for (const [name, rawStats] of Object.entries(playerStats)) {
-        allMapped[name] = {
-          stats: mapSofaScoreStats(rawStats),
-          team: rawStats.team || 'Unknown',
-        };
       }
 
       return new Response(JSON.stringify({
@@ -390,7 +555,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // FBRef or generic site — use AI HTML extraction
     const stats = await parseHtmlWithAI(url, LOVABLE_API_KEY);
 
     const fixtureStats: Record<string, number> = {};
@@ -398,12 +562,10 @@ Deno.serve(async (req) => {
 
     for (const [key, value] of Object.entries(stats)) {
       if (key === 'player_name' || key === 'source') continue;
-      const numVal = typeof value === 'number' ? value : parseFloat(String(value));
-      if (isNaN(numVal)) continue;
+      const numVal = coerceNumber(value);
+      if (numVal === null) continue;
 
-      if (isFBRef && FBREF_MAPPING[key]) {
-        fixtureStats[FBREF_MAPPING[key]] = numVal;
-      } else if (FBREF_MAPPING[key]) {
+      if (FBREF_MAPPING[key]) {
         fixtureStats[FBREF_MAPPING[key]] = numVal;
       } else {
         unmapped[key] = numVal;

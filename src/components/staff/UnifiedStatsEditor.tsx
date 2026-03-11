@@ -227,6 +227,17 @@ export const UnifiedStatsEditor = ({
     contributing_action_numbers: number[];
   }>>([]);
 
+  const actionDetailsByNumber = new Map(
+    (actions || []).map((action) => [
+      action.action_number,
+      {
+        description: action.action_description || action.action_type || 'No description',
+        score: action.action_score || 'N/A',
+        minute: action.minute || '?',
+      },
+    ])
+  );
+
   const handleSuggestWithAI = async () => {
     if (!actions || actions.length === 0) {
       toast.error('No performance actions to analyse');
@@ -787,9 +798,27 @@ export const UnifiedStatsEditor = ({
                       <p className="font-medium">{displayName}: {valueDisplay}</p>
                       <p className="text-muted-foreground">{suggestion.reasoning}</p>
                       {suggestion.contributing_action_numbers.length > 0 && (
-                        <p className="text-muted-foreground">
-                          Contributing actions: #{suggestion.contributing_action_numbers.join(', #')}
-                        </p>
+                        <div className="text-muted-foreground">
+                          <p>Contributing actions:</p>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {suggestion.contributing_action_numbers.map((actionNumber) => {
+                              const details = actionDetailsByNumber.get(actionNumber);
+                              const hoverText = details
+                                ? `#${actionNumber} · min ${details.minute} · score ${details.score} · ${details.description}`
+                                : `Action #${actionNumber}`;
+
+                              return (
+                                <span
+                                  key={actionNumber}
+                                  title={hoverText}
+                                  className="px-1.5 py-0.5 rounded bg-muted font-mono cursor-help"
+                                >
+                                  #{actionNumber}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
                       )}
                       <Button
                         size="sm"
