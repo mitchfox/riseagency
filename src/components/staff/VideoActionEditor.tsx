@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { formatScoreWithFrequency } from "@/lib/utils";
 import { canonicalActionType } from "@/lib/playerActionFrequency";
+import { ScoreDropdown } from "./ScoreDropdown";
 import type { RecordedStat } from "./ActionStatRecorder";
 
 interface PerformanceAction {
