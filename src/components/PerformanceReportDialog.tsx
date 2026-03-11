@@ -871,7 +871,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                           )}
                           {stat.per90Value !== undefined && (
                             <p className="text-[8px] md:text-xs text-muted-foreground mt-0.5">
-                              p90: {stat.per90Value}
+                              {t(reportLanguage, "per_90")}: {stat.per90Value}
                             </p>
                           )}
                         </div>
