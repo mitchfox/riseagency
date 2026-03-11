@@ -285,16 +285,12 @@ export const VideoActionEditor = ({
                   </div>
                 )}
               </div>
-              <div className="w-20 md:w-24">
-                <Input
-                  type="number"
-                  step="0.00001"
-                  value={current.action_score}
-                  onChange={(e) => updateAction(realIndex, "action_score", e.target.value)}
-                  placeholder="Score"
-                  className="h-7 md:h-8 text-xs md:text-sm border-[hsl(43,49%,61%)]/50 focus-visible:ring-[hsl(43,49%,61%)]/30"
-                />
-              </div>
+              <ScoreDropdown
+                value={current.action_score}
+                onChange={(val) => updateAction(realIndex, "action_score", val)}
+                className="w-20 md:w-24"
+                inputClassName="h-7 md:h-8 text-xs md:text-sm border-[hsl(43,49%,61%)]/50 focus-visible:ring-[hsl(43,49%,61%)]/30"
+              />
               <div className="flex items-center gap-1 md:gap-1.5 ml-auto">
                 <Input
                   value={searchFilter}
