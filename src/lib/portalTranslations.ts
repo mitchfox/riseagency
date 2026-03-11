@@ -792,6 +792,18 @@ Object.entries(deExtended).forEach(([key, val]) => {
   if (translations.de) translations.de[key] = val;
 });
 
+Object.assign(translations.de, {
+  inbox: "Posteingang",
+  see_all: "Alle anzeigen",
+  select_item_to_preview: "Wähle ein Element zur Vorschau aus",
+  new_analysis_available: "Neue Analyse verfügbar",
+  view_analysis: "Analyse ansehen",
+  tagged_in_analysis_for: "Du wurdest in einer Analyse markiert für",
+  new_highlight_reel: "Neues Highlight-Video",
+  new_highlight_created_for_you: "Ein neues Highlight-Video wurde für dich erstellt",
+  view_highlights: "Highlights ansehen",
+});
+
 // Italian extended
 const itExtended: Record<string, string> = {
   coach_availability: "Disponibilità Allenatore", availability: "Disponibilità",
