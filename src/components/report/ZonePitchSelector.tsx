@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { MapPin, ArrowUp, ArrowDown } from "lucide-react";
+import { MapPin, ArrowUp, ArrowDown, ChevronUp as NavUp, ChevronDown as NavDown, ChevronLeft as NavLeft, ChevronRight as NavRight } from "lucide-react";
 import { OFFENSIVE_ZONE_MULTIPLIERS } from "@/lib/zoneMultipliers";
 
 export interface ZonePoint {
