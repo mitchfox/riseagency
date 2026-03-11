@@ -187,35 +187,78 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
             )}
 
             {expandedZone ? (
-              /* Expanded sub-zone view for a single major zone */
+              /* Expanded sub-zone view with directional navigation */
               <div className="p-2">
-                <div className="grid grid-rows-3 gap-1">
-                  {SUB_GRID.map((row, ri) => (
-                    <div key={ri} className="grid grid-cols-3 gap-1">
-                      {row.map(sub => {
-                        const isSelected = hasZone(expandedZone, sub);
-                        return (
-                          <button
-                            key={sub}
-                            onClick={() => toggleSubZone(expandedZone, sub)}
-                            className={`
-                              relative flex items-center justify-center py-4 rounded transition-all
-                              ${isSelected
-                                ? 'bg-primary text-primary-foreground ring-2 ring-primary shadow-md'
-                                : `${getMultiplierColor(expandedZone)} hover:opacity-80`
-                              }
-                            `}
-                          >
-                            <span className={`text-xs font-bold ${isSelected ? '' : 'text-black'}`}>
-                              {expandedZone}.{sub}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ))}
+                {/* Nav: Up */}
+                <div className="flex justify-center mb-1">
+                  <button
+                    onClick={() => { const nz = expandedZone + 3; if (nz <= 18) setExpandedZone(nz); }}
+                    disabled={expandedZone + 3 > 18}
+                    className="p-0.5 rounded hover:bg-accent disabled:opacity-20 text-muted-foreground"
+                    title="Move up"
+                  >
+                    <NavUp className="h-4 w-4" />
+                  </button>
                 </div>
-                <p className="text-[8px] text-muted-foreground text-center mt-1.5">
+                <div className="flex items-center gap-1">
+                  {/* Nav: Left */}
+                  <button
+                    onClick={() => { const col = (expandedZone - 1) % 3; if (col > 0) setExpandedZone(expandedZone - 1); }}
+                    disabled={(expandedZone - 1) % 3 === 0}
+                    className="p-0.5 rounded hover:bg-accent disabled:opacity-20 text-muted-foreground shrink-0"
+                    title="Move left"
+                  >
+                    <NavLeft className="h-4 w-4" />
+                  </button>
+                  {/* Sub-zone grid */}
+                  <div className="flex-1 grid grid-rows-3 gap-1">
+                    {SUB_GRID.map((row, ri) => (
+                      <div key={ri} className="grid grid-cols-3 gap-1">
+                        {row.map(sub => {
+                          const isSelected = hasZone(expandedZone, sub);
+                          return (
+                            <button
+                              key={sub}
+                              onClick={() => toggleSubZone(expandedZone, sub)}
+                              className={`
+                                relative flex items-center justify-center py-4 rounded transition-all
+                                ${isSelected
+                                  ? 'bg-primary text-primary-foreground ring-2 ring-primary shadow-md'
+                                  : `${getMultiplierColor(expandedZone)} hover:opacity-80`
+                                }
+                              `}
+                            >
+                              <span className={`text-xs font-bold ${isSelected ? '' : 'text-black'}`}>
+                                {expandedZone}.{sub}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                  {/* Nav: Right */}
+                  <button
+                    onClick={() => { const col = (expandedZone - 1) % 3; if (col < 2) setExpandedZone(expandedZone + 1); }}
+                    disabled={(expandedZone - 1) % 3 === 2}
+                    className="p-0.5 rounded hover:bg-accent disabled:opacity-20 text-muted-foreground shrink-0"
+                    title="Move right"
+                  >
+                    <NavRight className="h-4 w-4" />
+                  </button>
+                </div>
+                {/* Nav: Down */}
+                <div className="flex justify-center mt-1">
+                  <button
+                    onClick={() => { const nz = expandedZone - 3; if (nz >= 1) setExpandedZone(nz); }}
+                    disabled={expandedZone - 3 < 1}
+                    className="p-0.5 rounded hover:bg-accent disabled:opacity-20 text-muted-foreground"
+                    title="Move down"
+                  >
+                    <NavDown className="h-4 w-4" />
+                  </button>
+                </div>
+                <p className="text-[8px] text-muted-foreground text-center mt-1">
                   Zone {expandedZone} &bull; {getMultiplierDisplay(expandedZone)} modifier
                 </p>
               </div>
