@@ -187,11 +187,11 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
           feed.push({
             id: `highlight-${h.id}`,
             type: "highlight",
-            title: `New Highlight Reel`,
+            title: t(portalLanguage, "new_highlight_reel"),
             subtitle: h.name,
-            description: `A new highlight reel "${h.name}" has been created for you.`,
+            description: `${t(portalLanguage, "new_highlight_created_for_you")} "${h.name}".`,
             timestamp: h.created_at,
-            linkLabel: "View Highlights",
+            linkLabel: t(portalLanguage, "view_highlights"),
           });
         });
 
