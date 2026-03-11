@@ -2311,18 +2311,20 @@ export const CreatePerformanceReportDialog = ({
 
                       <div className="relative shrink-0">
                         <Input
-                          value={action.action_type}
+                          value={getActionDisplayValue(index, 'type', action.action_type)}
                           onChange={(e) => {
+                            if (isTranslatedView) return;
                             updateAction(index, "action_type", e.target.value);
                             setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
                           }}
-                          onFocus={() => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: true }))}
+                          onFocus={() => !isTranslatedView && setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: true }))}
                           onBlur={() => {
                             setTimeout(() => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200);
                             if (action.action_type) updateAction(index, "action_type", canonicalActionType(action.action_type));
                           }}
                           placeholder="Type"
-                          className="w-36 text-sm h-9 pr-7"
+                          readOnly={isTranslatedView}
+                          className={`w-36 text-sm h-9 pr-7 ${isTranslatedView ? "bg-muted/50" : ""}`}
                         />
                         {action.action_type && (
                           <button
