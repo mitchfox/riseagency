@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
 import { t, normalizePortalLanguage } from "@/lib/portalTranslations";
+import { getReportLanguage, getReportLocale, getTranslatedReportField } from "@/lib/reportTranslations";
 
 interface FeedItem {
   id: string;
