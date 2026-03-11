@@ -960,7 +960,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {analysis.performance_overview && (
                 <Card className="overflow-hidden">
                   <CardHeader className="py-1.5 md:py-2">
-                    <CardTitle className="text-sm md:text-lg">{t(portalLanguage, "overview")}</CardTitle>
+                    <CardTitle className="text-sm md:text-lg">{t(reportLanguage, "overview")}</CardTitle>
                   </CardHeader>
                   <CardContent className="p-2 md:p-4">
                     <p className="text-muted-foreground whitespace-pre-wrap text-center text-xs md:text-sm">{tf("performanceOverview", analysis.performance_overview)}</p>

@@ -895,7 +895,14 @@ const PerformanceReport = () => {
         language={reportLanguage}
       />
 
-      {/* R90 Info Dialog */}
+      <ClippedActionsPlayer
+        open={showZonePlayer}
+        onOpenChange={setShowZonePlayer}
+        clips={zonePlayerClips}
+        language={reportLanguage}
+        title={zonePlayerTitle}
+      />
+
       <Dialog open={showR90Info} onOpenChange={setShowR90Info}>
         <DialogContent className="w-[95vw] max-w-[95vw] md:max-w-2xl max-h-[85vh] overflow-y-auto">
           <button onClick={() => setShowR90Info(false)} className="absolute right-3 top-3 z-10 rounded-full bg-muted p-1.5 hover:bg-muted/80 transition-colors">
