@@ -635,8 +635,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {isPortalView && analysis.visibility_status === "draft" && (
                 <div className="absolute inset-0 z-20 backdrop-blur-md bg-white/40 dark:bg-black/40 rounded-lg flex items-center justify-center">
                   <div className="text-center p-6 bg-background/90 rounded-xl border shadow-lg max-w-xs">
-                    <p className="font-semibold text-sm">Report In Progress</p>
-                    <p className="text-xs text-muted-foreground mt-1">This report is still being prepared. Check back soon.</p>
+                    <p className="font-semibold text-sm">{t(reportLanguage, "report_in_progress")}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t(reportLanguage, "report_in_progress_message")}</p>
                   </div>
                 </div>
               )}
@@ -645,19 +645,19 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               <div className="flex flex-col gap-3">
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
                   <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">Player</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "player_label")}</p>
                     <p className="font-bold text-sm md:text-base truncate">{analysis.player_name}</p>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">{t(portalLanguage, "date")}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "date")}</p>
                     <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString(portalLocale)}</p>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">{t(portalLanguage, "opponent")}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "opponent")}</p>
                     <p className="font-bold text-sm md:text-base truncate">{tf("opponent", analysis.opponent) || "N/A"}</p>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">{t(portalLanguage, "result")}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "result")}</p>
                     <p className="font-bold text-sm md:text-base">{analysis.result || "N/A"}</p>
                   </div>
                 </div>
