@@ -1129,6 +1129,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
       <ClippedActionsPlayer
         open={showClippedActions}
         onOpenChange={setShowClippedActions}
+        language={reportLanguage}
         clips={actions
           .filter(a => a.video_url)
           .map(a => ({
