@@ -119,7 +119,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
           opacity: swipeY > 0 ? Math.max(0.3, 1 - swipeY / 300) : 1,
           transition: swiping ? "none" : "transform 0.3s ease, opacity 0.3s ease",
         }}
-        className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-black border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none data-[state=open]:!slide-in-from-left-0 data-[state=open]:!slide-in-from-top-0"
+        className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-black border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none data-[state=open]:!slide-in-from-left-0 data-[state=open]:!slide-in-from-top-0 [&>button.absolute]:hidden"
       >
         <DialogTitle className="sr-only">{getModeLabel()}</DialogTitle>
 
