@@ -547,7 +547,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[98vw] md:max-w-[95vw] w-full max-h-[95vh] overflow-y-auto overflow-x-hidden p-0">
         <div className="sticky top-0 z-10 bg-background border-b p-2 md:p-4 flex items-center justify-between gap-2">
-          <h2 className="text-base md:text-xl font-bebas uppercase tracking-wider truncate">Performance Report</h2>
+          <h2 className="text-base md:text-xl font-bebas uppercase tracking-wider truncate">{t(reportLanguage, "performance_report")}</h2>
           <div className="flex gap-1 md:gap-2 flex-shrink-0">
             <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="px-2 md:px-3" disabled={savingImage || loading}>
               <ImageIcon className="h-4 w-4 md:mr-2" />
@@ -574,7 +574,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
             </Button>
             <Button onClick={() => onOpenChange(false)} variant="outline" size="sm" className="px-2 md:px-3">
               <X className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">Close</span>
+              <span className="hidden md:inline">{t(reportLanguage, "close")}</span>
             </Button>
           </div>
         </div>
