@@ -100,7 +100,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const tc = analysis?.translated_content;
   const hasTranslation = hasTranslatedReportContent(tc);
   const tf = (key: string, fallback: string) => getTranslatedReportField(tc, key, fallback);
-  const tAction = (index: number, field: string, fallback: string) => getTranslatedActionField(tc, index, field, fallback);
+  const tAction = (index: number, field: "type" | "description" | "notes", fallback: string) => getTranslatedActionField(tc, index, field, fallback);
 
   // Pre-fetch data when analysisId changes (even before dialog opens)
   useEffect(() => {

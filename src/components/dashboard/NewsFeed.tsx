@@ -153,8 +153,8 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
           .order("created_at", { ascending: false })
           .limit(5);
 
-        tags?.forEach(t => {
-          const a = (t as any).analyses;
+        tags?.forEach(tag => {
+          const a = (tag as any).analyses;
           if (!a) return;
           const typeLabel = a.analysis_type === "pre-match"
             ? t(portalLanguage, "pre_match")
@@ -167,7 +167,7 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
             title: `${typeLabel}: ${a.home_team || ""} vs ${a.away_team || ""}`,
             subtitle: a.title || t(portalLanguage, "new_analysis_available"),
             description: `${t(portalLanguage, "tagged_in_analysis_for")} ${a.home_team || ''} vs ${a.away_team || ''}.`,
-            timestamp: t.created_at,
+            timestamp: tag.created_at,
             linkLabel: t(portalLanguage, "view_analysis"),
             onClick: () => {
               const slug = createAnalysisSlug(a.home_team || '', a.away_team || '', a.id);
