@@ -2930,7 +2930,7 @@ export const CreatePerformanceReportDialog = ({
   // Inline mode: render with a header and full-page layout
   if (inline) {
     return (
-      <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+      <div className="fixed inset-0 z-50 bg-background overflow-y-auto pt-16 md:pt-14">
         {/* Top safe spacer bar for mobile */}
         <div className="w-full h-10 md:h-0 bg-background shrink-0" />
 
