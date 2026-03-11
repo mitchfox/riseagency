@@ -954,7 +954,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                       <div className="mt-3 space-y-3 border-t pt-3">
                         {/* Filter by action type */}
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Action Type</p>
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">{t(reportLanguage, "action_type_label")}</p>
                           <div className="flex flex-wrap gap-1">
                             {allActionTypes.map(type => (
                               <button
