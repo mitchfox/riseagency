@@ -163,27 +163,32 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
       if (data?.error) throw new Error(data.error);
 
       if (data?.multiplePlayersAvailable && data?.players) {
-        // Multiple players returned from SofaScore lineup — pick the first one for now
-        // TODO: Could add a player selector dialog
-        const playerNames = Object.keys(data.players);
-        const firstName = playerNames[0];
-        const playerData = data.players[firstName];
-        if (playerData?.stats && Object.keys(playerData.stats).length > 0) {
+        // Auto-pick player with the richest stat set (avoids selecting a player with only 1 stat)
+        const bestPlayerEntry = Object.entries(data.players as Record<string, { stats?: Record<string, number>; team?: string }>)
+          .map(([name, player]) => ({
+            name,
+            team: player?.team || 'Unknown',
+            stats: player?.stats || {},
+            count: Object.keys(player?.stats || {}).length,
+          }))
+          .sort((a, b) => b.count - a.count)[0];
+
+        if (bestPlayerEntry && bestPlayerEntry.count > 0) {
           const suggestions: Record<string, AISuggestion> = {};
-          for (const [key, value] of Object.entries(playerData.stats as Record<string, number>)) {
+          for (const [key, value] of Object.entries(bestPlayerEntry.stats)) {
             suggestions[key] = {
               value,
-              reasoning: `From SofaScore (${firstName}, ${playerData.team})`,
+              reasoning: `From SofaScore (${bestPlayerEntry.name}, ${bestPlayerEntry.team})`,
               contributing_action_numbers: [],
             };
           }
           setAiSuggestions(prev => ({ ...prev, ...suggestions }));
-          const count = Object.keys(playerData.stats).length;
-          toast.success(`Parsed ${count} stat${count !== 1 ? 's' : ''} from SofaScore for ${firstName}`);
+          toast.success(`Parsed ${bestPlayerEntry.count} stat${bestPlayerEntry.count !== 1 ? 's' : ''} from SofaScore for ${bestPlayerEntry.name}`);
           setShowUrlInput(false);
           setUrlInput("");
         } else {
-          toast.info(`Found ${playerNames.length} players but no stats available yet`);
+          const playerCount = Object.keys(data.players).length;
+          toast.info(`Found ${playerCount} players but no reliable stats were extracted yet`);
         }
       } else if (data?.fixtureStats) {
         const suggestions: Record<string, AISuggestion> = {};
