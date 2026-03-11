@@ -414,8 +414,8 @@ const PerformanceReport = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title={`${analysis.player_name} vs ${analysis.opponent} - Performance Report | RISE Football`}
-        description={`Detailed performance analysis for ${analysis.player_name} against ${analysis.opponent}. R90 Score: ${analysis.r90_score?.toFixed(2) || 'N/A'}.`}
+        title={`${analysis.player_name} vs ${tf("opponent", analysis.opponent)} - ${t(reportLanguage, "performance_report")} | RISE Football`}
+        description={`Detailed performance analysis for ${analysis.player_name} against ${tf("opponent", analysis.opponent)}. R90 Score: ${analysis.r90_score?.toFixed(2) || 'N/A'}.`}
       />
       {!isAuthenticated && <div className="print:hidden"><Header /></div>}
 
