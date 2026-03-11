@@ -157,6 +157,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         visibility_status: (analysisResult.data as any).visibility_status || "live",
         placeholder_raw_score: (analysisResult.data as any).placeholder_raw_score,
         placeholder_minutes: (analysisResult.data as any).placeholder_minutes,
+        translated_content: (analysisResult.data as any).translated_content || null,
       });
 
       if (actionsResult.error) throw actionsResult.error;
