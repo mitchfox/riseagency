@@ -1053,6 +1053,10 @@ Object.assign(translations.ru, {
   min_short: "Мин", type_label: "Тип", description_label: "Описание", score_label: "Счёт", clip_label: "Клип",
   player_label: "Игрок", raw_score: "Сырой счёт", mins_short: "Мин",
   clips_label: "клипы",
+  zone_word: "Зона", avg_short: "Ср.", view_clips: "Смотреть клипы",
+  no_zone_clips: "Клипы для этой зоны не найдены", zone_clips_title: "Зона",
+  fullscreen: "Полный экран",
+  switch_to_at_a_glance: "Переключить на обзор", switch_to_in_depth: "Переключить на детали",
 });
 
 Object.assign(translations.tr, {
