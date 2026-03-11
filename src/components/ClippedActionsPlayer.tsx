@@ -178,7 +178,7 @@ export const ClippedActionsPlayer = ({
 
           {/* Clip selector */}
           <div className="flex gap-1.5 overflow-x-auto max-w-[50%]">
-            {clips.map((clip, index) => (
+            {sortedClips.map((clip, index) => (
               <button
                 key={clip.id}
                 onClick={() => setCurrentIndex(index)}

@@ -58,7 +58,7 @@ export const ActionVideoPopup = ({
               size="icon"
               className="bg-black/50 hover:bg-black/70 text-white"
               onClick={handleFullscreen}
-              title="Fullscreen"
+              title={t(language, 'fullscreen')}
             >
               <Maximize className="h-4 w-4" />
             </Button>

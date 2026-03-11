@@ -161,7 +161,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-white text-sm font-semibold">#{current.action_number}</span>
-                <span className="text-white/70 text-xs">{Math.floor(current.minute)}'</span>
+                <span className="text-white/70 text-xs">{formatMinute(current.minute)}'</span>
                 <span className={`text-sm font-bold ${getScoreColor(current.action_score ?? 0)}`}>
                   {current.action_score != null ? `${current.action_score >= 0 ? "+" : ""}${current.action_score.toFixed(3)}` : "—"}
                 </span>
