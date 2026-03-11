@@ -422,7 +422,7 @@ const PerformanceReport = () => {
       <main className="container mx-auto px-3 md:px-4 py-4 md:py-8">
         {/* Sticky header bar */}
         <div className="sticky top-0 z-10 bg-background border-b mb-4 py-2 flex items-center justify-between gap-2 print:hidden">
-          <h2 className="text-base md:text-xl font-bebas uppercase tracking-wider truncate">Performance Report</h2>
+          <h2 className="text-base md:text-xl font-bebas uppercase tracking-wider truncate">{t(reportLanguage, "performance_report")}</h2>
           <div className="flex gap-1 md:gap-2 flex-shrink-0">
             <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="px-2 md:px-3" disabled={savingImage || loading}>
               <ImageIcon className="h-4 w-4 md:mr-2" />
