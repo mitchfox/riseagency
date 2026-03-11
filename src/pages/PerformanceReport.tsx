@@ -829,7 +829,7 @@ const PerformanceReport = () => {
                           <td className={`py-2 px-2 text-right ${getActionScoreColor(action.action_score)}`}>{action.action_score?.toFixed(5)}</td>
                           <td className="py-2 px-2 text-center">
                             {action.video_url ? (
-                              <button onClick={() => { setSelectedVideoUrl(action.video_url!); setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`); }} className="text-risegold hover:text-risegold/80 p-1">
+                              <button onClick={() => { const translated = getTranslatedActionData(action); setSelectedVideoUrl(action.video_url!); setSelectedVideoTitle(`#${action.action_number} - ${translated.action_type}`); }} className="text-risegold hover:text-risegold/80 p-1">
                                 <Video className="h-4 w-4" />
                               </button>
                             ) : <span className="text-muted-foreground">-</span>}
