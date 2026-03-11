@@ -23,6 +23,8 @@ import { RankedActionsPlayer } from "@/components/report/RankedActionsPlayer";
 import { toTitleCase } from "@/lib/titleCase";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { sortActionsByMinute } from "@/lib/actionSorting";
+import { t } from "@/lib/portalTranslations";
+import { getReportLanguage, getReportLocale, getTranslatedActionField, getTranslatedReportField, hasTranslatedReportContent } from "@/lib/reportTranslations";
 
 const formatMinute = (minute: number | null | undefined): string => {
   if (minute === null || minute === undefined) return "-";
