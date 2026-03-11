@@ -856,6 +856,7 @@ const PerformanceReport = () => {
           onOpenChange={(open) => { if (!open) { setSelectedVideoUrl(null); setSelectedVideoTitle(""); } }}
           videoUrl={selectedVideoUrl}
           actionTitle={selectedVideoTitle}
+          language={reportLanguage}
         />
       )}
 
