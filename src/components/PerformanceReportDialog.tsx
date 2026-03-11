@@ -559,6 +559,33 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
 
   const hasActiveFilters = filterTypes.length > 0 || filterRating !== null || filterHasNotes;
 
+  const handleOpenZoneClips = (zone: number, sub?: number) => {
+    const clips = filterActionsByZone(actions, zone, sub)
+      .filter((action) => action.video_url)
+      .map((action) => {
+        const translated = getTranslatedActionData(action);
+        return {
+          id: translated.id,
+          action_number: translated.action_number,
+          action_type: translated.action_type,
+          action_description: translated.action_description,
+          video_url: translated.video_url!,
+          minute: translated.minute,
+          notes: translated.notes,
+        };
+      });
+
+    if (clips.length === 0) {
+      toast.error(t(reportLanguage, "no_zone_clips"));
+      return;
+    }
+
+    setZonePlayerTitle(sub ? `${t(reportLanguage, "zone_clips_title")} ${zone}.${sub}` : `${t(reportLanguage, "zone_clips_title")} ${zone}`);
+    setZonePlayerClips(clips);
+    setShowZonePlayer(true);
+  };
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[98vw] md:max-w-[95vw] w-full max-h-[95vh] overflow-y-auto overflow-x-hidden p-0">
