@@ -330,9 +330,20 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
                             <p className="font-medium">AI Suggestion: {suggestion.value}</p>
                             <p className="text-muted-foreground">{suggestion.reasoning}</p>
                             {suggestion.contributing_action_numbers.length > 0 && (
-                              <p className="text-muted-foreground">
-                                Contributing actions: #{suggestion.contributing_action_numbers.join(', #')}
-                              </p>
+                              <div className="text-muted-foreground">
+                                <p>Contributing actions:</p>
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                  {suggestion.contributing_action_numbers.map((actionNumber) => (
+                                    <span
+                                      key={actionNumber}
+                                      title={getActionHoverText(actionNumber)}
+                                      className="px-1.5 py-0.5 rounded bg-muted font-mono cursor-help"
+                                    >
+                                      #{actionNumber}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
                             )}
                             <Button
                               size="sm"
