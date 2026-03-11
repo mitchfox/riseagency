@@ -728,7 +728,7 @@ const PerformanceReport = () => {
                     {hasActiveFilters && filteredActions.some(a => a.video_url) && (
                       <div className="pt-2 border-t border-border/30">
                         <Button variant="default" size="sm" className="bg-gold hover:bg-gold/90 text-black font-semibold text-xs w-full" onClick={() => setShowFilteredPlayer(true)}>
-                          <Play className="h-3.5 w-3.5 mr-1.5" />Watch Selected ({filteredActions.filter(a => a.video_url).length})
+                          <Play className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "watch_selected")} ({filteredActions.filter(a => a.video_url).length})
                         </Button>
                       </div>
                     )}
