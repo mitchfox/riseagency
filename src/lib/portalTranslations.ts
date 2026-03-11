@@ -786,6 +786,8 @@ const esExtended: Record<string, string> = {
   contact_to_unlock_report: "Contáctenos para desbloquear el análisis completo.",
   clips_label: "clips",
 };
+Object.entries(esExtended).forEach(([key, val]) => {
+  if (translations.es) translations.es[key] = val;
 });
 
 Object.assign(translations.es, {
