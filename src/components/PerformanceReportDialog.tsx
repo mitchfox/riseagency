@@ -939,7 +939,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                             onClick={() => { setFilterTypes([]); setFilterRating(null); setFilterHasNotes(false); }}
                             className="text-[10px] text-muted-foreground hover:text-foreground underline"
                           >
-                            Clear filters
+                            {t(reportLanguage, "clear_filters")}
                           </button>
                         )}
                         <button
