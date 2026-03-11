@@ -695,7 +695,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     className="text-xs"
                   >
                     <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
-                    Period Grade Map
+                    {t(reportLanguage, "period_grade_map")}
                   </Button>
                   {actions.some(a => a.zone || (a.zone_details && a.zone_details.length > 0)) && (
                     <>
