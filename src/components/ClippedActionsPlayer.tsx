@@ -20,6 +20,7 @@ interface ClippedActionsPlayerProps {
   onOpenChange: (open: boolean) => void;
   clips: ClipAction[];
   language?: string;
+  title?: string;
 }
 
 export const ClippedActionsPlayer = ({
