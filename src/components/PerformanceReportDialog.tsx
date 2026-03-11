@@ -789,7 +789,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {showPitchHeatmap && (
                 <Card className="overflow-hidden">
                   <CardContent className="p-3 md:p-6">
-                    <PitchHeatmap actions={actions} />
+                    <PitchHeatmap actions={actions} language={reportLanguage} />
                   </CardContent>
                 </Card>
               )}
