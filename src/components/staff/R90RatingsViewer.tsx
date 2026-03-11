@@ -57,12 +57,12 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
   // Always reset to 'all' when opening - never auto-filter to a specific category
   // initialCategory is intentionally ignored to ensure all categories are visible
 
-  // Reset everything when dialog opens - always start fresh on 'all'
+  // Reset when dialog opens - start with Offensive expanded
   useEffect(() => {
     if (open) {
       setSelectedCategory('all');
       setSearchFilter('');
-      setExpandedCategories(new Set());
+      setExpandedCategories(new Set(['Offensive']));
       setExpandedSubcategories(new Set());
       setExpandedRatings(new Set());
     }
