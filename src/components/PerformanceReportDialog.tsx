@@ -1000,7 +1000,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                                 : 'bg-muted/30 text-foreground/70 border-border hover:bg-muted/50'
                             }`}
                           >
-                            With Notes
+                            {t(reportLanguage, "with_notes")}
                           </button>
                         </div>
                         {/* Watch filtered selection */}
