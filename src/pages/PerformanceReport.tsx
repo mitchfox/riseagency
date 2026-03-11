@@ -512,7 +512,7 @@ const PerformanceReport = () => {
           {actions.length > 0 && (
             <div className="flex flex-wrap gap-2">
               <Button variant={showR90Flow ? "default" : "outline"} size="sm" onClick={() => { setShowR90Flow(!showR90Flow); setShowHeatmap(false); }} className="text-xs">
-                <TrendingUp className="h-3.5 w-3.5 mr-1.5" />R90 Flow
+                <TrendingUp className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "r90_flow")}
               </Button>
               <Button variant={showHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); setShowChanceCreation(false); setShowPitchHeatmap(false); }} className="text-xs">
                 <BarChart3 className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "period_grade_map")}
