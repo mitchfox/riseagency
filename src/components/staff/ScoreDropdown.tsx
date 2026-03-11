@@ -47,7 +47,7 @@ async function loadCommonScores() {
       .slice(0, 25)
       .map(([val, count]) => ({
         value: val,
-        label: parseFloat(val).toFixed(2),
+        label: val,
         count,
       }));
   })();
