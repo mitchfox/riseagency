@@ -94,18 +94,13 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [filterHasNotes, setFilterHasNotes] = useState(false);
 
   const portalLanguage = isPortalView ? (localStorage.getItem("portal_language_hint") || "en") : "en";
-  const langCode = normalizePortalLanguage(portalLanguage);
-  const localeMap: Record<string, string> = { fr: "fr-FR", es: "es-ES", pt: "pt-PT", de: "de-DE", it: "it-IT", pl: "pl-PL", cs: "cs-CZ", ru: "ru-RU", tr: "tr-TR" };
-  const portalLocale = localeMap[langCode] || "en-GB";
+  const reportLanguage = getReportLanguage(analysis?.translated_content, portalLanguage);
+  const portalLocale = getReportLocale(reportLanguage);
 
-  // Translation helper: show translated content when available and language matches
   const tc = analysis?.translated_content;
-  const hasTranslation = !!tc?.fields && tc.language && tc.language !== "en";
-  const tf = (key: string, fallback: string) => hasTranslation && tc?.fields[key] ? tc.fields[key] : fallback;
-  const tAction = (index: number, field: string, fallback: string) => {
-    const k = `action_${index}_${field}`;
-    return hasTranslation && tc?.fields[k] ? tc.fields[k] : fallback;
-  };
+  const hasTranslation = hasTranslatedReportContent(tc);
+  const tf = (key: string, fallback: string) => getTranslatedReportField(tc, key, fallback);
+  const tAction = (index: number, field: string, fallback: string) => getTranslatedActionField(tc, index, field, fallback);
 
   // Pre-fetch data when analysisId changes (even before dialog opens)
   useEffect(() => {

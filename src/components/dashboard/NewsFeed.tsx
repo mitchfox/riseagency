@@ -344,7 +344,7 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
                   </motion.div>
                 ) : (
                   <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                    <p>Select an item to preview</p>
+                    <p>{t(portalLanguage, "select_item_to_preview")}</p>
                   </div>
                 )}
               </AnimatePresence>
