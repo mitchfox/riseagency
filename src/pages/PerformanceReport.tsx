@@ -830,6 +830,7 @@ const PerformanceReport = () => {
         onOpenChange={setShowRankedPlayer}
         mode={rankedMode}
         clips={actions.filter(a => a.video_url).map(a => ({ id: a.id, action_number: a.action_number, action_type: a.action_type, action_description: a.action_description, action_score: a.action_score, video_url: a.video_url!, minute: a.minute, notes: a.notes }))}
+        language={reportLanguage}
       />
 
       {/* Filtered Video Player */}
