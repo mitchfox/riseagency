@@ -95,6 +95,12 @@ export const ClippedActionsPlayer = ({
     setSwiping(false);
   };
 
+  const formatMinute = (minute: number) => {
+    const minPart = Math.floor(minute);
+    const secPart = Math.round((minute - minPart) * 100);
+    return `${minPart}.${secPart.toString().padStart(2, '0')}`;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
