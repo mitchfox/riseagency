@@ -807,7 +807,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {showChanceCreation && analysis.striker_stats && (
                 <Card className="overflow-hidden">
                   <CardContent className="p-3 md:p-6">
-                    <ChanceCreationFlow strikerStats={analysis.striker_stats as Record<string, any>} />
+                    <ChanceCreationFlow strikerStats={analysis.striker_stats as Record<string, any>} language={reportLanguage} />
                   </CardContent>
                 </Card>
               )}
