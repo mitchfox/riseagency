@@ -338,7 +338,7 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
                         className="mt-2"
                       >
                         <Eye className="h-3.5 w-3.5 mr-1.5" />
-                        {selectedItem.linkLabel || "View"}
+                        {selectedItem.linkLabel || t(portalLanguage, "view")}
                       </Button>
                     )}
                   </motion.div>
