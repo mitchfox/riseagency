@@ -1,130 +1,32 @@
 
 
-## Two-Part Plan
+# Fix SofaScore 403 API Block
 
-This covers the immediate text truncation fix and the large AI features package.
+## Problem
+The SofaScore public API (`api.sofascore.com/api/v1/...`) now returns **403 Forbidden** for direct server-side requests. This blocks the lineups and player statistics endpoints used by the `parse-stats-url` edge function. This is a common issue — SofaScore actively blocks non-browser requests to their API.
 
----
+## Solution
+Replace the direct SofaScore API calls with an **AI-powered HTML scraping approach** (same pattern already used for FBRef). The edge function will:
 
-### Part 1: Fix Truncated Notes (Quick Fix)
+1. Fetch the SofaScore match page HTML directly (the public website, not the API)
+2. Pass the extracted text content to Gemini Flash to extract player statistics
+3. Map the AI-extracted stats to the existing fixture stat keys
 
-**Problem**: Notes on performance report actions are cut off with `...` via `truncate` and `line-clamp` classes, making them unreadable on mobile.
+This is resilient because the public HTML pages are accessible (they need to be for SEO/browsers), and the AI model can adapt to HTML structure changes automatically.
 
-**Files to change:**
+## Changes
 
-1. **`src/components/PerformanceReportDialog.tsx`**
-   - Line 1036: Remove `line-clamp-2` from action description div, allow full text
-   - Line 1038: Remove `truncate` from notes div, allow full wrap
-   - These are in the mobile card layout (the `md:hidden` block)
+### `supabase/functions/parse-stats-url/index.ts`
+- Replace `parseSofaScoreUrl()` — instead of calling `api.sofascore.com` endpoints, fetch the match page HTML from `www.sofascore.com`
+- Use the same AI extraction pattern as `parseFBRefUrl()`: strip HTML tags, truncate, send to Gemini Flash with stat extraction prompt
+- Keep the existing `mapSofaScoreStats()` mapping for consistent output format
+- The AI prompt will be tailored for SofaScore's page structure (player names, match stats tables)
+- Maintain the multi-player return format so the frontend player picker still works
 
-2. **`src/components/ClippedActionsPlayer.tsx`**
-   - Line 137: Remove `line-clamp-2` from description
-   - Line 139: Remove `line-clamp-2` from notes
-
-3. **`src/components/portal/AnalysisVideoReports.tsx`**
-   - Line 414: Remove `line-clamp-2` from clip description
-
-All replacements simply remove the truncation classes so text wraps naturally across as many lines as needed.
-
----
-
-### Part 2: AI Features Package
-
-This is a large feature set. Here is the implementation plan broken into phases.
-
-#### 2A. Collapsible AI Shell Suggestions
-
-**New components:**
-- `src/components/staff/AiShellSuggestions.tsx` - collapsible tab component with player selector
-- Sections: Athlete Centre, Analysis, Data, Player Management
-
-**New database table:** `ai_shell_suggestions`
-- `id`, `section` (enum), `player_id`, `shell_type`, `preview_text`, `shell_content` (JSONB), `created_at`
-
-**New database table:** `ai_shell_decisions`
-- `id`, `suggestion_id`, `player_id`, `staff_user_id`, `decision` (accepted/rejected), `created_at`
-
-**New edge function:** `generate-shell-suggestions`
-- Takes section + player context, queries recent data, calls Gemini to produce structural shells
-- Returns preview lines for each shell
-
-**Behaviour:**
-- Collapsed tab at top of each section
-- Opening requires player selection first
-- Accept inserts as editable draft; Reject hides for session
-- Decision history feeds future prioritisation
-
-#### 2B. Player-Specific Action Dropdown Intelligence
-
-**New database table:** `player_action_frequencies`
-- `player_id`, `action_type`, `frequency_count`, `last_used_at`, `position_weight`
-
-**Changes to existing components:**
-- Performance report action type dropdown and video analysis action type dropdown
-- Query last 5 reports for selected player, calculate frequency + recency weights
-- Sort dropdown accordingly, persist per player
-
-This builds on the existing frequency sorting (memory reference: action-type-frequency-sorting) but makes it player-specific rather than global.
-
-#### 2C. Video Tracking Integration (Roboflow)
-
-**New edge function:** `process-video-frames`
-- Accepts frame images (base64) at configurable sampling rate
-- Sends to Roboflow API for player/ball detection
-- Applies pitch homography mapping to 18/162 zone grids
-- Returns structured JSON per the specified format
-
-**Requirements:**
-- Roboflow API key (will need to be added as a secret)
-- A trained Roboflow model endpoint for player/ball detection
-- Configurable frame sampling rate (default 5 fps)
-
-**Frontend integration:**
-- New "AI Track" button in Video Analysis
-- Frame extraction from video element at configured rate
-- Batch upload to edge function
-- Results displayed as overlay markers on video
-
-#### 2D. Rule-Based Action Suggestion Engine
-
-**New module:** `src/lib/actionSuggestionEngine.ts`
-- Pure TypeScript, consumes Roboflow JSON output
-- Possession approximation: ball overlapping player across consecutive frames
-- Shot heuristic: ball near player then rapid displacement toward goal zone
-- Duel heuristic: two player boxes close with possession change
-
-**Database:**
-- Suggested actions inserted into `performance_report_actions` with a new `status` field (values: `confirmed`, `suggested`)
-- Requires migration to add `status` column
-
-**UI:**
-- Suggested actions shown with distinct styling and Confirm/Dismiss buttons
-- Confirmed actions become regular report entries
-
-#### 2E. Match Flow Automation
-
-**Changes to fixture creation flow:**
-- On fixture confirmation: auto-create linked draft performance report
-- Auto-create pre-match analysis shell
-- When report set to Live: prompt highlight compilation suggestion, check for duplicate clip exports
-
-**Batch mode:**
-- New "Batch Generate" button in Match Flow
-- Select multiple players, shared fixture data populates draft shells for each
-
----
-
-### Implementation Order
-
-1. **Part 1** (notes fix) - immediate
-2. **2B** (action dropdown intelligence) - builds on existing patterns
-3. **2A** (shell suggestions) - new UI + edge function
-4. **2E** (match flow automation) - workflow changes
-5. **2C** (Roboflow) - requires API key setup
-6. **2D** (suggestion engine) - depends on 2C output
-
-### Prerequisites
-
-- **Roboflow API key** will need to be provided and stored as a secret before 2C can function
-- A trained Roboflow model for player/ball detection must exist
+### Approach Details
+- Fetch URL with browser-like User-Agent headers
+- Extract text content (strip scripts/styles/tags), truncate to ~15K chars
+- Send to `google/gemini-2.5-flash` with a prompt asking for per-player stats in JSON format
+- Map extracted stats through existing `mapSofaScoreStats` function
+- Falls back gracefully with clear error messages if extraction fails
 
