@@ -698,7 +698,7 @@ const PerformanceReport = () => {
                 {showActionFilters && (
                   <div className="mt-3 space-y-3 border-t pt-3">
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Action Type</p>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">{t(reportLanguage, "action_type_label")}</p>
                       <div className="flex flex-wrap gap-1">
                         {allActionTypes.map(type => (
                           <button key={type} onClick={() => setFilterTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type])}
