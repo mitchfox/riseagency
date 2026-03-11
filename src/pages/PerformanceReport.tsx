@@ -515,34 +515,34 @@ const PerformanceReport = () => {
                 <TrendingUp className="h-3.5 w-3.5 mr-1.5" />R90 Flow
               </Button>
               <Button variant={showHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); setShowChanceCreation(false); setShowPitchHeatmap(false); }} className="text-xs">
-                <BarChart3 className="h-3.5 w-3.5 mr-1.5" />Period Grade Map
+                <BarChart3 className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "period_grade_map")}
               </Button>
               {actions.some(a => a.zone || (a.zone_details && a.zone_details.length > 0)) && (
                 <>
                   <Button variant={showPitchHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowPitchHeatmap(!showPitchHeatmap); setShowZonePerformance(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }} className="text-xs">
-                    <MapPin className="h-3.5 w-3.5 mr-1.5" />Pitch Heatmap
+                    <MapPin className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "pitch_heatmap")}
                   </Button>
                   <Button variant={showZonePerformance ? "default" : "outline"} size="sm" onClick={() => { setShowZonePerformance(!showZonePerformance); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }} className="text-xs">
-                    <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />Zone Performance
+                    <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "zone_performance")}
                   </Button>
                 </>
               )}
               {analysis.striker_stats && ['crossing_movement_xC', 'movement_in_behind_xC', 'movement_down_side_xC', 'triple_threat_xC', 'movement_to_feet_xC'].some(k => (analysis.striker_stats as any)?.[k] > 0) && (
                 <Button variant="outline" size="sm" onClick={() => { setShowChanceCreation(!showChanceCreation); setShowR90Flow(false); setShowHeatmap(false); }} className="text-xs">
-                  <TrendingUp className="h-3.5 w-3.5 mr-1.5" />Chance Creation Flow
+                  <TrendingUp className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "chance_creation_flow")}
                 </Button>
               )}
               {actions.filter(a => a.video_url).length > 0 && (
                 <>
                   <Button variant="outline" size="sm" onClick={() => { setRankedMode("chronological"); setShowRankedPlayer(true); }} className="text-xs">
-                    <Film className="h-3.5 w-3.5 mr-1.5" />Full Match Video
+                    <Film className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "full_match_video")}
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => { setRankedMode("ranked"); setShowRankedPlayer(true); }} className="text-xs">
-                    <Award className="h-3.5 w-3.5 mr-1.5" />Ranked Actions
+                    <Award className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "ranked_actions")}
                   </Button>
                   {actions.some(a => a.video_url && a.notes) && (
                     <Button variant="outline" size="sm" onClick={() => { setRankedMode("noted"); setShowRankedPlayer(true); }} className="text-xs">
-                      <MessageSquareText className="h-3.5 w-3.5 mr-1.5" />Noted Actions
+                      <MessageSquareText className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "noted_actions")}
                     </Button>
                   )}
                 </>
