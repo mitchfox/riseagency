@@ -1693,16 +1693,28 @@ export const CreatePerformanceReportDialog = ({
   }, [opponent, performanceOverview, actions]);
 
   const handleTranslated = useCallback((translations: Record<string, string>) => {
-    if (translations.opponent) setOpponent(translations.opponent);
-    if (translations.performanceOverview) setPerformanceOverview(translations.performanceOverview);
-    const updatedActions = [...actions];
-    actions.forEach((_, i) => {
-      if (translations[`action_${i}_type`]) updatedActions[i] = { ...updatedActions[i], action_type: translations[`action_${i}_type`] };
-      if (translations[`action_${i}_description`]) updatedActions[i] = { ...updatedActions[i], action_description: translations[`action_${i}_description`] };
-      if (translations[`action_${i}_notes`]) updatedActions[i] = { ...updatedActions[i], notes: translations[`action_${i}_notes`] };
-    });
-    setActions(updatedActions);
-  }, [actions]);
+    // No longer overwrite English state – translations live in translatedContent.fields
+  }, []);
+
+  // Whether we're viewing the translated tab
+  const isTranslatedView = activeTranslationTab !== "en" && !!translatedContent?.fields;
+
+  // Helper to get the display value for a translatable field
+  const getDisplayValue = useCallback((fieldKey: string, englishValue: string) => {
+    if (isTranslatedView && translatedContent?.fields[fieldKey]) {
+      return translatedContent.fields[fieldKey];
+    }
+    return englishValue;
+  }, [isTranslatedView, translatedContent]);
+
+  // Helper to get display value for action fields
+  const getActionDisplayValue = useCallback((index: number, field: 'type' | 'description' | 'notes', englishValue: string) => {
+    const key = `action_${index}_${field === 'type' ? 'type' : field}`;
+    if (isTranslatedView && translatedContent?.fields[key]) {
+      return translatedContent.fields[key];
+    }
+    return englishValue;
+  }, [isTranslatedView, translatedContent]);
 
   const languageSelector = (
     <ReportLanguageSelector
