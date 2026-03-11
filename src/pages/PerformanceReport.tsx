@@ -76,14 +76,12 @@ const PerformanceReport = () => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [savingImage, setSavingImage] = useState(false);
 
-  // Translation helpers
   const tc = analysis?.translated_content;
-  const hasTranslation = !!tc?.fields && !!tc?.language && tc.language !== "en";
-  const tf = (key: string, fallback: string) => hasTranslation && tc?.fields[key] ? tc.fields[key] : fallback;
-  const tAction = (index: number, field: string, fallback: string) => {
-    const k = `action_${index}_${field}`;
-    return hasTranslation && tc?.fields[k] ? tc.fields[k] : fallback;
-  };
+  const reportLanguage = getReportLanguage(tc, tc?.language || "en");
+  const reportLocale = getReportLocale(reportLanguage);
+  const hasTranslation = hasTranslatedReportContent(tc);
+  const tf = (key: string, fallback: string) => getTranslatedReportField(tc, key, fallback);
+  const tAction = (index: number, field: "type" | "description" | "notes", fallback: string) => getTranslatedActionField(tc, index, field, fallback);
 
   // Video/player states
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
