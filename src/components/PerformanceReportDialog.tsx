@@ -930,9 +930,9 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                 <Card className="overflow-hidden">
                   <CardHeader className="py-1.5 md:py-2">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm md:text-lg">
-                        Actions ({hasActiveFilters ? `${filteredActions.length}/${actions.length}` : actions.length})
-                      </CardTitle>
+                        <CardTitle className="text-sm md:text-lg">
+                          {t(reportLanguage, "actions_label")} ({hasActiveFilters ? `${filteredActions.length}/${actions.length}` : actions.length})
+                        </CardTitle>
                       <div className="flex items-center gap-2">
                         {hasActiveFilters && (
                           <button
