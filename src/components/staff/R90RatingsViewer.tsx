@@ -275,7 +275,12 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
                   )
                 ) : (
                   <div className="space-y-3">
-                    {Object.entries(groupedRatings()).map(([category, subcategories]) => {
+                    {Object.entries(groupedRatings()).sort(([a], [b]) => {
+                      // Offensive always first
+                      if (a === 'Offensive') return -1;
+                      if (b === 'Offensive') return 1;
+                      return a.localeCompare(b);
+                    }).map(([category, subcategories]) => {
                       const categoryKey = category;
                       const isCategoryExpanded = expandedCategories.has(categoryKey);
                       
