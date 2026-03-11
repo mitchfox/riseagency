@@ -1693,16 +1693,28 @@ export const CreatePerformanceReportDialog = ({
   }, [opponent, performanceOverview, actions]);
 
   const handleTranslated = useCallback((translations: Record<string, string>) => {
-    if (translations.opponent) setOpponent(translations.opponent);
-    if (translations.performanceOverview) setPerformanceOverview(translations.performanceOverview);
-    const updatedActions = [...actions];
-    actions.forEach((_, i) => {
-      if (translations[`action_${i}_type`]) updatedActions[i] = { ...updatedActions[i], action_type: translations[`action_${i}_type`] };
-      if (translations[`action_${i}_description`]) updatedActions[i] = { ...updatedActions[i], action_description: translations[`action_${i}_description`] };
-      if (translations[`action_${i}_notes`]) updatedActions[i] = { ...updatedActions[i], notes: translations[`action_${i}_notes`] };
-    });
-    setActions(updatedActions);
-  }, [actions]);
+    // No longer overwrite English state – translations live in translatedContent.fields
+  }, []);
+
+  // Whether we're viewing the translated tab
+  const isTranslatedView = activeTranslationTab !== "en" && !!translatedContent?.fields;
+
+  // Helper to get the display value for a translatable field
+  const getDisplayValue = useCallback((fieldKey: string, englishValue: string) => {
+    if (isTranslatedView && translatedContent?.fields[fieldKey]) {
+      return translatedContent.fields[fieldKey];
+    }
+    return englishValue;
+  }, [isTranslatedView, translatedContent]);
+
+  // Helper to get display value for action fields
+  const getActionDisplayValue = useCallback((index: number, field: 'type' | 'description' | 'notes', englishValue: string) => {
+    const key = `action_${index}_${field === 'type' ? 'type' : field}`;
+    if (isTranslatedView && translatedContent?.fields[key]) {
+      return translatedContent.fields[key];
+    }
+    return englishValue;
+  }, [isTranslatedView, translatedContent]);
 
   const languageSelector = (
     <ReportLanguageSelector
@@ -1808,9 +1820,11 @@ export const CreatePerformanceReportDialog = ({
               <Label htmlFor="opponent">Opponent</Label>
               <Input
                 id="opponent"
-                value={opponent}
-                onChange={(e) => setOpponent(e.target.value)}
+                value={getDisplayValue('opponent', opponent)}
+                onChange={(e) => !isTranslatedView && setOpponent(e.target.value)}
                 placeholder="Auto-filled from fixture"
+                readOnly={isTranslatedView}
+                className={isTranslatedView ? "bg-muted/50" : ""}
               />
             </div>
             <div>
@@ -1954,11 +1968,12 @@ export const CreatePerformanceReportDialog = ({
             <Label htmlFor="performance-overview">Performance Overview (Optional)</Label>
             <Textarea
               id="performance-overview"
-              value={performanceOverview}
-              onChange={(e) => setPerformanceOverview(e.target.value)}
+              value={getDisplayValue('performanceOverview', performanceOverview)}
+              onChange={(e) => !isTranslatedView && setPerformanceOverview(e.target.value)}
               placeholder="Briefly summarise what improved, what to continue working on, key focus areas, etc."
               rows={4}
-              className="mt-2"
+              className={`mt-2 ${isTranslatedView ? "bg-muted/50" : ""}`}
+              readOnly={isTranslatedView}
             />
           </div>
 
@@ -2083,18 +2098,20 @@ export const CreatePerformanceReportDialog = ({
                     <Label className="text-xs">Action Type *</Label>
                     <div className="relative">
                       <Input
-                        value={action.action_type}
+                        value={getActionDisplayValue(index, 'type', action.action_type)}
                         onChange={(e) => {
+                          if (isTranslatedView) return;
                           updateAction(index, "action_type", e.target.value);
                           setActionTypePopoverOpen(prev => ({ ...prev, [index]: true }));
                         }}
+                        readOnly={isTranslatedView}
+                        className={`text-sm h-9 pr-8 ${isTranslatedView ? "bg-muted/50" : ""}`}
                         onFocus={() => setActionTypePopoverOpen(prev => ({ ...prev, [index]: true }))}
                         onBlur={() => {
                           setTimeout(() => setActionTypePopoverOpen(prev => ({ ...prev, [index]: false })), 200);
                           if (action.action_type) updateAction(index, "action_type", canonicalActionType(action.action_type));
                         }}
                         placeholder="Type or select action type"
-                        className="text-sm h-9 pr-8"
                       />
                       {action.action_type && (
                         <button
@@ -2137,11 +2154,14 @@ export const CreatePerformanceReportDialog = ({
                     <Label className="text-xs">Description *</Label>
                     <div className="relative">
                       <Textarea
-                        value={action.action_description}
+                        value={getActionDisplayValue(index, 'description', action.action_description)}
                         onChange={(e) => {
+                          if (isTranslatedView) return;
                           updateAction(index, "action_description", e.target.value);
                           setDescriptionPopoverOpen(prev => ({ ...prev, [index]: true }));
                         }}
+                        readOnly={isTranslatedView}
+                        className={`text-sm min-h-[60px] ${isTranslatedView ? "bg-muted/50" : ""}`}
                         onFocus={() => {
                           if (action.action_type && getDescriptionsForType(action.action_type).length > 0) {
                             setDescriptionPopoverOpen(prev => ({ ...prev, [index]: true }));
@@ -2151,7 +2171,6 @@ export const CreatePerformanceReportDialog = ({
                           setTimeout(() => setDescriptionPopoverOpen(prev => ({ ...prev, [index]: false })), 200);
                         }}
                         placeholder="Describe the action"
-                        className="text-sm min-h-[60px]"
                         rows={2}
                       />
                       {descriptionPopoverOpen[index] && action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
@@ -2181,10 +2200,11 @@ export const CreatePerformanceReportDialog = ({
                   <div>
                     <Label className="text-xs">Notes</Label>
                     <Textarea
-                      value={action.notes}
-                      onChange={(e) => updateAction(index, "notes", e.target.value)}
+                      value={getActionDisplayValue(index, 'notes', action.notes)}
+                      onChange={(e) => !isTranslatedView && updateAction(index, "notes", e.target.value)}
                       placeholder="Optional notes"
-                      className="text-sm min-h-[60px]"
+                      className={`text-sm min-h-[60px] ${isTranslatedView ? "bg-muted/50" : ""}`}
+                      readOnly={isTranslatedView}
                       rows={2}
                     />
                     {/* Suggested R90 Scores - search based */}
@@ -2291,18 +2311,20 @@ export const CreatePerformanceReportDialog = ({
 
                       <div className="relative shrink-0">
                         <Input
-                          value={action.action_type}
+                          value={getActionDisplayValue(index, 'type', action.action_type)}
                           onChange={(e) => {
+                            if (isTranslatedView) return;
                             updateAction(index, "action_type", e.target.value);
                             setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
                           }}
-                          onFocus={() => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: true }))}
+                          onFocus={() => !isTranslatedView && setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: true }))}
                           onBlur={() => {
                             setTimeout(() => setActionTypePopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200);
                             if (action.action_type) updateAction(index, "action_type", canonicalActionType(action.action_type));
                           }}
                           placeholder="Type"
-                          className="w-36 text-sm h-9 pr-7"
+                          readOnly={isTranslatedView}
+                          className={`w-36 text-sm h-9 pr-7 ${isTranslatedView ? "bg-muted/50" : ""}`}
                         />
                         {action.action_type && (
                           <button
@@ -2342,13 +2364,14 @@ export const CreatePerformanceReportDialog = ({
 
                       <div className="relative flex-1 min-w-0">
                         <Textarea
-                          value={action.action_description}
+                          value={getActionDisplayValue(index, 'description', action.action_description)}
                           onChange={(e) => {
+                            if (isTranslatedView) return;
                             updateAction(index, "action_description", e.target.value);
                             setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
                           }}
                           onFocus={() => {
-                            if (action.action_type && getDescriptionsForType(action.action_type).length > 0) {
+                            if (!isTranslatedView && action.action_type && getDescriptionsForType(action.action_type).length > 0) {
                               setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
                             }
                           }}
@@ -2356,7 +2379,8 @@ export const CreatePerformanceReportDialog = ({
                             setTimeout(() => setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200);
                           }}
                           placeholder="Description"
-                          className="min-h-[36px] text-sm"
+                          readOnly={isTranslatedView}
+                          className={`min-h-[36px] text-sm ${isTranslatedView ? "bg-muted/50" : ""}`}
                           rows={1}
                         />
                         {descriptionPopoverOpen[1000 + index] && action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
@@ -2383,10 +2407,11 @@ export const CreatePerformanceReportDialog = ({
                       </div>
 
                       <Textarea
-                        value={action.notes}
-                        onChange={(e) => updateAction(index, "notes", e.target.value)}
+                        value={getActionDisplayValue(index, 'notes', action.notes)}
+                        onChange={(e) => !isTranslatedView && updateAction(index, "notes", e.target.value)}
                         placeholder="Notes"
-                        className="min-w-[120px] max-w-[200px] min-h-[36px] text-sm shrink-0"
+                        readOnly={isTranslatedView}
+                        className={`min-w-[120px] max-w-[200px] min-h-[36px] text-sm shrink-0 ${isTranslatedView ? "bg-muted/50" : ""}`}
                         rows={1}
                       />
                     </div>
@@ -2918,7 +2943,7 @@ export const CreatePerformanceReportDialog = ({
   // Inline mode: render with a header and full-page layout
   if (inline) {
     return (
-      <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+      <div className="fixed inset-0 z-50 bg-background overflow-y-auto pt-16 md:pt-14">
         {/* Top safe spacer bar for mobile */}
         <div className="w-full h-10 md:h-0 bg-background shrink-0" />
 
