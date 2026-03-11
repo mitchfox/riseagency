@@ -973,7 +973,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                         </div>
                         {/* Filter by rating */}
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Rating</p>
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">{t(reportLanguage, "rating_label")}</p>
                           <div className="flex flex-wrap gap-1">
                             {ratingBuckets.map(bucket => (
                               <button
