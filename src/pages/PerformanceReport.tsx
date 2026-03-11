@@ -562,7 +562,7 @@ const PerformanceReport = () => {
 
           {/* Pitch Heatmap */}
           {showPitchHeatmap && (
-            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><PitchHeatmap actions={actions} /></CardContent></Card>
+            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><PitchHeatmap actions={actions} language={reportLanguage} /></CardContent></Card>
           )}
 
           {/* Zone Performance */}
