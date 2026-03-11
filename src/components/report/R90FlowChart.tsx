@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { t } from "@/lib/portalTranslations";
+import { sortReportActionsChronologically } from "@/lib/reportActionHelpers";
 
 interface PerformanceAction {
   action_number: number;

@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X, SkipForward, SkipBack } from "lucide-react";
 import { t } from "@/lib/portalTranslations";
+import { sortReportActionsChronologically } from "@/lib/reportActionHelpers";
 
 interface Clip {
   id: string;

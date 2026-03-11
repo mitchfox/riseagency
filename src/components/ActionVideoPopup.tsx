@@ -2,6 +2,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, Maximize } from 'lucide-react';
 import { useRef, useEffect } from 'react';
+import { t } from '@/lib/portalTranslations';
 
 interface ActionVideoPopupProps {
   open: boolean;

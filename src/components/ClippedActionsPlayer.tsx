@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, SkipBack, SkipForward, Play, Pause } from 'lucide-react';
 import { t } from '@/lib/portalTranslations';
+import { sortReportActionsChronologically } from '@/lib/reportActionHelpers';
 
 interface ClipAction {
   id: string;
