@@ -1028,6 +1028,10 @@ Object.assign(translations.cs, {
   min_short: "Min", type_label: "Typ", description_label: "Popis", score_label: "Skóre", clip_label: "Klip",
   player_label: "Hráč", raw_score: "Hrubé skóre", mins_short: "Min",
   clips_label: "klipy",
+  zone_word: "Zóna", avg_short: "Prům.", view_clips: "Zobrazit klipy",
+  no_zone_clips: "Žádné klipy pro tuto zónu", zone_clips_title: "Zóna",
+  fullscreen: "Celá obrazovka",
+  switch_to_at_a_glance: "Přepnout na přehled", switch_to_in_depth: "Přepnout na detail",
 });
 
 Object.assign(translations.ru, {
