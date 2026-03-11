@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Component, ReactNode, ErrorInfo } from "react";
 import { Link } from "react-router-dom";
 import { LocalizedLink } from "@/components/LocalizedLink";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
