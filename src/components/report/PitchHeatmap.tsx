@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { t } from "@/lib/portalTranslations";
 
 interface PitchHeatmapAction {
   action_number: number;
@@ -9,6 +10,7 @@ interface PitchHeatmapAction {
 
 interface PitchHeatmapProps {
   actions: PitchHeatmapAction[];
+  language?: string;
 }
 
 const WIDTH = 300;
@@ -47,7 +49,7 @@ const getHeatColor = (intensity: number): string => {
   }
 };
 
-export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
+export const PitchHeatmap = ({ actions, language = "en" }: PitchHeatmapProps) => {
   const heatmapData = useMemo(() => {
     const points: { x: number; y: number }[] = [];
 
@@ -91,14 +93,14 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
   if (!heatmapData || heatmapData.blobs.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground text-sm">
-        No zone data available for heatmap
+        {t(language, "no_zone_data")}
       </div>
     );
   }
 
   return (
     <div className="space-y-2">
-      <h4 className="text-sm font-semibold">Pitch Heatmap</h4>
+      <h4 className="text-sm font-semibold">{t(language, "pitch_heatmap")}</h4>
       
       <div className="flex justify-center">
         <svg
@@ -157,10 +159,10 @@ export const PitchHeatmap = ({ actions }: PitchHeatmapProps) => {
           
           {/* Direction labels */}
           <text x={WIDTH / 2} y={HEIGHT - 2} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="7">
-            Own Goal
+            {t(language, "own_goal")}
           </text>
           <text x={WIDTH / 2} y="7" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="7">
-            ↑ Attacking
+            ↑ {t(language, "attacking_direction")}
           </text>
         </svg>
       </div>
