@@ -876,7 +876,10 @@ const PerformanceReport = () => {
         open={showRankedPlayer}
         onOpenChange={setShowRankedPlayer}
         mode={rankedMode}
-        clips={actions.filter(a => a.video_url).map(a => ({ id: a.id, action_number: a.action_number, action_type: a.action_type, action_description: a.action_description, action_score: a.action_score, video_url: a.video_url!, minute: a.minute, notes: a.notes }))}
+        clips={actions.filter(a => a.video_url).map((action) => {
+          const translated = getTranslatedActionData(action);
+          return { id: action.id, action_number: action.action_number, action_type: translated.action_type, action_description: translated.action_description, action_score: action.action_score, video_url: action.video_url!, minute: action.minute, notes: translated.notes };
+        })}
         language={reportLanguage}
       />
 
