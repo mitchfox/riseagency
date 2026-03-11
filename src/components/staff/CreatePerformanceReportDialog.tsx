@@ -2112,7 +2112,6 @@ export const CreatePerformanceReportDialog = ({
                           if (action.action_type) updateAction(index, "action_type", canonicalActionType(action.action_type));
                         }}
                         placeholder="Type or select action type"
-                        className="text-sm h-9 pr-8"
                       />
                       {action.action_type && (
                         <button
