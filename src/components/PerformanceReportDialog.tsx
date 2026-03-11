@@ -93,7 +93,18 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [filterHasNotes, setFilterHasNotes] = useState(false);
 
   const portalLanguage = isPortalView ? (localStorage.getItem("portal_language_hint") || "en") : "en";
-  const portalLocale = normalizePortalLanguage(portalLanguage) === "fr" ? "fr-FR" : "en-GB";
+  const langCode = normalizePortalLanguage(portalLanguage);
+  const localeMap: Record<string, string> = { fr: "fr-FR", es: "es-ES", pt: "pt-PT", de: "de-DE", it: "it-IT", pl: "pl-PL", cs: "cs-CZ", ru: "ru-RU", tr: "tr-TR" };
+  const portalLocale = localeMap[langCode] || "en-GB";
+
+  // Translation helper: show translated content when available and language matches
+  const tc = analysis?.translated_content;
+  const hasTranslation = !!tc?.fields && tc.language && tc.language !== "en";
+  const tf = (key: string, fallback: string) => hasTranslation && tc?.fields[key] ? tc.fields[key] : fallback;
+  const tAction = (index: number, field: string, fallback: string) => {
+    const k = `action_${index}_${field}`;
+    return hasTranslation && tc?.fields[k] ? tc.fields[k] : fallback;
+  };
 
   // Pre-fetch data when analysisId changes (even before dialog opens)
   useEffect(() => {
