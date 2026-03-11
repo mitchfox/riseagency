@@ -17,6 +17,7 @@ export const ActionVideoPopup = ({
   onOpenChange,
   videoUrl,
   actionTitle,
+  language = 'en',
 }: ActionVideoPopupProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
