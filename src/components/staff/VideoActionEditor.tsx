@@ -129,8 +129,19 @@ export const VideoActionEditor = ({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-56 p-2 z-[300]" align="start">
-               <ScrollArea className="max-h-[70vh]">
-                  <div className="space-y-0.5">
+               <div className="flex flex-col max-h-[70vh]">
+                  <button
+                    type="button"
+                    className="flex items-center justify-center py-1 hover:bg-accent rounded transition-colors shrink-0"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      const el = document.getElementById('jump-to-list');
+                      if (el) el.scrollBy({ top: -100, behavior: 'smooth' });
+                    }}
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5 rotate-90 text-muted-foreground" />
+                  </button>
+                  <div id="jump-to-list" className="overflow-y-auto flex-1 space-y-0.5">
                     {clippedIndices.map(({ action, index }, pos) => (
                       <button
                         key={index}
@@ -147,7 +158,18 @@ export const VideoActionEditor = ({
                       </button>
                     ))}
                   </div>
-                </ScrollArea>
+                  <button
+                    type="button"
+                    className="flex items-center justify-center py-1 hover:bg-accent rounded transition-colors shrink-0"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      const el = document.getElementById('jump-to-list');
+                      if (el) el.scrollBy({ top: 100, behavior: 'smooth' });
+                    }}
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5 -rotate-90 text-muted-foreground" />
+                  </button>
+                </div>
               </PopoverContent>
             </Popover>
           </div>
