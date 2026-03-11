@@ -1128,8 +1128,9 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                                 {action.video_url ? (
                                   <button
                                     onClick={() => {
+                                      const translated = getTranslatedActionData(action);
                                       setSelectedVideoUrl(action.video_url!);
-                                      setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
+                                      setSelectedVideoTitle(`#${action.action_number} - ${translated.action_type}`);
                                     }}
                                     className="text-risegold hover:text-risegold/80 p-1"
                                   >
