@@ -684,11 +684,11 @@ const PerformanceReport = () => {
               <CardHeader className="py-1.5 md:py-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm md:text-lg">
-                    Actions ({hasActiveFilters ? `${filteredActions.length}/${actions.length}` : actions.length})
+                    {t(reportLanguage, "actions_label")} ({hasActiveFilters ? `${filteredActions.length}/${actions.length}` : actions.length})
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     {hasActiveFilters && (
-                      <button onClick={() => { setFilterTypes([]); setFilterRating(null); setFilterHasNotes(false); }} className="text-[10px] text-muted-foreground hover:text-foreground underline">Clear filters</button>
+                      <button onClick={() => { setFilterTypes([]); setFilterRating(null); setFilterHasNotes(false); }} className="text-[10px] text-muted-foreground hover:text-foreground underline">{t(reportLanguage, "clear_filters")}</button>
                     )}
                     <button onClick={() => setShowActionFilters(!showActionFilters)} className={`p-1.5 rounded transition-colors ${hasActiveFilters ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'}`}>
                       <Filter className="h-4 w-4" />
