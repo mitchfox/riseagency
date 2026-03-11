@@ -23,6 +23,8 @@ import { RankedActionsPlayer } from "@/components/report/RankedActionsPlayer";
 import { toTitleCase } from "@/lib/titleCase";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { sortActionsByMinute } from "@/lib/actionSorting";
+import { t } from "@/lib/portalTranslations";
+import { getReportLanguage, getReportLocale, getTranslatedActionField, getTranslatedReportField, hasTranslatedReportContent } from "@/lib/reportTranslations";
 
 const formatMinute = (minute: number | null | undefined): string => {
   if (minute === null || minute === undefined) return "-";
@@ -74,14 +76,12 @@ const PerformanceReport = () => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [savingImage, setSavingImage] = useState(false);
 
-  // Translation helpers
   const tc = analysis?.translated_content;
-  const hasTranslation = !!tc?.fields && !!tc?.language && tc.language !== "en";
-  const tf = (key: string, fallback: string) => hasTranslation && tc?.fields[key] ? tc.fields[key] : fallback;
-  const tAction = (index: number, field: string, fallback: string) => {
-    const k = `action_${index}_${field}`;
-    return hasTranslation && tc?.fields[k] ? tc.fields[k] : fallback;
-  };
+  const reportLanguage = getReportLanguage(tc, tc?.language || "en");
+  const reportLocale = getReportLocale(reportLanguage);
+  const hasTranslation = hasTranslatedReportContent(tc);
+  const tf = (key: string, fallback: string) => getTranslatedReportField(tc, key, fallback);
+  const tAction = (index: number, field: "type" | "description" | "notes", fallback: string) => getTranslatedActionField(tc, index, field, fallback);
 
   // Video/player states
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
@@ -414,15 +414,15 @@ const PerformanceReport = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title={`${analysis.player_name} vs ${analysis.opponent} - Performance Report | RISE Football`}
-        description={`Detailed performance analysis for ${analysis.player_name} against ${analysis.opponent}. R90 Score: ${analysis.r90_score?.toFixed(2) || 'N/A'}.`}
+        title={`${analysis.player_name} vs ${tf("opponent", analysis.opponent)} - ${t(reportLanguage, "performance_report")} | RISE Football`}
+        description={`Detailed performance analysis for ${analysis.player_name} against ${tf("opponent", analysis.opponent)}. R90 Score: ${analysis.r90_score?.toFixed(2) || 'N/A'}.`}
       />
       {!isAuthenticated && <div className="print:hidden"><Header /></div>}
 
       <main className="container mx-auto px-3 md:px-4 py-4 md:py-8">
         {/* Sticky header bar */}
         <div className="sticky top-0 z-10 bg-background border-b mb-4 py-2 flex items-center justify-between gap-2 print:hidden">
-          <h2 className="text-base md:text-xl font-bebas uppercase tracking-wider truncate">Performance Report</h2>
+          <h2 className="text-base md:text-xl font-bebas uppercase tracking-wider truncate">{t(reportLanguage, "performance_report")}</h2>
           <div className="flex gap-1 md:gap-2 flex-shrink-0">
             <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="px-2 md:px-3" disabled={savingImage || loading}>
               <ImageIcon className="h-4 w-4 md:mr-2" />
@@ -437,7 +437,7 @@ const PerformanceReport = () => {
             {analysis.placeholder_raw_score != null && (analysis.placeholder_minutes ?? 0) > 0 ? (
               <div className="grid grid-cols-3 gap-4 max-w-md mx-auto p-4 bg-accent/20 rounded-lg">
                 <div className="text-center p-2">
-                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Raw Score</p>
+                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "raw_score")}</p>
                   <p className="text-base md:text-2xl font-bold">{analysis.placeholder_raw_score.toFixed(3)}</p>
                 </div>
                 <div className="text-center bg-primary text-primary-foreground rounded-lg p-2 md:p-4">
@@ -445,16 +445,16 @@ const PerformanceReport = () => {
                   <p className="text-lg md:text-3xl font-bold">{((analysis.placeholder_raw_score / analysis.placeholder_minutes!) * 90).toFixed(2)}</p>
                 </div>
                 <div className="text-center p-2">
-                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Mins</p>
+                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "mins_short")}</p>
                   <p className="text-base md:text-2xl font-bold">{analysis.placeholder_minutes}</p>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Placeholder stats are not set yet.</p>
+              <p className="text-sm text-muted-foreground">{t(reportLanguage, "placeholder_stats_not_set")}</p>
             )}
             <div className="bg-muted/50 rounded-lg p-6 max-w-sm mx-auto">
-              <p className="text-sm font-medium">This report is locked</p>
-              <p className="text-xs text-muted-foreground mt-1">Contact us to unlock the full performance breakdown.</p>
+              <p className="text-sm font-medium">{t(reportLanguage, "report_locked")}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t(reportLanguage, "contact_to_unlock_report")}</p>
             </div>
           </div>
         ) : (
@@ -462,11 +462,11 @@ const PerformanceReport = () => {
         {!isAuthenticated && analysis.visibility_status === "draft" && (
           <div className="absolute inset-0 z-20 backdrop-blur-md bg-white/40 dark:bg-black/40 rounded-lg flex items-center justify-center">
             <div className="text-center p-6 bg-background/90 rounded-xl border shadow-lg max-w-xs">
-              <p className="font-semibold text-sm">Report In Progress</p>
-              <p className="text-xs text-muted-foreground mt-1">This report is still being prepared. Check back soon.</p>
+              <p className="font-semibold text-sm">{t(reportLanguage, "report_in_progress")}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t(reportLanguage, "report_in_progress_message")}</p>
               {analysis.estimated_ready_at && (
                 <p className="text-xs text-primary mt-2 font-medium">
-                  Expected by: {new Date(analysis.estimated_ready_at).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} at {new Date(analysis.estimated_ready_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                  {t(reportLanguage, "expected_by")}: {new Date(analysis.estimated_ready_at).toLocaleDateString(reportLocale, { weekday: 'short', day: 'numeric', month: 'short' })} {t(reportLanguage, "at")} {new Date(analysis.estimated_ready_at).toLocaleTimeString(reportLocale, { hour: '2-digit', minute: '2-digit' })}
                 </p>
               )}
             </div>
@@ -477,34 +477,34 @@ const PerformanceReport = () => {
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
               <div>
-                <p className="text-xs md:text-sm text-muted-foreground">Player</p>
+                <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "player_label")}</p>
                 <p className="font-bold text-sm md:text-base truncate">{analysis.player_name}</p>
               </div>
               <div>
-                <p className="text-xs md:text-sm text-muted-foreground">Date</p>
-                <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString(hasTranslation ? ({ fr: "fr-FR", es: "es-ES", pt: "pt-PT", de: "de-DE", it: "it-IT", pl: "pl-PL", cs: "cs-CZ", ru: "ru-RU", tr: "tr-TR" } as Record<string, string>)[tc!.language] || "en-GB" : "en-GB")}</p>
+                <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "date")}</p>
+                <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString(reportLocale)}</p>
               </div>
               <div>
-                <p className="text-xs md:text-sm text-muted-foreground">Opponent</p>
+                <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "opponent")}</p>
                 <p className="font-bold text-sm md:text-base truncate">{tf("opponent", analysis.opponent || "N/A")}</p>
               </div>
               <div>
-                <p className="text-xs md:text-sm text-muted-foreground">Result</p>
+                <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "result")}</p>
                 <p className="font-bold text-sm md:text-base">{analysis.result || "N/A"}</p>
               </div>
             </div>
 
             {/* Clipped Actions Button */}
             {actions.filter(a => a.video_url).length > 0 && (
-              <Button
-                variant="default"
-                size="sm"
-                className="bg-risegold hover:bg-risegold/90 text-black font-semibold flex items-center gap-2 w-fit"
-                onClick={() => setShowClippedActions(true)}
-              >
-                <Play className="h-4 w-4" />
-                {actions.filter(a => a.video_url).length} Clips
-              </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="bg-risegold hover:bg-risegold/90 text-black font-semibold flex items-center gap-2 w-fit"
+                  onClick={() => setShowClippedActions(true)}
+                >
+                  <Play className="h-4 w-4" />
+                  {actions.filter(a => a.video_url).length} {t(reportLanguage, "clips_label")}
+                </Button>
             )}
           </div>
 
@@ -515,34 +515,34 @@ const PerformanceReport = () => {
                 <TrendingUp className="h-3.5 w-3.5 mr-1.5" />R90 Flow
               </Button>
               <Button variant={showHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); setShowChanceCreation(false); setShowPitchHeatmap(false); }} className="text-xs">
-                <BarChart3 className="h-3.5 w-3.5 mr-1.5" />Period Grade Map
+                <BarChart3 className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "period_grade_map")}
               </Button>
               {actions.some(a => a.zone || (a.zone_details && a.zone_details.length > 0)) && (
                 <>
                   <Button variant={showPitchHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowPitchHeatmap(!showPitchHeatmap); setShowZonePerformance(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }} className="text-xs">
-                    <MapPin className="h-3.5 w-3.5 mr-1.5" />Pitch Heatmap
+                    <MapPin className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "pitch_heatmap")}
                   </Button>
                   <Button variant={showZonePerformance ? "default" : "outline"} size="sm" onClick={() => { setShowZonePerformance(!showZonePerformance); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }} className="text-xs">
-                    <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />Zone Performance
+                    <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "zone_performance")}
                   </Button>
                 </>
               )}
               {analysis.striker_stats && ['crossing_movement_xC', 'movement_in_behind_xC', 'movement_down_side_xC', 'triple_threat_xC', 'movement_to_feet_xC'].some(k => (analysis.striker_stats as any)?.[k] > 0) && (
                 <Button variant="outline" size="sm" onClick={() => { setShowChanceCreation(!showChanceCreation); setShowR90Flow(false); setShowHeatmap(false); }} className="text-xs">
-                  <TrendingUp className="h-3.5 w-3.5 mr-1.5" />Chance Creation Flow
+                  <TrendingUp className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "chance_creation_flow")}
                 </Button>
               )}
               {actions.filter(a => a.video_url).length > 0 && (
                 <>
                   <Button variant="outline" size="sm" onClick={() => { setRankedMode("chronological"); setShowRankedPlayer(true); }} className="text-xs">
-                    <Film className="h-3.5 w-3.5 mr-1.5" />Full Match Video
+                    <Film className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "full_match_video")}
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => { setRankedMode("ranked"); setShowRankedPlayer(true); }} className="text-xs">
-                    <Award className="h-3.5 w-3.5 mr-1.5" />Ranked Actions
+                    <Award className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "ranked_actions")}
                   </Button>
                   {actions.some(a => a.video_url && a.notes) && (
                     <Button variant="outline" size="sm" onClick={() => { setRankedMode("noted"); setShowRankedPlayer(true); }} className="text-xs">
-                      <MessageSquareText className="h-3.5 w-3.5 mr-1.5" />Noted Actions
+                      <MessageSquareText className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "noted_actions")}
                     </Button>
                   )}
                 </>
@@ -578,7 +578,7 @@ const PerformanceReport = () => {
           {/* Key Stats */}
           <div className="grid grid-cols-3 gap-2 md:gap-4 p-2 md:p-4 bg-accent/20 rounded-lg">
             <div className="text-center p-2">
-              <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Raw Score</p>
+              <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "raw_score")}</p>
               <p className="text-base md:text-2xl font-bold">
                 {actions.length > 0 ? calculateRScore().toFixed(3) : (analysis.r90_score !== null && analysis.minutes_played ? ((analysis.r90_score / 90) * analysis.minutes_played).toFixed(3) : "N/A")}
               </p>
@@ -600,7 +600,7 @@ const PerformanceReport = () => {
               </p>
             </div>
             <div className="text-center p-2">
-              <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Mins</p>
+              <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "mins_short")}</p>
               <p className="text-base md:text-2xl font-bold">{analysis.minutes_played ?? "N/A"}</p>
             </div>
           </div>
@@ -609,7 +609,7 @@ const PerformanceReport = () => {
           {advancedStats.length > 0 && (
             <Card className="overflow-hidden">
               <CardHeader className="py-1.5 md:py-2">
-                <CardTitle className="text-sm md:text-lg">Match Statistics</CardTitle>
+                <CardTitle className="text-sm md:text-lg">{t(reportLanguage, "match_statistics")}</CardTitle>
               </CardHeader>
               <CardContent className="p-2 md:p-4">
                 <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
@@ -645,7 +645,7 @@ const PerformanceReport = () => {
               <CardHeader className="py-1.5 md:py-2 bg-primary/5">
                 <CardTitle className="text-sm md:text-lg flex items-center gap-2">
                   <Calculator className="h-4 w-4 text-primary" />
-                  <span className="text-primary">Calculated Ratios</span>
+                  <span className="text-primary">{t(reportLanguage, "calculated_ratios")}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-2 md:p-4">
@@ -670,7 +670,7 @@ const PerformanceReport = () => {
           {analysis.performance_overview && (
             <Card className="overflow-hidden">
               <CardHeader className="py-1.5 md:py-2">
-                <CardTitle className="text-sm md:text-lg">Overview</CardTitle>
+                <CardTitle className="text-sm md:text-lg">{t(reportLanguage, "overview")}</CardTitle>
               </CardHeader>
               <CardContent className="p-2 md:p-4">
                 <p className="text-muted-foreground whitespace-pre-wrap text-center text-xs md:text-sm">{tf("performanceOverview", analysis.performance_overview)}</p>
@@ -684,11 +684,11 @@ const PerformanceReport = () => {
               <CardHeader className="py-1.5 md:py-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm md:text-lg">
-                    Actions ({hasActiveFilters ? `${filteredActions.length}/${actions.length}` : actions.length})
+                    {t(reportLanguage, "actions_label")} ({hasActiveFilters ? `${filteredActions.length}/${actions.length}` : actions.length})
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     {hasActiveFilters && (
-                      <button onClick={() => { setFilterTypes([]); setFilterRating(null); setFilterHasNotes(false); }} className="text-[10px] text-muted-foreground hover:text-foreground underline">Clear filters</button>
+                      <button onClick={() => { setFilterTypes([]); setFilterRating(null); setFilterHasNotes(false); }} className="text-[10px] text-muted-foreground hover:text-foreground underline">{t(reportLanguage, "clear_filters")}</button>
                     )}
                     <button onClick={() => setShowActionFilters(!showActionFilters)} className={`p-1.5 rounded transition-colors ${hasActiveFilters ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'}`}>
                       <Filter className="h-4 w-4" />
@@ -698,7 +698,7 @@ const PerformanceReport = () => {
                 {showActionFilters && (
                   <div className="mt-3 space-y-3 border-t pt-3">
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Action Type</p>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">{t(reportLanguage, "action_type_label")}</p>
                       <div className="flex flex-wrap gap-1">
                         {allActionTypes.map(type => (
                           <button key={type} onClick={() => setFilterTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type])}
@@ -709,7 +709,7 @@ const PerformanceReport = () => {
                       </div>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Rating</p>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">{t(reportLanguage, "rating_label")}</p>
                       <div className="flex flex-wrap gap-1">
                         {ratingBuckets.map(bucket => (
                           <button key={bucket.key} onClick={() => setFilterRating(prev => prev === bucket.key ? null : bucket.key)}
@@ -719,16 +719,16 @@ const PerformanceReport = () => {
                       </div>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Notes</p>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">{t(reportLanguage, "notes_label")}</p>
                       <button onClick={() => setFilterHasNotes(!filterHasNotes)}
                         className={`px-2 py-0.5 rounded text-[10px] transition-colors border ${filterHasNotes ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/30 text-foreground/70 border-border hover:bg-muted/50'}`}>
-                        With Notes
+                        {t(reportLanguage, "with_notes")}
                       </button>
                     </div>
                     {hasActiveFilters && filteredActions.some(a => a.video_url) && (
                       <div className="pt-2 border-t border-border/30">
                         <Button variant="default" size="sm" className="bg-gold hover:bg-gold/90 text-black font-semibold text-xs w-full" onClick={() => setShowFilteredPlayer(true)}>
-                          <Play className="h-3.5 w-3.5 mr-1.5" />Watch Selected ({filteredActions.filter(a => a.video_url).length})
+                          <Play className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "watch_selected")} ({filteredActions.filter(a => a.video_url).length})
                         </Button>
                       </div>
                     )}
@@ -767,12 +767,12 @@ const PerformanceReport = () => {
                     <thead>
                       <tr className="border-b">
                         <th className="text-left py-2 px-2">#</th>
-                        <th className="text-left py-2 px-2">Min</th>
-                        <th className="text-left py-2 px-2">Type</th>
-                        <th className="text-left py-2 px-2">Description</th>
-                        <th className="text-left py-2 px-2">Notes</th>
-                        <th className="text-right py-2 px-2">Score</th>
-                        <th className="text-center py-2 px-2">Clip</th>
+                        <th className="text-left py-2 px-2">{t(reportLanguage, "min_short")}</th>
+                        <th className="text-left py-2 px-2">{t(reportLanguage, "type_label")}</th>
+                        <th className="text-left py-2 px-2">{t(reportLanguage, "description_label")}</th>
+                        <th className="text-left py-2 px-2">{t(reportLanguage, "notes_label")}</th>
+                        <th className="text-right py-2 px-2">{t(reportLanguage, "score_label")}</th>
+                        <th className="text-center py-2 px-2">{t(reportLanguage, "clip_label")}</th>
                       </tr>
                     </thead>
                     <tbody>

@@ -18,7 +18,8 @@ import { PitchHeatmap } from "@/components/report/PitchHeatmap";
 import { ZonePerformance } from "@/components/report/ZonePerformance";
 import { toTitleCase } from "@/lib/titleCase";
 import { sortActionsByMinute } from "@/lib/actionSorting";
-import { t, normalizePortalLanguage } from "@/lib/portalTranslations";
+import { t } from "@/lib/portalTranslations";
+import { getReportLanguage, getReportLocale, getTranslatedActionField, getTranslatedReportField, hasTranslatedReportContent } from "@/lib/reportTranslations";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -93,18 +94,13 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [filterHasNotes, setFilterHasNotes] = useState(false);
 
   const portalLanguage = isPortalView ? (localStorage.getItem("portal_language_hint") || "en") : "en";
-  const langCode = normalizePortalLanguage(portalLanguage);
-  const localeMap: Record<string, string> = { fr: "fr-FR", es: "es-ES", pt: "pt-PT", de: "de-DE", it: "it-IT", pl: "pl-PL", cs: "cs-CZ", ru: "ru-RU", tr: "tr-TR" };
-  const portalLocale = localeMap[langCode] || "en-GB";
+  const reportLanguage = getReportLanguage(analysis?.translated_content, portalLanguage);
+  const portalLocale = getReportLocale(reportLanguage);
 
-  // Translation helper: show translated content when available and language matches
   const tc = analysis?.translated_content;
-  const hasTranslation = !!tc?.fields && tc.language && tc.language !== "en";
-  const tf = (key: string, fallback: string) => hasTranslation && tc?.fields[key] ? tc.fields[key] : fallback;
-  const tAction = (index: number, field: string, fallback: string) => {
-    const k = `action_${index}_${field}`;
-    return hasTranslation && tc?.fields[k] ? tc.fields[k] : fallback;
-  };
+  const hasTranslation = hasTranslatedReportContent(tc);
+  const tf = (key: string, fallback: string) => getTranslatedReportField(tc, key, fallback);
+  const tAction = (index: number, field: "type" | "description" | "notes", fallback: string) => getTranslatedActionField(tc, index, field, fallback);
 
   // Pre-fetch data when analysisId changes (even before dialog opens)
   useEffect(() => {
@@ -551,7 +547,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[98vw] md:max-w-[95vw] w-full max-h-[95vh] overflow-y-auto overflow-x-hidden p-0">
         <div className="sticky top-0 z-10 bg-background border-b p-2 md:p-4 flex items-center justify-between gap-2">
-          <h2 className="text-base md:text-xl font-bebas uppercase tracking-wider truncate">Performance Report</h2>
+          <h2 className="text-base md:text-xl font-bebas uppercase tracking-wider truncate">{t(reportLanguage, "performance_report")}</h2>
           <div className="flex gap-1 md:gap-2 flex-shrink-0">
             <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="px-2 md:px-3" disabled={savingImage || loading}>
               <ImageIcon className="h-4 w-4 md:mr-2" />
@@ -578,7 +574,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
             </Button>
             <Button onClick={() => onOpenChange(false)} variant="outline" size="sm" className="px-2 md:px-3">
               <X className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">Close</span>
+              <span className="hidden md:inline">{t(reportLanguage, "close")}</span>
             </Button>
           </div>
         </div>
@@ -614,7 +610,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {analysis.placeholder_raw_score != null && (analysis.placeholder_minutes ?? 0) > 0 ? (
                 <div className="grid grid-cols-3 gap-4 max-w-md mx-auto p-4 bg-accent/20 rounded-lg">
                   <div className="text-center p-2">
-                    <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Raw Score</p>
+                    <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "raw_score")}</p>
                     <p className="text-base md:text-2xl font-bold">{analysis.placeholder_raw_score.toFixed(3)}</p>
                   </div>
                   <div className="text-center bg-primary text-primary-foreground rounded-lg p-2 md:p-4">
@@ -622,16 +618,16 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     <p className="text-lg md:text-3xl font-bold">{((analysis.placeholder_raw_score / analysis.placeholder_minutes!) * 90).toFixed(2)}</p>
                   </div>
                   <div className="text-center p-2">
-                    <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Mins</p>
+                    <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "mins_short")}</p>
                     <p className="text-base md:text-2xl font-bold">{analysis.placeholder_minutes}</p>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Placeholder stats are not set yet.</p>
+                <p className="text-sm text-muted-foreground">{t(reportLanguage, "placeholder_stats_not_set")}</p>
               )}
               <div className="bg-muted/50 rounded-lg p-4 max-w-sm mx-auto">
-                <p className="text-sm font-medium">This report is locked</p>
-                <p className="text-xs text-muted-foreground mt-1">Contact us to unlock the full performance breakdown.</p>
+                <p className="text-sm font-medium">{t(reportLanguage, "report_locked")}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t(reportLanguage, "contact_to_unlock_report")}</p>
               </div>
             </div>
           ) : (
@@ -639,8 +635,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {isPortalView && analysis.visibility_status === "draft" && (
                 <div className="absolute inset-0 z-20 backdrop-blur-md bg-white/40 dark:bg-black/40 rounded-lg flex items-center justify-center">
                   <div className="text-center p-6 bg-background/90 rounded-xl border shadow-lg max-w-xs">
-                    <p className="font-semibold text-sm">Report In Progress</p>
-                    <p className="text-xs text-muted-foreground mt-1">This report is still being prepared. Check back soon.</p>
+                    <p className="font-semibold text-sm">{t(reportLanguage, "report_in_progress")}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t(reportLanguage, "report_in_progress_message")}</p>
                   </div>
                 </div>
               )}
@@ -649,19 +645,19 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               <div className="flex flex-col gap-3">
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
                   <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">Player</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "player_label")}</p>
                     <p className="font-bold text-sm md:text-base truncate">{analysis.player_name}</p>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">{t(portalLanguage, "date")}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "date")}</p>
                     <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString(portalLocale)}</p>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">{t(portalLanguage, "opponent")}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "opponent")}</p>
                     <p className="font-bold text-sm md:text-base truncate">{tf("opponent", analysis.opponent) || "N/A"}</p>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">{t(portalLanguage, "result")}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "result")}</p>
                     <p className="font-bold text-sm md:text-base">{analysis.result || "N/A"}</p>
                   </div>
                 </div>
@@ -675,7 +671,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     onClick={() => setShowClippedActions(true)}
                   >
                     <Play className="h-4 w-4" />
-                    {actions.filter(a => a.video_url).length}
+                    {actions.filter(a => a.video_url).length} {t(reportLanguage, "clips_label")}
                   </Button>
                 )}
               </div>
@@ -699,7 +695,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     className="text-xs"
                   >
                     <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
-                    Period Grade Map
+                    {t(reportLanguage, "period_grade_map")}
                   </Button>
                   {actions.some(a => a.zone || (a.zone_details && a.zone_details.length > 0)) && (
                     <>
@@ -710,7 +706,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                         className="text-xs"
                       >
                         <MapPin className="h-3.5 w-3.5 mr-1.5" />
-                        Pitch Heatmap
+                        {t(reportLanguage, "pitch_heatmap")}
                       </Button>
                       <Button
                         variant={showZonePerformance ? "default" : "outline"}
@@ -719,7 +715,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                         className="text-xs"
                       >
                         <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />
-                        Zone Performance
+                        {t(reportLanguage, "zone_performance")}
                       </Button>
                     </>
                   )}
@@ -732,7 +728,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                       className="text-xs"
                     >
                       <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
-                      Chance Creation Flow
+                      {t(reportLanguage, "chance_creation_flow")}
                     </Button>
                   )}
                   {actions.filter(a => a.video_url).length > 0 && (
@@ -744,7 +740,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                         className="text-xs"
                       >
                         <Film className="h-3.5 w-3.5 mr-1.5" />
-                        Full Match Video
+                        {t(reportLanguage, "full_match_video")}
                       </Button>
                       <Button
                         variant="outline"
@@ -753,7 +749,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                         className="text-xs"
                       >
                         <Award className="h-3.5 w-3.5 mr-1.5" />
-                        Ranked Actions
+                        {t(reportLanguage, "ranked_actions")}
                       </Button>
                       {actions.some(a => a.video_url && a.notes) && (
                         <Button
@@ -763,7 +759,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                           className="text-xs"
                         >
                           <MessageSquareText className="h-3.5 w-3.5 mr-1.5" />
-                          Noted Actions
+                          {t(reportLanguage, "noted_actions")}
                         </Button>
                       )}
                     </>
@@ -819,7 +815,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {/* Key Stats */}
               <div className="grid grid-cols-3 gap-2 md:gap-4 p-2 md:p-4 bg-accent/20 rounded-lg">
                 <div className="text-center p-2">
-                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Raw Score</p>
+                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "raw_score")}</p>
                   <p className="text-base md:text-2xl font-bold">
                     {actions.length > 0 ? calculateRScore().toFixed(3) : (analysis.r90_score !== null && analysis.minutes_played ? ((analysis.r90_score / 90) * analysis.minutes_played).toFixed(3) : "N/A")}
                   </p>
@@ -845,7 +841,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                   </p>
                 </div>
                 <div className="text-center p-2">
-                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Mins</p>
+                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "mins_short")}</p>
                   <p className="text-base md:text-2xl font-bold">{analysis.minutes_played ?? "N/A"}</p>
                 </div>
               </div>
@@ -854,7 +850,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {advancedStats.length > 0 && (
                 <Card className="overflow-hidden">
                   <CardHeader className="py-1.5 md:py-2">
-                    <CardTitle className="text-sm md:text-lg">Match Statistics</CardTitle>
+                    <CardTitle className="text-sm md:text-lg">{t(reportLanguage, "match_statistics")}</CardTitle>
                   </CardHeader>
                   <CardContent className="p-2 md:p-4">
                     <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
@@ -892,7 +888,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                   <CardHeader className="py-1.5 md:py-2 bg-primary/5">
                     <CardTitle className="text-sm md:text-lg flex items-center gap-2">
                       <Calculator className="h-4 w-4 text-primary" />
-                      <span className="text-primary">Calculated Ratios</span>
+                      <span className="text-primary">{t(reportLanguage, "calculated_ratios")}</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-2 md:p-4">
@@ -934,16 +930,16 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                 <Card className="overflow-hidden">
                   <CardHeader className="py-1.5 md:py-2">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm md:text-lg">
-                        Actions ({hasActiveFilters ? `${filteredActions.length}/${actions.length}` : actions.length})
-                      </CardTitle>
+                        <CardTitle className="text-sm md:text-lg">
+                          {t(reportLanguage, "actions_label")} ({hasActiveFilters ? `${filteredActions.length}/${actions.length}` : actions.length})
+                        </CardTitle>
                       <div className="flex items-center gap-2">
                         {hasActiveFilters && (
                           <button
                             onClick={() => { setFilterTypes([]); setFilterRating(null); setFilterHasNotes(false); }}
                             className="text-[10px] text-muted-foreground hover:text-foreground underline"
                           >
-                            Clear filters
+                            {t(reportLanguage, "clear_filters")}
                           </button>
                         )}
                         <button
@@ -958,7 +954,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                       <div className="mt-3 space-y-3 border-t pt-3">
                         {/* Filter by action type */}
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Action Type</p>
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">{t(reportLanguage, "action_type_label")}</p>
                           <div className="flex flex-wrap gap-1">
                             {allActionTypes.map(type => (
                               <button
@@ -977,7 +973,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                         </div>
                         {/* Filter by rating */}
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Rating</p>
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">{t(reportLanguage, "rating_label")}</p>
                           <div className="flex flex-wrap gap-1">
                             {ratingBuckets.map(bucket => (
                               <button
@@ -995,7 +991,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                         </div>
                         {/* Filter by notes */}
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Notes</p>
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">{t(reportLanguage, "notes_label")}</p>
                           <button
                             onClick={() => setFilterHasNotes(!filterHasNotes)}
                             className={`px-2 py-0.5 rounded text-[10px] transition-colors border ${
@@ -1004,7 +1000,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                                 : 'bg-muted/30 text-foreground/70 border-border hover:bg-muted/50'
                             }`}
                           >
-                            With Notes
+                            {t(reportLanguage, "with_notes")}
                           </button>
                         </div>
                         {/* Watch filtered selection */}
@@ -1017,7 +1013,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                               onClick={() => setShowFilteredPlayer(true)}
                             >
                               <Play className="h-3.5 w-3.5 mr-1.5" />
-                              Watch Selected ({filteredActions.filter(a => a.video_url).length})
+                              {t(reportLanguage, "watch_selected")} ({filteredActions.filter(a => a.video_url).length})
                             </Button>
                           </div>
                         )}
@@ -1066,12 +1062,12 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                         <thead>
                           <tr className="border-b">
                             <th className="text-left py-2 px-2">#</th>
-                            <th className="text-left py-2 px-2">Min</th>
-                            <th className="text-left py-2 px-2">Type</th>
-                            <th className="text-left py-2 px-2">Description</th>
-                            <th className="text-left py-2 px-2">Notes</th>
-                            <th className="text-right py-2 px-2">Score</th>
-                            <th className="text-center py-2 px-2">Clip</th>
+                            <th className="text-left py-2 px-2">{t(reportLanguage, "min_short")}</th>
+                            <th className="text-left py-2 px-2">{t(reportLanguage, "type_label")}</th>
+                            <th className="text-left py-2 px-2">{t(reportLanguage, "description_label")}</th>
+                            <th className="text-left py-2 px-2">{t(reportLanguage, "notes_label")}</th>
+                            <th className="text-right py-2 px-2">{t(reportLanguage, "score_label")}</th>
+                            <th className="text-center py-2 px-2">{t(reportLanguage, "clip_label")}</th>
                           </tr>
                         </thead>
                         <tbody>

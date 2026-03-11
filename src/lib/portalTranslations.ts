@@ -85,11 +85,53 @@ const translations: Record<string, Record<string, string>> = {
     loading: "Loading...",
     log_out: "Log Out",
     settings: "Settings",
-    notifications: "Notifications",
-    injury_log: "Injury Log",
-    match_clipper: "Match Clipper",
-    quick_stats: "Quick Stats",
-    r90_chart: "R90 Chart",
+  notifications: "Notifications",
+  injury_log: "Injury Log",
+  match_clipper: "Match Clipper",
+  quick_stats: "Quick Stats",
+  r90_chart: "R90 Chart",
+  inbox: "Inbox",
+  see_all: "See All",
+  select_item_to_preview: "Select an item to preview",
+  new_analysis_available: "New analysis available",
+  view_analysis: "View Analysis",
+  tagged_in_analysis_for: "You've been tagged in an analysis for",
+  new_highlight_reel: "New Highlight Reel",
+  new_highlight_created_for_you: "A new highlight reel has been created for you",
+  view_highlights: "View Highlights",
+  post_match: "Post-Match",
+  player_label: "Player",
+  raw_score: "Raw Score",
+  mins_short: "Mins",
+  report_in_progress: "Report In Progress",
+  report_in_progress_message: "This report is still being prepared. Check back soon.",
+  expected_by: "Expected by",
+  report_locked: "This report is locked",
+  contact_to_unlock_report: "Contact us to unlock the full performance breakdown.",
+  placeholder_stats_not_set: "Placeholder stats are not set yet.",
+  clips_label: "Clips",
+  r90_flow: "R90 Flow",
+  period_grade_map: "Period Grade Map",
+  pitch_heatmap: "Pitch Heatmap",
+  zone_performance: "Zone Performance",
+  chance_creation_flow: "Chance Creation Flow",
+  full_match_video: "Full Match Video",
+  ranked_actions: "Ranked Actions",
+  noted_actions: "Noted Actions",
+  match_statistics: "Match Statistics",
+  calculated_ratios: "Calculated Ratios",
+  actions_label: "Actions",
+  clear_filters: "Clear filters",
+  action_type_label: "Action Type",
+  rating_label: "Rating",
+  notes_label: "Notes",
+  with_notes: "With Notes",
+  watch_selected: "Watch Selected",
+  min_short: "Min",
+  type_label: "Type",
+  description_label: "Description",
+  score_label: "Score",
+  clip_label: "Clip",
   },
   es: {
     hub: "Inicio",
@@ -613,7 +655,7 @@ const frExtended: Record<string, string> = {
   goalkeeper: "Gardien", centre_back: "Défenseur Central", full_back: "Latéral",
   midfielder: "Milieu de terrain", winger: "Ailier", striker: "Attaquant",
   days: "jours", hours: "heures", mins: "min", secs: "sec",
-  next_fixture: "Prochain Match", pre_match: "Pré-Match", view_pre_match_analysis: "Voir l'analyse pré-match",
+  next_fixture: "Prochain Match", pre_match: "Pré-Match", post_match: "Après-match", view_pre_match_analysis: "Voir l'analyse pré-match",
   no_upcoming_fixtures: "Pas de matchs à venir", match_day: "Jour de Match",
   r90_score: "Score R90", minutes_played: "Minutes Jouées", result: "Résultat", opponent: "Adversaire",
   date: "Date", at: "à",
@@ -628,6 +670,46 @@ const frExtended: Record<string, string> = {
   open_report: "Ouvrir le rapport", performance_report: "Rapport de performance", match: "Match",
   match_performance_rated_at_r90: "Performance du match notée à R90",
   minutes_played_suffix: "minutes jouées.",
+  inbox: "Boîte de réception",
+  see_all: "Voir tout",
+  select_item_to_preview: "Sélectionnez un élément à prévisualiser",
+  new_analysis_available: "Nouvelle analyse disponible",
+  view_analysis: "Voir l'analyse",
+  tagged_in_analysis_for: "Vous avez été identifié dans une analyse pour",
+  new_highlight_reel: "Nouveau best-of",
+  new_highlight_created_for_you: "Un nouveau best-of a été créé pour vous",
+  view_highlights: "Voir les highlights",
+  player_label: "Joueur",
+  raw_score: "Score brut",
+  mins_short: "Min",
+  report_in_progress: "Rapport en cours",
+  report_in_progress_message: "Ce rapport est encore en préparation. Revenez bientôt.",
+  expected_by: "Prévu pour",
+  report_locked: "Ce rapport est verrouillé",
+  contact_to_unlock_report: "Contactez-nous pour débloquer l'analyse complète.",
+  placeholder_stats_not_set: "Les statistiques provisoires ne sont pas encore définies.",
+  clips_label: "clips",
+  period_grade_map: "Carte des notes par période",
+  pitch_heatmap: "Carte de chaleur du terrain",
+  zone_performance: "Performance par zone",
+  chance_creation_flow: "Flux de création d'occasions",
+  full_match_video: "Vidéo du match complet",
+  ranked_actions: "Actions classées",
+  noted_actions: "Actions notées",
+  match_statistics: "Statistiques du match",
+  calculated_ratios: "Ratios calculés",
+  actions_label: "Actions",
+  clear_filters: "Effacer les filtres",
+  action_type_label: "Type d'action",
+  rating_label: "Note",
+  notes_label: "Notes",
+  with_notes: "Avec notes",
+  watch_selected: "Voir la sélection",
+  min_short: "Min",
+  type_label: "Type",
+  description_label: "Description",
+  score_label: "Score",
+  clip_label: "Clip",
 };
 
 // Merge extended translations into all languages
@@ -652,6 +734,18 @@ Object.entries(esExtended).forEach(([key, val]) => {
   if (translations.es) translations.es[key] = val;
 });
 
+Object.assign(translations.es, {
+  inbox: "Bandeja de entrada",
+  see_all: "Ver todo",
+  select_item_to_preview: "Selecciona un elemento para previsualizar",
+  new_analysis_available: "Nuevo análisis disponible",
+  view_analysis: "Ver análisis",
+  tagged_in_analysis_for: "Has sido etiquetado en un análisis para",
+  new_highlight_reel: "Nuevo vídeo de highlights",
+  new_highlight_created_for_you: "Se ha creado un nuevo vídeo de highlights para ti",
+  view_highlights: "Ver highlights",
+});
+
 // Portuguese extended
 const ptExtended: Record<string, string> = {
   coach_availability: "Disponibilidade do Treinador", availability: "Disponibilidade",
@@ -667,6 +761,18 @@ const ptExtended: Record<string, string> = {
 };
 Object.entries(ptExtended).forEach(([key, val]) => {
   if (translations.pt) translations.pt[key] = val;
+});
+
+Object.assign(translations.pt, {
+  inbox: "Caixa de entrada",
+  see_all: "Ver tudo",
+  select_item_to_preview: "Selecione um item para pré-visualizar",
+  new_analysis_available: "Nova análise disponível",
+  view_analysis: "Ver análise",
+  tagged_in_analysis_for: "Foi marcado numa análise para",
+  new_highlight_reel: "Novo vídeo de destaques",
+  new_highlight_created_for_you: "Foi criado um novo vídeo de destaques para si",
+  view_highlights: "Ver destaques",
 });
 
 // German extended
@@ -686,6 +792,18 @@ Object.entries(deExtended).forEach(([key, val]) => {
   if (translations.de) translations.de[key] = val;
 });
 
+Object.assign(translations.de, {
+  inbox: "Posteingang",
+  see_all: "Alle anzeigen",
+  select_item_to_preview: "Wähle ein Element zur Vorschau aus",
+  new_analysis_available: "Neue Analyse verfügbar",
+  view_analysis: "Analyse ansehen",
+  tagged_in_analysis_for: "Du wurdest in einer Analyse markiert für",
+  new_highlight_reel: "Neues Highlight-Video",
+  new_highlight_created_for_you: "Ein neues Highlight-Video wurde für dich erstellt",
+  view_highlights: "Highlights ansehen",
+});
+
 // Italian extended
 const itExtended: Record<string, string> = {
   coach_availability: "Disponibilità Allenatore", availability: "Disponibilità",
@@ -701,6 +819,66 @@ const itExtended: Record<string, string> = {
 };
 Object.entries(itExtended).forEach(([key, val]) => {
   if (translations.it) translations.it[key] = val;
+});
+
+Object.assign(translations.it, {
+  inbox: "Posta in arrivo",
+  see_all: "Vedi tutto",
+  select_item_to_preview: "Seleziona un elemento da visualizzare",
+  new_analysis_available: "Nuova analisi disponibile",
+  view_analysis: "Visualizza analisi",
+  tagged_in_analysis_for: "Sei stato taggato in un'analisi per",
+  new_highlight_reel: "Nuovo video highlights",
+  new_highlight_created_for_you: "È stato creato un nuovo video highlights per te",
+  view_highlights: "Visualizza highlights",
+});
+
+Object.assign(translations.pl, {
+  inbox: "Skrzynka odbiorcza",
+  see_all: "Zobacz wszystko",
+  select_item_to_preview: "Wybierz element do podglądu",
+  new_analysis_available: "Nowa analiza dostępna",
+  view_analysis: "Zobacz analizę",
+  tagged_in_analysis_for: "Zostałeś oznaczony w analizie dla",
+  new_highlight_reel: "Nowy film z highlights",
+  new_highlight_created_for_you: "Utworzono dla Ciebie nowy film z highlights",
+  view_highlights: "Zobacz highlights",
+});
+
+Object.assign(translations.cs, {
+  inbox: "Doručená pošta",
+  see_all: "Zobrazit vše",
+  select_item_to_preview: "Vyberte položku k náhledu",
+  new_analysis_available: "Nová analýza je k dispozici",
+  view_analysis: "Zobrazit analýzu",
+  tagged_in_analysis_for: "Byli jste označeni v analýze pro",
+  new_highlight_reel: "Nové video s highlights",
+  new_highlight_created_for_you: "Bylo pro vás vytvořeno nové video s highlights",
+  view_highlights: "Zobrazit highlights",
+});
+
+Object.assign(translations.ru, {
+  inbox: "Входящие",
+  see_all: "Смотреть всё",
+  select_item_to_preview: "Выберите элемент для предпросмотра",
+  new_analysis_available: "Доступен новый анализ",
+  view_analysis: "Посмотреть анализ",
+  tagged_in_analysis_for: "Вы отмечены в анализе для",
+  new_highlight_reel: "Новый ролик с highlights",
+  new_highlight_created_for_you: "Для вас создан новый ролик с highlights",
+  view_highlights: "Посмотреть highlights",
+});
+
+Object.assign(translations.tr, {
+  inbox: "Gelen kutusu",
+  see_all: "Tümünü gör",
+  select_item_to_preview: "Önizlemek için bir öğe seçin",
+  new_analysis_available: "Yeni analiz mevcut",
+  view_analysis: "Analizi görüntüle",
+  tagged_in_analysis_for: "Şu maç için bir analizde etiketlendiniz",
+  new_highlight_reel: "Yeni highlights videosu",
+  new_highlight_created_for_you: "Sizin için yeni bir highlights videosu oluşturuldu",
+  view_highlights: "Highlights görüntüle",
 });
 
 export type { TranslationKey };

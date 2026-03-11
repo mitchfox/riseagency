@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
 import { t, normalizePortalLanguage } from "@/lib/portalTranslations";
+import { getReportLanguage, getReportLocale, getTranslatedReportField } from "@/lib/reportTranslations";
 
 interface FeedItem {
   id: string;
@@ -69,7 +70,7 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
   const [selectedItem, setSelectedItem] = React.useState<FeedItem | null>(null);
 
   const langCode = normalizePortalLanguage(portalLanguage);
-  const locale = langCode === "fr" ? "fr-FR" : langCode === "es" ? "es-ES" : langCode === "pt" ? "pt-PT" : langCode === "de" ? "de-DE" : langCode === "it" ? "it-IT" : "en-GB";
+  const locale = getReportLocale(langCode);
 
   const formatRelative = (value: string) => {
     const target = new Date(value);
@@ -120,7 +121,7 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
       try {
         const { data: reports } = await supabase
           .from("player_analysis")
-          .select("id, analysis_date, opponent, r90_score, performance_overview, minutes_played")
+          .select("id, analysis_date, opponent, r90_score, performance_overview, minutes_played, visibility_status, translated_content")
           .eq("player_id", playerId)
           .not("r90_score", "is", null)
           .order("analysis_date", { ascending: false })
@@ -129,14 +130,18 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
         const liveReports = (reports || []).filter((r: any) => !r.visibility_status || r.visibility_status === "live");
 
         liveReports?.forEach((r: any) => {
+          const reportLanguage = getReportLanguage(r.translated_content, portalLanguage);
+          const reportOpponent = getTranslatedReportField(r.translated_content, "opponent", r.opponent || t(reportLanguage, "match"));
+          const reportOverview = getTranslatedReportField(r.translated_content, "performanceOverview", r.performance_overview || "");
+
           feed.push({
             id: `report-${r.id}`,
             type: "report",
-            title: `${t(portalLanguage, "performance_report")}: ${r.opponent || t(portalLanguage, "match")}`,
+            title: `${t(reportLanguage, "performance_report")}: ${reportOpponent}`,
             subtitle: `R90: ${r.r90_score} — ${new Date(r.analysis_date).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}`,
-            description: r.performance_overview || `${t(portalLanguage, "match_performance_rated_at_r90")} ${r.r90_score}. ${r.minutes_played ? `${r.minutes_played} ${t(portalLanguage, "minutes_played_suffix")}` : ''}`,
+            description: reportOverview || `${t(reportLanguage, "match_performance_rated_at_r90")} ${r.r90_score}. ${r.minutes_played ? `${r.minutes_played} ${t(reportLanguage, "minutes_played_suffix")}` : ''}`,
             timestamp: r.analysis_date,
-            linkLabel: t(portalLanguage, "open_report"),
+            linkLabel: t(reportLanguage, "open_report"),
             onClick: () => onOpenReport?.(r.id),
           });
         });
@@ -148,18 +153,22 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
           .order("created_at", { ascending: false })
           .limit(5);
 
-        tags?.forEach(t => {
-          const a = (t as any).analyses;
+        tags?.forEach(tag => {
+          const a = (tag as any).analyses;
           if (!a) return;
-          const typeLabel = a.analysis_type === "pre-match" ? "Pre-Match" : a.analysis_type === "post-match" ? "Post-Match" : a.analysis_type;
+          const typeLabel = a.analysis_type === "pre-match"
+            ? t(portalLanguage, "pre_match")
+            : a.analysis_type === "post-match"
+            ? t(portalLanguage, "post_match")
+            : a.analysis_type;
           feed.push({
             id: `analysis-${a.id}`,
             type: "analysis",
             title: `${typeLabel}: ${a.home_team || ""} vs ${a.away_team || ""}`,
-            subtitle: a.title || "New analysis available",
-            description: `You've been tagged in a ${typeLabel.toLowerCase()} analysis for ${a.home_team || ''} vs ${a.away_team || ''}.`,
-            timestamp: t.created_at,
-            linkLabel: "View Analysis",
+            subtitle: a.title || t(portalLanguage, "new_analysis_available"),
+            description: `${t(portalLanguage, "tagged_in_analysis_for")} ${a.home_team || ''} vs ${a.away_team || ''}.`,
+            timestamp: tag.created_at,
+            linkLabel: t(portalLanguage, "view_analysis"),
             onClick: () => {
               const slug = createAnalysisSlug(a.home_team || '', a.away_team || '', a.id);
               navigate(slug);
@@ -178,11 +187,11 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
           feed.push({
             id: `highlight-${h.id}`,
             type: "highlight",
-            title: `New Highlight Reel`,
+            title: t(portalLanguage, "new_highlight_reel"),
             subtitle: h.name,
-            description: `A new highlight reel "${h.name}" has been created for you.`,
+            description: `${t(portalLanguage, "new_highlight_created_for_you")} "${h.name}".`,
             timestamp: h.created_at,
-            linkLabel: "View Highlights",
+            linkLabel: t(portalLanguage, "view_highlights"),
           });
         });
 
@@ -216,7 +225,7 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
         <div className="flex items-center justify-between container mx-auto px-4 pr-6">
           <div className="flex items-center gap-2">
             <Inbox className="h-5 w-5" />
-            <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">Inbox</CardTitle>
+            <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">{t(portalLanguage, "inbox")}</CardTitle>
             {unreadCount > 0 && (
               <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
                 {unreadCount}
@@ -231,7 +240,7 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
                 onClick={onNavigateToAnalysis}
                 className="flex items-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
               >
-                See All
+                {t(portalLanguage, "see_all")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             )}
@@ -329,13 +338,13 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
                         className="mt-2"
                       >
                         <Eye className="h-3.5 w-3.5 mr-1.5" />
-                        {selectedItem.linkLabel || "View"}
+                        {selectedItem.linkLabel || t(portalLanguage, "view")}
                       </Button>
                     )}
                   </motion.div>
                 ) : (
                   <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                    <p>Select an item to preview</p>
+                    <p>{t(portalLanguage, "select_item_to_preview")}</p>
                   </div>
                 )}
               </AnimatePresence>
