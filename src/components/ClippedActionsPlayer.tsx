@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, SkipBack, SkipForward, Play, Pause } from 'lucide-react';
 import { t } from '@/lib/portalTranslations';
+import { sortReportActionsChronologically } from '@/lib/reportActionHelpers';
 
 interface ClipAction {
   id: string;
@@ -19,6 +20,7 @@ interface ClippedActionsPlayerProps {
   onOpenChange: (open: boolean) => void;
   clips: ClipAction[];
   language?: string;
+  title?: string;
 }
 
 export const ClippedActionsPlayer = ({
@@ -26,6 +28,7 @@ export const ClippedActionsPlayer = ({
   onOpenChange,
   clips,
   language = "en",
+  title,
 }: ClippedActionsPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -34,7 +37,8 @@ export const ClippedActionsPlayer = ({
   const [swiping, setSwiping] = useState(false);
   const touchStartY = useRef(0);
 
-  const currentClip = clips[currentIndex];
+  const sortedClips = useMemo(() => sortReportActionsChronologically(clips), [clips]);
+  const currentClip = sortedClips[currentIndex];
 
   useEffect(() => {
     if (open) {
@@ -44,7 +48,7 @@ export const ClippedActionsPlayer = ({
   }, [open]);
 
   const handleVideoEnded = () => {
-    if (currentIndex < clips.length - 1) {
+    if (currentIndex < sortedClips.length - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
       setIsPlaying(false);
@@ -70,7 +74,7 @@ export const ClippedActionsPlayer = ({
     }
   };
 
-  const nextClip = clips[currentIndex + 1] ?? null;
+  const nextClip = sortedClips[currentIndex + 1] ?? null;
 
   if (!currentClip) return null;
 
@@ -91,6 +95,12 @@ export const ClippedActionsPlayer = ({
     setSwiping(false);
   };
 
+  const formatMinute = (minute: number) => {
+    const minPart = Math.floor(minute);
+    const secPart = Math.round((minute - minPart) * 100);
+    return `${minPart}.${secPart.toString().padStart(2, '0')}`;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -103,11 +113,14 @@ export const ClippedActionsPlayer = ({
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-black/80 border-b border-border/30 shrink-0">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold">
-              {currentIndex + 1}/{clips.length}
+              {currentIndex + 1}/{sortedClips.length}
             </span>
-            <span className="text-white text-sm font-semibold">{currentClip.action_type}</span>
+            <div className="min-w-0">
+              <div className="text-white text-sm font-semibold truncate">{title || currentClip.action_type}</div>
+              <div className="text-white/70 text-xs truncate">{formatMinute(currentClip.minute)}' • {currentClip.action_type}</div>
+            </div>
           </div>
           <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:text-white hover:bg-white/20 h-10 w-10 min-w-[40px]">
             <X className="h-5 w-5" />
@@ -158,14 +171,14 @@ export const ClippedActionsPlayer = ({
             <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-10 w-10" onClick={togglePlayPause}>
               {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
             </Button>
-            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handleNext} disabled={currentIndex === clips.length - 1}>
+            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handleNext} disabled={currentIndex === sortedClips.length - 1}>
               <SkipForward className="h-5 w-5" />
             </Button>
           </div>
 
           {/* Clip selector */}
           <div className="flex gap-1.5 overflow-x-auto max-w-[50%]">
-            {clips.map((clip, index) => (
+            {sortedClips.map((clip, index) => (
               <button
                 key={clip.id}
                 onClick={() => setCurrentIndex(index)}

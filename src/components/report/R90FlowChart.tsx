@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { t } from "@/lib/portalTranslations";
+import { sortReportActionsChronologically } from "@/lib/reportActionHelpers";
 
 interface PerformanceAction {
   action_number: number;
@@ -19,7 +20,7 @@ export const R90FlowChart = ({ actions, minutesPlayed, language = "en" }: R90Flo
   const chartData = useMemo(() => {
     if (actions.length === 0 || !minutesPlayed) return [];
 
-    const sorted = [...actions].sort((a, b) => a.minute - b.minute);
+    const sorted = sortReportActionsChronologically(actions);
     const lastActionMinute = Math.max(...sorted.map(a => Math.floor(a.minute)));
     const startMinute = Math.max(0, lastActionMinute - minutesPlayed);
 

@@ -18,6 +18,7 @@ import { PitchHeatmap } from "@/components/report/PitchHeatmap";
 import { ZonePerformance } from "@/components/report/ZonePerformance";
 import { toTitleCase } from "@/lib/titleCase";
 import { sortActionsByMinute } from "@/lib/actionSorting";
+import { filterActionsByZone } from "@/lib/reportActionHelpers";
 import { t } from "@/lib/portalTranslations";
 import { getReportLanguage, getReportLocale, getTranslatedActionField, getTranslatedReportField, hasTranslatedReportContent } from "@/lib/reportTranslations";
 
@@ -88,6 +89,9 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [rankedMode, setRankedMode] = useState<"chronological" | "ranked" | "noted">("chronological");
   const [showClippedActions, setShowClippedActions] = useState(false);
   const [showFilteredPlayer, setShowFilteredPlayer] = useState(false);
+  const [showZonePlayer, setShowZonePlayer] = useState(false);
+  const [zonePlayerTitle, setZonePlayerTitle] = useState("");
+  const [zonePlayerClips, setZonePlayerClips] = useState<Array<{ id: string; action_number: number; action_type: string; action_description: string; video_url: string; minute: number; notes?: string | null }>>([]);
   const [showActionFilters, setShowActionFilters] = useState(false);
   const [filterTypes, setFilterTypes] = useState<string[]>([]);
   const [filterRating, setFilterRating] = useState<string | null>(null);
@@ -101,6 +105,18 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const hasTranslation = hasTranslatedReportContent(tc);
   const tf = (key: string, fallback: string) => getTranslatedReportField(tc, key, fallback);
   const tAction = (index: number, field: "type" | "description" | "notes", fallback: string) => getTranslatedActionField(tc, index, field, fallback);
+  const getTranslatedActionData = (action: PerformanceAction) => {
+    const translatedType = toTitleCase(tAction(action.action_number - 1, "type", action.action_type));
+    const translatedDescription = tAction(action.action_number - 1, "description", action.action_description);
+    const translatedNotes = tAction(action.action_number - 1, "notes", action.notes || "") || null;
+
+    return {
+      ...action,
+      action_type: translatedType,
+      action_description: translatedDescription,
+      notes: translatedNotes,
+    };
+  };
 
   // Pre-fetch data when analysisId changes (even before dialog opens)
   useEffect(() => {
@@ -543,6 +559,33 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
 
   const hasActiveFilters = filterTypes.length > 0 || filterRating !== null || filterHasNotes;
 
+  const handleOpenZoneClips = (zone: number, sub?: number) => {
+    const clips = filterActionsByZone(actions, zone, sub)
+      .filter((action) => action.video_url)
+      .map((action) => {
+        const translated = getTranslatedActionData(action);
+        return {
+          id: translated.id,
+          action_number: translated.action_number,
+          action_type: translated.action_type,
+          action_description: translated.action_description,
+          video_url: translated.video_url!,
+          minute: translated.minute,
+          notes: translated.notes,
+        };
+      });
+
+    if (clips.length === 0) {
+      toast.error(t(reportLanguage, "no_zone_clips"));
+      return;
+    }
+
+    setZonePlayerTitle(sub ? `${t(reportLanguage, "zone_clips_title")} ${zone}.${sub}` : `${t(reportLanguage, "zone_clips_title")} ${zone}`);
+    setZonePlayerClips(clips);
+    setShowZonePlayer(true);
+  };
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[98vw] md:max-w-[95vw] w-full max-h-[95vh] overflow-y-auto overflow-x-hidden p-0">
@@ -798,7 +841,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {showZonePerformance && (
                 <Card className="overflow-hidden">
                   <CardContent className="p-3 md:p-6">
-                    <ZonePerformance actions={actions} language={reportLanguage} />
+                    <ZonePerformance actions={actions} language={reportLanguage} onSelectZone={handleOpenZoneClips} />
                   </CardContent>
                 </Card>
               )}
@@ -917,7 +960,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {analysis.performance_overview && (
                 <Card className="overflow-hidden">
                   <CardHeader className="py-1.5 md:py-2">
-                    <CardTitle className="text-sm md:text-lg">{t(portalLanguage, "overview")}</CardTitle>
+                    <CardTitle className="text-sm md:text-lg">{t(reportLanguage, "overview")}</CardTitle>
                   </CardHeader>
                   <CardContent className="p-2 md:p-4">
                     <p className="text-muted-foreground whitespace-pre-wrap text-center text-xs md:text-sm">{tf("performanceOverview", analysis.performance_overview)}</p>
