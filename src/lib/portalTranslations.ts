@@ -801,6 +801,14 @@ const esExtended: Record<string, string> = {
   expected_by: "Previsto para", report_locked: "Este informe está bloqueado",
   contact_to_unlock_report: "Contáctenos para desbloquear el análisis completo.",
   clips_label: "clips",
+  zone_word: "Zona",
+  avg_short: "Prom",
+  view_clips: "Ver clips",
+  no_zone_clips: "No se encontraron clips para esta zona",
+  zone_clips_title: "Zona",
+  fullscreen: "Pantalla completa",
+  switch_to_at_a_glance: "Cambiar a vista general",
+  switch_to_in_depth: "Cambiar a vista detallada",
 };
 Object.entries(esExtended).forEach(([key, val]) => {
   if (translations.es) translations.es[key] = val;
