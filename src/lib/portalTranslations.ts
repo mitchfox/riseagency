@@ -766,9 +766,26 @@ const esExtended: Record<string, string> = {
   aphorism_of_the_day: "Pensamiento del Día",
   refresh: "Actualizar", close: "Cerrar",
   week_start_date: "Fecha de Inicio", week_start: "Inicio",
+  save_label: "Guardar", saving_label: "Guardando...", share_label: "Compartir",
+  per_90: "p90", own_goal: "Propia puerta", attacking_direction: "Dirección de ataque",
+  actions_across_min: "acciones en", action_word: "acción", actions_word: "acciones",
+  ranked_report: "INFORME CLASIFICADO", noted_report: "INFORME CON NOTAS", match_report: "INFORME DEL PARTIDO",
+  r90_flow: "Flujo R90", r90_flow_through_match: "Flujo R90 durante el partido", final_r90: "R90 final",
+  period_grade_map: "Mapa de notas por período", pitch_heatmap: "Mapa de calor del campo",
+  zone_performance: "Rendimiento por zona", chance_creation_flow: "Flujo de creación de ocasiones",
+  xc_by_movement: "xC por tipo de movimiento", total_xc: "xC total",
+  no_action_data: "No hay datos de acciones disponibles", no_zone_data: "No hay datos de zona disponibles",
+  full_match_video: "Vídeo del partido completo", ranked_actions: "Acciones clasificadas", noted_actions: "Acciones con notas",
+  match_statistics: "Estadísticas del partido", calculated_ratios: "Ratios calculados",
+  actions_label: "Acciones", clear_filters: "Borrar filtros", action_type_label: "Tipo de acción",
+  rating_label: "Calificación", notes_label: "Notas", with_notes: "Con notas", watch_selected: "Ver selección",
+  min_short: "Min", type_label: "Tipo", description_label: "Descripción", score_label: "Puntuación", clip_label: "Clip",
+  player_label: "Jugador", raw_score: "Puntuación bruta", mins_short: "Min",
+  report_in_progress: "Informe en curso", report_in_progress_message: "Este informe aún se está preparando. Vuelve pronto.",
+  expected_by: "Previsto para", report_locked: "Este informe está bloqueado",
+  contact_to_unlock_report: "Contáctenos para desbloquear el análisis completo.",
+  clips_label: "clips",
 };
-Object.entries(esExtended).forEach(([key, val]) => {
-  if (translations.es) translations.es[key] = val;
 });
 
 Object.assign(translations.es, {
