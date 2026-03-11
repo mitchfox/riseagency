@@ -1968,11 +1968,12 @@ export const CreatePerformanceReportDialog = ({
             <Label htmlFor="performance-overview">Performance Overview (Optional)</Label>
             <Textarea
               id="performance-overview"
-              value={performanceOverview}
-              onChange={(e) => setPerformanceOverview(e.target.value)}
+              value={getDisplayValue('performanceOverview', performanceOverview)}
+              onChange={(e) => !isTranslatedView && setPerformanceOverview(e.target.value)}
               placeholder="Briefly summarise what improved, what to continue working on, key focus areas, etc."
               rows={4}
-              className="mt-2"
+              className={`mt-2 ${isTranslatedView ? "bg-muted/50" : ""}`}
+              readOnly={isTranslatedView}
             />
           </div>
 
