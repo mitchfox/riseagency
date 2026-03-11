@@ -821,4 +821,64 @@ Object.entries(itExtended).forEach(([key, val]) => {
   if (translations.it) translations.it[key] = val;
 });
 
+Object.assign(translations.it, {
+  inbox: "Posta in arrivo",
+  see_all: "Vedi tutto",
+  select_item_to_preview: "Seleziona un elemento da visualizzare",
+  new_analysis_available: "Nuova analisi disponibile",
+  view_analysis: "Visualizza analisi",
+  tagged_in_analysis_for: "Sei stato taggato in un'analisi per",
+  new_highlight_reel: "Nuovo video highlights",
+  new_highlight_created_for_you: "È stato creato un nuovo video highlights per te",
+  view_highlights: "Visualizza highlights",
+});
+
+Object.assign(translations.pl, {
+  inbox: "Skrzynka odbiorcza",
+  see_all: "Zobacz wszystko",
+  select_item_to_preview: "Wybierz element do podglądu",
+  new_analysis_available: "Nowa analiza dostępna",
+  view_analysis: "Zobacz analizę",
+  tagged_in_analysis_for: "Zostałeś oznaczony w analizie dla",
+  new_highlight_reel: "Nowy film z highlights",
+  new_highlight_created_for_you: "Utworzono dla Ciebie nowy film z highlights",
+  view_highlights: "Zobacz highlights",
+});
+
+Object.assign(translations.cs, {
+  inbox: "Doručená pošta",
+  see_all: "Zobrazit vše",
+  select_item_to_preview: "Vyberte položku k náhledu",
+  new_analysis_available: "Nová analýza je k dispozici",
+  view_analysis: "Zobrazit analýzu",
+  tagged_in_analysis_for: "Byli jste označeni v analýze pro",
+  new_highlight_reel: "Nové video s highlights",
+  new_highlight_created_for_you: "Bylo pro vás vytvořeno nové video s highlights",
+  view_highlights: "Zobrazit highlights",
+});
+
+Object.assign(translations.ru, {
+  inbox: "Входящие",
+  see_all: "Смотреть всё",
+  select_item_to_preview: "Выберите элемент для предпросмотра",
+  new_analysis_available: "Доступен новый анализ",
+  view_analysis: "Посмотреть анализ",
+  tagged_in_analysis_for: "Вы отмечены в анализе для",
+  new_highlight_reel: "Новый ролик с highlights",
+  new_highlight_created_for_you: "Для вас создан новый ролик с highlights",
+  view_highlights: "Посмотреть highlights",
+});
+
+Object.assign(translations.tr, {
+  inbox: "Gelen kutusu",
+  see_all: "Tümünü gör",
+  select_item_to_preview: "Önizlemek için bir öğe seçin",
+  new_analysis_available: "Yeni analiz mevcut",
+  view_analysis: "Analizi görüntüle",
+  tagged_in_analysis_for: "Şu maç için bir analizde etiketlendiniz",
+  new_highlight_reel: "Yeni highlights videosu",
+  new_highlight_created_for_you: "Sizin için yeni bir highlights videosu oluşturuldu",
+  view_highlights: "Highlights görüntüle",
+});
+
 export type { TranslationKey };
