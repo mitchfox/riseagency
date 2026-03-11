@@ -2422,13 +2422,11 @@ export const CreatePerformanceReportDialog = ({
                           <Search className="h-3.5 w-3.5 text-primary mr-1" />
                           R90
                         </Button>
-                        <Input
-                          type="number"
-                          step="0.00001"
+                        <ScoreDropdown
                           value={action.action_score}
-                          onChange={(e) => updateAction(index, "action_score", e.target.value)}
-                          placeholder="Score"
-                          className="w-24 h-7 text-sm"
+                          onChange={(val) => updateAction(index, "action_score", val)}
+                          className="w-24"
+                          inputClassName="h-7 text-sm"
                         />
                       </div>
 
