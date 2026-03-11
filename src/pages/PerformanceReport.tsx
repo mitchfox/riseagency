@@ -109,6 +109,9 @@ const PerformanceReport = () => {
   const [rankedMode, setRankedMode] = useState<"chronological" | "ranked" | "noted">("chronological");
   const [showClippedActions, setShowClippedActions] = useState(false);
   const [showFilteredPlayer, setShowFilteredPlayer] = useState(false);
+  const [showZonePlayer, setShowZonePlayer] = useState(false);
+  const [zonePlayerTitle, setZonePlayerTitle] = useState("");
+  const [zonePlayerClips, setZonePlayerClips] = useState<Array<{ id: string; action_number: number; action_type: string; action_description: string; video_url: string; minute: number; notes?: string | null }>>([]);
   const [showActionFilters, setShowActionFilters] = useState(false);
   const [filterTypes, setFilterTypes] = useState<string[]>([]);
   const [filterRating, setFilterRating] = useState<string | null>(null);
