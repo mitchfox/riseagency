@@ -477,19 +477,19 @@ const PerformanceReport = () => {
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
               <div>
-                <p className="text-xs md:text-sm text-muted-foreground">Player</p>
+                <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "player_label")}</p>
                 <p className="font-bold text-sm md:text-base truncate">{analysis.player_name}</p>
               </div>
               <div>
-                <p className="text-xs md:text-sm text-muted-foreground">Date</p>
-                <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString(hasTranslation ? ({ fr: "fr-FR", es: "es-ES", pt: "pt-PT", de: "de-DE", it: "it-IT", pl: "pl-PL", cs: "cs-CZ", ru: "ru-RU", tr: "tr-TR" } as Record<string, string>)[tc!.language] || "en-GB" : "en-GB")}</p>
+                <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "date")}</p>
+                <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString(reportLocale)}</p>
               </div>
               <div>
-                <p className="text-xs md:text-sm text-muted-foreground">Opponent</p>
+                <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "opponent")}</p>
                 <p className="font-bold text-sm md:text-base truncate">{tf("opponent", analysis.opponent || "N/A")}</p>
               </div>
               <div>
-                <p className="text-xs md:text-sm text-muted-foreground">Result</p>
+                <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "result")}</p>
                 <p className="font-bold text-sm md:text-base">{analysis.result || "N/A"}</p>
               </div>
             </div>
