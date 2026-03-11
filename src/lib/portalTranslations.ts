@@ -755,6 +755,14 @@ const frExtended: Record<string, string> = {
   total_xc: "xC total",
   no_action_data: "Aucune donnée d'action disponible",
   no_zone_data: "Aucune donnée de zone disponible",
+  zone_word: "Zone",
+  avg_short: "Moy",
+  view_clips: "Voir les clips",
+  no_zone_clips: "Aucun clip trouvé pour cette zone",
+  zone_clips_title: "Zone",
+  fullscreen: "Plein écran",
+  switch_to_at_a_glance: "Passer à la vue d'ensemble",
+  switch_to_in_depth: "Passer à la vue détaillée",
 };
 
 // Merge extended translations into all languages
