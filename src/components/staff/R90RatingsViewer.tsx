@@ -205,7 +205,7 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] w-full h-[90vh] flex flex-col">
+      <DialogContent className="max-w-[95vw] w-full h-[90vh] flex flex-col z-[500]">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <LineChart className="w-5 h-5 text-primary" />
