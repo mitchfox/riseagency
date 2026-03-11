@@ -671,7 +671,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     onClick={() => setShowClippedActions(true)}
                   >
                     <Play className="h-4 w-4" />
-                    {actions.filter(a => a.video_url).length}
+                    {actions.filter(a => a.video_url).length} {t(reportLanguage, "clips_label")}
                   </Button>
                 )}
               </div>
