@@ -2407,10 +2407,11 @@ export const CreatePerformanceReportDialog = ({
                       </div>
 
                       <Textarea
-                        value={action.notes}
-                        onChange={(e) => updateAction(index, "notes", e.target.value)}
+                        value={getActionDisplayValue(index, 'notes', action.notes)}
+                        onChange={(e) => !isTranslatedView && updateAction(index, "notes", e.target.value)}
                         placeholder="Notes"
-                        className="min-w-[120px] max-w-[200px] min-h-[36px] text-sm shrink-0"
+                        readOnly={isTranslatedView}
+                        className={`min-w-[120px] max-w-[200px] min-h-[36px] text-sm shrink-0 ${isTranslatedView ? "bg-muted/50" : ""}`}
                         rows={1}
                       />
                     </div>
