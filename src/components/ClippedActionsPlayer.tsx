@@ -28,6 +28,7 @@ export const ClippedActionsPlayer = ({
   onOpenChange,
   clips,
   language = "en",
+  title,
 }: ClippedActionsPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -36,7 +37,8 @@ export const ClippedActionsPlayer = ({
   const [swiping, setSwiping] = useState(false);
   const touchStartY = useRef(0);
 
-  const currentClip = clips[currentIndex];
+  const sortedClips = useMemo(() => sortReportActionsChronologically(clips), [clips]);
+  const currentClip = sortedClips[currentIndex];
 
   useEffect(() => {
     if (open) {
