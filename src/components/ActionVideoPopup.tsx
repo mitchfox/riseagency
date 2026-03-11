@@ -9,6 +9,7 @@ interface ActionVideoPopupProps {
   onOpenChange: (open: boolean) => void;
   videoUrl: string;
   actionTitle?: string;
+  language?: string;
 }
 
 export const ActionVideoPopup = ({
