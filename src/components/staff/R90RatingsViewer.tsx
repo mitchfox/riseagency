@@ -57,12 +57,12 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
   // Always reset to 'all' when opening - never auto-filter to a specific category
   // initialCategory is intentionally ignored to ensure all categories are visible
 
-  // Reset everything when dialog opens - always start fresh on 'all'
+  // Reset when dialog opens - start with Offensive expanded
   useEffect(() => {
     if (open) {
       setSelectedCategory('all');
       setSearchFilter('');
-      setExpandedCategories(new Set());
+      setExpandedCategories(new Set(['Offensive']));
       setExpandedSubcategories(new Set());
       setExpandedRatings(new Set());
     }
@@ -275,7 +275,12 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
                   )
                 ) : (
                   <div className="space-y-3">
-                    {Object.entries(groupedRatings()).map(([category, subcategories]) => {
+                    {Object.entries(groupedRatings()).sort(([a], [b]) => {
+                      // Offensive always first
+                      if (a === 'Offensive') return -1;
+                      if (b === 'Offensive') return 1;
+                      return a.localeCompare(b);
+                    }).map(([category, subcategories]) => {
                       const categoryKey = category;
                       const isCategoryExpanded = expandedCategories.has(categoryKey);
                       
