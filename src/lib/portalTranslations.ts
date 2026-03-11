@@ -1078,6 +1078,10 @@ Object.assign(translations.tr, {
   min_short: "Dk", type_label: "Tür", description_label: "Açıklama", score_label: "Skor", clip_label: "Klip",
   player_label: "Oyuncu", raw_score: "Ham skor", mins_short: "Dk",
   clips_label: "klipler",
+  zone_word: "Bölge", avg_short: "Ort.", view_clips: "Klipleri görüntüle",
+  no_zone_clips: "Bu bölge için klip bulunamadı", zone_clips_title: "Bölge",
+  fullscreen: "Tam ekran",
+  switch_to_at_a_glance: "Genel görünüme geç", switch_to_in_depth: "Ayrıntılı görünüme geç",
 });
 
 export type { TranslationKey };
