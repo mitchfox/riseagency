@@ -1049,11 +1049,11 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                               </button>
                             )}
                           </div>
-                          <div className="font-medium text-xs mt-1 truncate">{toTitleCase(action.action_type)}</div>
-                          <div className="text-[10px] text-foreground/80">{action.action_description}</div>
-                          {action.notes && (
+                          <div className="font-medium text-xs mt-1 truncate">{toTitleCase(tAction(filteredActions.indexOf(action), "type", action.action_type))}</div>
+                          <div className="text-[10px] text-foreground/80">{tAction(filteredActions.indexOf(action), "description", action.action_description)}</div>
+                          {(action.notes || tAction(filteredActions.indexOf(action), "notes", "")) && (
                             <div className="text-[9px] text-muted-foreground italic mt-1 pt-1 border-t border-border/50 break-words">
-                              {action.notes}
+                              {tAction(filteredActions.indexOf(action), "notes", action.notes || "")}
                             </div>
                           )}
                         </div>
