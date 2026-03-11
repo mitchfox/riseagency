@@ -39,7 +39,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
 
   const sortedClips = mode === "ranked"
     ? [...filteredClips].sort((a, b) => b.action_score - a.action_score)
-    : [...filteredClips].sort((a, b) => a.minute - b.minute);
+    : sortReportActionsChronologically(filteredClips);
 
   const current = sortedClips[currentIndex];
 
