@@ -70,7 +70,7 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
   const [selectedItem, setSelectedItem] = React.useState<FeedItem | null>(null);
 
   const langCode = normalizePortalLanguage(portalLanguage);
-  const locale = langCode === "fr" ? "fr-FR" : langCode === "es" ? "es-ES" : langCode === "pt" ? "pt-PT" : langCode === "de" ? "de-DE" : langCode === "it" ? "it-IT" : "en-GB";
+  const locale = getReportLocale(langCode);
 
   const formatRelative = (value: string) => {
     const target = new Date(value);
