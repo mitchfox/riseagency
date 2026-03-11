@@ -53,11 +53,12 @@ serve(async (req) => {
       .map(([key, value], i) => `[FIELD_${key}]${value}[/FIELD_${key}]`)
       .join("\n\n");
 
-    const systemPrompt = `You are a professional football/soccer translator. Translate all text fields from English into ${langName}.
+    const systemPrompt = `You are a professional football/soccer translator. Translate ALL text fields from English into ${langName}.
 
 Important guidelines:
+- Translate EVERY field, including football action types like "double team", "pressing", "tackle", "interception", "dribble", etc. into the correct ${langName} football terminology
 - Keep the same tone, style, and level of detail
-- Preserve football/soccer terminology appropriately for ${langName}
+- Use natural ${langName} football vocabulary — do NOT leave English football terms untranslated unless they are universally used in ${langName} football culture (e.g., "corner" in some languages)
 - Keep proper nouns, player names, club names, and brand names unchanged
 - Keep any numbers, scores, and statistics unchanged
 - Preserve formatting (line breaks, punctuation)

@@ -58,6 +58,7 @@ interface AnalysisDetails {
   visibility_status?: string;
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
+  translated_content?: { language: string; fields: Record<string, string> } | null;
 }
 
 interface PerformanceReportDialogProps {
@@ -92,7 +93,18 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [filterHasNotes, setFilterHasNotes] = useState(false);
 
   const portalLanguage = isPortalView ? (localStorage.getItem("portal_language_hint") || "en") : "en";
-  const portalLocale = normalizePortalLanguage(portalLanguage) === "fr" ? "fr-FR" : "en-GB";
+  const langCode = normalizePortalLanguage(portalLanguage);
+  const localeMap: Record<string, string> = { fr: "fr-FR", es: "es-ES", pt: "pt-PT", de: "de-DE", it: "it-IT", pl: "pl-PL", cs: "cs-CZ", ru: "ru-RU", tr: "tr-TR" };
+  const portalLocale = localeMap[langCode] || "en-GB";
+
+  // Translation helper: show translated content when available and language matches
+  const tc = analysis?.translated_content;
+  const hasTranslation = !!tc?.fields && tc.language && tc.language !== "en";
+  const tf = (key: string, fallback: string) => hasTranslation && tc?.fields[key] ? tc.fields[key] : fallback;
+  const tAction = (index: number, field: string, fallback: string) => {
+    const k = `action_${index}_${field}`;
+    return hasTranslation && tc?.fields[k] ? tc.fields[k] : fallback;
+  };
 
   // Pre-fetch data when analysisId changes (even before dialog opens)
   useEffect(() => {
@@ -145,6 +157,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         visibility_status: (analysisResult.data as any).visibility_status || "live",
         placeholder_raw_score: (analysisResult.data as any).placeholder_raw_score,
         placeholder_minutes: (analysisResult.data as any).placeholder_minutes,
+        translated_content: (analysisResult.data as any).translated_content || null,
       });
 
       if (actionsResult.error) throw actionsResult.error;
@@ -644,11 +657,11 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString(portalLocale)}</p>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">Opponent</p>
-                    <p className="font-bold text-sm md:text-base truncate">{analysis.opponent || "N/A"}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t(portalLanguage, "opponent")}</p>
+                    <p className="font-bold text-sm md:text-base truncate">{tf("opponent", analysis.opponent) || "N/A"}</p>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">Result</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t(portalLanguage, "result")}</p>
                     <p className="font-bold text-sm md:text-base">{analysis.result || "N/A"}</p>
                   </div>
                 </div>
@@ -908,10 +921,10 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               {analysis.performance_overview && (
                 <Card className="overflow-hidden">
                   <CardHeader className="py-1.5 md:py-2">
-                    <CardTitle className="text-sm md:text-lg">Overview</CardTitle>
+                    <CardTitle className="text-sm md:text-lg">{t(portalLanguage, "overview")}</CardTitle>
                   </CardHeader>
                   <CardContent className="p-2 md:p-4">
-                    <p className="text-muted-foreground whitespace-pre-wrap text-center text-xs md:text-sm">{analysis.performance_overview}</p>
+                    <p className="text-muted-foreground whitespace-pre-wrap text-center text-xs md:text-sm">{tf("performanceOverview", analysis.performance_overview)}</p>
                   </CardContent>
                 </Card>
               )}
@@ -1036,11 +1049,11 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                               </button>
                             )}
                           </div>
-                          <div className="font-medium text-xs mt-1 truncate">{toTitleCase(action.action_type)}</div>
-                          <div className="text-[10px] text-foreground/80">{action.action_description}</div>
-                          {action.notes && (
+                          <div className="font-medium text-xs mt-1 truncate">{toTitleCase(tAction(action.action_number - 1, "type", action.action_type))}</div>
+                          <div className="text-[10px] text-foreground/80">{tAction(action.action_number - 1, "description", action.action_description)}</div>
+                          {(action.notes || tAction(action.action_number - 1, "notes", "")) && (
                             <div className="text-[9px] text-muted-foreground italic mt-1 pt-1 border-t border-border/50 break-words">
-                              {action.notes}
+                              {tAction(action.action_number - 1, "notes", action.notes || "")}
                             </div>
                           )}
                         </div>
@@ -1066,9 +1079,9 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                             <tr key={action.id} className="border-b border-border/50">
                               <td className="py-2 px-2">{action.action_number}</td>
                               <td className="py-2 px-2">{formatMinute(action.minute)}'</td>
-                              <td className="py-2 px-2">{toTitleCase(action.action_type)}</td>
-                              <td className="py-2 px-2">{action.action_description}</td>
-                              <td className="py-2 px-2 text-muted-foreground">{action.notes || "-"}</td>
+                              <td className="py-2 px-2">{toTitleCase(tAction(action.action_number - 1, "type", action.action_type))}</td>
+                              <td className="py-2 px-2">{tAction(action.action_number - 1, "description", action.action_description)}</td>
+                              <td className="py-2 px-2 text-muted-foreground">{tAction(action.action_number - 1, "notes", action.notes || "") || "-"}</td>
                               <td className={`py-2 px-2 text-right ${getActionScoreColor(action.action_score)}`}>
                                 {action.action_score?.toFixed(5)}
                               </td>
