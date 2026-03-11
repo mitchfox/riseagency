@@ -1128,8 +1128,9 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                                 {action.video_url ? (
                                   <button
                                     onClick={() => {
+                                      const translated = getTranslatedActionData(action);
                                       setSelectedVideoUrl(action.video_url!);
-                                      setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
+                                      setSelectedVideoTitle(`#${action.action_number} - ${translated.action_type}`);
                                     }}
                                     className="text-risegold hover:text-risegold/80 p-1"
                                   >
@@ -1165,6 +1166,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
           }}
           videoUrl={selectedVideoUrl}
           actionTitle={selectedVideoTitle}
+          language={reportLanguage}
         />
       )}
 
@@ -1175,15 +1177,18 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         language={reportLanguage}
         clips={actions
           .filter(a => a.video_url)
-          .map(a => ({
-            id: a.id,
-            action_number: a.action_number,
-            action_type: a.action_type,
-            action_description: a.action_description,
-            video_url: a.video_url!,
-            minute: a.minute,
-            notes: a.notes,
-          }))}
+          .map(a => {
+            const translated = getTranslatedActionData(a);
+            return {
+              id: a.id,
+              action_number: a.action_number,
+              action_type: translated.action_type,
+              action_description: translated.action_description,
+              video_url: a.video_url!,
+              minute: a.minute,
+              notes: translated.notes,
+            };
+          })}
       />
 
       {/* Ranked/Full Match Video Player */}
@@ -1194,16 +1199,19 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         language={reportLanguage}
         clips={actions
           .filter(a => a.video_url)
-          .map(a => ({
-            id: a.id,
-            action_number: a.action_number,
-            action_type: a.action_type,
-            action_description: a.action_description,
-            action_score: a.action_score,
-            video_url: a.video_url!,
-            minute: a.minute,
-            notes: a.notes,
-          }))}
+          .map(a => {
+            const translated = getTranslatedActionData(a);
+            return {
+              id: a.id,
+              action_number: a.action_number,
+              action_type: translated.action_type,
+              action_description: translated.action_description,
+              action_score: a.action_score,
+              video_url: a.video_url!,
+              minute: a.minute,
+              notes: translated.notes,
+            };
+          })}
       />
 
       {/* Filtered Video Player */}
@@ -1214,16 +1222,28 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         language={reportLanguage}
         clips={filteredActions
           .filter(a => a.video_url)
-          .map(a => ({
-            id: a.id,
-            action_number: a.action_number,
-            action_type: a.action_type,
-            action_description: a.action_description,
-            action_score: a.action_score,
-            video_url: a.video_url!,
-            minute: a.minute,
-            notes: a.notes,
-          }))}
+          .map(a => {
+            const translated = getTranslatedActionData(a);
+            return {
+              id: a.id,
+              action_number: a.action_number,
+              action_type: translated.action_type,
+              action_description: translated.action_description,
+              action_score: a.action_score,
+              video_url: a.video_url!,
+              minute: a.minute,
+              notes: translated.notes,
+            };
+          })}
+      />
+
+      {/* Zone Clips Player */}
+      <ClippedActionsPlayer
+        open={showZonePlayer}
+        onOpenChange={setShowZonePlayer}
+        clips={zonePlayerClips}
+        language={reportLanguage}
+        title={zonePlayerTitle}
       />
 
       <Dialog open={showR90Info} onOpenChange={setShowR90Info}>

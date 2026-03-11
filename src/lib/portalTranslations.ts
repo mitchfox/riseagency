@@ -150,6 +150,14 @@ const translations: Record<string, Record<string, string>> = {
   total_xc: "Total xC",
   no_action_data: "No action data available",
   no_zone_data: "No zone data available",
+  zone_word: "Zone",
+  avg_short: "Avg",
+  view_clips: "View clips",
+  no_zone_clips: "No clips found for this zone",
+  zone_clips_title: "Zone",
+  fullscreen: "Fullscreen",
+  switch_to_at_a_glance: "Switch to at-a-glance view",
+  switch_to_in_depth: "Switch to in-depth view",
   },
   es: {
     hub: "Inicio",
@@ -747,6 +755,14 @@ const frExtended: Record<string, string> = {
   total_xc: "xC total",
   no_action_data: "Aucune donnée d'action disponible",
   no_zone_data: "Aucune donnée de zone disponible",
+  zone_word: "Zone",
+  avg_short: "Moy",
+  view_clips: "Voir les clips",
+  no_zone_clips: "Aucun clip trouvé pour cette zone",
+  zone_clips_title: "Zone",
+  fullscreen: "Plein écran",
+  switch_to_at_a_glance: "Passer à la vue d'ensemble",
+  switch_to_in_depth: "Passer à la vue détaillée",
 };
 
 // Merge extended translations into all languages
@@ -785,6 +801,14 @@ const esExtended: Record<string, string> = {
   expected_by: "Previsto para", report_locked: "Este informe está bloqueado",
   contact_to_unlock_report: "Contáctenos para desbloquear el análisis completo.",
   clips_label: "clips",
+  zone_word: "Zona",
+  avg_short: "Prom",
+  view_clips: "Ver clips",
+  no_zone_clips: "No se encontraron clips para esta zona",
+  zone_clips_title: "Zona",
+  fullscreen: "Pantalla completa",
+  switch_to_at_a_glance: "Cambiar a vista general",
+  switch_to_in_depth: "Cambiar a vista detallada",
 };
 Object.entries(esExtended).forEach(([key, val]) => {
   if (translations.es) translations.es[key] = val;
@@ -814,6 +838,29 @@ const ptExtended: Record<string, string> = {
   aphorism_of_the_day: "Pensamento do Dia",
   refresh: "Atualizar", close: "Fechar",
   week_start_date: "Data de Início", week_start: "Início",
+  save_label: "Guardar", saving_label: "A guardar...", share_label: "Partilhar", per_90: "p90",
+  own_goal: "Golo na própria baliza", attacking_direction: "Direção de ataque",
+  actions_across_min: "ações em", action_word: "ação", actions_word: "ações",
+  ranked_report: "RELATÓRIO CLASSIFICADO", noted_report: "RELATÓRIO COM NOTAS", match_report: "RELATÓRIO DO JOGO",
+  r90_flow: "Fluxo R90", r90_flow_through_match: "Fluxo R90 durante o jogo", final_r90: "R90 final",
+  period_grade_map: "Mapa de notas por período", pitch_heatmap: "Mapa de calor do campo",
+  zone_performance: "Desempenho por zona", chance_creation_flow: "Fluxo de criação de oportunidades",
+  xc_by_movement: "xC por tipo de movimento", total_xc: "xC total",
+  no_action_data: "Sem dados de ações disponíveis", no_zone_data: "Sem dados de zona disponíveis",
+  full_match_video: "Vídeo do jogo completo", ranked_actions: "Ações classificadas", noted_actions: "Ações com notas",
+  match_statistics: "Estatísticas do jogo", calculated_ratios: "Rácios calculados",
+  actions_label: "Ações", clear_filters: "Limpar filtros", action_type_label: "Tipo de ação",
+  rating_label: "Classificação", notes_label: "Notas", with_notes: "Com notas", watch_selected: "Ver selecionados",
+  min_short: "Min", type_label: "Tipo", description_label: "Descrição", score_label: "Pontuação", clip_label: "Clip",
+  player_label: "Jogador", raw_score: "Pontuação bruta", mins_short: "Min",
+  report_in_progress: "Relatório em preparação", report_in_progress_message: "Este relatório ainda está a ser preparado. Volte em breve.",
+  expected_by: "Previsto para", report_locked: "Este relatório está bloqueado",
+  contact_to_unlock_report: "Contacte-nos para desbloquear a análise completa.",
+  clips_label: "clips",
+  zone_word: "Zona", avg_short: "Méd", view_clips: "Ver clips",
+  no_zone_clips: "Nenhum clip encontrado para esta zona", zone_clips_title: "Zona",
+  fullscreen: "Ecrã inteiro",
+  switch_to_at_a_glance: "Mudar para vista geral", switch_to_in_depth: "Mudar para vista detalhada",
 };
 Object.entries(ptExtended).forEach(([key, val]) => {
   if (translations.pt) translations.pt[key] = val;
@@ -843,6 +890,29 @@ const deExtended: Record<string, string> = {
   aphorism_of_the_day: "Gedanke des Tages",
   refresh: "Aktualisieren", close: "Schließen",
   week_start_date: "Wochenbeginn", week_start: "Wochenbeginn",
+  save_label: "Speichern", saving_label: "Wird gespeichert...", share_label: "Teilen", per_90: "p90",
+  own_goal: "Eigentor", attacking_direction: "Angriffsrichtung",
+  actions_across_min: "Aktionen über", action_word: "Aktion", actions_word: "Aktionen",
+  ranked_report: "RANGLISTEN-BERICHT", noted_report: "BERICHT MIT NOTIZEN", match_report: "SPIELBERICHT",
+  r90_flow: "R90-Verlauf", r90_flow_through_match: "R90-Verlauf im Spiel", final_r90: "End-R90",
+  period_grade_map: "Periodennotenkarte", pitch_heatmap: "Heatmap des Spielfelds",
+  zone_performance: "Zonenleistung", chance_creation_flow: "Chancenerstellung",
+  xc_by_movement: "xC nach Bewegungsart", total_xc: "Gesamt-xC",
+  no_action_data: "Keine Aktionsdaten verfügbar", no_zone_data: "Keine Zonendaten verfügbar",
+  full_match_video: "Komplettes Spielvideo", ranked_actions: "Rangliste der Aktionen", noted_actions: "Aktionen mit Notizen",
+  match_statistics: "Spielstatistiken", calculated_ratios: "Berechnete Verhältnisse",
+  actions_label: "Aktionen", clear_filters: "Filter löschen", action_type_label: "Aktionstyp",
+  rating_label: "Bewertung", notes_label: "Notizen", with_notes: "Mit Notizen", watch_selected: "Ausgewählte ansehen",
+  min_short: "Min", type_label: "Typ", description_label: "Beschreibung", score_label: "Punktzahl", clip_label: "Clip",
+  player_label: "Spieler", raw_score: "Rohpunktzahl", mins_short: "Min",
+  report_in_progress: "Bericht wird erstellt", report_in_progress_message: "Dieser Bericht wird noch vorbereitet. Schauen Sie bald wieder vorbei.",
+  expected_by: "Voraussichtlich bis", report_locked: "Dieser Bericht ist gesperrt",
+  contact_to_unlock_report: "Kontaktieren Sie uns, um die vollständige Analyse freizuschalten.",
+  clips_label: "Clips",
+  zone_word: "Zone", avg_short: "Durchschn.", view_clips: "Clips ansehen",
+  no_zone_clips: "Keine Clips für diese Zone gefunden", zone_clips_title: "Zone",
+  fullscreen: "Vollbild",
+  switch_to_at_a_glance: "Zur Übersicht wechseln", switch_to_in_depth: "Zur Detailansicht wechseln",
 };
 Object.entries(deExtended).forEach(([key, val]) => {
   if (translations.de) translations.de[key] = val;
@@ -872,6 +942,29 @@ const itExtended: Record<string, string> = {
   aphorism_of_the_day: "Pensiero del Giorno",
   refresh: "Aggiorna", close: "Chiudi",
   week_start_date: "Data Inizio", week_start: "Inizio",
+  save_label: "Salva", saving_label: "Salvataggio...", share_label: "Condividi", per_90: "p90",
+  own_goal: "Autogol", attacking_direction: "Direzione d'attacco",
+  actions_across_min: "azioni in", action_word: "azione", actions_word: "azioni",
+  ranked_report: "REPORT CLASSIFICATO", noted_report: "REPORT CON NOTE", match_report: "REPORT DELLA PARTITA",
+  r90_flow: "Flusso R90", r90_flow_through_match: "Flusso R90 durante la partita", final_r90: "R90 finale",
+  period_grade_map: "Mappa voti per periodo", pitch_heatmap: "Mappa termica del campo",
+  zone_performance: "Prestazioni per zona", chance_creation_flow: "Flusso di creazione occasioni",
+  xc_by_movement: "xC per tipo di movimento", total_xc: "xC totale",
+  no_action_data: "Nessun dato sulle azioni disponibile", no_zone_data: "Nessun dato di zona disponibile",
+  full_match_video: "Video della partita completa", ranked_actions: "Azioni classificate", noted_actions: "Azioni con note",
+  match_statistics: "Statistiche della partita", calculated_ratios: "Rapporti calcolati",
+  actions_label: "Azioni", clear_filters: "Cancella filtri", action_type_label: "Tipo di azione",
+  rating_label: "Valutazione", notes_label: "Note", with_notes: "Con note", watch_selected: "Guarda selezionati",
+  min_short: "Min", type_label: "Tipo", description_label: "Descrizione", score_label: "Punteggio", clip_label: "Clip",
+  player_label: "Giocatore", raw_score: "Punteggio grezzo", mins_short: "Min",
+  report_in_progress: "Report in preparazione", report_in_progress_message: "Questo report è ancora in preparazione. Torna presto.",
+  expected_by: "Previsto per", report_locked: "Questo report è bloccato",
+  contact_to_unlock_report: "Contattaci per sbloccare l'analisi completa.",
+  clips_label: "clip",
+  zone_word: "Zona", avg_short: "Media", view_clips: "Vedi clip",
+  no_zone_clips: "Nessun clip trovato per questa zona", zone_clips_title: "Zona",
+  fullscreen: "Schermo intero",
+  switch_to_at_a_glance: "Passa alla vista d'insieme", switch_to_in_depth: "Passa alla vista dettagliata",
 };
 Object.entries(itExtended).forEach(([key, val]) => {
   if (translations.it) translations.it[key] = val;
@@ -910,6 +1003,10 @@ Object.assign(translations.pl, {
   report_in_progress: "Raport w przygotowaniu", report_in_progress_message: "Ten raport jest jeszcze przygotowywany. Wróć wkrótce.",
   expected_by: "Planowany na", report_locked: "Ten raport jest zablokowany",
   contact_to_unlock_report: "Skontaktuj się z nami, aby odblokować pełną analizę.", clips_label: "klipy",
+  zone_word: "Strefa", avg_short: "Śr.", view_clips: "Zobacz klipy",
+  no_zone_clips: "Brak klipów dla tej strefy", zone_clips_title: "Strefa",
+  fullscreen: "Pełny ekran",
+  switch_to_at_a_glance: "Przełącz na widok ogólny", switch_to_in_depth: "Przełącz na widok szczegółowy",
 });
 
 Object.assign(translations.cs, {
@@ -931,6 +1028,10 @@ Object.assign(translations.cs, {
   min_short: "Min", type_label: "Typ", description_label: "Popis", score_label: "Skóre", clip_label: "Klip",
   player_label: "Hráč", raw_score: "Hrubé skóre", mins_short: "Min",
   clips_label: "klipy",
+  zone_word: "Zóna", avg_short: "Prům.", view_clips: "Zobrazit klipy",
+  no_zone_clips: "Žádné klipy pro tuto zónu", zone_clips_title: "Zóna",
+  fullscreen: "Celá obrazovka",
+  switch_to_at_a_glance: "Přepnout na přehled", switch_to_in_depth: "Přepnout na detail",
 });
 
 Object.assign(translations.ru, {
@@ -952,6 +1053,10 @@ Object.assign(translations.ru, {
   min_short: "Мин", type_label: "Тип", description_label: "Описание", score_label: "Счёт", clip_label: "Клип",
   player_label: "Игрок", raw_score: "Сырой счёт", mins_short: "Мин",
   clips_label: "клипы",
+  zone_word: "Зона", avg_short: "Ср.", view_clips: "Смотреть клипы",
+  no_zone_clips: "Клипы для этой зоны не найдены", zone_clips_title: "Зона",
+  fullscreen: "Полный экран",
+  switch_to_at_a_glance: "Переключить на обзор", switch_to_in_depth: "Переключить на детали",
 });
 
 Object.assign(translations.tr, {
@@ -973,6 +1078,10 @@ Object.assign(translations.tr, {
   min_short: "Dk", type_label: "Tür", description_label: "Açıklama", score_label: "Skor", clip_label: "Klip",
   player_label: "Oyuncu", raw_score: "Ham skor", mins_short: "Dk",
   clips_label: "klipler",
+  zone_word: "Bölge", avg_short: "Ort.", view_clips: "Klipleri görüntüle",
+  no_zone_clips: "Bu bölge için klip bulunamadı", zone_clips_title: "Bölge",
+  fullscreen: "Tam ekran",
+  switch_to_at_a_glance: "Genel görünüme geç", switch_to_in_depth: "Ayrıntılı görünüme geç",
 });
 
 export type { TranslationKey };
