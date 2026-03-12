@@ -102,8 +102,42 @@
 
 import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import App from "./App.tsx";
 import "./index.css";
+
+// Monkey-patch sonner's toast.error so every error toast gets a "Report" button
+const _originalError = toast.error.bind(toast);
+(toast as any).error = (message: string | React.ReactNode, data?: any) => {
+  const messageStr = typeof message === "string" ? message : String(message);
+  return _originalError(message, {
+    ...data,
+    duration: data?.duration ?? 8000,
+    action: data?.action ?? {
+      label: "Report",
+      onClick: async () => {
+        try {
+          const route = window.location.pathname + window.location.search;
+          await supabase.from("staff_notification_events").insert({
+            event_type: "error_report",
+            title: "User-Reported Error",
+            body: messageStr,
+            event_data: {
+              route,
+              context: data?.description || null,
+              userAgent: navigator.userAgent,
+              timestamp: new Date().toISOString(),
+            },
+          });
+          toast.success("Error reported — thank you!");
+        } catch {
+          toast("Could not send report.");
+        }
+      },
+    },
+  });
+};
 
 // Register service worker with update detection - wrapped in try-catch to prevent console errors
 const isLovablePreviewEnv = window.location.hostname.startsWith('id-preview--') ||
