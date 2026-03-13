@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, Link2, MessageSquareText, Filter, Lock, MapPin, Grid3X3 } from "lucide-react";
+import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, Link2, MessageSquareText, Filter, Lock, MapPin, Grid3X3, Timer } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
@@ -16,6 +16,7 @@ import { ChanceCreationFlow } from "@/components/report/ChanceCreationFlow";
 import { RankedActionsPlayer } from "@/components/report/RankedActionsPlayer";
 import { PitchHeatmap } from "@/components/report/PitchHeatmap";
 import { ZonePerformance } from "@/components/report/ZonePerformance";
+import { MatchTimelapse } from "@/components/report/MatchTimelapse";
 import { toTitleCase } from "@/lib/titleCase";
 import { sortActionsByMinute } from "@/lib/actionSorting";
 import { filterActionsByZone } from "@/lib/reportActionHelpers";
@@ -84,6 +85,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showPitchHeatmap, setShowPitchHeatmap] = useState(false);
   const [showZonePerformance, setShowZonePerformance] = useState(false);
+  const [showTimelapse, setShowTimelapse] = useState(false);
   const [showChanceCreation, setShowChanceCreation] = useState(false);
   const [showRankedPlayer, setShowRankedPlayer] = useState(false);
   const [rankedMode, setRankedMode] = useState<"chronological" | "ranked" | "noted">("chronological");
@@ -754,11 +756,20 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                       <Button
                         variant={showZonePerformance ? "default" : "outline"}
                         size="sm"
-                        onClick={() => { setShowZonePerformance(!showZonePerformance); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }}
+                        onClick={() => { setShowZonePerformance(!showZonePerformance); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); setShowTimelapse(false); }}
                         className="text-xs"
                       >
                         <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />
                         {t(reportLanguage, "zone_performance")}
+                      </Button>
+                      <Button
+                        variant={showTimelapse ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => { setShowTimelapse(!showTimelapse); setShowZonePerformance(false); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }}
+                        className="text-xs"
+                      >
+                        <Timer className="h-3.5 w-3.5 mr-1.5" />
+                        {t(reportLanguage, "match_timelapse")}
                       </Button>
                     </>
                   )}
@@ -842,6 +853,15 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                 <Card className="overflow-hidden">
                   <CardContent className="p-3 md:p-6">
                     <ZonePerformance actions={actions} language={reportLanguage} onSelectZone={handleOpenZoneClips} />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Match Timelapse */}
+              {showTimelapse && (
+                <Card className="overflow-hidden">
+                  <CardContent className="p-3 md:p-6">
+                    <MatchTimelapse actions={actions} language={reportLanguage} />
                   </CardContent>
                 </Card>
               )}
