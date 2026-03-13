@@ -69,7 +69,13 @@ const orderZonePoints = (
 
 // --- Timing constants ---
 const MS_PER_ZONE = 500; // 500ms per zone during action playback
-const FAST_FORWARD_SPEED = 60; // 60 game-seconds per real-second during gaps
+const GAP_SPEED_NORMAL = 60; // 60 game-seconds per real-second for small gaps
+const GAP_SPEED_FAST = 300; // 300 game-seconds per real-second for large gaps (halftime etc)
+const LARGE_GAP_THRESHOLD = 300; // 5+ minutes = large gap (halftime, long breaks)
+
+const getGapSpeed = (gapSeconds: number): number => {
+  return gapSeconds >= LARGE_GAP_THRESHOLD ? GAP_SPEED_FAST : GAP_SPEED_NORMAL;
+};
 
 interface ZoneStep {
   zone: number;
