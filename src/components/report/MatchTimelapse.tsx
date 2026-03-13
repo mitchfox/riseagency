@@ -64,8 +64,8 @@ const getScoreColor = (score: number): string => {
 
 type ActionCategory = "offensive" | "defensive" | "other";
 
-const categoriseAction = (type: string): ActionCategory => {
-  const lower = type.toLowerCase();
+const categoriseAction = (type: string | null | undefined): ActionCategory => {
+  const lower = (type ?? "").toLowerCase();
   if (["goal", "assist", "key pass", "chance created", "shot on target", "dribble", "carry", "pass", "cross", "through ball", "attacking", "build-up", "shot", "set-piece", "corner", "free-kick", "penalty", "throw-in", "goal-kick"].some(k => lower.includes(k))) return "offensive";
   if (["tackle", "interception", "block", "clearance", "defensive", "pressing", "recovery", "aerial", "header", "regain"].some(k => lower.includes(k))) return "defensive";
   return "other";
