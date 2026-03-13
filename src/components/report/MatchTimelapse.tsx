@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Play, Pause, RotateCcw, FastForward } from "lucide-react";
+import { Play, Pause, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/portalTranslations";
 import { parseMinuteToSeconds } from "@/lib/actionSorting";
@@ -68,10 +68,10 @@ const orderZonePoints = (
 };
 
 // --- Timing constants ---
-const MS_PER_ZONE = 500; // 500ms per zone during action playback
+const MS_PER_ZONE = 1000; // 1s per zone step (clock advances 1 game-second)
 const GAP_SPEED_NORMAL = 60; // 60 game-seconds per real-second for small gaps
 const GAP_SPEED_FAST = 300; // 300 game-seconds per real-second for large gaps (halftime etc)
-const LARGE_GAP_THRESHOLD = 300; // 5+ minutes = large gap (halftime, long breaks)
+const LARGE_GAP_THRESHOLD = 300; // 5+ min gap = fast skip
 
 const getGapSpeed = (gapSeconds: number): number => {
   return gapSeconds >= LARGE_GAP_THRESHOLD ? GAP_SPEED_FAST : GAP_SPEED_NORMAL;
@@ -91,7 +91,7 @@ interface Segment {
   type: "gap" | "zone";
   startGameTime: number;
   endGameTime: number;
-  realDuration: number; // ms
+  realDuration: number;
   stepIndex?: number;
 }
 
@@ -106,7 +106,6 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
   const [currentStep, setCurrentStep] = useState(-1);
   const [trail, setTrail] = useState<number[]>([]);
   const [gameTime, setGameTime] = useState(-1);
-  const [isFastForward, setIsFastForward] = useState(false);
 
   const animRef = useRef<number | null>(null);
   const startRealTimeRef = useRef(0);
@@ -135,7 +134,7 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
     return result;
   }, [actions]);
 
-  // Build timeline segments: alternating gaps and zone steps
+  // Build timeline segments
   const { segments, totalRealDuration, firstGameTime, lastGameTime } = useMemo(() => {
     if (steps.length === 0) return { segments: [] as Segment[], totalRealDuration: 0, firstGameTime: 0, lastGameTime: 0 };
 
@@ -147,31 +146,31 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       if (step.gameSeconds > cursor + 0.5) {
-        // Gap segment — fast forward
         const gapSecs = step.gameSeconds - cursor;
+        const speed = getGapSpeed(gapSecs);
         segs.push({
           type: "gap",
           startGameTime: cursor,
           endGameTime: step.gameSeconds,
-          realDuration: (gapSecs / FAST_FORWARD_SPEED) * 1000,
+          realDuration: (gapSecs / speed) * 1000,
         });
       }
-      // Zone step segment
+      // Zone step: clock advances 1 game-second over 1 real second
       segs.push({
         type: "zone",
         startGameTime: step.gameSeconds,
-        endGameTime: step.gameSeconds,
+        endGameTime: step.gameSeconds + 1,
         realDuration: MS_PER_ZONE,
         stepIndex: i,
       });
-      cursor = step.gameSeconds;
+      cursor = step.gameSeconds + 1;
     }
 
     const total = segs.reduce((sum, s) => sum + s.realDuration, 0);
     return { segments: segs, totalRealDuration: total, firstGameTime: first, lastGameTime: last };
   }, [steps]);
 
-  // Unique action markers for the timeline (deduplicated by action number)
+  // Unique action markers for the timeline
   const actionMarkers = useMemo(() => {
     if (steps.length === 0 || lastGameTime === firstGameTime) return [];
     const seen = new Set<number>();
@@ -196,7 +195,6 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
   const animate = useCallback((timestamp: number) => {
     const elapsed = timestamp - startRealTimeRef.current + pausedElapsedRef.current;
 
-    // Find current segment
     let cumulative = 0;
     let foundSeg: Segment | null = null;
     let segOffset = 0;
@@ -207,7 +205,6 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
         segOffset = elapsed - cumulative;
         break;
       }
-      // When we pass a zone segment, activate it
       if (seg.type === "zone" && seg.stepIndex != null) {
         if (!activatedStepsRef.current.includes(seg.stepIndex)) {
           activatedStepsRef.current = [...activatedStepsRef.current, seg.stepIndex];
@@ -217,7 +214,6 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
     }
 
     if (!foundSeg) {
-      // Done
       setGameTime(lastGameTime);
       if (steps.length > 0) {
         const lastIdx = steps.length - 1;
@@ -227,7 +223,6 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
         }
         setTrail([...activatedStepsRef.current]);
       }
-      setIsFastForward(false);
       setIsPlaying(false);
       return;
     }
@@ -236,10 +231,10 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
       const progress = segOffset / foundSeg.realDuration;
       const gt = foundSeg.startGameTime + (foundSeg.endGameTime - foundSeg.startGameTime) * progress;
       setGameTime(gt);
-      setIsFastForward(true);
     } else {
-      setGameTime(foundSeg.startGameTime);
-      setIsFastForward(false);
+      const progress = segOffset / foundSeg.realDuration;
+      const gt = foundSeg.startGameTime + (foundSeg.endGameTime - foundSeg.startGameTime) * progress;
+      setGameTime(gt);
       const idx = foundSeg.stepIndex!;
       setCurrentStep(idx);
       if (!activatedStepsRef.current.includes(idx)) {
@@ -255,7 +250,6 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
     if (steps.length === 0 || segments.length === 0) return;
     setIsPlaying(true);
 
-    // If finished, restart
     if (pausedElapsedRef.current >= totalRealDuration) {
       pausedElapsedRef.current = 0;
       activatedStepsRef.current = [];
@@ -270,7 +264,6 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
 
   const pause = useCallback(() => {
     if (animRef.current) {
-      // Save elapsed
       pausedElapsedRef.current += performance.now() - startRealTimeRef.current;
       cancelAnimationFrame(animRef.current);
       animRef.current = null;
@@ -285,7 +278,6 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
     setCurrentStep(-1);
     setTrail([]);
     setGameTime(-1);
-    setIsFastForward(false);
   }, [stopPlayback]);
 
   const togglePlayback = useCallback(() => {
@@ -333,92 +325,8 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
         </div>
       </div>
 
-      {/* Main layout: time board + pitch */}
+      {/* Main layout: pitch + time board */}
       <div className="flex gap-3 items-stretch justify-center">
-        {/* Time Board */}
-        <div className="flex flex-col items-center gap-2 min-w-[72px] select-none">
-          {/* Clock display */}
-          <div className="rounded-lg bg-[#0c1a12] border border-[#1a472a] px-3 py-2 text-center w-full">
-            <div
-              className="font-mono text-lg font-bold tracking-wider tabular-nums"
-              style={{ color: isFastForward ? "hsl(var(--muted-foreground))" : "hsl(var(--primary))" }}
-            >
-              {gameTime >= 0 ? formatClock(gameTime) : "--:--"}
-            </div>
-            <div className="flex items-center justify-center gap-1 mt-0.5">
-              {isFastForward ? (
-                <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
-                  <FastForward className="h-2.5 w-2.5" /> ×60
-                </span>
-              ) : isPlaying || current ? (
-                <span className="text-[9px] text-muted-foreground">▶ ×1</span>
-              ) : (
-                <span className="text-[9px] text-muted-foreground">&nbsp;</span>
-              )}
-            </div>
-          </div>
-
-          {/* Vertical timeline */}
-          <div className="relative flex-1 w-8 min-h-[280px]">
-            {/* Track line */}
-            <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-border" />
-
-            {/* Action markers */}
-            {actionMarkers.map((m) => {
-              const pct = timeSpan > 0 ? ((m.gameSeconds - firstGameTime) / timeSpan) * 100 : 0;
-              return (
-                <div
-                  key={m.actionNumber}
-                  className="absolute left-1/2 -translate-x-1/2 w-2 h-2 rounded-full"
-                  style={{
-                    top: `${pct}%`,
-                    backgroundColor: getScoreColor(m.score),
-                    opacity: 0.6,
-                  }}
-                />
-              );
-            })}
-
-            {/* Current position indicator */}
-            {gameTime >= 0 && (
-              <div
-                className="absolute left-1/2 -translate-x-1/2 z-10 transition-[top] duration-75"
-                style={{ top: `${clockProgress * 100}%` }}
-              >
-                <div className="w-3.5 h-3.5 rounded-full border-2 -translate-y-1/2"
-                  style={{
-                    borderColor: "hsl(var(--primary))",
-                    backgroundColor: "hsl(var(--primary))",
-                    boxShadow: "0 0 8px hsl(var(--primary) / 0.5)",
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Start / end time labels */}
-            <span className="absolute -left-0.5 top-0 -translate-y-full text-[8px] text-muted-foreground font-mono pb-0.5">
-              {formatClock(firstGameTime)}
-            </span>
-            <span className="absolute -left-0.5 bottom-0 translate-y-full text-[8px] text-muted-foreground font-mono pt-0.5">
-              {formatClock(lastGameTime)}
-            </span>
-          </div>
-
-          {/* Current action label */}
-          <div className="text-center min-h-[28px]">
-            {current ? (
-              <>
-                <div className="text-[9px] font-medium text-foreground leading-tight truncate max-w-[72px]">
-                  {current.actionType}
-                </div>
-                <div className="text-[8px] text-muted-foreground">#{current.actionNumber}</div>
-              </>
-            ) : (
-              <div className="text-[9px] text-muted-foreground">{t(language, "press_play")}</div>
-            )}
-          </div>
-        </div>
-
         {/* Pitch */}
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -473,6 +381,82 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
             ↑ {t(language, "attacking_direction")}
           </text>
         </svg>
+
+        {/* Time Board */}
+        <div className="flex flex-col items-center gap-2 min-w-[56px] select-none">
+          {/* Scoreboard clock */}
+          <div className="rounded-sm bg-black border border-[#333] px-2.5 py-1.5 text-center w-full shadow-[0_0_12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)]">
+            <div
+              className="font-mono text-base font-black tracking-widest tabular-nums leading-tight"
+              style={{ color: "#e8ff5a", textShadow: "0 0 8px rgba(232,255,90,0.4)" }}
+            >
+              {gameTime >= 0 ? formatClock(gameTime) : "--:--"}
+            </div>
+          </div>
+
+          {/* Vertical timeline */}
+          <div className="relative flex-1 w-6 min-h-[280px]">
+            {/* Track line - right side */}
+            <div className="absolute right-1 top-0 bottom-0 w-px bg-border" />
+
+            {/* Action markers - right side */}
+            {actionMarkers.map((m) => {
+              const pct = timeSpan > 0 ? ((m.gameSeconds - firstGameTime) / timeSpan) * 100 : 0;
+              return (
+                <div
+                  key={m.actionNumber}
+                  className="absolute w-2 h-2 rounded-full"
+                  style={{
+                    top: `${pct}%`,
+                    right: 0,
+                    backgroundColor: getScoreColor(m.score),
+                    opacity: 0.6,
+                    transform: "translateY(-50%)",
+                  }}
+                />
+              );
+            })}
+
+            {/* Current position indicator */}
+            {gameTime >= 0 && (
+              <div
+                className="absolute right-0 z-10 transition-[top] duration-75"
+                style={{ top: `${clockProgress * 100}%` }}
+              >
+                <div className="w-3 h-3 rounded-full border-2"
+                  style={{
+                    borderColor: "#e8ff5a",
+                    backgroundColor: "#e8ff5a",
+                    boxShadow: "0 0 8px rgba(232,255,90,0.5)",
+                    transform: "translate(50%, -50%)",
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Start / end time labels */}
+            <span className="absolute left-0 top-0 -translate-y-full text-[8px] text-muted-foreground font-mono pb-0.5">
+              {formatClock(firstGameTime)}
+            </span>
+            <span className="absolute left-0 bottom-0 translate-y-full text-[8px] text-muted-foreground font-mono pt-0.5">
+              {formatClock(lastGameTime)}
+            </span>
+          </div>
+
+          {/* Current action label */}
+          <div className="text-center min-h-[28px]">
+            {current ? (
+              <>
+                <div className="text-[9px] font-medium text-foreground leading-tight truncate max-w-[56px]">
+                  {current.actionType}
+                </div>
+                <div className="text-[8px] text-muted-foreground">#{current.actionNumber}</div>
+              </>
+            ) : (
+              <div className="text-[9px] text-muted-foreground">{t(language, "press_play")}</div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Step counter */}
