@@ -857,6 +857,15 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                 </Card>
               )}
 
+              {/* Match Timelapse */}
+              {showTimelapse && (
+                <Card className="overflow-hidden">
+                  <CardContent className="p-3 md:p-6">
+                    <MatchTimelapse actions={actions} language={reportLanguage} />
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Chance Creation Flow */}
               {showChanceCreation && analysis.striker_stats && (
                 <Card className="overflow-hidden">
