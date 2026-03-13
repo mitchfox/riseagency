@@ -756,11 +756,20 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                       <Button
                         variant={showZonePerformance ? "default" : "outline"}
                         size="sm"
-                        onClick={() => { setShowZonePerformance(!showZonePerformance); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }}
+                        onClick={() => { setShowZonePerformance(!showZonePerformance); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); setShowTimelapse(false); }}
                         className="text-xs"
                       >
                         <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />
                         {t(reportLanguage, "zone_performance")}
+                      </Button>
+                      <Button
+                        variant={showTimelapse ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => { setShowTimelapse(!showTimelapse); setShowZonePerformance(false); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }}
+                        className="text-xs"
+                      >
+                        <Timer className="h-3.5 w-3.5 mr-1.5" />
+                        {t(reportLanguage, "match_timelapse")}
                       </Button>
                     </>
                   )}
