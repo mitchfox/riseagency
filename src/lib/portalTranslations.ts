@@ -117,6 +117,8 @@ const translations: Record<string, Record<string, string>> = {
   pitch_heatmap: "Pitch Heatmap",
   zone_performance: "Zone Performance",
   chance_creation_flow: "Chance Creation Flow",
+  match_timelapse: "Match Timelapse",
+  press_play: "Press play to start",
   full_match_video: "Full Match Video",
   ranked_actions: "Ranked Actions",
   noted_actions: "Noted Actions",

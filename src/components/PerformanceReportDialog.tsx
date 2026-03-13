@@ -85,6 +85,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showPitchHeatmap, setShowPitchHeatmap] = useState(false);
   const [showZonePerformance, setShowZonePerformance] = useState(false);
+  const [showTimelapse, setShowTimelapse] = useState(false);
   const [showChanceCreation, setShowChanceCreation] = useState(false);
   const [showRankedPlayer, setShowRankedPlayer] = useState(false);
   const [rankedMode, setRankedMode] = useState<"chronological" | "ranked" | "noted">("chronological");
