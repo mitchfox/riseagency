@@ -870,6 +870,7 @@ const ptExtended: Record<string, string> = {
   no_zone_clips: "Nenhum clip encontrado para esta zona", zone_clips_title: "Zona",
   fullscreen: "Ecrã inteiro",
   switch_to_at_a_glance: "Mudar para vista geral", switch_to_in_depth: "Mudar para vista detalhada",
+  zones: "zonas",
 };
 Object.entries(ptExtended).forEach(([key, val]) => {
   if (translations.pt) translations.pt[key] = val;
