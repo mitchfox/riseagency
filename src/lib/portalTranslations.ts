@@ -816,6 +816,7 @@ const esExtended: Record<string, string> = {
   fullscreen: "Pantalla completa",
   switch_to_at_a_glance: "Cambiar a vista general",
   switch_to_in_depth: "Cambiar a vista detallada",
+  zones: "zonas",
 };
 Object.entries(esExtended).forEach(([key, val]) => {
   if (translations.es) translations.es[key] = val;
