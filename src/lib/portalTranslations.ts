@@ -924,6 +924,7 @@ const deExtended: Record<string, string> = {
   no_zone_clips: "Keine Clips für diese Zone gefunden", zone_clips_title: "Zone",
   fullscreen: "Vollbild",
   switch_to_at_a_glance: "Zur Übersicht wechseln", switch_to_in_depth: "Zur Detailansicht wechseln",
+  zones: "Zonen",
 };
 Object.entries(deExtended).forEach(([key, val]) => {
   if (translations.de) translations.de[key] = val;
