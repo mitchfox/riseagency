@@ -160,6 +160,7 @@ const translations: Record<string, Record<string, string>> = {
   fullscreen: "Fullscreen",
   switch_to_at_a_glance: "Switch to at-a-glance view",
   switch_to_in_depth: "Switch to in-depth view",
+  zones: "zones",
   },
   es: {
     hub: "Inicio",
