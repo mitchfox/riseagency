@@ -725,6 +725,8 @@ const frExtended: Record<string, string> = {
   pitch_heatmap: "Carte de chaleur du terrain",
   zone_performance: "Performance par zone",
   chance_creation_flow: "Flux de création d'occasions",
+  match_timelapse: "Timelapse du match",
+  press_play: "Appuyez sur lecture",
   full_match_video: "Vidéo du match complet",
   ranked_actions: "Actions classées",
   noted_actions: "Actions notées",
