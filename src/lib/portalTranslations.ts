@@ -1049,6 +1049,7 @@ Object.assign(translations.cs, {
   no_zone_clips: "Žádné klipy pro tuto zónu", zone_clips_title: "Zóna",
   fullscreen: "Celá obrazovka",
   switch_to_at_a_glance: "Přepnout na přehled", switch_to_in_depth: "Přepnout na detail",
+  zones: "zóny",
 });
 
 Object.assign(translations.ru, {
