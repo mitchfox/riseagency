@@ -1089,7 +1089,8 @@ Object.assign(translations.tr, {
   ranked_report: "SIRALANMIŞ RAPOR", noted_report: "NOTLU RAPOR", match_report: "MAÇ RAPORU",
   r90_flow: "R90 Akışı", r90_flow_through_match: "Maç boyunca R90 akışı", final_r90: "Son R90",
   period_grade_map: "Dönem not haritası", pitch_heatmap: "Saha ısı haritası", zone_performance: "Bölge performansı",
-  chance_creation_flow: "Şans yaratma akışı", xc_by_movement: "Hareket türüne göre xC", total_xc: "Toplam xC",
+  chance_creation_flow: "Şans yaratma akışı", match_timelapse: "Maç timelapse", press_play: "Başlatmak için basın",
+  xc_by_movement: "Hareket türüne göre xC", total_xc: "Toplam xC",
   no_action_data: "Aksiyon verisi yok", no_zone_data: "Bölge verisi yok",
   full_match_video: "Tam maç videosu", ranked_actions: "Sıralı aksiyonlar", noted_actions: "Notlu aksiyonlar",
   match_statistics: "Maç istatistikleri", calculated_ratios: "Hesaplanan oranlar",
@@ -1102,6 +1103,7 @@ Object.assign(translations.tr, {
   no_zone_clips: "Bu bölge için klip bulunamadı", zone_clips_title: "Bölge",
   fullscreen: "Tam ekran",
   switch_to_at_a_glance: "Genel görünüme geç", switch_to_in_depth: "Ayrıntılı görünüme geç",
+  zones: "bölgeler",
 });
 
 export type { TranslationKey };
