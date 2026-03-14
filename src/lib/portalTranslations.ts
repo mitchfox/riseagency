@@ -768,6 +768,7 @@ const frExtended: Record<string, string> = {
   fullscreen: "Plein écran",
   switch_to_at_a_glance: "Passer à la vue d'ensemble",
   switch_to_in_depth: "Passer à la vue détaillée",
+  zones: "zones",
 };
 
 // Merge extended translations into all languages
