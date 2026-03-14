@@ -466,7 +466,7 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
 
       {/* Step counter */}
       <div className="text-center text-[10px] text-muted-foreground">
-        {currentStep >= 0 ? currentStep + 1 : 0} / {steps.length} zones
+        {currentStep >= 0 ? currentStep + 1 : 0} / {steps.length} {t(language, "zones")}
       </div>
     </div>
   );
