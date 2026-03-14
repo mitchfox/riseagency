@@ -1076,6 +1076,7 @@ Object.assign(translations.ru, {
   no_zone_clips: "Клипы для этой зоны не найдены", zone_clips_title: "Зона",
   fullscreen: "Полный экран",
   switch_to_at_a_glance: "Переключить на обзор", switch_to_in_depth: "Переключить на детали",
+  zones: "зоны",
 });
 
 Object.assign(translations.tr, {
