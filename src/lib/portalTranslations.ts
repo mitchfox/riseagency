@@ -1022,6 +1022,7 @@ Object.assign(translations.pl, {
   no_zone_clips: "Brak klipów dla tej strefy", zone_clips_title: "Strefa",
   fullscreen: "Pełny ekran",
   switch_to_at_a_glance: "Przełącz na widok ogólny", switch_to_in_depth: "Przełącz na widok szczegółowy",
+  zones: "strefy",
 });
 
 Object.assign(translations.cs, {
