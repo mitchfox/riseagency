@@ -795,6 +795,7 @@ const esExtended: Record<string, string> = {
   r90_flow: "Flujo R90", r90_flow_through_match: "Flujo R90 durante el partido", final_r90: "R90 final",
   period_grade_map: "Mapa de notas por período", pitch_heatmap: "Mapa de calor del campo",
   zone_performance: "Rendimiento por zona", chance_creation_flow: "Flujo de creación de ocasiones",
+  match_timelapse: "Timelapse del partido", press_play: "Pulsa reproducir",
   xc_by_movement: "xC por tipo de movimiento", total_xc: "xC total",
   no_action_data: "No hay datos de acciones disponibles", no_zone_data: "No hay datos de zona disponibles",
   full_match_video: "Vídeo del partido completo", ranked_actions: "Acciones clasificadas", noted_actions: "Acciones con notas",
