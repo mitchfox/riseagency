@@ -853,6 +853,7 @@ const ptExtended: Record<string, string> = {
   r90_flow: "Fluxo R90", r90_flow_through_match: "Fluxo R90 durante o jogo", final_r90: "R90 final",
   period_grade_map: "Mapa de notas por período", pitch_heatmap: "Mapa de calor do campo",
   zone_performance: "Desempenho por zona", chance_creation_flow: "Fluxo de criação de oportunidades",
+  match_timelapse: "Timelapse do jogo", press_play: "Clique para iniciar",
   xc_by_movement: "xC por tipo de movimento", total_xc: "xC total",
   no_action_data: "Sem dados de ações disponíveis", no_zone_data: "Sem dados de zona disponíveis",
   full_match_video: "Vídeo do jogo completo", ranked_actions: "Ações classificadas", noted_actions: "Ações com notas",
