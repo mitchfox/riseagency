@@ -978,6 +978,7 @@ const itExtended: Record<string, string> = {
   no_zone_clips: "Nessun clip trovato per questa zona", zone_clips_title: "Zona",
   fullscreen: "Schermo intero",
   switch_to_at_a_glance: "Passa alla vista d'insieme", switch_to_in_depth: "Passa alla vista dettagliata",
+  zones: "zone",
 };
 Object.entries(itExtended).forEach(([key, val]) => {
   if (translations.it) translations.it[key] = val;
