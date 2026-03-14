@@ -160,6 +160,7 @@ const translations: Record<string, Record<string, string>> = {
   fullscreen: "Fullscreen",
   switch_to_at_a_glance: "Switch to at-a-glance view",
   switch_to_in_depth: "Switch to in-depth view",
+  zones: "zones",
   },
   es: {
     hub: "Inicio",
@@ -724,6 +725,8 @@ const frExtended: Record<string, string> = {
   pitch_heatmap: "Carte de chaleur du terrain",
   zone_performance: "Performance par zone",
   chance_creation_flow: "Flux de création d'occasions",
+  match_timelapse: "Timelapse du match",
+  press_play: "Appuyez sur lecture",
   full_match_video: "Vidéo du match complet",
   ranked_actions: "Actions classées",
   noted_actions: "Actions notées",
@@ -765,6 +768,7 @@ const frExtended: Record<string, string> = {
   fullscreen: "Plein écran",
   switch_to_at_a_glance: "Passer à la vue d'ensemble",
   switch_to_in_depth: "Passer à la vue détaillée",
+  zones: "zones",
 };
 
 // Merge extended translations into all languages
@@ -791,6 +795,7 @@ const esExtended: Record<string, string> = {
   r90_flow: "Flujo R90", r90_flow_through_match: "Flujo R90 durante el partido", final_r90: "R90 final",
   period_grade_map: "Mapa de notas por período", pitch_heatmap: "Mapa de calor del campo",
   zone_performance: "Rendimiento por zona", chance_creation_flow: "Flujo de creación de ocasiones",
+  match_timelapse: "Timelapse del partido", press_play: "Pulsa reproducir",
   xc_by_movement: "xC por tipo de movimiento", total_xc: "xC total",
   no_action_data: "No hay datos de acciones disponibles", no_zone_data: "No hay datos de zona disponibles",
   full_match_video: "Vídeo del partido completo", ranked_actions: "Acciones clasificadas", noted_actions: "Acciones con notas",
@@ -811,6 +816,7 @@ const esExtended: Record<string, string> = {
   fullscreen: "Pantalla completa",
   switch_to_at_a_glance: "Cambiar a vista general",
   switch_to_in_depth: "Cambiar a vista detallada",
+  zones: "zonas",
 };
 Object.entries(esExtended).forEach(([key, val]) => {
   if (translations.es) translations.es[key] = val;
@@ -847,6 +853,7 @@ const ptExtended: Record<string, string> = {
   r90_flow: "Fluxo R90", r90_flow_through_match: "Fluxo R90 durante o jogo", final_r90: "R90 final",
   period_grade_map: "Mapa de notas por período", pitch_heatmap: "Mapa de calor do campo",
   zone_performance: "Desempenho por zona", chance_creation_flow: "Fluxo de criação de oportunidades",
+  match_timelapse: "Timelapse do jogo", press_play: "Clique para iniciar",
   xc_by_movement: "xC por tipo de movimento", total_xc: "xC total",
   no_action_data: "Sem dados de ações disponíveis", no_zone_data: "Sem dados de zona disponíveis",
   full_match_video: "Vídeo do jogo completo", ranked_actions: "Ações classificadas", noted_actions: "Ações com notas",
@@ -863,6 +870,7 @@ const ptExtended: Record<string, string> = {
   no_zone_clips: "Nenhum clip encontrado para esta zona", zone_clips_title: "Zona",
   fullscreen: "Ecrã inteiro",
   switch_to_at_a_glance: "Mudar para vista geral", switch_to_in_depth: "Mudar para vista detalhada",
+  zones: "zonas",
 };
 Object.entries(ptExtended).forEach(([key, val]) => {
   if (translations.pt) translations.pt[key] = val;
@@ -899,6 +907,7 @@ const deExtended: Record<string, string> = {
   r90_flow: "R90-Verlauf", r90_flow_through_match: "R90-Verlauf im Spiel", final_r90: "End-R90",
   period_grade_map: "Periodennotenkarte", pitch_heatmap: "Heatmap des Spielfelds",
   zone_performance: "Zonenleistung", chance_creation_flow: "Chancenerstellung",
+  match_timelapse: "Spiel-Zeitraffer", press_play: "Zum Starten drücken",
   xc_by_movement: "xC nach Bewegungsart", total_xc: "Gesamt-xC",
   no_action_data: "Keine Aktionsdaten verfügbar", no_zone_data: "Keine Zonendaten verfügbar",
   full_match_video: "Komplettes Spielvideo", ranked_actions: "Rangliste der Aktionen", noted_actions: "Aktionen mit Notizen",
@@ -915,6 +924,7 @@ const deExtended: Record<string, string> = {
   no_zone_clips: "Keine Clips für diese Zone gefunden", zone_clips_title: "Zone",
   fullscreen: "Vollbild",
   switch_to_at_a_glance: "Zur Übersicht wechseln", switch_to_in_depth: "Zur Detailansicht wechseln",
+  zones: "Zonen",
 };
 Object.entries(deExtended).forEach(([key, val]) => {
   if (translations.de) translations.de[key] = val;
@@ -951,6 +961,7 @@ const itExtended: Record<string, string> = {
   r90_flow: "Flusso R90", r90_flow_through_match: "Flusso R90 durante la partita", final_r90: "R90 finale",
   period_grade_map: "Mappa voti per periodo", pitch_heatmap: "Mappa termica del campo",
   zone_performance: "Prestazioni per zona", chance_creation_flow: "Flusso di creazione occasioni",
+  match_timelapse: "Timelapse della partita", press_play: "Premi play per iniziare",
   xc_by_movement: "xC per tipo di movimento", total_xc: "xC totale",
   no_action_data: "Nessun dato sulle azioni disponibile", no_zone_data: "Nessun dato di zona disponibile",
   full_match_video: "Video della partita completa", ranked_actions: "Azioni classificate", noted_actions: "Azioni con note",
@@ -967,6 +978,7 @@ const itExtended: Record<string, string> = {
   no_zone_clips: "Nessun clip trovato per questa zona", zone_clips_title: "Zona",
   fullscreen: "Schermo intero",
   switch_to_at_a_glance: "Passa alla vista d'insieme", switch_to_in_depth: "Passa alla vista dettagliata",
+  zones: "zone",
 };
 Object.entries(itExtended).forEach(([key, val]) => {
   if (translations.it) translations.it[key] = val;
@@ -994,7 +1006,8 @@ Object.assign(translations.pl, {
   ranked_report: "RAPORT RANKINGOWY", noted_report: "RAPORT Z NOTATKAMI", match_report: "RAPORT MECZOWY",
   r90_flow: "Przepływ R90", r90_flow_through_match: "Przepływ R90 w meczu", final_r90: "Końcowe R90",
   period_grade_map: "Mapa ocen okresów", pitch_heatmap: "Mapa cieplna boiska", zone_performance: "Wydajność stref",
-  chance_creation_flow: "Przepływ tworzenia szans", xc_by_movement: "xC wg typu ruchu", total_xc: "Łączne xC",
+  chance_creation_flow: "Przepływ tworzenia szans", match_timelapse: "Timelapse meczu", press_play: "Naciśnij play",
+  xc_by_movement: "xC wg typu ruchu", total_xc: "Łączne xC",
   no_action_data: "Brak danych o akcjach", no_zone_data: "Brak danych o strefach",
   full_match_video: "Wideo z pełnego meczu", ranked_actions: "Akcje wg rankingu", noted_actions: "Akcje z notatkami",
   match_statistics: "Statystyki meczu", calculated_ratios: "Obliczone wskaźniki",
@@ -1009,6 +1022,7 @@ Object.assign(translations.pl, {
   no_zone_clips: "Brak klipów dla tej strefy", zone_clips_title: "Strefa",
   fullscreen: "Pełny ekran",
   switch_to_at_a_glance: "Przełącz na widok ogólny", switch_to_in_depth: "Przełącz na widok szczegółowy",
+  zones: "strefy",
 });
 
 Object.assign(translations.cs, {
@@ -1021,7 +1035,8 @@ Object.assign(translations.cs, {
   ranked_report: "HODNOCENÁ ZPRÁVA", noted_report: "ZPRÁVA S POZNÁMKAMI", match_report: "ZÁPASOVÁ ZPRÁVA",
   r90_flow: "Průběh R90", r90_flow_through_match: "Průběh R90 v zápase", final_r90: "Konečné R90",
   period_grade_map: "Mapa hodnocení období", pitch_heatmap: "Tepelná mapa hřiště", zone_performance: "Výkon zón",
-  chance_creation_flow: "Tok vytváření šancí", xc_by_movement: "xC podle typu pohybu", total_xc: "Celkové xC",
+  chance_creation_flow: "Tok vytváření šancí", match_timelapse: "Timelapse zápasu", press_play: "Stiskněte přehrát",
+  xc_by_movement: "xC podle typu pohybu", total_xc: "Celkové xC",
   no_action_data: "Žádná data o akcích", no_zone_data: "Žádná data o zónách",
   full_match_video: "Video celého zápasu", ranked_actions: "Hodnocené akce", noted_actions: "Akce s poznámkami",
   match_statistics: "Statistiky zápasu", calculated_ratios: "Vypočtené poměry",
@@ -1034,6 +1049,7 @@ Object.assign(translations.cs, {
   no_zone_clips: "Žádné klipy pro tuto zónu", zone_clips_title: "Zóna",
   fullscreen: "Celá obrazovka",
   switch_to_at_a_glance: "Přepnout na přehled", switch_to_in_depth: "Přepnout na detail",
+  zones: "zóny",
 });
 
 Object.assign(translations.ru, {
@@ -1046,7 +1062,8 @@ Object.assign(translations.ru, {
   ranked_report: "РЕЙТИНГОВЫЙ ОТЧЁТ", noted_report: "ОТЧЁТ С ЗАМЕТКАМИ", match_report: "МАТЧЕВЫЙ ОТЧЁТ",
   r90_flow: "Поток R90", r90_flow_through_match: "Поток R90 в матче", final_r90: "Итоговый R90",
   period_grade_map: "Карта оценок периодов", pitch_heatmap: "Тепловая карта поля", zone_performance: "Показатели по зонам",
-  chance_creation_flow: "Поток создания моментов", xc_by_movement: "xC по типу движения", total_xc: "Всего xC",
+  chance_creation_flow: "Поток создания моментов", match_timelapse: "Таймлапс матча", press_play: "Нажмите для воспроизведения",
+  xc_by_movement: "xC по типу движения", total_xc: "Всего xC",
   no_action_data: "Нет данных о действиях", no_zone_data: "Нет данных о зонах",
   full_match_video: "Полное видео матча", ranked_actions: "Действия по рейтингу", noted_actions: "Действия с заметками",
   match_statistics: "Статистика матча", calculated_ratios: "Расчётные показатели",
@@ -1059,6 +1076,7 @@ Object.assign(translations.ru, {
   no_zone_clips: "Клипы для этой зоны не найдены", zone_clips_title: "Зона",
   fullscreen: "Полный экран",
   switch_to_at_a_glance: "Переключить на обзор", switch_to_in_depth: "Переключить на детали",
+  zones: "зоны",
 });
 
 Object.assign(translations.tr, {
@@ -1071,7 +1089,8 @@ Object.assign(translations.tr, {
   ranked_report: "SIRALANMIŞ RAPOR", noted_report: "NOTLU RAPOR", match_report: "MAÇ RAPORU",
   r90_flow: "R90 Akışı", r90_flow_through_match: "Maç boyunca R90 akışı", final_r90: "Son R90",
   period_grade_map: "Dönem not haritası", pitch_heatmap: "Saha ısı haritası", zone_performance: "Bölge performansı",
-  chance_creation_flow: "Şans yaratma akışı", xc_by_movement: "Hareket türüne göre xC", total_xc: "Toplam xC",
+  chance_creation_flow: "Şans yaratma akışı", match_timelapse: "Maç timelapse", press_play: "Başlatmak için basın",
+  xc_by_movement: "Hareket türüne göre xC", total_xc: "Toplam xC",
   no_action_data: "Aksiyon verisi yok", no_zone_data: "Bölge verisi yok",
   full_match_video: "Tam maç videosu", ranked_actions: "Sıralı aksiyonlar", noted_actions: "Notlu aksiyonlar",
   match_statistics: "Maç istatistikleri", calculated_ratios: "Hesaplanan oranlar",
@@ -1084,6 +1103,7 @@ Object.assign(translations.tr, {
   no_zone_clips: "Bu bölge için klip bulunamadı", zone_clips_title: "Bölge",
   fullscreen: "Tam ekran",
   switch_to_at_a_glance: "Genel görünüme geç", switch_to_in_depth: "Ayrıntılı görünüme geç",
+  zones: "bölgeler",
 });
 
 export type { TranslationKey };

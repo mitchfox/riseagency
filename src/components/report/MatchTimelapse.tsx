@@ -145,29 +145,34 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
 
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
-      if (step.gameSeconds > cursor + 0.5) {
-        const gapSecs = step.gameSeconds - cursor;
+      // Use the effective game time: if step.gameSeconds <= cursor, offset by 1s so clock keeps ticking
+      const effectiveStart = Math.max(step.gameSeconds, cursor + 0.5) > cursor + 0.5
+        ? step.gameSeconds
+        : cursor;
+
+      if (effectiveStart > cursor + 0.5) {
+        const gapSecs = effectiveStart - cursor;
         const speed = getGapSpeed(gapSecs);
         segs.push({
           type: "gap",
           startGameTime: cursor,
-          endGameTime: step.gameSeconds,
+          endGameTime: effectiveStart,
           realDuration: (gapSecs / speed) * 1000,
         });
       }
       // Zone step: clock advances 1 game-second over 1 real second
       segs.push({
         type: "zone",
-        startGameTime: step.gameSeconds,
-        endGameTime: step.gameSeconds + 1,
+        startGameTime: effectiveStart,
+        endGameTime: effectiveStart + 1,
         realDuration: MS_PER_ZONE,
         stepIndex: i,
       });
-      cursor = step.gameSeconds + 1;
+      cursor = effectiveStart + 1;
     }
 
     const total = segs.reduce((sum, s) => sum + s.realDuration, 0);
-    return { segments: segs, totalRealDuration: total, firstGameTime: first, lastGameTime: last };
+    return { segments: segs, totalRealDuration: total, firstGameTime: first, lastGameTime: last + Math.max(0, cursor - last - 1) };
   }, [steps]);
 
   // Unique action markers for the timeline
@@ -461,7 +466,7 @@ export const MatchTimelapse = ({ actions, language = "en" }: MatchTimelapseProps
 
       {/* Step counter */}
       <div className="text-center text-[10px] text-muted-foreground">
-        {currentStep >= 0 ? currentStep + 1 : 0} / {steps.length} zones
+        {currentStep >= 0 ? currentStep + 1 : 0} / {steps.length} {t(language, "zones")}
       </div>
     </div>
   );
