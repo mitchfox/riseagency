@@ -907,6 +907,7 @@ const deExtended: Record<string, string> = {
   r90_flow: "R90-Verlauf", r90_flow_through_match: "R90-Verlauf im Spiel", final_r90: "End-R90",
   period_grade_map: "Periodennotenkarte", pitch_heatmap: "Heatmap des Spielfelds",
   zone_performance: "Zonenleistung", chance_creation_flow: "Chancenerstellung",
+  match_timelapse: "Spiel-Zeitraffer", press_play: "Zum Starten drücken",
   xc_by_movement: "xC nach Bewegungsart", total_xc: "Gesamt-xC",
   no_action_data: "Keine Aktionsdaten verfügbar", no_zone_data: "Keine Zonendaten verfügbar",
   full_match_video: "Komplettes Spielvideo", ranked_actions: "Rangliste der Aktionen", noted_actions: "Aktionen mit Notizen",
