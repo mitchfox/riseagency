@@ -290,6 +290,13 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   }, []);
 
   useEffect(() => {
+    return () => {
+      if (clipSavedTimerRef.current) clearTimeout(clipSavedTimerRef.current);
+      if (lookaheadPauseTimerRef.current) clearTimeout(lookaheadPauseTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     const loadHistoricalLearningExamples = async () => {
       const playerId = selectedVideo?.player_id;
       if (!playerId) {
