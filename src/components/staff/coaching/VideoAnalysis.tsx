@@ -104,7 +104,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<VideoAnalysisEntry | null>(null);
   const [showUpload, setShowUpload] = useState(false);
+  const playerShellRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const lookaheadRef = useRef<HTMLVideoElement>(null);
+  const lookaheadLastPrimeRef = useRef<number>(-1);
+  const lookaheadPauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Upload form
   const [newTitle, setNewTitle] = useState("");
