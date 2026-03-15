@@ -402,7 +402,8 @@ const VideoItem = ({
         open={cropOpen}
         onOpenChange={setCropOpen}
         videoUrl={url}
-        onCropComplete={onTrimComplete}
+        onCropComplete={onCropSaved}
+        initialCrop={existingCrop}
       />
       <Dialog open={annotateOpen} onOpenChange={(open) => { if (!open) { setAnnotateOpen(false); } }}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 overflow-hidden">
