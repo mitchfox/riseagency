@@ -275,8 +275,12 @@ const PerformanceReport = () => {
     const processedKeys = new Set<string>();
     const statsOrder = analysis.striker_stats.stats_order as string[] | undefined;
     const selectedStats = analysis.striker_stats.selected_stats as string[] | undefined;
-    const rawKeysToShow = statsOrder || selectedStats || Object.keys(analysis.striker_stats);
-    const keysToShow = rawKeysToShow.filter(key => !excludeKeys.includes(key));
+    const orderedKeys = statsOrder || selectedStats || Object.keys(analysis.striker_stats);
+    // Merge in any striker_stats keys not already in the ordered list (e.g. xC stats from legacy form)
+    const allStrikerKeys = Object.keys(analysis.striker_stats);
+    const orderedSet = new Set(orderedKeys);
+    const extraKeys = allStrikerKeys.filter(k => !orderedSet.has(k) && !excludeKeys.includes(k));
+    const keysToShow = [...orderedKeys.filter(key => !excludeKeys.includes(key)), ...extraKeys];
     
     for (const key of keysToShow) {
       if (key.includes('_per90')) continue;

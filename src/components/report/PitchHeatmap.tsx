@@ -37,15 +37,23 @@ const getPosition = (zone: number, sub?: number): { x: number; y: number } => {
 };
 
 const getHeatColor = (intensity: number): string => {
-  if (intensity <= 0.33) {
-    const t = intensity / 0.33;
-    return `${255}, ${Math.round(220 - t * 50)}, 0`;
-  } else if (intensity <= 0.66) {
-    const t = (intensity - 0.33) / 0.33;
-    return `${255}, ${Math.round(170 - t * 120)}, 0`;
+  // Green (low) → Yellow (medium) → Red (high) with clear differentiation
+  if (intensity <= 0.25) {
+    // Green to yellow-green
+    const t = intensity / 0.25;
+    return `${Math.round(t * 255)}, ${Math.round(180 + t * 75)}, 0`;
+  } else if (intensity <= 0.5) {
+    // Yellow-green to yellow
+    const t = (intensity - 0.25) / 0.25;
+    return `255, ${Math.round(255 - t * 55)}, 0`;
+  } else if (intensity <= 0.75) {
+    // Yellow to orange-red
+    const t = (intensity - 0.5) / 0.25;
+    return `255, ${Math.round(200 - t * 150)}, 0`;
   } else {
-    const t = (intensity - 0.66) / 0.34;
-    return `${Math.round(255 - t * 55)}, ${Math.round(50 - t * 50)}, 0`;
+    // Orange-red to deep red
+    const t = (intensity - 0.75) / 0.25;
+    return `${Math.round(255 - t * 40)}, ${Math.round(50 - t * 50)}, 0`;
   }
 };
 
