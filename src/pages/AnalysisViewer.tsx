@@ -1227,6 +1227,7 @@ const AnalysisViewer = () => {
                                   key={vidIndex}
                                   url={url}
                                   annotationId={point.annotation_ids?.[url]}
+                                  crop={point.video_crops?.[url]}
                                 />
                               ))}
                             </div>
