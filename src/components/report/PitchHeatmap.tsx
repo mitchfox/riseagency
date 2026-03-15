@@ -122,9 +122,9 @@ export const PitchHeatmap = ({ actions, language = "en" }: PitchHeatmapProps) =>
               const rgb = getHeatColor(intensity);
               return (
                 <radialGradient key={`grad-${i}`} id={`heat-${i}`} cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor={`rgba(${rgb}, ${0.4 + intensity * 0.5})`} />
-                  <stop offset="35%" stopColor={`rgba(${rgb}, ${0.25 + intensity * 0.35})`} />
-                  <stop offset="65%" stopColor={`rgba(${rgb}, ${0.08 + intensity * 0.15})`} />
+                  <stop offset="0%" stopColor={`rgba(${rgb}, ${0.55 + intensity * 0.4})`} />
+                  <stop offset="30%" stopColor={`rgba(${rgb}, ${0.35 + intensity * 0.35})`} />
+                  <stop offset="60%" stopColor={`rgba(${rgb}, ${0.12 + intensity * 0.18})`} />
                   <stop offset="100%" stopColor={`rgba(${rgb}, 0)`} />
                 </radialGradient>
               );
