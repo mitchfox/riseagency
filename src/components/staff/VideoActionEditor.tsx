@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { formatScoreWithFrequency } from "@/lib/utils";
 import { canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
 import type { RecordedStat } from "./ActionStatRecorder";
+import { useVideoPreloader } from "@/hooks/useVideoPreloader";
 
 interface PerformanceAction {
   id?: string;
@@ -74,6 +75,18 @@ export const VideoActionEditor = ({
   const [typePopoverOpen, setTypePopoverOpen] = useState(false);
   const [descPopoverOpen, setDescPopoverOpen] = useState(false);
 
+  const safePos = clippedIndices.length ? Math.min(currentPos, clippedIndices.length - 1) : 0;
+  const clipVideoUrls = useMemo(
+    () => clippedIndices.map(({ action }) => action.video_url).filter((url): url is string => Boolean(url)),
+    [clippedIndices]
+  );
+
+  const { preloadNextVideos, preloadVideo } = useVideoPreloader({
+    videos: clipVideoUrls,
+    preloadCount: 2,
+    enabled: open && clipVideoUrls.length > 1,
+  });
+
   useEffect(() => {
     if (open) {
       setCurrentPos(0);
@@ -82,9 +95,16 @@ export const VideoActionEditor = ({
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!open || clipVideoUrls.length === 0 || safePos >= clipVideoUrls.length) return;
+    preloadNextVideos(safePos);
+
+    const nextUrl = clipVideoUrls[safePos + 1];
+    if (nextUrl) preloadVideo(nextUrl);
+  }, [open, clipVideoUrls, safePos, preloadNextVideos, preloadVideo]);
+
   if (!clippedIndices.length) return null;
 
-  const safePos = Math.min(currentPos, clippedIndices.length - 1);
   const { action: current, index: realIndex } = clippedIndices[safePos];
 
   const handlePrev = () => {
@@ -224,7 +244,14 @@ export const VideoActionEditor = ({
               preload="auto"
               crossOrigin="anonymous"
               muted
-              style={{ display: 'none' }}
+              playsInline
+              aria-hidden="true"
+              className="absolute h-px w-px opacity-0 pointer-events-none"
+              onCanPlay={(e) => {
+                e.currentTarget.play().then(() => {
+                  e.currentTarget.pause();
+                }).catch(() => {});
+              }}
             />
           )}
 

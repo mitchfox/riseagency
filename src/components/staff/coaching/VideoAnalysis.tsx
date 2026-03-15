@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check, HelpCircle, HardDriveDownload, RefreshCw } from "lucide-react";
+import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check, HelpCircle, HardDriveDownload, RefreshCw, Maximize2, Minimize2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -104,7 +104,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<VideoAnalysisEntry | null>(null);
   const [showUpload, setShowUpload] = useState(false);
+  const playerShellRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const lookaheadRef = useRef<HTMLVideoElement>(null);
+  const lookaheadLastPrimeRef = useRef<number>(-1);
+  const lookaheadPauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Upload form
   const [newTitle, setNewTitle] = useState("");
@@ -169,6 +173,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   // Playback speed
   const SPEED_STEPS = [0.25, 0.5, 1, 2, 4, 8];
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [isPlayerFullscreen, setIsPlayerFullscreen] = useState(false);
 
   // Inline annotation
   const [annotatingClip, setAnnotatingClip] = useState<Clip | null>(null);
@@ -207,6 +212,89 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       fetchKnownActionTypes(selectedVideo.player_id);
     }
   }, [selectedVideo?.player_id]);
+
+  const primeLookaheadBuffer = useCallback(() => {
+    const mainVideo = videoRef.current;
+    const lookaheadVideo = lookaheadRef.current;
+
+    if (!mainVideo || !lookaheadVideo) return;
+    const duration = mainVideo.duration;
+    if (!Number.isFinite(duration) || duration <= 0) return;
+
+    const targetTime = Math.min(duration - 0.25, mainVideo.currentTime + 300);
+    if (targetTime <= mainVideo.currentTime + 5) return;
+    if (Math.abs(targetTime - lookaheadLastPrimeRef.current) < 20) return;
+
+    lookaheadLastPrimeRef.current = targetTime;
+
+    try {
+      lookaheadVideo.currentTime = targetTime;
+      const warmup = lookaheadVideo.play();
+      if (warmup && typeof warmup.then === "function") {
+        void warmup
+          .then(() => {
+            if (lookaheadPauseTimerRef.current) clearTimeout(lookaheadPauseTimerRef.current);
+            lookaheadPauseTimerRef.current = setTimeout(() => {
+              lookaheadVideo.pause();
+            }, 1200);
+          })
+          .catch(() => {});
+      }
+    } catch {
+      // Ignore seek/play failures while browser is still loading metadata
+    }
+  }, []);
+
+  const togglePlayerFullscreen = useCallback(async () => {
+    const shell = playerShellRef.current;
+    if (!shell) return;
+
+    try {
+      if (document.fullscreenElement === shell) {
+        await document.exitFullscreen();
+      } else {
+        await shell.requestFullscreen();
+      }
+    } catch {
+      // Ignore fullscreen API failures
+    }
+  }, []);
+
+  useEffect(() => {
+    const lookaheadVideo = lookaheadRef.current;
+    if (!lookaheadVideo || !selectedVideo?.video_url) return;
+
+    lookaheadLastPrimeRef.current = -1;
+    lookaheadVideo.src = selectedVideo.video_url;
+    lookaheadVideo.preload = "auto";
+    lookaheadVideo.load();
+  }, [selectedVideo?.id, selectedVideo?.video_url]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const shell = playerShellRef.current;
+      const playerVideo = videoRef.current;
+      const fullscreenElement = document.fullscreenElement;
+
+      if (shell && playerVideo && fullscreenElement === playerVideo) {
+        void shell.requestFullscreen().catch(() => {});
+      }
+
+      setIsPlayerFullscreen(document.fullscreenElement === shell);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (clipSavedTimerRef.current) clearTimeout(clipSavedTimerRef.current);
+      if (lookaheadPauseTimerRef.current) clearTimeout(lookaheadPauseTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const loadHistoricalLearningExamples = async () => {
@@ -1330,7 +1418,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [selectedVideo]);
 
-  // Hotkeys: arrow keys for seeking, Del for clip, +/- for speed
+  // Hotkeys: arrow keys for seeking, period/Delete for clip, +/- for speed
   useEffect(() => {
     if (!selectedVideo) return;
     const handleHotkey = (e: KeyboardEvent) => {
@@ -1340,6 +1428,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
       const video = videoRef.current;
       if (!video) return;
+
+      const isClipHotkey = e.key === '.' || e.key === '>' || e.code === 'Period' || e.code === 'NumpadDecimal';
 
       if (e.key === 'ArrowRight' && !e.shiftKey) {
         e.preventDefault();
@@ -1353,7 +1443,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         e.preventDefault();
         e.stopPropagation();
         video.currentTime = Math.min(video.duration, video.currentTime + 30);
-      } else if (e.key === 'Delete') {
+      } else if (e.key === 'Delete' || isClipHotkey) {
         e.preventDefault();
         e.stopPropagation();
         handleInstantClip();
@@ -1730,18 +1820,29 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
         {/* Widescreen video player with overlaid clip button */}
          {selectedVideo.video_url ? (
-          <div className="relative w-full bg-black rounded-lg overflow-hidden group/player">
+          <div ref={playerShellRef} className="relative w-full bg-black rounded-lg overflow-hidden group/player">
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={togglePlayerFullscreen}
+              className="absolute top-3 right-3 z-40 h-8 gap-1.5"
+            >
+              {isPlayerFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              {isPlayerFullscreen ? "Exit full screen" : "Full screen"}
+            </Button>
             <video
               ref={videoRef}
               src={selectedVideo.video_url}
               crossOrigin="anonymous"
               controls
-              controlsList="nodownload"
+              controlsList="nodownload nofullscreen"
               className="w-full aspect-video object-fill"
+              onPlay={primeLookaheadBuffer}
               onKeyDown={(e) => {
                 // Prevent native video controls from intercepting our hotkeys in fullscreen
                 const key = e.key;
-                if (['-', '_', '=', '+', '0', 'Delete', 'ArrowLeft', 'ArrowRight', 'Shift'].includes(key)) {
+                if (['-', '_', '=', '+', '0', 'Delete', 'ArrowLeft', 'ArrowRight', 'Shift', '.', '>'].includes(key) || e.code === 'Period' || e.code === 'NumpadDecimal') {
                   e.stopPropagation();
                 }
               }}
@@ -1749,24 +1850,19 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 if (overlayElements.length > 0) {
                   setOverlayCurrentTime(videoRef.current?.currentTime ?? 0);
                 }
-                // Keep lookahead video 5 min ahead for buffer priming
-                const la = document.getElementById('va-lookahead') as HTMLVideoElement;
-                if (la && videoRef.current) {
-                  const target = videoRef.current.currentTime + 300;
-                  if (target < (videoRef.current.duration || Infinity) && Math.abs(la.currentTime - target) > 30) {
-                    la.currentTime = target;
-                  }
-                }
+                primeLookaheadBuffer();
               }}
             />
             {/* Hidden lookahead video to prime browser buffer ~5 min ahead */}
             <video
-              id="va-lookahead"
+              ref={lookaheadRef}
               src={selectedVideo.video_url}
               preload="auto"
               crossOrigin="anonymous"
               muted
-              style={{ display: 'none' }}
+              playsInline
+              aria-hidden="true"
+              className="absolute h-px w-px opacity-0 pointer-events-none"
             />
             {/* Video stays visible but paused — no separate freeze frame image needed */}
             {/* Annotation canvas overlay during freeze */}
@@ -1834,9 +1930,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 <Scissors className="h-4 w-4" /> Clip (±5s)
               </Button>
             </div>
-            {/* Clip saved toast - visible even in fullscreen */}
+            {/* Clip saved toast - visible in full screen mode */}
             {clipSavedToast && (
-              <div className="absolute bottom-4 right-4 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <div className="absolute top-4 right-4 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
                 <Scissors className="h-4 w-4" />
                 Clip saved
               </div>
