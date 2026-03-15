@@ -204,6 +204,8 @@ const VideoItem = ({
   url,
   onRemove,
   onTrimComplete,
+  onCropSaved,
+  existingCrop,
   pointIndex,
   totalPoints,
   onMoveToPoint,
@@ -213,6 +215,8 @@ const VideoItem = ({
   url: string;
   onRemove: () => void;
   onTrimComplete: (newUrl: string) => void;
+  onCropSaved: (crop: import("./VideoCropDialog").CropRect) => void;
+  existingCrop?: import("./VideoCropDialog").CropRect | null;
   pointIndex: number;
   totalPoints: number;
   onMoveToPoint: (targetPointIndex: number) => void;
