@@ -176,11 +176,18 @@ export const VideoCropDialog = ({
       const startTime = hashMatch ? parseFloat(hashMatch[1]) : 0;
       const endTime = hashMatch ? parseFloat(hashMatch[2]) : video.duration;
 
+      // Seek to start and wait
+      video.currentTime = startTime;
+      await new Promise<void>((r) => { video.onseeked = () => r(); });
+
+      // Draw the first frame immediately so the stream has content
+      ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
       const stream = canvas.captureStream(30);
       const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
         ? "video/webm;codecs=vp9"
         : "video/webm";
-      const recorder = new MediaRecorder(stream, { mimeType });
+      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2_500_000 });
       const chunks: Blob[] = [];
 
       recorder.ondataavailable = (e) => {
@@ -191,24 +198,47 @@ export const VideoCropDialog = ({
         recorder.onstop = () => resolve(new Blob(chunks, { type: mimeType }));
       });
 
-      video.currentTime = startTime;
-      await new Promise<void>((r) => { video.onseeked = () => r(); });
+      recorder.start(100); // collect data every 100ms
 
-      recorder.start();
-      video.play();
-
-      const drawFrame = () => {
-        if (video.currentTime >= endTime || video.paused) {
+      // Use timeupdate for more reliable frame drawing than rAF
+      const onTimeUpdate = () => {
+        if (video.currentTime >= endTime || video.paused || video.ended) {
           video.pause();
-          recorder.stop();
+          video.removeEventListener("timeupdate", onTimeUpdate);
+          // Small delay to ensure last frames are captured
+          setTimeout(() => recorder.stop(), 150);
           return;
         }
         ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-        requestAnimationFrame(drawFrame);
       };
-      requestAnimationFrame(drawFrame);
+
+      // Also use rAF for smoother frame capture between timeupdate events
+      let rafId: number;
+      const drawLoop = () => {
+        if (video.paused || video.ended || video.currentTime >= endTime) return;
+        ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+        rafId = requestAnimationFrame(drawLoop);
+      };
+
+      video.addEventListener("timeupdate", onTimeUpdate);
+      
+      // Play the video - must await to catch autoplay issues
+      try {
+        await video.play();
+      } catch (playError) {
+        console.error("Video play failed:", playError);
+        video.removeEventListener("timeupdate", onTimeUpdate);
+        throw new Error("Could not play video for cropping. Check browser autoplay settings.");
+      }
+      
+      rafId = requestAnimationFrame(drawLoop);
 
       const blob = await recordingDone;
+      cancelAnimationFrame(rafId);
+
+      if (blob.size < 100) {
+        throw new Error("Cropped video is empty — encoding may have failed.");
+      }
 
       const fileName = `cropped-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webm`;
       const { error: uploadError } = await supabase.storage
@@ -226,7 +256,7 @@ export const VideoCropDialog = ({
       toast.success("Video cropped successfully");
     } catch (error: any) {
       console.error("Crop failed:", error);
-      toast.error("Failed to crop video");
+      toast.error(error.message || "Failed to crop video");
     } finally {
       setProcessing(false);
     }
