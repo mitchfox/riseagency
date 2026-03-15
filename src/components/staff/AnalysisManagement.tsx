@@ -75,6 +75,8 @@ interface Analysis {
   explanation?: string | null;
   points?: any[];
   video_url?: string | null;
+  visibility_status?: "draft" | "hidden" | "live" | null;
+  estimated_ready_at?: string | null;
   created_at: string;
   player_name?: string | null;
 }
@@ -107,6 +109,20 @@ interface AnalysisManagementProps {
 }
 
 const MAX_VIDEO_UPLOAD_BYTES = 50 * 1024 * 1024 * 1024;
+
+const toDateTimeLocalValue = (iso?: string | null) => {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (v: number) => String(v).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+const fromDateTimeLocalValue = (value: string) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+};
 
 export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagementProps) => {
   const navigate = useNavigate();
