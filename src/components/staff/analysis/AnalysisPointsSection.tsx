@@ -854,10 +854,15 @@ const SortablePointCard = ({
                   pointIndex={index}
                   totalPoints={totalPoints}
                   existingAnnotationId={point.annotation_ids?.[url]}
+                  existingCrop={point.video_crops?.[url]}
                   onMoveToPoint={(targetIdx) => onMoveVideoToPoint(index, vidIndex, targetIdx)}
                   onAnnotationSaved={(annotationId) => {
                     const currentIds = point.annotation_ids || {};
                     updatePoint(index, "annotation_ids", { ...currentIds, [url]: annotationId });
+                  }}
+                  onCropSaved={(crop) => {
+                    const currentCrops = point.video_crops || {};
+                    updatePoint(index, "video_crops", { ...currentCrops, [url]: crop });
                   }}
                   onRemove={() => {
                     const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
