@@ -1751,6 +1751,16 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             <p className="text-xs sm:text-sm text-muted-foreground">
               {new Date(analysis.created_at).toLocaleDateString()}
             </p>
+            {(analysis.visibility_status === "draft" || analysis.visibility_status === "hidden") && analysis.estimated_ready_at && (
+              <p className="text-xs text-primary mt-1">
+                Expected by {new Date(analysis.estimated_ready_at).toLocaleString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            )}
             {linkedPlayers[analysis.id] && linkedPlayers[analysis.id].length > 0 && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                 <Users className="w-3 h-3 flex-shrink-0" />
