@@ -1837,6 +1837,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               crossOrigin="anonymous"
               controls
               controlsList="nodownload nofullscreen"
+              preload="auto"
               className="w-full aspect-video object-fill"
               onPlay={primeLookaheadBuffer}
               onKeyDown={(e) => {
@@ -1845,6 +1846,21 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 if (['-', '_', '=', '+', '0', 'Delete', 'ArrowLeft', 'ArrowRight', 'Shift', '.', '>'].includes(key) || e.code === 'Period' || e.code === 'NumpadDecimal') {
                   e.stopPropagation();
                 }
+              }}
+              onWaiting={() => {
+                // At high playback rates, browsers may stall because they can't decode fast enough.
+                // Temporarily drop to 1x to let the buffer catch up, then restore.
+                const video = videoRef.current;
+                if (!video || video.playbackRate <= 1) return;
+                const savedRate = video.playbackRate;
+                video.playbackRate = 1;
+                const restore = () => {
+                  if (video) {
+                    video.playbackRate = savedRate;
+                    video.removeEventListener('canplay', restore);
+                  }
+                };
+                video.addEventListener('canplay', restore, { once: true });
               }}
               onTimeUpdate={() => {
                 if (overlayElements.length > 0) {
