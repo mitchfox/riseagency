@@ -735,6 +735,10 @@ const AnalysisViewer = () => {
         setPlayerName((playerData.players as any).name);
       }
 
+      const status = ["live", "draft", "hidden"].includes(String(data.visibility_status || "").toLowerCase())
+        ? (String(data.visibility_status).toLowerCase() as "live" | "draft" | "hidden")
+        : "live";
+
       const parsedAnalysis: Analysis = {
         ...data,
         match_date: data.match_date || null,
@@ -747,6 +751,8 @@ const AnalysisViewer = () => {
         starting_xi: Array.isArray(data.starting_xi) ? data.starting_xi : [],
         kit_primary_color: data.kit_primary_color || '#FFD700',
         kit_secondary_color: data.kit_secondary_color || '#000000',
+        visibility_status: status,
+        estimated_ready_at: data.estimated_ready_at || null,
         matchups: Array.isArray(data.matchups) ? data.matchups : [],
         points: Array.isArray(data.points) ? data.points : []
       };
