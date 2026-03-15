@@ -244,7 +244,14 @@ export const VideoActionEditor = ({
               preload="auto"
               crossOrigin="anonymous"
               muted
-              style={{ display: 'none' }}
+              playsInline
+              aria-hidden="true"
+              className="absolute h-px w-px opacity-0 pointer-events-none"
+              onCanPlay={(e) => {
+                e.currentTarget.play().then(() => {
+                  e.currentTarget.pause();
+                }).catch(() => {});
+              }}
             />
           )}
 
