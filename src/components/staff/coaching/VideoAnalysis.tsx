@@ -1749,7 +1749,24 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 if (overlayElements.length > 0) {
                   setOverlayCurrentTime(videoRef.current?.currentTime ?? 0);
                 }
+                // Keep lookahead video 5 min ahead for buffer priming
+                const la = document.getElementById('va-lookahead') as HTMLVideoElement;
+                if (la && videoRef.current) {
+                  const target = videoRef.current.currentTime + 300;
+                  if (target < (videoRef.current.duration || Infinity) && Math.abs(la.currentTime - target) > 30) {
+                    la.currentTime = target;
+                  }
+                }
               }}
+            />
+            {/* Hidden lookahead video to prime browser buffer ~5 min ahead */}
+            <video
+              id="va-lookahead"
+              src={selectedVideo.video_url}
+              preload="auto"
+              crossOrigin="anonymous"
+              muted
+              style={{ display: 'none' }}
             />
             {/* Video stays visible but paused — no separate freeze frame image needed */}
             {/* Annotation canvas overlay during freeze */}

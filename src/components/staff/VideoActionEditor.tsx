@@ -216,6 +216,18 @@ export const VideoActionEditor = ({
             onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
           />
 
+          {/* Prefetch next clip video */}
+          {safePos < clippedIndices.length - 1 && clippedIndices[safePos + 1].action.video_url && (
+            <video
+              key={`prefetch-${clippedIndices[safePos + 1].action.video_url}`}
+              src={clippedIndices[safePos + 1].action.video_url!}
+              preload="auto"
+              crossOrigin="anonymous"
+              muted
+              style={{ display: 'none' }}
+            />
+          )}
+
           <button
             onClick={handleNext}
             disabled={safePos === clippedIndices.length - 1}
