@@ -173,6 +173,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   // Playback speed
   const SPEED_STEPS = [0.25, 0.5, 1, 2, 4, 8];
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [isPlayerFullscreen, setIsPlayerFullscreen] = useState(false);
 
   // Inline annotation
   const [annotatingClip, setAnnotatingClip] = useState<Clip | null>(null);
