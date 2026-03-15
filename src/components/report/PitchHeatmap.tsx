@@ -151,7 +151,7 @@ export const PitchHeatmap = ({ actions, language = "en" }: PitchHeatmapProps) =>
           {/* Heatmap blobs */}
           {heatmapData.blobs.map((blob, i) => {
             const intensity = blob.count / heatmapData.maxCount;
-            const radius = 45 + intensity * 50;
+            const radius = 40 + intensity * 45;
             return (
               <ellipse
                 key={`blob-${i}`}
@@ -160,7 +160,7 @@ export const PitchHeatmap = ({ actions, language = "en" }: PitchHeatmapProps) =>
                 rx={radius}
                 ry={radius * 0.85}
                 fill={`url(#heat-${i})`}
-                style={{ mixBlendMode: "screen" }}
+                style={{ mixBlendMode: "hard-light" }}
               />
             );
           })}
