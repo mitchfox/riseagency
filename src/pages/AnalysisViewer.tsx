@@ -792,6 +792,29 @@ const AnalysisViewer = () => {
   const isPostMatch = analysis.analysis_type === "post-match";
   const isConcept = analysis.analysis_type === "concept";
 
+  const visibilityStatus = analysis.visibility_status || "live";
+  const statusConfig = {
+    live: {
+      label: "Live",
+      icon: Radio,
+      className: "bg-primary/15 text-primary border-primary/30",
+      message: "This analysis is fully visible to the player.",
+    },
+    draft: {
+      label: "Draft",
+      icon: FileEdit,
+      className: "bg-muted text-foreground border-border",
+      message: "This analysis is currently shown as in progress.",
+    },
+    hidden: {
+      label: "Hidden",
+      icon: EyeOff,
+      className: "bg-destructive/10 text-destructive border-destructive/30",
+      message: "This analysis is currently hidden from the player.",
+    },
+  } as const;
+  const activeStatus = statusConfig[visibilityStatus as keyof typeof statusConfig] || statusConfig.live;
+
   // Build quick nav sections
   const navSections = [];
   if (analysis.key_details) navSections.push({ id: SECTION_IDS.overview, label: "Overview" });
