@@ -14,6 +14,7 @@ import { formatScoreWithFrequency } from "@/lib/utils";
 import { canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
 import type { RecordedStat } from "./ActionStatRecorder";
+import { useVideoPreloader } from "@/hooks/useVideoPreloader";
 
 interface PerformanceAction {
   id?: string;
