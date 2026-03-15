@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { ReadOnlyAnnotationPlayback } from "@/components/portal/ReadOnlyAnnotationPlayback";
-import { ArrowLeft, ChevronDown, Play, Plus, Minus, Download, BookOpen } from "lucide-react";
+import { ArrowLeft, ChevronDown, Play, Plus, Minus, Download, BookOpen, FileEdit, EyeOff, Radio, Clock3 } from "lucide-react";
 import { ConceptTagsDisplay } from "@/components/portal/ConceptTagsDisplay";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
