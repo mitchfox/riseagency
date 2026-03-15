@@ -75,6 +75,8 @@ interface Analysis {
   explanation?: string | null;
   points?: any[];
   video_url?: string | null;
+  visibility_status?: "draft" | "hidden" | "live" | null;
+  estimated_ready_at?: string | null;
   created_at: string;
   player_name?: string | null;
 }
@@ -107,6 +109,20 @@ interface AnalysisManagementProps {
 }
 
 const MAX_VIDEO_UPLOAD_BYTES = 50 * 1024 * 1024 * 1024;
+
+const toDateTimeLocalValue = (iso?: string | null) => {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (v: number) => String(v).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+const fromDateTimeLocalValue = (value: string) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+};
 
 export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagementProps) => {
   const navigate = useNavigate();
@@ -453,7 +469,14 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
       }
     } else {
       setEditingAnalysis(null);
-      setFormData({ analysis_type: type, points: [], matchups: [], starting_xi: [], visibility_status: 'live' });
+      setFormData({
+        analysis_type: type,
+        points: [],
+        matchups: [],
+        starting_xi: [],
+        visibility_status: "live",
+        estimated_ready_at: null,
+      });
       // In Athlete Centre context, keep the currently selected player pre-linked
       setSelectedPlayerId(defaultPlayerId || "none");
       setSelectedPerformanceReportId("none");
@@ -670,6 +693,10 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
           dataToSave[col] = formData[col];
         }
       });
+
+      if (dataToSave.visibility_status === "live") {
+        dataToSave.estimated_ready_at = null;
+      }
 
       let analysisId = editingAnalysis?.id;
 
@@ -1641,21 +1668,50 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
 
         {/* Visibility Status */}
         {!isConcept && (
-          <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-            <Label className="text-sm font-medium whitespace-nowrap">Status</Label>
-            <Select
-              value={formData.visibility_status || 'live'}
-              onValueChange={(val) => setFormData({ ...formData, visibility_status: val })}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="live">Live</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="hidden">Hidden</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="space-y-3 p-3 rounded-lg border bg-card">
+            <div className="flex items-center gap-3">
+              <Label className="text-sm font-medium whitespace-nowrap">Status</Label>
+              <Select
+                value={formData.visibility_status || "live"}
+                onValueChange={(val) => {
+                  setFormData({
+                    ...formData,
+                    visibility_status: val,
+                    estimated_ready_at: val === "live" ? null : formData.estimated_ready_at || null,
+                  });
+                }}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="live">Live</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="hidden">Hidden</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(formData.visibility_status === "draft" || formData.visibility_status === "hidden") && (
+              <div className="space-y-1">
+                <Label htmlFor="analysis-estimated-ready" className="text-xs text-muted-foreground">
+                  Expected ready time (shown to player)
+                </Label>
+                <Input
+                  id="analysis-estimated-ready"
+                  type="datetime-local"
+                  value={toDateTimeLocalValue(formData.estimated_ready_at)}
+                  min={toDateTimeLocalValue(new Date().toISOString())}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      estimated_ready_at: fromDateTimeLocalValue(e.target.value),
+                    })
+                  }
+                  className="w-full sm:w-[280px]"
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -1699,6 +1755,16 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             <p className="text-xs sm:text-sm text-muted-foreground">
               {new Date(analysis.created_at).toLocaleDateString()}
             </p>
+            {(analysis.visibility_status === "draft" || analysis.visibility_status === "hidden") && analysis.estimated_ready_at && (
+              <p className="text-xs text-primary mt-1">
+                Expected by {new Date(analysis.estimated_ready_at).toLocaleString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            )}
             {linkedPlayers[analysis.id] && linkedPlayers[analysis.id].length > 0 && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                 <Users className="w-3 h-3 flex-shrink-0" />

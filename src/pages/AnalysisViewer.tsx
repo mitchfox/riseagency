@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { ReadOnlyAnnotationPlayback } from "@/components/portal/ReadOnlyAnnotationPlayback";
-import { ArrowLeft, ChevronDown, Play, Plus, Minus, Download, BookOpen } from "lucide-react";
+import { ArrowLeft, ChevronDown, Play, Plus, Minus, Download, BookOpen, FileEdit, EyeOff, Radio, Clock3 } from "lucide-react";
 import { ConceptTagsDisplay } from "@/components/portal/ConceptTagsDisplay";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -55,6 +55,8 @@ interface Analysis {
   explanation: string | null;
   points: any;
   video_url: string | null;
+  visibility_status?: "draft" | "hidden" | "live" | null;
+  estimated_ready_at?: string | null;
 }
 
 // Brand colors - Rise Agency tokens (gold/black theme)
@@ -733,6 +735,10 @@ const AnalysisViewer = () => {
         setPlayerName((playerData.players as any).name);
       }
 
+      const status = ["live", "draft", "hidden"].includes(String(data.visibility_status || "").toLowerCase())
+        ? (String(data.visibility_status).toLowerCase() as "live" | "draft" | "hidden")
+        : "live";
+
       const parsedAnalysis: Analysis = {
         ...data,
         match_date: data.match_date || null,
@@ -745,6 +751,8 @@ const AnalysisViewer = () => {
         starting_xi: Array.isArray(data.starting_xi) ? data.starting_xi : [],
         kit_primary_color: data.kit_primary_color || '#FFD700',
         kit_secondary_color: data.kit_secondary_color || '#000000',
+        visibility_status: status,
+        estimated_ready_at: data.estimated_ready_at || null,
         matchups: Array.isArray(data.matchups) ? data.matchups : [],
         points: Array.isArray(data.points) ? data.points : []
       };
@@ -783,6 +791,30 @@ const AnalysisViewer = () => {
   const isPreMatch = analysis.analysis_type === "pre-match";
   const isPostMatch = analysis.analysis_type === "post-match";
   const isConcept = analysis.analysis_type === "concept";
+
+  const visibilityStatus = analysis.visibility_status || "live";
+  const statusConfig = {
+    live: {
+      label: "Live",
+      icon: Radio,
+      className: "bg-primary/15 text-primary border-primary/30",
+      message: "This analysis is fully visible to the player.",
+    },
+    draft: {
+      label: "Draft",
+      icon: FileEdit,
+      className: "bg-muted text-foreground border-border",
+      message: "This analysis is currently shown as in progress.",
+    },
+    hidden: {
+      label: "Hidden",
+      icon: EyeOff,
+      className: "bg-destructive/10 text-destructive border-destructive/30",
+      message: "This analysis is currently hidden from the player.",
+    },
+  } as const;
+  const activeStatus = statusConfig[visibilityStatus as keyof typeof statusConfig] || statusConfig.live;
+  const StatusIcon = activeStatus.icon;
 
   // Build quick nav sections
   const navSections = [];
@@ -825,6 +857,30 @@ const AnalysisViewer = () => {
               Watch Video
             </Button>
           </motion.div>
+        )}
+
+        {!isConcept && (
+          <div className="px-4 md:px-6 pt-4">
+            <div className={`flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 ${activeStatus.className}`}>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
+                <StatusIcon className="w-3.5 h-3.5" />
+                {activeStatus.label}
+              </span>
+              <span className="text-xs opacity-90">{activeStatus.message}</span>
+              {(visibilityStatus === "draft" || visibilityStatus === "hidden") && analysis.estimated_ready_at && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium">
+                  <Clock3 className="w-3.5 h-3.5" />
+                  Expected by {new Date(analysis.estimated_ready_at).toLocaleString("en-GB", {
+                    weekday: "short",
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              )}
+            </div>
+          </div>
         )}
 
         <main className="w-full mx-auto">
