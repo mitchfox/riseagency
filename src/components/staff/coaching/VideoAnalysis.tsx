@@ -1418,7 +1418,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [selectedVideo]);
 
-  // Hotkeys: arrow keys for seeking, Del for clip, +/- for speed
+  // Hotkeys: arrow keys for seeking, period/Delete for clip, +/- for speed
   useEffect(() => {
     if (!selectedVideo) return;
     const handleHotkey = (e: KeyboardEvent) => {
@@ -1428,6 +1428,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
       const video = videoRef.current;
       if (!video) return;
+
+      const isClipHotkey = e.key === '.' || e.key === '>' || e.code === 'Period' || e.code === 'NumpadDecimal';
 
       if (e.key === 'ArrowRight' && !e.shiftKey) {
         e.preventDefault();
@@ -1441,7 +1443,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         e.preventDefault();
         e.stopPropagation();
         video.currentTime = Math.min(video.duration, video.currentTime + 30);
-      } else if (e.key === 'Delete') {
+      } else if (e.key === 'Delete' || isClipHotkey) {
         e.preventDefault();
         e.stopPropagation();
         handleInstantClip();
