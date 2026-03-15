@@ -859,6 +859,30 @@ const AnalysisViewer = () => {
           </motion.div>
         )}
 
+        {!isConcept && (
+          <div className="px-4 md:px-6 pt-4">
+            <div className={`flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 ${activeStatus.className}`}>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
+                <StatusIcon className="w-3.5 h-3.5" />
+                {activeStatus.label}
+              </span>
+              <span className="text-xs opacity-90">{activeStatus.message}</span>
+              {(visibilityStatus === "draft" || visibilityStatus === "hidden") && analysis.estimated_ready_at && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium">
+                  <Clock3 className="w-3.5 h-3.5" />
+                  Expected by {new Date(analysis.estimated_ready_at).toLocaleString("en-GB", {
+                    weekday: "short",
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
         <main className="w-full mx-auto">
         {/* Pre-Match Content */}
         {isPreMatch && (
