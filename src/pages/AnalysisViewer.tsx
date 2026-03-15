@@ -678,12 +678,18 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
 // Video with annotation overlay for analysis points
 // Uses the shared ReadOnlyAnnotationPlayback which mirrors the editor's freeze/pause
 // behaviour and supports all annotation types including space-oval, distance, etc.
-const AnnotatedPointVideo = ({ url, annotationId }: { url: string; annotationId?: string }) => {
+const AnnotatedPointVideo = ({ url, annotationId, crop }: { url: string; annotationId?: string; crop?: { top: number; right: number; bottom: number; left: number } | null }) => {
+  const hasCrop = crop && (crop.top > 0 || crop.right > 0 || crop.bottom > 0 || crop.left > 0);
+  const cropStyle = hasCrop
+    ? { clipPath: `inset(${crop.top}% ${crop.right}% ${crop.bottom}% ${crop.left}%)` }
+    : {};
   return (
-    <ReadOnlyAnnotationPlayback
-      videoUrl={url}
-      annotationProjectId={annotationId}
-    />
+    <div style={cropStyle}>
+      <ReadOnlyAnnotationPlayback
+        videoUrl={url}
+        annotationProjectId={annotationId}
+      />
+    </div>
   );
 };
 
