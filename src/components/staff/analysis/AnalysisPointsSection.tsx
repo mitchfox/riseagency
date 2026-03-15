@@ -220,6 +220,7 @@ const VideoItem = ({
   existingAnnotationId?: string;
 }) => {
   const [trimOpen, setTrimOpen] = useState(false);
+  const [cropOpen, setCropOpen] = useState(false);
   const [annotateOpen, setAnnotateOpen] = useState(false);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
   const [annotationVersion, setAnnotationVersion] = useState(0); // bump to refresh preview
