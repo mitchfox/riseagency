@@ -347,6 +347,15 @@ const VideoItem = ({
         >
           <Scissors className="w-3 h-3" />
         </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-6 w-6 p-0"
+          onClick={() => setCropOpen(true)}
+          title="Crop video frame"
+        >
+          <Crop className="w-3 h-3" />
+        </Button>
         {otherPoints.length > 0 && (
           <Select
             value=""
