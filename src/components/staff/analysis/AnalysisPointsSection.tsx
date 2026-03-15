@@ -61,6 +61,7 @@ interface Point {
   video_urls?: string[];
   audio_url?: string;
   annotation_ids?: Record<string, string>; // video_url -> annotation_project_id
+  video_crops?: Record<string, import("./VideoCropDialog").CropRect>; // video_url -> crop rect
   concept_tags?: string[]; // concept IDs from coaching_analysis
 }
 
