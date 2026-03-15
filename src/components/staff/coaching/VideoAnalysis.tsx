@@ -1820,18 +1820,29 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
         {/* Widescreen video player with overlaid clip button */}
          {selectedVideo.video_url ? (
-          <div className="relative w-full bg-black rounded-lg overflow-hidden group/player">
+          <div ref={playerShellRef} className="relative w-full bg-black rounded-lg overflow-hidden group/player">
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={togglePlayerFullscreen}
+              className="absolute top-3 right-3 z-40 h-8 gap-1.5"
+            >
+              {isPlayerFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              {isPlayerFullscreen ? "Exit full screen" : "Full screen"}
+            </Button>
             <video
               ref={videoRef}
               src={selectedVideo.video_url}
               crossOrigin="anonymous"
               controls
-              controlsList="nodownload"
+              controlsList="nodownload nofullscreen"
               className="w-full aspect-video object-fill"
+              onPlay={primeLookaheadBuffer}
               onKeyDown={(e) => {
                 // Prevent native video controls from intercepting our hotkeys in fullscreen
                 const key = e.key;
-                if (['-', '_', '=', '+', '0', 'Delete', 'ArrowLeft', 'ArrowRight', 'Shift'].includes(key)) {
+                if (['-', '_', '=', '+', '0', 'Delete', 'ArrowLeft', 'ArrowRight', 'Shift', '.', '>'].includes(key) || e.code === 'Period' || e.code === 'NumpadDecimal') {
                   e.stopPropagation();
                 }
               }}
@@ -1839,24 +1850,19 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 if (overlayElements.length > 0) {
                   setOverlayCurrentTime(videoRef.current?.currentTime ?? 0);
                 }
-                // Keep lookahead video 5 min ahead for buffer priming
-                const la = document.getElementById('va-lookahead') as HTMLVideoElement;
-                if (la && videoRef.current) {
-                  const target = videoRef.current.currentTime + 300;
-                  if (target < (videoRef.current.duration || Infinity) && Math.abs(la.currentTime - target) > 30) {
-                    la.currentTime = target;
-                  }
-                }
+                primeLookaheadBuffer();
               }}
             />
             {/* Hidden lookahead video to prime browser buffer ~5 min ahead */}
             <video
-              id="va-lookahead"
+              ref={lookaheadRef}
               src={selectedVideo.video_url}
               preload="auto"
               crossOrigin="anonymous"
               muted
-              style={{ display: 'none' }}
+              playsInline
+              aria-hidden="true"
+              className="absolute h-px w-px opacity-0 pointer-events-none"
             />
             {/* Video stays visible but paused — no separate freeze frame image needed */}
             {/* Annotation canvas overlay during freeze */}
