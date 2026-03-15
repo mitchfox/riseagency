@@ -814,6 +814,7 @@ const AnalysisViewer = () => {
     },
   } as const;
   const activeStatus = statusConfig[visibilityStatus as keyof typeof statusConfig] || statusConfig.live;
+  const StatusIcon = activeStatus.icon;
 
   // Build quick nav sections
   const navSections = [];
