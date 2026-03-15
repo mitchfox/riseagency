@@ -694,6 +694,10 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         }
       });
 
+      if (dataToSave.visibility_status === "live") {
+        dataToSave.estimated_ready_at = null;
+      }
+
       let analysisId = editingAnalysis?.id;
 
       if (editingAnalysis) {
