@@ -213,6 +213,82 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
   }, [selectedVideo?.player_id]);
 
+  const primeLookaheadBuffer = useCallback(() => {
+    const mainVideo = videoRef.current;
+    const lookaheadVideo = lookaheadRef.current;
+
+    if (!mainVideo || !lookaheadVideo) return;
+    const duration = mainVideo.duration;
+    if (!Number.isFinite(duration) || duration <= 0) return;
+
+    const targetTime = Math.min(duration - 0.25, mainVideo.currentTime + 300);
+    if (targetTime <= mainVideo.currentTime + 5) return;
+    if (Math.abs(targetTime - lookaheadLastPrimeRef.current) < 20) return;
+
+    lookaheadLastPrimeRef.current = targetTime;
+
+    try {
+      lookaheadVideo.currentTime = targetTime;
+      const warmup = lookaheadVideo.play();
+      if (warmup && typeof warmup.then === "function") {
+        void warmup
+          .then(() => {
+            if (lookaheadPauseTimerRef.current) clearTimeout(lookaheadPauseTimerRef.current);
+            lookaheadPauseTimerRef.current = setTimeout(() => {
+              lookaheadVideo.pause();
+            }, 1200);
+          })
+          .catch(() => {});
+      }
+    } catch {
+      // Ignore seek/play failures while browser is still loading metadata
+    }
+  }, []);
+
+  const togglePlayerFullscreen = useCallback(async () => {
+    const shell = playerShellRef.current;
+    if (!shell) return;
+
+    try {
+      if (document.fullscreenElement === shell) {
+        await document.exitFullscreen();
+      } else {
+        await shell.requestFullscreen();
+      }
+    } catch {
+      // Ignore fullscreen API failures
+    }
+  }, []);
+
+  useEffect(() => {
+    const lookaheadVideo = lookaheadRef.current;
+    if (!lookaheadVideo || !selectedVideo?.video_url) return;
+
+    lookaheadLastPrimeRef.current = -1;
+    lookaheadVideo.src = selectedVideo.video_url;
+    lookaheadVideo.preload = "auto";
+    lookaheadVideo.load();
+  }, [selectedVideo?.id, selectedVideo?.video_url]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const shell = playerShellRef.current;
+      const playerVideo = videoRef.current;
+      const fullscreenElement = document.fullscreenElement;
+
+      if (shell && playerVideo && fullscreenElement === playerVideo) {
+        void shell.requestFullscreen().catch(() => {});
+      }
+
+      setIsPlayerFullscreen(document.fullscreenElement === shell);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
   useEffect(() => {
     const loadHistoricalLearningExamples = async () => {
       const playerId = selectedVideo?.player_id;
