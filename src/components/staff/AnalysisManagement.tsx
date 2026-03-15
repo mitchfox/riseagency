@@ -1664,21 +1664,50 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
 
         {/* Visibility Status */}
         {!isConcept && (
-          <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-            <Label className="text-sm font-medium whitespace-nowrap">Status</Label>
-            <Select
-              value={formData.visibility_status || 'live'}
-              onValueChange={(val) => setFormData({ ...formData, visibility_status: val })}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="live">Live</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="hidden">Hidden</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="space-y-3 p-3 rounded-lg border bg-card">
+            <div className="flex items-center gap-3">
+              <Label className="text-sm font-medium whitespace-nowrap">Status</Label>
+              <Select
+                value={formData.visibility_status || "live"}
+                onValueChange={(val) => {
+                  setFormData({
+                    ...formData,
+                    visibility_status: val,
+                    estimated_ready_at: val === "live" ? null : formData.estimated_ready_at || null,
+                  });
+                }}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="live">Live</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="hidden">Hidden</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(formData.visibility_status === "draft" || formData.visibility_status === "hidden") && (
+              <div className="space-y-1">
+                <Label htmlFor="analysis-estimated-ready" className="text-xs text-muted-foreground">
+                  Expected ready time (shown to player)
+                </Label>
+                <Input
+                  id="analysis-estimated-ready"
+                  type="datetime-local"
+                  value={toDateTimeLocalValue(formData.estimated_ready_at)}
+                  min={toDateTimeLocalValue(new Date().toISOString())}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      estimated_ready_at: fromDateTimeLocalValue(e.target.value),
+                    })
+                  }
+                  className="w-full sm:w-[280px]"
+                />
+              </div>
+            )}
           </div>
         )}
 
