@@ -312,8 +312,12 @@ const VideoItem = ({
 
   const hasAnnotation = !!(existingAnnotationId || (previewElements && previewElements.length > 0));
 
+  const cropStyle = existingCrop && (existingCrop.top > 0 || existingCrop.right > 0 || existingCrop.bottom > 0 || existingCrop.left > 0)
+    ? { clipPath: `inset(${existingCrop.top}% ${existingCrop.right}% ${existingCrop.bottom}% ${existingCrop.left}%)` }
+    : {};
+
   return (
-    <div className="relative max-w-xs">
+    <div className="relative max-w-xs" style={cropStyle}>
       {hasAnnotation ? (
         <ReadOnlyAnnotationPlayback
           key={`preview-${annotationVersion}`}
