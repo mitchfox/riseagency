@@ -469,7 +469,14 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
       }
     } else {
       setEditingAnalysis(null);
-      setFormData({ analysis_type: type, points: [], matchups: [], starting_xi: [], visibility_status: 'live' });
+      setFormData({
+        analysis_type: type,
+        points: [],
+        matchups: [],
+        starting_xi: [],
+        visibility_status: "live",
+        estimated_ready_at: null,
+      });
       // In Athlete Centre context, keep the currently selected player pre-linked
       setSelectedPlayerId(defaultPlayerId || "none");
       setSelectedPerformanceReportId("none");
