@@ -2,26 +2,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Crop, Loader2, RotateCcw } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+
+export interface CropRect {
+  top: number;    // percent from top
+  right: number;  // percent from right
+  bottom: number; // percent from bottom
+  left: number;   // percent from left
+}
 
 interface VideoCropDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   videoUrl: string;
-  onCropComplete: (newUrl: string) => void;
-}
-
-interface CropRect {
-  x: number; // percent
-  y: number;
-  width: number;
-  height: number;
+  onCropComplete: (crop: CropRect) => void;
+  initialCrop?: CropRect | null;
 }
 
 type HandleType = "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "nw";
 
-const MIN_SIZE = 5; // minimum crop size in percent
+const MIN_INSET = 0; // min inset percent
+const MAX_CROP = 90; // max total crop on any axis (keep at least 10% visible)
 
 const HANDLES: { type: HandleType; cursor: string; style: React.CSSProperties }[] = [
   { type: "nw", cursor: "nwse-resize", style: { top: -5, left: -5 } },
@@ -34,69 +34,64 @@ const HANDLES: { type: HandleType; cursor: string; style: React.CSSProperties }[
   { type: "w", cursor: "ew-resize", style: { top: "50%", left: -5, transform: "translateY(-50%)" } },
 ];
 
+const DEFAULT_CROP: CropRect = { top: 0, right: 0, bottom: 0, left: 0 };
+
 export const VideoCropDialog = ({
   open,
   onOpenChange,
   videoUrl,
   onCropComplete,
+  initialCrop,
 }: VideoCropDialogProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [frameDataUrl, setFrameDataUrl] = useState<string | null>(null);
-  const [cropRect, setCropRect] = useState<CropRect>({ x: 10, y: 10, width: 80, height: 80 });
-  const [processing, setProcessing] = useState(false);
-  const [videoDims, setVideoDims] = useState({ width: 0, height: 0 });
+  const [crop, setCrop] = useState<CropRect>(initialCrop || DEFAULT_CROP);
+  const [videoDims, setVideoDims] = useState({ width: 1920, height: 1080 });
 
   const interactionRef = useRef<{
     mode: "move" | "resize";
     handle?: HandleType;
     startX: number;
     startY: number;
-    startRect: CropRect;
+    startCrop: CropRect;
   } | null>(null);
-
-  // Capture a frame from the video
-  const captureFrame = useCallback(() => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) return;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    setVideoDims({ width: video.videoWidth, height: video.videoHeight });
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0);
-    setFrameDataUrl(canvas.toDataURL("image/jpeg", 0.9));
-  }, []);
 
   useEffect(() => {
     if (open) {
-      setFrameDataUrl(null);
-      setCropRect({ x: 10, y: 10, width: 80, height: 80 });
-      setProcessing(false);
+      setCrop(initialCrop || DEFAULT_CROP);
     }
-  }, [open]);
+  }, [open, initialCrop]);
 
-  const handleLoadedData = () => {
-    if (videoRef.current) videoRef.current.currentTime = 1;
+  const handleVideoLoaded = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const v = e.currentTarget;
+    setVideoDims({ width: v.videoWidth, height: v.videoHeight });
+    v.currentTime = 1;
   };
 
-  const handleSeeked = () => captureFrame();
+  const clampCrop = (c: CropRect): CropRect => ({
+    top: Math.max(MIN_INSET, Math.min(c.top, MAX_CROP - (100 - c.bottom - 10))),
+    right: Math.max(MIN_INSET, Math.min(c.right, MAX_CROP - (100 - c.left - 10))),
+    bottom: Math.max(MIN_INSET, Math.min(c.bottom, MAX_CROP - (100 - c.top - 10))),
+    left: Math.max(MIN_INSET, Math.min(c.left, MAX_CROP - (100 - c.right - 10))),
+  });
 
-  // Pointer math helpers
+  // Simpler clamp: ensure visible area >= 10% on each axis
+  const safeCrop = (c: CropRect): CropRect => {
+    let { top, right, bottom, left } = c;
+    top = Math.max(0, top);
+    right = Math.max(0, right);
+    bottom = Math.max(0, bottom);
+    left = Math.max(0, left);
+    // Ensure at least 10% visible on each axis
+    if (top + bottom > 90) { top = Math.min(top, 90 - bottom); bottom = Math.min(bottom, 90 - top); }
+    if (left + right > 90) { left = Math.min(left, 90 - right); right = Math.min(right, 90 - left); }
+    return { top, right, bottom, left };
+  };
+
   const getContainerSize = () => {
     const el = containerRef.current;
     if (!el) return { w: 1, h: 1 };
     return { w: el.clientWidth, h: el.clientHeight };
   };
-
-  const clampRect = (r: CropRect): CropRect => ({
-    x: Math.max(0, Math.min(r.x, 100 - MIN_SIZE)),
-    y: Math.max(0, Math.min(r.y, 100 - MIN_SIZE)),
-    width: Math.max(MIN_SIZE, Math.min(r.width, 100 - Math.max(0, r.x))),
-    height: Math.max(MIN_SIZE, Math.min(r.height, 100 - Math.max(0, r.y))),
-  });
 
   const onPointerDown = (e: React.PointerEvent, mode: "move" | "resize", handle?: HandleType) => {
     e.preventDefault();
@@ -107,7 +102,7 @@ export const VideoCropDialog = ({
       handle,
       startX: e.clientX,
       startY: e.clientY,
-      startRect: { ...cropRect },
+      startCrop: { ...crop },
     };
   };
 
@@ -117,150 +112,47 @@ export const VideoCropDialog = ({
     const { w, h } = getContainerSize();
     const dx = ((e.clientX - interaction.startX) / w) * 100;
     const dy = ((e.clientY - interaction.startY) / h) * 100;
-    const sr = interaction.startRect;
+    const sc = interaction.startCrop;
 
     if (interaction.mode === "move") {
-      setCropRect(clampRect({ ...sr, x: sr.x + dx, y: sr.y + dy }));
+      // Moving the visible area = adjusting all insets together
+      setCrop(safeCrop({
+        top: sc.top + dy,
+        bottom: sc.bottom - dy,
+        left: sc.left + dx,
+        right: sc.right - dx,
+      }));
       return;
     }
 
     const handle = interaction.handle!;
-    let { x, y, width, height } = sr;
+    let { top, right, bottom, left } = sc;
 
-    if (handle.includes("w")) { x = sr.x + dx; width = sr.width - dx; }
-    if (handle.includes("e")) { width = sr.width + dx; }
-    if (handle.includes("n")) { y = sr.y + dy; height = sr.height - dy; }
-    if (handle.includes("s")) { height = sr.height + dy; }
+    // Each handle adjusts the corresponding inset(s)
+    if (handle.includes("n")) top = sc.top + dy;
+    if (handle.includes("s")) bottom = sc.bottom - dy;
+    if (handle.includes("w")) left = sc.left + dx;
+    if (handle.includes("e")) right = sc.right - dx;
 
-    // Enforce minimums
-    if (width < MIN_SIZE) {
-      if (handle.includes("w")) { x = sr.x + sr.width - MIN_SIZE; }
-      width = MIN_SIZE;
-    }
-    if (height < MIN_SIZE) {
-      if (handle.includes("n")) { y = sr.y + sr.height - MIN_SIZE; }
-      height = MIN_SIZE;
-    }
-
-    setCropRect(clampRect({ x, y, width, height }));
+    setCrop(safeCrop({ top, right, bottom, left }));
   }, []);
 
   const onPointerUp = useCallback(() => {
     interactionRef.current = null;
   }, []);
 
-  const resetCrop = () => setCropRect({ x: 0, y: 0, width: 100, height: 100 });
+  const resetCrop = () => setCrop(DEFAULT_CROP);
 
-  // Pixel dimensions for display
-  const pixelW = Math.round((cropRect.width / 100) * videoDims.width);
-  const pixelH = Math.round((cropRect.height / 100) * videoDims.height);
+  // Visible area dimensions in pixels
+  const visW = Math.round(((100 - crop.left - crop.right) / 100) * videoDims.width);
+  const visH = Math.round(((100 - crop.top - crop.bottom) / 100) * videoDims.height);
 
-  const handleCrop = useCallback(async () => {
-    if (!videoRef.current) return;
-    setProcessing(true);
-
-    try {
-      const video = videoRef.current;
-      const canvas = canvasRef.current!;
-
-      const cropX = Math.round((cropRect.x / 100) * video.videoWidth);
-      const cropY = Math.round((cropRect.y / 100) * video.videoHeight);
-      const cropW = Math.max(2, Math.round((cropRect.width / 100) * video.videoWidth));
-      const cropH = Math.max(2, Math.round((cropRect.height / 100) * video.videoHeight));
-
-      canvas.width = cropW;
-      canvas.height = cropH;
-      const ctx = canvas.getContext("2d")!;
-
-      const hashMatch = videoUrl.match(/#t=([\d.]+),([\d.]+)/);
-      const startTime = hashMatch ? parseFloat(hashMatch[1]) : 0;
-      const endTime = hashMatch ? parseFloat(hashMatch[2]) : video.duration;
-
-      // Seek to start and wait
-      video.currentTime = startTime;
-      await new Promise<void>((r) => { video.onseeked = () => r(); });
-
-      // Draw the first frame immediately so the stream has content
-      ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-
-      const stream = canvas.captureStream(30);
-      const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
-        ? "video/webm;codecs=vp9"
-        : "video/webm";
-      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2_500_000 });
-      const chunks: Blob[] = [];
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
-
-      const recordingDone = new Promise<Blob>((resolve) => {
-        recorder.onstop = () => resolve(new Blob(chunks, { type: mimeType }));
-      });
-
-      recorder.start(100); // collect data every 100ms
-
-      // Use timeupdate for more reliable frame drawing than rAF
-      const onTimeUpdate = () => {
-        if (video.currentTime >= endTime || video.paused || video.ended) {
-          video.pause();
-          video.removeEventListener("timeupdate", onTimeUpdate);
-          // Small delay to ensure last frames are captured
-          setTimeout(() => recorder.stop(), 150);
-          return;
-        }
-        ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-      };
-
-      // Also use rAF for smoother frame capture between timeupdate events
-      let rafId: number;
-      const drawLoop = () => {
-        if (video.paused || video.ended || video.currentTime >= endTime) return;
-        ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-        rafId = requestAnimationFrame(drawLoop);
-      };
-
-      video.addEventListener("timeupdate", onTimeUpdate);
-      
-      // Play the video - must await to catch autoplay issues
-      try {
-        await video.play();
-      } catch (playError) {
-        console.error("Video play failed:", playError);
-        video.removeEventListener("timeupdate", onTimeUpdate);
-        throw new Error("Could not play video for cropping. Check browser autoplay settings.");
-      }
-      
-      rafId = requestAnimationFrame(drawLoop);
-
-      const blob = await recordingDone;
-      cancelAnimationFrame(rafId);
-
-      if (blob.size < 100) {
-        throw new Error("Cropped video is empty — encoding may have failed.");
-      }
-
-      const fileName = `cropped-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webm`;
-      const { error: uploadError } = await supabase.storage
-        .from("analysis-videos")
-        .upload(fileName, blob);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("analysis-videos")
-        .getPublicUrl(fileName);
-
-      onCropComplete(publicUrl);
-      onOpenChange(false);
-      toast.success("Video cropped successfully");
-    } catch (error: any) {
-      console.error("Crop failed:", error);
-      toast.error(error.message || "Failed to crop video");
-    } finally {
-      setProcessing(false);
-    }
-  }, [cropRect, videoUrl, onCropComplete, onOpenChange]);
+  const handleSave = () => {
+    // If crop is essentially zero, don't save
+    const isZero = crop.top < 0.5 && crop.right < 0.5 && crop.bottom < 0.5 && crop.left < 0.5;
+    onCropComplete(isZero ? { top: 0, right: 0, bottom: 0, left: 0 } : crop);
+    onOpenChange(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -268,97 +160,81 @@ export const VideoCropDialog = ({
         <DialogHeader>
           <DialogTitle>Crop Video</DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Drag sides or corners to select any area. The cropped version will replace the original clip.
+            Drag sides or corners to hide parts of the frame. The crop is applied visually — no re-encoding needed.
           </p>
         </DialogHeader>
 
         <div className="space-y-4">
-          <video
-            ref={videoRef}
-            src={videoUrl.split("#")[0]}
-            onLoadedData={handleLoadedData}
-            onSeeked={handleSeeked}
-            className="hidden"
-            crossOrigin="anonymous"
-            muted
-            playsInline
-            preload="auto"
-          />
-          <canvas ref={canvasRef} className="hidden" />
+          <div
+            ref={containerRef}
+            className="relative bg-black rounded-lg overflow-hidden select-none"
+            style={{ touchAction: "none" }}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+          >
+            <video
+              src={videoUrl.split("#")[0]}
+              onLoadedMetadata={handleVideoLoaded}
+              className="w-full h-auto block"
+              crossOrigin="anonymous"
+              muted
+              playsInline
+              preload="auto"
+              autoPlay
+              loop
+            />
 
-          {frameDataUrl ? (
-            <>
-              <div
-                ref={containerRef}
-                className="relative bg-muted rounded-lg overflow-hidden select-none"
-                style={{ touchAction: "none" }}
-                onPointerMove={onPointerMove}
-                onPointerUp={onPointerUp}
-              >
-                <img
-                  src={frameDataUrl}
-                  alt="Video frame"
-                  className="w-full h-auto block"
-                  draggable={false}
-                />
-
-                {/* Dark overlay outside crop */}
-                <div className="absolute inset-0 pointer-events-none">
-                  {/* Top */}
-                  <div className="absolute bg-black/50" style={{ top: 0, left: 0, right: 0, height: `${cropRect.y}%` }} />
-                  {/* Bottom */}
-                  <div className="absolute bg-black/50" style={{ bottom: 0, left: 0, right: 0, height: `${100 - cropRect.y - cropRect.height}%` }} />
-                  {/* Left */}
-                  <div className="absolute bg-black/50" style={{ top: `${cropRect.y}%`, left: 0, width: `${cropRect.x}%`, height: `${cropRect.height}%` }} />
-                  {/* Right */}
-                  <div className="absolute bg-black/50" style={{ top: `${cropRect.y}%`, right: 0, width: `${100 - cropRect.x - cropRect.width}%`, height: `${cropRect.height}%` }} />
-                </div>
-
-                {/* Crop box */}
-                <div
-                  className="absolute border-2 border-primary"
-                  style={{
-                    left: `${cropRect.x}%`,
-                    top: `${cropRect.y}%`,
-                    width: `${cropRect.width}%`,
-                    height: `${cropRect.height}%`,
-                    cursor: "move",
-                  }}
-                  onPointerDown={(e) => onPointerDown(e, "move")}
-                >
-                  {/* Rule of thirds grid lines */}
-                  <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute top-1/3 left-0 right-0 border-t border-primary/30" />
-                    <div className="absolute top-2/3 left-0 right-0 border-t border-primary/30" />
-                    <div className="absolute left-1/3 top-0 bottom-0 border-l border-primary/30" />
-                    <div className="absolute left-2/3 top-0 bottom-0 border-l border-primary/30" />
-                  </div>
-
-                  {/* Resize handles */}
-                  {HANDLES.map((h) => (
-                    <div
-                      key={h.type}
-                      className="absolute w-[10px] h-[10px] bg-primary rounded-sm border border-primary-foreground z-10"
-                      style={{ ...h.style, cursor: h.cursor }}
-                      onPointerDown={(e) => onPointerDown(e, "resize", h.type)}
-                    />
-                  ))}
-
-                  {/* Dimension label */}
-                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded whitespace-nowrap">
-                    {pixelW} × {pixelH}
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="h-[400px] bg-muted rounded-lg flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            {/* Dark overlay regions (the cropped-out parts) */}
+            <div className="absolute inset-0 pointer-events-none">
+              {/* Top */}
+              <div className="absolute bg-black/60" style={{ top: 0, left: 0, right: 0, height: `${crop.top}%` }} />
+              {/* Bottom */}
+              <div className="absolute bg-black/60" style={{ bottom: 0, left: 0, right: 0, height: `${crop.bottom}%` }} />
+              {/* Left */}
+              <div className="absolute bg-black/60" style={{ top: `${crop.top}%`, left: 0, width: `${crop.left}%`, bottom: `${crop.bottom}%` }} />
+              {/* Right */}
+              <div className="absolute bg-black/60" style={{ top: `${crop.top}%`, right: 0, width: `${crop.right}%`, bottom: `${crop.bottom}%` }} />
             </div>
-          )}
+
+            {/* Crop selection box (the visible area) */}
+            <div
+              className="absolute border-2 border-primary"
+              style={{
+                top: `${crop.top}%`,
+                left: `${crop.left}%`,
+                right: `${crop.right}%`,
+                bottom: `${crop.bottom}%`,
+                cursor: "move",
+              }}
+              onPointerDown={(e) => onPointerDown(e, "move")}
+            >
+              {/* Grid lines */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-1/3 left-0 right-0 border-t border-primary/30" />
+                <div className="absolute top-2/3 left-0 right-0 border-t border-primary/30" />
+                <div className="absolute left-1/3 top-0 bottom-0 border-l border-primary/30" />
+                <div className="absolute left-2/3 top-0 bottom-0 border-l border-primary/30" />
+              </div>
+
+              {/* Resize handles */}
+              {HANDLES.map((h) => (
+                <div
+                  key={h.type}
+                  className="absolute w-[10px] h-[10px] bg-primary rounded-sm border border-primary-foreground z-10"
+                  style={{ ...h.style, cursor: h.cursor }}
+                  onPointerDown={(e) => onPointerDown(e, "resize", h.type)}
+                />
+              ))}
+
+              {/* Dimension label */}
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded whitespace-nowrap">
+                {visW} × {visH}
+              </div>
+            </div>
+          </div>
 
           <div className="flex gap-2 justify-between">
-            <Button variant="ghost" size="sm" onClick={resetCrop} disabled={!frameDataUrl}>
+            <Button variant="ghost" size="sm" onClick={resetCrop}>
               <RotateCcw className="w-4 h-4 mr-1" />
               Reset
             </Button>
@@ -366,18 +242,9 @@ export const VideoCropDialog = ({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleCrop} disabled={processing || !frameDataUrl}>
-                {processing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                    Cropping...
-                  </>
-                ) : (
-                  <>
-                    <Crop className="w-4 h-4 mr-1" />
-                    Crop & Save
-                  </>
-                )}
+              <Button onClick={handleSave}>
+                <Crop className="w-4 h-4 mr-1" />
+                Apply Crop
               </Button>
             </div>
           </div>
@@ -385,4 +252,17 @@ export const VideoCropDialog = ({
       </DialogContent>
     </Dialog>
   );
+};
+
+/**
+ * Utility: Apply a CropRect as a CSS clip-path inset to a video container.
+ * Use this on the wrapper div around the video to visually crop it.
+ */
+export const getCropStyle = (crop?: CropRect | null): React.CSSProperties => {
+  if (!crop || (crop.top === 0 && crop.right === 0 && crop.bottom === 0 && crop.left === 0)) {
+    return {};
+  }
+  return {
+    clipPath: `inset(${crop.top}% ${crop.right}% ${crop.bottom}% ${crop.left}%)`,
+  };
 };

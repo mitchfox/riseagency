@@ -61,6 +61,7 @@ interface Point {
   video_urls?: string[];
   audio_url?: string;
   annotation_ids?: Record<string, string>; // video_url -> annotation_project_id
+  video_crops?: Record<string, import("./VideoCropDialog").CropRect>; // video_url -> crop rect
   concept_tags?: string[]; // concept IDs from coaching_analysis
 }
 
@@ -204,6 +205,8 @@ const VideoItem = ({
   url,
   onRemove,
   onTrimComplete,
+  onCropSaved,
+  existingCrop,
   pointIndex,
   totalPoints,
   onMoveToPoint,
@@ -213,6 +216,8 @@ const VideoItem = ({
   url: string;
   onRemove: () => void;
   onTrimComplete: (newUrl: string) => void;
+  onCropSaved: (crop: import("./VideoCropDialog").CropRect) => void;
+  existingCrop?: import("./VideoCropDialog").CropRect | null;
   pointIndex: number;
   totalPoints: number;
   onMoveToPoint: (targetPointIndex: number) => void;
@@ -308,8 +313,12 @@ const VideoItem = ({
 
   const hasAnnotation = !!(existingAnnotationId || (previewElements && previewElements.length > 0));
 
+  const cropStyle = existingCrop && (existingCrop.top > 0 || existingCrop.right > 0 || existingCrop.bottom > 0 || existingCrop.left > 0)
+    ? { clipPath: `inset(${existingCrop.top}% ${existingCrop.right}% ${existingCrop.bottom}% ${existingCrop.left}%)` }
+    : {};
+
   return (
-    <div className="relative max-w-xs">
+    <div className="relative max-w-xs" style={cropStyle}>
       {hasAnnotation ? (
         <ReadOnlyAnnotationPlayback
           key={`preview-${annotationVersion}`}
@@ -394,7 +403,8 @@ const VideoItem = ({
         open={cropOpen}
         onOpenChange={setCropOpen}
         videoUrl={url}
-        onCropComplete={onTrimComplete}
+        onCropComplete={onCropSaved}
+        initialCrop={existingCrop}
       />
       <Dialog open={annotateOpen} onOpenChange={(open) => { if (!open) { setAnnotateOpen(false); } }}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 overflow-hidden">
@@ -845,10 +855,15 @@ const SortablePointCard = ({
                   pointIndex={index}
                   totalPoints={totalPoints}
                   existingAnnotationId={point.annotation_ids?.[url]}
+                  existingCrop={point.video_crops?.[url]}
                   onMoveToPoint={(targetIdx) => onMoveVideoToPoint(index, vidIndex, targetIdx)}
                   onAnnotationSaved={(annotationId) => {
                     const currentIds = point.annotation_ids || {};
                     updatePoint(index, "annotation_ids", { ...currentIds, [url]: annotationId });
+                  }}
+                  onCropSaved={(crop) => {
+                    const currentCrops = point.video_crops || {};
+                    updatePoint(index, "video_crops", { ...currentCrops, [url]: crop });
                   }}
                   onRemove={() => {
                     const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
