@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors, PenLine, Loader2, ArrowUp, ArrowDown, ArrowRightLeft, BookOpen } from "lucide-react";
+import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors, PenLine, Loader2, ArrowUp, ArrowDown, ArrowRightLeft, BookOpen, Crop } from "lucide-react";
 import { AudioRecorder } from "./AudioRecorder";
 import {
   Collapsible,
@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { VideoTrimmerDialog } from "./VideoTrimmerDialog";
+import { VideoCropDialog } from "./VideoCropDialog";
 import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEditor";
 import type { AnnotationProject } from "@/components/staff/annotations/AnnotationProjects";
 import { ReadOnlyAnnotationPlayback } from "@/components/portal/ReadOnlyAnnotationPlayback";
@@ -219,6 +220,7 @@ const VideoItem = ({
   existingAnnotationId?: string;
 }) => {
   const [trimOpen, setTrimOpen] = useState(false);
+  const [cropOpen, setCropOpen] = useState(false);
   const [annotateOpen, setAnnotateOpen] = useState(false);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
   const [annotationVersion, setAnnotationVersion] = useState(0); // bump to refresh preview
@@ -345,6 +347,15 @@ const VideoItem = ({
         >
           <Scissors className="w-3 h-3" />
         </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-6 w-6 p-0"
+          onClick={() => setCropOpen(true)}
+          title="Crop video frame"
+        >
+          <Crop className="w-3 h-3" />
+        </Button>
         {otherPoints.length > 0 && (
           <Select
             value=""
@@ -378,6 +389,12 @@ const VideoItem = ({
         onOpenChange={setTrimOpen}
         videoUrl={url}
         onTrimComplete={onTrimComplete}
+      />
+      <VideoCropDialog
+        open={cropOpen}
+        onOpenChange={setCropOpen}
+        videoUrl={url}
+        onCropComplete={onTrimComplete}
       />
       <Dialog open={annotateOpen} onOpenChange={(open) => { if (!open) { setAnnotateOpen(false); } }}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 overflow-hidden">
