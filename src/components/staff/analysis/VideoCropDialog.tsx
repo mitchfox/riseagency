@@ -190,6 +190,7 @@ export const VideoCropDialog = ({
                   image={frameDataUrl}
                   crop={crop}
                   zoom={zoom}
+                  aspect={undefined}
                   onCropChange={setCrop}
                   onZoomChange={setZoom}
                   onCropComplete={onCropAreaChange}
