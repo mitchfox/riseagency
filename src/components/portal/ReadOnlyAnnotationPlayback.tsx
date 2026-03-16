@@ -212,8 +212,9 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
         });
 
         if (newElements.length > 0) {
-          // Record playhead gate FIRST, then mark IDs, then freeze
-          lastFreezeTriggerTimeRef.current = relTime;
+          // Gate by the latest logical trigger point in the current visible batch,
+          // not just the paused playhead time.
+          lastFreezeTriggerTimeRef.current = Math.max(relTime, ...computed.map(el => el.appearAt));
           newElements.forEach(el => triggeredTimesRef.current.add(el.id));
           startFreezeRef.current(computed, video);
           rafRef.current = requestAnimationFrame(tick);

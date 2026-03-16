@@ -348,6 +348,17 @@ const TextReveal = ({ children, delay = 0 }: { children: React.ReactNode; delay?
   </motion.div>
 );
 
+const isLightColor = (color: string | null): boolean => {
+  if (!color) return false;
+  const hex = color.replace('#', '');
+  if (hex.length < 6) return false;
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.65;
+};
+
 // Main Header
 const AnalysisHeader = ({
   homeTeam,
@@ -430,18 +441,19 @@ const AnalysisHeader = ({
           }}
         >
           <span
-            className="font-bebas text-white tracking-wide uppercase text-center leading-tight overflow-hidden"
+            className="font-bebas tracking-wide uppercase text-center leading-tight overflow-hidden"
             style={{
               fontSize: 'clamp(0.7rem, 3.5vw, 1.2rem)',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+              textShadow: isLightColor(homeBgColor) ? 'none' : '2px 2px 4px rgba(0,0,0,0.8)',
+              color: isLightColor(homeBgColor) ? '#000000' : '#ffffff',
               lineHeight: 1.1,
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical' as const,
               wordBreak: 'break-word' as const,
-              marginLeft: '22%',
-              marginRight: '12%',
-              maxWidth: '60%',
+              marginLeft: '36%',
+              marginRight: '20%',
+              maxWidth: '50%',
             }}
           >
             {homeTeam}
@@ -457,18 +469,19 @@ const AnalysisHeader = ({
           }}
         >
           <span
-            className="font-bebas text-white tracking-wide uppercase text-center leading-tight overflow-hidden"
+            className="font-bebas tracking-wide uppercase text-center leading-tight overflow-hidden"
             style={{
               fontSize: 'clamp(0.7rem, 3.5vw, 1.2rem)',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+              textShadow: isLightColor(awayBgColor) ? 'none' : '2px 2px 4px rgba(0,0,0,0.8)',
+              color: isLightColor(awayBgColor) ? '#000000' : '#ffffff',
               lineHeight: 1.1,
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical' as const,
               wordBreak: 'break-word' as const,
-              marginLeft: '12%',
-              marginRight: '22%',
-              maxWidth: '60%',
+              marginLeft: '20%',
+              marginRight: '36%',
+              maxWidth: '50%',
             }}
           >
             {awayTeam}
@@ -678,17 +691,32 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
 // Video with annotation overlay for analysis points
 // Uses the shared ReadOnlyAnnotationPlayback which mirrors the editor's freeze/pause
 // behaviour and supports all annotation types including space-oval, distance, etc.
-const AnnotatedPointVideo = ({ url, annotationId, crop }: { url: string; annotationId?: string; crop?: { top: number; right: number; bottom: number; left: number } | null }) => {
-  const hasCrop = crop && (crop.top > 0 || crop.right > 0 || crop.bottom > 0 || crop.left > 0);
-  const cropStyle = hasCrop
-    ? { clipPath: `inset(${crop.top}% ${crop.right}% ${crop.bottom}% ${crop.left}%)` }
-    : {};
+const AnnotatedPointVideo = ({ url, annotationId, crop, audioUrl }: { url: string; annotationId?: string; crop?: { top: number; right: number; bottom: number; left: number } | null; audioUrl?: string }) => {
+  const hasCrop = !!(crop && (crop.top > 0 || crop.right > 0 || crop.bottom > 0 || crop.left > 0));
+  const cropShiftStyle = hasCrop && crop
+    ? {
+        marginTop: `-${(crop.top / (100 - crop.top - crop.bottom)) * 100}%`,
+        marginBottom: `-${(crop.bottom / (100 - crop.top - crop.bottom)) * 100}%`,
+        marginLeft: `-${(crop.left / (100 - crop.left - crop.right)) * 100}%`,
+        marginRight: `-${(crop.right / (100 - crop.left - crop.right)) * 100}%`,
+      }
+    : undefined;
+
   return (
-    <div style={cropStyle}>
-      <ReadOnlyAnnotationPlayback
-        videoUrl={url}
-        annotationProjectId={annotationId}
-      />
+    <div className="relative rounded-lg border-2 border-primary/30 overflow-hidden shadow-md">
+      <div style={hasCrop ? { overflow: 'hidden' } : undefined}>
+        <div style={cropShiftStyle}>
+          <ReadOnlyAnnotationPlayback
+            videoUrl={url}
+            annotationProjectId={annotationId}
+          />
+        </div>
+      </div>
+      {audioUrl && (
+        <div className="absolute top-4 right-4 z-20 md:top-5 md:right-5">
+          <AudioPlaybackButton audioUrl={audioUrl} />
+        </div>
+      )}
     </div>
   );
 };
@@ -774,8 +802,12 @@ const AnalysisViewer = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-black flex items-center justify-center px-6">
+        <div className="w-full max-w-md rounded-2xl border border-primary/30 bg-card/80 p-8 text-center shadow-2xl backdrop-blur-sm">
+          <div className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+          <h1 className="font-bebas text-3xl uppercase tracking-[0.2em] text-primary">Loading Analysis</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Preparing presentation, media and annotations.</p>
+        </div>
       </div>
     );
   }
@@ -1228,6 +1260,7 @@ const AnalysisViewer = () => {
                                   url={url}
                                   annotationId={point.annotation_ids?.[url]}
                                   crop={point.video_crops?.[url]}
+                                  audioUrl={vidIndex === 0 ? point.audio_url : undefined}
                                 />
                               ))}
                             </div>
@@ -1531,6 +1564,7 @@ const AnalysisViewer = () => {
                                   url={url}
                                   annotationId={point.annotation_ids?.[url]}
                                   crop={point.video_crops?.[url]}
+                                  audioUrl={vidIndex === 0 ? point.audio_url : undefined}
                                 />
                               ))}
                             </div>
@@ -1645,6 +1679,7 @@ const AnalysisViewer = () => {
                                   url={url}
                                   annotationId={point.annotation_ids?.[url]}
                                   crop={point.video_crops?.[url]}
+                                  audioUrl={vidIndex === 0 ? point.audio_url : undefined}
                                 />
                               ))}
                             </div>
