@@ -186,8 +186,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       // Check for new annotations that haven't triggered a freeze yet
       if (!video.paused && computed.length > 0) {
         const newElements = computed.filter(el => {
-          const roundedAppear = Math.round(el.appearAt * 4) / 4;
-          return !triggeredTimesRef.current.has(roundedAppear);
+          return !triggeredTimesRef.current.has(el.id);
         });
 
         if (newElements.length > 0) {
