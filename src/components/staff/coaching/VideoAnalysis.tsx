@@ -1925,23 +1925,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   e.stopPropagation();
                 }
               }}
-              onWaiting={() => {
-                // At high playback rates, browsers stall when they can't decode fast enough.
-                // Skip forward slightly to a buffered region instead of dropping rate.
-                const video = videoRef.current;
-                if (!video || video.playbackRate <= 1) return;
-                const buffered = video.buffered;
-                const ct = video.currentTime;
-                // Find a buffered range ahead of current time
-                for (let i = 0; i < buffered.length; i++) {
-                  if (buffered.start(i) > ct && buffered.start(i) - ct < 2) {
-                    video.currentTime = buffered.start(i) + 0.1;
-                    return;
-                  }
-                }
-                // Fallback: nudge forward slightly to skip the stall point
-                video.currentTime = ct + 0.5;
-              }}
               onTimeUpdate={() => {
                 if (overlayElements.length > 0) {
                   setOverlayCurrentTime(videoRef.current?.currentTime ?? 0);
@@ -1949,7 +1932,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 primeLookaheadBuffer();
               }}
             />
-            {/* Hidden lookahead video to prime browser buffer ~5 min ahead */}
+            {/* Hidden lookahead video plus background fetch to keep the full source downloading */}
             <video
               ref={lookaheadRef}
               src={selectedVideo.video_url}
