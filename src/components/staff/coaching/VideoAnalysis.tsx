@@ -208,6 +208,14 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
   }, [stopEightXSim]);
 
+  // Clean up 8x simulation on video change or unmount
+  useEffect(() => {
+    stopEightXSim();
+    setPlaybackSpeed(1);
+  }, [selectedVideo, stopEightXSim]);
+
+  useEffect(() => () => stopEightXSim(), [stopEightXSim]);
+
   // Inline annotation
   const [annotatingClip, setAnnotatingClip] = useState<Clip | null>(null);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
