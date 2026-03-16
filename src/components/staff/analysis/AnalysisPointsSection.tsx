@@ -1016,59 +1016,66 @@ export const AnalysisPointsSection = ({
         >
           <SortableContext items={pointIds} strategy={verticalListSortingStrategy}>
             {formData.points?.map((point: Point, index: number) => (
-              <SortablePointCard
-                key={pointIds[index]}
-                pointId={pointIds[index]}
-                point={point}
-                index={index}
-                totalPoints={(formData.points || []).length}
-                analysisType={analysisType}
-                removePoint={removePoint}
-                updatePoint={updatePoint}
-                onMovePoint={(fromIdx, toIdx) => {
-                  const newPoints = [...(formData.points || [])];
-                  const [moved] = newPoints.splice(fromIdx, 1);
-                  newPoints.splice(toIdx, 0, moved);
-                  setFormData({ ...formData, points: newPoints });
-                }}
-                onMoveVideoToPoint={(fromPointIdx, videoIdx, toPointIdx) => {
-                  const newPoints = JSON.parse(JSON.stringify(formData.points || []));
-                  const fromVideos = newPoints[fromPointIdx].video_urls || (newPoints[fromPointIdx].video_url ? [newPoints[fromPointIdx].video_url] : []);
-                  const [movedUrl] = fromVideos.splice(videoIdx, 1);
-                  newPoints[fromPointIdx].video_urls = fromVideos;
-                  // Migrate annotation_ids entry with the video
-                  const fromIds = newPoints[fromPointIdx].annotation_ids || {};
-                  if (fromIds[movedUrl]) {
-                    const toIds = newPoints[toPointIdx].annotation_ids || {};
-                    toIds[movedUrl] = fromIds[movedUrl];
-                    delete fromIds[movedUrl];
-                    newPoints[fromPointIdx].annotation_ids = fromIds;
-                    newPoints[toPointIdx].annotation_ids = toIds;
-                  }
-                  const toVideos = newPoints[toPointIdx].video_urls || (newPoints[toPointIdx].video_url ? [newPoints[toPointIdx].video_url] : []);
-                  toVideos.push(movedUrl);
-                  newPoints[toPointIdx].video_urls = toVideos;
-                  setFormData({ ...formData, points: newPoints });
-                  toast.success(`Video moved to Point ${toPointIdx + 1}`);
-                }}
-                handleImageUpload={handleImageUpload}
-                handleVideoUploadForPoint={handleVideoUploadForPoint}
-                removeImageFromPoint={removeImageFromPoint}
-                uploadingImage={uploadingImage}
-                generateWithAI={generateWithAI}
-                aiGenerating={aiGenerating}
-                performanceReportClips={performanceReportClips}
-                videoAnalysisClips={vaClips}
-                concepts={concepts}
-              />
+              <div key={pointIds[index]}>
+                <SortablePointCard
+                  pointId={pointIds[index]}
+                  point={point}
+                  index={index}
+                  totalPoints={(formData.points || []).length}
+                  analysisType={analysisType}
+                  removePoint={removePoint}
+                  updatePoint={updatePoint}
+                  onMovePoint={(fromIdx, toIdx) => {
+                    const newPoints = [...(formData.points || [])];
+                    const [moved] = newPoints.splice(fromIdx, 1);
+                    newPoints.splice(toIdx, 0, moved);
+                    setFormData({ ...formData, points: newPoints });
+                  }}
+                  onMoveVideoToPoint={(fromPointIdx, videoIdx, toPointIdx) => {
+                    const newPoints = JSON.parse(JSON.stringify(formData.points || []));
+                    const fromVideos = newPoints[fromPointIdx].video_urls || (newPoints[fromPointIdx].video_url ? [newPoints[fromPointIdx].video_url] : []);
+                    const [movedUrl] = fromVideos.splice(videoIdx, 1);
+                    newPoints[fromPointIdx].video_urls = fromVideos;
+                    const fromIds = newPoints[fromPointIdx].annotation_ids || {};
+                    if (fromIds[movedUrl]) {
+                      const toIds = newPoints[toPointIdx].annotation_ids || {};
+                      toIds[movedUrl] = fromIds[movedUrl];
+                      delete fromIds[movedUrl];
+                      newPoints[fromPointIdx].annotation_ids = fromIds;
+                      newPoints[toPointIdx].annotation_ids = toIds;
+                    }
+                    const toVideos = newPoints[toPointIdx].video_urls || (newPoints[toPointIdx].video_url ? [newPoints[toPointIdx].video_url] : []);
+                    toVideos.push(movedUrl);
+                    newPoints[toPointIdx].video_urls = toVideos;
+                    setFormData({ ...formData, points: newPoints });
+                    toast.success(`Video moved to Point ${toPointIdx + 1}`);
+                  }}
+                  handleImageUpload={handleImageUpload}
+                  handleVideoUploadForPoint={handleVideoUploadForPoint}
+                  removeImageFromPoint={removeImageFromPoint}
+                  uploadingImage={uploadingImage}
+                  generateWithAI={generateWithAI}
+                  aiGenerating={aiGenerating}
+                  performanceReportClips={performanceReportClips}
+                  videoAnalysisClips={vaClips}
+                  concepts={concepts}
+                />
+                {/* Add Point + Save between each point */}
+                <div className="flex items-center gap-2 my-2">
+                  <Button onClick={addPoint} variant="outline" size="sm" className="flex-1">
+                    <Plus className="w-3.5 h-3.5 mr-1.5" />
+                    Add {analysisType === "concept" ? "Images" : "Point"}
+                  </Button>
+                  {onSave && (
+                    <Button onClick={onSave} size="sm" className="flex-1">
+                      Save Analysis
+                    </Button>
+                  )}
+                </div>
+              </div>
             ))}
           </SortableContext>
         </DndContext>
-
-        <Button onClick={addPoint} variant="outline" className="w-full">
-          <Plus className="w-4 h-4 mr-2" />
-          Add {analysisType === "concept" ? "Images" : "Point"}
-        </Button>
       </CollapsibleContent>
     </Collapsible>
   );
