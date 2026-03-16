@@ -219,7 +219,25 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     };
   }, []);
 
-  // Effect A: Detect annotation timestamps, capture freeze frame, pause video
+  // Seek to initialSeekTime when video is ready
+  useEffect(() => {
+    if (initialSeekTime == null || initialSeekTime <= 0) return;
+    const video = videoRef.current;
+    if (!video) return;
+    const doSeek = () => {
+      if (video.readyState >= 1) {
+        video.currentTime = initialSeekTime;
+        video.pause();
+      }
+    };
+    if (video.readyState >= 1) {
+      doSeek();
+    } else {
+      video.addEventListener('loadedmetadata', doSeek, { once: true });
+      return () => video.removeEventListener('loadedmetadata', doSeek);
+    }
+  }, [initialSeekTime]);
+
   useEffect(() => {
     if (isExportingRef.current) return;
     if (drawingMode || !activeKlip || playbackFreezeActive) return;

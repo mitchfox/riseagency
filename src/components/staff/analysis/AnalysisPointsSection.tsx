@@ -229,9 +229,11 @@ const VideoItem = ({
   const [trimOpen, setTrimOpen] = useState(false);
   const [cropOpen, setCropOpen] = useState(false);
   const [annotateOpen, setAnnotateOpen] = useState(false);
+  const [annotateSeekTime, setAnnotateSeekTime] = useState<number | undefined>(undefined);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
   const [annotationVersion, setAnnotationVersion] = useState(0); // bump to refresh preview
   const [moveOpen, setMoveOpen] = useState(false);
+  const videoPreviewRef = useRef<HTMLVideoElement | null>(null);
 
   // Load existing annotation project if one exists
   useEffect(() => {
