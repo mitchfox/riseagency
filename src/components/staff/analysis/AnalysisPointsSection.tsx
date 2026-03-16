@@ -915,6 +915,7 @@ export const AnalysisPointsSection = ({
   defaultOpen = false,
   performanceReportClips = [],
   analysisId,
+  onSave,
 }: PointsSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [vaClips, setVaClips] = useState<VideoAnalysisClip[]>([]);
