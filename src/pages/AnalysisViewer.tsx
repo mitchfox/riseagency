@@ -691,17 +691,32 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
 // Video with annotation overlay for analysis points
 // Uses the shared ReadOnlyAnnotationPlayback which mirrors the editor's freeze/pause
 // behaviour and supports all annotation types including space-oval, distance, etc.
-const AnnotatedPointVideo = ({ url, annotationId, crop }: { url: string; annotationId?: string; crop?: { top: number; right: number; bottom: number; left: number } | null }) => {
-  const hasCrop = crop && (crop.top > 0 || crop.right > 0 || crop.bottom > 0 || crop.left > 0);
-  const cropStyle = hasCrop
-    ? { clipPath: `inset(${crop.top}% ${crop.right}% ${crop.bottom}% ${crop.left}%)` }
-    : {};
+const AnnotatedPointVideo = ({ url, annotationId, crop, audioUrl }: { url: string; annotationId?: string; crop?: { top: number; right: number; bottom: number; left: number } | null; audioUrl?: string }) => {
+  const hasCrop = !!(crop && (crop.top > 0 || crop.right > 0 || crop.bottom > 0 || crop.left > 0));
+  const cropShiftStyle = hasCrop && crop
+    ? {
+        marginTop: `-${(crop.top / (100 - crop.top - crop.bottom)) * 100}%`,
+        marginBottom: `-${(crop.bottom / (100 - crop.top - crop.bottom)) * 100}%`,
+        marginLeft: `-${(crop.left / (100 - crop.left - crop.right)) * 100}%`,
+        marginRight: `-${(crop.right / (100 - crop.left - crop.right)) * 100}%`,
+      }
+    : undefined;
+
   return (
-    <div style={cropStyle}>
-      <ReadOnlyAnnotationPlayback
-        videoUrl={url}
-        annotationProjectId={annotationId}
-      />
+    <div className="relative rounded-lg border-2 border-primary/30 overflow-hidden shadow-md">
+      <div style={hasCrop ? { overflow: 'hidden' } : undefined}>
+        <div style={cropShiftStyle}>
+          <ReadOnlyAnnotationPlayback
+            videoUrl={url}
+            annotationProjectId={annotationId}
+          />
+        </div>
+      </div>
+      {audioUrl && (
+        <div className="absolute top-4 right-4 z-20 md:top-5 md:right-5">
+          <AudioPlaybackButton audioUrl={audioUrl} />
+        </div>
+      )}
     </div>
   );
 };
