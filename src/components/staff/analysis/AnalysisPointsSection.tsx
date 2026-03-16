@@ -807,9 +807,9 @@ const SortablePointCard = ({
 
         {/* Concept Tags + Audio Commentary on same line */}
         {analysisType !== "concept" && (
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center justify-between">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex min-h-[112px] flex-col rounded-lg border bg-muted/50 p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
                 <Label className="flex items-center gap-1.5">
                   <BookOpen className="w-3.5 h-3.5" />
                   Linked Concepts
@@ -829,7 +829,7 @@ const SortablePointCard = ({
                           .map(c => (
                             <button
                               key={c.id}
-                              className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted transition-colors"
+                              className="w-full rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted"
                               onClick={() => {
                                 const current = point.concept_tags || [];
                                 updatePoint(index, "concept_tags" as keyof Point, [...current, c.id]);
@@ -843,14 +843,14 @@ const SortablePointCard = ({
                             </button>
                           ))}
                         {concepts.filter(c => !(point.concept_tags || []).includes(c.id)).length === 0 && (
-                          <p className="text-xs text-muted-foreground px-2 py-1">No more concepts available</p>
+                          <p className="px-2 py-1 text-xs text-muted-foreground">No more concepts available</p>
                         )}
                       </div>
                     </ScrollArea>
                   </PopoverContent>
                 </Popover>
               </div>
-              {(point.concept_tags || []).length > 0 && (
+              {(point.concept_tags || []).length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {(point.concept_tags || []).map(tagId => {
                     const concept = concepts.find(c => c.id === tagId);
@@ -858,14 +858,14 @@ const SortablePointCard = ({
                     return (
                       <div key={tagId} className="flex items-center gap-0.5">
                         <button
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-gold/15 text-gold border border-gold/30 hover:bg-gold/25 transition-colors"
+                          className="inline-flex items-center gap-1 rounded-md border border-gold/30 bg-gold/15 px-2.5 py-1 text-xs font-medium text-gold transition-colors hover:bg-gold/25"
                           onClick={() => setViewingConcept(concept)}
                         >
                           <BookOpen className="w-3 h-3" />
                           {concept.title}
                         </button>
                         <button
-                          className="text-muted-foreground hover:text-destructive transition-colors"
+                          className="text-muted-foreground transition-colors hover:text-destructive"
                           onClick={() => {
                             const current = point.concept_tags || [];
                             updatePoint(index, "concept_tags" as keyof Point, current.filter(id => id !== tagId));
@@ -877,11 +877,15 @@ const SortablePointCard = ({
                     );
                   })}
                 </div>
+              ) : (
+                <div className="flex flex-1 items-center rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">
+                  No linked concepts yet.
+                </div>
               )}
             </div>
-            <div className="flex-1">
-              <Label>Audio Commentary</Label>
-              <div className="mt-1">
+            <div className="flex min-h-[112px] flex-col rounded-lg border bg-muted/50 p-3">
+              <Label className="mb-2">Audio Commentary</Label>
+              <div className="flex-1">
                 <AudioRecorder
                   audioUrl={point.audio_url}
                   onAudioChange={(url) => updatePoint(index, "audio_url" as keyof Point, url)}
