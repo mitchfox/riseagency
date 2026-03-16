@@ -317,8 +317,10 @@ const VideoItem = ({
     ? { clipPath: `inset(${existingCrop.top}% ${existingCrop.right}% ${existingCrop.bottom}% ${existingCrop.left}%)` }
     : {};
 
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
+
   return (
-    <div className="relative max-w-xs" style={cropStyle}>
+    <div className="relative" style={cropStyle}>
       {hasAnnotation ? (
         <ReadOnlyAnnotationPlayback
           key={`preview-${annotationVersion}`}
