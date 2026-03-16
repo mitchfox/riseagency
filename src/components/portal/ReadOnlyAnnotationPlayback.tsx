@@ -694,7 +694,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       {freezeActive && freezeFrameUrl && (
         <img
           src={freezeFrameUrl}
-          className="absolute inset-0 w-full h-full object-fill z-[1]"
+          className="absolute inset-0 w-full h-full aspect-video object-fill z-[1]"
           alt=""
           style={{
             opacity: freezePhase === 'fading' ? 0 : 1,
