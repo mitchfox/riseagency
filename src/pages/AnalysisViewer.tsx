@@ -730,44 +730,12 @@ const AnalysisViewer = () => {
   
   const [pageLoaded, setPageLoaded] = useState(false);
 
-  // Extract UUID from slug (e.g., "team-vs-team-uuid" -> "uuid")
-  const analysisId = rawSlug ? extractAnalysisIdFromSlug(rawSlug) : null;
-
-  // Mark page as loaded after initial render + short delay to let framework/text/images paint first
+  // Minimum loading screen time (matches FFF: 6.5s branded loading)
+  const [minDelayPassed, setMinDelayPassed] = useState(false);
   useEffect(() => {
-    const timer = setTimeout(() => setPageLoaded(true), 1500);
+    const timer = setTimeout(() => setMinDelayPassed(true), 6500);
     return () => clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    if (analysisId) fetchAnalysis();
-  }, [analysisId]);
-
-  const fetchAnalysis = async () => {
-    try {
-      // Fetch analysis data
-      const { data, error } = await supabase
-        .from("analyses")
-        .select("*")
-        .eq("id", analysisId)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!data) {
-        setLoading(false);
-        return;
-      }
-
-      // Fetch linked player name from player_analysis
-      const { data: playerData } = await supabase
-        .from("player_analysis")
-        .select("player_id, players(name)")
-        .eq("analysis_writer_id", analysisId)
-        .maybeSingle();
-
-      if (playerData?.players) {
-        setPlayerName((playerData.players as any).name);
-      }
 
       const status = ["live", "draft", "hidden"].includes(String(data.visibility_status || "").toLowerCase())
         ? (String(data.visibility_status).toLowerCase() as "live" | "draft" | "hidden")
