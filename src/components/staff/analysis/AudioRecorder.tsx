@@ -16,6 +16,8 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [duration, setDuration] = useState(0);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -27,6 +29,7 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
     };
@@ -38,43 +41,69 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
     return `${m}:${s}`;
   };
 
+  const beginRecording = useCallback((stream: MediaStream) => {
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : MediaRecorder.isTypeSupported("audio/webm")
+      ? "audio/webm"
+      : "audio/mp4";
+
+    const recorder = new MediaRecorder(stream, {
+      mimeType,
+      audioBitsPerSecond: 256000,
+    });
+    chunksRef.current = [];
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+
+    recorder.onstop = () => {
+      const blob = new Blob(chunksRef.current, { type: mimeType });
+      setRecordedBlob(blob);
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+      stream.getTracks().forEach(t => t.stop());
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+
+    mediaRecorderRef.current = recorder;
+    recorder.start(250);
+    setIsRecording(true);
+    setCountdown(null);
+    setIsPaused(false);
+    setDuration(0);
+
+    timerRef.current = setInterval(() => {
+      setDuration(d => d + 1);
+    }, 1000);
+  }, []);
+
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 44100 },
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          sampleRate: 48000,
+          channelCount: 1,
+        },
       });
       streamRef.current = stream;
 
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-        ? "audio/webm"
-        : "audio/mp4";
-
-      const recorder = new MediaRecorder(stream, { mimeType });
-      chunksRef.current = [];
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: mimeType });
-        setRecordedBlob(blob);
-        const url = URL.createObjectURL(blob);
-        setPreviewUrl(url);
-        stream.getTracks().forEach(t => t.stop());
-        if (timerRef.current) clearInterval(timerRef.current);
-      };
-
-      mediaRecorderRef.current = recorder;
-      recorder.start(250); // collect data every 250ms for pause support
-      setIsRecording(true);
-      setIsPaused(false);
-      setDuration(0);
-
-      timerRef.current = setInterval(() => {
-        setDuration(d => d + 1);
+      // 3-2-1 countdown
+      setCountdown(3);
+      let count = 3;
+      countdownRef.current = setInterval(() => {
+        count--;
+        if (count <= 0) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          countdownRef.current = null;
+          beginRecording(stream);
+        } else {
+          setCountdown(count);
+        }
       }, 1000);
     } catch (err: any) {
       if (err.name === "NotAllowedError") {
@@ -83,7 +112,7 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
         toast.error("Failed to start recording");
       }
     }
-  }, []);
+  }, [beginRecording]);
 
   const pauseRecording = useCallback(() => {
     if (mediaRecorderRef.current?.state === "recording") {
@@ -212,11 +241,32 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
     );
   }
 
+  // Countdown
+  if (countdown !== null) {
+    return (
+      <div className="flex items-center gap-3 p-2 rounded-lg bg-muted/50 border">
+        <div className="w-8 h-8 rounded-full bg-destructive/10 border border-destructive/30 flex items-center justify-center">
+          <span className="text-lg font-mono font-bold text-destructive">{countdown}</span>
+        </div>
+        <span className="text-sm text-muted-foreground">Get ready...</span>
+        <div className="flex-1" />
+        <Button size="sm" variant="ghost" onClick={() => {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          countdownRef.current = null;
+          setCountdown(null);
+          if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+        }} className="h-7">
+          Cancel
+        </Button>
+      </div>
+    );
+  }
+
   // Recording in progress
   if (isRecording) {
     return (
-      <div className="flex items-center gap-2 p-2 rounded-lg bg-red-500/10 border border-red-500/30">
-        <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+      <div className="flex items-center gap-2 p-2 rounded-lg bg-destructive/10 border border-destructive/30">
+        <div className="w-2.5 h-2.5 rounded-full bg-destructive animate-pulse" />
         <span className="text-sm font-mono font-medium">{formatTime(duration)}</span>
         <div className="flex-1" />
         {isPaused ? (
