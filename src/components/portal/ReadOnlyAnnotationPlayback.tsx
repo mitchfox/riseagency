@@ -115,13 +115,10 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
     };
   }, [clipStart, clipEnd]);
 
-  // Freeze start helper
-  const startFreeze = useCallback((computed: ComputedAnnotationElement[], video: HTMLVideoElement) => {
-    // Mark times as triggered
-    computed.forEach(el => {
-      triggeredTimesRef.current.add(el.id);
-    });
+  // Freeze start helper — stored in ref to avoid RAF effect dependency churn
+  const startFreezeRef = useRef<(computed: ComputedAnnotationElement[], video: HTMLVideoElement) => void>(() => {});
 
+  const startFreeze = useCallback((computed: ComputedAnnotationElement[], video: HTMLVideoElement) => {
     // Calculate freeze duration
     const relTime = video.currentTime - clipStart;
     const maxDur = Math.max(
@@ -168,6 +165,11 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       }, 400);
     }, maxDur * 1000);
   }, [clipStart]);
+
+  // Keep ref in sync
+  useEffect(() => {
+    startFreezeRef.current = startFreeze;
+  }, [startFreeze]);
 
   // Main playback loop — NO dependency on freezeActive (uses ref)
   useEffect(() => {
