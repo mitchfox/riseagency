@@ -241,11 +241,32 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
     );
   }
 
+  // Countdown
+  if (countdown !== null) {
+    return (
+      <div className="flex items-center gap-3 p-2 rounded-lg bg-muted/50 border">
+        <div className="w-8 h-8 rounded-full bg-destructive/10 border border-destructive/30 flex items-center justify-center">
+          <span className="text-lg font-mono font-bold text-destructive">{countdown}</span>
+        </div>
+        <span className="text-sm text-muted-foreground">Get ready...</span>
+        <div className="flex-1" />
+        <Button size="sm" variant="ghost" onClick={() => {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          countdownRef.current = null;
+          setCountdown(null);
+          if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+        }} className="h-7">
+          Cancel
+        </Button>
+      </div>
+    );
+  }
+
   // Recording in progress
   if (isRecording) {
     return (
-      <div className="flex items-center gap-2 p-2 rounded-lg bg-red-500/10 border border-red-500/30">
-        <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+      <div className="flex items-center gap-2 p-2 rounded-lg bg-destructive/10 border border-destructive/30">
+        <div className="w-2.5 h-2.5 rounded-full bg-destructive animate-pulse" />
         <span className="text-sm font-mono font-medium">{formatTime(duration)}</span>
         <div className="flex-1" />
         {isPaused ? (
