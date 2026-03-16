@@ -85,7 +85,7 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
         audio: {
           echoCancellation: false,
           noiseSuppression: false,
-          autoGainControl: false,
+          autoGainControl: true,
           sampleRate: 48000,
           channelCount: 1,
         },
