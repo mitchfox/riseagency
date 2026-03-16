@@ -35,7 +35,7 @@ export type AnnotationTool =
 
 // interpolateKeyframes moved to annotationRenderUtils.ts
 
-export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, autoPlay }: AnnotationEditorProps) => {
+export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, autoPlay, initialSeekTime }: AnnotationEditorProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
