@@ -104,6 +104,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       const now = video.currentTime;
       if (!freezeActiveRef.current && lastTimeRef.current > 0 && now < lastTimeRef.current - 0.5) {
         triggeredTimesRef.current.clear();
+        lastFreezeTriggerTimeRef.current = -1;
       }
       lastTimeRef.current = now;
     };
