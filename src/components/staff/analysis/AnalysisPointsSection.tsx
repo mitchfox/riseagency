@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors, PenLine, Loader2, ArrowUp, ArrowDown, ArrowRightLeft, BookOpen, Crop } from "lucide-react";
+import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors, PenLine, Loader2, ArrowUp, ArrowDown, ArrowRightLeft, BookOpen, Crop, Maximize } from "lucide-react";
 import { AudioRecorder } from "./AudioRecorder";
 import {
   Collapsible,
@@ -33,6 +33,7 @@ import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEdito
 import type { AnnotationProject } from "@/components/staff/annotations/AnnotationProjects";
 import { ReadOnlyAnnotationPlayback } from "@/components/portal/ReadOnlyAnnotationPlayback";
 import { supabase } from "@/integrations/supabase/client";
+import { ActionVideoPopup } from "@/components/ActionVideoPopup";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -317,8 +318,10 @@ const VideoItem = ({
     ? { clipPath: `inset(${existingCrop.top}% ${existingCrop.right}% ${existingCrop.bottom}% ${existingCrop.left}%)` }
     : {};
 
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
+
   return (
-    <div className="relative max-w-xs" style={cropStyle}>
+    <div className="relative" style={cropStyle}>
       {hasAnnotation ? (
         <ReadOnlyAnnotationPlayback
           key={`preview-${annotationVersion}`}
@@ -338,6 +341,15 @@ const VideoItem = ({
         />
       )}
       <div className="absolute top-1 right-1 flex gap-1 z-10">
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-6 w-6 p-0"
+          onClick={() => setFullscreenOpen(true)}
+          title="Fullscreen preview"
+        >
+          <Maximize className="w-3 h-3" />
+        </Button>
         <Button
           variant="secondary"
           size="sm"
@@ -418,6 +430,12 @@ const VideoItem = ({
           )}
         </DialogContent>
       </Dialog>
+      <ActionVideoPopup
+        open={fullscreenOpen}
+        onOpenChange={setFullscreenOpen}
+        videoUrl={url}
+        actionTitle=""
+      />
     </div>
   );
 };
@@ -605,6 +623,163 @@ const SortablePointCard = ({
                 onChange={(e) => updatePoint(index, "paragraph_1", e.target.value)}
               />
             </div>
+
+            {/* Media section between paragraphs — file inputs on same line */}
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <Label className="text-xs">Images</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, "point_image", index, true)}
+                    disabled={uploadingImage}
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label className="text-xs">Videos</Label>
+                  <Input
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => handleVideoUploadForPoint(e, index)}
+                    disabled={uploadingImage}
+                  />
+                </div>
+              </div>
+
+              {/* R90 and Video Analysis clip selectors */}
+              {performanceReportClips.length > 0 && (
+                <div className="mt-2">
+                  <Select
+                    value=""
+                    onValueChange={(value) => {
+                      const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
+                      updatePoint(index, "video_urls", [...currentVideos, value]);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Add from R90 clips..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {performanceReportClips
+                        .filter(clip => clip.video_url)
+                        .map((clip) => (
+                          <SelectItem key={clip.id} value={clip.video_url!}>
+                            <div className="flex items-center gap-2">
+                              <Film className="w-3 h-3" />
+                              <span>
+                                {clip.action_type || 'Action'} #{clip.action_number}
+                                {clip.minute ? ` (${clip.minute}')` : ''}
+                              </span>
+                              {clip.action_score !== undefined && clip.action_score !== null && (
+                                <span className={`ml-2 px-1.5 py-0.5 rounded text-xs font-bold text-white ${getActionScoreBgColor(clip.action_score)}`}>
+                                  {clip.action_score}
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {videoAnalysisClips.length > 0 && (
+                <div className="mt-2">
+                  <Select
+                    value=""
+                    onValueChange={(value) => {
+                      const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
+                      updatePoint(index, "video_urls", [...currentVideos, value]);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Add from Video Analysis clips..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {videoAnalysisClips.map((clip) => (
+                        <SelectItem key={clip.id} value={`${clip.video_url}#t=${clip.start},${clip.end}`}>
+                          <div className="flex items-center gap-2">
+                            <Film className="w-3 h-3" />
+                            <span className="truncate">
+                              {clip.label}
+                              {clip.action_type && <span className="ml-1 capitalize text-muted-foreground">({clip.action_type})</span>}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground ml-1 shrink-0">
+                              {Math.floor(clip.start / 60)}:{String(Math.floor(clip.start % 60)).padStart(2, '0')}
+                              →
+                              {Math.floor(clip.end / 60)}:{String(Math.floor(clip.end % 60)).padStart(2, '0')}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Image previews */}
+              {point.images?.length > 0 && (
+                <div className="flex flex-wrap gap-2 sm:gap-4 mt-2">
+                  {point.images.map((img, imgIndex) => (
+                    <div key={imgIndex} className="relative">
+                      <img
+                        src={img}
+                        alt={`Point ${index + 1} Image ${imgIndex + 1}`}
+                        className="w-32 h-32 sm:w-48 sm:h-48 object-cover rounded shadow-lg"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute -top-2 -right-2 h-6 w-6 p-0"
+                        onClick={() => removeImageFromPoint(index, imgIndex)}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Video previews — grid layout, up to 3 per row */}
+              {(point.video_urls?.length || point.video_url) && (() => {
+                const allVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
+                return (
+                  <div className={`mt-2 ${allVideos.length < 4 ? 'flex gap-3' : 'grid grid-cols-2 md:grid-cols-3 gap-3'}`}>
+                    {allVideos.map((url, vidIndex) => (
+                      <div key={vidIndex} className={allVideos.length < 4 ? 'flex-1 min-w-0' : ''}>
+                        <VideoItem
+                          url={url}
+                          pointIndex={index}
+                          totalPoints={totalPoints}
+                          existingAnnotationId={point.annotation_ids?.[url]}
+                          existingCrop={point.video_crops?.[url]}
+                          onMoveToPoint={(targetIdx) => onMoveVideoToPoint(index, vidIndex, targetIdx)}
+                          onAnnotationSaved={(annotationId) => {
+                            const currentIds = point.annotation_ids || {};
+                            updatePoint(index, "annotation_ids", { ...currentIds, [url]: annotationId });
+                          }}
+                          onCropSaved={(crop) => {
+                            const currentCrops = point.video_crops || {};
+                            updatePoint(index, "video_crops", { ...currentCrops, [url]: crop });
+                          }}
+                          onRemove={() => {
+                            const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
+                            updatePoint(index, "video_urls", currentVideos.filter((_, i) => i !== vidIndex));
+                          }}
+                          onTrimComplete={(newUrl) => {
+                            const currentVideos = [...(point.video_urls || (point.video_url ? [point.video_url] : []))];
+                            currentVideos[vidIndex] = newUrl;
+                            updatePoint(index, "video_urls", currentVideos);
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+
             <div>
               <div className="flex items-center justify-between">
                 <Label>Paragraph 2</Label>
@@ -627,78 +802,89 @@ const SortablePointCard = ({
           </>
         )}
 
-        {/* Concept Tags */}
+        {/* Concept Tags + Audio Commentary on same line */}
         {analysisType !== "concept" && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5" />
-                Linked Concepts
-              </Label>
-              <Popover open={conceptPickerOpen} onOpenChange={setConceptPickerOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-7 text-xs">
-                    <Plus className="w-3 h-3 mr-1" />
-                    Add Concept
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-2" align="end">
-                  <ScrollArea className="max-h-60">
-                    <div className="space-y-0.5">
-                      {concepts
-                        .filter(c => !(point.concept_tags || []).includes(c.id))
-                        .map(c => (
-                          <button
-                            key={c.id}
-                            className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted transition-colors"
-                            onClick={() => {
-                              const current = point.concept_tags || [];
-                              updatePoint(index, "concept_tags" as keyof Point, [...current, c.id]);
-                              setConceptPickerOpen(false);
-                            }}
-                          >
-                            <span className="font-medium">{c.title}</span>
-                            {c.category && (
-                              <span className="ml-1.5 text-xs text-muted-foreground">({c.category})</span>
-                            )}
-                          </button>
-                        ))}
-                      {concepts.filter(c => !(point.concept_tags || []).includes(c.id)).length === 0 && (
-                        <p className="text-xs text-muted-foreground px-2 py-1">No more concepts available</p>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </PopoverContent>
-              </Popover>
-            </div>
-            {(point.concept_tags || []).length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {(point.concept_tags || []).map(tagId => {
-                  const concept = concepts.find(c => c.id === tagId);
-                  if (!concept) return null;
-                  return (
-                    <div key={tagId} className="flex items-center gap-0.5">
-                      <button
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-gold/15 text-gold border border-gold/30 hover:bg-gold/25 transition-colors"
-                        onClick={() => setViewingConcept(concept)}
-                      >
-                        <BookOpen className="w-3 h-3" />
-                        {concept.title}
-                      </button>
-                      <button
-                        className="text-muted-foreground hover:text-destructive transition-colors"
-                        onClick={() => {
-                          const current = point.concept_tags || [];
-                          updatePoint(index, "concept_tags" as keyof Point, current.filter(id => id !== tagId));
-                        }}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  );
-                })}
+          <div className="flex gap-4">
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  Linked Concepts
+                </Label>
+                <Popover open={conceptPickerOpen} onOpenChange={setConceptPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-7 text-xs">
+                      <Plus className="w-3 h-3 mr-1" />
+                      Add Concept
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 p-2" align="end">
+                    <ScrollArea className="max-h-60">
+                      <div className="space-y-0.5">
+                        {concepts
+                          .filter(c => !(point.concept_tags || []).includes(c.id))
+                          .map(c => (
+                            <button
+                              key={c.id}
+                              className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted transition-colors"
+                              onClick={() => {
+                                const current = point.concept_tags || [];
+                                updatePoint(index, "concept_tags" as keyof Point, [...current, c.id]);
+                                setConceptPickerOpen(false);
+                              }}
+                            >
+                              <span className="font-medium">{c.title}</span>
+                              {c.category && (
+                                <span className="ml-1.5 text-xs text-muted-foreground">({c.category})</span>
+                              )}
+                            </button>
+                          ))}
+                        {concepts.filter(c => !(point.concept_tags || []).includes(c.id)).length === 0 && (
+                          <p className="text-xs text-muted-foreground px-2 py-1">No more concepts available</p>
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
               </div>
-            )}
+              {(point.concept_tags || []).length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {(point.concept_tags || []).map(tagId => {
+                    const concept = concepts.find(c => c.id === tagId);
+                    if (!concept) return null;
+                    return (
+                      <div key={tagId} className="flex items-center gap-0.5">
+                        <button
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-gold/15 text-gold border border-gold/30 hover:bg-gold/25 transition-colors"
+                          onClick={() => setViewingConcept(concept)}
+                        >
+                          <BookOpen className="w-3 h-3" />
+                          {concept.title}
+                        </button>
+                        <button
+                          className="text-muted-foreground hover:text-destructive transition-colors"
+                          onClick={() => {
+                            const current = point.concept_tags || [];
+                            updatePoint(index, "concept_tags" as keyof Point, current.filter(id => id !== tagId));
+                          }}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <Label>Audio Commentary</Label>
+              <div className="mt-1">
+                <AudioRecorder
+                  audioUrl={point.audio_url}
+                  onAudioChange={(url) => updatePoint(index, "audio_url" as keyof Point, url)}
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -707,178 +893,6 @@ const SortablePointCard = ({
           open={!!viewingConcept}
           onOpenChange={(open) => { if (!open) setViewingConcept(null); }}
         />
-
-        {analysisType !== "concept" && (
-          <div>
-            <Label>Audio Commentary (Optional)</Label>
-            <div className="mt-1">
-              <AudioRecorder
-                audioUrl={point.audio_url}
-                onAudioChange={(url) => updatePoint(index, "audio_url" as keyof Point, url)}
-              />
-            </div>
-          </div>
-        )}
-
-        <div>
-          <Label>Images (Optional)</Label>
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleImageUpload(e, "point_image", index, true)}
-            disabled={uploadingImage}
-          />
-          <div className="flex flex-wrap gap-2 sm:gap-4 mt-2">
-            {point.images?.map((img, imgIndex) => (
-              <div key={imgIndex} className="relative">
-                <img
-                  src={img}
-                  alt={`Point ${index + 1} Image ${imgIndex + 1}`}
-                  className="w-32 h-32 sm:w-48 sm:h-48 object-cover rounded shadow-lg"
-                />
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="absolute -top-2 -right-2 h-6 w-6 p-0"
-                  onClick={() => removeImageFromPoint(index, imgIndex)}
-                >
-                  <X className="w-3 h-3" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <Label>Videos (Optional - Add Multiple) — or drag and drop a video file here</Label>
-          
-          {/* Select from R90 clips if available */}
-          {performanceReportClips.length > 0 && (
-            <div className="mb-2">
-              <Select
-                value=""
-                onValueChange={(value) => {
-                  const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
-                  updatePoint(index, "video_urls", [...currentVideos, value]);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Add from R90 clips..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {performanceReportClips
-                    .filter(clip => clip.video_url)
-                    .map((clip) => (
-                      <SelectItem key={clip.id} value={clip.video_url!}>
-                        <div className="flex items-center gap-2">
-                          <Film className="w-3 h-3" />
-                          <span>
-                            {clip.action_type || 'Action'} #{clip.action_number}
-                            {clip.minute ? ` (${clip.minute}')` : ''}
-                          </span>
-{clip.action_score !== undefined && clip.action_score !== null && (
-                            <span className={`ml-2 px-1.5 py-0.5 rounded text-xs font-bold text-white ${getActionScoreBgColor(clip.action_score)}`}>
-                              {clip.action_score}
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Select from Video Analysis clips if available */}
-          {videoAnalysisClips.length > 0 && (
-            <div className="mb-2">
-              <Select
-                value=""
-                onValueChange={(value) => {
-                  const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
-                  updatePoint(index, "video_urls", [...currentVideos, value]);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Add from Video Analysis clips..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {videoAnalysisClips.map((clip) => (
-                    <SelectItem key={clip.id} value={`${clip.video_url}#t=${clip.start},${clip.end}`}>
-                      <div className="flex items-center gap-2">
-                        <Film className="w-3 h-3" />
-                        <span className="truncate">
-                          {clip.label}
-                          {clip.action_type && <span className="ml-1 capitalize text-muted-foreground">({clip.action_type})</span>}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground ml-1 shrink-0">
-                          {Math.floor(clip.start / 60)}:{String(Math.floor(clip.start % 60)).padStart(2, '0')}
-                          →
-                          {Math.floor(clip.end / 60)}:{String(Math.floor(clip.end % 60)).padStart(2, '0')}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <Input
-            type="file"
-            accept="video/*"
-            onChange={(e) => handleVideoUploadForPoint(e, index)}
-            disabled={uploadingImage}
-          />
-          <Input
-            placeholder="Or paste video URL and press Enter..."
-            className="mt-2"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                const input = e.target as HTMLInputElement;
-                if (input.value.trim()) {
-                  const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
-                  updatePoint(index, "video_urls", [...currentVideos, input.value.trim()]);
-                  input.value = '';
-                }
-              }
-            }}
-          />
-          
-          {/* Display all videos */}
-          {(point.video_urls?.length || point.video_url) && (
-            <div className="mt-2 space-y-2">
-              {(point.video_urls || (point.video_url ? [point.video_url] : [])).map((url, vidIndex) => (
-                <VideoItem
-                  key={vidIndex}
-                  url={url}
-                  pointIndex={index}
-                  totalPoints={totalPoints}
-                  existingAnnotationId={point.annotation_ids?.[url]}
-                  existingCrop={point.video_crops?.[url]}
-                  onMoveToPoint={(targetIdx) => onMoveVideoToPoint(index, vidIndex, targetIdx)}
-                  onAnnotationSaved={(annotationId) => {
-                    const currentIds = point.annotation_ids || {};
-                    updatePoint(index, "annotation_ids", { ...currentIds, [url]: annotationId });
-                  }}
-                  onCropSaved={(crop) => {
-                    const currentCrops = point.video_crops || {};
-                    updatePoint(index, "video_crops", { ...currentCrops, [url]: crop });
-                  }}
-                  onRemove={() => {
-                    const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
-                    updatePoint(index, "video_urls", currentVideos.filter((_, i) => i !== vidIndex));
-                  }}
-                  onTrimComplete={(newUrl) => {
-                    const currentVideos = [...(point.video_urls || (point.video_url ? [point.video_url] : []))];
-                    currentVideos[vidIndex] = newUrl;
-                    updatePoint(index, "video_urls", currentVideos);
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
       </div>
     </Card>
   );
