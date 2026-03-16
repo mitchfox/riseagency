@@ -300,7 +300,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     return () => {
       if (clipSavedTimerRef.current) clearTimeout(clipSavedTimerRef.current);
       if (lookaheadPauseTimerRef.current) clearTimeout(lookaheadPauseTimerRef.current);
-      fullPreloadAbortRef.current?.abort();
+      if (preloadIntervalRef.current) clearInterval(preloadIntervalRef.current);
     };
   }, []);
 
