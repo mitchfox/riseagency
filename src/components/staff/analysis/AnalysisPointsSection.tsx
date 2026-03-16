@@ -233,7 +233,7 @@ const VideoItem = ({
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
   const [annotationVersion, setAnnotationVersion] = useState(0); // bump to refresh preview
   const [moveOpen, setMoveOpen] = useState(false);
-  const videoPreviewRef = useRef<HTMLVideoElement | null>(null);
+  const videoPreviewRef = useRef<HTMLDivElement>(null);
 
   // Load existing annotation project if one exists
   useEffect(() => {
