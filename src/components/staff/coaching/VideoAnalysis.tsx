@@ -222,7 +222,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     const duration = mainVideo.duration;
     if (!Number.isFinite(duration) || duration <= 0) return;
 
-    const targetTime = Math.min(duration - 0.25, mainVideo.currentTime + 300);
+    const targetTime = Math.min(duration - 0.25, Math.max(mainVideo.currentTime + 300, duration - 0.25));
     if (targetTime <= mainVideo.currentTime + 5) return;
     if (Math.abs(targetTime - lookaheadLastPrimeRef.current) < 20) return;
 
