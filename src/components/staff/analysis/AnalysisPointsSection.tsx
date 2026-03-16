@@ -454,6 +454,7 @@ const VideoItem = ({
               project={annotationProject}
               onSave={handleSaveAnnotation}
               onBack={() => setAnnotateOpen(false)}
+              initialSeekTime={annotateSeekTime}
             />
           )}
         </DialogContent>
