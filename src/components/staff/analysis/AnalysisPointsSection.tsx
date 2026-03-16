@@ -344,6 +344,15 @@ const VideoItem = ({
           variant="secondary"
           size="sm"
           className="h-6 w-6 p-0"
+          onClick={() => setFullscreenOpen(true)}
+          title="Fullscreen preview"
+        >
+          <Maximize className="w-3 h-3" />
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-6 w-6 p-0"
           onClick={handleOpenAnnotate}
           title="Annotate video"
         >
