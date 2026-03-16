@@ -261,14 +261,10 @@ const VideoItem = ({
   const handleOpenAnnotate = () => {
     // Capture current video time from the preview before opening
     let currentVideoTime: number | undefined;
-    // Try to find the video element within this component's container
-    const container = videoPreviewRef.current?.closest('.relative');
-    const videoEl = container?.querySelector('video') as HTMLVideoElement | null;
-    if (videoEl && !videoEl.paused) {
+    const videoEl = videoPreviewRef.current?.querySelector('video') as HTMLVideoElement | null;
+    if (videoEl) {
       currentVideoTime = videoEl.currentTime;
-      videoEl.pause();
-    } else if (videoEl) {
-      currentVideoTime = videoEl.currentTime;
+      if (!videoEl.paused) videoEl.pause();
     }
     setAnnotateSeekTime(currentVideoTime);
 
