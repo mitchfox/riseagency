@@ -109,6 +109,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const lookaheadRef = useRef<HTMLVideoElement>(null);
   const lookaheadLastPrimeRef = useRef<number>(-1);
   const lookaheadPauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fullPreloadAbortRef = useRef<AbortController | null>(null);
 
   // Upload form
   const [newTitle, setNewTitle] = useState("");
