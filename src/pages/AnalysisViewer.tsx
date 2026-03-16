@@ -441,18 +441,19 @@ const AnalysisHeader = ({
           }}
         >
           <span
-            className="font-bebas text-white tracking-wide uppercase text-center leading-tight overflow-hidden"
+            className="font-bebas tracking-wide uppercase text-center leading-tight overflow-hidden"
             style={{
               fontSize: 'clamp(0.7rem, 3.5vw, 1.2rem)',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+              textShadow: isLightColor(homeBgColor) ? 'none' : '2px 2px 4px rgba(0,0,0,0.8)',
+              color: isLightColor(homeBgColor) ? '#000000' : '#ffffff',
               lineHeight: 1.1,
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical' as const,
               wordBreak: 'break-word' as const,
-              marginLeft: '22%',
-              marginRight: '12%',
-              maxWidth: '60%',
+              marginLeft: '36%',
+              marginRight: '20%',
+              maxWidth: '50%',
             }}
           >
             {homeTeam}
@@ -468,18 +469,19 @@ const AnalysisHeader = ({
           }}
         >
           <span
-            className="font-bebas text-white tracking-wide uppercase text-center leading-tight overflow-hidden"
+            className="font-bebas tracking-wide uppercase text-center leading-tight overflow-hidden"
             style={{
               fontSize: 'clamp(0.7rem, 3.5vw, 1.2rem)',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+              textShadow: isLightColor(awayBgColor) ? 'none' : '2px 2px 4px rgba(0,0,0,0.8)',
+              color: isLightColor(awayBgColor) ? '#000000' : '#ffffff',
               lineHeight: 1.1,
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical' as const,
               wordBreak: 'break-word' as const,
-              marginLeft: '12%',
-              marginRight: '22%',
-              maxWidth: '60%',
+              marginLeft: '20%',
+              marginRight: '36%',
+              maxWidth: '50%',
             }}
           >
             {awayTeam}
