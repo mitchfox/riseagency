@@ -737,6 +737,86 @@ const AnalysisViewer = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Extract UUID from slug
+  const analysisId = rawSlug ? extractAnalysisIdFromSlug(rawSlug) : null;
+
+  // Mark page as loaded after short delay
+  useEffect(() => {
+    const timer = setTimeout(() => setPageLoaded(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (analysisId) fetchAnalysis();
+  }, [analysisId]);
+
+  const fetchAnalysis = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("analyses")
+        .select("*")
+        .eq("id", analysisId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) {
+        setLoading(false);
+        return;
+      }
+
+      // Player name resolution chain (matches FFF):
+      // 1. Check player_name stored on analysis
+      // 2. Check analysis_player_tags
+      // 3. Check player_analysis linkage
+      // 4. Check fixture linkage
+      let resolvedName: string | null = data.player_name || null;
+
+      if (!resolvedName) {
+        const { data: tagData } = await supabase
+          .from("analysis_player_tags")
+          .select("player_id")
+          .eq("analysis_id", analysisId)
+          .limit(1)
+          .maybeSingle();
+
+        if (tagData?.player_id) {
+          const { data: playerData } = await supabase
+            .from("players")
+            .select("name")
+            .eq("id", tagData.player_id)
+            .maybeSingle();
+          if (playerData?.name) {
+            resolvedName = playerData.name.toUpperCase();
+          }
+        }
+      }
+
+      if (!resolvedName) {
+        const { data: linkedData } = await supabase
+          .from("player_analysis")
+          .select("player_id, players(name)")
+          .eq("analysis_writer_id", analysisId)
+          .maybeSingle();
+
+        if (linkedData?.players) {
+          resolvedName = ((linkedData.players as any).name as string).toUpperCase();
+        }
+
+        if (!resolvedName && data.fixture_id) {
+          const { data: fixturePlayer } = await supabase
+            .from("player_analysis")
+            .select("players(name)")
+            .eq("fixture_id", data.fixture_id)
+            .maybeSingle();
+
+          if (fixturePlayer?.players) {
+            resolvedName = ((fixturePlayer.players as any).name as string).toUpperCase();
+          }
+        }
+      }
+
+      setPlayerName(resolvedName);
+
       const status = ["live", "draft", "hidden"].includes(String(data.visibility_status || "").toLowerCase())
         ? (String(data.visibility_status).toLowerCase() as "live" | "draft" | "hidden")
         : "live";
