@@ -50,7 +50,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     try { return localStorage.getItem('annotation-last-colour') || '#C6A332'; } catch { return '#C6A332'; }
   });
   const [strokeWidth, setStrokeWidth] = useState(() => {
-    try { return parseFloat(localStorage.getItem('annotation-last-stroke') || '1') || 1; } catch { return 1; }
+    try { return parseFloat(localStorage.getItem('annotation-last-stroke') || '0.2') || 0.2; } catch { return 0.2; }
   });
   const [fillOpacity, setFillOpacity] = useState(0.15);
 
