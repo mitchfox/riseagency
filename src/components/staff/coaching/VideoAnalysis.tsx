@@ -1492,7 +1492,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         setPlaybackSpeed(prev => {
           const idx = SPEED_STEPS.indexOf(prev);
           const next = idx < SPEED_STEPS.length - 1 ? SPEED_STEPS[idx + 1] : prev;
-          if (video) video.playbackRate = next;
+          applySpeed(next);
           return next;
         });
       } else if (e.key === '-' || e.key === '_') {
@@ -1501,14 +1501,14 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         setPlaybackSpeed(prev => {
           const idx = SPEED_STEPS.indexOf(prev);
           const next = idx > 0 ? SPEED_STEPS[idx - 1] : prev;
-          if (video) video.playbackRate = next;
+          applySpeed(next);
           return next;
         });
       } else if (e.key === '0') {
         e.preventDefault();
         e.stopPropagation();
         setPlaybackSpeed(1);
-        if (video) video.playbackRate = 1;
+        applySpeed(1);
       }
     };
     // Use capture phase so our handler fires before the browser's native video handlers
