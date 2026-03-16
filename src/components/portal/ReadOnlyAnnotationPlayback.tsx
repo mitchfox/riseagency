@@ -56,7 +56,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
 
   // Use refs to avoid RAF dependency on state
   const freezeActiveRef = useRef(false);
-  const triggeredTimesRef = useRef<Set<number>>(new Set());
+  const triggeredTimesRef = useRef<Set<string>>(new Set());
   const freezeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const freezeDurationRef = useRef(3);
