@@ -1,130 +1,53 @@
 
 
-## Two-Part Plan
+## Plan: Fix Annotation Double-Freeze + Audio Re-record Failure
 
-This covers the immediate text truncation fix and the large AI features package.
+### 1. Annotation Double-Freeze Fix
 
----
+**Root cause identified:** `startFreeze` is in the RAF effect's dependency array (line 207). `startFreeze` is a `useCallback` that creates a new function reference whenever its dependencies change. When React recreates the effect, the cleanup cancels the RAF and starts a new loop. While `triggeredTimesRef` persists (it's a ref), the timing of effect teardown/recreation during the freeze→resume transition can cause a brief window where the tick evaluates before the triggered set is fully respected.
 
-### Part 1: Fix Truncated Notes (Quick Fix)
+Additionally, the `onTimeUpdate` handler (line 97-107) sets `video.currentTime = clipStart` when clip end is reached, which triggers a backward time jump that clears `triggeredTimesRef` — this can happen right after a freeze resumes near clip boundaries.
 
-**Problem**: Notes on performance report actions are cut off with `...` via `truncate` and `line-clamp` classes, making them unreadable on mobile.
+**Fix — 3 changes in `ReadOnlyAnnotationPlayback.tsx`:**
 
-**Files to change:**
+1. **Move `startFreeze` to a ref** so the RAF effect has zero changing dependencies beyond `elements` and `clipStart`:
+   - Create `startFreezeRef = useRef(startFreeze)` and keep it synced
+   - Effect deps become `[elements, clipStart]` only — no more teardown/recreation from callback identity changes
 
-1. **`src/components/PerformanceReportDialog.tsx`**
-   - Line 1036: Remove `line-clamp-2` from action description div, allow full text
-   - Line 1038: Remove `truncate` from notes div, allow full wrap
-   - These are in the mobile card layout (the `md:hidden` block)
+2. **Guard the loop-reset logic**: Only clear `triggeredTimesRef` on backward seek when freeze is NOT active:
+   ```
+   if (!freezeActiveRef.current && lastTimeRef.current > 0 && now < lastTimeRef.current - 0.5) {
+     triggeredTimesRef.current.clear();
+   }
+   ```
 
-2. **`src/components/ClippedActionsPlayer.tsx`**
-   - Line 137: Remove `line-clamp-2` from description
-   - Line 139: Remove `line-clamp-2` from notes
+3. **Add element IDs to triggered set BEFORE calling freeze logic** (already the case, but make the ordering explicit and add the return immediately after):
+   ```
+   newElements.forEach(el => triggeredTimesRef.current.add(el.id));
+   startFreezeRef.current(computed, video);
+   ```
 
-3. **`src/components/portal/AnalysisVideoReports.tsx`**
-   - Line 414: Remove `line-clamp-2` from clip description
+### 2. Audio Re-record Fix
 
-All replacements simply remove the truncation classes so text wraps naturally across as many lines as needed.
+**Root cause:** `rerecordAudio` calls `onAudioChange(undefined)` then `await startRecording()`. The parent state change from `onAudioChange` triggers a re-render that can remount the `AudioRecorder` component. The unmount cleanup effect (line 97-102) increments `sessionRef` and calls `resetRecorderState(true)`, which kills the just-started recording session because all callbacks check `sessionRef.current !== sessionId`.
 
----
+**Fix in `AudioRecorder.tsx`:**
 
-### Part 2: AI Features Package
+1. **Don't call `onAudioChange(undefined)` during re-record.** Instead, just reset local state and start recording. Only clear the parent audio URL when the NEW recording is saved (or explicitly discarded):
+   ```typescript
+   const rerecordAudio = useCallback(async () => {
+     // Don't notify parent yet — avoid remount
+     sessionRef.current += 1;
+     resetRecorderState(true);
+     // Small delay to let state settle before getUserMedia
+     await new Promise(r => setTimeout(r, 50));
+     await startRecording();
+   }, [resetRecorderState, startRecording]);
+   ```
 
-This is a large feature set. Here is the implementation plan broken into phases.
+2. **Update the `removeAudio` flow** to handle the case where `audioUrl` exists but user is mid-recording — the parent notification happens on explicit delete only.
 
-#### 2A. Collapsible AI Shell Suggestions
-
-**New components:**
-- `src/components/staff/AiShellSuggestions.tsx` - collapsible tab component with player selector
-- Sections: Athlete Centre, Analysis, Data, Player Management
-
-**New database table:** `ai_shell_suggestions`
-- `id`, `section` (enum), `player_id`, `shell_type`, `preview_text`, `shell_content` (JSONB), `created_at`
-
-**New database table:** `ai_shell_decisions`
-- `id`, `suggestion_id`, `player_id`, `staff_user_id`, `decision` (accepted/rejected), `created_at`
-
-**New edge function:** `generate-shell-suggestions`
-- Takes section + player context, queries recent data, calls Gemini to produce structural shells
-- Returns preview lines for each shell
-
-**Behaviour:**
-- Collapsed tab at top of each section
-- Opening requires player selection first
-- Accept inserts as editable draft; Reject hides for session
-- Decision history feeds future prioritisation
-
-#### 2B. Player-Specific Action Dropdown Intelligence
-
-**New database table:** `player_action_frequencies`
-- `player_id`, `action_type`, `frequency_count`, `last_used_at`, `position_weight`
-
-**Changes to existing components:**
-- Performance report action type dropdown and video analysis action type dropdown
-- Query last 5 reports for selected player, calculate frequency + recency weights
-- Sort dropdown accordingly, persist per player
-
-This builds on the existing frequency sorting (memory reference: action-type-frequency-sorting) but makes it player-specific rather than global.
-
-#### 2C. Video Tracking Integration (Roboflow)
-
-**New edge function:** `process-video-frames`
-- Accepts frame images (base64) at configurable sampling rate
-- Sends to Roboflow API for player/ball detection
-- Applies pitch homography mapping to 18/162 zone grids
-- Returns structured JSON per the specified format
-
-**Requirements:**
-- Roboflow API key (will need to be added as a secret)
-- A trained Roboflow model endpoint for player/ball detection
-- Configurable frame sampling rate (default 5 fps)
-
-**Frontend integration:**
-- New "AI Track" button in Video Analysis
-- Frame extraction from video element at configured rate
-- Batch upload to edge function
-- Results displayed as overlay markers on video
-
-#### 2D. Rule-Based Action Suggestion Engine
-
-**New module:** `src/lib/actionSuggestionEngine.ts`
-- Pure TypeScript, consumes Roboflow JSON output
-- Possession approximation: ball overlapping player across consecutive frames
-- Shot heuristic: ball near player then rapid displacement toward goal zone
-- Duel heuristic: two player boxes close with possession change
-
-**Database:**
-- Suggested actions inserted into `performance_report_actions` with a new `status` field (values: `confirmed`, `suggested`)
-- Requires migration to add `status` column
-
-**UI:**
-- Suggested actions shown with distinct styling and Confirm/Dismiss buttons
-- Confirmed actions become regular report entries
-
-#### 2E. Match Flow Automation
-
-**Changes to fixture creation flow:**
-- On fixture confirmation: auto-create linked draft performance report
-- Auto-create pre-match analysis shell
-- When report set to Live: prompt highlight compilation suggestion, check for duplicate clip exports
-
-**Batch mode:**
-- New "Batch Generate" button in Match Flow
-- Select multiple players, shared fixture data populates draft shells for each
-
----
-
-### Implementation Order
-
-1. **Part 1** (notes fix) - immediate
-2. **2B** (action dropdown intelligence) - builds on existing patterns
-3. **2A** (shell suggestions) - new UI + edge function
-4. **2E** (match flow automation) - workflow changes
-5. **2C** (Roboflow) - requires API key setup
-6. **2D** (suggestion engine) - depends on 2C output
-
-### Prerequisites
-
-- **Roboflow API key** will need to be provided and stored as a secret before 2C can function
-- A trained Roboflow model for player/ball detection must exist
+**Files changed:** 2 files
+- `src/components/portal/ReadOnlyAnnotationPlayback.tsx` — ref-ify startFreeze, guard triggered-set clearing
+- `src/components/staff/analysis/AudioRecorder.tsx` — decouple re-record from parent state update
 
