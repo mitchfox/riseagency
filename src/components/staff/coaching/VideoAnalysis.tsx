@@ -262,61 +262,16 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   }, []);
 
   useEffect(() => {
-    const sourceUrl = selectedVideo?.video_url;
-
-    fullPreloadAbortRef.current?.abort();
-    fullPreloadAbortRef.current = null;
-
-    if (!sourceUrl) return;
-
-    const controller = new AbortController();
-    fullPreloadAbortRef.current = controller;
-
-    void (async () => {
-      try {
-        const response = await fetch(sourceUrl, {
-          signal: controller.signal,
-          cache: "force-cache",
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to preload source video (${response.status})`);
-        }
-
-        const reader = response.body?.getReader();
-        if (!reader) {
-          await response.blob();
-          return;
-        }
-
-        while (!controller.signal.aborted) {
-          const { done } = await reader.read();
-          if (done) break;
-        }
-
-        if (controller.signal.aborted) {
-          await reader.cancel().catch(() => {});
-        }
-      } catch (error) {
-        if (!controller.signal.aborted) {
-          console.error("Failed to fully preload analysis video", error);
-        }
-      }
-    })();
-
-    return () => {
-      controller.abort();
-      if (fullPreloadAbortRef.current === controller) {
-        fullPreloadAbortRef.current = null;
-      }
-    };
-  }, [selectedVideo?.id, selectedVideo?.video_url]);
-
-  useEffect(() => {
     const lookaheadVideo = lookaheadRef.current;
     if (!lookaheadVideo || !selectedVideo?.video_url) return;
 
-    lookaheadLastPrimeRef.current = -1;
+    // Reset preload state
+    if (preloadIntervalRef.current) {
+      clearInterval(preloadIntervalRef.current);
+      preloadIntervalRef.current = null;
+    }
+    preloadPhaseRef.current = 0;
+
     lookaheadVideo.src = selectedVideo.video_url;
     lookaheadVideo.preload = "auto";
     lookaheadVideo.load();
