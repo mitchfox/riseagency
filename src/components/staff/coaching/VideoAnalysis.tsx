@@ -176,6 +176,38 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isPlayerFullscreen, setIsPlayerFullscreen] = useState(false);
 
+  // 8x simulation: native 4x + RAF nudge to double effective speed
+  const eightXRafRef = useRef<number | null>(null);
+  const eightXLastRef = useRef<number>(0);
+
+  const stopEightXSim = useCallback(() => {
+    if (eightXRafRef.current !== null) {
+      cancelAnimationFrame(eightXRafRef.current);
+      eightXRafRef.current = null;
+    }
+  }, []);
+
+  const applySpeed = useCallback((speed: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    stopEightXSim();
+    if (speed === 8) {
+      video.playbackRate = 4;
+      eightXLastRef.current = performance.now();
+      const tick = () => {
+        const now = performance.now();
+        const elapsed = (now - eightXLastRef.current) / 1000;
+        eightXLastRef.current = now;
+        // Native 4x already advances 4s per real second; nudge an extra 4s worth
+        video.currentTime += elapsed * 4;
+        eightXRafRef.current = requestAnimationFrame(tick);
+      };
+      eightXRafRef.current = requestAnimationFrame(tick);
+    } else {
+      video.playbackRate = speed;
+    }
+  }, [stopEightXSim]);
+
   // Inline annotation
   const [annotatingClip, setAnnotatingClip] = useState<Clip | null>(null);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
