@@ -62,6 +62,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   const freezeDurationRef = useRef(3);
   const rafRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(-1);
+  const lastFreezeTriggerTimeRef = useRef<number>(-1);
 
   const { cleanUrl, clipStart, clipEnd } = useMemo(() => parseClipFragment(videoUrl), [videoUrl]);
 
@@ -103,6 +104,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       const now = video.currentTime;
       if (!freezeActiveRef.current && lastTimeRef.current > 0 && now < lastTimeRef.current - 0.5) {
         triggeredTimesRef.current.clear();
+        lastFreezeTriggerTimeRef.current = -1;
       }
       lastTimeRef.current = now;
     };
@@ -190,11 +192,13 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       // Check for new annotations that haven't triggered a freeze yet
       if (!video.paused && computed.length > 0) {
         const newElements = computed.filter(el => {
-          return !triggeredTimesRef.current.has(el.id);
+          return !triggeredTimesRef.current.has(el.id) &&
+                 el.appearAt > lastFreezeTriggerTimeRef.current;
         });
 
         if (newElements.length > 0) {
-          // Mark IDs FIRST, then freeze — prevents re-evaluation before set is updated
+          // Record playhead gate FIRST, then mark IDs, then freeze
+          lastFreezeTriggerTimeRef.current = relTime;
           newElements.forEach(el => triggeredTimesRef.current.add(el.id));
           startFreezeRef.current(computed, video);
           rafRef.current = requestAnimationFrame(tick);
