@@ -322,25 +322,27 @@ const VideoItem = ({
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
   return (
-    <div className="relative" style={cropStyle}>
-      {hasAnnotation ? (
-        <ReadOnlyAnnotationPlayback
-          key={`preview-${annotationVersion}`}
-          videoUrl={url}
-          annotationProjectId={!previewElements?.length ? existingAnnotationId : undefined}
-          preloadedElements={previewElements?.length ? previewElements : undefined}
-          className="rounded overflow-hidden"
-        />
-      ) : (
-        <video
-          src={url}
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-full rounded"
-        />
-      )}
+    <div className="relative">
+      <div className="overflow-hidden rounded" style={cropStyle}>
+        {hasAnnotation ? (
+          <ReadOnlyAnnotationPlayback
+            key={`preview-${annotationVersion}`}
+            videoUrl={url}
+            annotationProjectId={!previewElements?.length ? existingAnnotationId : undefined}
+            preloadedElements={previewElements?.length ? previewElements : undefined}
+            className="rounded overflow-hidden"
+          />
+        ) : (
+          <video
+            src={url}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full rounded"
+          />
+        )}
+      </div>
       <div className="absolute top-1 right-1 flex gap-1 z-10">
         <Button
           variant="secondary"
