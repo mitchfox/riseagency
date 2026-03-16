@@ -314,34 +314,43 @@ const VideoItem = ({
   }, [annotationProject, annotationVersion]);
 
   const hasAnnotation = !!(existingAnnotationId || (previewElements && previewElements.length > 0));
-
-  const cropStyle = existingCrop && (existingCrop.top > 0 || existingCrop.right > 0 || existingCrop.bottom > 0 || existingCrop.left > 0)
-    ? { clipPath: `inset(${existingCrop.top}% ${existingCrop.right}% ${existingCrop.bottom}% ${existingCrop.left}%)` }
-    : {};
+  const hasCrop = !!(existingCrop && (existingCrop.top > 0 || existingCrop.right > 0 || existingCrop.bottom > 0 || existingCrop.left > 0));
+  const cropShiftStyle = hasCrop && existingCrop
+    ? {
+        marginTop: `-${(existingCrop.top / (100 - existingCrop.top - existingCrop.bottom)) * 100}%`,
+        marginBottom: `-${(existingCrop.bottom / (100 - existingCrop.top - existingCrop.bottom)) * 100}%`,
+        marginLeft: `-${(existingCrop.left / (100 - existingCrop.left - existingCrop.right)) * 100}%`,
+        marginRight: `-${(existingCrop.right / (100 - existingCrop.left - existingCrop.right)) * 100}%`,
+      }
+    : undefined;
 
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
   return (
     <div className="relative">
-      <div className="overflow-hidden rounded" style={cropStyle}>
-        {hasAnnotation ? (
-          <ReadOnlyAnnotationPlayback
-            key={`preview-${annotationVersion}`}
-            videoUrl={url}
-            annotationProjectId={!previewElements?.length ? existingAnnotationId : undefined}
-            preloadedElements={previewElements?.length ? previewElements : undefined}
-            className="rounded overflow-hidden"
-          />
-        ) : (
-          <video
-            src={url}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full rounded"
-          />
-        )}
+      <div className="overflow-hidden rounded border border-border bg-background/20">
+        <div style={hasCrop ? { overflow: 'hidden' } : undefined}>
+          <div style={cropShiftStyle}>
+            {hasAnnotation ? (
+              <ReadOnlyAnnotationPlayback
+                key={`preview-${annotationVersion}`}
+                videoUrl={url}
+                annotationProjectId={!previewElements?.length ? existingAnnotationId : undefined}
+                preloadedElements={previewElements?.length ? previewElements : undefined}
+                className="rounded overflow-hidden"
+              />
+            ) : (
+              <video
+                src={url}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full rounded"
+              />
+            )}
+          </div>
+        </div>
       </div>
       <div className="absolute top-1 right-1 flex gap-1 z-10">
         <Button

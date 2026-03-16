@@ -6,13 +6,13 @@ interface AudioPlaybackButtonProps {
   audioUrl: string;
 }
 
-/**
- * A floating audio playback button that plays audio and continues
- * even when the user scrolls away. Press again to replay after finishing.
- */
+// Global registry so only one commentary track plays at a time
+let currentlyPlayingButton: (() => void) | null = null;
+
 export const AudioPlaybackButton = ({ audioUrl }: AudioPlaybackButtonProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     return () => {
@@ -20,59 +20,101 @@ export const AudioPlaybackButton = ({ audioUrl }: AudioPlaybackButtonProps) => {
         audioRef.current.pause();
         audioRef.current = null;
       }
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current = null;
+      }
     };
   }, []);
 
-  const handleToggle = useCallback(async () => {
-    if (isPlaying && audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
+  const stopPlayback = useCallback(() => {
+    audioRef.current?.pause();
+    audioRef.current = null;
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close().catch(() => {});
+      audioCtxRef.current = null;
+    }
+    setIsPlaying(false);
+  }, []);
+
+  const handleToggle = useCallback(() => {
+    if (isPlaying) {
+      stopPlayback();
+      if (currentlyPlayingButton === stopPlayback) currentlyPlayingButton = null;
       return;
     }
 
-    // Create or reuse audio element
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-    }
-    const audio = audioRef.current;
+    if (currentlyPlayingButton) currentlyPlayingButton();
 
-    audio.src = audioUrl;
-    audio.onended = () => setIsPlaying(false);
+    const audio = new Audio(audioUrl);
+    audio.crossOrigin = "anonymous";
 
     try {
-      await audio.play();
-      setIsPlaying(true);
+      const ctx = new AudioContext();
+      const source = ctx.createMediaElementSource(audio);
+      const gain = ctx.createGain();
+      gain.gain.value = 2.2;
+      source.connect(gain);
+      gain.connect(ctx.destination);
+      audioCtxRef.current = ctx;
     } catch {
-      // Autoplay blocked
+      audio.volume = 1;
     }
-  }, [audioUrl, isPlaying]);
+
+    audio.onended = () => {
+      setIsPlaying(false);
+      audioRef.current = null;
+      if (currentlyPlayingButton === stopPlayback) currentlyPlayingButton = null;
+    };
+
+    audio.play().then(() => {
+      audioRef.current = audio;
+      setIsPlaying(true);
+      currentlyPlayingButton = stopPlayback;
+    }).catch(() => setIsPlaying(false));
+  }, [audioUrl, isPlaying, stopPlayback]);
+
+  const barVariants = {
+    playing: (i: number) => ({
+      scaleY: [0.3, 1, 0.5, 0.8, 0.3],
+      transition: {
+        duration: 0.8 + i * 0.15,
+        repeat: Infinity,
+        ease: "easeInOut" as const,
+      },
+    }),
+    stopped: { scaleY: 0.3 },
+  };
 
   return (
-    <motion.button
+    <button
       onClick={handleToggle}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 border-primary text-sm font-bebas tracking-wider transition-colors"
+      className="flex items-center justify-center gap-1.5 rounded-full backdrop-blur-sm transition-all hover:scale-110 active:scale-95"
       style={{
-        backgroundColor: isPlaying ? 'hsl(var(--primary))' : 'transparent',
-        color: isPlaying ? 'black' : 'hsl(var(--primary))',
+        width: 40,
+        height: 40,
+        backgroundColor: isPlaying ? 'hsl(var(--primary))' : 'hsl(var(--background) / 0.7)',
+        color: isPlaying ? 'hsl(var(--primary-foreground))' : 'hsl(var(--primary))',
+        border: '2px solid hsl(var(--primary))',
       }}
-      whileTap={{ scale: 0.95 }}
-      title={isPlaying ? "Stop audio" : "Play audio"}
+      title={isPlaying ? "Stop audio" : "Listen"}
     >
-      <Volume2 className="w-4 h-4" />
-      {isPlaying ? "Playing..." : "Listen"}
-      {isPlaying && (
-        <span className="flex gap-0.5 ml-0.5">
-          {[0, 1, 2].map(i => (
-            <motion.span
+      {isPlaying ? (
+        <div className="flex h-3 items-end gap-[2px]">
+          {[0, 1, 2, 3].map((i) => (
+            <motion.div
               key={i}
-              className="w-0.5 bg-black rounded-full"
-              animate={{ height: [4, 12, 4] }}
-              transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+              custom={i}
+              variants={barVariants}
+              animate="playing"
+              className="w-[2.5px] origin-bottom rounded-full bg-primary-foreground"
+              style={{ height: '100%' }}
             />
           ))}
-        </span>
+        </div>
+      ) : (
+        <Volume2 className="h-5 w-5" />
       )}
-    </motion.button>
+    </button>
   );
 };

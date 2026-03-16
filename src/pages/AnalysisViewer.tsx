@@ -1679,6 +1679,7 @@ const AnalysisViewer = () => {
                                   url={url}
                                   annotationId={point.annotation_ids?.[url]}
                                   crop={point.video_crops?.[url]}
+                                  audioUrl={vidIndex === 0 ? point.audio_url : undefined}
                                 />
                               ))}
                             </div>
