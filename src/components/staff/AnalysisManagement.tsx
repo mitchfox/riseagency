@@ -1638,6 +1638,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
           defaultOpen={false}
           performanceReportClips={performanceReportClips}
           analysisId={editingAnalysis?.id}
+          onSave={handleSave}
         />
 
         {/* Overview Section (Pre-Match and Post-Match - shown after points) - collapsed by default */}
