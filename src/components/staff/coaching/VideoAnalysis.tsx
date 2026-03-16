@@ -1872,7 +1872,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               controlsList="nodownload nofullscreen"
               preload="auto"
               className="w-full aspect-video object-fill"
-              onPlay={primeLookaheadBuffer}
+              onPlay={startFullPreload}
+              onLoadedMetadata={startFullPreload}
               onKeyDown={(e) => {
                 // Prevent native video controls from intercepting our hotkeys in fullscreen
                 const key = e.key;
@@ -1884,10 +1885,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 if (overlayElements.length > 0) {
                   setOverlayCurrentTime(videoRef.current?.currentTime ?? 0);
                 }
-                primeLookaheadBuffer();
               }}
             />
-            {/* Hidden lookahead video plus background fetch to keep the full source downloading */}
+            {/* Hidden lookahead video that progressively seeks through the entire file to force full buffering */}
             <video
               ref={lookaheadRef}
               src={selectedVideo.video_url}
