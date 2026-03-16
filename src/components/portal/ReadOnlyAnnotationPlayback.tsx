@@ -647,6 +647,9 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   };
 
   const hasAnnotations = elements.length > 0;
+  const renderedVisibleEls = freezeActive
+    ? visibleEls
+    : visibleEls.filter((el) => !triggeredTimesRef.current.has(el.id));
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -672,7 +675,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
         className="w-full"
         style={{ display: 'block', width: '100%', height: 'auto', objectFit: 'fill' }}
       />
-      {hasAnnotations && visibleEls.length > 0 && (
+      {hasAnnotations && renderedVisibleEls.length > 0 && (
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none"
           viewBox="0 0 100 100"
@@ -684,7 +687,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
             transition: freezePhase === 'fading' ? 'opacity 0.4s ease-out' : 'none',
           }}
         >
-          {visibleEls.map(renderElement)}
+          {renderedVisibleEls.map(renderElement)}
         </svg>
       )}
     </div>

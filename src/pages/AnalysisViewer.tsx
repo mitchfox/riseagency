@@ -203,7 +203,7 @@ const SectionTitle = ({ title, icon }: { title: string; icon?: "plus" | "minus" 
 // Content card - grey background with black text (matches fuelforfootball)
 const ContentCard = ({ children, className = "", transparent = false }: { children: React.ReactNode; className?: string; transparent?: boolean }) => (
   <div 
-    className={`rounded-2xl p-4 md:p-6 ${className}`}
+    className={`rounded-2xl border-2 border-primary p-4 md:p-6 ${className}`}
     style={transparent ? {} : { backgroundColor: 'hsl(0 0% 75%)', color: 'black' }}
   >
     {children}
@@ -703,7 +703,7 @@ const AnnotatedPointVideo = ({ url, annotationId, crop, audioUrl }: { url: strin
     : undefined;
 
   return (
-    <div className="relative rounded-lg border-2 border-primary/30 overflow-hidden shadow-md">
+    <div className="relative overflow-hidden rounded-lg border-2 border-primary shadow-md">
       <div style={hasCrop ? { overflow: 'hidden' } : undefined}>
         <div style={cropShiftStyle}>
           <ReadOnlyAnnotationPlayback
@@ -713,7 +713,7 @@ const AnnotatedPointVideo = ({ url, annotationId, crop, audioUrl }: { url: strin
         </div>
       </div>
       {audioUrl && (
-        <div className="absolute top-4 right-4 z-20 md:top-5 md:right-5">
+        <div className="absolute right-4 top-4 z-20 md:right-5 md:top-5">
           <AudioPlaybackButton audioUrl={audioUrl} />
         </div>
       )}
@@ -1225,11 +1225,6 @@ const AnalysisViewer = () => {
                   return (
                     <ExpandableSection key={index} title={point.title} id={`section-point-${index}`} flipBackground={shouldFlip}>
                       <div className="space-y-4 md:space-y-6">
-                        {point.audio_url && (
-                          <div className="flex justify-center">
-                            <AudioPlaybackButton audioUrl={point.audio_url} />
-                          </div>
-                        )}
                         {point.paragraph_1 && (
                           <TextReveal>
                             <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
@@ -1534,11 +1529,6 @@ const AnalysisViewer = () => {
                   return (
                     <ExpandableSection key={index} title={point.title} id={`section-point-${index}`} flipBackground={shouldFlip}>
                       <div className="space-y-4 md:space-y-6">
-                        {point.audio_url && (
-                          <div className="flex justify-center">
-                            <AudioPlaybackButton audioUrl={point.audio_url} />
-                          </div>
-                        )}
                         {point.paragraph_1 && (
                           <TextReveal>
                             <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">

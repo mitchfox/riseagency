@@ -328,7 +328,7 @@ const VideoItem = ({
 
   return (
     <div className="relative">
-      <div className="overflow-hidden rounded border border-border bg-background/20">
+      <div className="overflow-hidden rounded border-2 border-primary bg-background/20">
         <div style={hasCrop ? { overflow: 'hidden' } : undefined}>
           <div style={cropShiftStyle}>
             {hasAnnotation ? (
@@ -337,7 +337,7 @@ const VideoItem = ({
                 videoUrl={url}
                 annotationProjectId={!previewElements?.length ? existingAnnotationId : undefined}
                 preloadedElements={previewElements?.length ? previewElements : undefined}
-                className="rounded overflow-hidden"
+                className="overflow-hidden rounded"
               />
             ) : (
               <video
