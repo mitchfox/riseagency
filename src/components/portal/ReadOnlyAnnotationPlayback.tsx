@@ -171,7 +171,8 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
     startFreezeRef.current = startFreeze;
   }, [startFreeze]);
 
-  // Main playback loop — NO dependency on freezeActive (uses ref)
+  // Main playback loop — stable deps only (elements, clipStart)
+  // startFreeze accessed via ref to prevent effect teardown/recreation
   useEffect(() => {
     if (!elements || elements.length === 0) return;
     const video = videoRef.current;
@@ -193,7 +194,9 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
         });
 
         if (newElements.length > 0) {
-          startFreeze(computed, video);
+          // Mark IDs FIRST, then freeze — prevents re-evaluation before set is updated
+          newElements.forEach(el => triggeredTimesRef.current.add(el.id));
+          startFreezeRef.current(computed, video);
           rafRef.current = requestAnimationFrame(tick);
           return;
         }
@@ -207,7 +210,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
     return () => {
       cancelAnimationFrame(rafRef.current);
     };
-  }, [elements, clipStart, startFreeze]);
+  }, [elements, clipStart]);
 
   // Cleanup timers on unmount
   useEffect(() => {
