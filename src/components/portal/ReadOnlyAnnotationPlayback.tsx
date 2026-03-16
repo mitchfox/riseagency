@@ -118,7 +118,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   const startFreeze = useCallback((computed: ComputedAnnotationElement[], video: HTMLVideoElement) => {
     // Mark times as triggered
     computed.forEach(el => {
-      triggeredTimesRef.current.add(Math.round(el.appearAt * 4) / 4);
+      triggeredTimesRef.current.add(el.id);
     });
 
     // Calculate freeze duration
