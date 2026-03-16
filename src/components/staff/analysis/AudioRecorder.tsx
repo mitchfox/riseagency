@@ -17,21 +17,39 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [duration, setDuration] = useState(0);
   const [countdown, setCountdown] = useState<number | null>(null);
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
+
+  // Full cleanup helper — stops everything and releases resources
+  const fullCleanup = useCallback(() => {
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      try { mediaRecorderRef.current.stop(); } catch {}
+    }
+    mediaRecorderRef.current = null;
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (countdownRef.current) clearInterval(countdownRef.current);
+      fullCleanup();
+      // Revoke any lingering preview URL
       if (previewUrl) URL.revokeObjectURL(previewUrl);
-      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
     };
   }, []);
 
@@ -41,46 +59,12 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
     return `${m}:${s}`;
   };
 
-  const beginRecording = useCallback((stream: MediaStream) => {
-    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-      ? "audio/webm;codecs=opus"
-      : MediaRecorder.isTypeSupported("audio/webm")
-      ? "audio/webm"
-      : "audio/mp4";
-
-    const recorder = new MediaRecorder(stream, {
-      mimeType,
-      audioBitsPerSecond: 256000,
-    });
-    chunksRef.current = [];
-
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunksRef.current.push(e.data);
-    };
-
-    recorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: mimeType });
-      setRecordedBlob(blob);
-      const url = URL.createObjectURL(blob);
-      setPreviewUrl(url);
-      stream.getTracks().forEach(t => t.stop());
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-
-    mediaRecorderRef.current = recorder;
-    recorder.start(250);
-    setIsRecording(true);
-    setCountdown(null);
-    setIsPaused(false);
-    setDuration(0);
-
-    timerRef.current = setInterval(() => {
-      setDuration(d => d + 1);
-    }, 1000);
-  }, []);
-
   const startRecording = useCallback(async () => {
     try {
+      // Always clean up any previous session first
+      fullCleanup();
+
+      // Get a fresh stream directly from user gesture
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: false,
@@ -100,25 +84,78 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
         if (count <= 0) {
           if (countdownRef.current) clearInterval(countdownRef.current);
           countdownRef.current = null;
-          beginRecording(stream);
+
+          // Begin recording with the captured stream
+          const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+            ? "audio/webm;codecs=opus"
+            : MediaRecorder.isTypeSupported("audio/webm")
+            ? "audio/webm"
+            : "audio/mp4";
+
+          chunksRef.current = [];
+
+          const recorder = new MediaRecorder(stream, {
+            mimeType,
+            audioBitsPerSecond: 256000,
+          });
+
+          recorder.ondataavailable = (e) => {
+            if (e.data.size > 0) chunksRef.current.push(e.data);
+          };
+
+          recorder.onstop = () => {
+            const blob = new Blob(chunksRef.current, { type: mimeType });
+            setRecordedBlob(blob);
+            const url = URL.createObjectURL(blob);
+            setPreviewUrl(url);
+            // Stop timer
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+            // Stop stream tracks to release mic
+            if (streamRef.current) {
+              streamRef.current.getTracks().forEach(t => t.stop());
+              streamRef.current = null;
+            }
+            mediaRecorderRef.current = null;
+            setIsRecording(false);
+            setIsPaused(false);
+          };
+
+          mediaRecorderRef.current = recorder;
+          recorder.start(250);
+          setIsRecording(true);
+          setCountdown(null);
+          setIsPaused(false);
+          setDuration(0);
+
+          timerRef.current = setInterval(() => {
+            setDuration(d => d + 1);
+          }, 1000);
         } else {
           setCountdown(count);
         }
       }, 1000);
     } catch (err: any) {
+      fullCleanup();
       if (err.name === "NotAllowedError") {
         toast.error("Microphone access denied. Check browser permissions.");
       } else {
         toast.error("Failed to start recording");
+        console.error("Recording error:", err);
       }
     }
-  }, [beginRecording]);
+  }, [fullCleanup]);
 
   const pauseRecording = useCallback(() => {
     if (mediaRecorderRef.current?.state === "recording") {
       mediaRecorderRef.current.pause();
       setIsPaused(true);
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     }
   }, []);
 
@@ -135,10 +172,14 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setIsPaused(false);
+      // onstop handler will clean up state
     }
   }, []);
+
+  const cancelCountdown = useCallback(() => {
+    fullCleanup();
+    setCountdown(null);
+  }, [fullCleanup]);
 
   const saveRecording = useCallback(async () => {
     if (!recordedBlob) return;
@@ -204,6 +245,13 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
     setPreviewUrl(null);
   }, [onAudioChange, previewUrl]);
 
+  const discardRecording = useCallback(() => {
+    setRecordedBlob(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setDuration(0);
+  }, [previewUrl]);
+
   // Already has a saved audio URL
   if (audioUrl) {
     return (
@@ -230,10 +278,10 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
             {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Upload className="w-3.5 h-3.5 mr-1" />}
             {isUploading ? "Saving..." : "Save"}
           </Button>
-          <Button size="sm" variant="outline" onClick={() => { setRecordedBlob(null); if (previewUrl) URL.revokeObjectURL(previewUrl); setPreviewUrl(null); setDuration(0); }}>
+          <Button size="sm" variant="outline" onClick={discardRecording}>
             Re-record
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => { setRecordedBlob(null); if (previewUrl) URL.revokeObjectURL(previewUrl); setPreviewUrl(null); setDuration(0); }}>
+          <Button size="sm" variant="ghost" onClick={discardRecording}>
             Discard
           </Button>
         </div>
@@ -250,12 +298,7 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
         </div>
         <span className="text-sm text-muted-foreground">Get ready...</span>
         <div className="flex-1" />
-        <Button size="sm" variant="ghost" onClick={() => {
-          if (countdownRef.current) clearInterval(countdownRef.current);
-          countdownRef.current = null;
-          setCountdown(null);
-          if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-        }} className="h-7">
+        <Button size="sm" variant="ghost" onClick={cancelCountdown} className="h-7">
           Cancel
         </Button>
       </div>
