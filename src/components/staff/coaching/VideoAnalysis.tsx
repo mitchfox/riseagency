@@ -176,6 +176,46 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isPlayerFullscreen, setIsPlayerFullscreen] = useState(false);
 
+  // 8x simulation: native 4x + RAF nudge to double effective speed
+  const eightXRafRef = useRef<number | null>(null);
+  const eightXLastRef = useRef<number>(0);
+
+  const stopEightXSim = useCallback(() => {
+    if (eightXRafRef.current !== null) {
+      cancelAnimationFrame(eightXRafRef.current);
+      eightXRafRef.current = null;
+    }
+  }, []);
+
+  const applySpeed = useCallback((speed: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    stopEightXSim();
+    if (speed === 8) {
+      video.playbackRate = 4;
+      eightXLastRef.current = performance.now();
+      const tick = () => {
+        const now = performance.now();
+        const elapsed = (now - eightXLastRef.current) / 1000;
+        eightXLastRef.current = now;
+        // Native 4x already advances 4s per real second; nudge an extra 4s worth
+        video.currentTime += elapsed * 4;
+        eightXRafRef.current = requestAnimationFrame(tick);
+      };
+      eightXRafRef.current = requestAnimationFrame(tick);
+    } else {
+      video.playbackRate = speed;
+    }
+  }, [stopEightXSim]);
+
+  // Clean up 8x simulation on video change or unmount
+  useEffect(() => {
+    stopEightXSim();
+    setPlaybackSpeed(1);
+  }, [selectedVideo, stopEightXSim]);
+
+  useEffect(() => () => stopEightXSim(), [stopEightXSim]);
+
   // Inline annotation
   const [annotatingClip, setAnnotatingClip] = useState<Clip | null>(null);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
@@ -1460,7 +1500,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         setPlaybackSpeed(prev => {
           const idx = SPEED_STEPS.indexOf(prev);
           const next = idx < SPEED_STEPS.length - 1 ? SPEED_STEPS[idx + 1] : prev;
-          if (video) video.playbackRate = next;
+          applySpeed(next);
           return next;
         });
       } else if (e.key === '-' || e.key === '_') {
@@ -1469,14 +1509,14 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         setPlaybackSpeed(prev => {
           const idx = SPEED_STEPS.indexOf(prev);
           const next = idx > 0 ? SPEED_STEPS[idx - 1] : prev;
-          if (video) video.playbackRate = next;
+          applySpeed(next);
           return next;
         });
       } else if (e.key === '0') {
         e.preventDefault();
         e.stopPropagation();
         setPlaybackSpeed(1);
-        if (video) video.playbackRate = 1;
+        applySpeed(1);
       }
     };
     // Use capture phase so our handler fires before the browser's native video handlers
@@ -1839,7 +1879,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 setPlaybackSpeed(prev => {
                   const idx = SPEED_STEPS.indexOf(prev);
                   const next = idx < SPEED_STEPS.length - 1 ? SPEED_STEPS[idx + 1] : prev;
-                  video.playbackRate = next;
+                  applySpeed(next);
                   return next;
                 });
               } else if (e.deltaY > 0) {
@@ -1847,7 +1887,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 setPlaybackSpeed(prev => {
                   const idx = SPEED_STEPS.indexOf(prev);
                   const next = idx > 0 ? SPEED_STEPS[idx - 1] : prev;
-                  video.playbackRate = next;
+                  applySpeed(next);
                   return next;
                 });
               }
@@ -1947,7 +1987,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                     key={s}
                     onClick={() => {
                       setPlaybackSpeed(s);
-                      if (videoRef.current) videoRef.current.playbackRate = s;
+                      applySpeed(s);
                     }}
                     className={`px-1.5 py-0.5 text-[10px] font-mono rounded transition-colors ${
                       playbackSpeed === s
