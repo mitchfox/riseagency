@@ -192,11 +192,13 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       // Check for new annotations that haven't triggered a freeze yet
       if (!video.paused && computed.length > 0) {
         const newElements = computed.filter(el => {
-          return !triggeredTimesRef.current.has(el.id);
+          return !triggeredTimesRef.current.has(el.id) &&
+                 el.appearAt > lastFreezeTriggerTimeRef.current;
         });
 
         if (newElements.length > 0) {
-          // Mark IDs FIRST, then freeze — prevents re-evaluation before set is updated
+          // Record playhead gate FIRST, then mark IDs, then freeze
+          lastFreezeTriggerTimeRef.current = relTime;
           newElements.forEach(el => triggeredTimesRef.current.add(el.id));
           startFreezeRef.current(computed, video);
           rafRef.current = requestAnimationFrame(tick);
