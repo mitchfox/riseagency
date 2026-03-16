@@ -431,7 +431,7 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
                     <video
                       ref={videoRef}
                       src={currentClip.video_url || ''}
-                      className="max-h-full max-w-full object-contain"
+                      className="max-h-full max-w-full aspect-video object-fill"
                       autoPlay muted playsInline loop
                       onEnded={handleVideoEnded}
                       onPlay={() => setIsPlaying(true)}
