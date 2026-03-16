@@ -107,7 +107,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const playerShellRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const lookaheadRef = useRef<HTMLVideoElement>(null);
-  const lookaheadLastPrimeRef = useRef<number>(-1);
   const lookaheadPauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const preloadPhaseRef = useRef<number>(0);
   const preloadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
