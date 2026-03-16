@@ -710,8 +710,8 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
         muted
         playsInline
         crossOrigin="anonymous"
-        className="w-full"
-        style={{ display: 'block', width: '100%', height: 'auto', objectFit: 'fill' }}
+        className="w-full aspect-video"
+        style={{ display: 'block', width: '100%', objectFit: 'fill' }}
       />
       {hasAnnotations && renderedVisibleEls.length > 0 && (
         <svg
