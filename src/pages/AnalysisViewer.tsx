@@ -703,7 +703,7 @@ const AnnotatedPointVideo = ({ url, annotationId, crop, audioUrl }: { url: strin
     : undefined;
 
   return (
-    <div className="relative rounded-lg border-2 border-primary/30 overflow-hidden shadow-md">
+    <div className="relative overflow-hidden rounded-lg border-2 border-primary shadow-md">
       <div style={hasCrop ? { overflow: 'hidden' } : undefined}>
         <div style={cropShiftStyle}>
           <ReadOnlyAnnotationPlayback
@@ -713,7 +713,7 @@ const AnnotatedPointVideo = ({ url, annotationId, crop, audioUrl }: { url: strin
         </div>
       </div>
       {audioUrl && (
-        <div className="absolute top-4 right-4 z-20 md:top-5 md:right-5">
+        <div className="absolute right-4 top-4 z-20 md:right-5 md:top-5">
           <AudioPlaybackButton audioUrl={audioUrl} />
         </div>
       )}
