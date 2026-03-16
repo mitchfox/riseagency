@@ -1871,7 +1871,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 setPlaybackSpeed(prev => {
                   const idx = SPEED_STEPS.indexOf(prev);
                   const next = idx < SPEED_STEPS.length - 1 ? SPEED_STEPS[idx + 1] : prev;
-                  video.playbackRate = next;
+                  applySpeed(next);
                   return next;
                 });
               } else if (e.deltaY > 0) {
@@ -1879,7 +1879,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 setPlaybackSpeed(prev => {
                   const idx = SPEED_STEPS.indexOf(prev);
                   const next = idx > 0 ? SPEED_STEPS[idx - 1] : prev;
-                  video.playbackRate = next;
+                  applySpeed(next);
                   return next;
                 });
               }
