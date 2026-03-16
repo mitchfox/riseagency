@@ -342,7 +342,7 @@ const VideoItem = ({
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={videoPreviewRef}>
       <div className="overflow-hidden rounded border-2 border-primary bg-background/20">
         <div style={hasCrop ? { overflow: 'hidden' } : undefined}>
           <div style={cropShiftStyle}>
