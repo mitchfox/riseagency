@@ -319,11 +319,21 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
   }, [resetRecorderState]);
 
   const rerecordAudio = useCallback(async () => {
-    onAudioChange(undefined);
+    // Don't call onAudioChange(undefined) here — that triggers parent re-render
+    // which can remount this component and kill the new session via cleanup effect.
+    // Instead, just reset local state and start recording. Parent URL is cleared
+    // only when the new recording is saved or the user explicitly deletes.
+    sessionRef.current += 1;
+    resetRecorderState(true);
+    // Small delay to let React state settle before getUserMedia
+    await new Promise(r => setTimeout(r, 50));
     await startRecording();
-  }, [onAudioChange, startRecording]);
+  }, [resetRecorderState, startRecording]);
 
-  if (audioUrl) {
+  // If actively recording/previewing/counting down, show that UI even if audioUrl exists
+  const isActiveSession = isRecording || countdown !== null || (recordedBlob && previewUrl);
+
+  if (audioUrl && !isActiveSession) {
     return (
       <div className="space-y-2 rounded-lg border bg-muted/50 p-2">
         <div className="flex items-center gap-2">

@@ -99,8 +99,9 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
         video.currentTime = clipStart;
       }
       // Detect loop/seek backward — reset triggered times
+      // But ONLY if freeze is not active (freeze resumes can look like backward jumps)
       const now = video.currentTime;
-      if (lastTimeRef.current > 0 && now < lastTimeRef.current - 0.5) {
+      if (!freezeActiveRef.current && lastTimeRef.current > 0 && now < lastTimeRef.current - 0.5) {
         triggeredTimesRef.current.clear();
       }
       lastTimeRef.current = now;
@@ -114,13 +115,10 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
     };
   }, [clipStart, clipEnd]);
 
-  // Freeze start helper
-  const startFreeze = useCallback((computed: ComputedAnnotationElement[], video: HTMLVideoElement) => {
-    // Mark times as triggered
-    computed.forEach(el => {
-      triggeredTimesRef.current.add(el.id);
-    });
+  // Freeze start helper — stored in ref to avoid RAF effect dependency churn
+  const startFreezeRef = useRef<(computed: ComputedAnnotationElement[], video: HTMLVideoElement) => void>(() => {});
 
+  const startFreeze = useCallback((computed: ComputedAnnotationElement[], video: HTMLVideoElement) => {
     // Calculate freeze duration
     const relTime = video.currentTime - clipStart;
     const maxDur = Math.max(
@@ -168,7 +166,13 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
     }, maxDur * 1000);
   }, [clipStart]);
 
-  // Main playback loop — NO dependency on freezeActive (uses ref)
+  // Keep ref in sync
+  useEffect(() => {
+    startFreezeRef.current = startFreeze;
+  }, [startFreeze]);
+
+  // Main playback loop — stable deps only (elements, clipStart)
+  // startFreeze accessed via ref to prevent effect teardown/recreation
   useEffect(() => {
     if (!elements || elements.length === 0) return;
     const video = videoRef.current;
@@ -190,7 +194,9 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
         });
 
         if (newElements.length > 0) {
-          startFreeze(computed, video);
+          // Mark IDs FIRST, then freeze — prevents re-evaluation before set is updated
+          newElements.forEach(el => triggeredTimesRef.current.add(el.id));
+          startFreezeRef.current(computed, video);
           rafRef.current = requestAnimationFrame(tick);
           return;
         }
@@ -204,7 +210,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
     return () => {
       cancelAnimationFrame(rafRef.current);
     };
-  }, [elements, clipStart, startFreeze]);
+  }, [elements, clipStart]);
 
   // Cleanup timers on unmount
   useEffect(() => {
