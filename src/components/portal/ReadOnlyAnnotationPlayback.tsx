@@ -62,6 +62,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   const freezeDurationRef = useRef(3);
   const rafRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(-1);
+  const lastFreezeTriggerTimeRef = useRef<number>(-1);
 
   const { cleanUrl, clipStart, clipEnd } = useMemo(() => parseClipFragment(videoUrl), [videoUrl]);
 
