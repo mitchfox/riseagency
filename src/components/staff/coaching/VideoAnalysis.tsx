@@ -1979,7 +1979,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                     key={s}
                     onClick={() => {
                       setPlaybackSpeed(s);
-                      if (videoRef.current) videoRef.current.playbackRate = s;
+                      applySpeed(s);
                     }}
                     className={`px-1.5 py-0.5 text-[10px] font-mono rounded transition-colors ${
                       playbackSpeed === s
