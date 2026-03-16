@@ -23,6 +23,8 @@ interface AnnotationEditorProps {
   clipConstraint?: { start: number; end: number };
   /** Auto-start playback once video is loaded */
   autoPlay?: boolean;
+  /** Seek video to this time (seconds) once loaded */
+  initialSeekTime?: number;
 }
 
 export type AnnotationTool =
