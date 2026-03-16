@@ -203,7 +203,7 @@ const SectionTitle = ({ title, icon }: { title: string; icon?: "plus" | "minus" 
 // Content card - grey background with black text (matches fuelforfootball)
 const ContentCard = ({ children, className = "", transparent = false }: { children: React.ReactNode; className?: string; transparent?: boolean }) => (
   <div 
-    className={`rounded-2xl p-4 md:p-6 ${className}`}
+    className={`rounded-2xl border-2 border-primary p-4 md:p-6 ${className}`}
     style={transparent ? {} : { backgroundColor: 'hsl(0 0% 75%)', color: 'black' }}
   >
     {children}
