@@ -105,15 +105,22 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
 
     const onTimeUpdate = () => {
       if (clipEnd !== null && video.currentTime >= clipEnd) {
+        internalLoopRef.current = true;
         video.currentTime = clipStart;
       }
-      // Detect loop/seek backward — reset triggered times
-      // But ONLY if freeze is not active (freeze resumes can look like backward jumps)
+
       const now = video.currentTime;
+      const loopedNaturally = video.loop && video.duration > 0 && lastTimeRef.current > Math.max(video.duration - 1, 0) && now < 1;
+
+      // Reset trigger history on genuine backward seeks only, not on automatic loops or freeze resume.
       if (!freezeActiveRef.current && lastTimeRef.current > 0 && now < lastTimeRef.current - 0.5) {
-        triggeredTimesRef.current.clear();
-        lastFreezeTriggerTimeRef.current = -1;
+        if (!internalLoopRef.current && !loopedNaturally) {
+          triggeredTimesRef.current.clear();
+          lastFreezeTriggerTimeRef.current = -1;
+        }
       }
+
+      internalLoopRef.current = false;
       lastTimeRef.current = now;
     };
 
