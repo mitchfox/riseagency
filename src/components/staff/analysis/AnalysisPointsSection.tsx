@@ -429,6 +429,12 @@ const VideoItem = ({
           )}
         </DialogContent>
       </Dialog>
+      <ActionVideoPopup
+        open={fullscreenOpen}
+        onOpenChange={setFullscreenOpen}
+        videoUrl={url}
+        actionTitle=""
+      />
     </div>
   );
 };
