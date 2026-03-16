@@ -56,7 +56,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
 
   // Use refs to avoid RAF dependency on state
   const freezeActiveRef = useRef(false);
-  const triggeredTimesRef = useRef<Set<number>>(new Set());
+  const triggeredTimesRef = useRef<Set<string>>(new Set());
   const freezeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const freezeDurationRef = useRef(3);
@@ -118,7 +118,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   const startFreeze = useCallback((computed: ComputedAnnotationElement[], video: HTMLVideoElement) => {
     // Mark times as triggered
     computed.forEach(el => {
-      triggeredTimesRef.current.add(Math.round(el.appearAt * 4) / 4);
+      triggeredTimesRef.current.add(el.id);
     });
 
     // Calculate freeze duration
@@ -186,8 +186,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       // Check for new annotations that haven't triggered a freeze yet
       if (!video.paused && computed.length > 0) {
         const newElements = computed.filter(el => {
-          const roundedAppear = Math.round(el.appearAt * 4) / 4;
-          return !triggeredTimesRef.current.has(roundedAppear);
+          return !triggeredTimesRef.current.has(el.id);
         });
 
         if (newElements.length > 0) {
