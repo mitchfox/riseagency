@@ -41,43 +41,69 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
     return `${m}:${s}`;
   };
 
+  const beginRecording = useCallback((stream: MediaStream) => {
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : MediaRecorder.isTypeSupported("audio/webm")
+      ? "audio/webm"
+      : "audio/mp4";
+
+    const recorder = new MediaRecorder(stream, {
+      mimeType,
+      audioBitsPerSecond: 256000,
+    });
+    chunksRef.current = [];
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+
+    recorder.onstop = () => {
+      const blob = new Blob(chunksRef.current, { type: mimeType });
+      setRecordedBlob(blob);
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+      stream.getTracks().forEach(t => t.stop());
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+
+    mediaRecorderRef.current = recorder;
+    recorder.start(250);
+    setIsRecording(true);
+    setCountdown(null);
+    setIsPaused(false);
+    setDuration(0);
+
+    timerRef.current = setInterval(() => {
+      setDuration(d => d + 1);
+    }, 1000);
+  }, []);
+
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 44100 },
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          sampleRate: 48000,
+          channelCount: 1,
+        },
       });
       streamRef.current = stream;
 
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-        ? "audio/webm"
-        : "audio/mp4";
-
-      const recorder = new MediaRecorder(stream, { mimeType });
-      chunksRef.current = [];
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: mimeType });
-        setRecordedBlob(blob);
-        const url = URL.createObjectURL(blob);
-        setPreviewUrl(url);
-        stream.getTracks().forEach(t => t.stop());
-        if (timerRef.current) clearInterval(timerRef.current);
-      };
-
-      mediaRecorderRef.current = recorder;
-      recorder.start(250); // collect data every 250ms for pause support
-      setIsRecording(true);
-      setIsPaused(false);
-      setDuration(0);
-
-      timerRef.current = setInterval(() => {
-        setDuration(d => d + 1);
+      // 3-2-1 countdown
+      setCountdown(3);
+      let count = 3;
+      countdownRef.current = setInterval(() => {
+        count--;
+        if (count <= 0) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          countdownRef.current = null;
+          beginRecording(stream);
+        } else {
+          setCountdown(count);
+        }
       }, 1000);
     } catch (err: any) {
       if (err.name === "NotAllowedError") {
@@ -86,7 +112,7 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
         toast.error("Failed to start recording");
       }
     }
-  }, []);
+  }, [beginRecording]);
 
   const pauseRecording = useCallback(() => {
     if (mediaRecorderRef.current?.state === "recording") {
