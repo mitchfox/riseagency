@@ -109,6 +109,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const lookaheadRef = useRef<HTMLVideoElement>(null);
   const lookaheadLastPrimeRef = useRef<number>(-1);
   const lookaheadPauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fullPreloadAbortRef = useRef<AbortController | null>(null);
 
   // Upload form
   const [newTitle, setNewTitle] = useState("");
@@ -221,7 +222,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     const duration = mainVideo.duration;
     if (!Number.isFinite(duration) || duration <= 0) return;
 
-    const targetTime = Math.min(duration - 0.25, mainVideo.currentTime + 300);
+    const targetTime = Math.min(duration - 0.25, Math.max(mainVideo.currentTime + 300, duration - 0.25));
     if (targetTime <= mainVideo.currentTime + 5) return;
     if (Math.abs(targetTime - lookaheadLastPrimeRef.current) < 20) return;
 
@@ -261,6 +262,57 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   }, []);
 
   useEffect(() => {
+    const sourceUrl = selectedVideo?.video_url;
+
+    fullPreloadAbortRef.current?.abort();
+    fullPreloadAbortRef.current = null;
+
+    if (!sourceUrl) return;
+
+    const controller = new AbortController();
+    fullPreloadAbortRef.current = controller;
+
+    void (async () => {
+      try {
+        const response = await fetch(sourceUrl, {
+          signal: controller.signal,
+          cache: "force-cache",
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to preload source video (${response.status})`);
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+          await response.blob();
+          return;
+        }
+
+        while (!controller.signal.aborted) {
+          const { done } = await reader.read();
+          if (done) break;
+        }
+
+        if (controller.signal.aborted) {
+          await reader.cancel().catch(() => {});
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("Failed to fully preload analysis video", error);
+        }
+      }
+    })();
+
+    return () => {
+      controller.abort();
+      if (fullPreloadAbortRef.current === controller) {
+        fullPreloadAbortRef.current = null;
+      }
+    };
+  }, [selectedVideo?.id, selectedVideo?.video_url]);
+
+  useEffect(() => {
     const lookaheadVideo = lookaheadRef.current;
     if (!lookaheadVideo || !selectedVideo?.video_url) return;
 
@@ -293,6 +345,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     return () => {
       if (clipSavedTimerRef.current) clearTimeout(clipSavedTimerRef.current);
       if (lookaheadPauseTimerRef.current) clearTimeout(lookaheadPauseTimerRef.current);
+      fullPreloadAbortRef.current?.abort();
     };
   }, []);
 
@@ -1872,23 +1925,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   e.stopPropagation();
                 }
               }}
-              onWaiting={() => {
-                // At high playback rates, browsers stall when they can't decode fast enough.
-                // Skip forward slightly to a buffered region instead of dropping rate.
-                const video = videoRef.current;
-                if (!video || video.playbackRate <= 1) return;
-                const buffered = video.buffered;
-                const ct = video.currentTime;
-                // Find a buffered range ahead of current time
-                for (let i = 0; i < buffered.length; i++) {
-                  if (buffered.start(i) > ct && buffered.start(i) - ct < 2) {
-                    video.currentTime = buffered.start(i) + 0.1;
-                    return;
-                  }
-                }
-                // Fallback: nudge forward slightly to skip the stall point
-                video.currentTime = ct + 0.5;
-              }}
               onTimeUpdate={() => {
                 if (overlayElements.length > 0) {
                   setOverlayCurrentTime(videoRef.current?.currentTime ?? 0);
@@ -1896,7 +1932,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 primeLookaheadBuffer();
               }}
             />
-            {/* Hidden lookahead video to prime browser buffer ~5 min ahead */}
+            {/* Hidden lookahead video plus background fetch to keep the full source downloading */}
             <video
               ref={lookaheadRef}
               src={selectedVideo.video_url}
