@@ -768,14 +768,45 @@ const AnalysisViewer = () => {
     }
   };
 
-  if (loading) {
+  const showLoading = loading || !minDelayPassed;
+
+  if (showLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center px-6">
-        <div className="w-full max-w-md rounded-2xl border border-primary/30 bg-card/80 p-8 text-center shadow-2xl backdrop-blur-sm">
-          <div className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
-          <h1 className="font-bebas text-3xl uppercase tracking-[0.2em] text-primary">Loading Analysis</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Preparing presentation, media and annotations.</p>
-        </div>
+      <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden">
+        <TacticalSymbols />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="relative text-center flex flex-col items-center gap-6"
+        >
+          <motion.img 
+            src={riseLogo} 
+            alt="Rise Agency" 
+            className="w-20 h-20 md:w-28 md:h-28 object-contain"
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="h-[2px] rounded-full bg-primary"
+            initial={{ width: 0 }}
+            animate={{ width: 120 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+          />
+          <p className="font-bebas tracking-[0.3em] uppercase text-lg md:text-xl text-primary">
+            Loading Analysis
+          </p>
+          <div className="flex gap-2">
+            {[0, 1, 2].map(i => (
+              <motion.div
+                key={i}
+                className="w-2 h-2 rounded-full bg-primary"
+                animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
+                transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+              />
+            ))}
+          </div>
+        </motion.div>
       </div>
     );
   }
