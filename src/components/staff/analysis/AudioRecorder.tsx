@@ -330,7 +330,10 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
     await startRecording();
   }, [resetRecorderState, startRecording]);
 
-  if (audioUrl) {
+  // If actively recording/previewing/counting down, show that UI even if audioUrl exists
+  const isActiveSession = isRecording || countdown !== null || (recordedBlob && previewUrl);
+
+  if (audioUrl && !isActiveSession) {
     return (
       <div className="space-y-2 rounded-lg border bg-muted/50 p-2">
         <div className="flex items-center gap-2">
