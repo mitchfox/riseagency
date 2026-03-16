@@ -215,36 +215,35 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
   }, [selectedVideo?.player_id]);
 
-  const primeLookaheadBuffer = useCallback(() => {
-    const mainVideo = videoRef.current;
+  // Aggressively buffer entire video by progressively seeking the lookahead element
+  const startFullPreload = useCallback(() => {
     const lookaheadVideo = lookaheadRef.current;
-
-    if (!mainVideo || !lookaheadVideo) return;
+    const mainVideo = videoRef.current;
+    if (!lookaheadVideo || !mainVideo) return;
     const duration = mainVideo.duration;
     if (!Number.isFinite(duration) || duration <= 0) return;
 
-    const targetTime = Math.min(duration - 0.25, Math.max(mainVideo.currentTime + 300, duration - 0.25));
-    if (targetTime <= mainVideo.currentTime + 5) return;
-    if (Math.abs(targetTime - lookaheadLastPrimeRef.current) < 20) return;
+    // Already running or done
+    if (preloadIntervalRef.current) return;
 
-    lookaheadLastPrimeRef.current = targetTime;
+    // Seek the lookahead in 30-second jumps from start to end
+    preloadPhaseRef.current = 0;
+    const CHUNK = 30;
+    const totalSteps = Math.ceil(duration / CHUNK);
 
-    try {
-      lookaheadVideo.currentTime = targetTime;
-      const warmup = lookaheadVideo.play();
-      if (warmup && typeof warmup.then === "function") {
-        void warmup
-          .then(() => {
-            if (lookaheadPauseTimerRef.current) clearTimeout(lookaheadPauseTimerRef.current);
-            lookaheadPauseTimerRef.current = setTimeout(() => {
-              lookaheadVideo.pause();
-            }, 1200);
-          })
-          .catch(() => {});
+    preloadIntervalRef.current = setInterval(() => {
+      if (preloadPhaseRef.current >= totalSteps) {
+        if (preloadIntervalRef.current) clearInterval(preloadIntervalRef.current);
+        preloadIntervalRef.current = null;
+        return;
       }
-    } catch {
-      // Ignore seek/play failures while browser is still loading metadata
-    }
+
+      const seekTo = Math.min(preloadPhaseRef.current * CHUNK, duration - 0.5);
+      try {
+        lookaheadVideo.currentTime = seekTo;
+      } catch {}
+      preloadPhaseRef.current++;
+    }, 600);
   }, []);
 
   const togglePlayerFullscreen = useCallback(async () => {
