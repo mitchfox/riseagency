@@ -29,6 +29,7 @@ export const AudioRecorder = ({ audioUrl, onAudioChange }: AudioRecorderProps) =
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
     };
