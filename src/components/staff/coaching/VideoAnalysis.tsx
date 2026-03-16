@@ -1820,7 +1820,32 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
         {/* Widescreen video player with overlaid clip button */}
          {selectedVideo.video_url ? (
-          <div ref={playerShellRef} className="relative w-full bg-black rounded-lg overflow-hidden group/player">
+          <div
+            ref={playerShellRef}
+            className="relative w-full bg-black rounded-lg overflow-hidden group/player"
+            onWheel={(e) => {
+              e.preventDefault();
+              const video = videoRef.current;
+              if (!video) return;
+              if (e.deltaY < 0) {
+                // Scroll up = faster
+                setPlaybackSpeed(prev => {
+                  const idx = SPEED_STEPS.indexOf(prev);
+                  const next = idx < SPEED_STEPS.length - 1 ? SPEED_STEPS[idx + 1] : prev;
+                  video.playbackRate = next;
+                  return next;
+                });
+              } else if (e.deltaY > 0) {
+                // Scroll down = slower
+                setPlaybackSpeed(prev => {
+                  const idx = SPEED_STEPS.indexOf(prev);
+                  const next = idx > 0 ? SPEED_STEPS[idx - 1] : prev;
+                  video.playbackRate = next;
+                  return next;
+                });
+              }
+            }}
+          >
             <Button
               type="button"
               size="sm"
