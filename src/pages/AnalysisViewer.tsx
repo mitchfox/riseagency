@@ -1529,11 +1529,6 @@ const AnalysisViewer = () => {
                   return (
                     <ExpandableSection key={index} title={point.title} id={`section-point-${index}`} flipBackground={shouldFlip}>
                       <div className="space-y-4 md:space-y-6">
-                        {point.audio_url && (
-                          <div className="flex justify-center">
-                            <AudioPlaybackButton audioUrl={point.audio_url} />
-                          </div>
-                        )}
                         {point.paragraph_1 && (
                           <TextReveal>
                             <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
