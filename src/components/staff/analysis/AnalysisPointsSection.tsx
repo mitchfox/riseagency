@@ -374,7 +374,6 @@ const VideoItem = ({
           <Maximize className="w-3 h-3" />
         </Button>
         <Button
-          ref={videoPreviewRef as any}
           variant="secondary"
           size="sm"
           className="h-6 w-6 p-0"
