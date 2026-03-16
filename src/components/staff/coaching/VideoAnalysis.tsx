@@ -107,9 +107,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const playerShellRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const lookaheadRef = useRef<HTMLVideoElement>(null);
-  const lookaheadLastPrimeRef = useRef<number>(-1);
   const lookaheadPauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fullPreloadAbortRef = useRef<AbortController | null>(null);
+  const preloadPhaseRef = useRef<number>(0);
+  const preloadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Upload form
   const [newTitle, setNewTitle] = useState("");
@@ -214,36 +214,35 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
   }, [selectedVideo?.player_id]);
 
-  const primeLookaheadBuffer = useCallback(() => {
-    const mainVideo = videoRef.current;
+  // Aggressively buffer entire video by progressively seeking the lookahead element
+  const startFullPreload = useCallback(() => {
     const lookaheadVideo = lookaheadRef.current;
-
-    if (!mainVideo || !lookaheadVideo) return;
+    const mainVideo = videoRef.current;
+    if (!lookaheadVideo || !mainVideo) return;
     const duration = mainVideo.duration;
     if (!Number.isFinite(duration) || duration <= 0) return;
 
-    const targetTime = Math.min(duration - 0.25, Math.max(mainVideo.currentTime + 300, duration - 0.25));
-    if (targetTime <= mainVideo.currentTime + 5) return;
-    if (Math.abs(targetTime - lookaheadLastPrimeRef.current) < 20) return;
+    // Already running or done
+    if (preloadIntervalRef.current) return;
 
-    lookaheadLastPrimeRef.current = targetTime;
+    // Seek the lookahead in 30-second jumps from start to end
+    preloadPhaseRef.current = 0;
+    const CHUNK = 30;
+    const totalSteps = Math.ceil(duration / CHUNK);
 
-    try {
-      lookaheadVideo.currentTime = targetTime;
-      const warmup = lookaheadVideo.play();
-      if (warmup && typeof warmup.then === "function") {
-        void warmup
-          .then(() => {
-            if (lookaheadPauseTimerRef.current) clearTimeout(lookaheadPauseTimerRef.current);
-            lookaheadPauseTimerRef.current = setTimeout(() => {
-              lookaheadVideo.pause();
-            }, 1200);
-          })
-          .catch(() => {});
+    preloadIntervalRef.current = setInterval(() => {
+      if (preloadPhaseRef.current >= totalSteps) {
+        if (preloadIntervalRef.current) clearInterval(preloadIntervalRef.current);
+        preloadIntervalRef.current = null;
+        return;
       }
-    } catch {
-      // Ignore seek/play failures while browser is still loading metadata
-    }
+
+      const seekTo = Math.min(preloadPhaseRef.current * CHUNK, duration - 0.5);
+      try {
+        lookaheadVideo.currentTime = seekTo;
+      } catch {}
+      preloadPhaseRef.current++;
+    }, 600);
   }, []);
 
   const togglePlayerFullscreen = useCallback(async () => {
@@ -262,61 +261,16 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   }, []);
 
   useEffect(() => {
-    const sourceUrl = selectedVideo?.video_url;
-
-    fullPreloadAbortRef.current?.abort();
-    fullPreloadAbortRef.current = null;
-
-    if (!sourceUrl) return;
-
-    const controller = new AbortController();
-    fullPreloadAbortRef.current = controller;
-
-    void (async () => {
-      try {
-        const response = await fetch(sourceUrl, {
-          signal: controller.signal,
-          cache: "force-cache",
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to preload source video (${response.status})`);
-        }
-
-        const reader = response.body?.getReader();
-        if (!reader) {
-          await response.blob();
-          return;
-        }
-
-        while (!controller.signal.aborted) {
-          const { done } = await reader.read();
-          if (done) break;
-        }
-
-        if (controller.signal.aborted) {
-          await reader.cancel().catch(() => {});
-        }
-      } catch (error) {
-        if (!controller.signal.aborted) {
-          console.error("Failed to fully preload analysis video", error);
-        }
-      }
-    })();
-
-    return () => {
-      controller.abort();
-      if (fullPreloadAbortRef.current === controller) {
-        fullPreloadAbortRef.current = null;
-      }
-    };
-  }, [selectedVideo?.id, selectedVideo?.video_url]);
-
-  useEffect(() => {
     const lookaheadVideo = lookaheadRef.current;
     if (!lookaheadVideo || !selectedVideo?.video_url) return;
 
-    lookaheadLastPrimeRef.current = -1;
+    // Reset preload state
+    if (preloadIntervalRef.current) {
+      clearInterval(preloadIntervalRef.current);
+      preloadIntervalRef.current = null;
+    }
+    preloadPhaseRef.current = 0;
+
     lookaheadVideo.src = selectedVideo.video_url;
     lookaheadVideo.preload = "auto";
     lookaheadVideo.load();
@@ -345,7 +299,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     return () => {
       if (clipSavedTimerRef.current) clearTimeout(clipSavedTimerRef.current);
       if (lookaheadPauseTimerRef.current) clearTimeout(lookaheadPauseTimerRef.current);
-      fullPreloadAbortRef.current?.abort();
+      if (preloadIntervalRef.current) clearInterval(preloadIntervalRef.current);
     };
   }, []);
 
@@ -1917,7 +1871,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               controlsList="nodownload nofullscreen"
               preload="auto"
               className="w-full aspect-video object-fill"
-              onPlay={primeLookaheadBuffer}
+              onPlay={startFullPreload}
+              onLoadedMetadata={startFullPreload}
               onKeyDown={(e) => {
                 // Prevent native video controls from intercepting our hotkeys in fullscreen
                 const key = e.key;
@@ -1929,10 +1884,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 if (overlayElements.length > 0) {
                   setOverlayCurrentTime(videoRef.current?.currentTime ?? 0);
                 }
-                primeLookaheadBuffer();
               }}
             />
-            {/* Hidden lookahead video plus background fetch to keep the full source downloading */}
+            {/* Hidden lookahead video that progressively seeks through the entire file to force full buffering */}
             <video
               ref={lookaheadRef}
               src={selectedVideo.video_url}
