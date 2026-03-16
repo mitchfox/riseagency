@@ -87,6 +87,13 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       });
   }, [annotationProjectId, preloadedElements]);
 
+  useEffect(() => {
+    triggeredTimesRef.current.clear();
+    lastFreezeTriggerTimeRef.current = -1;
+    lastTimeRef.current = -1;
+    internalLoopRef.current = false;
+  }, [cleanUrl, clipStart, clipEnd, annotationProjectId, preloadedElements]);
+
   // Handle clip fragment: seek to start, loop at end
   useEffect(() => {
     const video = videoRef.current;
